@@ -1,4 +1,4 @@
 my-utils
 ========
 
-some tools 
+some tools for Mac
