@@ -1,7 +1,7 @@
 #------------------------
 # .bashrc, for Mac OS X configuration
 # author: gerryyang
-# update time: 2014-02-17
+# update time: 2014-05-03
 #------------------------
 
 #------------------------
@@ -35,6 +35,8 @@ alias mvim='/Users/gerryyang/Downloads/tools/editor/MacVim-snapshot-66/mvim'
 
 # 使用GCC4.8.1
 alias g++481='/usr/local/gcc-4.8.1/bin/g++'
+alias gcc490='/Users/gerryyang/LAMP/gcc/install/gcc-4.9.0/bin/gcc'
+alias g++490='/Users/gerryyang/LAMP/gcc/install/gcc-4.9.0/bin/g++'
 
 # 使用Sublime Text 2
 alias subl='/Applications/Sublime\ Text\ 2.app/Contents/SharedSupport/bin/subl'
@@ -47,4 +49,8 @@ export GOPATH=/Users/gerryyang/code/go/mygo
 # MySQL
 export MYSQL_PATH=/Users/gerryyang/LAMP/MySQL/mysql-5.6.16-osx10.7-x86
 export PATH=$PATH:$MYSQL_PATH/bin
+
+# OpenSSL
+export OPENSSL_PATH=/Users/gerryyang/LAMP/OpenSSL/install/openssl-1.0.1g
+export PATH=$PATH:$OPENSSL_PATH/bin
 
