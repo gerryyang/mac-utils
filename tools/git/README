@@ -1,0 +1,14 @@
+
+git的一些常用命令
+
+
+git add .
+git status
+git commit -m"info"
+git push origin master
+
+
+git add -A
+把我们未通过 git rm 删除的文件全部stage
+
+
