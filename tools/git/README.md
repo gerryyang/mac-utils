@@ -1,10 +1,10 @@
 
-**git commands**
+Abstract
+==
+> git commands
 
 
-
-# 0 git help
-
+0 git help
 ===
 
 'git help -a' and 'git help -g' lists available subcommands and some
@@ -12,8 +12,7 @@ concept guides. See 'git help <command>' or 'git help <concept>'
 to read about a specific subcommand or concept.
 
 
-#1 Create a new repository on the command line
-
+1 Create a new repository on the command line
 ===
 
 mkdir your_repo; cd your_repo
@@ -35,8 +34,7 @@ git remote add origin git@github.com:gerryyang/your_repo.git
 git push -u origin master
 
 
-#2 useful git commands
-
+2 useful git commands
 ===
 
 (1) git clone https://github.com/gerryyang/mac-utils.git
@@ -53,6 +51,7 @@ Update the index not only where the working tree has a file matching <pathspec> 
 
 (5) git push origin master
 
-#3 ended
-
+3 ended
 ===
+
+
