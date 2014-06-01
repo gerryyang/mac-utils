@@ -4,6 +4,7 @@
 
 
 # 0 git help
+
 ===
 
 'git help -a' and 'git help -g' lists available subcommands and some
@@ -12,6 +13,7 @@ to read about a specific subcommand or concept.
 
 
 #1 Create a new repository on the command line
+
 ===
 
 mkdir your_repo; cd your_repo
@@ -34,6 +36,7 @@ git push -u origin master
 
 
 #2 useful git commands
+
 ===
 
 (1) git clone https://github.com/gerryyang/mac-utils.git
@@ -51,4 +54,5 @@ Update the index not only where the working tree has a file matching <pathspec> 
 (5) git push origin master
 
 #3 ended
+
 ===
