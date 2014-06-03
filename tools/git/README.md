@@ -37,6 +37,8 @@ git push -u origin master
 2 useful git commands
 ===
 
+(0)  wget --no-check-certificate https://github.com/gerryyang/mac-utils/archive/master.zip
+
 (1) git clone https://github.com/gerryyang/mac-utils.git
 
 (2) git add -A
