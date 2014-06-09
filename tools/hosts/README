@@ -1,0 +1,11 @@
+
+The ways to modify Mac hosts
+
+sudo vi /etc/hosts
+
+refer to:
+http://www.douban.com/group/topic/7726277/
+http://www.guomii.com/posts/8644
+
+https://code.google.com/p/smarthosts/
+
