@@ -54,3 +54,6 @@ export PATH=$PATH:$MYSQL_PATH/bin
 export OPENSSL_PATH=/Users/gerryyang/LAMP/OpenSSL/install/openssl-1.0.1g
 export PATH=$PATH:$OPENSSL_PATH/bin
 
+# Mou Markdown
+export MOU_PATH=/Applications/Mou.app/Contents/MacOS
+export PATH=$PATH:$MOU_PATH
