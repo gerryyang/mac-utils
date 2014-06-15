@@ -1,0 +1,13 @@
+
+
+sudo sysctl -a | grep  net.inet.tcp.msl
+net.inet.tcp.msl: 15000
+
+// 短连接时需要调整的参数配置, 参考redis-benchmark.c
+if (config.keepalive == 0) {
+	printf("WARNING: keepalive disabled, you probably need 'echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse' for Linux and 'sudo sysctl -w net.inet.tcp.msl=1000' for Mac OS X in order to use a lot of clients/requests\n");
+}
+
+
+FreeBSD系统优化部分内核参数调整中文注释
+http://blog.csdn.net/yjz0065/article/details/1717071
