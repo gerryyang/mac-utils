@@ -7,3 +7,9 @@ nginx configure note
 http://blog.csdn.net/delphiwcdj/article/details/35787517
 
 
+Debugging Requests
+Nginx is a complicated server at times, thankfully we have an excellent error log available to us to help figure out where things are going wrong. If you check the error log directive in the documentation you will notice that it takes a second argument. This will let you define how much information is output by nginx. A value of warn will give you sufficient info to debug most issues.
+
+For more detailed reading on debugging please see my debugging nginx errors post.
+
+
