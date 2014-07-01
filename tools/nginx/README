@@ -1,4 +1,7 @@
 
+关于nginx源码下载
+nginx的官网(http://nginx.org/)没有提供所有历史版本的下载链接，但nginx的所有版本源码包都放在目录http://nginx.org/download/下的。
+
 
 Mac OS X 10.9.3 install nginx-1.7.2
 http://blog.csdn.net/delphiwcdj/article/details/35291965
