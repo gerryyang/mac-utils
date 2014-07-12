@@ -4,6 +4,8 @@ Abstract
 
 > 关于Markdown的基本用法
 
+[http://daringfireball.net/projects/markdown/syntax](http://daringfireball.net/projects/markdown/syntax)
+
 Tips
 ===
 
