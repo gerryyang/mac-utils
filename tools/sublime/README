@@ -2,13 +2,30 @@
 http://blog.csdn.net/delphiwcdj/article/details/11873023
 
 Windows
-(1) Alt + F3
-选择所有相同的关键字，并同时进行编辑
+
+1 多重选择和编辑功能
+
+(1) Ctrl + d
+作用: 反复按下实现将所有相同的关键字加入选择
+
+(2) Alt + F3
+作用: 选择所有相同的关键字，并同时进行编辑
+
+(3) Ctrl + 鼠标点击不同的位置
+作用: 对不同位置进行选择和编辑
 
 
 Max OS X
-(1) Control + Command + g
+
+
+1 多重选择和编辑功能
+
+(1) Command + d
+作用: 反复按下实现将所有相同的关键字加入选择
+
+(2) Control + Command + g
 选择所有相同的关键字，并同时进行编辑
 
-
+(3) Command + 鼠标点击不同的位置
+作用: 对不同位置进行选择和编辑
 
