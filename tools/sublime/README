@@ -1,6 +1,38 @@
 
 http://blog.csdn.net/delphiwcdj/article/details/11873023
 
+
+Max OS X
+
+
+1 多重选择和编辑功能
+
+(1) Command + d
+作用: 反复按下实现将所有相同的关键字加入选择
+
+(2) Control + Command + g
+作用: 选择所有相同的关键字，并同时进行编辑
+
+(3) Command + 鼠标点击不同的位置
+作用: 对不同位置进行选择和编辑
+
+
+2 UI界面显示功能
+
+(1) Command + k; Command +b
+作用: 实现对侧边栏文件列表的打开和关闭显示
+
+(2) Control + Command + f
+作用: 全屏模式
+
+(3) Command + = 或者 Command + -
+作用: 字体大小动态调整
+
+(4) Command + Option + 数字
+作用: 实现多个tab并行编辑和对比
+
+
+
 Windows
 
 1 多重选择和编辑功能
@@ -15,17 +47,20 @@ Windows
 作用: 对不同位置进行选择和编辑
 
 
-Max OS X
+2 UI界面显示功能
+
+(1) Ctrl + k; Ctrl +b
+作用: 实现对侧边栏文件列表的打开和关闭显示
+
+(2) F11
+作用: 全屏模式
+
+(3) Ctrl + = 或者 Ctrl + -
+作用: 字体大小动态调整
+
+(4) Alt + Shift + 数字
+作用: 实现多个tab并行编辑和对比
 
 
-1 多重选择和编辑功能
 
-(1) Command + d
-作用: 反复按下实现将所有相同的关键字加入选择
-
-(2) Control + Command + g
-选择所有相同的关键字，并同时进行编辑
-
-(3) Command + 鼠标点击不同的位置
-作用: 对不同位置进行选择和编辑
 
