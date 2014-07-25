@@ -1,4 +1,7 @@
 
+nginx (pronounced "engine x") is a free open source web server written by Igor Sysoev, a Russian software engineer. Since its public launch in 2004, nginx has focused on high performance, high concurrency and low memory usage. Additional features on top of the web server functionality, like load balancing, caching, access and bandwidth control, and the ability to integrate efficiently with a variety of applications, have helped to make nginx a good choice for modern website architectures. Currently nginx is the second most popular open source web server on the Internet.
+http://aosabook.org/en/nginx.html
+
 关于nginx源码下载
 nginx的官网(http://nginx.org/)没有提供所有历史版本的下载链接，但nginx的所有版本源码包都放在目录http://nginx.org/download/下的。
 
