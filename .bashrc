@@ -1,7 +1,7 @@
 #------------------------
 # .bashrc, for Mac OS X configuration
 # author: gerryyang
-# update time: 2014-05-03
+# update time: 2014-08-10
 #------------------------
 
 #------------------------
@@ -23,22 +23,21 @@ fi
 #------------------------
 # set shortcut key
 #------------------------
-# 搜索关键字高亮
 alias grep='grep --color'
 alias egrep='egrep --color'
 alias fgrep='fgrep --color'
 
-# 使用MacVim
+# MacVim
 alias vi='vim'
 alias vim='mvim'
 alias mvim='/Users/gerryyang/Downloads/tools/editor/MacVim-snapshot-66/mvim'
 
-# 使用GCC4.8.1
+# GCC4.8.1
 alias g++481='/usr/local/gcc-4.8.1/bin/g++'
 alias gcc490='/Users/gerryyang/LAMP/gcc/install/gcc-4.9.0/bin/gcc'
 alias g++490='/Users/gerryyang/LAMP/gcc/install/gcc-4.9.0/bin/g++'
 
-# 使用Sublime Text 2
+# Sublime Text 2
 alias subl='/Applications/Sublime\ Text\ 2.app/Contents/SharedSupport/bin/subl'
 
 # Golang enviroment variable
@@ -57,3 +56,12 @@ export PATH=$PATH:$OPENSSL_PATH/bin
 # Mou Markdown
 export MOU_PATH=/Applications/Mou.app/Contents/MacOS
 export PATH=$PATH:$MOU_PATH
+
+# Protobuf
+export PROTOBUF_PATH=/Users/gerryyang/LAMP/protobuf/install/protobuf-2.4.1
+export PATH=$PATH:$PROTOBUF_PATH/bin
+
+# pkg-config
+export PKGCONFIG_PATH=/Users/gerryyang/LAMP/pkg-config/install/pkg-config-0.28
+export PATH=$PATH:$PKGCONFIG_PATH/bin
+
