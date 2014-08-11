@@ -1,5 +1,9 @@
 
+下载
 http://pkgconfig.freedesktop.org/releases/
+对pkg_config的介绍
+http://www.cnblogs.com/feisky/archive/2010/03/29/1699880.html
+
 
 gerryyang@mba:pkg-config-0.28$./configure  --help
 `configure' configures pkg-config 0.28 to adapt to many kinds of systems.
