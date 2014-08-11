@@ -64,4 +64,5 @@ export PATH=$PATH:$PROTOBUF_PATH/bin
 # pkg-config
 export PKGCONFIG_PATH=/Users/gerryyang/LAMP/pkg-config/install/pkg-config-0.28
 export PATH=$PATH:$PKGCONFIG_PATH/bin
+export PKG_CONFIG_PATH=/Users/gerryyang/LAMP/protobuf/protobuf-2.4.1
 

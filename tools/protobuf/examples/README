@@ -1,0 +1,72 @@
+
+https://github.com/datacratic/protobuf
+
+This directory contains example code that uses Protocol Buffers to manage an
+address book.  Two programs are provided, each with three different
+implementations, one written in each of C++, Java, and Python.  The add_person
+example adds a new person to an address book, prompting the user to input
+the person's information.  The list_people example lists people already in the
+address book.  The examples use the exact same format in all three languages,
+so you can, for example, use add_person_java to create an address book and then
+use list_people_python to read it.
+
+You must install the protobuf package before you can build these.
+
+To build all the examples (on a unix-like system), simply run "make".  This
+creates the following executable files in the current directory:
+  add_person_cpp     list_people_cpp
+  add_person_java    list_people_java
+  add_person_python  list_people_python
+
+If you only want to compile examples in one language, use "make cpp"*,
+"make java", or "make python".
+
+All of these programs simply take an address book file as their parameter.
+The add_person programs will create the file if it doesn't already exist.
+
+These examples are part of the Protocol Buffers tutorial, located at:
+  http://code.google.com/apis/protocolbuffers/docs/tutorials.html
+
+* Note that on some platforms you may have to edit the Makefile and remove
+"-lpthread" from the linker commands (perhaps replacing it with something else).
+We didn't do this automatically because we wanted to keep the example simple.
+
+gerryyang@mba:examples$ls
+Makefile  README.txt  add_person.cc  addressbook.proto  list_people.cc
+gerryyang@mba:examples$make
+protoc --cpp_out=. addressbook.proto
+pkg-config --cflags protobuf  # fails if protobuf is not installed
+-D_THREAD_SAFE -I/Users/gerryyang/LAMP/protobuf/install/protobuf-2.4.1/include 
+c++ add_person.cc addressbook.pb.cc -o add_person_cpp `pkg-config --cflags --libs protobuf`
+pkg-config --cflags protobuf  # fails if protobuf is not installed
+-D_THREAD_SAFE -I/Users/gerryyang/LAMP/protobuf/install/protobuf-2.4.1/include 
+c++ list_people.cc addressbook.pb.cc -o list_people_cpp `pkg-config --cflags --libs protobuf`
+gerryyang@mba:examples$ls
+Makefile    add_person.cc    addressbook.pb.cc  addressbook.proto  list_people_cpp*
+README.txt  add_person_cpp*  addressbook.pb.h   list_people.cc     protoc_middleman
+
+测试:
+
+gerryyang@mba:examples$./list_people_cpp gerry_bk
+Failed to parse address book.
+gerryyang@mba:examples$./add_person_cpp gerry_bk
+gerry_bk: File not found.  Creating a new file.
+Enter person ID number: 1001
+Enter name: gerry
+Enter email address (blank for none): gerry@tencent.com
+Enter a phone number (or leave blank to finish): 12315
+Is this a mobile, home, or work phone? work
+Enter a phone number (or leave blank to finish): 13613897300
+Is this a mobile, home, or work phone? mobile
+Enter a phone number (or leave blank to finish): 
+gerryyang@mba:examples$ls
+Makefile  add_person.cc    addressbook.pb.cc  addressbook.proto  list_people.cc    protoc_middleman
+README    add_person_cpp*  addressbook.pb.h   gerry_bk           list_people_cpp*
+gerryyang@mba:examples$./list_people_cpp gerry_bk 
+Person ID: 1001
+  Name: gerry
+  E-mail address: gerry@tencent.com
+  Work phone #: 12315
+  Mobile phone #: 13613897300
+gerryyang@mba:examples$
+
