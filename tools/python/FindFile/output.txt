@@ -1,0 +1,4 @@
+
+e://test ['2', '3'] ['code_test.c', '\xd0\xc2\xbd\xa8 \xce\xc4\xb1\xbe\xce\xc4\xb5\xb5.txt']
+e://test\2 [] ['code_test.c']
+e://test\3 [] ['aa.txt']
