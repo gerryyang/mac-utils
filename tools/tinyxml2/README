@@ -1,0 +1,242 @@
+
+https://github.com/leethomason/tinyxml2
+
+
+gerryyang@mba:tinyxml2$./xmltest 
+[pass] Example-1 [0][0]
+[pass] Example-2 [0][0]
+Name of play (1): A Midsummer Night's Dream
+Name of play (2): A Midsummer Night's Dream
+[pass] Example-3 [0][0]
+Both values are the same: 2 and 2
+[pass] Example-4 [1][1]
+<element/>
+----------------------------------------------
+<element/>
+----------------------------------------------
+<element>
+    <subelement/>
+</element>
+----------------------------------------------
+<element>
+    <subelement/>
+</element>
+----------------------------------------------
+<element>
+    <subelement>
+        <subsub/>
+    </subelement>
+</element>
+----------------------------------------------
+<!--comment beside elements-->
+<element>
+    <subelement/>
+</element>
+----------------------------------------------
+<!--comment beside elements, this time with spaces-->
+<element>
+    <subelement/>
+</element>
+----------------------------------------------
+<element attrib1="foo" attrib2="bar"/>
+----------------------------------------------
+<element attrib1="foo" attrib2="bar">
+    <subelement attrib3="yeehaa"/>
+</element>
+----------------------------------------------
+<element>Text inside element.</element>
+----------------------------------------------
+<element>
+    <b/>
+</element>
+----------------------------------------------
+<element>Text inside and     <b>bolded</b> in the element.</element>
+----------------------------------------------
+<outer>
+    <element>Text inside and         <b>bolded</b> in the element.</element>
+</outer>
+----------------------------------------------
+<element>This &amp; That.</element>
+----------------------------------------------
+<element attrib="This&lt;That"/>
+----------------------------------------------
+<!--hello world
+          line 2
+          line 3
+          line 4
+          line 5
+--><element>Text before.    <Subelement/></element>
+<element>
+    <!--comment-->
+    <sub attrib="0"/>
+    <sub attrib="1"/>
+    <sub attrib="2">&amp; Text!</sub>
+</element>
+[pass] Programmatic DOM [comment][comment]
+[pass] Programmatic DOM [0][0]
+[pass] Programmatic DOM [2][2]
+[pass] Programmatic DOM [& Text!][& Text!]
+[pass] Programmatic DOM [1][1]
+[pass] Programmatic DOM [1][1]
+[pass] Programmatic DOM [10][10]
+<element>
+    <sub attrib="1"/>
+    <sub/>
+</element>
+<element>
+    <sub attrib="1"/>
+    <sub/>
+</element>
+[pass] Compact mode
+[pass] Dream [xml version="1.0"][xml version="1.0"]
+[pass] Dream [1][1]
+[pass] Dream [DOCTYPE PLAY SYSTEM "play.dtd"][DOCTYPE PLAY SYSTEM "play.dtd"]
+[pass] Dream [And Robin shall restore amends.][And Robin shall restore amends.]
+[pass] Dream [And Robin shall restore amends.][And Robin shall restore amends.]
+[pass] Dream-out [xml version="1.0"][xml version="1.0"]
+[pass] Dream-out [1][1]
+[pass] Dream-out [DOCTYPE PLAY SYSTEM "play.dtd"][DOCTYPE PLAY SYSTEM "play.dtd"]
+[pass] Dream-out [And Robin shall restore amends.][And Robin shall restore amends.]
+[pass] Bad XML [8][8]
+[pass] Query attribute: int as double [0][0]
+[pass] Query attribute: int as double [1][1]
+[pass] Query attribute: double as double [0][0]
+[pass] Query attribute: double as double [2][2]
+[pass] Query attribute: double as int [0][0]
+[pass] Query attribute: double as int [2][2]
+[pass] Query attribute: not a number [2][2]
+[pass] Query attribute: does not exist [1][1]
+[pass] Attribute match test [strValue][strValue]
+[pass] Attribute round trip. c-string. [strValue][strValue]
+[pass] Attribute round trip. int. [1][1]
+[pass] Attribute round trip. double. [-1][-1]
+[pass] Alternate query [1][1]
+[pass] Alternate query [1][1]
+[pass] UTF-8: Russian value. [ценность][ценность]
+[pass] UTF-8: Browsing russian element name. [<имеет>][<имеет>]
+[pass] UTF-8: Verified multi-language round trip. [1][1]
+[pass] GetText() normal use. [This is  text][This is  text]
+[pass] GetText() contained element. [1][1]
+[pass] SetText() normal use (open/close). [darkness.][darkness.]
+[pass] SetText() replace. [blue flame.][blue flame.]
+[pass] SetText() normal use. (self-closing) [The driver][The driver]
+[pass] SetText() replace with tag-like text. [<b>horses</b>][<b>horses</b>]
+[pass] SetText() prefix to nested non-text children. [wolves][wolves]
+[pass] SetText types [str][str]
+[pass] SetText types [1][1]
+[pass] SetText types [1][1]
+[pass] SetText types [1][1]
+[pass] SetText types [1.5][1.5]
+[pass] SetText types [1.5][1.5]
+<xmlElement><![CDATA[I am > the rules!
+...since I make symbolic puns]]></xmlElement>
+[pass] CDATA parse.
+<xmlElement><![CDATA[<b>I am > the rules!</b>
+...since I make symbolic puns]]></xmlElement>
+[pass] CDATA parse. [ tixml1:1480107 ]
+[pass] Test InsertAfterChild on empty node.  [1][1]
+[pass] Entity transformation: read.  [Line 5 has "quotation marks" and 'apostrophe marks'. It also has <, >, and &, as well as a fake copyright ©.][Line 5 has "quotation marks" and 'apostrophe marks'. It also has <, >, and &, as well as a fake copyright ©.]
+[pass] Entity transformation: write. 
+[pass] No entity parsing. [Line 5 has &quot;quotation marks&quot; and &apos;apostrophe marks&apos;.][Line 5 has &quot;quotation marks&quot; and &apos;apostrophe marks&apos;.]
+[pass] No entity parsing. [Crazy &ttk;][Crazy &ttk;]
+<?xml version="1.0" standalone="no" ?>
+<passages count="006" formatversion="20020620">
+    <psg context="Line 5 has &quot;quotation marks&quot; and &apos;apostrophe marks&apos;.">Crazy &ttk;</psg>
+</passages>
+[pass] dot in names [0][0]
+[pass] dot in names [a.elem][a.elem]
+[pass] dot in names [2.0][2.0]
+[pass] Entity with one digit.
+<?xml version="1.0" ?>
+<!DOCTYPE PLAY SYSTEM 'play.dtd'>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT books (title,authors)>
+<element/>
+[pass] Correct value of unknown. [DOCTYPE PLAY SYSTEM 'play.dtd'][DOCTYPE PLAY SYSTEM 'play.dtd']
+[pass] Comment formatting. [ Somewhat<evil> ][ Somewhat<evil> ]
+[pass] Parsing repeated attributes. [8][8]
+XMLDocument error id=8 'XML_ERROR_PARSING_ATTRIBUTE' str1= attr str2= />
+[pass] Embedded null throws error. [1][1]
+[pass] Empty document error [15][15]
+[pass] Low entities. [][]
+<test></test>
+[pass] Throw error with bad end quotes. [1][1]
+[pass] Missing end tag at end of input [1][1]
+[pass] Missing end tag with trailing whitespace [1][1]
+[pass] Mismatched tags [16][16]
+[pass] Comments ignore entities. [ declarations for <head> & <body> ][ declarations for <head> & <body> ]
+[pass] Comments ignore entities. [ far &amp; away ][ far &amp; away ]
+<Parent>
+    <child1 att=""/>
+    <!-- With this comment, child2 will not be parsed! -->
+    <child2 att=""/>
+</Parent>
+[pass] Comments iterate correctly. [3][3]
+[pass] Handle end tag whitespace [0][0]
+[pass] Infinite loop test. [1][1]
+<?xml version='1.0'?>
+<element/>
+
+<!--comment-->
+<!DOCTYPE>[pass] Clone and Equal [1][1]
+[pass] Clone and Equal [1][1]
+[pass] Clone and Equal [1][1]
+[pass] Clone and Equal [1][1]
+[pass] Clone and Equal [4][4]
+XMLDocument error id=3 'XML_ERROR_FILE_NOT_FOUND' str1=aaaaaaaaaaaaaaaaaaa str2=
+[pass] Error in snprinf handling. [1][1]
+[pass] Attribute order [1][1]
+[pass] Attribute order [2][2]
+[pass] Attribute order [3][3]
+[pass] Attribute order [attrib3][attrib3]
+[pass] Attribute order [1][1]
+[pass] Attribute order [3][3]
+[pass] Attribute order (empty) [0][0]
+[pass] Attribute with space #1 [Test Attribute][Test Attribute]
+[pass] Attribute with space #2 [Test Attribute][Test Attribute]
+[pass] Attribute with space #3 [Test Attribute][Test Attribute]
+[pass] Infinite loop in shallow equal. [1][1]
+[pass] Handle, success, mutable [sub][sub]
+[pass] Handle, dne, mutable [0][0]
+[pass] Handle, success, const [sub][sub]
+[pass] Handle, dne, const [0][0]
+[pass] BOM and default declaration
+[pass] CStrSize
+[pass] Ill formed XML [1][1]
+[pass] QueryIntText
+[pass] QueryUnsignedText
+[pass] QueryFloatText
+[pass] QueryDoubleText
+[pass] QueryBoolText
+[pass] Non-alpha element lead letter parses. [0][0]
+[pass] Non-alpha attribute lead character parses. [0][0]
+[pass] Element names with lead digit fail to parse. [1][1]
+[pass] Set length of incoming data [0][0]
+[pass] Document Clear()'s [1][1]
+[pass] Whitespace collapse [This is ' text '][This is ' text ']
+[pass] Whitespace collapse [This is ' text '][This is ' text ']
+[pass] Whitespace collapse [This is ' text '][This is ' text ']
+[pass] Whitespace  all space [1][1]
+[pass] Tracking unused elements
+[pass] Printing of sub-element
+[pass] Loading an empty file [15][15]
+[pass] Loading an empty file and ErrorName as string [XML_ERROR_EMPTY_DOCUMENT][XML_ERROR_EMPTY_DOCUMENT]
+XMLDocument error id=15 'XML_ERROR_EMPTY_DOCUMENT' str1= str2=
+[pass] BOM preservation (parse)
+[pass] BOM preservation (compare)
+[pass] BOM preservation (load)
+[pass] BOM preservation (compare)
+[pass] Move node from within <one> to <two> [<?xml version="1.0" ?><root><one/><two><subtree><elem>element 1</elem>text<!-- comment --></subtree></two></root>][<?xml version="1.0" ?><root><one/><two><subtree><elem>element 1</elem>text<!-- comment --></subtree></two></root>]
+[pass] Move node from within <one> after <two>
+[pass] Move node from within <one> after <one>
+[pass] Move node from within <one> after <two>
+<svg width="128" height="128">
+    <text/>
+</svg>
+<element attrA-f64="123456789.12345679" attrB-f64="1001000000" attrC-f64="1e+20" attrD-f64="0.123456789" attrA-f32="1.2345679e+08" attrB-f32="1.001e+09" attrC-f32="1e+20" attrD-f32="0.12345679"/>
+
+Parsing Release of dream.xml: 4465.500 milli-seconds
+
+Pass 128, Fail 0
+
+
