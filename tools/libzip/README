@@ -1,2 +1,17 @@
 
 http://www.nih.at/libzip/
+
+libzip is a C library for reading, creating, and modifying zip archives. Files can be added from data buffers, files, or compressed data copied directly from other zip archives. Changes made without closing the archive can be reverted. The API is documented by man pages.
+
+There is a mailing list for discussions about libzip. You can subscribe to it by sending a mail with the subject "subscribe libzip-discuss" to minimalist at nih.at. List mail should be sent to libzip-discuss at nih.at.
+
+There is also a read-only mailing list for commit messages to the libzip repository. You can subscribe to it by sending a mail with the subject "subscribe libzip-changes" to minimalist at nih.at.
+
+Current version: 0.11.2 released on 2013-12-19
+
+Projects using libzip: MySQL Workbench, ckmame, fuse-zip, lua-zip, php zip extension, zipruby, Endeavour2, FreeDink, DeaDBeeF (vfs_zip plugin), OpenLierox, ebook-tools, PDF Expert, ReaddleDocs, simple basic C++ wrapper for libzip, Adobe (e.g., in Edge), PureBasic (ZipPacker), freebasic (ExtLibZip), Mercedes (S-Class), Kerkythea, G3D Innovation Engine, D'Fusion Studio, Kobo eReader
+
+Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libzip 0.9.3), Archlinux, Cydia, Cygwin-Ports, Debian, Fedora, Fedora (mingw-libzip), FreeBSD, Gentoo, HAIKU ports, HP-UX Porting & Archiving Centre, Mandriva (cooker), NetBSD, OpenBSD, OS4Depot (Amiga OS4), Pardus, Rudix, The T2 Project, Ubuntu, various RPM-based distributions (CentOS, Mageia, OpenSUSE/SUSE)
+
+
+
