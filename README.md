@@ -9,5 +9,5 @@ Tips:
 
 (2) say Mac OS X，通过say命令进行语音阅读
 
-
+(3) Mac上的otool工具等同于Linux上的objdump
 
