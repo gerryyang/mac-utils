@@ -21,7 +21,7 @@ Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libz
 
 修改zip文件comment的方法
 
-方法一：直接使用zip命令
+方法一：直接使用zip命令 (-z   add zipfile comment)
 zip -z xxx.apk
 
 方法二：使用libzip提供的api接口zip_set_archive_comment
