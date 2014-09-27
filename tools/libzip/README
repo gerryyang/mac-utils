@@ -25,6 +25,7 @@ Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libz
 zip -z xxx.apk
 
 方法二：使用libzip提供的api接口zip_set_archive_comment
+http://www.nih.at/libzip/zip_get_archive_comment.html
 http://www.nih.at/libzip/zip_set_archive_comment.html
 
 参考代码：

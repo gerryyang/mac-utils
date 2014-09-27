@@ -135,6 +135,18 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// get the comment for the entire zip archive
+	int icommentlen = 0;
+	comment = zip_get_archive_comment(zipfd, &icommentlen, ZIP_FL_ENC_RAW);
+	if (comment == NULL)
+	{
+		printf("zip_get_archive_comment get null or err[%d:%s]\n", errno, strerror(errno));
+	}
+	else 
+	{
+		printf("zip_get_archive_comment[%d:%s]\n", icommentlen, comment);
+	}
+
 	// sets the comment for the entire zip archive
 	// If comment is NULL and len is 0, the archive comment will be removed
 	// comment must be encoded in ASCII or UTF-8
