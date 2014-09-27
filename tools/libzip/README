@@ -15,7 +15,7 @@ Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libz
 
 
 
-
+初始化编译libzip
 ./configure --prefix="/Users/gerryyang/LAMP/libzip/install/libzip-0.11.2" --with-zlib="/Users/gerryyang/LAMP/zlib/install/zlib-1.2.8"
 
 
@@ -28,6 +28,8 @@ zip -z xxx.apk
 http://www.nih.at/libzip/zip_set_archive_comment.html
 
 参考代码：
+https://github.com/gerryyang/mac-utils/blob/master/tools/libzip/src/demo.cpp
+
 
 
 
