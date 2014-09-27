@@ -15,3 +15,19 @@ Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libz
 
 
 
+
+./configure --prefix="/Users/gerryyang/LAMP/libzip/install/libzip-0.11.2" --with-zlib="/Users/gerryyang/LAMP/zlib/install/zlib-1.2.8"
+
+
+修改zip文件comment的方法
+
+方法一：直接使用zip命令
+zip -z xxx.apk
+
+方法二：使用libzip提供的api接口zip_set_archive_comment
+http://www.nih.at/libzip/zip_set_archive_comment.html
+
+参考代码：
+
+
+
