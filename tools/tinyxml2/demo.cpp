@@ -78,6 +78,7 @@ bool example_4()
 		"	<attributeApproach v='2' />"
 		"	<textApproach>"
 		"		<v>2</v>"
+		"		<v2>4</v2>"
 		"	</textApproach>"
 		"</information>";
 
@@ -86,16 +87,19 @@ bool example_4()
 
 	int v0 = 0;
 	int v1 = 0;
+	int v2 = 0;
 
 	XMLElement* attributeApproachElement = doc.FirstChildElement()->FirstChildElement( "attributeApproach" );
 	attributeApproachElement->QueryIntAttribute( "v", &v0 );
 
 	XMLElement* textApproachElement = doc.FirstChildElement()->FirstChildElement( "textApproach" );
 	textApproachElement->FirstChildElement( "v" )->QueryIntText( &v1 );
+	textApproachElement->FirstChildElement( "v2" )->QueryIntText( &v2 );
 
-	printf( "Both values are the same: %d and %d\n", v0, v1 );
+	printf( "Both values are the same: [%d] [%d] [%d]\n", v0, v1, v2 );
 
-	return !doc.Error() && ( v0 == v1 );
+	//return !doc.Error() && ( v0 == v1 );
+	return !doc.Error();
 }
 
 
@@ -132,6 +136,6 @@ gerryyang@mba:tinyxml2$./demo
 Name of play (1): A Midsummer Night's Dream
 Name of play (2): A Midsummer Night's Dream
 [pass] Example-3 [0][0]
-Both values are the same: 2 and 2
+Both values are the same: [2] [2] [4]
 [pass] Example-4 [1][1]
- */
+*/

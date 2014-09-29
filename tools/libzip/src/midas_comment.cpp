@@ -87,17 +87,19 @@ int main(int argc, char* argv[])
 
 	// Midas Header
 	// idx:0 bytes:2 0X96FA
-	// idx:2 bytes:2 comment len
+	// idx:2 bytes:2 comment len = strlen(channelId) + 0D0A
 	// idx:4 bytes:N channelId=xxx
 	// idx:4+N bytes:2 end:0X0D0A
 	char dstcomment[1024] = {0};
-	int dstlen = 0;
+	zip_uint16_t dstlen = 0;
 	memset(dstcomment + dstlen, 0XFA, 1);
 	dstlen += 1;
 	memset(dstcomment + dstlen, 0X96, 1);
 	dstlen += 1;
-	memset(dstcomment + dstlen, zipcomment.length() + 2, 1);
-	dstlen += 2;
+	memset(dstcomment + dstlen, (zipcomment.length() + 2) % 0XFF, 1);// 0D0A
+	dstlen += 1;
+	memset(dstcomment + dstlen, (zipcomment.length() + 2) / 0XFF, 1);
+	dstlen += 1;
 	memcpy(dstcomment + dstlen, zipcomment.data(), zipcomment.length());
 	dstlen += zipcomment.length();
 	memset(dstcomment + dstlen, 0X0D, 1);
@@ -113,10 +115,22 @@ int main(int argc, char* argv[])
 	// sets the comment for the entire zip archive
 	// If comment is NULL and len is 0, the archive comment will be removed
 	// comment must be encoded in ASCII or UTF-8
-	int iret = zip_set_archive_comment(zipfd, (const char *)dstcomment, dstlen);// err !!!
+	int iret = zip_set_archive_comment(zipfd, dstcomment, dstlen);// err !!!
 	if (iret != 0)
 	{
-		printf("zip_set_archive_comment err[%d:%s]\n", errno, strerror(errno));
+		printf("zip_set_archive_comment err[%d:%s]\n", iret, strerror(errno));
+		switch (iret)
+		{
+		case ZIP_ER_INVAL:
+			printf("zip_set_archive_comment: len is less than 0 or longer than the maximum comment length in a zip file (65535), or comment is not a valid UTF-8 encoded string\n");
+			break;
+		case ZIP_ER_MEMORY:
+			printf("zip_set_archive_comment: Required memory could not be allocated\n");
+			break;
+		default:
+			printf("zip_set_archive_comment: unknown err\n");
+			break;
+		}
 	}
 
 	// close, If any files within were changed, those changes are written to disk first
