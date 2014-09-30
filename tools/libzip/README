@@ -30,6 +30,7 @@ zip -z xxx.apk
 方法二：使用libzip提供的api接口zip_set_archive_comment
 http://www.nih.at/libzip/zip_get_archive_comment.html
 http://www.nih.at/libzip/zip_set_archive_comment.html
+http://www.coderanch.com/t/530362/java-io/java/Zip-file-archive-comment-extended
 
 参考代码：
 https://github.com/gerryyang/mac-utils/blob/master/tools/libzip/src/demo.cpp
