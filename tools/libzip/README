@@ -24,6 +24,7 @@ Packages for libzip: AIX Open Source Packages, Android NDK repackaging (for libz
 读取的方法：
 unzip -z file
 
+修改的方法：
 方法一：直接使用zip命令 (-z   add zipfile comment)
 zip -z xxx.apk
 
