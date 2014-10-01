@@ -92,14 +92,19 @@ int main(int argc, char* argv[])
 	// idx:4+N bytes:2 end:0X0D0A
 	char dstcomment[1024] = {0};
 	zip_uint16_t dstlen = 0;
-	memset(dstcomment + dstlen, 0XFA, 1);
+
+	// 需要修改libzip的源码支持可以添加扩展字符, 否则_zip_guess_encoding会判断出错
+	// zip_set_archive_comment.c:65
+#if 1
+	memset(dstcomment + dstlen, 250, 1);// 0XFA
 	dstlen += 1;
-	memset(dstcomment + dstlen, 0X96, 1);
+	memset(dstcomment + dstlen, 150, 1);// 0X96
 	dstlen += 1;
 	memset(dstcomment + dstlen, (zipcomment.length() + 2) % 0XFF, 1);// 0D0A
 	dstlen += 1;
 	memset(dstcomment + dstlen, (zipcomment.length() + 2) / 0XFF, 1);
 	dstlen += 1;
+#endif
 	memcpy(dstcomment + dstlen, zipcomment.data(), zipcomment.length());
 	dstlen += zipcomment.length();
 	memset(dstcomment + dstlen, 0X0D, 1);
