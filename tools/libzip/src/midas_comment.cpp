@@ -96,9 +96,9 @@ int main(int argc, char* argv[])
 	// 需要修改libzip的源码支持可以添加扩展字符, 否则_zip_guess_encoding会判断出错
 	// zip_set_archive_comment.c:65
 #if 1
-	memset(dstcomment + dstlen, 250, 1);// 0XFA
+	memset(dstcomment + dstlen, 127, 1);// 0XFA
 	dstlen += 1;
-	memset(dstcomment + dstlen, 150, 1);// 0X96
+	memset(dstcomment + dstlen, 129, 1);// 0X96
 	dstlen += 1;
 	memset(dstcomment + dstlen, (zipcomment.length() + 2) % 0XFF, 1);// 0D0A
 	dstlen += 1;
@@ -116,6 +116,7 @@ int main(int argc, char* argv[])
 	encode_hex_string((unsigned char *)dstcomment, dstlen, hex);
 	printf("zip_set_archive_comment hex[%d:%s]\n", dstlen, hex);
 
+	printf("1 -----------------\n");
 
 	// sets the comment for the entire zip archive
 	// If comment is NULL and len is 0, the archive comment will be removed
@@ -137,6 +138,8 @@ int main(int argc, char* argv[])
 			break;
 		}
 	}
+
+	printf("2 -----------------\n");
 
 	// close, If any files within were changed, those changes are written to disk first
 	iret = zip_close(zipfd);
