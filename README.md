@@ -13,5 +13,8 @@ Tips:
 use otool -tV <executable> to disassemble
 use gobjdump -a libcrypto.a to see mach-o-i386 or something
 
+(4) Mac上使用dtruss命令跟踪某个进程，对应Linux上的strace命令
+
+
 
 
