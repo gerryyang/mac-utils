@@ -19,5 +19,15 @@ use gobjdump -a libcrypto.a to see mach-o-i386 or something
 在Linux上查看cpu的信息，可以 cat /proc/cpuinfo
 在Mac上，则可以 sysctl -a machdep.cpu
 
+(6) Mac上的top命令用法和Linux上有些不同
+Linux上使用h查看帮助信息
+Mac上top使用?来查看帮助信息
+按CPU排序是ocpu，按内存排序是ovsize
+top -F -R -o cpu (降低top自身暂用的CPU使用率)
+http://osxdaily.com/2009/10/06/monitoring-cpu-usage-on-your-mac-a-better-top-command/
+
+在Linux上使用top 1可以查看每个多核cpu每个核的使用率
+在Mac上使用活动监视器的图形工具也可以查看
+
 
 
