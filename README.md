@@ -15,6 +15,9 @@ use gobjdump -a libcrypto.a to see mach-o-i386 or something
 
 (4) Mac上使用dtruss命令跟踪某个进程，对应Linux上的strace命令
 
+(5) Mac上使用 sysctl -a 查看系统的相关信息
+在Linux上查看cpu的信息，可以 cat /proc/cpuinfo
+在Mac上，则可以 sysctl -a machdep.cpu
 
 
 
