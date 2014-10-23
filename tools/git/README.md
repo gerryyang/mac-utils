@@ -56,7 +56,9 @@ Update the index not only where the working tree has a file matching <pathspec> 
 3 Reference
 ===
 
-[1] http://www.garyrobinson.net/2014/10/git-in-two-minutes-for-a-solo-developer.html
+[1] Git In Two Minutes (for a solo developer) http://www.garyrobinson.net/2014/10/git-in-two-minutes-for-a-solo-developer.html
+
+[2] Git In Five Minutes http://classic.scottr.org/presentations/git-in-5-minutes/
 
 
 
