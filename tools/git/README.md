@@ -53,7 +53,10 @@ Update the index not only where the working tree has a file matching <pathspec> 
 
 (5) git push origin master
 
-3 ended
+3 Reference
 ===
+
+[1] http://www.garyrobinson.net/2014/10/git-in-two-minutes-for-a-solo-developer.html
+
 
 
