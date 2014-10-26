@@ -15,5 +15,16 @@ max_connections = 2000
 方法2：在使用mysqld命令启动时，显示指定 -O max_connections=2000 参数，缺点是重启则可能失效。
 
 
+2, MySQL访问授权
+用root用户登录mysql
+
+mysql> use mysql
+mysql> show tables;
+mysql> select * from user limit 1\G                                 # 查看用户的信息
+mysql> grant all on *.* to root@ ’172.27.198.179’ identified by ‘’; # 授权开发机
+mysql> flush privileges;                                            # 刷新MySQL的系统权限表
+
+
+
 
 
