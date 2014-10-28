@@ -1,4 +1,10 @@
+
+fibjs
+基于 Google v8 引擎实现的协程应用开发框架
+
+Refer:
 https://github.com/xicilion/fibjs
+http://fibjs.org/
 
 
 在Mac下安装fibjs的方法
