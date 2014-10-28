@@ -1,0 +1,7 @@
+https://github.com/xicilion/fibjs
+
+
+在Mac下安装fibjs的方法
+brew update
+brew install fibjs
+
