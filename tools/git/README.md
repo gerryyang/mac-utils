@@ -53,6 +53,8 @@ Update the index not only where the working tree has a file matching <pathspec> 
 
 (5) git push origin master
 
+(6) git log
+
 3 Reference
 ===
 
