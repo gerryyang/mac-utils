@@ -14,7 +14,10 @@ se nocompatible
 
 " 设置文件编码
 set encoding=utf-8
-set fenc=cp936
+" for Linux
+set fenc=utf-8
+" for Windows
+" set fenc=cp936
 set fileencodings=ucs-bom,utf-8,cp936,gb2312,gb18030,big5
 
 " 显示行号
