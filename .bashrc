@@ -30,7 +30,7 @@ alias fgrep='fgrep --color'
 # MacVim
 alias vi='vim'
 alias vim='mvim'
-alias mvim='/Users/gerryyang/Downloads/tools/editor/MacVim-snapshot-66/mvim'
+alias mvim='/Users/gerryyang/Downloads/tools/editor/MacVim-snapshot-72/mvim'
 
 # GCC4.8.1
 alias g++481='/usr/local/gcc-4.8.1/bin/g++'
