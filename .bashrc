@@ -67,7 +67,4 @@ export PKGCONFIG_PATH=/Users/gerryyang/LAMP/pkg-config/install/pkg-config-0.28
 export PATH=$PATH:$PKGCONFIG_PATH/bin
 export PKG_CONFIG_PATH=/Users/gerryyang/LAMP/protobuf/protobuf-2.4.1
 
-# hg
-export HG_PATH=/usr/local/Cellar/mercurial/3.2
-#export PATH=$PATH:$HG_PATH/bin
 
