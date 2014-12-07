@@ -67,4 +67,10 @@ export PKGCONFIG_PATH=/Users/gerryyang/LAMP/pkg-config/install/pkg-config-0.28
 export PATH=$PATH:$PKGCONFIG_PATH/bin
 export PKG_CONFIG_PATH=/Users/gerryyang/LAMP/protobuf/protobuf-2.4.1
 
+# docker
+export DOCKER_HOST=tcp://192.168.59.103:2376
+export DOCKER_CERT_PATH=/Users/gerryyang/.boot2docker/certs/boot2docker-vm
+export DOCKER_TLS_VERIFY=1
+
+
 
