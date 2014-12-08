@@ -15,9 +15,18 @@ Docker consists of:
 http://docs.docker.com/
 http://docs.docker.com/installation/#installation
 http://docs.docker.com/installation/mac/
+https://www.docker.com/tryit/#
 
 Install Docker
 http://blog.csdn.net/delphiwcdj/article/details/41780063
+
+
+Some Commonds:
+
+docker version
+docker search tutorial
+docker pull learn/tutorial
+
 
 
 
