@@ -1,0 +1,45 @@
+
+OS X Mountain Lion 系统配置 Apache+Mysql+PHP 详细教程
+http://www.guomii.com/posts/30136
+
+
+gerryyang@mba:tools$sudo apachectl start
+Password:
+gerryyang@mba:tools$ps aux|grep httpd
+gerryyang       21975   0.0  0.0  2441988    664 s000  S+    9:56下午   0:00.00 grep --color httpd
+_www            21973   0.0  0.0  2463084    760   ??  S     9:56下午   0:00.00 /usr/sbin/httpd -D FOREGROUND
+root            21972   0.0  0.1  2463084   4044   ??  Ss    9:56下午   0:00.09 /usr/sbin/httpd -D FOREGROUND
+gerryyang@mba:tools$sudo apachectl stop
+gerryyang@mba:tools$ps aux|grep httpd
+gerryyang       21984   0.0  0.0  2432772    528 s000  R+    9:57下午   0:00.00 grep --color httpd
+gerryyang@mba:tools$sudo apachectl restart
+gerryyang@mba:tools$ps aux|grep httpd
+gerryyang       22002   0.0  0.0  2432772    552 s000  R+    9:57下午   0:00.00 grep --color httpd
+_www            22000   0.0  0.0  2463084    772   ??  S     9:57下午   0:00.00 /usr/sbin/httpd -D FOREGROUND
+root            21999   0.0  0.1  2463084   4036   ??  Ss    9:57下午   0:00.06 /usr/sbin/httpd -D FOREGROUND
+gerryyang@mba:tools$which httpd
+/usr/sbin/httpd
+gerryyang@mba:tools$httpd -v
+Server version: Apache/2.4.9 (Unix)
+Server built:   Sep  9 2014 14:48:20
+
+gerryyang@mba:Documents$pwd
+/Library/WebServer/Documents
+gerryyang@mba:Documents$ls
+PoweredByMacOSX.gif  PoweredByMacOSXLarge.gif  index.html.en
+gerryyang@mba:Documents$cat index.html.en 
+<html><body><h1>It works!</h1></body></html>
+
+gerryyang@mba:users$pwd
+/etc/apache2/users
+gerryyang@mba:users$cat Guest.conf 
+<Directory "/Users/Guest/Sites/">
+    Options Indexes MultiViews
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+</Directory>
+
+
+
+
