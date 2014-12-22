@@ -5,3 +5,22 @@ Homebrew usage:
 https://github.com/Homebrew/homebrew
 http://blog.csdn.net/delphiwcdj/article/details/19679891
 
+Tips:
+
+1, brew link xxx
+当用brew安装某个应用后，但没有成功创建brew link（比如，link的目录已经存在相同的老版本文件导致link创建失败），此时可以将老版本删除，然后再次执行brew link xxx就可以创建link了，后面就可以使用brew安装的新版本了。
+
+例如：
+gerryyang@mba:~$brew link boot2docker
+Linking /usr/local/Cellar/boot2docker/1.4.1... 1 symlinks created
+gerryyang@mba:~$ls -lh /usr/local/bin/boot2docker 
+lrwxr-xr-x 1 gerryyang admin 43 12 22 20:50 /usr/local/bin/boot2docker -> ../Cellar/boot2docker/1.4.1/bin/boot2docker*
+gerryyang@mba:~$brew link boot2docker
+Warning: Already linked: /usr/local/Cellar/boot2docker/1.4.1
+To relink: brew unlink boot2docker && brew link boot2docker
+gerryyang@mba:homebrew$boot2docker version
+Boot2Docker-cli version: v1.4.1
+Git commit: 43241cb
+
+
+
