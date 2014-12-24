@@ -33,6 +33,8 @@ Some Commonds:
 docker version
 docker search tutorial
 docker pull learn/tutorial
+docker images
+docker ps
 
 
 
