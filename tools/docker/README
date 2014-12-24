@@ -1,10 +1,23 @@
 
-https://www.docker.com/
-入门手册
-http://www.docker.org.cn/
-http://www.docker.org.cn/book/docker.html
-镜像
-index.docker.io
+
+Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。开发者在笔记本上编译测试通过的容器可以批量地在生产环境中部署，包括VMs（虚拟机）、bare metal、OpenStack 集群和其他的基础应用平台。
+
+Docker通常用于如下场景：
+
+    web应用的自动化打包和发布；
+    自动化测试和持续集成、发布；
+    在服务型环境中部署和调整数据库或其他的后台应用；
+    从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。
+
+Docker系统有两个程序：docker服务端和docker客户端。其中docker服务端是一个服务进程，管理着所有的容器。docker客户端则扮演着docker服务端的远程控制器，可以用来控制docker的服务端进程。大部分情况下，docker服务端和客户端运行在一台机器上。
+
+docker容器可以理解为在沙盒中运行的进程。这个沙盒包含了该进程运行所必须的资源，包括文件系统、系统类库、shell 环境等等。但这个沙盒默认是不会运行任何程序的。你需要在沙盒中运行一个进程来启动某一个容器。这个进程是该容器的唯一进程，所以当该进程结束的时候，容器也会完全的停止。
+
+Docker支持的安装方式
+Docker有很多种安装的选择，我们推荐您在Ubuntu下面安装，因为docker是在Ubuntu下面开发的，安装包测试比较充分，可以保证软件包的可用性。Mac, windows和其他的一些linux发行版本无法原生运行Docker，可以使用虚拟软件创建一个ubuntu的虚拟机并在里面运行docker。 
+
+gerryyang@mba:docker$docker run learn/tutorial uname -a
+Linux 0038d4f77199 3.16.7-tinycore64 #1 SMP Tue Dec 16 23:03:39 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
 
 
 About Docker
@@ -18,6 +31,29 @@ Docker consists of:
     The Docker Engine - our lightweight and powerful open source container virtualization technology combined with a work flow for building and containerizing your applications.
     Docker Hub - our SaaS service for sharing and managing your application stacks.
 
+gerryyang@mba:docker$docker version
+Client version: 1.4.1
+Client API version: 1.16
+Go version (client): go1.4
+Git commit (client): 5bc2ff8
+OS/Arch (client): darwin/amd64
+Server version: 1.4.1
+Server API version: 1.16
+Go version (server): go1.3.3
+Git commit (server): 5bc2ff8
+
+
+Refer:
+
+http://yeasy.gitbooks.io/docker_practice/content/
+Docker —— 从入门到实践
+https://www.docker.com/
+http://www.docker.io/gettingstarted/#0
+入门手册
+http://www.docker.org.cn/
+http://www.docker.org.cn/book/docker.html
+镜像
+index.docker.io
 
 http://docs.docker.com/
 http://docs.docker.com/installation/#installation
@@ -28,13 +64,35 @@ Install Docker
 http://blog.csdn.net/delphiwcdj/article/details/41780063
 
 
-Some Commonds:
+Tips:
 
 docker version
+显示版本
+
 docker search tutorial
+搜索镜像
+在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
+
 docker pull learn/tutorial
+下载镜像(docker命令和git有一些类似的地方)
+
+docker push gerryyang/ping
+发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
+
 docker images
-docker ps
+列出所有安装过的镜像
+
+docker ps -l
+查看所有正在运行中的容器列表
+
+docker inspect containerid
+查看更详细的关于某一个容器的信息
+
+docker commit
+Create a new image from a container's changes
+当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
+
+
 
 
 
