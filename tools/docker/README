@@ -1,4 +1,5 @@
 
+0 什么是Docker
 
 Docker是一个开源项目，诞生于2013年初，最初是dotCloud公司内部的一个业余项目。它基于Google公司推出的Go语言实现。项目后来加入了Linux基金会，遵从了Apache 2.0协议，项目代码在GitHub(https://github.com/docker/docker)上进行维护。
 
@@ -9,12 +10,45 @@ Docker项目的目标是实现轻量级的操作系统虚拟化解决方案。Do
 在LXC的基础上Docker进行了进一步的封装，让用户不需要去关心容器的管理，使得操作更为简便。用户操作Docker的容器就像操作一个快速轻量级的虚拟机一样简单。
 
 
-Docker通常用于如下场景：
+1 为什么要用Docker
 
-    web应用的自动化打包和发布；
-    自动化测试和持续集成、发布；
-    在服务型环境中部署和调整数据库或其他的后台应用；
-    从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。
+作为一种新兴的虚拟化方式，Docker跟传统的虚拟化方式相比具有众多的优势。
+
+首先，Docker容器的启动可以在秒级实现，这相比传统的虚拟机方式要快得多。 其次，Docker对系统资源的利用率很高，一台主机上可以同时运行数千个Docker容器。
+
+容器除了运行其中应用外，基本不消耗额外的系统资源，使得应用的性能很高，同时系统的开销尽量小。传统虚拟机方式运行10个不同的应用就要起10个虚拟机，而Docker只需要启动10个隔离的应用即可。
+
+对比传统虚拟机总结
+特性 		容器 				虚拟机
+启动 		秒级 				分钟级
+硬盘使用 	一般为 MB 			一般为 GB
+性能 		接近原生 			弱于
+系统支持量 	单机支持上千个容器 	一般几十个
+
+
+2 基本概念
+
+(1) Docker 镜像
+Docker镜像就是一个只读的模板。
+例如：一个镜像可以包含一个完整的ubuntu操作系统环境，里面仅安装了Apache或用户需要的其它应用程序。
+镜像可以用来创建Docker容器。
+Docker提供了一个很简单的机制来创建镜像或者更新现有的镜像，用户甚至可以直接从其他人那里下载一个已经做好的镜像来直接使用。
+
+(2) Docker 容器
+Docker利用容器来运行应用。
+容器是从镜像创建的运行实例。它可以被启动、开始、停止、删除。每个容器都是相互隔离的、保证安全的平台。
+可以把容器看做是一个简易版的Linux环境（包括root用户权限、进程空间、用户空间和网络空间等）和运行在其中的应用程序。
+*注：镜像是只读的，容器在启动的时候创建一层可写层作为最上层。
+
+(3) Docker 仓库
+仓库是集中存放镜像文件的场所。有时候会把仓库和仓库注册服务器（Registry）混为一谈，并不严格区分。实际上，仓库注册服务器上往往存放着多个仓库，每个仓库中又包含了多个镜像，每个镜像有不同的标签（tag）。
+仓库分为公开仓库（Public）和私有仓库（Private）两种形式。
+最大的公开仓库是 Docker Hub，存放了数量庞大的镜像供用户下载。国内的公开仓库包括 Docker Pool 等，可以提供大陆用户更稳定快速的访问。
+当然，用户也可以在本地网络内创建一个私有仓库。
+当用户创建了自己的镜像之后就可以使用 push 命令将它上传到公有或者私有仓库，这样下次在另外一台机器上使用这个镜像时候，只需要从仓库上 pull 下来就可以了。
+*注：Docker仓库的概念跟 Git 类似，注册服务器可以理解为 GitHub 这样的托管服务。
+
+
 
 Docker系统有两个程序：docker服务端和docker客户端。其中docker服务端是一个服务进程，管理着所有的容器。docker客户端则扮演着docker服务端的远程控制器，可以用来控制docker的服务端进程。大部分情况下，docker服务端和客户端运行在一台机器上。
 
@@ -50,6 +84,36 @@ Go version (server): go1.3.3
 Git commit (server): 5bc2ff8
 
 
+
+Tips:
+
+docker version
+显示版本
+
+docker search tutorial
+搜索镜像
+在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
+
+docker pull learn/tutorial
+下载镜像(docker命令和git有一些类似的地方)
+
+docker push gerryyang/ping
+发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
+
+docker images
+显示本地已有的镜像
+
+docker ps -l
+查看所有正在运行中的容器列表
+
+docker inspect containerid
+查看更详细的关于某一个容器的信息
+
+docker commit
+Create a new image from a container's changes
+当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
+
+
 Refer:
 
 https://github.com/yeasy/docker_practice
@@ -70,36 +134,6 @@ https://www.docker.com/tryit/#
 
 Install Docker
 http://blog.csdn.net/delphiwcdj/article/details/41780063
-
-
-Tips:
-
-docker version
-显示版本
-
-docker search tutorial
-搜索镜像
-在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
-
-docker pull learn/tutorial
-下载镜像(docker命令和git有一些类似的地方)
-
-docker push gerryyang/ping
-发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
-
-docker images
-列出所有安装过的镜像
-
-docker ps -l
-查看所有正在运行中的容器列表
-
-docker inspect containerid
-查看更详细的关于某一个容器的信息
-
-docker commit
-Create a new image from a container's changes
-当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
-
 
 
 
