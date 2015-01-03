@@ -44,7 +44,8 @@ alias subl='/Applications/Sublime\ Text\ 2.app/Contents/SharedSupport/bin/subl'
 export GOROOT=/usr/local/go
 export GOBIN=$GOROOT/bin
 export PATH=$PATH:$GOBIN
-export GOPATH=/Users/gerryyang/code/go/mygo
+#export GOPATH=/Users/gerryyang/code/go/mygo
+export GOPATH=/Users/gerryyang/github_project/goinaction/programming_in_go
 
 # MySQL
 export MYSQL_PATH=/Users/gerryyang/LAMP/MySQL/mysql-5.6.16-osx10.7-x86
