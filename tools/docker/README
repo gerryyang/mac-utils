@@ -138,6 +138,9 @@ Run a command in a new container
 
 Tips:
 
+docker help
+查看所有docker命令
+
 boot2docker stop
 boot2docker download
 boot2docker start/up
@@ -146,28 +149,11 @@ boot2docker start/up
 docker version
 显示版本
 
-docker search tutorial
-搜索镜像
-在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
-
-docker pull learn/tutorial
-下载镜像(docker命令和git有一些类似的地方)
-
-docker push gerryyang/ping
-发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
-
-docker images
-显示本地已有的镜像
-
 docker ps -l
 查看所有正在运行中的容器列表
 
 docker inspect containerid
 查看更详细的关于某一个容器的信息
-
-docker commit
-Create a new image from a container's changes
-当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
 
 docker info
 例如
@@ -194,6 +180,36 @@ Docker Root Dir: /mnt/sda1/var/lib/docker
 Username: gerryyang
 Registry: [https://index.docker.io/v1/]
 
+docker stop container_name
+停止运行某个容器
+
+docker restart container_name
+重启某个容器
+
+docker stop container_name 
+docker rm container_name
+如果要完全移除容器，需要将该容器停止，然后才能移除
+
+docker commit container_name job1
+将容器的状态保存为镜像，注意，镜像名称只能取字符[a-z]和数字[0-9]，镜像是存储在Docker registry。
+Create a new image from a container's changes
+当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
+
+docker search image-name 
+搜索镜像
+在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
+
+docker history image-name
+查看镜像的历史版本
+
+docker pull learn/tutorial
+下载镜像(docker命令和git有一些类似的地方)
+
+docker push gerryyang/ping
+发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
+
+docker images
+显示本地所有的镜像
 
 
 Refer:
