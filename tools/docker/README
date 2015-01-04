@@ -164,6 +164,32 @@ docker commit
 Create a new image from a container's changes
 当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
 
+docker info
+例如
+gerryyang@mba:~$docker info
+Containers: 18
+Images: 27
+Storage Driver: aufs
+ Root Dir: /mnt/sda1/var/lib/docker/aufs
+ Dirs: 63
+Execution Driver: native-0.2
+Kernel Version: 3.16.7-tinycore64
+Operating System: Boot2Docker 1.4.1 (TCL 5.4); master : 86f7ec8 - Tue Dec 16 23:11:29 UTC 2014
+CPUs: 4
+Total Memory: 1.961 GiB
+Name: boot2docker
+ID: V5OZ:LVOS:25OJ:3AY2:DGIF:SV3U:RTJ6:7JIY:FXU4:JCU3:ACQW:IT54
+Debug mode (server): true
+Debug mode (client): false
+Fds: 18
+Goroutines: 18
+EventsListeners: 0
+Init Path: /usr/local/bin/docker
+Docker Root Dir: /mnt/sda1/var/lib/docker
+Username: gerryyang
+Registry: [https://index.docker.io/v1/]
+
+
 
 Refer:
 
