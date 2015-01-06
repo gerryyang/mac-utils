@@ -62,5 +62,5 @@ Update the index not only where the working tree has a file matching <pathspec> 
 
 [2] Git In Five Minutes http://classic.scottr.org/presentations/git-in-5-minutes/
 
-
+[3] My GitHub Resume http://resume.github.io/
 
