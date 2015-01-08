@@ -213,12 +213,6 @@ docker images
 
 
 Refer:
-
-http://dockerone.com/article/111
-Docker入门教程
-https://github.com/yeasy/docker_practice
-http://yeasy.gitbooks.io/docker_practice/content/
-Docker —— 从入门到实践
 https://www.docker.com/
 http://www.docker.io/gettingstarted/#0
 入门手册
@@ -231,6 +225,17 @@ http://docs.docker.com/
 http://docs.docker.com/installation/#installation
 http://docs.docker.com/installation/mac/
 https://www.docker.com/tryit/#
+
+Docker入门教程
+http://dockerone.com/article/111
+
+Dockerfile Best Practices
+http://crosbymichael.com/dockerfile-best-practices.html
+
+https://github.com/yeasy/docker_practice
+
+Docker —— 从入门到实践
+http://yeasy.gitbooks.io/docker_practice/content/
 
 Install Docker
 http://blog.csdn.net/delphiwcdj/article/details/41780063
