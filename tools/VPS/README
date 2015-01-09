@@ -1,9 +1,28 @@
 
-Tips:
 
 DigitalOcean
+ssh root@104.131.173.242
+yq96****U
+
+环境：(使用DigitalOcean注册VPS服务，安装Ubuntu image)
+Ubuntu 14.04.1 LTS GNU Linux 3.13.0 37 generic x86_64
+
+使用apt-get安装基础工具：
+apt-get update
+
+(1) 安装gcc 4.8.2
+apt-get install gcc
+
+(2) 安装docker
+apt-get install -y docker.io
+ln -sf /usr/bin/docker.io /usr/local/bin/docker
+sed -i `$acomplete -F _docker docker` /etc/bash_completion.d/docker.io
+
+
+Refer:
 http://timyang.net/container/why-digitalocean-coreos/
 https://www.digitalocean.com/community/tutorials/how-to-create-your-first-digitalocean-droplet-virtual-server
 https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets
+https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
 
 
