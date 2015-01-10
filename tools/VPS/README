@@ -1,10 +1,19 @@
 
 
 DigitalOcean
+
+体验DigitalOcean的VPS云服务 
+http://blog.csdn.net/delphiwcdj/article/details/42581781
+
 ssh gerryyang@104.131.173.242
 wc******8
 ssh root@104.131.173.242
-yq96****U
+yq******U
+
+
+注意：DO创建完droplet就开始收费，即使你把它power off，它也同样在计费，因为droplet使用的资源没有释放。在Billing的选项里可以查看自己的balance和usage情况。
+Note that when you power off your droplet you are still billed for it. This is because your diskspace, CPU, RAM, and IP address are all reserved while it is powered off.
+
 
 环境：(使用DigitalOcean注册VPS服务，安装Ubuntu image)
 Ubuntu 14.04.1 LTS GNU Linux 3.13.0 37 generic x86_64
@@ -16,15 +25,30 @@ apt-get update
 apt-get install gcc
 
 (2) 安装docker
+方法一：使用Ubuntu 14.04 系统默认自带docker.io安装包安装
 apt-get install -y docker.io
 ln -sf /usr/bin/docker.io /usr/local/bin/docker
 sed -i `$acomplete -F _docker docker` /etc/bash_completion.d/docker.io
 
+方法二：从docker官方源安装最新版本
+首先需要安装apt-transport-https，并添加docker官方源。
+apt-get install apt-transport-https
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7***
+bash -c "echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
+apt-get update
+之后通过下面命令来安装最新版本的docker：
+apt-get install -y lxc-docker
+以后更新则：
+apt-get update -y lxc-docker
+
+
 
 Refer:
+
 http://timyang.net/container/why-digitalocean-coreos/
 https://www.digitalocean.com/community/tutorials/how-to-create-your-first-digitalocean-droplet-virtual-server
 https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets
 https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
+https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
 
 
