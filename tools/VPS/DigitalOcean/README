@@ -8,6 +8,10 @@ http://blog.csdn.net/delphiwcdj/article/details/42581781
 yangjia41@126.com
 yq******U
 
+使用SSH keys的方式登陆droplet（不用每次都输入密码，比较方便，并且安全）：
+ssh -i ~/.ssh/id_droplet_gerry_rsa root@104.131.173.242
+
+使用固定密码的方式登陆droplet（每次都需要输入相同的密码，密码可能被force attack）：
 ssh gerryyang@104.131.173.242
 wc******8
 ssh root@104.131.173.242
@@ -55,5 +59,12 @@ https://www.digitalocean.com/community/tutorials/how-to-create-your-first-digita
 https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets
 https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
 https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
+https://www.digitalocean.com/community/tutorials/how-to-connect-to-your-droplet-with-ssh
+https://www.digitalocean.com/community/tutorials/where-to-go-from-here?
+https://www.digitalocean.com/community/tags/firewall
+https://www.digitalocean.com/community/tutorials
+
+
+
 
 
