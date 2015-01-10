@@ -5,6 +5,9 @@ DigitalOcean
 体验DigitalOcean的VPS云服务 
 http://blog.csdn.net/delphiwcdj/article/details/42581781
 
+yangjia41@126.com
+yq******U
+
 ssh gerryyang@104.131.173.242
 wc******8
 ssh root@104.131.173.242
@@ -41,6 +44,8 @@ apt-get install -y lxc-docker
 以后更新则：
 apt-get update -y lxc-docker
 
+(3) 安装go
+apt-get install gccgo-go
 
 
 Refer:

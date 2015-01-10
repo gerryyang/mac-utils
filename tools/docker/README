@@ -211,6 +211,26 @@ docker push gerryyang/ping
 docker images
 显示本地所有的镜像
 
+docker tag
+为本地镜像添加新的标签，例如：
+docker tag dl.dockerpool.com:5000/ubuntu:14.04 dockerpool_ubuntu_gerry:v14.04
+
+docker inspect
+获取该镜像的详细信息
+docker inspect -f {{".Architecture"}}  550
+amd64
+
+docker rmi REPOSITORY:TAG
+删除镜像，例如：
+docker rmi ubuntu:lucid
+Untagged: ubuntu:lucid
+注意：应该先删除依赖该镜像的所有容器，再来删除镜像。否则会有如下错误提示：
+root@gerryyang:~# docker rmi 550
+Error response from daemon: Conflict, cannot delete image 550 because it is tagged in multiple repositories, use -f to force
+2015/01/10 06:06:22 Error: failed to remove one or more images
+
+
+
 
 Refer:
 https://www.docker.com/
