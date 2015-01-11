@@ -51,18 +51,25 @@ apt-get update -y lxc-docker
 (3) 安装go
 apt-get install gccgo-go
 
+(4) 安装apache
+sudo apt-get install apache2
+
+
 
 Refer:
 
 http://timyang.net/container/why-digitalocean-coreos/
+
 https://www.digitalocean.com/community/tutorials/how-to-create-your-first-digitalocean-droplet-virtual-server
 https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets
-https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
-https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
 https://www.digitalocean.com/community/tutorials/how-to-connect-to-your-droplet-with-ssh
+https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
+https://www.digitalocean.com/community/tutorials/additional-recommended-steps-for-new-ubuntu-14-04-servers
 https://www.digitalocean.com/community/tutorials/where-to-go-from-here?
+https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-14-04
+https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mysql-php-lemp-stack-on-ubuntu-14-04
 https://www.digitalocean.com/community/tags/firewall
-https://www.digitalocean.com/community/tutorials
+https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
 
 
 
