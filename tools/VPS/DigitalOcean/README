@@ -17,6 +17,11 @@ wc******8
 ssh root@104.131.173.242
 yq******U
 
+查看droplet的public ip：
+方法1：
+ip addr show eth0 | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'
+方法2：
+curl http://icanhazip.com
 
 注意：DO创建完droplet就开始收费，即使你把它power off，它也同样在计费，因为droplet使用的资源没有释放。在Billing的选项里可以查看自己的balance和usage情况。
 Note that when you power off your droplet you are still billed for it. This is because your diskspace, CPU, RAM, and IP address are all reserved while it is powered off.
@@ -27,6 +32,8 @@ Ubuntu 14.04.1 LTS GNU Linux 3.13.0 37 generic x86_64
 
 使用apt-get安装基础工具：
 apt-get update
+apt-cache search php5-
+apt-get install package1 package2 ...
 
 (1) 安装gcc 4.8.2
 apt-get install gcc
@@ -53,6 +60,21 @@ apt-get install gccgo-go
 
 (4) 安装apache
 sudo apt-get install apache2
+
+(5) 安装mysql
+apt-get install mysql-server php5-mysql
+root yq******U
+
+(6) 安装php
+apt-get install php5 libapache2-mod-php5 php5-mcrypt
+"web root" is /var/www/html
+
+(7) 安装phpMyAdmin
+apt-get install phpmyadmin apache2-utils
+root yq******U
+http://104.131.173.242/phpmyadmin/
+
+
 
 
 
