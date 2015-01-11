@@ -75,6 +75,12 @@ root yq******U
 http://104.131.173.242/phpmyadmin/
 
 
+说明：
+You can do this in a lot less steps 
+1. sudo apt-get update 
+2. sudo apt-get install tasksel 
+3. sudo tasksel install lamp-server 
+Done!
 
 
 
