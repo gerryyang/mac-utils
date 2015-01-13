@@ -1,0 +1,9 @@
+
+
+mysql -umybbuser -pmybbuser
+
+
+Refer:
+
+https://www.digitalocean.com/community/tutorials/a-straightforward-guide-on-installing-web-facing-applications-on-a-vps
+
