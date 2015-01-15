@@ -1,4 +1,8 @@
 
+
+http://104.131.173.242/index.php
+
+
 SSH Quick Install
 
 wget --content-disposition http://www.mybb.com/download/latest -O mybb.zip
