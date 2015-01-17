@@ -5,6 +5,13 @@ DigitalOcean
 体验DigitalOcean的VPS云服务 
 http://blog.csdn.net/delphiwcdj/article/details/42581781
 
+在本地可以使用scp命令来实现VPS上传和下载文件：
+从VPS下载文件到本地
+scp -p root@104.131.173.242:/root/temp/mybb_1803.zip .
+从本地上传文件到VPS
+scp -p mybb_1803.zip root@104.131.173.242:/root/temp/
+
+
 yangjia41@126.com
 yq******U
 
@@ -76,6 +83,7 @@ http://104.131.173.242/phpmyadmin/
 
 
 说明：
+安装LAMP的简单方法
 You can do this in a lot less steps 
 1. sudo apt-get update 
 2. sudo apt-get install tasksel 
