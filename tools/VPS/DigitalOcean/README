@@ -54,19 +54,30 @@ sed -i `$acomplete -F _docker docker` /etc/bash_completion.d/docker.io
 方法二：从docker官方源安装最新版本
 首先需要安装apt-transport-https，并添加docker官方源。
 apt-get install apt-transport-https
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7***
-bash -c "echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
-apt-get update
+# Add the Docker repository key to your local keychain
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+# Add the Docker repository to your apt sources list.
+sudo sh -c "echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
+# update your sources list
+sudo apt-get update
+ 
 之后通过下面命令来安装最新版本的docker：
 apt-get install -y lxc-docker
 以后更新则：
 apt-get update -y lxc-docker
 
+从remote client使用SSH登陆docker的方法
+ssh -i ~/.ssh/id_docker_ubuntu_sshd_rsa root@104.131.173.242 -p 10022
+
 (3) 安装go
 apt-get install gccgo-go
 
-(4) 安装apache
-sudo apt-get install apache2
+(4) 安装apache和nginx
+apt-get install apache2
+http://104.131.173.242:80
+# for nginx
+apt-get install nginx
+http://104.131.173.242:8080/
 
 (5) 安装mysql
 apt-get install mysql-server php5-mysql
@@ -75,6 +86,9 @@ root yq******U
 (6) 安装php
 apt-get install php5 libapache2-mod-php5 php5-mcrypt
 "web root" is /var/www/html
+# for nginx
+apt-get install php5-fpm php5-mysql
+root /usr/share/nginx/html;
 
 (7) 安装phpMyAdmin
 apt-get install phpmyadmin apache2-utils
@@ -112,3 +126,4 @@ https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
 
 
 
+sudo apt-get install lxc-docker之后通过下面命令来安装最新版本的docker：
