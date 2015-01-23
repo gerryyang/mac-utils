@@ -124,6 +124,3 @@ https://www.digitalocean.com/community/tags/docker?primary_filter=tutorials
 
 
 
-
-
-sudo apt-get install lxc-docker之后通过下面命令来安装最新版本的docker：
