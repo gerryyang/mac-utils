@@ -1,0 +1,16 @@
+
+问题1：Failed to get machine "boot2docker-vm": machine does not exist 
+gerryyang@mba:~$boot2docker restart
+error in run: Failed to get machine "boot2docker-vm": machine not exist
+
+解决方法：
+通过执行boot2docker init后可以解决。
+https://github.com/boot2docker/boot2docker/issues/436
+
+问题2：Get http:///var/run/docker.sock/v1.16/images/json: dial unix /var/run/docker.sock: no such file or directory. Are you trying to connect to a TLS-enabled daemon without TLS? 
+gerryyang@mba:~$sudo docker images
+Password:
+FATA[0000] Get http:///var/run/docker.sock/v1.16/images/json: dial unix /var/run/docker.sock: no such file or directory. Are you trying to connect to a TLS-enabled daemon without TLS? 
+
+解决方法：
+

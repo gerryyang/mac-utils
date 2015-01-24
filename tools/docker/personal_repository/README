@@ -1,12 +1,51 @@
 
-私有仓库
-curl http://104.131.173.242:5000/v1/search
+使用Docker registry镜像创建私有仓库
 
-启动私有仓库的容器
+1 使用registry启动私有仓库的容器
 docker run -d -p 5000:5000 -v /root/my_registry:/tmp/registry registry
+说明：若之前没有安装registry容器则会自动下载并启动一个registry容器，创建本地的私有仓库服务。默认情况下，会将仓库创建在容器的/tmp/registry目录下，可以通过 -v 参数来将镜像文件存放在本地的指定路径上（例如，放在本地目录/root/my_registry下）。
 
+
+2 向私有仓库push镜像
 docker push 104.131.173.242:5000/ubuntu_sshd_gcc_gerry:14.04
+说明：根据第一步启动的registry容器所在宿主主机的IP和Port，push某环境的本地容器。
 
 root@gerryyang:~# docker push 104.131.173.242:5000/ubuntu_sshd_gcc_gerry:14.04
+The push refers to a repository [104.131.173.242:5000/ubuntu_sshd_gcc_gerry] (len: 1)
+Sending image list
+Pushing repository 104.131.173.242:5000/ubuntu_sshd_gcc_gerry (1 tags)
+511136ea3c5a: Image successfully pushed 
+3b363fd9d7da: Image successfully pushed 
+607c5d1cca71: Image successfully pushed 
+f62feddc05dc: Image successfully pushed 
+8eaa4ff06b53: Image successfully pushed 
+894c0161121f: Image successfully pushed 
+a45787b0222f: Image successfully pushed 
+f0e3262ed661: Image successfully pushed 
+Pushing tag for rev [f0e3262ed661] on {http://104.131.173.242:5000/v1/repositories/ubuntu_sshd_gcc_gerry/tags/14.04}
+
+关于https的问题
+root@gerryyang:~# docker push 104.131.173.242:5000/ubuntu_sshd_gcc_gerry:14.04
 FATA[0002] Error: Invalid registry endpoint https://104.131.173.242:5000/v1/: Get https://104.131.173.242:5000/v1/_ping: EOF. If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 104.131.173.242:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/104.131.173.242:5000/ca.crt 
+解决方法：
+修改Docker配置文件
+vim /etc/default/docker
+增加以下一行
+DOCKER_OPTS="$DOCKER_OPTS --insecure-registry=104.131.173.242:5000"
+重启Docker
+sudo service docker restart
+refer: http://dockerone.com/question/21
+
+
+3 私有仓库查询方法
+curl http://104.131.173.242:5000/v1/search
+说明：使用curl查看仓库104.131.173.242:5000中的镜像。在结果中可以查看到ubuntu_sshd_gcc_gerry，说明已经上传成功了。
+
+gerryyang@mba:personal_repository$curl http://104.131.173.242:5000/v1/search
+{"num_results": 0, "query": "", "results": []}
+gerryyang@mba:personal_repository$curl http://104.131.173.242:5000/v1/search
+{"num_results": 1, "query": "", "results": [{"description": "", "name": "library/ubuntu_sshd_gcc_gerry"}]}
+
+4 在其他的机器上访问和下载私有仓库的镜像
+docker pull 104.131.173.242:5000/ubuntu_sshd_gcc_gerry:14.04
 

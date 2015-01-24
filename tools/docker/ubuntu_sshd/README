@@ -1,4 +1,9 @@
 
+创建支持SSH服务的Docker镜像 
+http://blog.csdn.net/delphiwcdj/article/details/42836639
+
+
+使用Dockerfile构建支持SSH的容器
 
 root@gerryyang:~/ubuntu_sshd# docker build -t ubuntu_sshd_dockerfile_gerry:14.04 .
 Sending build context to Docker daemon  7.68 kB
