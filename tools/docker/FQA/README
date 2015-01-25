@@ -17,6 +17,8 @@ Docker后台进程没有启动
 sudo service docker status
  * Docker is not running
 sudo service docker start
+service docker status
+docker start/running, process 12836
 
 
 
