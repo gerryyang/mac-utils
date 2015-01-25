@@ -13,4 +13,10 @@ Password:
 FATA[0000] Get http:///var/run/docker.sock/v1.16/images/json: dial unix /var/run/docker.sock: no such file or directory. Are you trying to connect to a TLS-enabled daemon without TLS? 
 
 解决方法：
+Docker后台进程没有启动
+sudo service docker status
+ * Docker is not running
+sudo service docker start
+
+
 
