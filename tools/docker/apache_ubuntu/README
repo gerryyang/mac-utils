@@ -1,0 +1,292 @@
+
+
+root@gerryyang:~/apache_ubuntu# tree .
+.
+├── Dockerfile
+├── run.sh
+└── sample
+    └── index.html
+
+1 directory, 3 files
+root@gerryyang:~/apache_ubuntu# ls
+Dockerfile  run.sh  sample
+root@gerryyang:~/apache_ubuntu# docker build -t 104.131.173.242:8081/ubuntu_sshd_gcc_apache_gerry:14.04 .
+Sending build context to Docker daemon  5.12 kB
+Sending build context to Docker daemon 
+Step 0 : FROM 104.131.173.242:5000/ubuntu_sshd_gcc_gerry:14.04
+ ---> f0e3262ed661
+Step 1 : MAINTAINER gerry 20150126
+ ---> Running in 369c0004770f
+ ---> 705482f8ee5b
+Removing intermediate container 369c0004770f
+Step 2 : ENV DEBIAN_FRONTEND noninteractive
+ ---> Running in c105a0a64f08
+ ---> e8706291853a
+Removing intermediate container c105a0a64f08
+Step 3 : RUN apt-get -yq install apache2 && rm -rf /var/lib/apt/lists/*
+ ---> Running in c59629a7741a
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following extra packages will be installed:
+  apache2-bin apache2-data libapr1 libaprutil1 libaprutil1-dbd-sqlite3
+  libaprutil1-ldap libasn1-8-heimdal libgssapi3-heimdal libhcrypto4-heimdal
+  libheimbase1-heimdal libheimntlm0-heimdal libhx509-5-heimdal
+  libkrb5-26-heimdal libldap-2.4-2 libroken18-heimdal libsasl2-2
+  libsasl2-modules libsasl2-modules-db libwind0-heimdal libxml2 sgml-base
+  ssl-cert xml-core
+Suggested packages:
+  www-browser apache2-doc apache2-suexec-pristine apache2-suexec-custom ufw
+  apache2-utils libsasl2-modules-otp libsasl2-modules-ldap
+  libsasl2-modules-sql libsasl2-modules-gssapi-mit
+  libsasl2-modules-gssapi-heimdal sgml-base-doc openssl-blacklist debhelper
+The following NEW packages will be installed:
+  apache2 apache2-bin apache2-data libapr1 libaprutil1 libaprutil1-dbd-sqlite3
+  libaprutil1-ldap libasn1-8-heimdal libgssapi3-heimdal libhcrypto4-heimdal
+  libheimbase1-heimdal libheimntlm0-heimdal libhx509-5-heimdal
+  libkrb5-26-heimdal libldap-2.4-2 libroken18-heimdal libsasl2-2
+  libsasl2-modules libsasl2-modules-db libwind0-heimdal libxml2 sgml-base
+  ssl-cert xml-core
+0 upgraded, 24 newly installed, 0 to remove and 16 not upgraded.
+Need to get 2945 kB of archives.
+After this operation, 11.6 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu/ trusty/main libroken18-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [40.0 kB]
+Get:2 http://archive.ubuntu.com/ubuntu/ trusty/main libasn1-8-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [160 kB]
+Get:3 http://archive.ubuntu.com/ubuntu/ trusty/main libhcrypto4-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [84.0 kB]
+Get:4 http://archive.ubuntu.com/ubuntu/ trusty/main libheimbase1-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [29.0 kB]
+Get:5 http://archive.ubuntu.com/ubuntu/ trusty/main libwind0-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [47.8 kB]
+Get:6 http://archive.ubuntu.com/ubuntu/ trusty/main libhx509-5-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [104 kB]
+Get:7 http://archive.ubuntu.com/ubuntu/ trusty/main libkrb5-26-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [197 kB]
+Get:8 http://archive.ubuntu.com/ubuntu/ trusty/main libheimntlm0-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [15.2 kB]
+Get:9 http://archive.ubuntu.com/ubuntu/ trusty/main libgssapi3-heimdal amd64 1.6~git20131207+dfsg-1ubuntu1 [90.1 kB]
+Get:10 http://archive.ubuntu.com/ubuntu/ trusty/main libsasl2-modules-db amd64 2.1.25.dfsg1-17build1 [14.9 kB]
+Get:11 http://archive.ubuntu.com/ubuntu/ trusty/main libsasl2-2 amd64 2.1.25.dfsg1-17build1 [56.5 kB]
+Get:12 http://archive.ubuntu.com/ubuntu/ trusty/main libldap-2.4-2 amd64 2.4.31-1+nmu2ubuntu8 [154 kB]
+Get:13 http://archive.ubuntu.com/ubuntu/ trusty-updates/main libxml2 amd64 2.9.1+dfsg1-3ubuntu4.4 [570 kB]
+Get:14 http://archive.ubuntu.com/ubuntu/ trusty/main sgml-base all 1.26+nmu4ubuntu1 [12.5 kB]
+Get:15 http://archive.ubuntu.com/ubuntu/ trusty/main libapr1 amd64 1.5.0-1 [85.1 kB]
+Get:16 http://archive.ubuntu.com/ubuntu/ trusty/main libaprutil1 amd64 1.5.3-1 [76.4 kB]
+Get:17 http://archive.ubuntu.com/ubuntu/ trusty/main libsasl2-modules amd64 2.1.25.dfsg1-17build1 [64.3 kB]
+Get:18 http://archive.ubuntu.com/ubuntu/ trusty/main xml-core all 0.13+nmu2 [23.3 kB]
+Get:19 http://archive.ubuntu.com/ubuntu/ trusty/main libaprutil1-dbd-sqlite3 amd64 1.5.3-1 [10.5 kB]
+Get:20 http://archive.ubuntu.com/ubuntu/ trusty/main libaprutil1-ldap amd64 1.5.3-1 [8634 B]
+Get:21 http://archive.ubuntu.com/ubuntu/ trusty-updates/main apache2-bin amd64 2.4.7-1ubuntu4.1 [839 kB]
+Get:22 http://archive.ubuntu.com/ubuntu/ trusty-updates/main apache2-data all 2.4.7-1ubuntu4.1 [160 kB]
+Get:23 http://archive.ubuntu.com/ubuntu/ trusty-updates/main apache2 amd64 2.4.7-1ubuntu4.1 [87.5 kB]
+Get:24 http://archive.ubuntu.com/ubuntu/ trusty/main ssl-cert all 1.0.33 [16.6 kB]
+Preconfiguring packages ...
+Fetched 2945 kB in 0s (8715 kB/s)
+Selecting previously unselected package libroken18-heimdal:amd64.
+(Reading database ... 19705 files and directories currently installed.)
+Preparing to unpack .../libroken18-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libroken18-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libasn1-8-heimdal:amd64.
+Preparing to unpack .../libasn1-8-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libasn1-8-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libhcrypto4-heimdal:amd64.
+Preparing to unpack .../libhcrypto4-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libhcrypto4-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libheimbase1-heimdal:amd64.
+Preparing to unpack .../libheimbase1-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libheimbase1-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libwind0-heimdal:amd64.
+Preparing to unpack .../libwind0-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libwind0-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libhx509-5-heimdal:amd64.
+Preparing to unpack .../libhx509-5-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libhx509-5-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libkrb5-26-heimdal:amd64.
+Preparing to unpack .../libkrb5-26-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libkrb5-26-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libheimntlm0-heimdal:amd64.
+Preparing to unpack .../libheimntlm0-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libheimntlm0-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libgssapi3-heimdal:amd64.
+Preparing to unpack .../libgssapi3-heimdal_1.6~git20131207+dfsg-1ubuntu1_amd64.deb ...
+Unpacking libgssapi3-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../libsasl2-modules-db_2.1.25.dfsg1-17build1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.25.dfsg1-17build1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../libsasl2-2_2.1.25.dfsg1-17build1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.25.dfsg1-17build1) ...
+Selecting previously unselected package libldap-2.4-2:amd64.
+Preparing to unpack .../libldap-2.4-2_2.4.31-1+nmu2ubuntu8_amd64.deb ...
+Unpacking libldap-2.4-2:amd64 (2.4.31-1+nmu2ubuntu8) ...
+Selecting previously unselected package libxml2:amd64.
+Preparing to unpack .../libxml2_2.9.1+dfsg1-3ubuntu4.4_amd64.deb ...
+Unpacking libxml2:amd64 (2.9.1+dfsg1-3ubuntu4.4) ...
+Selecting previously unselected package sgml-base.
+Preparing to unpack .../sgml-base_1.26+nmu4ubuntu1_all.deb ...
+Unpacking sgml-base (1.26+nmu4ubuntu1) ...
+Selecting previously unselected package libapr1:amd64.
+Preparing to unpack .../libapr1_1.5.0-1_amd64.deb ...
+Unpacking libapr1:amd64 (1.5.0-1) ...
+Selecting previously unselected package libaprutil1:amd64.
+Preparing to unpack .../libaprutil1_1.5.3-1_amd64.deb ...
+Unpacking libaprutil1:amd64 (1.5.3-1) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../libsasl2-modules_2.1.25.dfsg1-17build1_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.25.dfsg1-17build1) ...
+Selecting previously unselected package xml-core.
+Preparing to unpack .../xml-core_0.13+nmu2_all.deb ...
+Unpacking xml-core (0.13+nmu2) ...
+Selecting previously unselected package libaprutil1-dbd-sqlite3:amd64.
+Preparing to unpack .../libaprutil1-dbd-sqlite3_1.5.3-1_amd64.deb ...
+Unpacking libaprutil1-dbd-sqlite3:amd64 (1.5.3-1) ...
+Selecting previously unselected package libaprutil1-ldap:amd64.
+Preparing to unpack .../libaprutil1-ldap_1.5.3-1_amd64.deb ...
+Unpacking libaprutil1-ldap:amd64 (1.5.3-1) ...
+Selecting previously unselected package apache2-bin.
+Preparing to unpack .../apache2-bin_2.4.7-1ubuntu4.1_amd64.deb ...
+Unpacking apache2-bin (2.4.7-1ubuntu4.1) ...
+Selecting previously unselected package apache2-data.
+Preparing to unpack .../apache2-data_2.4.7-1ubuntu4.1_all.deb ...
+Unpacking apache2-data (2.4.7-1ubuntu4.1) ...
+Selecting previously unselected package apache2.
+Preparing to unpack .../apache2_2.4.7-1ubuntu4.1_amd64.deb ...
+Unpacking apache2 (2.4.7-1ubuntu4.1) ...
+Selecting previously unselected package ssl-cert.
+Preparing to unpack .../ssl-cert_1.0.33_all.deb ...
+Unpacking ssl-cert (1.0.33) ...
+Processing triggers for ureadahead (0.100.0-16) ...
+Setting up libroken18-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libasn1-8-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libhcrypto4-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libheimbase1-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libwind0-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libhx509-5-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libkrb5-26-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libheimntlm0-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libgssapi3-heimdal:amd64 (1.6~git20131207+dfsg-1ubuntu1) ...
+Setting up libsasl2-modules-db:amd64 (2.1.25.dfsg1-17build1) ...
+Setting up libsasl2-2:amd64 (2.1.25.dfsg1-17build1) ...
+Setting up libldap-2.4-2:amd64 (2.4.31-1+nmu2ubuntu8) ...
+Setting up libxml2:amd64 (2.9.1+dfsg1-3ubuntu4.4) ...
+Setting up sgml-base (1.26+nmu4ubuntu1) ...
+Setting up libapr1:amd64 (1.5.0-1) ...
+Setting up libaprutil1:amd64 (1.5.3-1) ...
+Setting up libsasl2-modules:amd64 (2.1.25.dfsg1-17build1) ...
+Setting up xml-core (0.13+nmu2) ...
+Setting up libaprutil1-dbd-sqlite3:amd64 (1.5.3-1) ...
+Setting up libaprutil1-ldap:amd64 (1.5.3-1) ...
+Setting up apache2-bin (2.4.7-1ubuntu4.1) ...
+Setting up apache2-data (2.4.7-1ubuntu4.1) ...
+Setting up apache2 (2.4.7-1ubuntu4.1) ...
+Enabling module mpm_event.
+Enabling module authz_core.
+Enabling module authz_host.
+Enabling module authn_core.
+Enabling module auth_basic.
+Enabling module access_compat.
+Enabling module authn_file.
+Enabling module authz_user.
+Enabling module alias.
+Enabling module dir.
+Enabling module autoindex.
+Enabling module env.
+Enabling module mime.
+Enabling module negotiation.
+Enabling module setenvif.
+Enabling module filter.
+Enabling module deflate.
+Enabling module status.
+Enabling conf charset.
+Enabling conf localized-error-pages.
+Enabling conf other-vhosts-access-log.
+Enabling conf security.
+Enabling conf serve-cgi-bin.
+Enabling site 000-default.
+invoke-rc.d: policy-rc.d denied execution of start.
+Setting up ssl-cert (1.0.33) ...
+Processing triggers for libc-bin (2.19-0ubuntu6.4) ...
+Processing triggers for sgml-base (1.26+nmu4ubuntu1) ...
+Processing triggers for ureadahead (0.100.0-16) ...
+ ---> d7a708ac9448
+Removing intermediate container c59629a7741a
+Step 4 : RUN echo "Asia/Shanghai" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+ ---> Running in 82de34396489
+
+Current default time zone: 'Asia/Shanghai'
+Local time is now:      Mon Jan 26 17:12:58 CST 2015.
+Universal Time is now:  Mon Jan 26 09:12:58 UTC 2015.
+
+ ---> c2cd5b8af52d
+Removing intermediate container 82de34396489
+Step 5 : ADD run.sh /run.sh
+ ---> 1b13772e08fe
+Removing intermediate container 5c8b6ed511cb
+Step 6 : RUN chmod 755 /*.sh
+ ---> Running in f5dc4033f4a2
+ ---> d717645a3cee
+Removing intermediate container f5dc4033f4a2
+Step 7 : RUN mkdir -p /var/lock/apache2 && mkdir -p /app && rm -rf /var/www/html && ln -s /app /var/www/html
+ ---> Running in a81c2893a0d9
+ ---> 6b493492b795
+Removing intermediate container a81c2893a0d9
+Step 8 : COPY sample/ /app
+ ---> 286da2c47109
+Removing intermediate container 995439d18a9b
+Step 9 : ENV APACHE_RUN_USER www-data
+ ---> Running in 29d2482ba9bc
+ ---> a3ff1ae68338
+Removing intermediate container 29d2482ba9bc
+Step 10 : ENV APACHE_RUN_GROUP www-data
+ ---> Running in 7ef0acbf9ee4
+ ---> 00ae07e02be7
+Removing intermediate container 7ef0acbf9ee4
+Step 11 : ENV APACHE_LOG_DIR /var/log/apache2
+ ---> Running in 8f6cc2eefc65
+ ---> 525a69eaa001
+Removing intermediate container 8f6cc2eefc65
+Step 12 : ENV APACHE_PID_FILE /var/run/apache2.pid
+ ---> Running in 5ddcfe66b5a0
+ ---> 28bca1655662
+Removing intermediate container 5ddcfe66b5a0
+Step 13 : ENV APACHE_RUN_DIR /var/run/apache2
+ ---> Running in 3bec2fce219f
+ ---> 3876897c922e
+Removing intermediate container 3bec2fce219f
+Step 14 : ENV APACHE_LOCK_DIR /var/lock/apache2
+ ---> Running in ec928cf8b146
+ ---> 124a707e592b
+Removing intermediate container ec928cf8b146
+Step 15 : ENV APACHE_SERVERADMIN admin@localhost
+ ---> Running in efd1ec113947
+ ---> 94a86b7e4a28
+Removing intermediate container efd1ec113947
+Step 16 : ENV APACHE_SERVERNAME localhost
+ ---> Running in dccb0450c0fb
+ ---> 1f59b2f79cb9
+Removing intermediate container dccb0450c0fb
+Step 17 : ENV APACHE_SERVERALIAS docker.localhost
+ ---> Running in 119cf531ad11
+ ---> c35b29e9f232
+Removing intermediate container 119cf531ad11
+Step 18 : ENV APACHE_DOCUMENTROOT /var/www
+ ---> Running in d8d980589fc8
+ ---> 30309058a3f6
+Removing intermediate container d8d980589fc8
+Step 19 : EXPOSE 80
+ ---> Running in bbbcf960db80
+ ---> 22f4d4db03c1
+Removing intermediate container bbbcf960db80
+Step 20 : WORKDIR /app
+ ---> Running in 543a53d69838
+ ---> ca3b92c4c2f7
+Removing intermediate container 543a53d69838
+Step 21 : CMD /run.sh
+ ---> Running in 73bc2e07acd1
+ ---> 7c8483f450b0
+Removing intermediate container 73bc2e07acd1
+Successfully built 7c8483f450b0
+
+
+root@gerryyang:~/apache_ubuntu# docker images
+REPOSITORY                                          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+104.131.173.242:8081/ubuntu_sshd_gcc_apache_gerry   14.04               7c8483f450b0        55 seconds ago      351.2 MB
+ubuntu_sshd_dockerfile_gerry                        14.04               7c46169e8192        7 days ago          230.3 MB
+ubuntu_sshd_gcc_gerry                               14.04               f0e3262ed661        7 days ago          334.3 MB
+mysql                                               5.7.5               8419f2b0e486        2 weeks ago         322.8 MB
+
+
