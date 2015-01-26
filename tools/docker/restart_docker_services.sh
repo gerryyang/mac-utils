@@ -18,4 +18,7 @@ docker run -p 5000:5000 -d -v /root/my_registry:/tmp/registry registry
 
 # apache service
 echo "start apache service"
-docker run -d -P ubuntu_sshd_gcc_apache_gerry:14.04
+#docker run -d -P ubuntu_sshd_gcc_apache_gerry:14.04
+#docker run -d -p 20080:80 -p 20022:22 ubuntu_sshd_gcc_apache_gerry:14.04
+docker run -d -p 20080:80 -p 20022:22 -e APACHE_SERVERNAME=test -v /root/apache_ubuntu/www:/var/www/html:ro ubuntu_sshd_gcc_apache_gerry:14.04
+
