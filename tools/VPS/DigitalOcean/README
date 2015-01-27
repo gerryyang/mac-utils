@@ -12,6 +12,10 @@ scp -p root@104.131.173.242:/root/temp/mybb_1803.zip .
 scp -p mybb_1803.zip root@104.131.173.242:/root/temp/
 
 
+备份镜像（保存快照snapshot）
+https://www.digitalocean.com/community/questions/how-do-i-power-off-a-droplet-from-a-command-line-to-create-a-snapshot
+
+
 yangjia41@126.com
 yq******U
 
