@@ -31,7 +31,7 @@ echo "start tutum/lamp image"
 docker run -d -p 40080:80 -p 43306:3306 tutum/lamp:latest
 
 # tutum_lamp_golang_gerry image
-docker run -d -p 9090:9090 -p 50080:80 -p 53306:3306 tutum_lamp_golang_gerry:1.0
+docker run -d -p 9090:9090 tutum_lamp_golang_gerry:1.0
 
 # ubuntu_sshd_gcc_golang_gerry image
 echo "start ubuntu_sshd_gcc_golang_gerry image"
