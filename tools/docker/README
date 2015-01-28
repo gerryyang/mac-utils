@@ -221,6 +221,9 @@ docker inspect
 docker inspect -f {{".Architecture"}}  550
 amd64
 
+docker logs $containerid
+查看docker启动的日志信息
+
 docker rmi REPOSITORY:TAG
 删除镜像，例如：
 docker rmi ubuntu:lucid
