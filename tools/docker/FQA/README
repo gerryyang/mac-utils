@@ -1,7 +1,7 @@
 
 Troubleshooting
 
-问题1：Failed to get machine "boot2docker-vm": machine does not exist 
+问题1：Mac OS X 上，Failed to get machine "boot2docker-vm": machine does not exist 
 gerryyang@mba:~$boot2docker restart
 error in run: Failed to get machine "boot2docker-vm": machine not exist
 
@@ -33,5 +33,10 @@ DOCKER_OPTS="$DOCKER_OPTS --insecure-registry=104.131.173.242:5000"
 service docker restart
 
 
+问题4：Cannot connect to the Docker daemon. Is 'docker -d' running on this host? 
+
+解决方法：
+1，sudo service docker start
+2，sudo docker -d
 
 
