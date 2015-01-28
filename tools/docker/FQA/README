@@ -40,3 +40,19 @@ service docker restart
 2，sudo docker -d
 
 
+问题5：Could not find a free IP address range for interface 'docker0'
+
+解决方法：
+Got the same message while trying to set up docker while connected to a PPPoWLAN network. To expand on the fix proposed by @creack I created a bridge like this in Ubuntu (following the help wiki):
+
+sudo brctl addbr docker0 # create your bridge
+sudo brctl addif docker0 eth0 # mask an existing interface using the bridge
+sudo ip link set dev docker0 up # bring it up - not really sure if this is necessary or is it done automatically
+sudo ifconfig docker0 10.0.0.4 # give it an IP
+
+You should now be able to start docker.
+sudo docker -d -b docker0
+
+https://code.csdn.net/wohugb/docker
+
+
