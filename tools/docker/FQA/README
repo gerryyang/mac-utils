@@ -24,4 +24,14 @@ service docker status
 docker start/running, process 12836
 
 
+问题3：从非官方仓库下载镜像时，会提示“Error: Invalid registry endpoint https://xxx”错误
+
+解决方法：
+编辑Docker配置文件，在其中添加--insecure-registry到启动参数中，然后重启Docker服务。
+vi /etc/default/docker
+DOCKER_OPTS="$DOCKER_OPTS --insecure-registry=104.131.173.242:5000"
+service docker restart
+
+
+
 
