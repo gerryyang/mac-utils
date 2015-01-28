@@ -233,6 +233,8 @@ root@gerryyang:~# docker rmi 550
 Error response from daemon: Conflict, cannot delete image 550 because it is tagged in multiple repositories, use -f to force
 2015/01/10 06:06:22 Error: failed to remove one or more images
 
+docker top $containerid
+若一个容器内运行了多个进程，可以通过docker top来查看进程信息
 
 
 
