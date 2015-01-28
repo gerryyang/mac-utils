@@ -162,4 +162,3 @@ a781d1c74024        mysql:latest        "/run.sh"           About a minute ago  
 38c73b5555aa        mysql:latest        "/run.sh"           About a minute ago   Up About a minute   0.0.0.0:49165->22/tcp, 0.0.0.0:49166->3306/tcp   mysql
 ```
 现在，你就可以通过相应的端口来连接主或者从 mysql 服务器了。
-`
