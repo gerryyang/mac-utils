@@ -64,3 +64,4 @@ Update the index not only where the working tree has a file matching <pathspec> 
 
 [3] My GitHub Resume http://resume.github.io/
 
+[4] 版本管理工具介绍—Git篇 http://www.imooc.com/view/208
