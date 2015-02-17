@@ -12,6 +12,9 @@ svn：集大成者，集中式（每次提交都需要联网，效率低），20
 git：Linux之父Linus开发的，geek主流，分布式（不需要联网，可以在本地提交），2005
 github：geek社区，托管网站，2008
 
-
+如何回到过去：
+git log
+git reflog
+git reset --hard $commit
 
 
