@@ -1,0 +1,48 @@
+
+摘要：在Ubuntu14.04环境下配置Apache服务。
+
+
+1, 下载apache
+http://httpd.apache.org/download.cgi#apache24
+wget http://mirrors.hust.edu.cn/apache//httpd/httpd-2.4.12.tar.gz
+
+2, 安装依赖
+(1) 下载apr
+http://apr.apache.org/download.cgi
+wget http://apache.dataguru.cn//apr/apr-1.5.1.tar.gz
+./configure && make && make install
+
+(2) 下载apr-util
+wget http://apache.dataguru.cn//apr/apr-util-1.5.4.tar.gz
+./configure --with-apr=/usr/local/apr && make && make install
+
+(3) 安装pcre
+http://ftp.exim.llorien.org/pcre/
+wget http://ftp.exim.llorien.org/pcre/pcre-8.36.tar.gz
+注意：Ubuntu默认并不提供C/C++的编译环境，因此在安装pcre前需要先在Ubuntu安装C/C++环境。
+sudo apt-get install build-essential
+
+3, 编译apache
+./configure --enable-so && make && make install
+
+4, 修改apache配置
+vi /usr/local/apache2/conf/httpd.conf
+(1) 修改端口，由于本机80端口已被其他服务占用，故更换为其他端口：
+Listen 8081
+(2) 将ServerName节点的注释去除：
+ServerName www.example.com:80
+
+5, 运行apache
+/usr/local/apache2/bin/apachectl start
+
+6, 测试
+http://104.131.173.242:8081/
+
+
+参考
+http://httpd.apache.org/docs/2.4/
+http://httpd.apache.org/docs/2.4/mod/directives.html
+
+
+
+
