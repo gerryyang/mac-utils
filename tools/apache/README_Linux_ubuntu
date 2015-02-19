@@ -1,5 +1,5 @@
 
-摘要：在Ubuntu14.04环境下配置Apache服务。
+摘要：本文主要记录在Ubuntu14.04环境下通过源码编译方式配置Apache服务，当然也可以简便使用包管理工具apt-get install apache2来安装Apache。
 
 
 1, 下载apache
