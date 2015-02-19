@@ -1,0 +1,38 @@
+
+Ubuntu14.04环境配置php-5.6.5开发环境
+
+
+1, 安装php
+wget http://php.net/get/php-5.6.5.tar.gz/from/a/mirror
+./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-mysql
+
+ --with-apxs2=FILE       Build shared Apache 2.0 Handler module. FILE is the optional
+                          pathname to the Apache apxs tool apxs
+
+make && make install
+
+2, 修改apache的配置(httpd.conf)
+将index.php添加到apache的DirectoryIndex指令中。
+注意：修改配置后需要重启apache服务
+/usr/local/apache2/bin/apachectl restart
+
+3, 可能遇到的错误
+(1) configure错误：configure: error: xml2-config not found. Please check your libxml2 installation
+解决方法：sudo apt-get install libxml2-dev
+
+(2) apache启动做错：
+./apachectl restart
+Apache is running a threaded MPM, but your PHP Module is not compiled to be threadsafe.  You need to recompile PHP.
+解决方法：
+重新编译apache：
+./configure --enable-so --with-mpm=prefork && make && make install
+
+This section contains notes and hints specific to Apache 2.x installs of PHP on Unix systems. 
+http://php.net/manual/en/install.unix.apache2.php
+http://php.net/manual/en/faq.installation.php#faq.installation.apache2
+http://php.net/manual/en/install.php
+
+4, 测试php
+http://104.131.173.242:8081/
+
+

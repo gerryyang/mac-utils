@@ -23,7 +23,14 @@ wget http://ftp.exim.llorien.org/pcre/pcre-8.36.tar.gz
 sudo apt-get install build-essential
 
 3, 编译apache
-./configure --enable-so && make && make install
+./configure --enable-so --with-mpm=prefork && make && make install
+
+  --with-mpm=MPM          Choose the process model for Apache to use by
+                          default. MPM={event|worker|prefork|winnt} This will
+                          be statically linked as the only available MPM
+                          unless --enable-mpms-shared is also specified.
+http://php.net/manual/en/install.unix.apache2.php
+
 
 4, 修改apache配置
 vi /usr/local/apache2/conf/httpd.conf
@@ -42,6 +49,8 @@ http://104.131.173.242:8081/
 参考
 http://httpd.apache.org/docs/2.4/
 http://httpd.apache.org/docs/2.4/mod/directives.html
+http://php.net/manual/en/install.unix.apache2.php
+
 
 
 
