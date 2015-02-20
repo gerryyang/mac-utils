@@ -27,8 +27,10 @@ Apache is running a threaded MPM, but your PHP Module is not compiled to be thre
 重新编译apache：
 ./configure --enable-so --with-mpm=prefork && make && make install
 
+In the official documentation recommends to change the apache2 configuration to use the PHP "prefork" instead of MPM "worker" module to get it work with php5. See this document to get more information and get a non-threaded version of Apache.
+http://www.php.net/manual/en/install.unix.apache2.php
+More:
 This section contains notes and hints specific to Apache 2.x installs of PHP on Unix systems. 
-http://php.net/manual/en/install.unix.apache2.php
 http://php.net/manual/en/faq.installation.php#faq.installation.apache2
 http://php.net/manual/en/install.php
 
