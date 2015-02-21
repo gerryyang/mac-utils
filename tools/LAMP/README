@@ -25,7 +25,25 @@ Ubuntu系统LAMP环境配置
 
 虚拟主机（Virtual-Host）原理
 Apache通过Virtual-Host配置功能可以实现，一台服务器上可以同时放多个服务的网站，用户使用不同的域名访问不同的网站。
-通过修改客户端hosts文件（/etc/hosts）来模拟DNS解析。
+在Apache中配置虚拟主机的方法：
+(1) 通过修改客户端hosts文件（/etc/hosts）来模拟DNS解析。
+例如：
+127.0.0.1 a.gerryyang.com
+127.0.0.1 b.gerryyang.com
+(2) 进入/etc/apache2/sites-available目录，将000-default.conf作为模板，分别复制两份，然后修改部分内容。
+cp 000-default.conf a.conf
+cp 000-default.conf b.conf
+vi a.conf打开后：
+添加ServerName：ServerName a.gerryyang.com
+修改DocumentRoot：DocumentRoot /var/www/html/gerry_data
+同理，对b.conf做同样操作。
+然后，再进入/etc/apache2/sites-enabled目录，分别创建../sites-available/a.conf和../sites-available/b.conf两个配置文件的软链接：
+ln -s ../sites-available/a.conf a.conf
+ln -s ../sites-available/b.conf b.conf
+最后，重启Apache2，sudo service apache2 restart
+(3) 测试方法
+curl  "a.gerryyang.com/index.html"
+curl  "b.gerryyang.com/index.html"
 
 
 
