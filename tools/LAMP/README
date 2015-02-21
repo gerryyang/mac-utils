@@ -1,0 +1,32 @@
+
+
+在Ubuntu Server下搭建LAMP环境
+http://www.imooc.com/learn/170
+
+LAMP通常是指Linux+Apache+MySQL+PHP组合形成的一套可以运行PHP程序的体系，并不是一个软件的名称。没有安装MySQL的服务器依然可以在其它条件完备的情况下运行不涉及MySQL数据库读写操作的PHP程序，另外PHP并非只支持MySQL一种数据库产品，还支持其他的数据库产品。并非只有Apache可以通过扩展支持PHP的解析，Nginx，LightHttpd等其它软件同样可以。
+
+
+Ubuntu一键安装LAMP环境的命令：
+sudo apt-get install apache2 php5 mysql-server php5-mysql
+或者使用tasksel安装LAMP套件：
+sudo apt-get update && sudo apt-get install tasksel && sudo tasksel install lamp-server
+
+给PHP添加常用扩展：
+sudo apt-get install php5-gd curl libcurl3 libcurl3-dev php5-curl
+安装完需要重启apache：
+sudo service apache2 restart
+
+Ubuntu系统LAMP环境配置
+在Ubuntu系统中，通过apt-get工具安装的软件配置文件均放置在/etc下，并为每个软件建立一个以软件名称为名的文件夹用于区分不同软件的配置文件。
+通过apt-get安装的LAMP组件的配置文件也在/etc目录下：
+- Apache /etc/apache2
+- MySQL /etc/mysql
+- PHP /etc/php5
+
+虚拟主机（Virtual-Host）原理
+Apache通过Virtual-Host配置功能可以实现，一台服务器上可以同时放多个服务的网站，用户使用不同的域名访问不同的网站。
+通过修改客户端hosts文件（/etc/hosts）来模拟DNS解析。
+
+
+
+

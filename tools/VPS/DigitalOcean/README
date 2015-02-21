@@ -43,7 +43,7 @@ Ubuntu 14.04.1 LTS GNU Linux 3.13.0 37 generic x86_64
 
 使用apt-get安装基础工具：
 apt-get update
-apt-cache search php5-
+apt-cache search xxx
 apt-get install package1 package2 ...
 
 (1) 安装gcc 4.8.2
