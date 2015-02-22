@@ -46,5 +46,80 @@ curl  "a.gerryyang.com/index.html"
 curl  "b.gerryyang.com/index.html"
 
 
+MySQL数据存储目录迁移方法
+(1) 停止MySQL服务
+sudo service mysql stop
+(2) 创建新的迁移目录，以及访问权限和之前的目录相同（MySQL的数据存储目录在/var/lib/mysql中
+）
+sudo mkdir /mysqldata
+sudo chown -vR mysql:mysql /mysqldata/
+sudo chmod -vR 700 /mysqldata/
+sudo cp -av /var/lib/mysql/* /mysqldata/
+(3) 修改MySQL的配置
+sudo vim /etc/mysql/my.cnf
+将datadir = /var/lib/mysql修改为：
+datadir = /mysqldata
+(4) Ubuntu还需要修改apparmor的配置文件
+sudo vi /etc/apparmor.d/usr.sbin/mysqld
+将：
+/var/lib/mysql/ r,
+/var/lib/mysql/** rwk,
+注释，然后添加新目录的访问权限：
+/mysqldata/ r,
+/mysqldata/** rwk,
+保存退出。
+(5) 分别重启apparmor和mysql服务
+sudo service apparmor reload
+sudo service mysql restart
+(6) 测试方法
+建立一个新的数据库，MySQL会在数据存储目录建立一个与数据库同名的文件夹。
+create database db_gerry;
+show databases;
+exit;
+cd /mysqldata/ && ll
+
+小结：
+Apache支持virtual-host虚拟主机，可以将多个指向同一服务器的域名分别指定根目录以及权限配置并且互不干扰。通过apt-get安装的MySQL，其数据存储目录可以改变，以便更加符合数据安全的需求，但在迁移数据后需要修改apparmor中与MySQL相关的目录访问权限。默认情况下，出于安全的考虑，MySQL在初始状态下不允许远程连接，只允许服务器内部应用的本地连接。
+
+
+安装phpmyadmin
+phpmyadmin是非常流行的mysql管理工具。
+两种安装方式：
+(1) apt-get方式（/etc/phpmyadmin/）
+sudo apt-get install phpmyadmin
+sudo ln -s /usr/share/phpmyadmin/ /var/www/pma
+
+(2) 手动上传方式
+先下载好phpmyadmin的安装包，然后通过ftp工具FileZilla上传到服务器。
+
+
+开启MySQL的remote access
+默认情况下MySQL只允许本地访问，而不允许远程访问（remote access）
+(1) 第一步，修改vi /etc/mysql/my.cnf（针对整个服务器而言）
+将
+bind-address = 127.0.0.1
+注释并退出。
+(2) 第二步，修改user用户表
+使用phpmyadmin添加一个新的用户，允许用公网IP来访问
+(3) 因为修改过my.cnf配置，所以需要重启MySQL服务
+sudo service mysql restart
+(4) 测试
+通过外网使用phpmyadmin或者Navicat进行访问测试
+
+
+服务器集群介绍
+
+一种简单的LAMP集群
+
+一大波用户请求到来 -> 负载均衡Nginx(分发请求) -> Apache+PHP(写入) -> MySQL#1(同步) -> MySQL#2...#3
+一大波用户请求到来 -> 负载均衡Nginx(分发请求) -> Apache+PHP(读取) -> MySQL#2...#3
+
+国内外著名的巨型服务器集群
+TTC - Tencent Table Cache (腾讯)
+TFS - Taobao File System (阿里巴巴)
+BAE - Baidu Application Engine (百度)
+SAE - Sina Application Engine (新浪)
+GFS - Google File System (谷歌)
+
 
 
