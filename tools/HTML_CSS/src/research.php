@@ -17,7 +17,7 @@
     <span>活动统计</span>(<a href="http://about.me/gerryyang" target="_blank" title="关于" style="color:blue">about</a>)<br />
   </p>
   <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
-    <label for="7am">早上7点到深圳湾口岸集合</label>
+    <!-- <label for="7am">早上7点到深圳湾口岸集合</label>
     <input type="radio" name="time" id="7am" value="7" />
     <br />
     <label for="8am">早上8点到深圳湾口岸集合</label>
@@ -25,9 +25,9 @@
     <br />
     <label for="9am">早上9点到深圳湾口岸集合</label>
     <input type="radio" name="time" id="9am" value="9" />
-    <br />
-    <label for="other">其他</label>  
-    <input type="text" name="other" id="other" size="60"  maxlength="128" /> 
+    <br /> -->
+    <label for="other">留言</label>  
+    <input type="text" name="other" id="other" size="60"  maxlength="1024" /> 
     <br />
     <br />
     <input type="submit" value="确定"  name="submit" />  
@@ -49,7 +49,7 @@ if (isset($_POST['time']))
     printf("%s <br />", $other);
   }
 
-  $info = sprintf("OK, 明天%s点我们在深圳湾口岸集合, 不见不散！", $time);
+  $info = sprintf("%s", $time);
   printf("%s <br />", $info);
 
   do_save($info);
@@ -69,7 +69,7 @@ else if ($query == "查询")
 }
 else if (isset($_POST['other']))
 {
-  printf("你还没有回答我呢！<br />");
+  printf("你还没有填写哦！<br />");
 }
 
 function connect_db(&$link)
@@ -92,7 +92,7 @@ function do_save($info)
   connect_db($link);
 
   $time = date('Y-m-d H:i:s');
-  $query = 'insert into whentohk(time, info) values(\'' . $time . '\', \'' . $info . '\')';
+  $query = 'insert into t_research(time, info) values(\'' . $time . '\', \'' . $info . '\')';
   printf("%s <br />", $query);
   $result = mysql_query($query, $link);
   if (!$result) {
@@ -108,7 +108,7 @@ function do_query()
 {
   connect_db($link);
 
-  $query = 'select time, info from whentohk order by time desc';
+  $query = 'select time, info from t_research order by time desc';
   printf("%s <br />", $query);
   $result = mysql_query($query, $link);
   if (!$result) {
@@ -118,7 +118,7 @@ function do_query()
   }
 
   echo "<hr />";
-  printf("统计结果如下：<br />");
+  printf("查询结果：<br />");
   while ($row = mysql_fetch_assoc($result)) 
   {
     printf("%s&nbsp;&nbsp;&nbsp;&nbsp;%s <br />", $row['time'], $row['info']);
