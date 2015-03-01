@@ -27,7 +27,7 @@
     <input type="radio" name="time" id="9am" value="9" />
     <br />
     <label for="other">其他</label>  
-    <input type="text" name="other" id="other" size="30"  maxlength="29" /> 
+    <input type="text" name="other" id="other" size="128"  maxlength="127" /> 
     <br />
     <br />
     <input type="submit" value="确定"  name="submit" />  
