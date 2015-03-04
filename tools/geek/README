@@ -3,3 +3,8 @@
 A point to point color terminal video chat. 
 https://github.com/mofarrell/p2pvc
 
+(2) Using colors with printf
+printf '\e[1;34m%-6s\e[m' "This is text"
+http://stackoverflow.com/questions/5412761/using-colors-with-printf
+
+
