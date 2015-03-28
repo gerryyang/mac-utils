@@ -1,0 +1,14 @@
+{
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"Alignment",
+		"ConvertToUTF8",
+		"Git",
+		"GoSublime",
+		"Package Control",
+		"SyncedSideBar"
+	]
+}
