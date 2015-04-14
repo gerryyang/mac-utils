@@ -453,22 +453,29 @@ int test_msgpack()
 	do
 	{
 		protocol_t req;
-		req.body.uuid = "0000-1111-4444-5555";
-		req.body.metric = 245573;
-
-		req.body.service = "tdftest";
-		req.body.func = "test";
-		req.body.sig = "why?";
+		req.body.uuid    =  "0000-1111-2222-3333";
+		req.body.metric  =  245573;
+		req.body.service =  "tdftest";
+		req.body.func    =  "test";
+		req.body.sig     =  "why?";
 
 		error_stack_t err_st;
-		err_st.code = 10001;
-		err_st.msg = "client error haha";
+		err_st.code =  10001;
+		err_st.msg  =  "client error haha";
 		req.body.err_vec.push_back(err_st);
 
-		req.body.rec_map["test1"] = "1111";
-		req.body.rec_map["test2"] = "2222";
+		req.body.rec_map["test1"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test2"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test3"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test4"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test5"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test6"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test7"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test8"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test9"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		req.body.rec_map["test10"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-		// 
+		// msgpack encode
 		msgpack::sbuffer sbuf;
 
 		msgpack::pack(&sbuf, req.body);
@@ -480,17 +487,18 @@ int test_msgpack()
 			return -6;  // data error
 		}
 
-		mp_pkt_t *pkt = (mp_pkt_t *)(m_data);
-		pkt->len = htonl(pack_len);
-		pkt->ver = htonl(MSG_PACK_VER);
-		pkt->seqno = htonl(g_sn++);
+		mp_pkt_t *pkt =  (mp_pkt_t *)(m_data);
+		pkt->len      =  htonl(pack_len);
+		pkt->ver      =  htonl(MSG_PACK_VER);
+		pkt->seqno    =  htonl(g_sn++);
+
 		if (g_sn == 0)
 		{
 			g_sn++;
 		}
 		memcpy(m_data + MSG_PACK_HEAD_LEN, sbuf.data(), sbuf.size());
 
-		// 解析
+		// msgpack decode
 		msgpack::unpacked msg;
 		protocol_t rsp;
 		try
@@ -525,7 +533,7 @@ int test_msgpack()
 
 int main(int argc, char* argv[])
 {
-	//return test_msgpack();
+	return test_msgpack();
 	//return test_http();
 
 	int succ_cnt = 0;
@@ -547,9 +555,8 @@ int main(int argc, char* argv[])
 		protocol_t req;
 		protocol_t rsp;
 
-		req.body.uuid   =  "0000-1111-4444-5555";
-		req.body.metric =  245573;
-
+		req.body.uuid    =  "0000-1111-2222-3333";
+		req.body.metric  =  245573;
 		req.body.service =  "tdftest";
 		req.body.func    =  "test";
 		req.body.sig     =  "why?";
@@ -609,8 +616,6 @@ int main(int argc, char* argv[])
 				std::cout << getpid() << " " << ((succ_cnt + fail_cnt) * 1000) / (double(usec) / 1000) << std::endl;
 
 				step_begin_time = stop_end_time;
-
-
 			}
 		}
 

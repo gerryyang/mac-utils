@@ -6,7 +6,8 @@ RANLIB = ranlib
 AR = ar
 AROPT = -scurv
 
-CFLAGS = -Wall -g -Os -pipe 
+#CFLAGS = -Wall -g -Os -pipe 
+CFLAGS = -Wall -g -O3 -pipe 
 
 MSGPACK_PATH = /Users/gerryyang/LAMP/msgpack/install/msgpack-0.5.5
 
