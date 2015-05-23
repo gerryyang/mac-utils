@@ -1,7 +1,7 @@
 #------------------------
 # .bashrc, for Mac OS X configuration
 # author: gerryyang
-# update time: 2014-08-10
+# update time: 2015-05-23
 #------------------------
 
 #------------------------
@@ -26,6 +26,9 @@ fi
 alias grep='grep --color'
 alias egrep='egrep --color'
 alias fgrep='fgrep --color'
+
+# add time info to history cmd output
+export HISTTIMEFORMAT="[%y-%m-%d %T] "
 
 # MacVim
 alias vi='vim'
