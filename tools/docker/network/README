@@ -1,0 +1,32 @@
+
+网络方案：使用桥接模式，将Docker容器网络配置到本地主机网络的网段中。以实现节点之间、各节点与宿主机以及跨主机之间的通信。
+原理：将宿主机的网卡桥接到虚拟网桥中，再给Docker容器分配一个本地局域网IP。
+网络拓扑：
+pic
+
+具体的配置命令：
+
+brctl addbr br0
+ip link set br0 up
+
+ip addr add 172.27.208.238/25 dev br0; \
+ip addr del 172.27.208.238/25 dev eth1; \
+brctl addif br0 eth1; \
+ip route del default; \
+ip route add default via 172.27.208.129 dev br0
+
+pid=$(docker inspect --format '{{.State.Pid}}' test1)
+mkdir -p /var/run/netns
+ln -s /proc/$pid/ns/net /var/run/netns/$pid
+
+ip link add veth-a type veth peer name veth-b
+brctl addif br0 veth-a
+ip link set veth-a up
+
+ip link set veth-b netns $pid
+ip netns exec $pid ip link set dev veth-b name eth0
+ip netns exec $pid ip link set eth0 up
+ip netns exec $pid ip addr add 172.27.208.135/25 dev eth0
+ip netns exec $pid ip route add default via 172.27.208.129
+
+
