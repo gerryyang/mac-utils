@@ -40,15 +40,47 @@ Unorderde lists
 
 You can make an unordered list by preceding list items with either a * or a -
 
+* Item
+* Item
+* Item
+
 Ordered lists
 
 You can make an ordered list by preceding list items with a number
+
+1. Item 1
+2. Item 2
+3. Item 3
+
+`Nested lists`
+
+You can create nested lists by indenting list items by two spaces.
+
 
 **(6) Links**
 
 You can create an inline link, by wrapping link text in brackets([]), and then wrapping the link in parenthesis(()).
 
 For example, to create a hyperlink to www.github.com, with a link text that says, Visit GitHub!, you'd write this in Markdown: [Visit GitHub!](www.github.com).
+
+**(7) Inline formats**
+
+Use single backticks (`) to format text in a special monospace format. Everything within the backticks appear as-is, with no other special formatting.
+
+Here's an idea: why don't we take `SuperiorProject` and turn it into `**Reasonable**Project`.
+
+**(8) Multiple lines**
+
+You can use triple backticks (```) to format text as its own distinct block.
+
+Check out this neat program I wrote:
+
+```
+x = 0
+x = 2 + 2
+what is x
+```
+
 
 
 ---
