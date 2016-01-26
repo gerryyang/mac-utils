@@ -17,12 +17,6 @@ Tips
 
 You can create a heading by adding one or more # symbols before your heading text. The number of # you use will determine the size of the heading. For example,
 
-# The largest heading (an <h1>tag)
-
-## The second largest heading (an <h2>tag)
-
-...
-
 **(3) Blockquotes**
 
 You can indicate blockquotes with a >
@@ -31,9 +25,9 @@ You can indicate blockquotes with a >
 
 You can make text **bold** or *italic*
 
-*This text will be italic*
+> *This text will be italic*
 
-** This text will be bold **
+> **This text will be bold**
 
 Both **bold** and *italic* can use either a * or an _ around the text for styling. This allows you to combine both bold and italic if needed.
 
