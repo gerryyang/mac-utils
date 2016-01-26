@@ -1,10 +1,15 @@
 
 Abstract
 ===
+*What is Markdown?*
 
-> 关于Markdown的基本用法
+[Markdown](http://daringfireball.net/projects/markdown/) is a way to style text on the web. You control the display of the document; formatting words as bold or italic, adding images, and creating lists are just a few of the things we can do with Markdown. Mostly, Markdown is just regular text with a few non-alphabetic characters thrown in, like `#` or `*`.
 
-[更多](http://daringfireball.net/projects/markdown/syntax)
+
+* [Gists](https://gist.github.com/)
+* Comments in Issues and Pull Requests
+* Files with the .md or .markdown extension
+
 
 Tips
 ===
@@ -81,6 +86,15 @@ x = 2 + 2
 what is x
 ```
 
+**(9) Tables**
+
+You can create tables by assembling a list of words and dividing them with hyphens `-` (for the first row), and then separating each column with a pipe `|`:
+
+First Header | Second Header
+------------ | -------------
+Content from cell 1 | Content from cell 2
+Content in the first column | Content in the second column
+
 
 
 ---
@@ -89,8 +103,15 @@ what is x
 
 [1] [https://help.github.com/articles/markdown-basics](https://help.github.com/articles/markdown-basics)
 
+[2] [https://guides.github.com/features/mastering-markdown/](https://guides.github.com/features/mastering-markdown/)
 
-*END*
+[3] [http://daringfireball.net/projects/markdown/syntax](http://daringfireball.net/projects/markdown/syntax)
+
+[4] [10款流行的Markdown编辑器，总有一款适合你](http://code.csdn.net/news/2819623)
+
+[5] [Online Markdown](http://daringfireball.net/projects/markdown/dingus)
+
+
 
 
 
