@@ -91,10 +91,11 @@ what is x
 You can create tables by assembling a list of words and dividing them with hyphens `-` (for the first row), and then separating each column with a pipe `|`:
 
 First Header | Second Header
------------- | -------------
+------------ | -------------:
 Content from cell 1 | Content from cell 2
 Content in the first column | Content in the second column
 
+表格的分隔线的冒号，是对齐方式。冒号在左边是左对齐，右边右对齐，两边居中。
 
 
 ---
@@ -107,11 +108,28 @@ Content in the first column | Content in the second column
 
 [3] [http://daringfireball.net/projects/markdown/syntax](http://daringfireball.net/projects/markdown/syntax)
 
-[4] [10款流行的Markdown编辑器，总有一款适合你](http://code.csdn.net/news/2819623)
+[4] [http://www.appinn.com/markdown/#philosophy](http://www.appinn.com/markdown/#philosophy)
 
-[5] [Online Markdown](http://daringfireball.net/projects/markdown/dingus)
+[5] [GitHub Flavored Markdown](https://github.com/guodongxiaren/README)
+
+**Tools**
+
+[1] [10款流行的Markdown编辑器，总有一款适合你](http://code.csdn.net/news/2819623)
+
+[2] [Online Markdown](http://daringfireball.net/projects/markdown/dingus)
+
+[3] [马克飞象-支持流程图，适合印象笔记用户](https://maxiang.io/)
+
+[4] [Mou](http://25.io/mou/)
+
+[5] [Cmd Markdown](https://www.zybuluo.com/mdeditor)
+
+[6] [Markdown Plus-支持流程图](http://mdp.tylingsoft.com/)
 
 
+**Other**
+
+[1] [Markdown+Pandoc 最佳写作拍档](http://www.tuicool.com/articles/zQrQbaU)
 
 
 
