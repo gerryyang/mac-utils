@@ -4,7 +4,7 @@ Abstract
 
 > 关于Markdown的基本用法
 
-[http://daringfireball.net/projects/markdown/syntax](http://daringfireball.net/projects/markdown/syntax)
+[更多](http://daringfireball.net/projects/markdown/syntax)
 
 Tips
 ===
@@ -17,20 +17,21 @@ Tips
 
 You can create a heading by adding one or more # symbols before your heading text. The number of # you use will determine the size of the heading. For example,
 
-> # The largest heading (an <h1> tag)
-## The second largest heading (an <h2> tag)
+> # The largest heading (an <h1>tag)
+## The second largest heading (an <h2>tag)
 ...
 
 **(3) Blockquotes**
 
-You can indicate blockquotes with a >
+> You can indicate blockquotes with a >
 
 **(4) Styling text**
 
 You can make text **bold** or *italic*
 
 > *This text will be italic*
-** This text will be bold**
+
+> ** This text will be bold **
 
 Both **bold** and *italic* can use either a * or an _ around the text for styling. This allows you to combine both bold and italic if needed.
 
@@ -54,9 +55,9 @@ You can create an inline link, by wrapping link text in brackets([]), and then w
 For example, to create a hyperlink to www.github.com, with a link text that says, Visit GitHub!, you'd write this in Markdown: [Visit GitHub!](www.github.com).
 
 
+---
 
-
-*Reference*
+**Reference**
 
 [1] [https://help.github.com/articles/markdown-basics](https://help.github.com/articles/markdown-basics)
 
