@@ -27,9 +27,9 @@ use **gobjdump -a libcrypto.a** to see mach-o-i386 or something
 
 (7) Mac上的 **top** 命令用法和Linux上有些不同
 
-Linux上使用h查看帮助信息
+Linux上使用 **h** 查看帮助信息
 
-Mac上top使用?来查看帮助信息
+Mac上top使用 **?** 来查看帮助信息
 
 按CPU排序是ocpu，按内存排序是ovsize
 
