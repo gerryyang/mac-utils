@@ -1,4 +1,4 @@
-my-utils
+mac-utils
 ========
 
 > Some tools about Mac OSX system.
