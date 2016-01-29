@@ -1,0 +1,217 @@
+" Vim configuration settings
+
+" ================================================ 
+" Maintainer:   Bram Moolenaar <Bram@vim.org>
+" Modified:     gerryyang <diggwcdjATgmail.com>
+" Last change:  2014-01-23
+"
+" To use it, copy it to
+"     for Unix and OS/2:     ~/.vimrc
+"     for MS-DOS and Win32:  $VIM\_vimrc
+" ================================================ 
+
+" -------------
+" 默认设置
+" -------------
+set nocompatible
+source $VIMRUNTIME/vimrc_example.vim
+" Set options and add mapping such that Vim behaves a lot like MS-Windows
+source $VIMRUNTIME/mswin.vim
+behave mswin
+
+set diffexpr=MyDiff()
+function MyDiff()
+  let opt = '-a --binary '
+  if &diffopt =~ 'icase' | let opt = opt . '-i ' | endif
+  if &diffopt =~ 'iwhite' | let opt = opt . '-b ' | endif
+  let arg1 = v:fname_in
+  if arg1 =~ ' ' | let arg1 = '"' . arg1 . '"' | endif
+  let arg2 = v:fname_new
+  if arg2 =~ ' ' | let arg2 = '"' . arg2 . '"' | endif
+  let arg3 = v:fname_out
+  if arg3 =~ ' ' | let arg3 = '"' . arg3 . '"' | endif
+  let eq = ''
+  if $VIMRUNTIME =~ ' '
+    if &sh =~ '\<cmd'
+      let cmd = '""' . $VIMRUNTIME . '\diff"'
+      let eq = '"'
+    else
+      let cmd = substitute($VIMRUNTIME, ' ', '" ', '') . '\diff"'
+    endif
+  else
+    let cmd = $VIMRUNTIME . '\diff'
+  endif
+  silent execute '!' . cmd . ' ' . opt . arg1 . ' ' . arg2 . ' > ' . arg3 . eq
+endfunction
+
+
+" -------------
+" 基本设置
+" -------------
+
+" 启用Vim高级特性
+" Use Vim settings, rather than Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+se nocompatible
+
+" 显示行号
+se nu
+
+" 设置默认字体
+" for Mac OS X
+" se guifont=Monaco:h14
+" for Windows
+se guifont=YaHei\ Consolas\ Hybrid:h12:cANSI
+
+" 设置字体编码
+"let &termencoding=&encoding
+se fileencodings=utf-8,gbk
+
+" 设置默认窗口大小
+se lines=30 columns=80
+
+" 设置当前行高亮, cursorline
+se cul
+
+" 设置当前光标下的列高亮, cursorcolumn
+" 对于Pythoner比较有用
+"se cuc
+
+" 显示光标位置
+" show the cursor position all the time
+se ruler
+
+" 设置配色方案
+"colorscheme slate
+"colorscheme desert
+"colorscheme torte
+
+" Molokai color, https://github.com/tomasr/molokai
+colorscheme molokai 
+"let g:molokai_original = 1
+let g:rehash256 = 1
+set background=dark
+
+" Solarized color, https://github.com/altercation/vim-colors-solarized
+"colorscheme solarized
+"set background=dark
+
+"colorscheme darkblue
+"colorscheme advantage
+"colorscheme murphy 
+"colorscheme light2011
+"colorscheme google-prettify
+
+" 记录上次打开的位置
+if has("autocmd")
+autocmd BufRead *.txt set tw=78
+autocmd BufReadPost *
+\ if line("'\"") > 0 && line ("'\"") <= line("$") |
+\   exe "normal g'\"" |
+\ endif
+endif
+
+
+" -------------
+" 搜索设置
+" -------------
+
+" enable magic matching
+set magic
+
+" show matching bracets
+set showmatch
+
+" highlight search things
+set hlsearch
+
+" ignore case when searching
+set smartcase
+set ignorecase
+
+" incremental match when searching
+set incsearch
+
+" -------------
+" 代码设置
+" -------------
+
+" 设置语法高亮
+syntax enable
+syntax on
+
+" 显示缩进tab线
+se list lcs=tab:\|\ 
+
+" 设置代码折叠
+set foldenable
+set foldnestmax=1
+set foldmethod=syntax
+
+" -------------
+" 缩进设置
+" -------------
+
+" auto indent
+set autoindent
+
+" c indent
+set cindent
+
+" smart indet
+set smartindent
+
+" use hard tabs
+set tabstop=4
+" 将空格转换为tab, :%retab
+set noexpandtab
+set shiftwidth=4
+
+" 自动换行
+" break long lines
+set textwidth=160
+"set cc=+1
+
+" config C-indenting
+set cinoptions=:0,l1,t0,g0
+
+" enable filetype plugin
+filetype plugin indent on
+ 
+" use soft tabs for python
+autocmd Filetype python set et sta ts=4 sw=4
+
+" -------------
+" 快捷键设置
+" -------------
+
+" drop or show line num
+map <F9> :set nonu <CR>
+map <F10> :set nu <CR>
+
+" format codes
+map <F8> ggVG= <CR>
+
+" ------ Tabular Plugin [beg] ------
+" Tabular codes, '='
+map <F1> :Tab/= <CR>
+" Tabular codes, ','
+map <F2> :Tab/,\zs <CR>
+" Tabular codes, '<<'
+map <F3> :Tab/<< <CR>
+
+" it will call the :Tabularize command each time you insert a | character.
+inoremap <silent> <Bar> <Bar><Esc>:call <SID>align()<CR>a
+function! s:align()
+	let p = '^\s*|\s.*\s|\s*$'
+	"if exists(':Tabularize') && getline('.') =~# '^\s*|' && (getline(line('.')-1) =~# p || getline(line('.')+1) =~# p)
+		let column = strlen(substitute(getline('.')[0:col('.')],'[^|]','','g'))
+		let position = strlen(matchstr(getline('.')[0:col('.')],'.*|\s*\zs.*'))
+		Tabularize/|/l1
+		normal! 0
+		call search(repeat('[^|]*|',column).'\s\{-\}'.repeat('.',position),'ce',line('.'))
+	"endif
+endfunction
+" ------ Tabular Plugin [end] ------
+
+

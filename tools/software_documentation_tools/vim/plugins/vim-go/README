@@ -1,0 +1,11 @@
+
+vim-go
+https://github.com/fatih/vim-go
+
+Go (golang) support for Vim. It comes with pre-defined sensible settings (like auto gofmt on save), has autocomplete, snippet support, improved syntax highlighting, go toolchain commands, etc... If needed vim-go installs all necessary binaries for providing seamless Vim integration with current commands. It's highly customizable and each individual feature can be disabled/enabled easily.
+
+GoLang之再谈Gvim/Vim配置——使用Vundle安装vim-go
+http://blog.csdn.net/delphiwcdj/article/details/40947885
+
+
+
