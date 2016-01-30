@@ -68,13 +68,20 @@ You can create an inline link, by wrapping link text in brackets([]), and then w
 
 For example, to create a hyperlink to www.github.com, with a link text that says, Visit GitHub!, you'd write this in Markdown: [Visit GitHub!](www.github.com).
 
-**(7) Inline formats**
+**(7) Images**
+
+![GitHub Logo](/images/logo.png)
+
+Format: ![Alt Text](url)
+
+
+**(8) Inline formats**
 
 Use single backticks (`) to format text in a special monospace format. Everything within the backticks appear as-is, with no other special formatting.
 
 Here's an idea: why don't we take `SuperiorProject` and turn it into `**Reasonable**Project`.
 
-**(8) Multiple lines**
+**(9) Multiple lines**
 
 You can use triple backticks (```) to format text as its own distinct block.
 
@@ -86,7 +93,7 @@ x = 2 + 2
 what is x
 ```
 
-**(9) Tables**
+**(10) Tables**
 
 You can create tables by assembling a list of words and dividing them with hyphens `-` (for the first row), and then separating each column with a pipe `|`:
 
