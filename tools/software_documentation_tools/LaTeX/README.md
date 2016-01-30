@@ -34,4 +34,4 @@ Learn LaTex
 To compile test.tex file to pdf
 1. Run TeXworks in MikTex/CTEX
 2.Type as in figure
-![1.png](1.png)
+![1.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/1.png)
