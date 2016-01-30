@@ -30,4 +30,8 @@ Learn LaTex
 	* The Not So Short Introduction to LaTeX
 	[http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf](http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf)
 	[http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf](http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf)
-
+Simple Usage
+To compile test.tex file to pdf
+1. Run TeXworks in MikTex/CTEX
+2.Type as in figure
+![1.png](1.png)
