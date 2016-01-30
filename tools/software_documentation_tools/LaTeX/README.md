@@ -1,5 +1,5 @@
 
-LaTex
+###LaTex
 
 * Document markup language for TeX
 
@@ -20,7 +20,7 @@ LaTex
 	
 
 
-Learn LaTex
+###Learn LaTex
 
 * LaTeX Wikibook
 
@@ -30,8 +30,18 @@ Learn LaTex
 	* The Not So Short Introduction to LaTeX
 	[http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf](http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf)
 	[http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf](http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf)
-Simple Usage
+###Simple Usage
 To compile test.tex file to pdf
-1. Run TeXworks in MikTex/CTEX
-2.Type as in figure
-![1.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/1.png)
+1\. Run TeXworks in MikTex/CTEX
+2\. Type as in figure
+![1.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/1.png)
+
+3\. Save as test.tex
+
+4\. Click typeset green button (or Ctrl + T)
+
+5\. test.pdf is generated and shown in preview window
+
+![2.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/2.png) 
+
+-------
