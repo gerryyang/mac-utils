@@ -34,6 +34,9 @@
 To compile test.tex file to pdf
 1\. Run TeXworks in MikTex/CTEX
 2\. Type as in figure
+
+```
+\documentclass{article}\begin{document}hello gerry\end{document}```
 ![1.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/1.png)
 
 3\. Save as test.tex
@@ -43,5 +46,25 @@
 5\. test.pdf is generated and shown in preview window
 
 ![2.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/2.png) 
+
+###Edit With Sublime Text
+
+* Install LaTeXTools with Package Control
+	* Syntax lighting, build, seek to cursor...
+	[https://packagecontrol.io/packages/LaTeXTools](https://packagecontrol.io/packages/LaTeXTools)
+
+####Structure
+```
+\documentclass{...}
+\usepackage{...}
+\begin{document}
+...
+\end{document}
+```
+
+####Front Matter
+```
+\documentclass{article}\begin{document}\title{this is title}\author{gerry}\date{\today}\maketitlethis is body\end{documen
+```
 
 -------
