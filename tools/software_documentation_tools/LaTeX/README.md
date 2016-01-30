@@ -27,7 +27,7 @@
 	[http://en.wikibooks.org/wiki/LaTeX](http://en.wikibooks.org/wiki/LaTeX)
 
 	[http://zh.wikibooks.org/wiki/LaTeX](http://zh.wikibooks.org/wiki/LaTeX) (partially translated to Chinese)
-	* The Not So Short Introduction to LaTeX
+	* The Not So Short Introduction to LaTeX
 	[http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf](http://mirror.neu.edu.cn/CTAN/info/lshort/english/lshort.pdf)
 	[http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf](http://mirror.bjtu.edu.cn/CTAN/info/lshort/chinese/lshort-zh-cn.pdf)
 ###Simple Usage
