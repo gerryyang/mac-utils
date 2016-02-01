@@ -50,7 +50,7 @@
 ###Edit With Sublime Text
 
 * Install LaTeXTools with Package Control
-	* Syntax lighting, build, seek to cursor...
+	* Syntax lighting, build, seek to cursor... 
 	[https://packagecontrol.io/packages/LaTeXTools](https://packagecontrol.io/packages/LaTeXTools)
 
 ####Structure
