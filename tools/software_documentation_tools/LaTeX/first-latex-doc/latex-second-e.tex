@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{lipsum}
+
+\title{Test document}
+\author{Your name \\ \url{you@example.com}}
+\date{2009-Oct-12}
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+This is some preamble text that you enter 
+yourself.\footnote{First footnote.}\footnote{Second footnote.}
+
+\section{Text for the first section}
+\lipsum[1]
+
+\subsection{Text for a subsection of the first section}
+\lipsum[2-3]
+\label{labelone}
+
+\subsection{Another subsection of the first section}
+\lipsum[4-5]
+\label{labeltwo}
+
+\section{The second section}
+\lipsum[6]
+
+Refer again to \ref{labelone}.\cite{ConcreteMath}
+Note also the discussion on page \pageref{labeltwo}
+
+\subsection{Title of the first subsection of the second section}
+\lipsum[7]
+
+There are $\binom{2n+1}{n}$ sequences with $n$ occurrences of 
+$-1$ and $n+1$ occurrences of $+1$, and Raney's lemma
+tells us that exactly $1/(2n+1)$ of these sequences have all
+partial sums positive.
+
+Elementary calculus suffices to evaluate $C$ if we are clever enough
+to look at the double integral
+\begin{equation*}
+  C^2
+  =\int_{-\infty}^{+\infty} e^{-x^2} \mathrm{d}x
+   \int_{-\infty}^{+\infty} e^{-y^2} \mathrm{d}y\;.
+\end{equation*}
+
+Solve the following recurrence for $n,k\geq 0$:
+\begin{align*}
+  Q_{n,0} &= 1
+  \quad Q_{0,k} = [k=0];  \\
+  Q_{n,k} &= Q_{n-1,k}+Q_{n-1,k-1}+\binom{n}{k}, \quad\text{for $n,k>0$.}
+\end{align*}
+
+Therefore
+\begin{equation*}
+a\equiv b\pmod{m}
+\qquad\Longleftrightarrow\qquad
+a\equiv b \pmod{p^{m_p}}\quad\text{for all $p$}  
+\end{equation*}
+if the prime factorization of $m$ is $\prod_p p^{m_p}$.
+
+\begin{thebibliography}{9}
+\bibitem{ConcreteMath}
+Ronald L. Graham, Donald E. Knuth, and Oren Patashnik, 
+\textit{Concrete mathematics}, 
+Addison-Wesley, Reading, MA, 1995.
+\end{thebibliography}
+\end{document}

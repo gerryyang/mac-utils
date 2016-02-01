@@ -1,0 +1,31 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{lipsum}
+
+\begin{document}
+This is some preamble text that you enter yourself.
+
+\section{Text for the first section}
+\lipsum[1]
+
+\subsection{Text for a subsection of the first section}
+\lipsum[2-3]
+\label{labelone}
+
+\subsection{Another subsection of the first section}
+\lipsum[4-5]
+\label{labeltwo}
+
+\section{The second section}
+\lipsum[6]
+
+Refer again to \ref{labelone}.
+Note also the discussion on page \pageref{labeltwo}
+
+\subsection{Title of the first subsection of the second section}
+\lipsum[7]
+\end{document}

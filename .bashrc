@@ -76,6 +76,10 @@ export DOCKER_HOST=tcp://192.168.59.103:2376
 export DOCKER_CERT_PATH=/Users/gerryyang/.boot2docker/certs/boot2docker-vm
 export DOCKER_TLS_VERIFY=1
 
+# cgdb
+alias cgdb='/Users/gerryyang/LAMP/cgdb/install/cgdb-0.6.8/bin/cgdb'
 
-
+# texlive
+export TEXLIVE_PATH=/usr/local/texlive/2015basic/bin/universal-darwin
+export PATH=$PATH:$TEXLIVE_PATH/bin
 

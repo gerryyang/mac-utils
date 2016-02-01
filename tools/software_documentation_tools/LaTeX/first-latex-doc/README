@@ -1,0 +1,24 @@
+first-latex-doc
+
+This document is for you if you don't know anything about TeX or 
+LaTeX, but want to see what is involved.  For instance, maybe you
+are a graduate student who has been advised to try writing document
+using LaTeX.
+
+It brings you through writing a document of a couple of pages, 
+involving both plain text and mathematics, and should only 
+take a couple of hours.  At the end you will have an idea if
+the system could help you, and there are a couple of recommendations
+for tutorials.
+
+See also http://www.ctan.org/tex-archive/info/latex-doc-ptr .
+
+
+License: 
+  public domain
+
+Comments to:
+  Jim Hefferon  email: ftpmaint at tug.ctan.org
+
+History:
+  2009-May-25 Jim Hefferon, Manuel Pégourié-Gonnard, Karl Berry 

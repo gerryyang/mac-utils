@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{lipsum}
+
+\title{Test document}
+\author{Your name \\ \url{you@example.com}}
+\date{2009-Oct-12}
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+This is some preamble text that you enter 
+yourself.\footnote{First footnote.}\footnote{Second footnote.}
+
+\section{Text for the first section}
+\lipsum[1]
+
+\subsection{Text for a subsection of the first section}
+\lipsum[2-3]
+\label{labelone}
+
+\subsection{Another subsection of the first section}
+\lipsum[4-5]
+\label{labeltwo}
+
+\section{The second section}
+\lipsum[6]
+
+Refer again to \ref{labelone}.\cite{ConcreteMath}
+Note also the discussion on page \pageref{labeltwo}
+
+\subsection{Title of the first subsection of the second section}
+\lipsum[7]
+
+\begin{thebibliography}{9}
+\bibitem{ConcreteMath}
+Ronald L. Graham, Donald E. Knuth, and Oren Patashnik, 
+\textit{Concrete mathematics}, 
+Addison-Wesley, Reading, MA, 1995.
+\end{thebibliography}
+\end{document}
