@@ -7,7 +7,7 @@ mac-utils
 
 * 把Finder中的文件直接拖拽到terminal可以立即显示文件的路径
 
-* 在终端下通过 `open $dirpath` 可以打开某个文件夹，或者使用 `shift+command+g` 快捷键前往某个路径
+* 在终端下通过 `open $dirpath` 可以打开某个文件夹，或者在Finder中使用 `shift+command+g` 快捷键前往某个路径
 
 * say Mac OS X，通过 `say` 命令进行语音阅读
 
