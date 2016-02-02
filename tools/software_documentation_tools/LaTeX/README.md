@@ -201,5 +201,10 @@ Like a C/C++ source file, LaTeX can include other .tex files by `\input{}`
 \input{approach]
 \end{document}
 ```
+####Technical Graphics
+Many types of tech graphics
+[http://www.texample.net/tikz/examples](http://www.texample.net/tikz/examples)
+
+Support LaTeX Formula
 
 -------
