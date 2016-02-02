@@ -78,7 +78,7 @@
 
 ####Front Matter
 ```
-\documentclass{article}\begin{document}\title{this is title}\author{gerry}\date{\today}\maketitlethis is body\end{documen
+\documentclass{article}\begin{document}\title{this is title}\author{gerry}\date{\today}\maketitlethis is body\end{document}
 ```
 ![3.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/3.png)
 
