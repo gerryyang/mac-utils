@@ -10,6 +10,14 @@ Abstract
 * Comments in Issues and Pull Requests
 * Files with the .md or .markdown extension
 
+*特点*
+
+* Lightweight
+* Plain Text
+* Easy-to-read, write
+* Optionally render to HTML
+* Popular format in GitHub, StackExchange
+
 
 Tips
 ===
@@ -119,7 +127,18 @@ Content in the first column | Content in the second column
 
 [5] [GitHub Flavored Markdown](https://github.com/guodongxiaren/README)
 
-**Tools**
+**Editors**
+
+* Offline
+
+	* Sublime Text with MarkdownEditing & Markdown Preview (install via Package Control)
+
+* Online
+	* [https://gist.github.com/](https://gist.github.com/) 
+	* [https://stackedit.io/](https://stackedit.io/)(can sync with google doc)
+	* [https://www.zybuluo.com/mdeditor](https://www.zybuluo.com/mdeditor)(Cmd Markdown, support LaTeX formula)
+	* [https://raysnote.com/](https://raysnote.com/)(support LaTeX formula)
+	* [http//maxiang.info/](http//maxiang.info/)(马克飞象，can sync with EverNote)
 
 [1] [10款流行的Markdown编辑器，总有一款适合你](http://code.csdn.net/news/2819623)
 
