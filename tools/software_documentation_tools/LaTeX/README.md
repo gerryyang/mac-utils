@@ -78,7 +78,20 @@
 
 ####Front Matter
 ```
-\documentclass{article}\begin{document}\title{this is title}\author{gerry}\date{\today}\maketitlethis is body\end{document}
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\begin{document}
+\title{this is title}
+\author{gerry}
+\date{\today}
+\maketitle
+hello world!
+\end{document}
 ```
 ![3.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/3.png)
 
