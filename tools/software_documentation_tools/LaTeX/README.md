@@ -82,4 +82,111 @@
 ```
 ![3.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/3.png)
 
+####Chapters/Sections
+```
+\begin{document}
+\maketitle
+\tableofcontents
+\chapter{Introduction}
+...
+\section{History}
+...
+\chapter{Related Works}
+...
+\end{document}
+```
+
+####Lists
+
+```
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\begin{document}
+Hello world!
+\begin{itemize}
+	\item The first item
+	\item The second item
+	\item The third etc \dots
+\end{itemize}
+\end{document}
+```
+![4.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/4.png)
+
+```
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\begin{document}
+Hello world!
+\begin{enumerate}
+	\item The first item
+	\item The second item
+	\item The third etc \dots
+\end{enumerate}
+\end{document}
+```
+![5.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/5.png)
+
+####Mathematics
+```
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\begin{document}
+Hello world!
+The length $u$ is $\sqrt{x^2+y^2}$.
+\[\cos(2\theta)=\cos^2\theta-\sin^2\theta\]
+\end{document}
+```
+![6.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/6.png)
+
+[公式书写工具](http://www.codecogs.com/latex/eqneditor.php)
+
+####Code
+Use `\verb` and `\begin{verbatim}...\end{verbatim}`
+
+Use `listings` package if need syntax highlighting
+
+```
+\documentclass{article}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\begin{document}
+Hello world!
+\lstset{language=c++}
+The class \lstinline!Foo! is a base class...
+\begin{lstlisting}
+class Foo {
+	...
+};
+\end{lstlisting}
+\end{document}
+```
+![7.png](https://github.com/gerryyang/mac-utils/blob/master/tools/software_documentation_tools/LaTeX/pic/7.png)
+
+
+####Multiple files
+Like a C/C++ source file, LaTeX can include other .tex files by `\input{}`
+
+```
+\begin{document}
+\input{introduction}
+\input{approach]
+\end{document}
+```
+
 -------
