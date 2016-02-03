@@ -78,9 +78,11 @@ For example, to create a hyperlink to www.github.com, with a link text that says
 
 **(7) Images**
 
-![GitHub Logo](/images/logo.png)
+![markdown logo](http://markdown.tw/images/208x128.png)
 
-Format: ![Alt Text](url)
+Format: `![Alt Text](url)`
+
+添加图片和链接非常相似，只是在最前面多加一个`！`。
 
 
 **(8) Inline formats**
@@ -157,6 +159,7 @@ Content in the first column | Content in the second column
 
 [1] [Markdown+Pandoc 最佳写作拍档](http://www.tuicool.com/articles/zQrQbaU)
 
+[2] [http://markdown.tw/ 繁体](http://markdown.tw/)
 
 
 
