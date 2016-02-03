@@ -9,6 +9,9 @@ plot charts
 
 Lightweight/Plain Text/Easy-to-read, write
 
+####Pandoc
+If you need to convert files from one markup format into another, pandoc is your swiss-army knife. 
+
 ####LaTeX
 
 Use LaTeX for typesetting technical document, widely used in academia
