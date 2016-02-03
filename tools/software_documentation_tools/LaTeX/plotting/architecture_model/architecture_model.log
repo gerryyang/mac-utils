@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.1)  3 FEB 2016 14:48
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.1)  3 FEB 2016 14:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**test.tex
-(./test.tex
+**architecture_model.tex
+(./architecture_model.tex
 LaTeX2e <2015/01/01>
 Babel <3.9l> and hyphenation patterns for 21 languages loaded.
 (/usr/local/texlive/2015basic/texmf-dist/tex/latex/base/article.cls
@@ -365,8 +365,9 @@ File: tikzlibrarychains.code.tex 2013/07/15 v3.0.0 (rcs-revision 1.6)
 (/usr/local/texlive/2015basic/texmf-dist/tex/generic/pgf/frontendlayer/tikz/lib
 raries/tikzlibrarypositioning.code.tex
 File: tikzlibrarypositioning.code.tex 2008/10/06 v3.0.0 (rcs-revision 1.7)
-)) (./test.aux)
-\openout1 = `test.aux'.
+))
+No file architecture_model.aux.
+\openout1 = `architecture_model.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
@@ -380,7 +381,6 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
-
 ABD: EveryShipout initializing macros
 (/usr/local/texlive/2015basic/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -444,19 +444,19 @@ e
 )) [1
 
 {/usr/local/texlive/2015basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (.
-/test.aux) ) 
+/architecture_model.aux) ) 
 Here is how much of TeX's memory you used:
- 11535 strings out of 494501
- 237160 string characters out of 6167031
- 264288 words of memory out of 5000000
- 14623 multiletter control sequences out of 15000+600000
+ 11524 strings out of 494501
+ 237093 string characters out of 6167031
+ 264229 words of memory out of 5000000
+ 14614 multiletter control sequences out of 15000+600000
  3945 words of font info for 15 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 55i,6n,56p,408b,685s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2015basic/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmr10.pfb></usr/local/texlive/2015basic/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmss10.pfb>
-Output written on test.pdf (1 page, 21841 bytes).
+ 55i,6n,56p,422b,685s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texlive/2015basic/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2015basic/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmss10.pfb>
+Output written on architecture_model.pdf (1 page, 21841 bytes).
 PDF statistics:
  19 PDF objects out of 1000 (max. 8388607)
  13 compressed objects within 1 object stream
