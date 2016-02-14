@@ -16,5 +16,6 @@ Then, run `texhash` command. Don't forget to stay as a root user (like sudo -s )
 
 [http://tug.ctan.org/info/beginlatex/html/chapter5.html](http://tug.ctan.org/info/beginlatex/html/chapter5.html)
 
+[http://tex.stackexchange.com/questions/27993/can-i-download-ctan-packages-from-the-command-line-ubuntu](http://tex.stackexchange.com/questions/27993/can-i-download-ctan-packages-from-the-command-line-ubuntu)
 
 
