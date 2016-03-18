@@ -48,7 +48,7 @@ export GOROOT=/usr/local/go
 export GOBIN=$GOROOT/bin
 export PATH=$PATH:$GOBIN
 #export GOPATH=/Users/gerryyang/code/go/mygo
-export GOPATH=/Users/gerryyang/github_project/goinaction/programming_in_go
+#export GOPATH=/Users/gerryyang/github_project/goinaction/programming_in_go
 
 # MySQL
 export MYSQL_PATH=/Users/gerryyang/LAMP/MySQL/mysql-5.6.16-osx10.7-x86
@@ -76,10 +76,10 @@ export PKG_CONFIG_PATH=/Users/gerryyang/LAMP/protobuf/protobuf-2.4.1
 #export DOCKER_CERT_PATH=/Users/gerryyang/.boot2docker/certs/boot2docker-vm
 #export DOCKER_TLS_VERIFY=1
 
-export DOCKER_TLS_VERIFY="1"
-export DOCKER_HOST="tcp://192.168.99.100:2376"
-export DOCKER_CERT_PATH="/Users/gerryyang/.docker/machine/machines/default"
-export DOCKER_MACHINE_NAME="default"
+#export DOCKER_TLS_VERIFY="1"
+#export DOCKER_HOST="tcp://192.168.99.100:2376"
+#export DOCKER_CERT_PATH="/Users/gerryyang/.docker/machine/machines/default"
+#export DOCKER_MACHINE_NAME="default"
 # Run this command to configure your shell: 
 # eval $(/usr/local/bin/docker-machine env default)
 
