@@ -1,11 +1,20 @@
+#!/bin/bash
+set -e
 
-网络方案：使用桥接模式，将Docker容器网络配置到本地主机网络的网段中。以实现节点之间、各节点与宿主机以及跨主机之间的通信。
-原理：将宿主机的网卡桥接到虚拟网桥中，再给Docker容器分配一个本地局域网IP。
-网络拓扑：
-pic
+usage() {
+	echo "usage: $0 container_name"
+	exit 1
+}
 
-具体的配置命令：
+if [ "$1" = "" ]; then
+	usage
+fi
+container_name=$1
 
+echo "init container network..."
+
+# init once
+:<<gerry
 brctl addbr br0
 ip link set br0 up
 
@@ -14,8 +23,10 @@ ip addr del 172.27.208.238/25 dev eth1; \
 brctl addif br0 eth1; \
 ip route del default; \
 ip route add default via 172.27.208.129 dev br0
+gerry
 
-pid=$(docker inspect --format '{{.State.Pid}}' test1)
+pid=$(docker inspect --format '{{.State.Pid}}' $container_name)
+rm -rf /var/run/netns
 mkdir -p /var/run/netns
 ln -s /proc/$pid/ns/net /var/run/netns/$pid
 
@@ -29,4 +40,12 @@ ip netns exec $pid ip link set eth0 up
 ip netns exec $pid ip addr add 172.27.208.135/25 dev eth0
 ip netns exec $pid ip route add default via 172.27.208.129
 
+echo "check..."
+ping -c 1 -w 1 172.27.208.135
+if [ "$?" == 0 ]; then
+	echo "network is ok"
+else
+	echo "network is err"
+fi
 
+echo "done"
