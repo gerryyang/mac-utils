@@ -57,7 +57,7 @@ class wechatCallbackapiTest
 			}
 
 		}else {
-			echo "";
+			echo "gerry: say hello";
 			exit;
 		}
 	}
