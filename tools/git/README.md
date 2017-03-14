@@ -49,10 +49,12 @@ git clone https://github.com/gerryyang/mac-utils.git
 ```
 
 (2) 提交变更
+```
 git add -A
 git status
 git commit -m"update info"
 git push origin master
+```
 
 (3) 回到过去
 ```
