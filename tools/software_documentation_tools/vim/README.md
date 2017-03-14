@@ -3,7 +3,7 @@ Tips
 
 > 记录Vi/Vim的一些用法。推荐一个印度男孩(Swaroop C H)写的《[byte of vim](http://www.swaroopch.com/notes/Vim/)》的manual。之前也总结过一些关于Vi/Vim的用法，可见[这里](http://blog.csdn.net/delphiwcdj/article/category/801838)。
 
-###1 Move
+## 1 Move
 
 在Vim中完全使用快捷键来实现光标的移动，下面是一些常用的*shortcut keys*：
 
@@ -69,8 +69,12 @@ Use ma to create a mark named 'a'. Move the cursor to wherever you want. Press '
 
 You can use any alphabet (a-zA-Z) to name a mark which means you can have up to 26*2=52 named marks for each file. 
 
+** [9] 多窗口调试 **
 
-###2 plugins
+使用vim在当前src下打开源码后执行命令:make，然后执行命令:cw可以方便查找make的输出
+
+
+## 2 plugins
 
 **(1) tabular (代码对齐功能)**
 
