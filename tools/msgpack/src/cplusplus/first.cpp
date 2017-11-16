@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 int main(void) 
 {
@@ -33,13 +34,33 @@ int main(void)
 		std::cout << *it << std::endl;
 	}
 
+	std::map<std::string, std::string> m;
+	m["a"] = "1";
+	m["b"] = "2";
+
+	msgpack::sbuffer sbuf2;
+	msgpack::pack(sbuf2, m);
+	msgpack::unpacked msg2;
+	msgpack::unpack(&msg2, sbuf2.data(), sbuf2.size());
+	msgpack::object obj2 = msg2.get();
+	std::cout << obj2 << std::endl;
+
+	std::map<std::map<std::string, std::string>, std::string> m2;
+	m2[m] = "3";
+	msgpack::sbuffer sbuf3;
+	msgpack::pack(sbuf3, m2);
+	msgpack::unpacked msg3;
+	msgpack::unpack(&msg3, sbuf3.data(), sbuf3.size());
+	msgpack::object obj3 = msg3.get();
+	std::cout << obj3 << std::endl;
+
 	return 0;
 }
 /*
-output:
-gerryyang@bogon:cplusplus$./first 
 ["Hello", "MessagePack"]
 convert it into statically typed object.
 Hello
 MessagePack
- */
+{"a"=>"1", "b"=>"2"}
+{{"a"=>"1", "b"=>"2"}=>"3"}
+*/
