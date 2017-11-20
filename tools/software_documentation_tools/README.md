@@ -28,6 +28,12 @@ editor
 
 pdf view
 
+#### word2013种如何插入代码着色的代码块
+
+https://www.zhihu.com/question/31544667
+http://pygments.org
+
+
 ####Other tools
 
 Graphviz: draw graphs with auto layout
