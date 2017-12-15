@@ -1,5 +1,16 @@
 
 
+Q&A
+
+1. [Control startup order in Compose](https://docs.docker.com/compose/startup-order/)
+
+https://docs.docker.com/compose/compose-file/#depends_on
+
+2. 定时器
+
+https://www.kancloud.cn/digest/batu-go/153534
+
+
 About Docker
 
 Develop, Ship and Run Any Application, Anywhere
@@ -218,6 +229,14 @@ docker inspect -f {{".Architecture"}}  550
 amd64
 
 docker logs $containerid
+docker logs -f $cid    # 类似tail -f
+docker logs --tail=10 $cid # 显示最近的10行日志
+docker logs contaiername >& logs/myFile.log (不推荐)
+# No need to redirect logs, Docker by default store logs to one log file. To check log file path run command: (推荐)
+root@ubuntu-s-1vcpu-3gb-nyc3-01:~/debug# docker inspect --format='{{.LogPath}}' 9d0329060dbb
+/var/lib/docker/containers/9d0329060dbb3d878f6bac1a7cbb09c29b3e9b31458f55a372372cd36d6aec9f/9d0329060dbb3d878f6bac1a7cbb09c29b3e9b31458f55a372372cd36d6aec9f-json.log
+root@ubuntu-s-1vcpu-3gb-nyc3-01:~/debug# docker inspect --format='{{.LogPath}}' peer1.org2.example.com
+/var/lib/docker/containers/5ed79df36f3510aeec0186803b6b74253287e9fd6ae8dd8bdc1ca76603684b45/5ed79df36f3510aeec0186803b6b74253287e9fd6ae8dd8bdc1ca76603684b45-json.log
 查看docker启动的日志信息
 
 docker rmi REPOSITORY:TAG
@@ -231,6 +250,10 @@ Error response from daemon: Conflict, cannot delete image 550 because it is tagg
 
 docker top $containerid
 若一个容器内运行了多个进程，可以通过docker top来查看进程信息
+
+docker exec -it $cid /bin/bash
+进入某个容器
+
 
 
 
