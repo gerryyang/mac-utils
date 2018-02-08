@@ -90,3 +90,5 @@ git submodule add https://github.com/miloyip/rapidjson ./deps/rapidjson
 [4] 版本管理工具介绍—Git篇 http://www.imooc.com/view/208
 
 [5] [阮一峰的Git 使用规范流程](http://www.ruanyifeng.com/blog/2015/08/git-use-process.html)
+
+[6] [Pro Git book](https://git-scm.com/book/zh/v1) **TODO**
