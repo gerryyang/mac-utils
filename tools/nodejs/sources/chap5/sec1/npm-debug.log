@@ -1,0 +1,78 @@
+info it worked if it ends with ok
+verbose cli [ 'node', '/usr/local/bin/npm', 'link', 'express' ]
+info using npm@1.0.106
+info using node@v0.6.12
+verbose /usr/local/bin/node node symlink
+verbose config file /Users/byvoid/.npmrc
+verbose config file /usr/local/etc/npmrc
+verbose config file /usr/local/lib/node_modules/npm/npmrc
+info unbuild /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express
+verbose link symlinking /usr/local/lib/node_modules/express to /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express
+verbose mkdir (expected) error ENOENT, no such file or directory '/Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules'
+verbose mkdir done: /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules 755
+info build /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express
+silly testEngine { name: 'express',
+silly testEngine   description: 'Sinatra inspired web development framework',
+silly testEngine   version: '2.5.8',
+silly testEngine   author: { name: 'TJ Holowaychuk', email: 'tj@vision-media.ca' },
+silly testEngine   contributors: 
+silly testEngine    [ { name: 'TJ Holowaychuk', email: 'tj@vision-media.ca' },
+silly testEngine      { name: 'Aaron Heckmann',
+silly testEngine        email: 'aaron.heckmann+github@gmail.com' },
+silly testEngine      { name: 'Ciaran Jessup', email: 'ciaranj@gmail.com' },
+silly testEngine      { name: 'Guillermo Rauch', email: 'rauchg@gmail.com' } ],
+silly testEngine   dependencies: { connect: '1.x', mime: '1.2.4', qs: '0.4.x', mkdirp: '0.3.0' },
+silly testEngine   devDependencies: 
+silly testEngine    { 'connect-form': '0.2.1',
+silly testEngine      ejs: '0.4.2',
+silly testEngine      expresso: '0.9.2',
+silly testEngine      hamljs: '0.6.x',
+silly testEngine      jade: '0.16.2',
+silly testEngine      stylus: '0.13.0',
+silly testEngine      should: '0.3.2',
+silly testEngine      'express-messages': '0.0.2',
+silly testEngine      'node-markdown': '>= 0.0.1',
+silly testEngine      'connect-redis': '>= 0.0.1' },
+silly testEngine   keywords: [ 'framework', 'sinatra', 'web', 'rest', 'restful' ],
+silly testEngine   repository: { type: 'git', url: 'git://github.com/visionmedia/express.git' },
+silly testEngine   main: 'index',
+silly testEngine   bin: { express: './bin/express' },
+silly testEngine   scripts: { test: 'make test', prepublish: 'npm prune' },
+silly testEngine   engines: { node: '>= 0.4.1 < 0.7.0' },
+silly testEngine   _npmUser: { name: 'byvoid', email: 'byvoid.kcp@gmail.com' },
+silly testEngine   _id: 'express@2.5.8',
+silly testEngine   _engineSupported: true,
+silly testEngine   _npmVersion: '1.0.106',
+silly testEngine   _nodeVersion: 'v0.6.12',
+silly testEngine   _defaultsLoaded: true }
+verbose caching /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express/package.json
+verbose loadDefaults express@2.5.8
+info preinstall express@2.5.8
+verbose linkStuff [ false,
+verbose linkStuff   false,
+verbose linkStuff   false,
+verbose linkStuff   '/Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules' ]
+info linkStuff express@2.5.8
+verbose linkBins express@2.5.8
+verbose bins linking [ { express: './bin/express' },
+verbose bins linking   '/Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/.bin',
+verbose bins linking   false ]
+verbose linkMans express@2.5.8
+verbose rebuildBundles express@2.5.8
+verbose rebuildBundles [ 'connect', 'mime', 'mkdirp', 'qs' ]
+verbose mkdir (expected) error ENOENT, no such file or directory '/Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/.bin'
+verbose mkdir done: /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/.bin 755
+ERR! Error: EPERM, operation not permitted '/Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express/bin/express'
+ERR! Report this *entire* log at:
+ERR!     <http://github.com/isaacs/npm/issues>
+ERR! or email it to:
+ERR!     <npm-@googlegroups.com>
+ERR! 
+ERR! System Darwin 11.3.0
+ERR! command "node" "/usr/local/bin/npm" "link" "express"
+ERR! cwd /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1
+ERR! node -v v0.6.12
+ERR! npm -v 1.0.106
+ERR! path /Volumes/byvoid/dev/node/sphinx/source/sources/chap5/sec1/node_modules/express/bin/express
+ERR! code EPERM
+verbose exit [ 1, true ]

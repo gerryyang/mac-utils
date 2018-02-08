@@ -1,0 +1,36 @@
+[Thu Apr 19 2012 23:33:21 GMT+0800 (CST)] /
+Error: An error for test purposes.
+    at Object.<anonymous> (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/routes/index.js:7:11)
+    at nextMiddleware (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:175:25)
+    at param (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:183:16)
+    at pass (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:191:10)
+    at Object.router [as handle] (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:197:6)
+    at next (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/http.js:203:15)
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:323:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:342:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/lib/connect-mongo.js:151:15
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/node_modules/mongodb/lib/mongodb/collection.js:885:34
+[Thu Apr 19 2012 23:41:24 GMT+0800 (CST)] /
+Error: An error for test purposes.
+    at Object.<anonymous> (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/routes/index.js:7:11)
+    at nextMiddleware (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:175:25)
+    at param (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:183:16)
+    at pass (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:191:10)
+    at Object.router [as handle] (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:197:6)
+    at next (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/http.js:203:15)
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:323:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:342:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/lib/connect-mongo.js:151:15
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/node_modules/mongodb/lib/mongodb/collection.js:885:34
+[Thu Apr 19 2012 23:41:44 GMT+0800 (CST)] /
+Error: An error for test purposes.
+    at Object.<anonymous> (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/routes/index.js:7:11)
+    at nextMiddleware (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:175:25)
+    at param (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:183:16)
+    at pass (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:191:10)
+    at Object.router [as handle] (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/router.js:197:6)
+    at next (/Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/http.js:203:15)
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:323:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/express/node_modules/connect/lib/middleware/session.js:342:9
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/lib/connect-mongo.js:151:15
+    at /Volumes/byvoid/dev/node/sphinx/source/sources/chap6/sec3/microblog/node_modules/connect-mongo/node_modules/mongodb/lib/mongodb/collection.js:885:34
