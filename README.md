@@ -1,12 +1,10 @@
 mac-utils
 ========
+> Some tools about Mac OSX system.
 
 # Table of Contents
 
 * [Tips](#tips)
-
-
-> Some tools about Mac OSX system.
 
 
 # <a name="tips"></a>Tips
