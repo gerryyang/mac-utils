@@ -1,9 +1,15 @@
 mac-utils
 ========
 
+# Table of Contents
+
+* [Tips](#tips)
+
+
 > Some tools about Mac OSX system.
 
-#Tips:
+
+# <a name="tips"></a>Tips
 
 * 把Finder中的文件直接拖拽到terminal可以立即显示文件的路径
 
