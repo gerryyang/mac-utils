@@ -78,7 +78,17 @@ git checkout <branch-name>
 git submodule add https://github.com/miloyip/rapidjson ./deps/rapidjson
 ```
 
-3 Reference
+Some tools
+===
+
+1. TOC
+
+[GitHub Wiki TOC generator](https://ecotrust-canada.github.io/markdown-toc/)
+[github-markdown-toc](https://github.com/ekalinin/github-markdown-toc)
+
+
+
+Reference
 ===
 
 [1] Git In Two Minutes (for a solo developer) http://www.garyrobinson.net/2014/10/git-in-two-minutes-for-a-solo-developer.html
