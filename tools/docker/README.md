@@ -6,10 +6,11 @@ Q&A
 
 https://docs.docker.com/compose/compose-file/#depends_on
 
-2. 定时器
+2. find docker image with specific tag
 
-https://www.kancloud.cn/digest/batu-go/153534
+https://stackoverflow.com/questions/24481564/how-can-i-find-docker-image-with-specific-tag-in-docker-registry-in-docker-comma
 
+---
 
 About Docker
 
