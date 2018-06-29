@@ -95,6 +95,16 @@ PS: 详细的package列表可以在 https://sublime.wbond.net/ 查询。
 作用: 实现多个tab并行编辑和对比
 
 
+###小技巧
+
+[Sublime 小技巧：文本自动换行显示](https://www.jianshu.com/p/c75d21d2e967)
+
+```
+{
+    "word_wrap": true
+}
+```
+
 **refer**
 
 [1] [GoLang及Sublime Text 2之Mac OS X 10.8.4开发环境安装](http://blog.csdn.net/delphiwcdj/article/details/11873023)
