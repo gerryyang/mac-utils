@@ -29,3 +29,10 @@ http://www.gnuplot.info/demo/
 
 http://www.gnuplotting.org/plotting-data/
 
+[Linetype, colors, and styles](http://gnuplot.sourceforge.net/docs_4.2/node62.html)
+
+[Colorspec](http://gnuplot.sourceforge.net/docs_4.2/node63.html)
+
+[Color Names and Their Numerical Equivalent](https://www2.uni-hamburg.de/Wiss/FB/15/Sustainability/schneider/gnuplot/colors.htm)
+
+
