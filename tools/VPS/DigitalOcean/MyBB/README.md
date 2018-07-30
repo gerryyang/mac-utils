@@ -5,17 +5,18 @@ http://104.131.173.242/index.php
 
 SSH Quick Install
 
+```
 wget --content-disposition http://www.mybb.com/download/latest -O mybb.zip
 unzip mybb.zip "Upload/*"
 mv Upload/* .
 rm -Rf Upload mybb.zip
 mv inc/config.default.php inc/config.php
 chmod -R 0777 cache uploads inc/settings.php inc/config.php
-
+```
 
 mysql -umybbuser -pmybbuser
 
-
+```
 mysql> show databases;
 +--------------------+
 | Database           |
@@ -110,12 +111,15 @@ mysql> show tables;
 | mybb_warningtypes        |
 +--------------------------+
 74 rows in set (0.00 sec)
+```
 
-
-Refer:
+# Refer
 
 https://www.digitalocean.com/community/tutorials/a-straightforward-guide-on-installing-web-facing-applications-on-a-vps
+
 https://www.digitalocean.com/community/tutorials/how-to-launch-your-site-on-a-new-ubuntu-14-04-server-with-lamp-sftp-and-dns
+
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean
+
 http://docs.mybb.com/1.8/install/
 
