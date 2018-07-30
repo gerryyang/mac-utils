@@ -1,15 +1,5 @@
 
-https://github.com/jekyll/jekyll
 
-https://jekyllrb.com/philosophy
-
-https://jekyllrb.com/docs/troubleshooting/
-
-https://jekyllrb.com/docs/installation/
-
-https://jekyllrb.com/docs/installation/#ubuntu
-
-https://jekyllrb.com/docs/usage/
 
 # Basic Usage
 
@@ -30,6 +20,21 @@ jekyll build --watch
 
 https://forestry.io/docs/troubleshooting/could-not-locate-gemfile-or-bundle-directory/
 
+
+
+# refer
+
+https://github.com/jekyll/jekyll
+
+https://jekyllrb.com/philosophy
+
+https://jekyllrb.com/docs/troubleshooting/
+
+https://jekyllrb.com/docs/installation/
+
+https://jekyllrb.com/docs/installation/#ubuntu
+
+https://jekyllrb.com/docs/usage/
 
 
 
