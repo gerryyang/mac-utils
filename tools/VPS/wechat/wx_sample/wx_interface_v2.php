@@ -77,7 +77,7 @@ class wechatCallbackapiTest
 
 					// 返回一个文本消息
 					$msgType = "text";
-					$contentStr = "欢迎关注gerryyang，我会分享一些人文和技术内容。您可以回复m，查看关于此订阅号的信息，或者通过点击右上角图标 - 查看历史消息，或者查看我的Web存档：http://blog.csdn.net/delphiwcdj (目前使用开发者接口)";
+					$contentStr = "欢迎关注gerryyang，我会分享一些人文和技术内容。您可以回复m，查看关于此订阅号的信息，或者通过点击右上角图标 - 查看历史消息，或者查看我的Web存档：http://blog.csdn.net/delphiwcdj，或者论坛：gerryyang.com，和个人站点: gerryyang.com:8080 (目前使用开发者接口)";
 					$resultStr = sprintf($textTpl, $fromUsername, $toUsername, $time, $msgType, $contentStr);
 					echo $resultStr;
 				}
