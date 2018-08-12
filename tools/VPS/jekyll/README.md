@@ -86,10 +86,16 @@ The Minima theme gem contains these files:
      └── main.scss
 ```
 
+# Usage
+
+https://jekyllrb.com/docs/usage/
+
 
 # refer
 
 https://github.com/jekyll/jekyll
+
+https://jekyllrb.com/
 
 https://jekyllrb.com/philosophy
 
