@@ -12,7 +12,7 @@ Abstract
 0 git help
 ===
 
-'git help -a' and 'git help -g' lists available subcommands and some
+`git help -a` and `git help -g` lists available subcommands and some
 concept guides. See 'git help <command>' or 'git help <concept>'
 to read about a specific subcommand or concept.
 
@@ -20,6 +20,7 @@ to read about a specific subcommand or concept.
 1 Create a new repository on the command line
 ===
 
+```
 mkdir your_repo; cd your_repo
 
 touch README.md
@@ -37,7 +38,7 @@ git remote rm origin
 git remote add origin git@github.com:gerryyang/your_repo.git
 
 git push -u origin master
-
+```
 
 2 Useful git commands
 ===
@@ -105,7 +106,11 @@ git merge <branch-name>
 Auto-merging index.html
 CONFLICT (content): Merge conflict in index.html
 Automatic merge failed; fix conflicts and then commit the result.
-// Git作了合并，但没有提交，它会停下来等你解决冲突。要看看哪些文件在合并时发生冲突，可以用 git status 查阅
+```
+
+Git作了合并，但没有提交，它会停下来等你解决冲突。要看看哪些文件在合并时发生冲突，可以用 git status 查阅
+
+```
 git status
 On branch master
 You have unmerged paths.
