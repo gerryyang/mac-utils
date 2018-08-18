@@ -12,7 +12,7 @@ categories: jekyll update
 
 一般，本地事务可以通过数据库的本地事务(ACID)来保证。当事务A在操作数据且commit或rollback前，其他事务都不能看到事务A对数据的修改。
 
-![acid_lock_time]({{ "/assets/images/201808/acid_lock_time.png" }})
+![acid_lock_time](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/acid_lock_time.png)
 
 内部是通过**Two-Phase Commit**来保证的。
 
@@ -44,7 +44,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 
 可以考虑`compensation`(补偿)的方法。把每个操作都作为一个短的本地ACID事务，减少锁的时间。代价是牺牲了rollback的能力。而补偿(取消操作)需要根据具体的业务场景来实现。
 
-![compensation_lock_time]({{ "/assets/images/201808/compensation_lock_time.png" }})
+![compensation_lock_time](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/compensation_lock_time.png)
 
 通常，有两种不同的补偿方式：
 
