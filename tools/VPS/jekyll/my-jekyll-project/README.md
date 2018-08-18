@@ -32,3 +32,22 @@ git push
 # If you did stash any work above, reapply it 
 # now with "git stash pop"
 ```
+
+
+# TODO
+
+http://www.linux-kongress.org/2009/slides/compiler_survey_felix_von_leitner.pdf
+
+https://www.jianshu.com/p/dab1c0ecbac0
+
+http://www.bytesoft.org/tcc-intro/
+
+https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
+
+https://cs.brown.edu/courses/cs227/archives/2012/papers/weaker/cidr07p15.pdf
+
+https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
+
+http://www.infoq.com/cn/interviews/soa-chengli
+
+http://www.infoq.com/cn/news/2018/08/rocketmq-4.3-release
