@@ -63,9 +63,20 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 进一步思考：
 
 1. 如果补偿操作失败了，怎么办？
-2. 如果出现了通信失败，或者超时错误，如何方式重复请求？
+2. 如果出现了通信失败，或者超时错误，如何防止重复请求？
 
 考虑到事务的完整性，如果补偿操作失败了，一般借助消息服务进行重试，但是可能会出现重复请求，因此需要后端RM的接口根据当前请求的ID做到幂等。
+
+在实际编程中实现事务有哪些方法？
+
+[Java Transaction API (JTA)]提供了一套事务接口规范。
+
+```
+`JTA` is short for Sun Microsystems' Java Transaction API and is Sun's (low-level) API for creating transactions in Java and making your data access operations part of those transactions.
+
+The JTA defines how your application can request transactional functionality on the Java platform. **JTA is not a product in itself, but rather a set of Java interfaces.** A vendor-specific JTA implementation referred to as a transaction manager or transaction service (such as Transactions™) is needed to actually use the functionality
+defined in these interfaces. In other words, you can program JTA transactions in your application, but you need the implementation classes of a JTA-compliant transaction manager vendor in order to run your application.
+```
 
 
 
