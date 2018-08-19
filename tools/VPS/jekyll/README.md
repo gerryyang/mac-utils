@@ -109,6 +109,10 @@ https://jekyllrb.com/docs/usage/
 
 https://jekyllrb.com/docs/quickstart/
 
+[“授人以渔”的教你搭建个人独立博客](https://www.jianshu.com/p/8f843034c7ec)
+
+[在Github上搭建Jekyll博客和创建主题](http://yansu.org/2014/02/12/how-to-deploy-a-blog-on-github-by-jekyll.html)
+
 
 
 
