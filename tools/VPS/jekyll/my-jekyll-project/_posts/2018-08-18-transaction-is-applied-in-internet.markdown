@@ -6,6 +6,8 @@ categories: jekyll update
 ---
 工作中经常遇到一些场景需要对提供的服务保证事务和可靠。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。
 
+# 背景
+
 关于事务的概念：
 
 > A `transaction`(事务) is a logical unit of work which effects can either be made permanent in their entirety (committed) or cancelled in their entirety (rolled back). Before a transaction is committed or rolled back, it is active. Active transactions' effects are typically invisible to other, concurrent transactions. Consequently, only committed transactions' effects are visible.
@@ -65,9 +67,13 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 1. 如果补偿操作失败了，怎么办？
 2. 如果出现了通信失败，或者超时错误，如何防止重复请求？
 
-考虑到事务的完整性，如果补偿操作失败了，一般借助消息服务进行重试，但是可能会出现重复请求，因此需要后端RM的接口根据当前请求的ID做到幂等。
+考虑到事务的完整性，如果补偿操作失败了，一般借助消息服务进行重试(At-Least-Once Message)，但是可能会出现重复请求，因此需要后端RM的接口根据当前请求的ID做到幂等(idempotence)。
+
+# 实践
 
 在实际编程中实现事务有哪些方法？
+
+## JTA
 
 [Java Transaction API (JTA)]提供了一套事务接口规范。
 
@@ -78,13 +84,142 @@ The JTA defines how your application can request transactional functionality on 
 defined in these interfaces. In other words, you can program JTA transactions in your application, but you need the implementation classes of a JTA-compliant transaction manager vendor in order to run your application.
 ```
 
+## 本地事务
+
+可以用`START TRANSACTION`语句开始一个事务，然后要么使用`COMMIT`提交事务将修改的数据持久保留，要么使用`ROLLBACK`撤销所有的修改。
+
+{% highlight sql %}
+START TRANSACTION;
+SELECT balance FROM checking WHERE customer_id = 'gerry';
+UPDATE checking SET balance = balance - 200.00 WHERE customer_id = 'gerry';
+UPDATE savings SET balance = balance + 200.00 WHERE customer_id = 'gerry';
+COMMIT;
+{% endhighlight %}
+
+`ACID`表示原子性，一致性，隔离性和持久性。一个运行良好的事务处理系统，必须具备这些标准特征。事务的ACID特性可以确保银行不会弄丢你的钱。
+
+```
+1. 原子性（atomicity） 
+对于一个事务来说，不可能只执行其中一部分操作，这就是事务的原子性。
+2. 一致性（consistency） 
+数据库总是从一个一致性的状态转换到另外一个一致性的状态。
+3. 隔离性（isolation） 
+通常来说（根据不同的隔离级别），一个事务所做的修改在最终提交以前，对其他事务是不可见的。
+4. 持久性（durability） 
+一旦事务提交，则其所做的修改就会永久保存在数据库中。
+```
+
+在SQL标准中定义了`四种`隔离级别。每一种级别都规定了一个事务中所做的修改，哪些在事务内和事务间是可见的，哪些是不可见的。较低级别的隔离通常可以执行更高的并发，系统的开销也更低。每种存储引擎实现的隔离级别不尽相同，请查阅具体相关手册。
+
+```
+1. READ UNCOMMITTED（未提交读） 
+在此级别，事务中的修改即使没有提交，对其他事务也都是可见的，即，“赃读”。（实际应用中，很少使用）
+
+2. READ COMMITTED（提交读，不可重复读） 
+大多数数据的默认隔离级别都是此级别（但MySQL不是）。此级别满足隔离性的简单定义：一个事务开始时，只能看见已经提交的事务所做的修改（或者，一个事务从开始直到提交之前，所做的任何修改对其他事务都是不可见的）。此级别，也称为“不可重复读”，因为两次执行同样的查询，可能会得到不一样的结果。
+
+3. REPEATABLE READ（可重复读） 
+此级别保证了在同一个事务中，多次读取同样纪录的结果是一致的。此级别，是MySQL的默认事务隔离级别。
+
+4. SERIALIZABLE（可串行化） 
+此级别是最高的隔离级别。它通过强制事务串行执行，避免了“幻读”的问题。此级别，会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。（实际应用中也很少使用这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑使用此级别）
+```
+
+## X/Open XA
+
+[X/Open XA](e**X**tended **A**rchitecture)提出了一种**Distributed Transaction Processing (DTP)**处理分布式事务的模型。采用[Two-phase commit protocol]来保证，对多种资源(databases, application servers, message queues, transactional caches, etc.)操作时，具备数据库ACID的事务能力。
+
+![DTP](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/DTP.png)
+
+```
+**DTP**（Distributed Transaction Processing）systems are those where work in support of a
+single transaction may occur across RMs. This has several implications:
+* The system must have a way to refer to a transaction that encompasses all work
+done anywhere in the system. （知道每个子事务的状态）
+* The decision to commit or roll back a transaction must consider the status of work
+done anywhere on behalf of the transaction. The decision must have uniform effect
+throughout the DTP system.  （根据每个子事务的状态来决定commit还是rollback）
+```
+
+MySQL 5.0或更新版本的数据库已经开始支持XA事务。存储引擎的事务特性能够保证在存储引擎级别实现ACID。而XA分布式事务，可以让ACID扩展到多个数据库。实际上，在MySQL中有两种XA事务。
+
+1. 外部XA事务。
+2. 内部XA事务。协调存储引擎和二进制日志。详见High Performance MySQL 7.11.1章节介绍。
+
+注意：
+
+1. XA事务是一种在多个服务器之间同步数据的方法。如果由于某些原因不能使用MySQL本身的复制，或者性能并不是瓶颈的时候，可以尝试使用。
+2. 因为涉及网络通信延迟，外部XA事务比内部XA事务消耗更大，不稳定的网络通信或者用户长时间的等待而不提交，会导致所有参与者都在等待。因此，建议优先考虑其他更高性能的方案。
+3. innodb_support_xa 选项：控制MySQL内部存储引擎和二进制日志之间的分布式事务。
+
+MySQL XA事务状态变化：(详见[XA Transaction States])
+
+1. 使用`XA START`启动一个XA事务，并把它置为**ACTIVE状态**。
+2. 对一个ACTIVE XA事务，发布构成事务的SQL语句，然后发布一个`XA END`语句，`XA END`把事务置为**IDLE状态**。
+3. 对一个IDLE XA事务， 发布一个`XA PREPARE`语句。把事务置为**PREPARE状态**，此时XA RECOVER 语句的输出包含事务的xid值(XA RECOVER语句会列出所有处于PREPARE状态的XA事务)。 
+4. 对一个PREPARE XA事务，可以发布一个`XA COMMIT`语句来提交和终止事务，或者发布一个`XA ROLLBACK`来回滚并终止事务。
+
+使用MySQL XA的一个例子：
+
+{% highlight sql %}
+xa start xid;  // request for db1
+update db1.t_user_balance set balance = balance - 1 where user = 'Bob' and balance > 1;
+xa start xid;  // request for db2
+update db2.t_user_balance set balance = balance + 1 where user = 'John';
+xa prepare xid; // for db1
+xa prepare xid; // for db2
+
+do_other_something(); // db连接可以断开，此时可以做一些其他事情（比如rpc操作），然后再提交db事务
+
+// 如果do_other_something成功，可以提交之前的db事务
+xa commit xid; // for db1
+xa commit xid; // for db2
+
+// 如果do_other_something失败，需要回滚之前的db事务
+xa rollback xid; // for db1
+xa rollback xid; // for db2
+{% endhighlight %}
+
+思考1: MySQL默认是RR隔离级别，分布式事务场景下, 是否需要设置成串行化隔离级别？
+
+如果数据库不支持分布式MVCC，就有必要。否则可能RM1的本地事务提交了，RM2还没提交，这样外部就会读取到RM1已经提交的结果和RM2上未提交的结果，破坏了隔离性。
+
+{% highlight sql %}
+set session transaction isolation level SERIALIZABLE;
+{% endhighlight %}
+
+思考2：分布式事务的热点数据并发性能最高就是趋近于单机本地事务。所以无论是基于XA协议实现的分布式事务，还是单机本地事务，都是存在热点数据并发性能极限的。如何解决热点数据问题？
+
+1. 排队。把操作热点数据的请求排队，比如用单线程处理，避免版本号冲突或加锁问题。
+2. 异步。就是引入多个中间账户，扣费的时候操作中间账户，然后再异步把中间账户的数据同步到热点账户。
+
+## TCC
+
+PHelland在2007年发表的一篇文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，应该使用一种抽象的方法，应用层代码不应该关心底层扩展所带来的问题，并提出了一种`Performing Tentative(不确定的) Business Operations`方法(**Tentative Operations, Confirmation, and Cancellation**)，来解决分布式场景可能导致的不一致问题。
+
+![2007_scale_agnostic](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/2007_scale_agnostic.png)
+
+``` 
+To reach an agreement across entities, one entity has to ask another to accept some uncertainty. This is done by sending a message which requests a commitment but leaves open the possibility of cancellation. This is called a tentative operation and it represented by a message
+flowing between two entities. At the end of this step, one of the entities agrees to abide by the wishes of the other.
+```
+
+更多：[TryConfirmCancel]
 
 
-## Refer
+# 应用
+
+TODO
+
+
+# Refer
 
 1. [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]
 2. [Java Transaction API (JTA)]
-
+3. [Life beyond Distributed Transactions: an Apostate’s Opinion]
+4. [X/Open XA]
+5. [XA Transaction States]
+6. [Two-phase commit protocol]
 
 
 
@@ -92,3 +227,12 @@ defined in these interfaces. In other words, you can program JTA transactions in
 
 [Java Transaction API (JTA)]: http://www.oracle.com/technetwork/java/javaee/tech/jta-138684.html
 
+[Life beyond Distributed Transactions: an Apostate’s Opinion]: https://cs.brown.edu/courses/cs227/archives/2012/papers/weaker/cidr07p15.pdf
+
+[X/Open XA]: https://en.wikipedia.org/wiki/X/Open_XA
+
+[Two-phase commit protocol]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
+
+[XA Transaction States]: https://dev.mysql.com/doc/refman/5.7/en/xa-states.html
+
+[TryConfirmCancel]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
