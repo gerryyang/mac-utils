@@ -2,7 +2,7 @@
 layout: post
 title:  "事务在互联网场景中的应用"
 date:   2018-08-18 14:08:00 +0800
-categories: jekyll update
+categories: tech
 ---
 工作中经常遇到一些场景需要对提供的服务保证事务和可靠。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。
 
@@ -162,22 +162,22 @@ MySQL XA事务状态变化：(详见[XA Transaction States])
 使用MySQL XA的一个例子：
 
 {% highlight sql %}
-xa start xid;  // request for db1
+xa start xid;  # for db1
 update db1.t_user_balance set balance = balance - 1 where user = 'Bob' and balance > 1;
-xa start xid;  // request for db2
+xa start xid;  # for db2
 update db2.t_user_balance set balance = balance + 1 where user = 'John';
-xa prepare xid; // for db1
-xa prepare xid; // for db2
+xa prepare xid; # for db1
+xa prepare xid; # for db2
 
-do_other_something(); // db连接可以断开，此时可以做一些其他事情（比如rpc操作），然后再提交db事务
+do_other_something(); # db连接可以断开，此时可以做一些其他事情（比如rpc操作），然后再提交db事务
 
-// 如果do_other_something成功，可以提交之前的db事务
-xa commit xid; // for db1
-xa commit xid; // for db2
+# 如果do_other_something成功，可以提交之前的db事务
+xa commit xid; # for db1
+xa commit xid; # for db2
 
-// 如果do_other_something失败，需要回滚之前的db事务
-xa rollback xid; // for db1
-xa rollback xid; // for db2
+# 如果do_other_something失败，需要回滚之前的db事务
+xa rollback xid; # for db1
+xa rollback xid; # for db2
 {% endhighlight %}
 
 思考1: MySQL默认是RR隔离级别，分布式事务场景下, 是否需要设置成串行化隔离级别？
