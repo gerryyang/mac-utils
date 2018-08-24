@@ -129,7 +129,7 @@ COMMIT;
 
 ## X/Open XA
 
-[X/Open XA](e**X**tended **A**rchitecture)提出了一种**Distributed Transaction Processing (DTP)**处理分布式事务的模型。采用[Two-phase commit protocol]来保证，对多种资源(databases, application servers, message queues, transactional caches, etc.)操作时，具备数据库ACID的事务能力。
+[X/Open XA]，`XA`是e**X**tended **A**rchitecture的简称，提出了一种**Distributed Transaction Processing (DTP)**处理分布式事务的模型。采用[Two-phase commit protocol]来保证，对多种资源(databases, application servers, message queues, transactional caches, etc.)操作时，具备数据库ACID的事务能力。
 
 ![DTP](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/DTP.png)
 
@@ -258,7 +258,12 @@ TODO
 5. [X/Open XA]
 6. [XA Transaction States]
 7. [Two-phase commit protocol]
-
+8. [分布式事务解决方案与适用场景分析]
+9. [Tentative Operation]
+10. [Lease]
+11. [REST]
+12. [CompensatingAction]
+13. [程立谈大规模SOA系统]
 
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
@@ -271,16 +276,18 @@ TODO
 
 [X/Open XA]: https://en.wikipedia.org/wiki/X/Open_XA
 
-[Two-phase commit protocol]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
-
 [XA Transaction States]: https://dev.mysql.com/doc/refman/5.7/en/xa-states.html
 
-[Tentative Operation]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
+[Two-phase commit protocol]: https://en.wikipedia.org/wiki/Two-phase_commit_protocol
 
 [分布式事务解决方案与适用场景分析]: https://zhuanlan.zhihu.com/p/34232350
+
+[Tentative Operation]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
 
 [Lease]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/Lease.html
 
 [REST]: http://www.amazon.com/exec/obidos/ASIN/1441983023/enterpriseint-20
 
 [CompensatingAction]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/CompensatingAction.html
+
+[程立谈大规模SOA系统]: http://www.infoq.com/cn/interviews/soa-chengli
