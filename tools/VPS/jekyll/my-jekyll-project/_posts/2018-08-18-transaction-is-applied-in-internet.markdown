@@ -37,6 +37,8 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 1. 小Q需承担在A网站预定的机票钱。
 2. 在网站A预定机票的座位没有及时售卖出去，航空公司承担经济损失。
 
+> PS: 在实际场景中，如果用户没有及时退票(cancel)，通常会根据退票的时间需要承担相应的罚金(penalties)。就像在12306上购买火车票，如果退票在开车时间前15天，不收取退票费，48小时以上的按票价5%计，24小时以上且不足48小时按票价10%计，不足24小时的按票价20%计。
+
 是否有一种方法可以保证小Q在预定机票时类似像本地事务(ACID)提交一样，就可以避免或减轻上述问题。但是还需要具备：
 
 1. 网站A在预定机票成功后，具备实时退票的能力，而不是通过人工介入。
@@ -162,22 +164,22 @@ MySQL XA事务状态变化：(详见[XA Transaction States])
 使用MySQL XA的一个例子：
 
 {% highlight sql %}
-xa start xid;  # for db1
+xa start xid;  -- for db1
 update db1.t_user_balance set balance = balance - 1 where user = 'Bob' and balance > 1;
-xa start xid;  # for db2
+xa start xid;  -- for db2
 update db2.t_user_balance set balance = balance + 1 where user = 'John';
-xa prepare xid; # for db1
-xa prepare xid; # for db2
+xa prepare xid; -- for db1
+xa prepare xid; -- for db2
 
-do_other_something(); # db连接可以断开，此时可以做一些其他事情（比如rpc操作），然后再提交db事务
+do_other_something(); -- db连接可以断开，此时可以做一些其他事情（比如rpc操作），然后再提交db事务
 
-# 如果do_other_something成功，可以提交之前的db事务
-xa commit xid; # for db1
-xa commit xid; # for db2
+-- 如果do_other_something成功，可以提交之前的db事务
+xa commit xid; -- for db1
+xa commit xid; -- for db2
 
-# 如果do_other_something失败，需要回滚之前的db事务
-xa rollback xid; # for db1
-xa rollback xid; # for db2
+-- 如果do_other_something失败，需要回滚之前的db事务
+xa rollback xid; -- for db1
+xa rollback xid; -- for db2
 {% endhighlight %}
 
 思考1: MySQL默认是RR隔离级别，分布式事务场景下, 是否需要设置成串行化隔离级别？
@@ -195,7 +197,9 @@ set session transaction isolation level SERIALIZABLE;
 
 ## TCC
 
-PHelland在2007年发表的一篇文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，应该使用一种抽象的方法，应用层代码不应该关心底层扩展所带来的问题，并提出了一种`Performing Tentative(不确定的) Business Operations`方法(**Tentative Operations, Confirmation, and Cancellation**)，来解决分布式场景可能导致的不一致问题。
+`Tentative Operation`也称为`Try-Confirm-Cancel`，最早由[Atomikos]提出。 
+
+Pat helland在2007年也发表了一篇相同观点的文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，业务层不应该关心底层扩展所带来的问题，应该由统一的平台或者框架来屏蔽底层扩展所带来的差异。并提出了一种`Performing Tentative(不确定的) Business Operations`处理流程(**workflow**)(**Tentative Operations, Confirmation, and Cancellation**)，来减少分布式场景可能导致的不一致(**uncertainty**)问题。
 
 ![2007_scale_agnostic](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/2007_scale_agnostic.png)
 
@@ -204,8 +208,41 @@ To reach an agreement across entities, one entity has to ask another to accept s
 flowing between two entities. At the end of this step, one of the entities agrees to abide by the wishes of the other.
 ```
 
-更多：[TryConfirmCancel]
+在蚂蚁金服的[分布式事务解决方案与适用场景分析]一文中，也对`TCC`模型进行了介绍。
 
+```
+TCC 分布式事务模型直接作用于服务层。不与具体的服务框架耦合，与底层 RPC 协议无关，与底层存储介质无关，可以灵活选择业务资源的锁定粒度，减少资源锁持有时间，可扩展性好，可以说是为独立部署的 SOA 服务而设计的。
+```
+
+文中认为`TCC`有**两个主要优势**：
+
+* 跨服务的分布式事务。这一部分的作用与 XA 类似，服务的拆分。
+* 两阶段拆分。就是把两阶段拆分成了**两个独立的阶段**，通过**资源业务锁定的方式进行关联**。资源业务锁定方式的好处在于，既不会阻塞其他事务在第一阶段对于相同资源的继续使用，也不会影响本事务第二阶段的正确执行。
+
+
+[Tentative Operation]文中也对`How can a requestor ensure a consistent outcome across multiple, independent providers?`的问题进行了讨论。
+
+```
+* The communication channels used by loosely coupled, distributed systems usually do not provide transactional semantics at the transport level. Instead, participants can send and receive message, often reliably.
+* While some operations are inherently reversible, e.g. debiting a bank account after a credit, other operations, such as shipping a package or scrapping a car cannot easily be undone. As a result, the requestor might not be able to do much to rectify the situation.
+* Distributed conversations typically involve uncertainty: a participant cannot be certain that a conversation partner continues in the conversation or even exist after the last interaction. Participants should therefore allocate resources cautiously.
+```
+
+![requestor_provider](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/requestor_provider.png)
+
+`Tentative Operation`有两种处理模型：
+
+1. 显式的`cancellation`操作，例如，直到收到取消操作。
+2. 隐式的`cancellation`操作，例如，超时自动取消。此方式类似[Lease]，只不过仅需要一次确认，没有周期的`renewal`。
+
+通过`Tentative Operation`的三种状态[REST]，可以帮助进一步理解这两种处理模型。
+
+1. 如果`Confirm`操作不会失败，则需要显式的`Cancel`操作。此种模型属于**补偿模型**，另见[CompensatingAction]。
+2. 如果`Confirm`操作可能失败，则需要显式的`Confirm`操作。
+
+![tcc_state](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/tcc_state.png)
+
+ 
 
 # 应用
 
@@ -216,16 +253,19 @@ TODO
 
 1. [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]
 2. [Java Transaction API (JTA)]
-3. [Life beyond Distributed Transactions: an Apostate’s Opinion]
-4. [X/Open XA]
-5. [XA Transaction States]
-6. [Two-phase commit protocol]
+3. [Atomikos]
+4. [Life beyond Distributed Transactions: an Apostate’s Opinion]
+5. [X/Open XA]
+6. [XA Transaction States]
+7. [Two-phase commit protocol]
 
 
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
 [Java Transaction API (JTA)]: http://www.oracle.com/technetwork/java/javaee/tech/jta-138684.html
+
+[Atomikos]: http://www.atomikos.com/Publications/TryCancelConfirm
 
 [Life beyond Distributed Transactions: an Apostate’s Opinion]: https://cs.brown.edu/courses/cs227/archives/2012/papers/weaker/cidr07p15.pdf
 
@@ -235,4 +275,12 @@ TODO
 
 [XA Transaction States]: https://dev.mysql.com/doc/refman/5.7/en/xa-states.html
 
-[TryConfirmCancel]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
+[Tentative Operation]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCancel.html
+
+[分布式事务解决方案与适用场景分析]: https://zhuanlan.zhihu.com/p/34232350
+
+[Lease]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/Lease.html
+
+[REST]: http://www.amazon.com/exec/obidos/ASIN/1441983023/enterpriseint-20
+
+[CompensatingAction]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/CompensatingAction.html

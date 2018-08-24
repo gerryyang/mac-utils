@@ -51,3 +51,6 @@ https://www.enterpriseintegrationpatterns.com/patterns/conversation/TryConfirmCa
 http://www.infoq.com/cn/interviews/soa-chengli
 
 http://www.infoq.com/cn/news/2018/08/rocketmq-4.3-release
+
+
+http://gmssl.org/
