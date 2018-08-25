@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "一致性在互联网场景中的应用"
+title:  "一致性算法在互联网场景中的应用"
 date:   2018-08-25 23:30:00 +0800
 categories: tech
 ---
@@ -52,6 +52,8 @@ categories: tech
 
 
 # Refer
+
+1. [分布式系统的事务处理]
 
 
 

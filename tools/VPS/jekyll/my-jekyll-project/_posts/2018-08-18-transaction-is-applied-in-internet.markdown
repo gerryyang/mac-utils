@@ -274,23 +274,26 @@ GTS(Global Transaction Service)在2017年3月开始在阿里云上公测。主�
 
 关于GTS的几个问题：
 
-1. GTS支持两种隔离级别，读未提交(RU)和读已提交(RC)。RU相比RC有明显性能优势，因此作为默认的隔离级别，但是RU对业务的影响大吗？
+问题1：GTS支持两种隔离级别，读未提交(RU)和读已提交(RC)。RU相比RC有明显性能优势，因此作为默认的隔离级别，但是RU对业务的影响大吗？
 
 RU -> 脏读 -> 会影响业务，导致应用逻辑并发处理不当。解决方法是：
 
 {% highlight sql %}
 select value from table where id = 'gerry' for update;
 update table set value = value - 100 where id = 'gerry';
-{% endlight %}
+{% endhighlight %}
 
-2. GTS什么场景下不能保证数据的一致性？
+问题2：GTS什么场景下不能保证数据的一致性？
 
 当用户用GTS事务操作数据时，同时并发用非GTS方式更改同一行数据，会影响数据一致性。因为，GTS阻止不了别的方式写数据，使用方需要按规则出牌，如果真需要混用，需要通过时间差的方式来防止冲突。
 
-3. GTS目前支持哪些资源？
+问题3：GTS目前支持哪些资源？
 
 DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 
+问题4：`强一致`和`隔离性`没有必然的联系。
+
+强一致性是新的数据一旦写入，在任意副本任意时刻都能读到新值。
 
 
 
