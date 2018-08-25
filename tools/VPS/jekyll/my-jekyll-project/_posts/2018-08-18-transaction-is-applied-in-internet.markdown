@@ -4,7 +4,12 @@ title:  "事务在互联网场景中的应用"
 date:   2018-08-18 14:08:00 +0800
 categories: tech
 ---
-工作中经常遇到一些场景需要对提供的服务保证事务和可靠。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。
+工作中经常遇到一些场景需要对提供的服务保证事务能力。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。事务的核心是`锁`，在`并发`的场景下如何协调好不同的资源。同时，事务(锁)和性能是两个相悖的特性，因此通常对事务的调优原则(在不影响业务的前提下)包括。
+
+1. 尽可能减少锁的覆盖范围。例如，MyISAM表锁到Innodb的行锁。
+2. 增加锁上可并行的线程数。例如，读锁和写锁分离，允许并行读取数据。
+3. 选择正确的锁类型。例如，悲观锁适合并发争抢比较严重的场景，乐观锁适合并发争抢不太严重的场景。
+
 
 # 背景
 
@@ -30,7 +35,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 	- If at least one reply is negative (or missing) then a rollback decision is sent to the remaining resource. This means that the remaining resource cancels (rolls back) the work done for the transaction.
 ```
 
-但是，当出现多个不同的本地事务时，如何保证一致性？
+但是，当出现**多个不同的本地事务**时，如何保证一致性？
 
 例如，小Q想去国外旅游，需要在两个不同的网站上预定机票。在A网站预定从北京到深圳的机票，再在B网站预定深圳到国外的机票。如果小Q在预定B网站机票时失败了，就必须取消已经在A网站预定的机票。如果没有及时取消就会发生：
 
@@ -86,9 +91,9 @@ The JTA defines how your application can request transactional functionality on 
 defined in these interfaces. In other words, you can program JTA transactions in your application, but you need the implementation classes of a JTA-compliant transaction manager vendor in order to run your application.
 ```
 
-## 本地事务
+## 数据库事务
 
-可以用`START TRANSACTION`语句开始一个事务，然后要么使用`COMMIT`提交事务将修改的数据持久保留，要么使用`ROLLBACK`撤销所有的修改。
+以MySQL为例。可以用`START TRANSACTION`语句开始一个事务，然后要么使用`COMMIT`提交事务将修改的数据持久保留，要么使用`ROLLBACK`撤销所有的修改。
 
 {% highlight sql %}
 START TRANSACTION;
@@ -143,23 +148,36 @@ done anywhere on behalf of the transaction. The decision must have uniform effec
 throughout the DTP system.  （根据每个子事务的状态来决定commit还是rollback）
 ```
 
+## MySQL XA
+
 MySQL 5.0或更新版本的数据库已经开始支持XA事务。存储引擎的事务特性能够保证在存储引擎级别实现ACID。而XA分布式事务，可以让ACID扩展到多个数据库。实际上，在MySQL中有两种XA事务。
 
-1. 外部XA事务。
-2. 内部XA事务。协调存储引擎和二进制日志。详见High Performance MySQL 7.11.1章节介绍。
+1. 外部XA事务。跨多MySQL实例的分布式事务，需要应用层介入作为协调者。
+2. 内部XA事务。同一MySQL实例下跨多个引擎的事务，例如，协调存储引擎和二进制日志。详见High Performance MySQL 7.11.1章节介绍。
 
 注意：
 
 1. XA事务是一种在多个服务器之间同步数据的方法。如果由于某些原因不能使用MySQL本身的复制，或者性能并不是瓶颈的时候，可以尝试使用。
 2. 因为涉及网络通信延迟，外部XA事务比内部XA事务消耗更大，不稳定的网络通信或者用户长时间的等待而不提交，会导致所有参与者都在等待。因此，建议优先考虑其他更高性能的方案。
-3. innodb_support_xa 选项：控制MySQL内部存储引擎和二进制日志之间的分布式事务。
+3. `innodb_support_xa` 选项：控制MySQL内部存储引擎和二进制日志之间的分布式事务。
 
-MySQL XA事务状态变化：(详见[XA Transaction States])
+MySQL XA**事务状态**变化：(详见[XA Transaction States])
 
 1. 使用`XA START`启动一个XA事务，并把它置为**ACTIVE状态**。
 2. 对一个ACTIVE XA事务，发布构成事务的SQL语句，然后发布一个`XA END`语句，`XA END`把事务置为**IDLE状态**。
 3. 对一个IDLE XA事务， 发布一个`XA PREPARE`语句。把事务置为**PREPARE状态**，此时XA RECOVER 语句的输出包含事务的xid值(XA RECOVER语句会列出所有处于PREPARE状态的XA事务)。 
 4. 对一个PREPARE XA事务，可以发布一个`XA COMMIT`语句来提交和终止事务，或者发布一个`XA ROLLBACK`来回滚并终止事务。
+
+下面是`XA Transaction SQL Syntax`的一些用法，其中`xid`，即全局唯一事务ID通常是由`Transaction Manager`生成。
+
+{% highlight sql %}
+XA START | BEGIN xid;
+XA END xid;
+XA PREPARE xid;
+XA COMMIT xid;
+XA ROLLBACK xid;
+XA RECOVER;         -- 显示PREPARED状态的事务
+{% endhighlight %}
 
 使用MySQL XA的一个例子：
 
@@ -199,7 +217,7 @@ set session transaction isolation level SERIALIZABLE;
 
 `Tentative Operation`也称为`Try-Confirm-Cancel`，最早由[Atomikos]提出。 
 
-Pat helland在2007年也发表了一篇相同观点的文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，业务层不应该关心底层扩展所带来的问题，应该由统一的平台或者框架来屏蔽底层扩展所带来的差异。并提出了一种`Performing Tentative(不确定的) Business Operations`处理流程(**workflow**)(**Tentative Operations, Confirmation, and Cancellation**)，来减少分布式场景可能导致的不一致(**uncertainty**)问题。
+Pat helland在2007年也发表了一篇相同观点的文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，业务层不应该关心底层扩展所带来的问题，应该由统一的平台或者框架来屏蔽底层扩展所带来的差异。并提出了一种`Performing Tentative(不确定的) Business Operations`处理流程(**workflow**)，即`TCC流程`(**Tentative Operations, Confirmation, and Cancellation**)，来减少分布式场景可能导致的不一致(**uncertainty**)问题。
 
 ![2007_scale_agnostic](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/2007_scale_agnostic.png)
 
@@ -207,6 +225,28 @@ Pat helland在2007年也发表了一篇相同观点的文章[Life beyond Distrib
 To reach an agreement across entities, one entity has to ask another to accept some uncertainty. This is done by sending a message which requests a commitment but leaves open the possibility of cancellation. This is called a tentative operation and it represented by a message
 flowing between two entities. At the end of this step, one of the entities agrees to abide by the wishes of the other.
 ```
+
+[Tentative Operation]进一步对`TCC`的定义进行了说明。对`How can a requestor ensure a consistent outcome across multiple, independent providers?`的问题进行了讨论。
+
+```
+* The communication channels used by loosely coupled, distributed systems usually do not provide transactional semantics at the transport level. Instead, participants can send and receive message, often reliably.
+* While some operations are inherently reversible, e.g. debiting a bank account after a credit, other operations, such as shipping a package or scrapping a car cannot easily be undone. As a result, the requestor might not be able to do much to rectify the situation.
+* Distributed conversations typically involve uncertainty: a participant cannot be certain that a conversation partner continues in the conversation or even exist after the last interaction. Participants should therefore allocate resources cautiously.
+```
+
+![requestor_provider](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/requestor_provider.png)
+
+`Tentative Operation`有两种处理模型：
+
+1. 显式的`cancellation`操作，例如，直到收到取消操作。
+2. 隐式的`cancellation`操作，例如，超时则自动取消。此方式类似[Lease]，只不过仅需要一次确认，没有周期的`renewal`。
+
+通过`Tentative Operation`的三种状态[REST]，可以帮助进一步理解这两种处理模型。
+
+1. 如果`Confirm`操作不会失败，则需要显式的`Cancel`操作。此种模型属于**补偿模型**，另见[CompensatingAction]。
+2. 如果`Confirm`操作可能失败，则需要显式的`Confirm`操作。
+
+![tcc_state](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/tcc_state.png)
 
 在蚂蚁金服的[分布式事务解决方案与适用场景分析]一文中，也对`TCC`模型进行了介绍。
 
@@ -220,33 +260,38 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 * 两阶段拆分。就是把两阶段拆分成了**两个独立的阶段**，通过**资源业务锁定的方式进行关联**。资源业务锁定方式的好处在于，既不会阻塞其他事务在第一阶段对于相同资源的继续使用，也不会影响本事务第二阶段的正确执行。
 
 
-[Tentative Operation]文中也对`How can a requestor ensure a consistent outcome across multiple, independent providers?`的问题进行了讨论。
-
-```
-* The communication channels used by loosely coupled, distributed systems usually do not provide transactional semantics at the transport level. Instead, participants can send and receive message, often reliably.
-* While some operations are inherently reversible, e.g. debiting a bank account after a credit, other operations, such as shipping a package or scrapping a car cannot easily be undone. As a result, the requestor might not be able to do much to rectify the situation.
-* Distributed conversations typically involve uncertainty: a participant cannot be certain that a conversation partner continues in the conversation or even exist after the last interaction. Participants should therefore allocate resources cautiously.
-```
-
-![requestor_provider](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/requestor_provider.png)
-
-`Tentative Operation`有两种处理模型：
-
-1. 显式的`cancellation`操作，例如，直到收到取消操作。
-2. 隐式的`cancellation`操作，例如，超时自动取消。此方式类似[Lease]，只不过仅需要一次确认，没有周期的`renewal`。
-
-通过`Tentative Operation`的三种状态[REST]，可以帮助进一步理解这两种处理模型。
-
-1. 如果`Confirm`操作不会失败，则需要显式的`Cancel`操作。此种模型属于**补偿模型**，另见[CompensatingAction]。
-2. 如果`Confirm`操作可能失败，则需要显式的`Confirm`操作。
-
-![tcc_state](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/tcc_state.png)
-
- 
-
 # 应用
 
-TODO
+目前在工程上，关于处理事务问题的一些产品介绍。
+
+## 全局事务服务GTS
+
+GTS(Global Transaction Service)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
+
+1. 高性能(XA有性能问题)。
+2. 易用性(减少入侵)。
+3. 强一致(最终一致业务受限多)。 
+
+关于GTS的几个问题：
+
+1. GTS支持两种隔离级别，读未提交(RU)和读已提交(RC)。RU相比RC有明显性能优势，因此作为默认的隔离级别，但是RU对业务的影响大吗？
+
+RU -> 脏读 -> 会影响业务，导致应用逻辑并发处理不当。解决方法是：
+
+{% highlight sql %}
+select value from table where id = 'gerry' for update;
+update table set value = value - 100 where id = 'gerry';
+{% endlight %}
+
+2. GTS什么场景下不能保证数据的一致性？
+
+当用户用GTS事务操作数据时，同时并发用非GTS方式更改同一行数据，会影响数据一致性。因为，GTS阻止不了别的方式写数据，使用方需要按规则出牌，如果真需要混用，需要通过时间差的方式来防止冲突。
+
+3. GTS目前支持哪些资源？
+
+DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
+
+
 
 
 # Refer
@@ -258,8 +303,8 @@ TODO
 5. [X/Open XA]
 6. [XA Transaction States]
 7. [Two-phase commit protocol]
-8. [分布式事务解决方案与适用场景分析]
-9. [Tentative Operation]
+8. [Tentative Operation]
+9. [分布式事务解决方案与适用场景分析]
 10. [Lease]
 11. [REST]
 12. [CompensatingAction]
