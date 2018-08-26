@@ -251,13 +251,35 @@ flowing between two entities. At the end of this step, one of the entities agree
 在蚂蚁金服的[分布式事务解决方案与适用场景分析]一文中，也对`TCC`模型进行了介绍。
 
 ```
-TCC 分布式事务模型直接作用于服务层。不与具体的服务框架耦合，与底层 RPC 协议无关，与底层存储介质无关，可以灵活选择业务资源的锁定粒度，减少资源锁持有时间，可扩展性好，可以说是为独立部署的 SOA 服务而设计的。
+TCC 分布式事务模型直接作用于服务层。不与具体的服务框架耦合，与底层 RPC 协议无关，与底层存储介质无关，可以灵活选择业务资源的锁定粒度，减少资源锁持有时间，可扩展性好，可以说是为独立部署的 `SOA`(Service-Oriented Architecture) 服务而设计的。
 ```
 
 文中认为`TCC`有**两个主要优势**：
 
 * 跨服务的分布式事务。这一部分的作用与 XA 类似，服务的拆分。
 * 两阶段拆分。就是把两阶段拆分成了**两个独立的阶段**，通过**资源业务锁定的方式进行关联**。资源业务锁定方式的好处在于，既不会阻塞其他事务在第一阶段对于相同资源的继续使用，也不会影响本事务第二阶段的正确执行。
+
+
+在[程立谈大规模SOA系统]一文中，支付宝公司的首席架构师程立，在讲交易平台如何支持事务的方案时也提到了`TCC`处理模式。有几个观点：
+
+1. 参考Ebay的最佳实践，在满足业务需求的情况下，允许有不一致的情况出现。
+2. 关于事务的ACID哪些是必须保证，哪些是可以放宽的。AID是必须保证的。这样，没有隔离性的补偿方案就被排除掉了。
+3. 设计了一套支付宝分布式事务方案，在数据库操作这个层次我们建立transaction，账务处理是一种TCC模式，任何一个账户处理你可以try它，最后可以confirm或者cancel它。在这个过程中，有TCC基础支持的话，结合中央事务协调器，我们就可以做分布式服务，而且可以是多层次的，任何一个服务都可以做在事务里面。
+
+一个SOA应用由一系列服务松散复合而成。
+
+![soa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/soa.png)
+
+程立在2009年8月的北京IT168系统架构师大会上，关于[面向生产环境的SOA系统设计]的分享里，提出了两种分布式事务处理模式：
+
+> 基于TCC模式的分布事务
+
+![taobao_tcc](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/taobao_tcc.png)
+
+> 基于补偿模式的分布式事务
+
+![taobao_compensation](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/taobao_compensation.png)
+
 
 
 # 应用
@@ -339,3 +361,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [CompensatingAction]: https://www.enterpriseintegrationpatterns.com/patterns/conversation/CompensatingAction.html
 
 [程立谈大规模SOA系统]: http://www.infoq.com/cn/interviews/soa-chengli
+
+[面向生产环境的SOA系统设计]: https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/面向生产环境的SOA系统设计.ppt
