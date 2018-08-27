@@ -56,3 +56,17 @@ http://www.infoq.com/cn/news/2018/08/rocketmq-4.3-release
 http://gmssl.org/
 
 
+动态库和静态库，mv，为什么会core
+
+gcc -g -shared -Wl,-soname,libfunc_wrap.so.0 -o libfunc_wrap.so.0.0 libfunc_wrap.o -lc -L./ -lfunc-static
+/usr/bin/ld: .//libfunc-static.a(libfunc-static.o): relocation R_X86_64_32 against `.rodata' can not be used when making a shared object; recompile with -fPIC
+.//libfunc-static.a: could not read symbols: Bad value
+collect2: error: ld returned 1 exit status
+
+https://stackoverflow.com/questions/19364969/compilation-fails-with-relocation-r-x86-64-32-against-rodata-str1-8-can-not
+http://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#Code-Gen-Options
+https://en.wikipedia.org/wiki/Position-independent_code
+
+https://stackoverflow.com/questions/9637551/relocation-r-x86-64-32s-against-rodata-while-compiling-on-64-bit-platform?rq=1
+https://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html
+
