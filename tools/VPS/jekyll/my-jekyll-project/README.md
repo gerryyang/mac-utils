@@ -70,3 +70,4 @@ https://en.wikipedia.org/wiki/Position-independent_code
 https://stackoverflow.com/questions/9637551/relocation-r-x86-64-32s-against-rodata-while-compiling-on-64-bit-platform?rq=1
 https://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html
 
+https://zhuanlan.zhihu.com/p/32684212
