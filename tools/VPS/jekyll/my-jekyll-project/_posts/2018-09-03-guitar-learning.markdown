@@ -4,7 +4,7 @@ title:  "guitar学习"
 date:   2018-09-03 22:00:00 +0800
 categories: life
 ---
-参加了一个公司组织的guitar初级学习班(第20期)，目的是给繁忙枯燥的生活添加一些色彩。课程总共16节。
+参加了公司组织的guitar初级学习班(第20期)，目的是给繁忙枯燥的生活添加一些色彩。课程总共16节。
 
 * 前4节，主要学习右手如何拨弦，据说是最枯燥的阶段。
 * 5-7节，练习一首曲子，小星星。
@@ -39,7 +39,7 @@ categories: life
 * 六弦 <- 一弦 (从**最细**的弦开始)
 * 一品 -> xxx 品 (从上往下)
 
-![guitar_struct](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/guitar_struct.png)
+![guitar_struct](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/guitar_struct.gif)
 
 吉他的选择：
 
