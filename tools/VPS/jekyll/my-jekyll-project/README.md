@@ -71,3 +71,7 @@ https://stackoverflow.com/questions/9637551/relocation-r-x86-64-32s-against-roda
 https://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html
 
 https://zhuanlan.zhihu.com/p/32684212
+
+
+
+https://github.com/scylladb/seastar
