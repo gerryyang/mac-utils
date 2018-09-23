@@ -83,10 +83,148 @@ std::cout << testClass<int>::_z << std::endl;
 任何迭代器都必须实现`increment, operator++`和取值`dereference, operator*`的功能。前者还分为`前置式prefix`和`后置式postfix`两种，有非常规律的写法。有些迭代器具备双向移动功能，就必须再提供`decrement`，也分前置式和后置式两种。
 
 {% highlight cpp %} 
-// TODO
+class INT
+{
+    friend std::ostream& operator<<(std::ostream& os, const INT& i);
+
+public:
+    INT(int i) ： m_i(i) { };
+
+    // prefix: increment and then fetch
+    INT& operator++()
+    {
+        ++m_i;   // 随着class的不同，该行应该有不同的操作
+        return *this;
+    }
+
+    // postfix: fetch and then increment
+    const INT operator++(int)
+    {
+        INT temp = *this;
+        ++(*this);
+        return temp;
+    }
+
+    // prefix： decrement and then fetch
+    INT& operator--()
+    {
+        --(m_i);   // 随着class的不同，该行应该有不同的操作
+        return *this;
+    }
+
+    // postfix: fetch and then decrement
+    const INT operator--(int)
+    {
+        INT temp = *this;
+        --(*this);
+        return temp;
+    }
+
+    // dereference
+    int& operator*() const
+    {
+        return (int&)m_i;// 以上转换告诉编译器，你确实要将const int转为non-const lvalue
+                         // 如果没有转型，有些编译器会告警甚至视为错误
+    }
+
+private:
+    int m_i;
+
+};
+
+std::ostream& operator<<(std::ostream& os, const INT& i)
+{
+    os << '[' << i.m_i << ']';
+    return os;
+}
+
+// main.cpp
+INT i_obj(5);
+std::cout << i_obj++;
+std::cout << ++i_obj;
+std::cout << i_obj--;
+std::cout << --i_obj;
+std::cout << *i_obj;
 {% endhighlight %}
 
+# 语法4 - 前闭后开区间表示法 [)
 
+任何一个STL算法，都需要获得由一对迭代器(泛型指针)所标示的区间，用以表示操作范围。这一对迭代器所表示的是所谓的`前闭后开`区间，以`[first, last)`表示。也就是，整个实际范围从first开始，直到last-1。**迭代器last表示：最后一个元素的下一个位置**。
+
+> 1. 这种`off by one`或者`pass the end`的标示法，带来了许多方便。
+> 2. 前闭后开区间，元素之间无需占用连续内存空间。
+
+{% highlight cpp %} 
+template<class InputIterator, class T>
+InputIterator find(InputIterator first, InputIterator last, const T& value)
+{
+    while (first != last && *first != value) ++first;
+    return first;
+}
+
+template<class InputIterator, class Function>
+Function for_each(InputIterator first, InputIterator last, Function f)
+{
+    for (; first != last; ++first)
+        f(*first);
+    return f;
+}
+{% endhighlight %}
+
+# 语法5 - function call 操作符 operator()
+
+函数调用操作`()`也可以被重载。过去C语言时代，欲将函数当做参数传递，唯有通过`函数指针`才能达成。
+
+{% highlight cpp %} 
+int fcmp(const void* elem1, const void* elem2)
+{
+    const int* i1 = (const int*)elem1;
+    const int* i2 = (const int*)elem2;
+
+    if (* i1 < *i2) return -1;
+    else if (*i1 == *i2) return 0;
+    else if (*i1 > *i2) return 1;
+}
+
+int ia[10] = {2, 4, 1, 3, 8, 5, 4, 6, 7};
+for (int i = 0; i < 10; i++)
+    std::cout << ia[i] << " ";
+qsort(ia, sizeof(ia)/sizeof(int), sizeof(int), util::fcmp);
+for (int i = 0; i < 10; i++)
+    std::cout << ia[i] << " ";
+{% endhighlight %}
+
+但是，函数指针有缺点：它无法持有自己的状态，也无法达到组件技术中的可适配性(adaptability)，即无法再将某些修饰条件加诸于其上而改变其状态。
+
+为此，STL算法的特殊版本所接受的所谓`条件`，或`策略`，或`一整组操作`，都以**仿函数**形式呈现。
+
+> 所谓仿函数(functor)，就是使用起来像函数一样的东西，如果你针对某个class进行operator()重载，它就成为一个仿函数。至于要成为一个可配接的仿函数，还需要做一些额外的努力。
+
+{% highlight cpp %} 
+// 由于将operator()重载了，因此plus成了一个仿函数
+template <class T>
+struct plus 
+{
+    T operator()(const T& x, const T& y) const { return x + y; }
+};
+
+// 由于将operator()重载了，因此minus成了一个仿函数
+template <class T>
+struct minus
+{
+    T operator()(const T& x, const T& y) const { return x - y; }
+};
+
+plus<int> plus_obj;    // 仿函数对象
+minus<int> minus_obj;  // 仿函数对象
+std::cout << plus_obj(1, 2) << std::endl;
+std::cout << minus_obj(1, 2) << std::endl;
+
+std::cout << plus<int>(1, 2) << std::endl;
+std::cout << minus<int>(1, 2) << std::endl;
+{% endhighlight %}
+
+上述的`plus<T>`和`minus<T>`已经非常接近STL的实现了。唯一的差别在它缺乏可配接能力。
 
 # Refer
 
