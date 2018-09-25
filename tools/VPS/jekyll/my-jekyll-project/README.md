@@ -75,3 +75,23 @@ https://zhuanlan.zhihu.com/p/32684212
 
 
 https://github.com/scylladb/seastar
+
+LD_PRELOAD用法
+https://blog.csdn.net/iEearth/article/details/49952047
+
+https://blog.csdn.net/junlon2006/article/details/77854898
+
+性能调优相关：
+
+http://www.brendangregg.com/overview.html
+https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/6/html/performance_tuning_guide/
+http://www.keil.com/support/man/docs/armclang_ref/armclang_ref_vvi1466179578564.htm
+http://www.brendangregg.com/blog/2017-05-09/cpu-utilization-is-wrong.html
+
+
+redis:
+https://blog.csdn.net/Aquester/article/details/82767217
+
+RDMA:
+https://en.wikipedia.org/wiki/Remote_direct_memory_access
+https://blog.csdn.net/u011459120/article/details/78469098
