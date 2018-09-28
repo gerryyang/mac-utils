@@ -55,9 +55,9 @@ ALGORITHM = inplace,LOCK = default;
 
 ## MySQL 5.7 online DDL的实现原理
 
-![mysql-5-7-online-ddl1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl1.png
+![mysql-5-7-online-ddl1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl1.png)
 
-![mysql-5-7-online-ddl2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl2.png
+![mysql-5-7-online-ddl2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl2.png)
 
 依然存在的问题：
 
@@ -93,9 +93,9 @@ ALGORITHM = inplace,LOCK = default;
 
 ## 最佳实践
 
-![mysql-5-7-online-ddl3](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl3.png
+![mysql-5-7-online-ddl3](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl3.png)
 
-![mysql-5-7-online-ddl4](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl4.png
+![mysql-5-7-online-ddl4](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/mysql-5-7-online-ddl4.png)
 
 1. `MYSQL5.6以下`的版本，建议使用第三方工具进行DDL
 2. `MYSQL5.6及以上`的版本，除了修改索引、外键、列名时，优先采用online DDL，并指定`ALGORITHM = INPLACE`，其他的均采用PT-OSC
