@@ -38,8 +38,9 @@ STL的实现版本百花齐放。`HP`版本是所有STL实现版本的始祖。�
 
 ![stl](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/stl.jpeg)
 
+# 困惑的C++语法
 
-# 语法1 - 临时对象的产生和运用
+## 语法1 - 临时对象的产生和运用
 
 所谓临时对象，就是一种无名对象。它的出现如果不在程序员的预期之下，往往造成效率上的负担。但有时刻意制造一些临时对象，却又是使程序干净清爽的技巧。STL最常将此技巧应用于仿函数functor与算法的搭配上。
 
@@ -59,7 +60,7 @@ std::vector<int> v(a, a + 6);
 for_each(v.begin(), v.end(), print<int>());// print<int>() 是一个临时对象，不是一个函数调用操作。当for_each结束时，这个临时对象也就结束了它的生命
 {% endhighlight %}
 
-# 语法2 - 静态常量整数成员在class内部直接初始化
+## 语法2 - 静态常量整数成员在class内部直接初始化
 
 如果class内含const static integral data member，那么根据C++的标准，我们可以在class之内直接给予初值。
 
@@ -78,7 +79,7 @@ std::cout << testClass<int>::_y << std::endl;
 std::cout << testClass<int>::_z << std::endl;
 {% endhighlight %}
 
-# 语法3 - increment/decrement/dereference 操作符
+## 语法3 - increment/decrement/dereference 操作符
 
 任何迭代器都必须实现`increment, operator++`和取值`dereference, operator*`的功能。前者还分为`前置式prefix`和`后置式postfix`两种，有非常规律的写法。有些迭代器具备双向移动功能，就必须再提供`decrement`，也分前置式和后置式两种。
 
@@ -147,7 +148,7 @@ std::cout << --i_obj;
 std::cout << *i_obj;
 {% endhighlight %}
 
-# 语法4 - 前闭后开区间表示法 [)
+## 语法4 - 前闭后开区间表示法 [)
 
 任何一个STL算法，都需要获得由一对迭代器(泛型指针)所标示的区间，用以表示操作范围。这一对迭代器所表示的是所谓的`前闭后开`区间，以`[first, last)`表示。也就是，整个实际范围从first开始，直到last-1。**迭代器last表示：最后一个元素的下一个位置**。
 
@@ -171,7 +172,7 @@ Function for_each(InputIterator first, InputIterator last, Function f)
 }
 {% endhighlight %}
 
-# 语法5 - function call 操作符 operator()
+## 语法5 - function call 操作符 operator()
 
 函数调用操作`()`也可以被重载。过去C语言时代，欲将函数当做参数传递，唯有通过`函数指针`才能达成。
 
@@ -225,6 +226,117 @@ std::cout << minus<int>(1, 2) << std::endl;
 {% endhighlight %}
 
 上述的`plus<T>`和`minus<T>`已经非常接近STL的实现了。唯一的差别在它缺乏可配接能力。
+
+
+# 空间配置器
+
+1. 以STL的运用角度而言，空间配置器是最不需要介绍的东西，因为它总是隐藏在一切组件(或容器)的背后，默默工作。
+2. 但若以STL的实现角度而言，第一个需要介绍的就是空间配置器，因为整个STL的操作对象都存放在容器之内。
+3. 为什么不说`allocator`是内存配置器，而说是空间配置器，因为空间不一定是内存，也可以是磁盘或其他辅助存储介质。
+
+{% highlight cpp %} 
+allocator::value_type
+allocator::pointer
+allocator::const_pointer
+allocator::reference
+allocator::const_reference
+allocator::size_type
+allocator::difference_type
+allocator::rebind
+
+allocator::allocator()                                      // default constructor
+allocator::allocator(const allocator&)                      // copy constructor
+template <class U>allocator::allocator(const allocator<U>&) // 泛化的copy constructor
+allocator::~allocator()                                     // destructor
+
+pointer allocator::address(reference x) const
+const_pointer allocator::address(const_reference x) const
+pointer allocator::allocate(size_type n, const void* = 0)
+void allocator::deallocate(pointer p, size_type n)
+size_type allocator::max_size() const
+
+void allocator::construct(pointer p, const T& x)            // 等同于 new((void*) p) T(x)
+void allocator::destroy(pointer p)                          // 等同于 p->~T()
+{% endhighlight %}
+
+## 内存池 (memory pool)
+
+SGI容器使用了`两级空间适配器`的设计。通过`chunk_alloc`接口可以了解其工作原理。
+
+![sgi_allocate](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate.jpg)
+
+{% highlight cpp %}
+template <bool threads, int inst>
+char * __default_alloc_template<threads, inst>::chunk_alloc(size_t size, int& nobjs)
+{
+    char * result;
+    size_t total_bytes = size * nobjs;
+    size_t bytes_left = end_free - start_free;// 内存池剩余空间
+
+    if (bytes_left >= total_bytes) {
+        // 内存池剩余空间完全满足需求量
+        result = start_free;
+        start_free += total_bytes;
+        return result;
+
+    } else if (bytes_left >= size) {
+        // 内存池剩余空间不能完全满足需求量，但足够供应一个(含)以上的区块
+        nobjs = bytes_left / size;
+        total_bytes = size * nobjs;
+        result = start_free;
+        start_free += total_bytes;
+        return result;
+
+    } else {
+        // 内存池剩余空间连一个区块的大小都无法提供
+        size_t bytes_to_get = 2 * total_bytes + ROUND_UP(heap_size >> 4);
+        // 以下试着让内存池中残余零头还有利用价值
+        if (bytes_left > 0) {
+            // 内存池还有一些零头，先配给适当的free list
+            // 首先寻找适当的free list
+            obj * volatile * my_free_list = free_list + FREELIST_INDEX(bytes_left);
+            // 调整free list，将内存池中的残余空间编入
+            ((obj *)start_free) -> free_list_link = *my_free_list;
+            *my_free_list = (obj *)start_free;
+        }
+
+        // 配置heap空间，用来补充内存池
+        start_free = (char *)malloc(bytes_to_get);
+        if (0 == start_free) {
+            // heap空间不足，malloc失败
+            int i;
+            obj * volatile * my_free_list, * p;
+
+            for (i = size; i <= __MAX_BYTES; i += __ALIGN) {
+                my_free_list = free_list + FREELIST_INDEX(i);
+                p = *my_free_list;
+                // free list尚有未用区块
+                if (0 != p) {
+                    // 调整free list以释放出未用区块
+                    *my_free_list = p -> free_list_link;
+                    start_free = (char *)p;
+                    end_free = start_free + i;
+                    // 递归调用自己，为了修正nobjs
+                    return (chunk_alloc(size, nobjs));
+
+                }
+            }
+            end_free = 0;// 如果出现意外，山穷水尽，到处都没有内存可用了
+
+            // 调用一级适配器，看看out-of-memory机制能否尽点力
+            start_free = (char *)malloc_alloc::allocate(bytes_to_get);
+            // 这会导致抛出异常，或内存不足的情况获得改善
+        }
+
+        heap_size += bytes_to_get;
+        end_free = start_free + bytes_to_get;
+        // 递归调用自己，为了修正nobjs
+        return (chunk_alloc(size, nobjs));
+    }
+}
+{% endhighlight %}
+
+
 
 # Refer
 
