@@ -234,6 +234,10 @@ std::cout << minus<int>(1, 2) << std::endl;
 2. 但若以STL的实现角度而言，第一个需要介绍的就是空间配置器，因为整个STL的操作对象都存放在容器之内。
 3. 为什么不说`allocator`是内存配置器，而说是空间配置器，因为空间不一定是内存，也可以是磁盘或其他辅助存储介质。
 
+## 空间配置器的标准接口
+
+根据STL的规范，以下是`allocator`的必要接口：
+
 {% highlight cpp %} 
 allocator::value_type
 allocator::pointer
@@ -259,9 +263,45 @@ void allocator::construct(pointer p, const T& x)            // 等同于 new((vo
 void allocator::destroy(pointer p)                          // 等同于 p->~T()
 {% endhighlight %}
 
-## 内存池 (memory pool)
+## SGI特殊的空间适配器 
 
-SGI容器使用了`两级空间适配器`的设计。通过`chunk_alloc`接口可以了解其工作原理。
+考虑到对效率的优化，SGI默认使用特殊的空间适配器`std::alloc`。
+
+一般而言，C++内存配置和释放操作是这样的：
+
+{% highlight cpp %} 
+class Foo {...};
+Foo* pf = new Foo;    // 配置内存，然后构造对象
+delete pf;            // 将对象析构，然后释放内存
+{% endhighlight %}
+
+`new`算式内含两阶段操作：
+1. 调用`::operator new`配置内存
+2. 调用`Foo::Foo()`构造对象内容
+`delete`算式也内含两阶段操作：
+1. 调用`Foo::~Foo()`将对象析构
+2. 调用`::operator delete`释放内存
+
+STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
+
+1. 内存配置操作由`alloc::allocate()`负责
+2. 内存释放操作由`alloc::deallocate()`负责
+3. 对象构造操作由`::construct()`负责
+4. 对象析构操作由`::destroy()`负责
+
+考虑到小型区块所可能造成的内存碎片问题，。SGI容器使用了`两级空间适配器`的设计。
+
+1. 第一级配置器直接使用`malloc()`和`free()`
+2. 第二级配置器则视情况采取不同的策略
+    * 当配置区块超过128B时，视之为“足够大”，便调用第一级配置器
+    * 当配置区块小于128B时，视之为“过小”，为了降低额外负担，便采用复杂的`memory pool`整理方式，而不再求助于第一级配置器。
+
+![sgi_allocate_12_a](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_12_a.jpg)
+
+![sgi_allocate_12_b](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_12_b.jpg)
+
+
+## 内存池 (memory pool)
 
 ![sgi_allocate](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate.jpg)
 
