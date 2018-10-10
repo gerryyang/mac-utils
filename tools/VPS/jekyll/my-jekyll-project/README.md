@@ -79,6 +79,7 @@ https://github.com/scylladb/seastar
 LD_PRELOAD用法
 https://blog.csdn.net/iEearth/article/details/49952047
 
+内存优化总结:ptmalloc、tcmalloc和jemalloc
 https://blog.csdn.net/junlon2006/article/details/77854898
 
 性能调优相关：
@@ -95,3 +96,6 @@ https://blog.csdn.net/Aquester/article/details/82767217
 RDMA:
 https://en.wikipedia.org/wiki/Remote_direct_memory_access
 https://blog.csdn.net/u011459120/article/details/78469098
+
+云栖大会2018
+https://yunqi.youku.com/

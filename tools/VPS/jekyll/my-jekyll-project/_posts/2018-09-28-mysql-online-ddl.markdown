@@ -104,7 +104,11 @@ ALGORITHM = inplace,LOCK = default;
 # Refer
 
 1. [The JSON Data Type]
-
+2. [mysql 5.6 原生Online DDL解析]
+3. [GitHub's online schema migration for MySQL]
 
 [The JSON Data Type]: https://dev.mysql.com/doc/refman/8.0/en/json.html
 
+[mysql 5.6 原生Online DDL解析]: http://seanlook.com/2016/05/24/mysql-online-ddl-concept/
+
+[GitHub's online schema migration for MySQL]: https://github.com/github/gh-ost
