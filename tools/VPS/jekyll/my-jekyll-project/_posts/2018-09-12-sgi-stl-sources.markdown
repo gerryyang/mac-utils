@@ -300,6 +300,145 @@ STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
 
 ![sgi_allocate_12_b](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_12_b.jpg)
 
+### 第二级配置器设计原理
+
+1. 第二级配置器多了一些机制，避免太多小额区块造成内存的碎片。
+2. 小额区块带来的其实不仅是内存碎片，配置时的额外负担(overhead)也是一个大问题。区块越小，额外负担所占的比例就越大，越显得浪费。
+3. SGI第二级配置器的做法是，如果区块大于128B，就交给第一级配置器处理；如果区块小于128B，就以内存池管理。每次配置一块大内存，并维护对应的自由链表，下次若再有相同大小的内存需求，就直接从自由链表中拔出；如果客户端释放了小额区块，就由配置器回收到自由链表中。即，**配置器负责配置和回收**。
+4. 为了方便管理，第二级配置器会主动将任何小额区块的内存需求量上调至8的倍数，并维护16个自由链表，各自管理大小分别为8，16，24，32，40，48，56，64，72，80，88，96，104，112，120，128字节的小额区块。
+
+自由链表的结构如下: 
+
+使用union结构，是一种节省空间的方法(一物二用)。
+
+{% highlight cpp %}
+union obj {
+    union obj * free_list_link;
+    char client_data[1];          // the client sees this
+};
+{% endhighlight %}
+
+### 第二级配置器的部分实现
+
+{% highlight cpp %}
+enum {
+    __ALIGN = 8  // 小型区块的上调边界
+};
+enum {
+    __MAX_BYTES = 128 // 小型区块的上限
+};
+enum {
+    __NFREELISTS = __MAX_BYTES / __ALIGN // free_lists个数
+};
+
+template <bool threads, int inst>
+class __default_alloc_template {
+    
+private：
+    // 将bytes上调至8的倍数
+    static size_t ROUND_UP(size_t bytes) {
+    return ( (bytes + __ALIGN - 1) & ~(__ALIGN - 1));
+    }
+
+    union obj {
+        union obj * free_list_link;
+        char client_data[1];          // the client sees this
+    };
+
+    static obj * volatile free_list[__NFREELISTS];
+    static size_t FREELIST_INDEX(size_t bytes) {
+        return ( (bytes + __ALIGN - 1) / __ALIGN - 1 );
+    }
+
+    // 返回一个大小为n的对象，并可能加入大小为n的其他区块到free_list
+    static void *refill(size_t n);
+
+    // 配置一大块空间，可容纳nobjs个大小为size的区块
+    // 如果配置nobjs个区块有所不便，nobjs可能会降低
+    static char *chunk_alloc(size_t size, int &nobjs);
+
+    // chunk allocation state
+    static char *start_free;   // 内存池的起始位置，只在chunk_alloc中变化
+    static char *end_free;     // 内存池的结束位置，只在chunk_alloc中变化
+    static size_t heap_size;
+
+public:
+    static void *allocate(size_t n);
+    static void deallocate(void *p, size_t n);
+    static void *reallocate(void *p, size_t old_sz, size_t new_sz);
+};
+
+// 以下是static data member的定义与初始值设定
+template <bool threads, int inst>
+char *__default_alloc_template<threads, inst>::start_free = 0;
+
+template <bool threads, int inst>
+char *__default_alloc_template<threads, inst>::end_free = 0;
+
+template <bool threads, int inst>
+size_t __default_alloc_template<threads, inst>::heap_size = 0;
+
+template <bool threads, int inst>
+__default_alloc_template<threads, inst>::obj * volatile
+__default_alloc_template<threads, inst>::free_list[__NFREELISTS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 16个自由链表
+
+{% endhighlight %}
+
+### 空间配置函数的实现 - allocate
+
+![sgi_allocate_func](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_func.jpg)
+
+{% highlight cpp %}
+static void * allocate(size_t n)
+{
+    obj * volatile * my_free_list;
+    obj * result;
+
+    // 大于128B就调用第一级配置器
+    if (n > (size_t) __MAX_BYTES) {
+        return (malloc_alloc::allocate(n));
+    }
+
+    // 寻找16个free_lists中适当的一个
+    my_free_list = free_list + FREELIST_INDEX(n);
+    result = *my_free_list;
+    if (result == 0) {
+        // 没有找到可用的free_list，准备重新填充free_list
+        void *r = refill(ROUND_UP(n));
+        return r;
+    }
+
+    // 调整free_list，拔出这个区块
+    *my_free_list = result->free_list_link;
+    return result;
+}
+{% endhighlight %}
+
+### 空间释放函数的实现 - deallocate
+
+![sgi_deallocate_func](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_deallocate_func.jpg)
+
+{% highlight cpp %}
+static void deallocate(void *p, size_t n)
+{
+    obj * q = (obj *)p;
+    obj * volatile * my_free_list;
+
+    // 大于128B就调用第一级配置器
+    if (n > (size_t) __MAX_BYTES) {
+        malloc_alloc::deallocate(p, n);
+        return;
+    }
+
+    // 寻找对应的free_list
+    my_free_list = free_list + FREELIST_INDEX(n);
+
+    // 调整free_list，回收这个区块
+    q->free_list_link = *my_free_list;
+    *my_free_list = q;
+}
+{% endhighlight %}
+
 
 ## 内存池 (memory pool)
 
