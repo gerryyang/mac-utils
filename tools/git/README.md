@@ -51,10 +51,51 @@ git clone https://github.com/gerryyang/mac-utils.git
 
 (2) 提交变更
 ```
-git add -A
-git status
-git commit -m"update info"
-git push origin master
+git status      // 查看本地代码状态
+git reflog      // 查看操作记录
+
+// --- 新增 commit ---
+git add .                   // 所有文件添加到暂存区
+git commit -m '提交备注'    // 添加文件到缓存区，然后提交到本地仓库
+
+
+// --- 撤销 commit ---
+// 会将提交记录回滚，代码不回滚
+git reset b14bb52
+
+// 会将提交记录和代码全部回滚
+git reset --hard b14bb52
+
+// 将部分代码文件回滚
+git checkout -- files
+
+
+// --- 合并 commit ---
+// 合并 commit，本质上合并两份不同状态下的代码
+// Git 提供了两种合并 commit 的方式，那么 git rebase 和 git merge 到底有什么区别呢？
+// merge是两个分支处理冲突后，新增一个 commit 追加到master上
+// rebase是将someFeature分支上的commit记录追加到主分支上，值得注意的是，这个时候他的commit其实已经发生变化
+// 相对来说，git merge 处理冲突更直接，而git rebase 能够保证清晰的 commit 记录
+git merge master
+git rebase master
+
+
+// 都是先 git fetch，然后执行合并操作
+// 不同的是，git pull 执行的是 git merge，git pull -r 执行的是git rebase
+git pull origin master 
+git pull -r origin master
+
+git pull -r origin <branch-name> // fetch远端代码到本地，并且以rebase的方式合并代码
+git push origin <branch-name>    // 更新本地代码到远端
+
+git checkout .  // 撤销所有
+
+// 基于功能分支的开发流程：用分支来承载功能开发，开发结束之后就合并到 master 分支
+// 此流程的优点是能够保证master分支的整洁，同时还能让分支代码逻辑集中，也便于CodeReview
+// 注意，不要在master合并代码，保证master的可用性很重要
+git checkout <branch-name>
+git pull -r origin master // 将master的代码更新下来，并且rebase处理冲突
+git push origin master    // 将本地代码更新到远端
 ```
 
 (3) 回到过去
@@ -64,11 +105,20 @@ git reflog
 git reset --hard $commit
 ```
 
-(4) 显示分支信息
+(4) 分支操作
 ```
+// 所谓的分支其实就是一个指向 commitID 的指针，你可以去.git/refs/heads里去看看
+// 一般情况下，我们应该从master或者其他稳定分支来新增分支
+
 git branch     // 显示local分支
 git branch -r  // 显示remote分支
 git branch -a  // 显示所有分支
+
+git branch -d                     // 删除本地分支
+git branch -D                     // 强制删除本地分支
+git push origin -d <branch-name>  // 删除远端分支
+
+git fetch -p   // 同步远端分支状态
 ```
 
 (5) 新建和切换到某个分支
@@ -142,9 +192,34 @@ no changes added to commit (use "git add" and/or "git commit -a")
 
 
 (6) 添加外部引用模块
+
+git submodule && git subtree，管理第三方模块
+这两个命令通常用来管理公用的第三方模块。比如一些通用的底层逻辑、中间件、还有一些可能会频繁变化的通用业务组件。
+当然，两者还是有区别的。
+git submodule 主要用来管理一些单向更新的公共模块或底层逻辑。
+git subtree 对于部分需要双向更新的可复用逻辑来说，特别适合管理。比如一些需要复用的业务组件代码。
+
 ```
 git submodule add https://github.com/miloyip/rapidjson ./deps/rapidjson
 ```
+
+(7) 简化 Git 命令
+
+可以通过配置 git alias 来简化需要输入的 Git 命令。
+比如前文的 git subtree 需要输入很长的 Git 命令，我们可以配置 .git/config 文件来解决。
+
+```
+// git stpull appfe demo/xxx
+// git stpush appfe demo/xxx
+[alias]
+    stpull = !git subtree pull --prefix=$1 appfe $2 \
+        && :
+    stpush = !git subtree pull --prefix=$1 appfe $2 \
+        && git subtree split --rejoin --prefix=$1 $2 \
+        && git subtree push --prefix=$1 appfe $2 \
+        && :
+```
+
 
 Some tools
 ===
@@ -174,3 +249,8 @@ Reference
 
 [7] https://git-scm.com/book/zh/v1/Git-分支-分支的新建与合并
 
+[8] [廖雪峰的 git 教程](https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000)
+
+[9] https://gitee.com/progit/8-Git-与其他系统.html#8.2-迁移到-Git
+
+[10] [Pro Git（中文版）](https://gitee.com/progit/index.html)
