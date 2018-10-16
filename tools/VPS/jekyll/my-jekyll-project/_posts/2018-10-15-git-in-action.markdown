@@ -107,34 +107,29 @@ If a particular version of a file is in the git directory, it's considered commi
 
 # 安装和配置Git
 
-以MacOS上配置Git为例。
-
-[Git下载地址]，由于Mac上已经默认安装了Git，因此这里就不需要了。注意Git是一个命令行工具，它没有华丽的GUI界面，所以你只能在Terminal里使用它而不会在Mac的dock上找到它。
-
-```
-$git --version
-git version 1.8.3.4 (Apple Git-47)
-```
+[Git下载地址]，Git有两种使用方式，一种是命令行，一种是集成了git命令的客户端。
 
 安装后，对Git进行配置，通过命令行的方式：
 
 ```
-git config --global user.name "Your Name Here"
 # Sets the default name for git to use when you commit
+git config --global user.name "Your Name Here"
 
-git config --global user.email "your_email@example.com"
 # Sets the default email for git to use when you commit
+git config --global user.email "your_email@example.com"
 ```
 
-注意上面的设置是对全局生效的，若想对某个repo使用不同的username或email可以通过下面方法进行设置：
+注意上面的设置是对**全局**生效的，若想对某个repo使用不同的username或email可以通过下面方法进行设置：
 
 ```
-cd my_other_repo
 # Changes the working directory to the repository you need to switch info for
-git config user.name "Different Name"
+cd my_other_repo
+
 # Sets the user's name for this specific repository
-git config user.email "differentemail@email.com"
+git config user.name "Different Name"
+
 # Sets the user's email for this specific repository
+git config user.email "differentemail@email.com"
 ```
 
 设置Password caching，帮助我们缓存用户名和密码，方便我们使用Git：
@@ -154,15 +149,84 @@ The next time you clone an HTTPS URL that requires a password you will be prompt
 Tip: The credential helper only works when you clone an HTTPS repository URL. If you use the SSH repository URL instead, SSH keys are used for authentication.This guide([Connecting to GitHub with SSH]) offers help generating and using an SSH key pair.
 ```
 
+# 协作模式
+
+## Gitflow工作流
+
+主要是适合复杂的大型项目。
+
+* Master分支：用于存放线上版本代码，可以方便的给代码打版本号。
+* Develop分支：用于整合 Feature 分支。
+* Hotfix分支：紧急修复的分支，一旦修复了可以合并到 Master 分支和 Develop 分支。
+* Feature分支：某个功能的分支，从 Develop 分支切出，并且功能完成时又合并回 Develop 分支，不直接和Master 分支交互。
+* Release分支：通常对应一个迭代。将一个版本的功能全部合并到 Develop 分支之后，从 Develop 切出一个Release 分支。这个分支不再追加新需求，可以完成 bug 修复、完善文档等工作。务必记住，代码发布后，需要将其合并到 Master 分支，同时也要合并到 Develop 分支。
+
+![gitflow](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitflow.png)
+
+## 功能分支模式  
+
+主要适合日常不太复杂的项目开发，此模式下有三种类型的分支：
+
+1. `master`分支，只能有一个，相当于svn中的trunk，只允许merge requests，不允许直接push。可以通过分支保护设置。
+2. `feature`分支，可以有多个，用来做新功能开发，可以随意commit和push
+3. `bugfix`分支，可以有多个，用来做bugfix，可以随意commit和push
+
+## 新功能开发流程
+
+1. 从远端master拉取最新的代码到本地
+2. 创建一个新的分支，可以在新的分支中随时commit和push
+3. 新分支功能开发完成后
+	+ 先把主干merge到分支，解决可能的冲突，再发起merge requests到master
+	+ 先把分支rebase到master，解决可能存在的冲突，再发起merge requests到master
+4. 项目的maintainer接收到merge requests，负责code review，没有问题后再accept并merge到master
+
+> PS：使用rebase，提交记录线性的，会比较清晰。
+
+## bugfix流程
+
+与新功能开发流程基本一致，注意建立分支时请以`bugfix_`开头
+
+## 回滚流程
+
+若不小心把错误的代码merge到主干了怎么办？到项目根目录，执行如下操作：
+
+```
+git checkout master          # 切换到master
+git pull                     # 拉取最新代码
+git log -l 5                 # 查看想退回到版本号并copy下来，后面到数字可以自己设置。或者使用git reflog
+git reset --hard `版本号`    # 强制将指针回退到指定版本
+git push -f                  # 强制push到远端master
+```
+
+
 # 常用命令
 
-TODO
+| 操作 | Git | Subversion |
+| -- | -- | --
+|复制数据库|	git clone|	svn checkout
+|提交|	git commit|	svn commit
+|查看提交的详细记录|	git show|	svn cat
+|确认状态|	git status|	svn status
+|确认差异|	git diff|	svn diff
+|确认记录|	git log / git reflog|	svn log
+|添加|	git add|	svn add
+|移动|	git mv|	svn mv
+|删除|	git rm|	svn rm
+|取消修改|	git checkout / git reset|	svn revert 
+|创建分支|	git branch|	svn copy 
+|切换分支|	git checkout|	svn switch
+|合并|	git merge|	svn merge
+|创建标签|	git tag|	svn copy 
+|更新|	git pull / git fetch|	svn update
+|反映到远端|	git push|	svn commit 
+|忽略档案目录|	.gitignore|	.svnignore
 
 
 # Refer
 
 1. [Getting Started - About Version Control]
 2. [Git Basics]
+
 
 [Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 
