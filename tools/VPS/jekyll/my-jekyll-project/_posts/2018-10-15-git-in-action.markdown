@@ -5,7 +5,7 @@ date:   2018-10-15 13:00:00 +0800
 categories: tools
 ---
 
-作为程序员日常离不开对代码的管理，Git 采用了分布式版本库的方式，这是它与常用的版本控制工具例如  CVS，Subversion 等很大的不同之处。使用Git，让源代码的发布和团队间的交流极其方便，并且 Git 的速度很快，对于大项目来说尤为重要，这也是为什么越来越多的科技公司都使用 Git 进行代码管理。
+Linux的创始人Linus Torvalds在2005年开发了Git的原型程序，主要用于对Linux内核开发的版本管理。作为程序员日常离不开对代码的管理，Git 采用了分布式版本库的方式，这是它与常用的版本控制工具例如  CVS，Subversion 等很大的不同之处。使用Git，让源代码的发布和团队间的交流极其方便，并且 Git 的速度很快，对于大项目来说尤为重要，这也是为什么越来越多的科技公司都使用 Git 进行代码管理。
 
 版本控制演变：
 
@@ -220,6 +220,32 @@ git push -f                  # 强制push到远端master
 |更新|	git pull / git fetch|	svn update
 |反映到远端|	git push|	svn commit 
 |忽略档案目录|	.gitignore|	.svnignore
+
+
+# GitHub 
+
+GitHub主要为开发者提供Git仓库的托管服务，拥有一只`octocat`的吉祥物。截止2013年12月，GitHub托管的仓库数已超过1000万。GitHub这一服务为开源世界带来了社会化编程的概念。在GitHub上进行交流时用到的Issue, Wiki等都可以用FGM(Git Flavored Markdown)语法表述。
+
+在GitHub上公开源代码时可以指定相关的许可协议。实际使用时，只需将`LICENSE`文件加入仓库，并在`README.md`文件中声明使用了何种许可协议即可。
+
+* 修正的BSD许可协议
+* Apache许可协议
+* MIT许可协议 (https://opensource.org/licenses/mit-license.php)
+
+```
+Copyright <YEAR> <COPYRIGHT HOLDER>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+关于GitHub的更多功能
+
+* https://github.com/features
+* https://github.com/trending
 
 
 # Refer
