@@ -4,6 +4,10 @@ title:  "一致性共识算法在互联网场景中的应用"
 date:   2018-08-25 23:30:00 +0800
 categories: tech
 ---
+
+* Do not remove this line (it will not be displayed)
+{:toc}
+
 世界上只有一种一致性算法就是`Paxos`(帕克索斯)。在工程上通常使用其简化版本的`Raft`算法。算法的核心思想都是，在保证**CP**的前提下，只要大多数的节点可以互联，系统便一直处于可用状态(A)。
 
 # 背景

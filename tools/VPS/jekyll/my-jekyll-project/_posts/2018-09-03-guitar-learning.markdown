@@ -4,6 +4,10 @@ title:  "guitar学习"
 date:   2018-09-03 22:00:00 +0800
 categories: life
 ---
+
+* Do not remove this line (it will not be displayed)
+{:toc}
+
 参加了公司组织的guitar初级学习班(第20期)，目的是给繁忙枯燥的生活添加一些色彩。课程总共16节。
 
 * 前4节，主要学习右手如何拨弦，据说是最枯燥的阶段。

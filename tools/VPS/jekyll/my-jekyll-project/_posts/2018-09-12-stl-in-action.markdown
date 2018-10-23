@@ -4,6 +4,10 @@ title:  "STL in Action"
 date:   2018-09-12 22:46:00 +0800
 categories: C++
 ---
+
+* Do not remove this line (it will not be displayed)
+{:toc}
+
 STL的实现版本百花齐放。`HP`版本是所有STL实现版本的始祖。每一个HP STL头文件都有一份声明，允许任何人免费使用，拷贝，修改，传播，贩卖整份软件及其说明文件，唯一需要遵守的是，必须在所有头文件中加上HP的版本声明。`SGI`(Silicon Graphics Computer Systems, Inc.)版本的STL声名最盛，其继承自HP版本，所以它的每一个头文件都有HP的版本声明，SGI版本被GCC采用。学习STL的实现细节，可以得到：
 
 * 通过代码向世界一流的程序员学习。

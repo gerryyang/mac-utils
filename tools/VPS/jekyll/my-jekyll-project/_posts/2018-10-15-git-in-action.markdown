@@ -5,6 +5,9 @@ date:   2018-10-15 13:00:00 +0800
 categories: tools
 ---
 
+* Do not remove this line (it will not be displayed)
+{:toc}
+
 Linux的创始人Linus Torvalds在2005年开发了Git的原型程序，主要用于对Linux内核开发的版本管理。作为程序员日常离不开对代码的管理，Git 采用了分布式版本库的方式，这是它与常用的版本控制工具例如  CVS，Subversion 等很大的不同之处。使用Git，让源代码的发布和团队间的交流极其方便，并且 Git 的速度很快，对于大项目来说尤为重要，这也是为什么越来越多的科技公司都使用 Git 进行代码管理。
 
 版本控制演变：

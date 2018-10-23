@@ -5,6 +5,9 @@ date:   2018-09-28 09:15:00 +0800
 categories: mysql
 ---
 
+* Do not remove this line (it will not be displayed)
+{:toc}
+
 MySQL online DDL(Data Definition Language)主要解决的问题是，满足在不中断数据库服务的情况下进行DDL操作。现有的方案有：
 
 * 使用原生的MySQL online DDL
