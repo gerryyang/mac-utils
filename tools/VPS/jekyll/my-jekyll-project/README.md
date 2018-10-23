@@ -99,3 +99,6 @@ https://blog.csdn.net/u011459120/article/details/78469098
 
 云栖大会2018
 https://yunqi.youku.com/
+
+阿里巴巴中台战略
+https://www.kancloud.cn/architect-jdxia/architect/519490
