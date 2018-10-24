@@ -15,11 +15,12 @@ categories: life
 
 1. TOC
 
-[How to add TOC for Jekyll posts]
-
+* [How I Add a Table of Contents to my Jekyll Blog Written in Markdown]
+* [kramdown]
 
 
 [这篇博文]: http://tom.preston-werner.com/2008/11/17/blogging-like-a-hacker.html
 [CSDN的博客]: https://blog.csdn.net/delphiwcdj
 
-[How to add TOC for Jekyll posts]: https://blog.webjeda.com/jekyll-toc/
+[How I Add a Table of Contents to my Jekyll Blog Written in Markdown]: http://www.seanbuscay.com/blog/jekyll-toc-markdown/
+[kramdown]: https://kramdown.gettalong.org/
