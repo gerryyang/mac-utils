@@ -45,7 +45,7 @@ Redis is an open source (BSD licensed), `in-memory` data structure store, used a
 * Redis的安装
 	+ 从 http://redis.io/download下载最新的stable版本的源码
 	+ 编译(如果要查看详细的编译过程，可以指定`make V=1`)，安装和启动Redis
-	+ 下载并安装Python语言的Redis客户端库
+	+ 下载并安装Python语言的Redis客户端库，或者使用自带的客户端测试工具
 
 * Redis在`deps`目录下是对外部第三方库的依赖包括，jemalloc, lua, hiredis, linenoise，如果要重新编译第三方库需要先执行`make distclean`，默认不会编译
 * Redis在Linux下默认使用jemalloc，而在其他环境下默认使用libc malloc。jemalloc相比libc malloc对内存碎片问题处理的更好。通过`MALLOC`环境变量指定使用哪种内存分配器。
@@ -476,21 +476,20 @@ Redis的key是二级制安全的，使用上对key的几个原则：
 Redis对key的**创建和删除**原则：
 
 1. When we add an element to an aggregate data type, if the target key does not exist, an empty aggregate data type is created before adding the element.
-
 当往一个key中添加元素时，若key不存在，Redis会自动先创建key，然后再添加元素。
+
+2. When we remove elements from an aggregate data type, if the value remains empty, the key is automatically destroyed.
+当一个key的value为空时，Redis会自动清除这个key。
+
+3. Calling a read-only command such as LLEN (which returns the length of the list), or a write command removing elements, with an empty key, always produces the same result as if the key is holding an empty aggregate type of the type the command expects to find.
+此规则与第一条类似。
 
 ```
 > del mylist
 (integer) 1
 > lpush mylist 1 2 3
 (integer) 3
-```
 
-2. When we remove elements from an aggregate data type, if the value remains empty, the key is automatically destroyed.
-
-当一个key的value为空时，Redis会自动清除这个key。
-
-```
 > lpush mylist 1 2 3
 (integer) 3
 > exists mylist
@@ -503,13 +502,7 @@ Redis对key的**创建和删除**原则：
 "1"
 > exists mylist
 (integer) 0
-```
 
-3. Calling a read-only command such as LLEN (which returns the length of the list), or a write command removing elements, with an empty key, always produces the same result as if the key is holding an empty aggregate type of the type the command expects to find.
-
-此规则与第一条类似。
-
-```
 > del mylist
 (integer) 0
 > llen mylist
@@ -517,7 +510,6 @@ Redis对key的**创建和删除**原则：
 > lpop mylist
 (nil)
 ```
-
 
 ## Redis的值(value)
 
@@ -908,7 +900,7 @@ Bitmaps are not an actual data type, but a set of bit-oriented operations define
 
 | 命令 | 含义
 | -- | --
-| PFADD | 统计一个新的元素
+| PFADD | 统计unique元素
 | PFCOUNT | 返回PFADD统计的所有元素的个数
 
 * HyperLogLog 用于记录一些unique的元素。
