@@ -203,6 +203,32 @@ git push -f                  # 强制push到远端master
 |反映到远端|	git push|	svn commit 
 |忽略档案目录|	.gitignore|	.svnignore
 
+## 查看历史提交信息
+
+```
+# 查看最近2次的提交统计信息
+git log --stat -2
+
+# 按格式化显示提交信息
+git log --pretty=format:"%h - %an, %ar : %s"
+git log --pretty=format:"%h %s" --graph
+git log --since=2.weeks
+```
+more: [Git-基础-查看提交历史]
+
+[Git-基础-查看提交历史]: https://git-scm.com/book/zh/v1/Git-基础-查看提交历史
+
+## 分支操作
+
+```
+# 切换到某个分支
+git checkout $branch
+
+# 切换到上一个分支
+git checkout -
+```
+
+
 
 # GitHub 
 
