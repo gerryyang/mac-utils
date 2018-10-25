@@ -447,7 +447,7 @@ this way their data set will remain synchronized with the one in the master.
 
 首先需要了解[Redis Data Types]有哪些。
 
-Redis提供的5种数据结构
+Redis提供的5种基本数据结构
 
 | 结构类型 | 结构存储的值 | 结构的读写能力
 | STRING | 可以是字符串，整数，浮点数 | 可以对整个字符串或者其中一部分执行操作；对整数和浮点数执行自增(increment)或者自减(decrement)
@@ -456,9 +456,479 @@ Redis提供的5种数据结构
 | HASH | 包含键值对的无序散列表 | 添加，获取，删除单个键值对；获取所有键值对
 | ZSET | 字符串成员与浮点数分值之间的有序映射，元素的排列顺序由分值的大小决定 | 添加，获取，删除单个元素；根据分值范围或者成员来获取元素
 
-## STRING
+1. Binary-safe strings.
+2. Lists: collections of string elements sorted according to the order of insertion. They are basically linked lists.
+3. Sets: collections of unique, unsorted string elements.
+4. Sorted sets, similar to Sets but where every string element is associated to a floating number value, called score. The elements are always taken sorted by their score, so unlike Sets it is possible to retrieve a range of elements (for example you may ask: give me the top 10, or the bottom 10).
+5. Hashes, which are maps composed of fields associated with values. Both the field and the value are strings. This is very similar to Ruby or Python hashes.
+6. Bit arrays (or simply bitmaps): it is possible, using special commands, to handle String values like an array of bits: you can set and clear individual bits, count all the bits set to 1, find the first set or unset bit, and so forth.
+7. HyperLogLogs: this is a probabilistic data structure which is used in order to estimate the cardinality of a set. Don't be scared, it is simpler than it seems... See later in the HyperLogLog section of this tutorial.
 
-## ...
+## Redis的键(key)
+
+Redis的key是二级制安全的，使用上对key的几个原则：
+
+1. key的长度不建议太长，否则会影响查询效率。对于过长的key可以通过hash的方法减少其长度
+2. key的长度也不建议太短，否则会影响可读性
+3. 规定好一种好的格式，比如：`user:1000`
+4. key允许的最大长度是512MB
+
+Redis对key的**创建和删除**原则：
+
+1. When we add an element to an aggregate data type, if the target key does not exist, an empty aggregate data type is created before adding the element.
+
+当往一个key中添加元素时，若key不存在，Redis会自动先创建key，然后再添加元素。
+
+```
+> del mylist
+(integer) 1
+> lpush mylist 1 2 3
+(integer) 3
+```
+
+2. When we remove elements from an aggregate data type, if the value remains empty, the key is automatically destroyed.
+
+当一个key的value为空时，Redis会自动清除这个key。
+
+```
+> lpush mylist 1 2 3
+(integer) 3
+> exists mylist
+(integer) 1
+> lpop mylist
+"3"
+> lpop mylist
+"2"
+> lpop mylist
+"1"
+> exists mylist
+(integer) 0
+```
+
+3. Calling a read-only command such as LLEN (which returns the length of the list), or a write command removing elements, with an empty key, always produces the same result as if the key is holding an empty aggregate type of the type the command expects to find.
+
+此规则与第一条类似。
+
+```
+> del mylist
+(integer) 0
+> llen mylist
+(integer) 0
+> lpop mylist
+(nil)
+```
+
+
+## Redis的值(value)
+
+### STRING
+
+Redis最简单的一种值类型，可以用来存储一个网页，或者存储一张照片。其最大长度不能超过512MB。
+
+#### 基本操作
+
+| 命令 | 含义
+| -- | --
+| SET | 可看做一种赋值操作
+| SET $key $value nx | 如果key已经存在，不允许覆盖
+| SET $key $value xx | 如果key已经存在，允许覆盖
+
+```
+./redis-cli       
+127.0.0.1:6379> set mykey
+(error) ERR wrong number of arguments for 'set' command
+127.0.0.1:6379> set mykey value
+OK
+127.0.0.1:6379> get mykey
+"value"
+127.0.0.1:6379> set mykey value2
+OK
+127.0.0.1:6379> get mykey
+"value2"
+127.0.0.1:6379> set mykey value3 nx
+(nil)
+127.0.0.1:6379> get mykey
+"value2"
+127.0.0.1:6379> set mykey value3 xx
+OK
+127.0.0.1:6379> get mykey
+"value3"
+```
+
+#### 原子操作
+
+| 命令 | 含义 | 应用场景
+| -- | -- | --
+| incr | 加 1 | 
+| incrby | 加 $n |
+| decr | 减 1 | 
+| decrby | 减 $n | 
+| getset | 设置新值，并返回老值 | 比如，按周期统计
+
+
+```
+127.0.0.1:6379> set cnt 100
+OK
+127.0.0.1:6379> incr cnt
+(integer) 101
+127.0.0.1:6379> incr cnt
+(integer) 102
+127.0.0.1:6379> incrby cnt 50
+(integer) 152
+127.0.0.1:6379> decr cnt
+(integer) 151
+127.0.0.1:6379> decr cnt
+(integer) 150
+127.0.0.1:6379> decrby cnt 50
+(integer) 100
+
+127.0.0.1:6379> get cnt
+"100"
+127.0.0.1:6379> getset cnt 1
+"100"
+127.0.0.1:6379> get cnt
+"1"
+```
+
+#### 批量操作
+
+批量操作，可以减少交互的延迟。
+
+| 命令 | 含义
+| -- | --
+| mset | 批量设置多个值
+| mget | 批量获取多个值
+
+
+```
+127.0.0.1:6379> mset a 10 b 20 c 30
+OK
+127.0.0.1:6379> mget a b c
+1) "10"
+2) "20"
+3) "30"
+```
+
+#### 对key的操作
+
+| 命令 | 含义
+| -- | --
+| exists | 判断某个key是否存在
+| del | 删除某个key
+| type | 返回某个key对应的value类型
+
+```
+127.0.0.1:6379> set mykey hello
+OK
+127.0.0.1:6379> get mykey
+"hello"
+127.0.0.1:6379> exists mykey
+(integer) 1
+127.0.0.1:6379> del mykey
+(integer) 1
+127.0.0.1:6379> del mykey
+(integer) 0
+127.0.0.1:6379> get mykey
+(nil)
+127.0.0.1:6379> exists mykey
+(integer) 0
+
+127.0.0.1:6379> set mykey hello
+OK
+127.0.0.1:6379> type mykey
+string
+127.0.0.1:6379> del mykey
+(integer) 1
+127.0.0.1:6379> type mykey
+none
+```
+
+#### 过期操作(expires)
+
+可以对某个key设置一个`timeout`，超时后会自动del当前的key。过期时间精度支持`秒`和`毫秒`。
+
+| 命令 | 含义
+| -- | --
+| expire | 指定某个key的过期时间
+| set key 100 ex 10 | 通过set选项指定过期时间，指定key 10秒后过期
+| ttl | 查看某个key过期前的剩余时间
+| PEXPIRE | 同expire，精度为毫秒
+| PTTL | 同ttl，精度为毫秒
+
+```
+> set key some-value
+OK
+> expire key 5
+(integer) 1
+> get key (immediately)
+"some-value"
+> get key (after some time)
+(nil)
+
+> set key 100 ex 10
+OK
+> ttl key
+(integer) 9
+```
+
+### LIST
+
+Redis的LIST底层实现为一个链表结构，而不是一个连续的数组。
+
+优点：插入时间复杂度是O(1)
+缺点：查询时间复杂度是O(n)
+
+LIST的一个使用场景：例如，当写博客的时候，每次创建新的文章就把文章的ID `LPUSH` 到一个LIST里，当访问博客的时候，通过`LRANGE 0 9`只展示最新的10篇文章。
+
+#### 基本操作
+
+| 命令 | 含义
+| -- | --
+| LPUSH | 从左(头部)添加一个元素到链表里
+| RPUSH | 从右(尾部)添加一个元素到链表里
+| LRANGE beg_idx end_idx| 从链表获取某个范围的元素，其中，位置索引支持`负值`。例如，`-1`表示最后一个元素，`-2`表示倒数第二个元素。
+| RPOP | 从右弹出一个元素
+| LTRIM | 类似LRANGE，区别是只保留指定范围内的元素，其他全部删除(discarded)
+
+```
+> rpush mylist A
+(integer) 1
+> rpush mylist B
+(integer) 2
+> lpush mylist first
+(integer) 3
+> lrange mylist 0 -1
+1) "first"
+2) "A"
+3) "B"
+> rpush mylist 1 2 3 4 5 "foo bar"
+(integer) 9
+> lrange mylist 0 -1
+1) "first"
+2) "A"
+3) "B"
+4) "1"
+5) "2"
+6) "3"
+7) "4"
+8) "5"
+9) "foo bar"
+
+> rpush mylist a b c
+(integer) 3
+> rpop mylist
+"c"
+> rpop mylist
+"b"
+> rpop mylist
+"a"
+
+> rpush mylist 1 2 3 4 5
+(integer) 5
+> ltrim mylist 0 2
+OK
+> lrange mylist 0 -1
+1) "1"
+2) "2"
+3) "3"
+```
+
+#### 生产者消费者模型 (基于LIST的阻塞操作)
+
+问题：如果使用LIST正常的接口，实现一个生产者消费者模型如下过程，但是存在一个问题是，如果LIST为空，消费者会通过轮询(polling)的方式重试，会造成对Redis很多无用的操作。
+
+* To push items into the list, producers call `LPUSH`.
+* To extract / process items from the list, consumers call `RPOP`.
+
+解决方案：
+
+ Redis implements commands called `BRPOP` and `BLPOP` which are versions of RPOP and LPOP able to block if the list is empty: they'll return to the caller only when a new element is added to the list, or when a user-specified timeout is reached.
+
+MORE:
+
+* It is possible to build safer queues or rotating queues using `RPOPLPUSH`.
+* There is also a blocking variant of the command, called `BRPOPLPUSH`.
+
+
+### HASH
+
+| 命令 | 含义
+| -- | --
+| hset | 设置一个hash
+| hget | 获取某一个hash
+| hmset | 批量设置多个hash
+| hmget | 批量获取多个hash
+| hgetall | 获取所有hash
+| hincrby | 可以对hash某个字段执行incrby操作
+
+```
+> hmset user:1000 username antirez birthyear 1977 verified 1
+OK
+> hget user:1000 username
+"antirez"
+> hget user:1000 birthyear
+"1977"
+> hgetall user:1000
+1) "username"
+2) "antirez"
+3) "birthyear"
+4) "1977"
+5) "verified"
+6) "1"
+
+> hmget user:1000 username birthyear no-such-field
+1) "antirez"
+2) "1977"
+3) (nil)
+
+> hincrby user:1000 birthyear 10
+(integer) 1987
+> hincrby user:1000 birthyear 10
+(integer) 1997
+```
+
+### SET
+
+| 命令 | 含义
+| -- | --
+| sadd | 像集合中添加元素
+| smembers | 返回集合中所有元素
+| sismember | 检查某个元素是否存在
+| sinter | 计算交集
+| SPOP | 从集合中随机删除一个元素，并返回客户端
+| SUNIONSTORE | 合并多个集合
+
+### Sorted SET
+
+| 命令 | 含义
+| -- | --
+| zadd | 像有序集合中添加记录
+| zrange | 按score升序排序
+| ZREVRANGE | 按score降序排序
+| ZRANGEBYSCORE | 返回某个score区间的记录
+| ZREMRANGEBYSCORE | 移除某个score区间的记录
+| zrank | 按score升序，返回名次
+| ZREVRANK | 按score降序，返回名次
+
+应用场景：
+1. 排行榜
+2. 基于score的区间操作
+
+有序集合的不同在于：
+
+Every element in a sorted set is associated with a floating point value, called the score (this is why the type is also similar to a hash, since every element is mapped to a value)
+
+They are ordered according to the following rule:
+
+* If A and B are two elements with a different score, then A > B if A.score is > B.score.
+* If A and B have exactly the same score, then A > B if the A string is lexicographically greater than the B string. A and B strings can't be equal since sorted sets only have unique elements.
+
+内部数据结构实现：包含了`skip list`和`hash table`，其插入和更新的时间复杂度为`O(log(N))`。
+
+Implementation note: Sorted sets are implemented via a dual-ported data structure containing both a skip list and a hash table, so every time we add an element Redis performs an O(log(N)) operation. That's good, but when we ask for sorted elements Redis does not have to do any work at all, it's already all sorted.
+
+下面使用ZSET存储历史上的一些计算机名人，会按年龄自动排序。
+
+```
+> zadd hackers 1940 "Alan Kay"
+(integer) 1
+> zadd hackers 1957 "Sophie Wilson"
+(integer) 1
+> zadd hackers 1953 "Richard Stallman"
+(integer) 1
+> zadd hackers 1949 "Anita Borg"
+(integer) 1
+> zadd hackers 1965 "Yukihiro Matsumoto"
+(integer) 1
+> zadd hackers 1914 "Hedy Lamarr"
+(integer) 1
+> zadd hackers 1916 "Claude Shannon"
+(integer) 1
+> zadd hackers 1969 "Linus Torvalds"
+(integer) 1
+> zadd hackers 1912 "Alan Turing"
+(integer) 1
+
+> zrange hackers 0 -1
+1) "Alan Turing"
+2) "Hedy Lamarr"
+3) "Claude Shannon"
+4) "Alan Kay"
+5) "Anita Borg"
+6) "Richard Stallman"
+7) "Sophie Wilson"
+8) "Yukihiro Matsumoto"
+9) "Linus Torvalds"
+
+> zrevrange hackers 0 -1
+1) "Linus Torvalds"
+2) "Yukihiro Matsumoto"
+3) "Sophie Wilson"
+4) "Richard Stallman"
+5) "Anita Borg"
+6) "Alan Kay"
+7) "Claude Shannon"
+8) "Hedy Lamarr"
+9) "Alan Turing"
+```
+
+### Bitmap
+
+| 命令 | 含义
+| -- | --
+| SETBIT | 对某个bit位进行设置
+| GETBIT | 获取某个bit位的值
+| BITCOUNT | 返回bit位为1的数量
+
+
+* Bitmap底层使用STRING实现，总共可以记录`2^32`个bit(每个bit位上记录`0`或`1`)，总共占用内存`512 MB`，使用Bitmap的好处是节省内存。
+* 当Bitmap的空间不够时，Redis会自动扩展底层的STRING长度。
+* 没有设置的bit位默认为0。
+* 例如，用bitmap记录不同的用户ID，可以标识`4亿`个不同的用户，且只用了512 MB的内存空间。
+
+Bitmaps are not an actual data type, but a set of bit-oriented operations defined on the `String` type. Since strings are binary safe blobs and their maximum length is `512 MB`, they are suitable to set up to `2^32`(= 2^9 * 2^20 * 2^3) different bits.
+
+```
+> setbit key 10 1
+(integer) 1
+> getbit key 10
+(integer) 1
+> getbit key 11
+(integer) 0
+
+> setbit key 0 1
+(integer) 0
+> setbit key 100 1
+(integer) 0
+> bitcount key
+(integer) 2
+```
+
+### HyperLogLog(HLL)
+
+| 命令 | 含义
+| -- | --
+| PFADD | 统计一个新的元素
+| PFCOUNT | 返回PFADD统计的所有元素的个数
+
+* HyperLogLog 用于记录一些unique的元素。
+* HLL的原理，类似使用SET记录每个元素，并保证唯一，不同的是只是记录状态，而不实际存储元素。
+* 应用场景：记录某个场景下的新用户个数。
+
+问题：记录unique元素的功能，对存储空间要求较高。
+
+Usually counting unique items requires using an amount of memory proportional to the number of items you want to count, because you need to remember the elements you have already seen in the past in order to avoid counting them multiple times. 
+
+解决方案：
+
+The magic of this algorithm is that you no longer need to use an amount of memory proportional to the number of items counted, and instead can use a constant amount of memory! 12k bytes in the worst case, or a lot less if your HyperLogLog (We'll just call them HLL from now) has seen very few elements.
+
+```
+> pfadd hll a b c d
+(integer) 1
+> pfcount hll
+(integer) 4
+```
 
 
 # 执行命令
@@ -486,6 +956,18 @@ void foobarCommand(client *c) {
 * 命令执行结果通过`addReply()`函数返回，在`networking.c`定义
 
 > 可以在Redis中扩展和定义自己的命令。
+
+# Lua scripts server
+
+It is possible to run Lua scripts server side to improve latency and bandwidth.
+
+https://redis.io/commands/eval
+
+# Pub-Sub server
+
+Redis is also a Pub-Sub server.
+
+https://redis.io/topics/pubsub
 
 
 
