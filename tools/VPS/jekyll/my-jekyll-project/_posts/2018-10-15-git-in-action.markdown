@@ -8,7 +8,9 @@ categories: tools
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-Linux的创始人Linus Torvalds在2005年开发了Git的原型程序，主要用于对Linux内核开发的版本管理。作为开发者日常离不开对代码的管理，Git 采用了分布式版本库的方式，使得开发者更加自由，随时随地可以管理自己的代码，而不像集中式的版本控制工具(`VCSs`)，例如`CVS`，`Subversion`，需要对网络的依赖。使用Git让源代码的管理，以及团队间的协作更为方便，这也是为什么越来越多的科技公司都使用Git进行代码管理。
+Linux的创始人Linus Torvalds在2005年开发了[Git]的原型程序，主要用于对Linux内核开发的版本管理。作为开发者日常离不开对代码的管理，Git 采用了分布式版本库的方式，使得开发者更加自由，随时随地可以管理自己的代码，而不像集中式的版本控制工具(`VCSs`)，例如`CVS`，`Subversion`，需要对网络的依赖。使用Git让源代码的管理，以及团队间的协作更为方便，这也是为什么越来越多的科技公司都使用Git进行代码管理。
+
+[Git]: https://zh.wikipedia.org/wiki/Git
 
 版本控制演变：
 
@@ -16,6 +18,15 @@ Linux的创始人Linus Torvalds在2005年开发了Git的原型程序，主要用
 * svn：集大成者，集中式（每次提交都需要联网，效率低），2000
 * git：Linux之父Linus开发的，geek主流，分布式（不需要联网，可以在本地提交），2005
 * github：geek社区，托管网站，2008
+
+Git的操作流程：
+
+![git-mode](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git-mode.jpg)
+
+
+更多：[阮一峰: 版本控制入门插图教程]
+
+[阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
 
 # [Git的设计思想]
 
@@ -105,6 +116,8 @@ If a particular version of a file is in the git directory, it's considered commi
 
 [Git下载地址]: http://git-scm.com/downloads
 
+## 基础配置
+
 ``` bash
 # Sets the default name for git to use when you commit
 git config --global user.name "Your Name Here"
@@ -130,7 +143,32 @@ git config user.email "differentemail@email.com"
 
 [Customizing-Git-Git-Configuration]: https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_git_config
 
-# 协作模式
+## 忽略文件
+
+在实际的项目中，比如，临时文件，编译过程文件(例如C/C++编译过程中的`.o`文件)等，是不需要进行代码管理的(即不用提交)。可以在仓库的根目录下创建一个名为`.gitignore`的文件，并配置当前项目需要忽略的文件列表。
+
+```
+*.[oa]
+*~
+```
+
+* 忽略所有以`.o`或`.a`结尾的文件
+* 忽略所有以波浪符结尾的文件
+
+如果忘记添加`.gitignore`文件，不小心将一些不需要的日志文件添加到了暂存区(staging area)，可以这么撤销：
+
+```
+git rm --cached *.log
+```
+
+此命令会把暂存区域的文件移除，同时文件仍然保留在磁盘。
+
+
+![gitignore](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitignore.jpg)
+
+
+
+# Git的协作模式
 
 使用Git的最大好处，是提高团队的协作效率，以下是两种常见的方式。
 
@@ -181,7 +219,7 @@ git reset --hard `版本号`    # 强制将指针回退到指定版本
 git push -f                  # 强制push到远端master
 ```
 
-# Git常用命令
+# Git的常用命令
 
 | 操作 | Git | Subversion |
 | -- | -- | --
@@ -203,9 +241,61 @@ git push -f                  # 强制push到远端master
 |反映到远端|	git push|	svn commit 
 |忽略档案目录|	.gitignore|	.svnignore
 
-## 查看历史提交信息
+## 查看和设置Git配置
 
 ```
+# 查看当前Git配置
+git config --list
+
+# 设置用户名和邮箱
+git config --global user.name "Your Name Here"
+git config --global user.email "your_email@example.com"
+```
+
+## 创建代码仓库
+
+```
+# 初始化并生成.git子目录存放Git仓库的配置文件
+git init
+
+# 添加指定的文件到暂存区
+git add README.md
+# 把所有修改过文件都加入暂存区
+git add .  
+
+# 先提交到本地
+git commit -m "first commit"
+
+# 或者将以上两步合并为一步
+
+git commit -am "first commit"
+
+# 添加remote仓库
+git remote add origin git@github.com:gerryyang/your_repo.git
+
+# 将本地修改的代码推送到remote仓库
+git push -u origin master
+```
+
+## 克隆仓库
+
+```
+# 获取master分支
+git clone https://github.com/gerryyang/mac-utils.git
+
+# 获取指定分支
+git clone -b $branch https://github.com/gerryyang/mac-utils.git
+```
+
+## 查看代码状态和历史提交信息
+
+```
+# 查看当前仓库代码状态
+git status
+
+# 对比修改的内容
+git diff
+
 # 查看最近2次的提交统计信息
 git log --stat -2
 
@@ -213,6 +303,9 @@ git log --stat -2
 git log --pretty=format:"%h - %an, %ar : %s"
 git log --pretty=format:"%h %s" --graph
 git log --since=2.weeks
+
+# 将每个提交版本信息缩减为一行
+git log --pretty=oneline 
 ```
 more: [Git-基础-查看提交历史]
 
@@ -220,19 +313,175 @@ more: [Git-基础-查看提交历史]
 
 ## 分支操作
 
+Git最核心的特性就是，创建新分支操作几乎能在瞬间完成，并且在不同分支之间的切换操作也是一样高效。在切换分支时，会发现当前工作目录里的文件会改变成切换后的分支代码。
+
+由于Git的分支实质上仅是包含所指对象校验和(长度为40的SHA-1值字符串)的文件，所以它的创建和销毁都异常高效。创建一个新分支就相当于往一个文件中写入41 个字节(40个字符和 1个换行符)，如此的简单能不快吗？
+
+这与过去大多数版本控制系统形成了鲜明的对比，它们在创建分支时，将所有的项目文件都复制一遍，并保存到一个特定的目录。完成这样繁琐的过程通常需要好几秒钟，有时甚至需要好几分钟。所需时间的长短，完全取决于项目的规模。而在Git中，任何规模的项目都能在瞬间创建新分支。
+
 ```
+# 查看分支详细信息 (可以看出代码是否已经push)
+git branch -av
+
+# 删除本地分支
+git branch -d  
+
+# 强制删除本地分支                   
+git branch -D  
+
+# 删除远端分支                   
+git push origin -d <branch-name> 
+
+# 通过查看远程分支信息，也可以看出每个分支的进度
+git remote show origin
+
 # 切换到某个分支
-git checkout $branch
+git checkout <branch-name> 
 
 # 切换到上一个分支
 git checkout -
+
+# 新建并切换到该分支
+git checkout -b <branch-name> 
+# 等价于
+git branch <branch-name>
+git checkout <branch-name>
+
+# 分支合并，例如修复了一个bug然后合并到master
+git checkout master
+git checkout -b hotfix
+# 在hotfix分支修改bug代码
+git commit -a -m 'fix the bug'
+git checkout master
+git merge hotfix
+# 最新的修改已经合到 master分支，hotfix分支可以退出历史舞台了，可以删掉   (建议，除非分支确实太多了)
+git branch -d hotfix
+
+```
+
+注意：若在执行`git merge`时遇到代码冲突，需要先解决冲突。解决完冲突后，执行`git status`可以查看，任何因包含合并冲突而有待解决的文件，都会以未合并状态标识出来。而如果没有，说明所有的冲突都修复了，并且提醒你去提交一下。再执行`git commit -am <comment>`，至此冲突解决完毕并已提交代码。
+
+
+
+## 撤销操作
+
+```
+# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
+git reset HEAD <filename>
+
+# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
+git reset --hard <commit-id>
+
+# 将HEAD理解为当前分支的别名
+# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+git reset --hard HEAD^
+
+# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
+git checkout -- files
+```
+
+问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
+解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
+
+**总结**：
+
+* 场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`
+* 场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD file`，就回到了场景1，第二步按场景1操作。
+* 场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，则按照版本回退的办法，不过前提是没有推送到远程库。
+
+## 远程仓库操作
+
+```
+# 查看远程仓库的名称 (`origin`是Git默认的远程仓库名字)
+git remote
+
+# 查看远程仓库的详细信息
+git remote show origin
+
+# 将代码推送到远程仓库
+# git push $remote-name $branch-name
+git push origin master
+
+# 拉取远程仓库代码
+git fetch
+get merge
+# 等价于
+git pull
+
+# 将所有远程分支拉取下来
+git fetch -- all
+
+# 删除远端分支  (本地分支和远程分支的删除互不影响)                  
+git push origin -d <branch-name> 
+# 或者
+git push origin :<branch-name> 
+```
+
+例如：
+
+```
+$ git remote
+origin
+$ git remote show origin
+* remote origin
+  Fetch URL: git@git.code.oa.com:gerryyang/portal.git
+  Push  URL: git@git.code.oa.com:gerryyang/portal.git
+  HEAD branch: master
+  Remote branches:
+    V1.0R010 tracked
+    V1.0R020 tracked
+    master   tracked
+  Local branch configured for 'git pull':
+    master merges with remote master
+  Local refs configured for 'git push':
+    V1.0R010 pushes to V1.0R010 (local out of date)
+    V1.0R020 pushes to V1.0R020 (up to date)
+    master   pushes to master   (local out of date)
+```
+
+更多：[阮一峰: Git远程操作详解]
+
+[阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
+
+## 变基(rebase)操作
+
+在Git中整合来自不同分支的修改主要有两种方法：
+* merge
+* rebase
+
+这两种整合方法的最终结果没有任何区别，但是变基(rebase)使得提交历史更加整洁。在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的，但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。但不合理的使用变基，会丢失别人的提交记录，这时候人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你。
+
+## 暂存操作
+
+当前你在开发feature1分支，开发了一半，还要2天才能开发完成，这时候又不想提交。这时突然来了个bug，你必须今天就得修复bug，修复完了后才继续开发需求，怎么办？这里就使用到了暂存的功能。
+
+```
+# 先把所有的修改暂存起来，这时候你的所有改动都好像消失了一样，但其实是被暂存起来了
+git stash 
+# 新建bugfix分支去修复bug
+git checkout -b bugfix/分支名  
+# 修复bug...
+# 回到原来的开发分支
+git checkout feature1 
+# 恢复暂存的内容
+git stash pop 
+# 继续开发需求...
+```
+
+## 压缩提交
+
+在开发中的时候尽量保持一个较高频率的代码提交，这样可以避免不小心代码丢失。但是真正合并代码的时候，我们并不希望有太多冗余的提交记录。那么，如何压缩commit记录呢？
+
+```
+# 使用 git log 找到起始 commit-id
+git reset commit-id  # 切记不要用 -- hard 参数
+# 重新 git add && git commit
 ```
 
 
+# Git与GitHub 
 
-# GitHub 
-
-GitHub主要为开发者提供Git仓库的托管服务，拥有一只`octocat`的吉祥物。截止2013年12月，GitHub托管的仓库数已超过1000万。GitHub这一服务为开源世界带来了社会化编程的概念。在GitHub上进行交流时用到的Issue, Wiki等都可以用FGM(Git Flavored Markdown)语法表述。
+`GitHub`主要为开发者提供`Git`仓库的托管服务，拥有一只`octocat`的吉祥物。截止2013年12月，GitHub托管的仓库数已超过1000万。GitHub这一服务为开源世界带来了社会化编程的概念。在GitHub上进行交流时用到的Issue, Wiki等都可以用`FGM(Git Flavored Markdown)`语法表述。
 
 在GitHub上公开源代码时可以指定相关的许可协议。实际使用时，只需将`LICENSE`文件加入仓库，并在`README.md`文件中声明使用了何种许可协议即可。
 
@@ -261,8 +510,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ```
 cd $HOME/.ssh
-ssh-keygen -t rsa -C "$email"                                      # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
-ssh-keygen -t rsa -C "$email" -f "xxx_rsa" -C "公钥文件中的备注"   # 指定生成的密钥文件名
+ssh-keygen -t rsa -C <email>                                      # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
+ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"    # 指定生成的私钥文件名
 ```
 
 生成公私钥后，复制公钥信息配置在Github上。并注意本地`.git/config`配置中的`url`为ssh要求的格式：
@@ -324,13 +573,18 @@ A free Git client for Windows and Mac. Sourcetree simplifies how you interact wi
 
 https://www.sourcetreeapp.com/
 
+2. TortoiseGit
+
+TortoiseGit is a Windows Shell Interface to Git and based on TortoiseSVN. It's open source and can fully be build with freely available software.
+
+https://tortoisegit.org/
 
 
 # Refer
 
 更多关于Git的内容可以参考以下一些资料。
 
-1. [Getting Started - About Version Control]
+1. Git官方的使用文档[Getting Started - About Version Control]
 
 [Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 
