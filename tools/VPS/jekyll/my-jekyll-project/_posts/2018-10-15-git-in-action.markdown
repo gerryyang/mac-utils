@@ -571,13 +571,13 @@ Host github.com
 
 # Git相关工具
 
-1. Sourcetree
+* Sourcetree
 
 A free Git client for Windows and Mac. Sourcetree simplifies how you interact with your Git repositories so you can focus on coding. Visualize and manage your repositories through Sourcetree's simple Git GUI.
 
 https://www.sourcetreeapp.com/
 
-2. TortoiseGit
+*  TortoiseGit
 
 TortoiseGit is a Windows Shell Interface to Git and based on TortoiseSVN. It's open source and can fully be build with freely available software.
 
@@ -589,8 +589,8 @@ https://tortoisegit.org/
 更多关于Git的内容可以参考以下一些资料。
 
 1. Git官方的使用文档[Getting Started - About Version Control]
+2. [廖雪峰: Git教程]
 
 [Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 
-
-
+[廖雪峰: Git教程]: https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
