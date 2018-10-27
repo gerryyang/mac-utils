@@ -8,16 +8,16 @@ categories: tools
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-Linux的创始人Linus Torvalds在2005年开发了[Git]的原型程序，主要用于对Linux内核开发的版本管理。作为开发者日常离不开对代码的管理，Git 采用了分布式版本库的方式，使得开发者更加自由，随时随地可以管理自己的代码，而不像集中式的版本控制工具(`VCSs`)，例如`CVS`，`Subversion`，需要对网络的依赖。使用Git让源代码的管理，以及团队间的协作更为方便，这也是为什么越来越多的科技公司都使用Git进行代码管理。
+Linux的创始人Linus Torvalds在2005年开发了[Git]的原型程序，主要用于对Linux内核开发的版本管理。作为开发者日常离不开对代码的管理，Git 采用了分布式版本库的方式，使得开发者更加自由，随时随地可以管理自己的代码，而不像集中式的版本控制工具(`VCSs`)，例如`CVS`，`Subversion`，需要对网络的依赖。使用Git让源代码的管理，以及团队间的协作更为高效，这也是为什么越来越多的科技公司都使用Git进行代码管理。
 
 [Git]: https://zh.wikipedia.org/wiki/Git
 
 版本控制演变：
 
-* cvs：始祖，集中式（每次提交都需要联网，效率低），1985
-* svn：集大成者，集中式（每次提交都需要联网，效率低），2000
-* git：Linux之父Linus开发的，geek主流，分布式（不需要联网，可以在本地提交），2005
-* github：geek社区，托管网站，2008
+* CVS：始祖，集中式(每次提交都需要联网，效率低)，1985
+* SVN：集大成者，集中式(每次提交都需要联网，效率低)，2000
+* Git：Linux之父Linus开发的，geek主流，分布式(不需要联网，可以在本地提交)，2005
+* GitHub：geek社区，托管网站，2008
 
 Git的操作流程：
 
@@ -32,7 +32,7 @@ Git的操作流程：
 
 [Git的设计思想]: https://git-scm.com/book/en/v2/Getting-Started-Git-Basics
 
-如果要学习Git，请先忘记之前你知道的关于其他VCSs的用法(例如，svn)，这样可以帮助你更好地理解和使用Git，因为Git的设计理念和其他的VCSs完全不同，下图非常形象地解释了二者的不同。
+如果要学习Git，请先忘记之前你知道的关于其他VCSs的用法(例如，SVN)，这样可以帮助你更好地理解和使用Git，因为Git的设计理念和其他的VCSs完全不同，下图非常形象地解释了二者的不同。
 
 ![two_ways_vcs](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/two_ways_vcs.jpg)
 
@@ -42,7 +42,11 @@ Git的操作流程：
 
 Git通过快照的方式来记录每次变更，如果文件没有变更，新的分支不会重复复制此文件，而是通过索引的方式访问历史的快照文件。
 
+* Other systems tend to store data as changes to a base version of each file.
+
 ![git_svn_diff1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff1.jpg)
+
+* Git stores data as snapshots of the project over time.
 
 ![git_svn_diff2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff2.jpg)
 
@@ -307,7 +311,7 @@ git log --since=2.weeks
 # 将每个提交版本信息缩减为一行
 git log --pretty=oneline 
 ```
-more: [Git-基础-查看提交历史]
+更多: [Git-基础-查看提交历史]
 
 [Git-基础-查看提交历史]: https://git-scm.com/book/zh/v1/Git-基础-查看提交历史
 
