@@ -151,7 +151,7 @@ git config user.email "differentemail@email.com"
 
 在实际的项目中，比如，临时文件，编译过程文件(例如C/C++编译过程中的`.o`文件)等，是不需要进行代码管理的(即不用提交)。可以在仓库的根目录下创建一个名为`.gitignore`的文件，并配置当前项目需要忽略的文件列表。
 
-```
+``` bash
 *.[oa]
 *~
 ```
@@ -161,7 +161,7 @@ git config user.email "differentemail@email.com"
 
 如果忘记添加`.gitignore`文件，不小心将一些不需要的日志文件添加到了暂存区(staging area)，可以这么撤销：
 
-```
+``` bash
 git rm --cached *.log
 ```
 
@@ -215,7 +215,7 @@ git rm --cached *.log
 
 若不小心把错误的代码merge到主干了怎么办？到项目根目录，执行如下操作：
 
-```
+``` bash
 git checkout master          # 切换到master
 git pull                     # 拉取最新代码
 git log -l 5                 # 查看想退回到版本号并copy下来，后面到数字可以自己设置。或者使用git reflog
@@ -247,7 +247,7 @@ git push -f                  # 强制push到远端master
 
 ## 查看和设置Git配置
 
-```
+``` bash
 # 查看当前Git配置
 git config --list
 
@@ -258,7 +258,7 @@ git config --global user.email "your_email@example.com"
 
 ## 创建代码仓库
 
-```
+``` bash
 # 初始化并生成.git子目录存放Git仓库的配置文件
 git init
 
@@ -283,7 +283,7 @@ git push -u origin master
 
 ## 克隆仓库
 
-```
+``` bash
 # 获取master分支
 git clone https://github.com/gerryyang/mac-utils.git
 
@@ -323,7 +323,7 @@ Git最核心的特性就是，创建新分支操作几乎能在瞬间完成，�
 
 这与过去大多数版本控制系统形成了鲜明的对比，它们在创建分支时，将所有的项目文件都复制一遍，并保存到一个特定的目录。完成这样繁琐的过程通常需要好几秒钟，有时甚至需要好几分钟。所需时间的长短，完全取决于项目的规模。而在Git中，任何规模的项目都能在瞬间创建新分支。
 
-```
+``` bash
 # 查看分支详细信息 (可以看出代码是否已经push)
 git branch -av
 
@@ -369,7 +369,7 @@ git branch -d hotfix
 
 ## 撤销操作
 
-```
+``` bash
 # 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
 git reset HEAD <filename>
 
@@ -395,7 +395,7 @@ git checkout -- files
 
 ## 远程仓库操作
 
-```
+``` bash
 # 查看远程仓库的名称 (`origin`是Git默认的远程仓库名字)
 git remote
 
@@ -423,7 +423,7 @@ git push origin :<branch-name>
 
 例如：
 
-```
+``` 
 $ git remote
 origin
 $ git remote show origin
@@ -459,7 +459,7 @@ $ git remote show origin
 
 当前你在开发feature1分支，开发了一半，还要2天才能开发完成，这时候又不想提交。这时突然来了个bug，你必须今天就得修复bug，修复完了后才继续开发需求，怎么办？这里就使用到了暂存的功能。
 
-```
+``` bash
 # 先把所有的修改暂存起来，这时候你的所有改动都好像消失了一样，但其实是被暂存起来了
 git stash 
 # 新建bugfix分支去修复bug
@@ -476,7 +476,7 @@ git stash pop
 
 在开发中的时候尽量保持一个较高频率的代码提交，这样可以避免不小心代码丢失。但是真正合并代码的时候，我们并不希望有太多冗余的提交记录。那么，如何压缩commit记录呢？
 
-```
+``` bash
 # 使用 git log 找到起始 commit-id
 git reset commit-id  # 切记不要用 -- hard 参数
 # 重新 git add && git commit
@@ -512,7 +512,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 使用`ssh认证方式`可以实现免密提交，通过`ssh-keygen`可以生成ssh认证所需的`公钥`和`私钥`。执行`ssh-keygen`后直接回车，不用填写东西，之后会让你输入密码(根据安全性选择是否需要此密码，可以直接回车)，然后就生成一个`.ssh`目录，目录里会生成两个(默认)文件：`id_rsa`和`id_rsa.pub`。
 
-```
+``` bash
 cd $HOME/.ssh
 ssh-keygen -t rsa -C <email>                                      # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
 ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"    # 指定生成的私钥文件名
