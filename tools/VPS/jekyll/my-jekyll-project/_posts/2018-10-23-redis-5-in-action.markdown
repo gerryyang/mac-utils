@@ -8,7 +8,7 @@ categories: redis
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-一提起数据库，大多数人可能想到的是`Oracle`，`MySQL`以及`Microsoft SQL Server`这三大巨头。但除此外，很多新兴的数据库也开始被开发者使用。例如，基于海量日志查询的[Elasticsearch]，在高并发场景使用[Redis]做缓存。[DB-engines]上可以看到近期数据库的使用排名情况。可以看到Redis作为一款NoSQL数据库（非关系型数据库）其排名正处在一个上升的阶段。Redis使用ANSI C编写，目前是一位意大利的开发者[Salvatore Sanfilippo]来维护，他在twitter上非常活跃，可以帮助开发者了解更多最新的Redis信息，也可订阅官方的[Redis邮件组]。可以在GitHub上找到最新的[Redis源码]，也有一个[Redis在线测试]工具可以尝试Redis的一些基本用法。
+一提起数据库，大多数人可能想到的是`Oracle`，`MySQL`以及`Microsoft SQL Server`这三大巨头。但除此外，很多新兴的数据库也开始被开发者使用。例如，基于海量日志查询的[Elasticsearch]，在高并发场景使用[Redis]做缓存。[DB-engines]上可以看到近期数据库的使用排名情况。可以看到Redis作为一款NoSQL数据库（非关系型数据库）其排名正处在一个上升的阶段。Redis使用ANSI C编写，目前是一位意大利的开发者[Salvatore Sanfilippo]来维护，他在twitter上非常活跃，可以帮助开发者了解更多最新的Redis信息，也可订阅官方的[Redis邮件组]。可以在GitHub上找到最新的[Redis源码]，也有一个[Redis在线测试]工具可以尝试Redis的一些基本用法。在了解完Redis之后，思考问题的方式也会发生改变，从原来怎样将数据塞到数据库表里，变为应该使用哪种Redis的数据结构来解决这个问题。
 
 ![db_rank](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/db_rank.jpg)
 
@@ -515,7 +515,14 @@ Redis对key的**创建和删除**原则：
 
 ### STRING
 
-Redis最简单的一种值类型，可以用来存储一个网页，或者存储一张照片。其最大长度不能超过512MB。
+Redis最简单的一种值类型，可以用来存储一个网页，或者存储一张照片。其最大长度不能超过512MB。在Redis里面，字符串可以存储以下3种类型的值：
+
+* 字节串
+* 整数
+* 浮点数
+
+如果尝试对一个值，无法被解释为整数或者浮点数的字符串键执行自增或者自减操作，Redis将返回错误。
+
 
 #### 基本操作
 
@@ -744,14 +751,19 @@ MORE:
 
 ### HASH
 
+Redis的散列可以将`多个键值对`存储到一个键里面，使得散列非常适用于将一些相关的数据存储在一起。**可以把这种数据的聚集看做是关系数据库中的行，或者文档数据库中的文档**。
+
 | 命令 | 含义
 | -- | --
-| hset | 设置一个hash
-| hget | 获取某一个hash
-| hmset | 批量设置多个hash
-| hmget | 批量获取多个hash
-| hgetall | 获取所有hash
-| hincrby | 可以对hash某个字段执行incrby操作
+| hset | 在hash里设置一个键值对
+| hget | 在hash里获取一个键值对
+| hmset | 批量设置多个键值对
+| hmget | 批量获取多个键值对
+| hgetall | 获取所有键值对
+| hkeys | 获取散列包含的所有键
+| hvals | 获取散列包含的所有值
+| hexists | 检查给定键是否存在于散列中
+| hincrby | 可以对hash里，某个键执行incrby操作
 
 ```
 > hmset user:1000 username antirez birthyear 1977 verified 1
@@ -781,26 +793,56 @@ OK
 
 ### SET
 
+Redis的集合，以`无序`的方式来存储多个`不同的元素`。
+
 | 命令 | 含义
 | -- | --
 | sadd | 像集合中添加元素
 | smembers | 返回集合中所有元素
 | sismember | 检查某个元素是否存在
-| sinter | 计算交集
 | SPOP | 从集合中随机删除一个元素，并返回客户端
-| SUNIONSTORE | 合并多个集合
+| SCARD | 返回集合包含的元素数量
 
-### Sorted SET
+用于组合和处理多个集合的命令：
 
 | 命令 | 含义
 | -- | --
-| zadd | 像有序集合中添加记录
-| zrange | 按score升序排序
-| ZREVRANGE | 按score降序排序
+| SDIFF | 返回存在于第一个集合，但不存在于其他集合中的元素，即`差集`
+| SINTER | 返回同时存在于所有集合的元素，即`交集`
+| SUNION | 返回至少存在于一个集合中的元素，即`并集`
+
+对应于以上三个`返回结果的版本`，也有三个`存储结果的版本`，分别是，SDIFFSTORE, SINTERSTORE, SUNIONSTORE。
+
+
+### Sorted SET
+
+和`散列`存储着**键与值**之间的映射类似，`有序集合`也存储着**成员与分值**之间的映射，并提供了**分值**的处理命令。这些**分值**在Redis中以IEEE 754双精度浮点数的格式存储。
+
+比如：
+* 实现基于发表时间排序的文章列表
+* 基于投票数量排序的文章列表
+* 存储cookie的过期时间
+
+| 命令 | 含义
+| -- | --
+| zadd key-name score member [socre member ...]| 将带有给定分值的成员添加到有序集合里
+| zrem key-name member [member ...] | 从有序集合里移除给定的成员，并返回被移除成员的数量
+| zcard key-name | 返回有序集合包含的成员数量
+| zincrby key-name increment member | 将member成员的分值加上increment
+| zcount key-name min max | 返回分值介于min和max之间的成员数量 
+| zrank key-name member | 返回成员member在有序集合中的排名
+| zscore key-name member | 返回成员member的分值
+| zrange key-name start stop [withscores] | 返回有序集合中排名介于start和stop之间的成员，如果给定了可选的withscores选项，那么命令会将成员的分值也一并返回
+
+基于返回的获取，删除，以及并集，交集命令。
+
+| 命令 | 含义
+| -- | --
+| ZREVRANK key-name member | 返回有序集合里成员member的排名，成员按照分值从大到小排列
+| ZREVRANGE key-name start stop [withscores] | 返回有序集合给定排名范围内的成员，成员按照分值从大到小排列
 | ZRANGEBYSCORE | 返回某个score区间的记录
 | ZREMRANGEBYSCORE | 移除某个score区间的记录
-| zrank | 按score升序，返回名次
-| ZREVRANK | 按score降序，返回名次
+
 
 应用场景：
 1. 排行榜
@@ -961,6 +1003,136 @@ Redis is also a Pub-Sub server.
 
 https://redis.io/topics/pubsub
 
+| 命令 | 含义
+| -- | --
+| subscribe channel [channel ...] | 订阅给定的一个或多个频道
+| unsubscribe [channel [channel ...]] | 退订给定的一个或多个频道，如果执行时没有给定任何频道，则退订所有频道
+| publish channel message | 向指定频道发送消息
+| psubscribe pattern [pattern ...] | 订阅与给定模式相匹配的所有频道
+| punsubscribe [pattern [pattern ...]] | 退订给定的模式，如果没有给定任何模式，则退订所有模式
+
+注意：如何使用Redis实现可靠的消息传递？
+
+# Redis的事务
+
+Redis有5个命令可以在不被打断的情况下对多个键执行操作。Redis的事务以`MULTI`命令开始，之后跟着用户传入的多个命令，最后以`EXEC`结束。这种简单的事务在`EXEC`命令被调用之前不会执行任何实际操作，所以用户将没办法根据读取到的数据来做决定。
+
+* WATCH
+* MULTI
+* EXEC
+* UNWATCH
+* DISCARD
+
+在关系型数据库中，使用`select for update`是一种`悲观锁`，持有锁的客户端运行越慢，等待解锁的客户端被阻塞的时间就越长。
+
+Redis的一种事务的处理方法(思想类似，`乐观锁`)：使用`WATCH`对键进行监视，直到用户尝试执行`EXEC`命令的这段时间里，如果有其他客户端抢先对任何被监视的键进行了替换，更新或者删除等操作，那么当用户尝试执行`EXEC`命令的时候，事务将失败并返回一个错误(客户端可以选择重试或者取消)。通过使用`WATCH`可以保证在执行某些重要操作的时候，确保自己正在用的数据没有发生变化来避免数据出错。
+
+
+
+```
+watch
+
+multi
+
+# 操作1
+# 操作2
+
+exec
+```
+
+
+# Redis键的过期时间
+
+在使用Redis存储数据时，有些数据仅在一段很短的时间内有用，虽然可以在数据的有效期过了之后`手动删除`无用的数据，但更好的办法是使用Redis提供的`键过期操作`来自动删除无用数据。
+
+* 显示删除
+
+DEL命令
+
+* 自动删除
+
+| 命令 | 含义
+| -- | --
+| PERSIST key-name | 移除键的过期时间
+| TTL key-name | 查看给定键距离过期还有多少秒
+| EXPIRE key-name seconds | 让给定键在指定的秒数后过期
+| EXPIREAT key-name timestamp | 将给定键的过期时间设置为给定的UNIX时间戳
+| PTTL key-name | 单位是毫秒，Redis2.6以上版本可用
+| PEXPIRE key-name milliseconds | 单位毫秒
+| PEXPIREAT key-name timestamp-milliseconds | 单位毫秒
+
+# Redis的持久化
+
+Redis提供了两种不同的持久化方法。
+
+## 快照持久化 (允许丢数据)
+
+将存在于某一时刻的所有数据都写入硬盘里。
+
+共享选项，决定快照文件和AOF文件的保存位置。
+
+```
+dir ./
+```
+
+快照持久化配置选项：
+
+```
+save 60 1000
+stop-writes-on-bgsave-error no
+rdbcompression yes
+dbfilename dump.rdb
+```
+
+创建快照的几个方法：
+
+1. 客户端发送`BGSAVE`命令来创建一个快照。Redis会调用fork创建一个子进程负责将快照写入硬盘，而父进程则继续处理命令请求。
+2. 客户端发送`SAVE`命令来创建一个快照。区别是，Redis在创建快照之前将不再响应任何其他命令。(此命令并不常用)
+3. 如果用户设置了save选项配置，比如，`save 60 1000`，那么从Redis最近一次创建快照之后开始算起，当60秒之内有1000次写入这个条件被满足时，Redis就会自动触发`BGSAVE`命令。如果用户设置了多个save配置选项，那么当任意一个save配置选项所设置的条件被满足时，Redis就会触发一次`BGSAVE`。
+4. 当Redis通过`SHUTDOWN`命令接收到关闭服务器的请求时，或者收到标准`TERM`信号时，会执行一个`SAVE`命令，阻塞所有客户端，不再执行客户端发送的任何命令，并在`SAVE`命令执行完毕之后关闭服务器。
+5. 当一个Redis服务器连接另一个Redis服务器，并向对方发送`SYNC`命令来开始一次复制操作的时候，如果主服务器没有在执行`BGSAVE`操作，或者主服务器并非刚刚执行完`BGSAVE`操作，那么主服务器就会执行`BGSAVE`。
+
+
+## AOF持久化
+
+只追加文件(Append-Only File)，在执行写命令时，将被执行的写命令复制到硬盘里。因此，Redis只要从头到尾重新执行一次AOF文件包含的所有写命令，就可以恢复AOF文件所记录的数据集。
+
+AOF持久化配置选项：
+
+```
+appendonly no
+appendfsync everysec/always/no
+no-appendsync-on-rewrite no
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+```
+
+# Redis的复制
+
+复制(replication)可以实现读写分离，作为扩展性能的一种手段。
+
+配置选项：
+
+* 如果在启动Redis服务器指定了`slaveof host port`选项配置，那么Redis服务器将根据该选项来连接主服务器。
+* 发送`slaveof no one`命令让服务器终止复制操作，不再接受主服务器的数据更新。
+* 发送`slaveof host port`命令让服务器开始复制一个新的主服务器。
+
+# Redis的性能
+
+要对Redis的性能进行优化，首先需要知道各种命令的执行速度，可以通过附带的性能测试程序`redis-benchmark`测试，可以展示一些常用命令在1秒内可以执行的次数。
+
+``` bash
+# -c 1 一个客户端, 不指定则默认为50个客户端
+# -q 简化输出结果
+redis-benchmark -c 1 -1
+```
+
+
+# Redis的应用
+
+* 对文章进行投票。例如，StackOverflow是一个可以对问题进行投票的网站
+
+
 
 
 [Redis]: https://redis.io/
@@ -985,3 +1157,6 @@ https://redis.io/topics/pubsub
 [Redis Command]: https://redis.io/commands
 
 [Memcached]: https://memcached.org/
+
+
+

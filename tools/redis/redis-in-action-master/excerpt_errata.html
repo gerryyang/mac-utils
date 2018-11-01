@@ -1,0 +1,510 @@
+﻿<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Errata for Redis in Action</title>
+        <style type="text/css">
+            body {background-color: #eee;}
+            #body {
+                margin-left: auto;
+                margin-right: auto;
+                width: 800px;
+                border: 1px solid #444;
+                background-color: #eee;
+                padding: 10px;
+            }
+            h2 {
+                margin-left: 10px;
+                border-top: 1px solid #444;
+            }
+            h3,h4 {margin-left: 20px;}
+            p {margin-left: 30px;}
+            blockquote {margin-left: 60px;}
+            ul.ns {list-style-type: none;}
+        </style>
+    </head>
+    <body>
+        <div id="body">
+            <h1>Errata for Redis in Action</h1>
+            <img id="bookcover" width="150" height="188" src="https://manning-content.s3.amazonaws.com/book/8/00f2522-76ce-4594-8564-541254e6d8f0/carlson.png" alt="booktitle">
+            <p><i>Last updated August 27, 2018</i></p>
+            <p><strong>You can view the most recent version of this errata <a href="https://htmlpreview.github.io/?https://github.com/josiahcarlson/redis-in-action/blob/master/excerpt_errata.html">here</a></strong></p>
+            <h3>Known errata</h3>
+            <ul class="ns">
+                <li><a href="#2">Chapter 2</a><br/>
+                    <ul class="ns">
+                        <li><a href="#2.5">Section 2.5</a>, Page 35, <a href="#l2.10">Listing 2.10</a> (not actually an error!)</li>
+                    </ul>
+                </li>
+                <li><a href="#3">Chapter 3 exercises</a><br/>
+                    <ul class="ns">
+                        <li><a href="#3.7">Section 3.7</a>, Page 62, <a href="#l3.16">Exercise: Replacing timestamp <tt>ZSETS</tt> with <tt>EXPIRE</tt></a></li>
+                    </ul>
+                </li>
+                <li><a href="#5">Chapter 5</a><br/>
+                    <ul class="ns">
+                        <li><a href="#5.1.2">Section 5.1.2</a>, Page 93, <a href="#l5.2">Listing 5.2</a></li>
+                    </ul>
+                </li>
+                <li><a href="#6">Chapter 6</a><br/>
+                    <ul class="ns">
+                        <li><a href="#6.1.1">Section 6.1.1</a>, Page 113, <a href="#l6.2">Listing 6.2</a></li>
+                        <li><a href="#6.2.3">Section 6.2.3</a>, Page 121, <a href="#l6.9">Listing 6.9</a></li>
+                        <li><a href="#6.2.5">Section 6.2.5</a>, Page 126, <a href="#l6.11">Listing 6.11</a></li>
+                        <li><a href="#6.5.2">Section 6.5.2</a>, Page 145, <a href="#l6.28">Listing 6.28</a></li>
+                    </ul>
+                </li>
+                <li><a href="#7">Chapter 7</a><br/>
+                    <ul class="ns">
+                        <li><a href="#7.3.4">Section 7.3.4</a>, Page 177, <a href="#l7.15">Listing 7.15</a></li>
+                    </ul>
+                </li>
+                <li><a href="#8">Chapter 8</a><br/>
+                    <ul class="ns">
+                        <li><a href="#8.1.1">Section 8.1.1</a>, Page 187, <a href="#l8.1">Listing 8.1</a></li>
+                        <li><a href="#8.3">Section 8.3</a>, Page 190-191, <a href="#l8.4">Listing 8.4</a></li>
+                        <li><a href="#8.3">Section 8.3</a>, Page 191-192, <a href="#l8.5">Listing 8.5</a></li>
+                        <li><a href="#8.4">Section 8.4</a>, Page 194, <a href="#l8.8">Listing 8.8</a></li>
+                        <li><a href="#8.5.3">Section 8.5.3</a>, Page 201-202, <a href="#l8.14">Listing 8.14</a></li>
+                        <li><a href="#8.5.3">Section 8.5.3</a>, Page 205, <a href="#l8.19">Listing 8.19</a></li>
+                    </ul>
+                </li>
+                <li><a href="#9">Chapter 9</a><br/>
+                    <ul class="ns">
+                        <li><a href="#9.3.3">Section 9.3.3</a>, Page 223-2224, <a href="#l9.17">Listing 9.17</a></li>
+                    </ul>
+                </li>
+                <li><a href="#11">Chapter 11</a><br/>
+                    <ul class="ns">
+                        <li><a href="#11.3.2">Section 11.3.2</a>, Page 260-261, <a href="#l11.12">Listing 11.12</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <h3>Recent updates</h3>
+            <ul>
+                <li>2018/08/27 - <a href="#3">Chapter 3</a>, <a href="#3.7">Section 3.7</a>, Page 62, <a href="#l3.16">Exercise: Replacing timestamp <tt>ZSETS</tt> with <tt>EXPIRE</tt></a></li>
+                <li>2017/06/26 - <a href="#2">Chapter 2</a>, <a href="#2.5">Section 2.5</a>, Page 35, <a href="#l2.10">Listing 2.10</a> (not a bug)</li>
+                <li>2017/04/03 - <a href="#9">Chapter 9</a>, <a href="#9.3.3">Section 3.3.3</a>, Page 223-224, <a href="#l9.17">Listing 9.17</a></li>
+                <li>2017/04/03 - <a href="#8">Chapter 8</a>, <a href="#8.3">Section 8.3</a>, Page 191-192, <a href="#l8.5">Listing 8.5</a></li>
+                <li>2017/03/07 - <a href="#6">Chapter 6</a>, <a href="#6.2.5">Section 6.2.5</a>, Page 126, <a href="#l6.11">Listing 6.11</a></li>
+                <li>2017/03/07 - <a href="#6">Chapter 6</a>, <a href="#6.1.1">Section 6.1.1</a>, Page 113, <a href="#l6.2">Listing 6.2</a></li>
+                <li>2015/12/14 - <a href="#6">Chapter 6</a>, <a href="#6.5.2">Section 6.5.2</a>, Page 145, <a href="#l6.28">Listing 6.28</a></li>
+                <li>2015/10/10 - <a href="#5">Chapter 5</a>, <a href="#5.1.2">Section 5.1.2</a>, Page 93, <a href="#l5.2">Listing 5.2</a></li>
+                <li>2015/04/22 - <a href="#11">Chapter 11</a>, <a href="#11.3.2">Section 11.3.2</a>, Page 260-261, <a href="#l11.12">Listing 11.12</a></li>
+                <li>2015/04/22 - <a href="#7">Chapter 7</a>, <a href="#7.3.4">Section 7.3.4</a>, Page 177, <a href="#l7.15">Listing 7.15</a></li>
+                <li>2015/04/22 - <a href="#6">Chapter 6</a>, <a href="#6.2.3">Section 6.2.3</a>, Page 121, <a href="#l6.9">Listing 6.9</a></li>
+                <li>2015/04/13 - <a href="#8">Chapter 8</a>, <a href="#8.5.3">Section 8.5.3</a>, Page 201-202, <a href="#l8.14">Listing 8.14</a></li>
+                <li>2015/04/13 - <a href="#8">Chapter 8</a>, <a href="#8.4">Section 8.4</a>, Page 194, <a href="#l8.8">Listing 8.8</a></li>
+                <li>2015/04/13 - <a href="#8">Chapter 8</a>, <a href="#8.3">Section 8.3</a>, Page 191-192, <a href="#l8.5">Listing 8.5</a></li>
+                <li>2015/04/13 - <a href="#8">Chapter 8</a>, <a href="#8.3">Section 8.3</a>, Page 190-191, <a href="#l8.4">Listing 8.4</a></li>
+                <li>2015/04/13 - <a href="#8">Chapter 8</a>, <a href="#8.1.1">Section 8.1.1</a>, Page 187, <a href="#l8.1">Listing 8.1</a></li>
+                <li>2015/04/10 - <a href="#6">Chapter 6</a>, <a href="#6.5.2">Section 6.5.2</a>, Page 145, <a href="#l6.28">Listing 6.28</a></li>
+                <li>2014/07/30 - <a href="#8">Chapter 8</a>, <a href="#8.5.3">Section 8.5.3</a>, Page 205, <a href="#l8.19">Listing 8.19</a></li>
+                <li>2014/05/04 - <a href="#2">Chapter 2</a>, <a href="#2.5">Section 2.5</a>, Page 35, <a href="#l2.10">Listing 2.10</a></li>
+                <li>2014/02/16 - <a href="#6">Chapter 6</a>, <a href="#6.2.3">Section 6.2.3</a>, Page 121, <a href="#l6.9">Listing 6.9</a></li>
+                <li>2013/08/24 - <a href="#6">Chapter 6</a>, <a href="#6.2.3">Section 6.2.3</a>, Page 121, <a href="#l6.9">Listing 6.9</a></li>
+            </ul>
+
+            <h2><a name=2>Chapter 2</a></h2>
+            <h3><a name="2.5">Section 2.5</a>, Page 35, <a name="l2.10">Listing 2.10</a> (2014/05/04, updated 2017/06/26)</h3>
+            <p>The full <tt>rescale_viewed()</tt> definition reads:</p>
+            <blockquote>
+<pre>def rescale_viewed(conn):
+    while not QUIT:
+        conn.zremrangebyrank('viewed:', 20000, -1)
+        conn.zinterstore('viewed:', {'viewed:': .5})
+        time.sleep(300)</pre>
+            </blockquote>
+
+            <p>If you read the definition in Listing 2.9 for <tt>update_token()</tt>, every item view results in a <tt>ZINCRBY -1</tt>, so the highest-hit items will have the lowest value score.</p>
+            <p>Looking at the above <tt>rescale_viewed()</tt> function, we delete everything that isn't in the lowest 20,000 value scores.</p>
+            <p>Between 2014/05/04 and 2017/06/26 I thought there was a bug in the original code, so there was an errata here, but this code is correct, given Listing 2.9 and <tt>update_token()</tt>.</p>
+
+            <p>You can see the updated code in-context by visiting: <a href="https://github.com/josiahcarlson/redis-in-action/blob/master/python/ch02_listing_source.py#L170">https://github.com/josiahcarlson/redis-in-action/blob/master/python/ch02_listing_source.py#L170</a></p>
+
+            <h2><a name=3>Chapter 3</a></h2>
+            <h3><a name="3.7">Section 3.7</a>, Page 62, <a name="l3.16">Exercise: Replacing timestamp <tt>ZSETS</tt> with <tt>EXPIRE</tt></a> (2018/08/27)</h3>
+
+            <p>The exercise included in the book references two functions, <tt>update_token()</tt> and <tt>add_to_cart()</tt>. In the github source for the functions and their updates in chapter 3, both had single-line errors where <tt>conn.zincrby('viewed:', item, -1)</tt> should have been protected from an empty/null <tt>item</tt> inside an if clause.</p>
+
+            <p>You can see the fix in this github commit: <a href="https://github.com/josiahcarlson/redis-in-action/commit/9156ad6ee8e4a7f53980ad45c49e877083ecbe27">https://github.com/josiahcarlson/redis-in-action/commit/9156ad6ee</a></p>
+
+            <h2><a name=5>Chapter 5</a></h2>
+            <h3><a name="5.1.2">Section 5.1.2</a>, Page 93, <a name="l5.2">Listing 5.2</a> (2015/10/10)</h3>
+            <p>There is a <strong>bug</strong> caused by a missing <tt>elif</tt> clause inside the try block of the <tt>log_common()</tt> function definition.</p>
+            <p>The original full function definition reads:</p>
+            <blockquote>
+<pre>def log_common(conn, name, message, severity=logging.INFO, timeout=5):
+    severity = str(SEVERITY.get(severity, severity)).lower()
+    destination = 'common:%s:%s'%(name, severity)
+    start_key = destination + ':start'
+    pipe = conn.pipeline()
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            pipe.watch(start_key)
+            now = datetime.utcnow().timetuple()
+            hour_start = datetime(*now[:4]).isoformat()
+
+            existing = pipe.get(start_key)
+            pipe.multi()
+            if existing and existing < hour_start:
+                pipe.rename(destination, destination + ':last')
+                pipe.rename(start_key, destination + ':pstart')
+                pipe.set(start_key, hour_start)
+
+            pipe.zincrby(destination, message)
+            log_recent(pipe, name, message, severity, pipe)
+            return
+        except redis.exceptions.WatchError:
+            continue</pre>
+            </blockquote>
+
+            <p>And with the added elif block (prefixed by a comment line below), the function should read:</p>
+            <blockquote>
+<pre>def log_common(conn, name, message, severity=logging.INFO, timeout=5):
+    severity = str(SEVERITY.get(severity, severity)).lower()
+    destination = 'common:%s:%s'%(name, severity)
+    start_key = destination + ':start'
+    pipe = conn.pipeline()
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            pipe.watch(start_key)
+            now = datetime.utcnow().timetuple()
+            hour_start = datetime(*now[:4]).isoformat()
+
+            existing = pipe.get(start_key)
+            pipe.multi()
+            if existing and existing < hour_start:
+                pipe.rename(destination, destination + ':last')
+                pipe.rename(start_key, destination + ':pstart')
+                pipe.set(start_key, hour_start)
+            # add the following two lines
+            elif not existing:
+                pipe.set(start_key, hour_start)
+
+            pipe.zincrby(destination, message)
+            log_recent(pipe, name, message, severity, pipe)
+            return
+        except redis.exceptions.WatchError:
+            continue</pre>
+            </blockquote>
+
+            <p>You can see the change in-context by visiting: <a href="https://goo.gl/UN5kMw">https://goo.gl/UN5kMw</a></p>
+
+
+            <h2><a name=6>Chapter 6</a></h2>
+            <h3><a name="6.1.1">Section 6.1.1</a>, Page 113, <a name="l6.2">Listing 6.2</a> (2017/03/07)</h3>
+            <p>There is one minor bug in <tt>fetch_autocomplete_list()</tt>. While this fix is not necessary for the function to execute correctly in some cases, it is necessary for the code to execute correctly in all cases.</p>
+            <p><strong>Bug:</strong> <tt>prefix</tt> should have <tt>.lower()</tt> called on it before passing into <tt>.startswith()</tt> . The original function read as:</p>
+            <blockquote>
+<pre>def fetch_autocomplete_list(conn, user, prefix):
+     candidates = conn.lrange('recent:' + user, 0, -1)
+     matches = []
+     for candidate in candidates:
+         if candidate.lower().startswith(prefix):
+             matches.append(candidate)
+     return matches</pre>
+            </blockquote>
+
+            <p>With the <tt>.lower()</tt> call included, the function should read something like:</p>
+            <blockquote>
+<pre>def fetch_autocomplete_list(conn, user, prefix):
+     candidates = conn.lrange('recent:' + user, 0, -1)
+     prefix = prefix.lower()
+     matches = []
+     for candidate in candidates:
+         if candidate.lower().startswith(prefix):
+             matches.append(candidate)
+     return matches</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="https://goo.gl/9FwNYi">https://goo.gl/9FwNYi</a></p>
+            <hr>
+            <h3><a name="6.2.3">Section 6.2.3</a>, Page 121, <a name="l6.9">Listing 6.9</a> (2013/08/24, 2014/02/16, 2014/04/22)</h3>
+            <p>There is one printing errata (wrong in the printed version, correct in the source code), three other bugs, and three cleanups in this listing for <tt>purchase_item_with_lock()</tt>.</p>
+            <p><strong>Printing errata</strong>: there is a missing line between the two lines that read:</p>
+            <blockquote>
+<pre>locked = acquire_lock(conn, market)
+    return False</pre>
+            </blockquote>
+
+            <p>With the missing line replaced, it should read:</p>
+            <blockquote>
+<pre>locked = acquire_lock(conn, market)
+if not locked:
+    return False</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/QpcbuC">http://goo.gl/QpcbuC</a></p>
+
+            <p><strong>Bug</strong>: there is an extra <tt>pipe.watch(buyer)</tt> call that breaks the remaining behavior, which can be removed. The lines that read:</p>
+            <blockquote>
+<pre>try:
+    pipe.watch(buyer)
+    pipe.zscore("market:", item)
+    pipe.hget(buyer, 'funds')</pre>
+            </blockquote>
+
+            <p>Should instead read:</p>
+            <blockquote>
+<pre>try:
+    pipe.zscore("market:", item)
+    pipe.hget(buyer, 'funds')</pre>
+            </blockquote>
+
+            <p>Further, there are missing <tt>'funds'</tt> arguments to the <tt>pipe.hincrby()</tt> calls later, *and* a misnamed argument. The lines that read:</p>
+            <blockquote>
+<pre>pipe.hincrby(seller, int(price))
+pipe.hincrby(buyerid, int(-price))</pre>
+            </blockquote>
+
+            <p>Should instead read:</p>
+            <blockquote>
+<pre>pipe.hincrby(seller, 'funds', int(price))
+pipe.hincrby(buyer, 'funds', int(-price))</pre>
+            </blockquote>
+
+            <p>Note the addition of the <tt>'funds'</tt> arguments and the renaming of the <tt>buyerid</tt> argument to <tt>buyer</tt>.</p>
+            <p>You can see the change in-context by visiting: <a href="http://goo.gl/kQltLd">http://goo.gl/kQltLd</a></p>
+
+            <p><strong>Bug</strong>: the calls to <tt>acquire_lock()</tt> and <tt>release_lock()</tt> reference the variable <tt>market</tt> when they should instead pass the string <tt>'market:'</tt>.
+
+            <p>There are also several additional (but unnecessary) <strong>cleanups</strong> that can be done to this listing. These changes include: 1) removing the <tt>while</tt> loop, 2) removing the <tt>try/except</tt> clause, 3) removing the unnecessary <tt>pipe.unwatch()</tt> call.</p>
+            <p>You can see the change for these cleanups and the fixed <tt>market</tt> -&gt; <tt>'market:'</tt> reference inline by visiting: <a href="http://goo.gl/LxGvV8">http://goo.gl/LxGvV8</a></p>
+
+            <h3><a name="6.2.5">Section 6.2.5</a>, Page 126, <a name="l6.11">Listing 6.11</a> (2017/03/07)</h3>
+            <p>There is a bug with the call to <tt>.ttl()</tt> in <tt>acquire_lock_with_timeout()</tt> that expects a different return result for missing time-to-live values.</p>
+            <p><strong>Bug:</strong> call to <tt>ttl()</tt> should be compared against 0, instead of being inverted by <tt>not</tt>:</p>
+            <blockquote>
+<pre>        elif not conn.ttl(lockname):
+            conn.expire(lockname, lock_timeout)</pre>
+            </blockquote>
+
+            <p>With the proper comparison, this should instead read:</p>
+            <blockquote>
+<pre>        elif conn.ttl(lockname) < 0:
+            conn.expire(lockname, lock_timeout)</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="https://goo.gl/JHQqen">https://goo.gl/JHQqen</a></p>
+
+            <h3><a name="6.5.2">Section 6.5.2</a>, Page 145, <a name="l6.28">Listing 6.28</a> (2015/04/10)</h3>
+            <p>There are two <strong>bug</strong>s on the last line of the <tt>leave_chat()</tt> function. The first bug is where the <tt>oldest</tt> argument to the <tt>conn.zremrangebyscore()</tt> call should really be <tt>oldest[0][1]</tt> (this was discovered on 2015-04-10). The second bug is what reads as <tt>'chat:'</tt> should read <tt>'msgs:'</tt> (this was discovered on 2015-12-14). The lines that read:</p>
+            <blockquote>
+<pre>        'chat:' + chat_id, 0, 0, withscores=True)
+        conn.zremrangebyscore('chat:' + chat_id, 0, oldest)</pre>
+            </blockquote>
+
+            <p>Should instead read:</p>
+            <blockquote>
+<pre>        'chat:' + chat_id, 0, 0, withscores=True)
+        conn.zremrangebyscore('msgs:' + chat_id, 0, oldest[0][1])</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="https://goo.gl/T8zCp2">https://goo.gl/T8zCp2</a></p>
+
+            <h2><a name=7>Chapter 7</a></h2>
+            <h3><a name="7.3.4">Section 7.3.4</a>, Page 177, <a name="l7.15">Listing 7.15</a> (2014/04/22)</h3>
+            <p>There is a <strong>printing errata</strong> and <strong>bug</strong> in the <tt>record_click()</tt> function.</p>
+            <p><strong>Printing errata</strong> and <strong>bug</strong>: in the printed book, there is a missing <tt>else:</tt> line between the two <tt>pipeline.incr()</tt> calls below, and the first <tt>pipeline.incr()</tt> call is missing a <tt>'%s'</tt> for the string templating to work. So lines 13-15 in the book:</p>
+            <blockquote>
+<pre>    if action and type == 'cpa':
+        pipeline.incr('type:cpa:actions:' % type)
+        pipeline.incr('type:%s:clicks:' % type)</pre>
+            </blockquote>
+
+            <p>Should instead read:</p>
+            <blockquote>
+<pre>    if action and type == 'cpa':
+        pipeline.incr('type:%s:actions:' % type)
+    else:
+        pipeline.incr('type:%s:clicks:' % type)</pre>
+            </blockquote>
+
+            <p>You can see the change in-context with the <tt>else:</tt> clause by visiting: <a href="http://goo.gl/XXiNTD">http://goo.gl/XXiNTD</a></p>
+
+
+            <h2><a name=8>Chapter 8</a></h2>
+            <h3><a name="8.1.1">Section 8.1.1</a>, Page 187, <a name="l8.1">Listing 8.1</a> (2015/04/13)</h3>
+            <p>There is a <strong>bug</strong> in the <tt>create_user()</tt> between lines 7 and 8, where there is a missing <tt>release_lock()</tt> call prior to return. In practice, this may cause a 1 second delay in deleting a status message for a user if someone were trying to create a new account with the same user name.</p>
+
+            <p>Lines 7-8 of <tt>create_user()</tt> originally read:</p>
+            <blockquote>
+<pre>    if conn.hget('users:', llogin):
+        return None</pre>
+            </blockquote>
+
+            <p>Lines 7-8 should be replaced with these 3 lines:</p>
+            <blockquote>
+<pre>    if conn.hget('users:', llogin):
+        release_lock(conn, 'user:' + llogin, lock)
+        return None</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/quX7ee">http://goo.gl/quX7ee</a></p>
+
+            <hr>
+            <h3><a name="8.3">Section 8.3</a>, Page 190-191, <a name="l8.4">Listing 8.4</a> (2017/04/03,2015/04/13)</h3>
+            <p>There is a <strong>race condition</strong> in the <tt>follow_user()</tt> function, caused by directly setting the size of the following/follower lists instead of incrementally changing them. This is fixed as part of other updates to <tt>follow_user()</tt> in section 10.3.3, listing 10.12, and we are just bringing a couple of these changes back to chapter 8.</p>
+
+            <p>Lines 12-21 originally read:</p>
+            <blockquote>
+<pre>    pipeline.zadd(fkey1, other_uid, now)
+    pipeline.zadd(fkey2, uid, now)
+    pipeline.zcard(fkey1)
+    pipeline.zcard(fkey2)
+    pipeline.zrevrange('profile:%s'%other_uid,
+        0, HOME_TIMELINE_SIZE-1, withscores=True)
+    following, followers, status_and_score = pipeline.execute()[-3:]
+
+    pipeline.hset('user:%s'%uid, 'following', following)
+    pipeline.hset('user:%s'%other_uid, 'followers', followers)</pre>
+            </blockquote>
+
+            <p>With 2 lines deleted and 2 lines changed, lines 12-19 should now read:</p>
+            <blockquote>
+<pre>    pipeline.zadd(fkey1, other_uid, now)
+    pipeline.zadd(fkey2, uid, now)
+    pipeline.zrevrange('profile:%s'%other_uid,
+        0, HOME_TIMELINE_SIZE-1, withscores=True)
+    following, followers, status_and_score = pipeline.execute()[-3:]
+
+    pipeline.hincrby('user:%s'%uid, 'following', int(following))
+    pipeline.hincrby('user:%s'%other_uid, 'followers', int(followers))</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/mvmxwV">http://goo.gl/mvmxwV</a></p>
+
+            <hr>
+            <h3><a name="8.3">Section 8.3</a>, Page 191-192, <a name="l8.5">Listing 8.5</a> (2015/04/13)</h3>
+            <p>There is a <strong>race condition</strong> in the <tt>unfollow_user()</tt> function, caused by directly setting the size of the following/follower lists instead of incrementally changing them. This is the exact same bug that occurs in the <tt>follow_user()</tt> function, and has the same fix.</p>
+
+            <p>Lines 12-21 originally read:</p>
+            <blockquote>
+<pre>    pipeline.zrem(fkey1, other_uid, now)
+    pipeline.zrem(fkey2, uid, now)
+    pipeline.zcard(fkey1)
+    pipeline.zcard(fkey2)
+    pipeline.zrevrange('profile:%s'%other_uid,
+        0, HOME_TIMELINE_SIZE-1, withscores=True)
+    following, followers, status_and_score = pipeline.execute()[-3:]
+
+    pipeline.hset('user:%s'%uid, 'following', following)
+    pipeline.hset('user:%s'%other_uid, 'followers', followers)  </pre>
+            </blockquote>
+
+            <p>With 2 lines deleted and 2 lines changed, lines 12-19 should now read:</p>
+            <blockquote>
+<pre>    pipeline.zrem(fkey1, other_uid, now)
+    pipeline.zrem(fkey2, uid, now)
+    pipeline.zrevrange('profile:%s'%other_uid,
+        0, HOME_TIMELINE_SIZE-1, withscores=True)
+    following, followers, status_and_score = pipeline.execute()[-3:]
+
+    pipeline.hincrby('user:%s'%uid, 'following', -int(following))
+    pipeline.hincrby('user:%s'%other_uid, 'followers', -int(followers))</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/mxcUqZ">http://goo.gl/mxcUqZ</a></p>
+
+            <hr>
+            <h3><a name="8.4">Section 8.4</a>, Page 194, <a name="l8.8">Listing 8.8</a> (2015/04/13)</h3>
+            <p>There is a <strong>bug</strong> in the <tt>delete_status()</tt> function between lines 7 and 8, where there is a missing <tt>release_lock()</tt> call prior to return. In practice, this may cause a 1 second delay in deleting a status message for a user if someone tried to delete a status message they didn't own.</p>
+
+            <p>Lines 7-8 of <tt>delete_status(conn, uid, status_id)</tt> originally read:</p>
+            <blockquote>
+<pre>    if conn.hget(key, 'uid') != str(uid):
+        return None</pre>
+            </blockquote>
+
+            <p>Lines 7-8 should be replaced with these 3 lines:</p>
+            <blockquote>
+<pre>    if conn.hget(key, 'uid') != str(uid):
+        release_lock(conn, key, lock)
+        return None</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/gL6dPG">http://goo.gl/gL6dPG</a></p>
+
+            <hr>
+            <h3><a name="8.5.3">Section 8.5.3</a>, Page 201-202, <a name="l8.14">Listing 8.14</a> (2015/04/13)</h3>
+
+            <p>There is a <strong>bug</strong> in the streaming <tt>delete_status()</tt> function between lines 7 and 8, where there is a missing <tt>release_lock()</tt> call prior to return. In practice, this may cause a 1 second delay in deleting a status message for a user if someone tried to delete a status message they didn't own.</p>
+
+            <p>Lines 7-8 of <tt>delete_status(conn, uid, status_id)</tt> originally read:</p>
+            <blockquote>
+<pre>    if conn.hget(key, 'uid') != str(uid):
+        return None</pre>
+            </blockquote>
+
+            <p>Lines 7-8 should be replaced with these 3 lines:</p>
+            <blockquote>
+<pre>    if conn.hget(key, 'uid') != str(uid):
+        release_lock(conn, key, lock)
+        return None</pre>
+            </blockquote>
+
+            <p>You can see the code in-context by visiting: <a href="http://goo.gl/DzweRD">http://goo.gl/DzweRD</a></p>
+
+            <hr>
+            <h3>Section 8.5.3, Page 205, <a name="l8.19">Listing 8.19</a> (2014/07/30)</h3>
+            <p>There is a <strong>bug</strong> in the <tt>FollowFilter()</tt> function on lines 2, 4, and 10 of the code listing, where the argument <tt>names</tt> is overridden by an empty set, which prevents the <tt>FollowFilter()</tt> call from actually following anyone.</p>
+
+            <p>The function originally read:</p>
+            <blockquote>
+<pre>def FollowFilter(names):
+    names = set()
+    for name in names:
+        names.add('@' + name.lower().lstrip('@'))
+
+    def check(status):
+        message_words = set(status['message'].lower().split())
+        message_words.add('@' + status['login'].lower())
+
+        return message_words & names
+    return check</pre>
+            </blockquote>
+
+            <p>The function (with comments here to show the changes) now reads:</p>
+            <blockquote>
+<pre>def FollowFilter(names):
+    nset = set() # first fix here
+    for name in names:
+        nset.add('@' + name.lower().lstrip('@')) # second fix here
+
+    def check(status):
+        message_words = set(status['message'].lower().split())
+        message_words.add('@' + status['login'].lower())
+
+        return message_words & nset # third fix here
+    return check</pre>
+            </blockquote>
+
+            <p>The diff (which might be easier to read) can be found: <a href="http://goo.gl/Opbp13">http://goo.gl/Opbp13</a></p>
+            <p>And the code in-context can be seen: <a href="http://goo.gl/GkqXp5">http://goo.gl/GkqXp5</a></p>
+
+<li>2017/04/03 - <a href="#9">Chapter 9</a>, <a href="#9.3.3">Section 3.3.3</a>, Page 223-224, <a href="#l9.17">Listing 9.17</a></li>
+            <h2><a name=9>Chapter 9</a></h2>
+            <h3><a name="9.3.3">Section 9.3.3</a>, Page 223-224, <a name="l9.17">Listing 9.17</a> (2017/04/03)</h3>
+
+            <p>There is a <strong>bug</strong> on the 17th line of the <tt>update_aggregates()</tt> function definition.</p>
+            <p>The one line reads:</p>
+            <blockquote>
+<pre>        if state < 0 or state >= STATES[country]:</pre>
+            </blockquote>
+
+            <p>The 17th line, updated inline, should read:</p>
+            <blockquote>
+<pre>        if state < 0 or state >= len(STATES[country]):</pre>
+            </blockquote>
+
+            <p>You can see the updated code in-context by visiting: <a href="https://github.com/josiahcarlson/redis-in-action/blob/master/python/ch09_listing_source.py#L412">https://github.com/josiahcarlson/redis-in-action/blob/master/python/ch09_listing_source.py#L412</a></p>
+
+            <h2><a name=11>Chapter 11</a></h2>
+            <h3><a name="11.3.2">Section 11.3.2</a>, Page 260-261, <a name="l11.12">Listing 11.12</a> (2015/04/22)</h3>
+            <p>This code listing is a copy of the listing from <a href="#6">Chapter 6</a>, <a href="#6.2.3">Section 6.2.3</a>, Page 121, <a href="#l6.9">Listing 6.9</a>, and has all of the same issues except for the printing errata and the <tt>market</tt> variable reference bug.</p>
+
+        </div>
+    </body>
+</html>
