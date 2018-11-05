@@ -102,3 +102,15 @@ https://yunqi.youku.com/
 
 阿里巴巴中台战略
 https://www.kancloud.cn/architect-jdxia/architect/519490
+
+
+Apache Lucene Core
+https://lucene.apache.org/core/
+
+
+Is file append atomic in UNIX?
+https://stackoverflow.com/questions/1154446/is-file-append-atomic-in-unix
+https://www.notthewizard.com/2014/06/17/are-files-appends-really-atomic/
+https://www.zhihu.com/question/20906432
+https://stackoverflow.com/questions/5200923/are-unix-reads-and-writes-to-a-single-file-atomically-serialized
+https://nullprogram.com/blog/2016/08/03/
