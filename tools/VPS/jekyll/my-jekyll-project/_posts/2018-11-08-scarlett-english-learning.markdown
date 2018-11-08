@@ -98,7 +98,7 @@ hello my name is ..., today I am happy/tired. My favorite color is blue.
 
 4. 画上面的单词。
 
-![2018-10-13-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/2018-10-13-1.jpg)
+![2018-10-13-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/english/2018-10-13-1.jpg)
 
 ## 课堂表现
 
@@ -127,7 +127,7 @@ Assistent: Diya (迪亚)
 7. 画表情。
 
 
-![2018-09-22-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/2018-09-22-1.jpg)
+![2018-09-22-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/english/2018-09-22-1.jpg)
 
 ## 课堂表现
 
