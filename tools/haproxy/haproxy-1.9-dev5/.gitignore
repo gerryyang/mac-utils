@@ -1,0 +1,46 @@
+# Below we forbid everything and only allow what we know, that's much easier
+# than blocking about 500 different test files and bug report outputs.
+/.*
+/*
+!/.gitignore
+!/CHANGELOG
+!/LICENSE
+!/Makefile
+!/README
+!/CONTRIBUTING
+!/MAINTAINERS
+!/ROADMAP
+!/SUBVERS
+!/VERDATE
+!/VERSION
+!/contrib
+!/doc
+!/ebtree
+!/examples
+!/include
+!/src
+!/tests
+!/debian
+!/scripts
+!/reg-tests
+# Reject some generic files
+*.o
+*~
+*.rej
+*.orig
+*.bak
+# And reject some specific files
+/contrib/base64/base64rev
+/contrib/halog/halog
+/contrib/ip6range/ip6range
+/contrib/iprange/iprange
+/contrib/systemd/haproxy.service
+/contrib/spoa_example/spoa
+contrib/debug/flags
+contrib/mod_defender/defender
+contrib/modsecurity/modsecurity
+contrib/hpack/decode
+contrib/hpack/gen-rht
+contrib/tcploop/tcploop
+/src/dlmalloc.c
+/tests/test_hashes

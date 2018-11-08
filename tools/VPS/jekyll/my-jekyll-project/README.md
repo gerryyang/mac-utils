@@ -114,3 +114,16 @@ https://www.notthewizard.com/2014/06/17/are-files-appends-really-atomic/
 https://www.zhihu.com/question/20906432
 https://stackoverflow.com/questions/5200923/are-unix-reads-and-writes-to-a-single-file-atomically-serialized
 https://nullprogram.com/blog/2016/08/03/
+
+
+blog to https
+https://www.jianshu.com/p/34b5a5233f8f
+
+haproxy
+https://serversforhackers.com/c/using-ssl-certificates-with-haproxy
+http://www.haproxy.org/
+http://cbonte.github.io/haproxy-dconv/1.9/intro.html
+
+参考博客
+https://imququ.com/post/archives.html
+
