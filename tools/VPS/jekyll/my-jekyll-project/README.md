@@ -126,4 +126,10 @@ http://cbonte.github.io/haproxy-dconv/1.9/intro.html
 
 参考博客
 https://imququ.com/post/archives.html
+https://ericchiang.github.io/
 
+
+# TODO
+
+1. https改造
+2. nginx端口转发，通过二级域名

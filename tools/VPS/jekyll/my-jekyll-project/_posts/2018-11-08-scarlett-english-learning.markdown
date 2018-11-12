@@ -16,14 +16,14 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. 自我介绍。要求在没有老师的提示下可以整句表达。
+* 自我介绍。要求在没有老师的提示下可以整句表达。
 ```
 Good morning, my name is ..., I amm ... years old. I like (animal).
 ```
 
-2. 游戏抢凳子。锻炼孩子的反应能力与团队精神，能自己独立明白老师所说的游戏规则并遵守。
+* 游戏抢凳子。锻炼孩子的反应能力与团队精神，能自己独立明白老师所说的游戏规则并遵守。
 
-3. 学习新单词。
+* 学习新单词。
 
 | 单词 | 发音 (美式) | 含义
 | -- | -- | --
@@ -35,14 +35,14 @@ Good morning, my name is ..., I amm ... years old. I like (animal).
 | teddy bear | /'tɛdi/ /bɛr/ | 泰迪玩具熊
 | legos | /'leɡəu |  乐高积木
 
-4. Toy Store，玩具商店。让孩子们学会使用一元，五元，十元，二十元去购买自己想要的物品。涉及：
+* Toy Store，玩具商店。让孩子们学会使用一元，五元，十元，二十元去购买自己想要的物品。涉及：
 ```
 Hi thank you, you're welcome.
 what do you want? I want cars. 5 yuan, thank you.
 ```
-5. 涂色。
+* 涂色。
 
-6. ABCs歌曲。(已下载)
+* ABCs歌曲。(已下载)
 
 ## 课堂表现
 
@@ -56,15 +56,15 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. ABCs歌曲，并将24张字母卡片放在地上让孩子排列准确。
+* ABCs歌曲，并将24张字母卡片放在地上让孩子排列准确。
 
-2. 每个孩子轮着踩字母一边读字母，然后老师喊停要说出字母开头的英文单词。比如，P: Pig; M: Monkey
+* 每个孩子轮着踩字母一边读字母，然后老师喊停要说出字母开头的英文单词。比如，P: Pig; M: Monkey
 
-3. 熟悉颜色。
+* 熟悉颜色。
 
-4. 学习英文版“红灯，绿灯，黄灯”，训练孩子的表现力与对身体的控制。
+* 学习英文版“红灯，绿灯，黄灯”，训练孩子的表现力与对身体的控制。
 
-5. 画Traffic Lights
+* 画Traffic Lights
 
 ## 课堂表现
 
@@ -78,14 +78,14 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. AEIOU原因发音练习，并让孩子在白板上写出来。
+* AEIOU原因发音练习，并让孩子在白板上写出来。
 
-2. 自我介绍。
+* 自我介绍。
 ```
 hello my name is ..., today I am happy/tired. My favorite color is blue.
 ```
 
-3. 学习新单词
+* 学习新单词
 
 | 单词 | 发音 (美式) | 含义
 | -- | -- | --
@@ -96,7 +96,7 @@ hello my name is ..., today I am happy/tired. My favorite color is blue.
 | haunted house | /'hɔntɪd/ | 鬼屋
 | monster | /'mɑnstɚ/ | 怪物
 
-4. 画上面的单词。
+* 画上面的单词。
 
 ![2018-10-13-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/english/2018-10-13-1.jpg)
 
@@ -112,19 +112,19 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. 唱歌。Head shoulder knees and toes, eyes ear mouth and nose.
+* 唱歌。Head shoulder knees and toes, eyes ear mouth and nose.
 
-2. 学习元音发音，a e i o u
+* 学习元音发音，a e i o u
 
-3. 通过传球练习24个字母，同时巩固5个元音。
+* 通过传球练习24个字母，同时巩固5个元音。
 
-4. 鳄鱼过河游戏。
+* 鳄鱼过河游戏。
 
-5. 通过寻找颜色让孩子熟悉课堂基本指令。
+* 通过寻找颜色让孩子熟悉课堂基本指令。
 
-6. 情绪练习。Happy Sad Angry
+* 情绪练习。Happy Sad Angry
 
-7. 画表情。
+* 画表情。
 
 
 ![2018-09-22-1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/english/2018-09-22-1.jpg)
@@ -141,13 +141,13 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. 唱歌。Head shoulder knees and toes, eyes ear mouth and nose.
+* 唱歌。Head shoulder knees and toes, eyes ear mouth and nose.
 
-2. 自我介绍。hi everyone, good morning, I am ...
+* 自我介绍。hi everyone, good morning, I am ...
 
-3. 通过鳄鱼过河游戏让孩子们了解water。
+* 通过鳄鱼过河游戏让孩子们了解water。
 
-4. 学习新单词。
+* 学习新单词。
 
 | 单词 | 发音 (美式) | 含义
 | -- | -- | --
@@ -169,15 +169,15 @@ Assistent: Diya (迪亚)
 
 ## 学习内容
 
-1. 自我介绍，以及与别人打招呼。
+* 自我介绍，以及与别人打招呼。
 
-2. 学习颜色。Red Yellow Blue Brown Green Pink Purple Black。
+* 学习颜色。Red Yellow Blue Brown Green Pink Purple Black。
 
-3. 通过找颜色，指玩偶的游戏，让孩子将颜色运用的句子中。It's red, I have red.
+* 通过找颜色，指玩偶的游戏，让孩子将颜色运用的句子中。It's red, I have red.
 
-4. 将颜色与三种形状(正方形Square，圆形Circle，三角形Triangle)结合。
+* 将颜色与三种形状(正方形Square，圆形Circle，三角形Triangle)结合。
 
-5. 手工环节。
+* 手工环节。
 
 ## 课堂表现
 

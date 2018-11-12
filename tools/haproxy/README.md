@@ -112,3 +112,6 @@ Usage : haproxy [-f <cfgfile|cfgdir>]* [ -vdVD ] [ -n <maxconn> ] [ -N <maxpconn
 ```
 
 
+## Refer
+
+https://serversforhackers.com/c/using-ssl-certificates-with-haproxy
