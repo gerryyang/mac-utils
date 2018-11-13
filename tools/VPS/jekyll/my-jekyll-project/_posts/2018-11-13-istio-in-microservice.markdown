@@ -20,7 +20,9 @@ categories: 微服务
 
 # 课程安排
 
-# 1. [11 月 1 日-Istio 初探]: https://github.com/dWChina/ibm-opentech-ma/blob/master/istio/Istio-01-intro.pdf
+# 1. [11 月 1 日-Istio 初探] 
+
+[11 月 1 日-Istio 初探]: https://github.com/dWChina/ibm-opentech-ma/blob/master/istio/Istio-01-intro.pdf
 
 LIN SUN, Senior Technical Staff Member, IBM
 
@@ -47,21 +49,23 @@ An **open service mesh platform** to connect， observe, secure, and control mic
 
 How does it work ?
 
+```
+
                 call
        A ------------------> B
 
-                ||
-                ||
-                \/
+                |
+                |
+                v
 
        A ------------------> B
 
                 call
      Envoy  ------------>   Envoy
 
-                ||
-                ||
-                \/
+                |
+                |
+                v
 
        A                     B
                 call
@@ -73,9 +77,9 @@ How does it work ?
      Envoy --------------------
      Pilot
 
-                ||
-                ||
-                \/
+                |
+                |
+                v
 
        A       call           B
      Envoy  ------------>   Envoy
@@ -88,9 +92,9 @@ How does it work ?
      Envoy    Envoy
      Pilot   Telemetry
 
-                ||
-                ||
-                \/
+                |
+                |
+                v
 
        A       call           B
      Envoy  ------------>   Envoy
@@ -103,9 +107,9 @@ How does it work ?
      Envoy    Envoy         Envoy
      Pilot   Telemetry      Citadel
 
-                ||
-                ||
-                \/
+                |
+                |
+                v
 
        A               call              B
      Envoy  ------------------------>   Envoy
@@ -117,7 +121,7 @@ How does it work ?
               
      Envoy    Envoy         Envoy       Envoy
      Pilot   Telemetry      Citadel     Policy
-
+```
 
 1. Deploy a proxy (`Envoy`) beside your application ("sidecar deployment")
 2. Deploy `Pilot` to configure the sidecars
@@ -136,7 +140,9 @@ Both sidecars report telemetry data
 
 
 
-# 2. [11 月 8 日-Istio 上手]: https://github.com/dWChina/ibm-opentech-ma/blob/master/istio/istio-02-arch.pdf
+# 2. [11 月 8 日-Istio 上手]
+
+[11 月 8 日-Istio 上手]: https://github.com/dWChina/ibm-opentech-ma/blob/master/istio/istio-02-arch.pdf
 
 # 3. 11 月 15 日-Istio 的安全管理
 # 4. 11 月 22 日-Envoy
@@ -146,8 +152,7 @@ Both sidecars report telemetry data
 # 8. 12 月 20 日-Istio 使用案例：Serverless 平台knative
 
 
-Refer
----
+# Refer
 
 1. [istio官网]
 2. [Istio系列-IBM 微讲堂]
