@@ -69,7 +69,7 @@ A Service in Kubernetes is an abstraction which defines a logical set of Pods an
 
 Users expect applications to be available all the time and developers are expected to deploy new versions of them several times a day. In Kubernetes this is done with rolling updates. Rolling updates allow Deployments' update to take place with zero downtime by incrementally updating Pods instances with new ones. The new Pods will be scheduled on Nodes with available resources.
 
-## 命令
+## Commands
 
 ### kubectl
 
