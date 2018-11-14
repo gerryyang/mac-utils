@@ -191,6 +191,10 @@ Envoy - sidecar proxy in Istio:
 
 ![envoy](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/envoy.jpg)
 
+[Envoy源码]
+
+[Envoy源码]: https://github.com/istio/proxy
+
 
 ## Istio setup
 
@@ -282,9 +286,21 @@ sudo apt-get install -y kubectl
 安装后：
 
 ```
+# minikube start
+Starting local Kubernetes v1.10.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+Loading cached images from config file.
+
 # kubectl version
 Client Version: version.Info{Major:"1", Minor:"12", GitVersion:"v1.12.2", GitCommit:"17c77c7898218073f14c8d573582e8d2313dc740", GitTreeState:"clean", BuildDate:"2018-10-24T06:54:59Z", GoVersion:"go1.10.4", Compiler:"gc", Platform:"linux/amd64"}
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
+Server Version: version.Info{Major:"1", Minor:"10", GitVersion:"v1.10.0", GitCommit:"fc32d2f3698e36b93322a3465f63a14e9f0eaead", GitTreeState:"clean", BuildDate:"2018-03-26T16:44:10Z", GoVersion:"go1.9.3", Compiler:"gc", Platform:"linux/amd64"}
 ```
 
 #### install Hypervisor
@@ -347,46 +363,15 @@ kubectl apply -f install/kubernetes/istio-demo.yaml
 
 #### Verifying the installation
 
-```
-# kubectl get svc -n istio-system
-NAME                     TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                                                                                                                   AGE
-grafana                  ClusterIP      10.104.81.217    <none>        3000/TCP                                                                                                                  2m
-istio-citadel            ClusterIP      10.99.212.47     <none>        8060/TCP,9093/TCP                                                                                                         2m
-istio-egressgateway      ClusterIP      10.101.88.50     <none>        80/TCP,443/TCP                                                                                                            2m
-istio-galley             ClusterIP      10.101.4.208     <none>        443/TCP,9093/TCP                                                                                                          2m
-istio-ingressgateway     LoadBalancer   10.111.139.11    <pending>     80:31380/TCP,443:31390/TCP,31400:31400/TCP,15011:31940/TCP,8060:32510/TCP,853:31987/TCP,15030:31817/TCP,15031:32358/TCP   2m
-istio-pilot              ClusterIP      10.111.57.42     <none>        15010/TCP,15011/TCP,8080/TCP,9093/TCP                                                                                     2m
-istio-policy             ClusterIP      10.109.96.65     <none>        9091/TCP,15004/TCP,9093/TCP                                                                                               2m
-istio-sidecar-injector   ClusterIP      10.105.31.101    <none>        443/TCP                                                                                                                   2m
-istio-telemetry          ClusterIP      10.110.186.100   <none>        9091/TCP,15004/TCP,9093/TCP,42422/TCP                                                                                     2m
-jaeger-agent             ClusterIP      None             <none>        5775/UDP,6831/UDP,6832/UDP                                                                                                1m
-jaeger-collector         ClusterIP      10.100.145.125   <none>        14267/TCP,14268/TCP                                                                                                       1m
-jaeger-query             ClusterIP      10.97.147.178    <none>        16686/TCP                                                                                                                 1m
-prometheus               ClusterIP      10.97.93.5       <none>        9090/TCP                                                                                                                  2m
-servicegraph             ClusterIP      10.97.188.124    <none>        8088/TCP                                                                                                                  2m
-tracing                  ClusterIP      10.100.225.23    <none>        80/TCP                                                                                                                    1m
-zipkin                   ClusterIP      10.102.168.139   <none>        9411/TCP                                                                                                                  1m
-```
+查看Istio启动pods的情况，比较慢。
 
-```
-# kubectl get pods -n istio-system
-NAME                                      READY   STATUS              RESTARTS   AGE
-grafana-9cfc9d4c9-5q97n                   0/1     ContainerCreating   0          5m
-istio-citadel-6d7f9c545b-995bd            0/1     ContainerCreating   0          5m
-istio-cleanup-secrets-l2gb4               0/1     ContainerCreating   0          6m
-istio-egressgateway-866885bb49-tp26z      0/1     ContainerCreating   0          6m
-istio-galley-6d74549bb9-x2jcr             0/1     ContainerCreating   0          6m
-istio-grafana-post-install-7jqhr          0/1     ContainerCreating   0          6m
-istio-ingressgateway-6c6ffb7dc8-ssctr     0/1     ContainerCreating   0          6m
-istio-pilot-595545c7c6-75ft8              0/2     Pending             0          5m
-istio-policy-688f99c9c4-j75rl             0/2     ContainerCreating   0          5m
-istio-security-post-install-vf27f         0/1     ContainerCreating   0          6m
-istio-sidecar-injector-74855c54b9-hzbq9   0/1     ContainerCreating   0          5m
-istio-telemetry-69b794ff59-lfngw          0/2     ContainerCreating   0          5m
-istio-tracing-ff94688bb-jkvdk             0/1     ContainerCreating   0          5m
-prometheus-f556886b8-26pfb                0/1     ContainerCreating   0          5m
-servicegraph-778f94d6f8-fzksx             0/1     ContainerCreating   0          5m
-```
+![istio_pods](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_pods.png)
+
+![istio_svc](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_svc.png)
+
+
+
+
 
 # 3. 11 月 15 日-Istio 的安全管理
 
