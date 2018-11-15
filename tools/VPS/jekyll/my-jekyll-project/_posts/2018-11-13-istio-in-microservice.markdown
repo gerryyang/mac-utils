@@ -2,7 +2,7 @@
 layout: post
 title:  "Istio一个开源的Service Mesh平台 - 微服务网格技术"
 date:   2018-11-13 08:30:00 +0800
-categories: 微服务
+categories: microservice
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -309,7 +309,8 @@ https://kubernetes.io/docs/tasks/tools/install-minikube/#install-a-hypervisor
 
 ```
 sudo apt-get update
-sudo apt-get install virtualbox-5.2
+# 5.2
+sudo apt-get install virtualbox
 # or
 sudo dpkg -i packagename.deb
 # check version
@@ -326,6 +327,33 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.30.0/minik
 ```
 
 https://istio.io/docs/setup/kubernetes/platform-setup/minikube/
+
+启动minkube的方法：
+
+``` bash
+#!/bin/bash
+# start_minikube.sh
+
+export MINIKUBE_WANTUPDATENOTIFICATION=false
+export MINIKUBE_WANTREPORTERRORPROMPT=false
+export MINIKUBE_HOME=$HOME
+export CHANGE_MINIKUBE_NONE_USER=true
+mkdir $HOME/.kube || true
+touch $HOME/.kube/config
+
+export KUBECONFIG=$HOME/.kube/config
+sudo -E minikube start --vm-driver=none
+
+# 使用kubectl检查api server, 确保集群创建成功
+for i in {1..150}; do # timeout for 5 minutes
+	kubectl get po &> /dev/null
+	if [ &? -ne 1 ]; then
+		break
+	fi
+	sleep 2
+done
+```
+
 
 ```
 # minikube start --vm-driver=virtualbox
@@ -392,6 +420,9 @@ kubectl apply -f install/kubernetes/istio-demo.yaml
 1. [istio官网]
 2. [Istio系列-IBM 微讲堂]
 3. [Istio 流量管理的基本概念详解-以 Bookinfo 为例详解其如何作用于 Kubernetes 中的 Pod]
+4. [kubernetes-vagrant-centos-cluster]
+5. [什么是 istio]
+
 
 [istio官网]: https://istio.io/
 
@@ -399,11 +430,11 @@ kubectl apply -f install/kubernetes/istio-demo.yaml
 
 [Istio 流量管理的基本概念详解-以 Bookinfo 为例详解其如何作用于 Kubernetes 中的 Pod]: https://jimmysong.io/posts/istio-traffic-management-basic-concepts/?from=message&isappinstalled=0
 
+[kubernetes-vagrant-centos-cluster]: https://github.com/rootsongjc/kubernetes-vagrant-centos-cluster
 
+[什么是 istio]: https://cizixs.com/2018/08/26/what-is-istio/
 
-
-
-
+[jimmysong-istio-handbook]: https://jimmysong.io/istio-handbook/setup/quick-start.html
 
 
   
