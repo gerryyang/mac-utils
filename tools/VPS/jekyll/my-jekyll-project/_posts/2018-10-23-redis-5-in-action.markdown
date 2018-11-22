@@ -12,6 +12,10 @@ categories: redis
 
 ![db_rank](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/db_rank.jpg)
 
+关于使用Cache的一个有趣的故事：[TutorialCachingStory]
+
+[TutorialCachingStory]: https://github.com/memcached/memcached/wiki/TutorialCachingStory
+
 # 数据库对比
 
 | 名称 | 类型 | 数据存储选项 | 查询类型 | 附加功能
@@ -21,6 +25,18 @@ categories: redis
 | MySQL | 关系数据库 | 每个数据库可以包含多个表，每个表可以包含多个行，可以处理多个表的视图(view)，支持空间(spatial)和第三方扩展 | SELECT, INSERT, UPDATE, DELETE, 函数, 存储过程 | 支持ACID性质(需要使用InnoDB)，主从复制，主主复制
 | PostgreSQL | 关系数据库 | 基本同MySQL | 基本同MySQL | 支持ACID性质，主从复制，由第三方支持的多主复制
 | MongoDB| 使用硬盘存储(on-disk)的非关系文档存储 | 每个数据库可以包含多个表，每个表可以包含多个schema-less的BSON文档 | 创建命令，读取命令，更新命令，删除命令，条件查询命令等 | 支持map-reduce操作，主从复制，分片，空间索引(spatial index) 
+
+Redis是一个支持网络，以键值对的形式存储数据，可基于内存亦可持久性的开源数据库。从数据库的类型分类来说，Redis有别于传统关系型数据库(如Oracle，MySQL)的表结构，也与其他NoSQL(如Neo4j，MongoDB等)有本质的区别。常与Redis进行比较的数据库是Memcached，两者都是存储键值对，但在底层实现上却有较大的不同。
+
+* Redis存储的value类型相对来说比memcached多。Redis支持二进制案例的 Strings(字符串), Lists(链表), Hashes(哈希类型), Sets (集合)及 Sorted Sets（有序集合）等数据类型的操作。在有序集合上面，redis还支持各种不同方式的排序。
+
+* 基于内存，并具备自动写入磁盘功能，性能极高。Redis能支持超过 100K+ 每秒的读写频率。这得益于Redis把数据缓存在内存中。这一点与memcached较为相似，但两者区别在于，Redis会周期性地把更新的数据写入磁盘或者把修改操作写入追加的记录文件，并且在此基础上实现了master-slave(主从)同步。也就是说，数据可以由主服务器向任意数量的从服务器上同步。
+
+* 原子性操作，保证数据的一致性。Redis提供了push/pop、add/remove及取交集并集和差集及更丰富的数据操作，然而这些操作都是原子性的，保证了操作前后数据的一致性。此外，Redis还支持对几个操作合并后的原子性执行。
+
+* 其他丰富特性。Redis还支持 publish/subscribe, 通知, key 过期等等特性。Redis提供了Java，C/C++，C#，PHP，JavaScript，Perl，Object-C，Python，Ruby等客户端，使用很方便。
+
+Redis在数据库的可用性，可扩展性和可维护性上都表现出较高的性能，因而能在数据库大家族，尤其是NoSQL中占据一席之地。
 
 # Redis初步
 
@@ -1133,7 +1149,12 @@ redis-benchmark -c 1 -1
 * 对文章进行投票。例如，StackOverflow是一个可以对问题进行投票的网站
 
 
+# 数据同步
 
+[What's the best strategy to sync Redis data to MySQL?]: https://stackoverflow.com/questions/23080557/whats-the-best-strategy-to-sync-redis-data-to-mysql
+[leonchen83/redis-replicator]: https://github.com/leonchen83/redis-replicator
+
+----
 
 [Redis]: https://redis.io/
 [Elasticsearch]: https://www.elastic.co/products/elasticsearch
@@ -1157,6 +1178,8 @@ redis-benchmark -c 1 -1
 [Redis Command]: https://redis.io/commands
 
 [Memcached]: https://memcached.org/
+
+[学习Redis从这里开始]: https://www.epubit.com/selfpublish/article/1240;jsessionid=0143EF459F8D4FC0EB29711B57502B8D
 
 
 

@@ -9,6 +9,54 @@ categories: English
 {:toc}
 
 
+# 2018-11-17
+
+Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
+Assistent: Diya (迪亚)
+
+## 学习内容
+
+课堂目标：
+
+* 使用完整句子进行自我介绍 (颜色 + 动物)
+* 掌握日常基础对话：thank you/sorry/goodbye/here you go/you are welcome.
+* 练习对话能跟人完整交流。
+
+课堂内容：
+
+* Hello song + ABC songs, 根据Circle song围成一圈做自我介绍：
+
+> My name is xxx, I am three years old. I like rabbit/I like to eat cakes.
+
+* 游戏，抢凳子
+
+* 引导学生说出常用字句。
+
+> thank you, you are welcome. Hands up. Can I go to the toilet? Can I have water?
+
+* 学习并运用新单词。
+
+| 单词 | 发音 (美式) | 含义
+| -- | -- | --
+| pea |  /pi/ | 豌豆
+| corn |  /kɔrn/ | 玉米
+| mushroom |  /'mʌʃrʊm/ | 蘑菇
+| fish | /fɪʃ/  | 鱼
+| chicken |  /'tʃɪkən/ | 鸡肉
+
+* 购物时间。带领孩子们复习前两节课所学词汇。孩子们轮流当售货员与顾客，进行完整对话交流。
+
+* 涂色时间。
+
+* 老师带着数星星给奖励。
+
+## 课后功课
+
+1. 每天练习二十六个字母的发音。
+2. 复习新单词。
+3. 重温之前学过的全部单词。
+
+
 # 2018-11-03
 
 Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
@@ -33,7 +81,7 @@ Good morning, my name is ..., I amm ... years old. I like (animal).
 | train | /tren/ | 火车
 | doll | /dɑl/ | 洋娃娃
 | teddy bear | /'tɛdi/ /bɛr/ | 泰迪玩具熊
-| legos | /'leɡəu |  乐高积木
+| legos | /'leɡəu/ |  乐高积木
 
 * Toy Store，玩具商店。让孩子们学会使用一元，五元，十元，二十元去购买自己想要的物品。涉及：
 ```
