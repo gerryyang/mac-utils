@@ -30,10 +30,12 @@ Assistent: Diya (迪亚)
 * 引导学生说出常用字句，How are you? I am fine, thank you. Goodbye
 * 复习二十六个字母的发音以及数字
 * 学习新单词
+
 | 单词 | 发音 (美式) | 含义
 | -- | -- | --
-| carrot | ['kærət] | 胡萝卜
-| broccoli |  ['brɑkəli] | 西兰花
+| carrot | /'kærət/ | 胡萝卜
+| broccoli |  /'brɑkəli/ | 西兰花
+
 * 购物时间，轮流扮演售货员和顾客，进行完整对话交流
 * 涂色时间
 * 老师带着数星星给奖励
