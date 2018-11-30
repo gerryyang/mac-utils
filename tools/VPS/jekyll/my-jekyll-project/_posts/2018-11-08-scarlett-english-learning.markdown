@@ -9,6 +9,41 @@ categories: English
 {:toc}
 
 
+# 2018-11-24
+
+Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
+Assistent: Diya (迪亚)
+
+## 学习内容
+
+课堂目标：
+
+* 完整句子自我介绍，包括颜色
+* 基础礼貌用语 (knock the door when you walk into a room/thank you/sorry/good bye/pay for buying things)
+* 对白练习，主题：超市Market
+
+上课内容：
+
+* Hello song + ABC songs
+* 听老师说，安静，坐好，不准打人或踢人，站立，看仔细等
+* 自我介绍，Hello my name is xxx, I am xxx, I like color
+* 引导学生说出常用字句，How are you? I am fine, thank you. Goodbye
+* 复习二十六个字母的发音以及数字
+* 学习新单词
+| 单词 | 发音 (美式) | 含义
+| -- | -- | --
+| carrot | ['kærət] | 胡萝卜
+| broccoli |  ['brɑkəli] | 西兰花
+* 购物时间，轮流扮演售货员和顾客，进行完整对话交流
+* 涂色时间
+* 老师带着数星星给奖励
+
+## 课后功课
+
+1. 每天练习二十六个字母的发音。
+2. 复习新单词。
+
+
 # 2018-11-17
 
 Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
