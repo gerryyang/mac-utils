@@ -102,6 +102,8 @@ cd utils
 /etc/init.d/redis_<portnumber>
 
 /etc/init.d/redis_6379
+
+redis-cli shutdown
 ```
 
 # Redis代码结构

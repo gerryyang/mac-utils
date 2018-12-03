@@ -44,7 +44,7 @@ https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-
 [证书安装指引]: https://cloud.tencent.com/document/product/400/4143
 
 
-
+[Jekyll on Ubuntu]: https://jekyllrb.com/docs/installation/ubuntu/
 [这篇博文]: http://tom.preston-werner.com/2008/11/17/blogging-like-a-hacker.html
 [CSDN的博客]: https://blog.csdn.net/delphiwcdj
 
