@@ -9,6 +9,59 @@ categories: English
 {:toc}
 
 
+# 日常用语
+
+语言是一个灵活的东西，需要抛弃千篇一律的"课本模板"，多多深入到具体的场景中，才能说出让对方共鸣的话。
+
+| A | B (太正式) | B (随和自然)
+| -- | -- | --
+| How are you? | Thank you. And you? | Not bad/I'm good/Can't complain 还不错
+| Thank you | You are welcome. | Sure/My pleasure 愿意效劳
+| Bye | bye | Have a nice day 美好的一天
+| Please wait a minute | ok, no problem | Just take your time. 慢慢来
+| xxx | 认为对方说的很对 yes/right | Exactly/Tell me about it 就是啊
+| xxx | 当没听清对方需要别人重复时, Pardon | I'm sorry?/Excuse me? 通过升调表疑问语气，自然且地道  
+
+
+# 2018-12-01
+
+Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
+Assistent: Diya (迪亚)
+
+## 学习内容
+
+课堂目标：
+
+* 完整句子自我介绍 (包括颜色)
+* 基础礼貌用语
+* 对白训练。主题：蔬菜类与肉类
+* 学习新单词
+
+| 单词 | 发音 (美式) | 含义
+| -- | -- | --
+| steak | /stek/ | 牛排
+| sausage |  /'sɔsɪdʒ/  | 香肠
+| puppet |  /'pʌpɪt/ | 木偶
+
+上课内容：
+
+* Hello song + ABC songs
+* 让孩子们一只手蒙住眼睛一只手随机抓finger puppets. Good morning, my name is scarlett, I am 4 years old, I like color. I like animal.
+* Teacher Says 复习课堂规则：听老师说，安静，坐好，不准打人或踢人，站立，看仔细等
+* 重温日常用语。How are you ? / I am fine/happy/hungry/angry/sad/tired/exciting. Thank you, Goodbye.
+* 学习新单词，steak, sausages, 引入蔬菜与肉的区别：vegetables和meat.
+* 复习上次课单词。Corn, Peas, Mushroom, Chicken, Carrot, Broccoli.
+* 购物时间。孩子们轮流扮演售货员和顾客进行完整对话交流。学会用这些新单词
+* 邀请家长观课
+* 老师带着数星星给奖励
+
+## 课后功课
+
+1. 每天练习二十六个字母的发音。
+2. 复习新单词。
+
+课堂奖励环节多加了`Drama Coin`戏剧币，根据课堂表现，作业情况，都可以得到相应的奖励，然后在中心兑换礼物。
+
 # 2018-11-24
 
 Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)

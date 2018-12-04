@@ -11,7 +11,7 @@ Hello, My name is Gerry, I'm a developer based in Shenzhen. Some information cou
 	- MySQL, Redis, LevelDB
 	- Apache, Nginx
 	- Vim, Sublime Text, LaTeX, Gnuplot
-	- Docker, Kubernetes
+	- Docker, Kubernetes, Istio
 	- Hyperledger Fabric
 
 * Language Skills
