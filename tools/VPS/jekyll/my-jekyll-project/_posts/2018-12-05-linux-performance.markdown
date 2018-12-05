@@ -41,13 +41,19 @@ Brendan Gregg描述的[Linux性能工具图谱]，可以帮助我们在发现Lin
 这两个逻辑核拥有自己的中断、状态，但是共用物理核的计算资源。超线程技术旨在提高CPU计算资源的使用率，从而提高计算并行度。超线程技术基于这样一个现实，那就是大多数程序运行时，CPU资源并没有得到充分的利用。比如CPU缓存未命中、分支预测错误或者等待数据时，CPU中的计算资源其实是闲置的。超线程技术，可以通过硬件指令，将这些闲置的CPU资源，调度给其他的指令，从而整体上提高CPU的资源利用率。有研究表明，超线程依赖于操作系统对CPU的调度。但是如果应用程序开启了CPU绑定功能，则有可能破坏这种调度的完整性，反而带来性能损失。
 
 更多：
-[Hyper-Threading]
-[When is hyper-threading performance not worth the hassle?]
+
+[Hyper-Threading 2]
+
+[When is hyper-threading performance not worth the hassle]
+
 [Superscalar processor]
 
 [Hyper-threading]: https://en.wikipedia.org/wiki/Hyper-threading
-[Hyper-Threading]: https://whatis.techtarget.com/definition/Hyper-Threading
-[When is hyper-threading performance not worth the hassle?]: https://searchservervirtualization.techtarget.com/answer/When-should-admins-avoid-using-hyper-threading-technology
+
+[Hyper-Threading 2]: https://whatis.techtarget.com/definition/Hyper-Threading
+
+[When is hyper-threading performance not worth the hassle]: https://searchservervirtualization.techtarget.com/answer/When-should-admins-avoid-using-hyper-threading-technology
+
 [Superscalar processor]: https://en.wikipedia.org/wiki/Superscalar_processor
 
  # Refer
