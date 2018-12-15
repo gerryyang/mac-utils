@@ -482,6 +482,23 @@ git reset commit-id  # 切记不要用 -- hard 参数
 # 重新 git add && git commit
 ```
 
+## 子模块submodule
+
+默认情况下，子模块会将子项目放到一个与仓库同名的目录中，本例中是 “DbConnector”。 如果你想要放到其他地方，那么可以在命令结尾添加一个不同的路径。虽然 DbConnector 是工作目录中的一个子目录，但 Git 还是会将它视作一个子模块。当你不在那个目录中时，Git 并不会跟踪它的内容， 而是将它看作该仓库中的一个特殊提交。如果你想看到更漂亮的差异输出，可以给 git diff 传递 --submodule 选项。
+
+``` bash
+# 添加子模块
+git submodule add https://github.com/chaconinc/DbConnector
+git clone --recursive https://github.com/chaconinc/MainProject
+
+# 清除子模块
+git submodule deinit --all
+```
+
+[Git 工具 - 子模块]
+
+[Git 工具 - 子模块]: https://git-scm.com/book/zh/v2/Git-工具-子模块
+
 
 # Git与GitHub 
 

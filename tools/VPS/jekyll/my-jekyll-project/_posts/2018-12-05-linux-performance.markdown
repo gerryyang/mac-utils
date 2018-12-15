@@ -8,6 +8,13 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+## 开发语言的性能
+
+https://github.com/famzah/langs-performance
+
+https://blog.famzah.net/2016/09/10/cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3/
+
+
 # 性能指标
 
 * 吞吐 
