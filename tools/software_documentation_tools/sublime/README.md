@@ -94,6 +94,12 @@ PS: 详细的package列表可以在 https://sublime.wbond.net/ 查询。
 
 作用: 实现多个tab并行编辑和对比
 
+(5) 代码折叠
+
+看菜单 edit - code folding
+ctrl + k, ctrl + 1 折叠所有函数
+ctrl + k, ctrl + j 展开所有函数
+
 
 ###小技巧
 
