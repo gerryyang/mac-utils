@@ -22,6 +22,38 @@ categories: English
 | xxx | 认为对方说的很对 yes/right | Exactly/Tell me about it 就是啊
 | xxx | 当没听清对方需要别人重复时, Pardon | I'm sorry?/Excuse me? 通过升调表疑问语气，自然且地道  
 
+# 2018-12-08
+
+Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
+Assistent: Diya (迪亚)
+
+## 学习内容
+
+课堂目标：
+
+* Hello song + ABC songs + 自我介绍
+* 复习课堂规则
+* 学习和复习上学期的职业单词。Doctor/Postman/Firefighter/Teacher/bus driver
+* 将这些单词跟这些职业的特性结合成句子。
+    - Teacher writes stars.
+    - Firefighter uses water.
+    - Doctor checks your body.
+    - Bus driver drives bus.
+    - Postman gives you letter.
+* 用这些单词进行角色扮演学习简单对话。
+    - Hello, hello shake hands
+    - What do you do？
+    - I am a bus driver.
+* 学习歌曲 The pinocchi
+* 涂色Firefighter
+* 熟悉12月23日表演曲目 We wish you a merry christmas 和 Jingle Bells
+* 老师带着数星星
+
+## 课后功课
+
+* 练习本堂课学习的新单词和句子
+* 在家多听三首歌
+
 
 # 2018-12-01
 
