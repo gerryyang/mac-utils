@@ -449,7 +449,8 @@ procs -----------memory---------- ---swap-- -----io---- -system-- -----cpu------
 
 ![perf_call_graph](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/perf_call_graph.png)
 
-	+ [brendangregg: perf Examples]
+
+refer: [brendangregg: perf Examples]
 
 
 [brendangregg: perf Examples]: http://www.brendangregg.com/perf.html
