@@ -239,8 +239,11 @@ cpu7 70509238 13466270 33395943 3676865232 47833 0 860013 43484 0 0
 
 * `/proc/softirqs` 提供了软中断的运行情况。可以看到各种类型软中断在不同CPU上的累积运行次数。
 * 软中断，包括了10个类别：
-	- `NET_RX`表示网络接收中断
-	- `NET_TX`表示网络发送中断
+	- `NET_RX`，网络接收中断
+	- `NET_TX`，网络发送中断
+	- `TIMER`，定时中断
+	- `SCHED`，内核调度
+	- `RCU`，RCU锁
 * 正常情况，同一种中断在不同CPU上的累积次数应该相差不大。
 
 ```
@@ -257,6 +260,16 @@ BLOCK_IOPOLL:          0          0          0          0          0          0 
      HRTIMER:    3770790    3067883    3294058    2814030    3082644    5280147    2529713    2751330
          RCU:  505317878  414070615  405384406  383304364  379485156  369748897  386444807  374074340
 ```
+
+如何查看**中断次数的变化速率**？
+
+```
+# 从高亮部分可以直观看出哪些内容变化的更快
+watch -d cat /proc/softirqs
+```
+
+
+
 
 ### 查看内核线程
 
@@ -460,6 +473,47 @@ refer: [brendangregg: perf Examples]
 * ab
 	- ab -c 10 -n 10000 http://ip:port
 
+* sar
+	+ Collect, report, or save system activity information.
+	+ 一个系统活动报告工具，既可以实时查看系统的当前活动，又可以配置保存和报告历史统计数
+
+```
+# 查看CPU使用率
+sar -u 1 
+
+# -n DEV表示显示网络收发的报告,  间隔1秒输出一组数据
+$sar -n DEV 1
+Linux 3.10.94-1-tlinux2_kvm_guest-0019.tl2 (TENCENT64.site)     12/31/18        _x86_64_        (8 CPU)
+
+17:41:55        IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s
+17:41:56         eth0      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+17:41:56        peth1      7.00     20.00      0.85      4.85      0.00      0.00      0.00
+17:41:56         eth1      7.00     20.00      0.85      4.85      0.00      0.00      0.00
+17:41:56       peth21      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+17:41:56           lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+```
+第一列，是报告的时间
+IFACE，是网卡
+rxpck/s和txpck/s，分别是每秒接收，发送的网络帧数
+rxkB/s和txkB/s，分别是每秒接收，发送的千字节数
+
+* hping3
+	+ 一个可以构造TCP/IP协议数据包的工具，可以对系统进行安全审计，防火墙测试等
+
+```
+# 模拟SYN FLOOD攻击
+# -S参数表示设置TCP协议的SYN(同步序列号)，-p表示目的端口为80
+# -i u100表示每隔100微妙发送一个网络帧
+# 注意：如果在实践过程中现象不明显，可以尝试把100调小
+$ hping3 -S -p 80 -i u100 192.168.0.30
+```
+
+PS: SYN FLOOD问题最简单的解决方法，是从交换机或硬件防火墙中封掉来源IP，这样SYN FLOOD网络帧就不会发送到服务器中。
+
+* tcpdump
+	+ 一个常用的网络抓包工具，用于分析网络问题	
+	+ tcpdump -i eth0 -n tcp  port 80
+
 * htop
 * atop 
 
@@ -480,7 +534,7 @@ https://drupal.stackexchange.com/questions/71610/nginx-vs-apache-are-there-any-a
 https://wiki.apache.org/httpd/FAQ#How_does_Apache_httpd_performance_compare_to_other_servers.3F
 
 
- # Refer
+# Refer
 
 [Hyper-threading]: https://en.wikipedia.org/wiki/Hyper-threading
 
