@@ -492,10 +492,10 @@ Linux 3.10.94-1-tlinux2_kvm_guest-0019.tl2 (TENCENT64.site)     12/31/18        
 17:41:56       peth21      0.00      0.00      0.00      0.00      0.00      0.00      0.00
 17:41:56           lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00
 ```
-第一列，是报告的时间
-IFACE，是网卡
-rxpck/s和txpck/s，分别是每秒接收，发送的网络帧数
-rxkB/s和txkB/s，分别是每秒接收，发送的千字节数
+第一列，是报告的时间。
+IFACE，是网卡。
+rxpck/s和txpck/s，分别是每秒接收，发送的网络帧数。
+rxkB/s和txkB/s，分别是每秒接收，发送的千字节数。
 
 * hping3
 	+ 一个可以构造TCP/IP协议数据包的工具，可以对系统进行安全审计，防火墙测试等
@@ -520,18 +520,29 @@ PS: SYN FLOOD问题最简单的解决方法，是从交换机或硬件防火墙�
 
 # 开发语言性能比较
 
-https://github.com/famzah/langs-performance
+[langs-performance]
 
-https://blog.famzah.net/2016/09/10/cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3/
+[cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3]
+
+[langs-performance]: https://github.com/famzah/langs-performance
+
+[cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3]: https://blog.famzah.net/2016/09/10/cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3/
 
 
 # Web服务性能比较
 
-https://help.dreamhost.com/hc/en-us/articles/215945987-Web-server-performance-comparison
+[Web-server-performance-comparison]
 
-https://drupal.stackexchange.com/questions/71610/nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there
+[nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there]
 
-https://wiki.apache.org/httpd/FAQ#How_does_Apache_httpd_performance_compare_to_other_servers.3F
+[How_does_Apache_httpd_performance_compare_to_other_servers]
+
+
+[Web-server-performance-comparison]: https://help.dreamhost.com/hc/en-us/articles/215945987-Web-server-performance-comparison
+
+[nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there]: https://drupal.stackexchange.com/questions/71610/nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there
+
+[How_does_Apache_httpd_performance_compare_to_other_servers]: https://wiki.apache.org/httpd/FAQ#How_does_Apache_httpd_performance_compare_to_other_servers.3F
 
 
 # Refer
