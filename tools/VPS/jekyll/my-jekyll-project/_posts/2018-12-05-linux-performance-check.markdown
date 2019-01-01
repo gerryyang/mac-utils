@@ -422,10 +422,6 @@ Linux用的正是**四级页表**来管理内存：
 	- 杀死进程，内存紧张时系统还会通过`OOM(Out of Memory)`，直接杀掉占用大量内存的进程
 
 
-
-
-
-
 # 性能测试工具
 
 * stress
@@ -516,10 +512,12 @@ Linux 3.10.107-1-tlinux2_kvm_guest-0046 (VM_4_14_centos)        12/20/18        
 * vmstat
 	- vmstat输出的第一行数据为什么和其他行差别巨大？回答：The  first  report  produced gives averages since the last reboot.  Additional reports give information on a sampling period of length delay. The process and memory reports are instantaneous in either case. (man vmstat) 
 	- 数据指标：
-		+ cs (context switch)是每秒上下文切换的次数。
-		+ in (interrupt)是每秒中断的次数。
 		+ r (Running or Runnable)是就绪队列的长度，也就是正在运行和等待CPU的进程数。
 		+ b (Blocked)是处于不可中断睡眠状态的进程数。
+		+ cs (context switch)是每秒上下文切换的次数。
+		+ in (interrupt)是每秒中断的次数。
+		+ bi 块设备读取的大小，单位为块/秒(因为Linux中块的大小是1KB，所以单位等价于KB/s)
+		+ bo 块设备写入的大小，单位为块/秒
 
 ```
 # 每隔5秒输出1组数据
@@ -611,6 +609,79 @@ PS: SYN FLOOD问题最简单的解决方法，是从交换机或硬件防火墙�
 * tcpdump
 	+ 一个常用的网络抓包工具，用于分析网络问题	
 	+ tcpdump -i eth0 -n tcp  port 80
+
+* dd
+
+测试场景：
+
+使用dd测试读写文件，用vmstat查看，Buffer是对**磁盘数据的缓存**，而Cache是**文件数据的缓存**，它们既会用在**读请求**中，也会用在**写请求**中。
+
+```
+# echo 3 > /proc/sys/vm/drop_caches
+# dd if=/dev/urandom of=/tmp/file bs=1M count=500
+500+0 records in
+500+0 records out
+524288000 bytes (524 MB, 500 MiB) copied, 4.41097 s, 119 MB/s
+# echo 3 > /proc/sys/vm/drop_caches
+# dd if=/tmp/file of=/dev/null
+1024000+0 records in
+1024000+0 records out
+524288000 bytes (524 MB, 500 MiB) copied, 12.4156 s, 42.2 MB/s
+```
+
+准备工作：
+
+```
+# 清理文件页，目录项，Inodes等各种缓存：
+echo 3 > /proc/sys/vm/drop_caches
+
+# 查看cache使用情况
+vmstat 1
+```
+
+写案例：
+
+```
+# 通过读取随机设备，生成一个500MB大小的文件
+dd if=/dev/urandom of=/tmp/file bs=1M count=500
+```
+![dd_r_w](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dd_r_w.png)
+
+bi和bo，分别表示块设备读取和写入的大小，单位为`块/秒`(因为Linux中块的大小是1KB，所以单位等价于KB/s)。将bo加起来就是写入的500MB。
+
+读案例：
+
+```
+# 读
+dd if=/tmp/file of=/dev/null
+```
+![dd_r](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dd_r.png)
+
+* cachestat 
+	- 提供了整个操作系统缓存的读写命中情况
+	- TOTAL，总的I/O次数
+	- MISSES，缓存未命中的次数
+	- HITS，缓存命中的次数
+	- DIRTIES，新增到缓存中的脏页数
+	- BUFFERS_MB，Buffers的大小，以MB为单位
+	- CACHED_MB，Cache的大小，以MB为单位
+
+
+![cachestat](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/cachestat.png)
+
+* cachetop
+
+提供了每个进程的缓存命中情况
+
+* pcstat
+
+[pcstat]是一个基于Go开发的工具，指定和查看文件的缓存大小。
+
+```
+go get github.com/tobert/pcstat
+```
+
+[pcstat]: https://github.com/tobert/pcstat
 
 * htop
 * atop 
