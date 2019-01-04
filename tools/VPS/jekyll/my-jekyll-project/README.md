@@ -135,7 +135,8 @@ https://blog.tsunanet.net/
 
 # TODO
 
-1. https改造
-2. nginx端口转发，通过二级域名
+* 博客https改造
+* nginx端口转发，通过二级域名
 
-
+* gcc attri
+https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html
