@@ -135,6 +135,14 @@ https://blog.tsunanet.net/
 du和df的区别
 https://www.cnblogs.com/heyonggang/p/3644736.html
 
+
+urlencode
+https://stackoverflow.com/questions/9086296/why-url-encode-or-which-characters-to-encode
+http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
+
+gitbook
+https://docs.gitbook.com/
+
 # TODO
 
 * 博客https改造
@@ -142,3 +150,4 @@ https://www.cnblogs.com/heyonggang/p/3644736.html
 
 * gcc attri
 https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html
+
