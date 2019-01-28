@@ -211,7 +211,46 @@ git rm --cached *.log
 
 与新功能开发流程基本一致，注意建立分支时请以`bugfix_`开头
 
+## 撤销流程
+
+在未进行`git push`前的所有操作，都是在本地仓库中执行的。将**本地仓库的代码还原操作**叫做**撤销**。
+
+* 文件被修改了，但未执行git add操作(working tree内撤销)
+```
+git checkout <fileName>
+git checkout .
+```
+
+* 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件
+```
+git add *
+git status
+# 取消暂存
+git reset HEAD <fileName>
+```
+
+* 文件执行了`git add`操作，但想撤销对其的修改(index内回滚)
+```
+# 取消暂存
+git reset HEAD <fileName>
+# 撤销修改
+git checkout <fileName>
+```
+
+* 修改的文件已被`git commit`，但想再次修改不再产生新的Commit
+```
+# 修改最后一次提交 
+git add sample.txt
+git commit --amend -m"说明"
+```
+
+refer: [Git撤销&回滚操作]
+
+[Git撤销&回滚操作]: https://blog.csdn.net/ligang2585116/article/details/71094887
+
 ## 回滚流程
+
+已进行`git push`，即已推送到远程仓库中。将**已被提交到远程仓库的代码还原操作**叫做**回滚**。注意：对远程仓库做回滚操作是有风险的，需提前做好备份和通知其他团队成员。
 
 若不小心把错误的代码merge到主干了怎么办？到项目根目录，执行如下操作：
 

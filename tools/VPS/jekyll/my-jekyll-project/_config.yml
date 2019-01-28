@@ -13,11 +13,11 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Gerry's blog
+title: Gerry's blog   
 author: gerryyang
 email: N/A
 description: >- # this means to ignore newlines until "baseurl:"
-  Blogging like a Hacker, that sounds cool !
+  他山之石，可以攻玉
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://gerryyang.com" # the base hostname & protocol for your site, e.g. http://example.com
 
@@ -35,8 +35,8 @@ plugins:
 
 # Serving
 detach: true
-port:   8080 
-host:    104.131.173.242
+port:   80
+host:    172.19.0.16
 baseurl: "" # does not include hostname
 show_dir_listing: false
 

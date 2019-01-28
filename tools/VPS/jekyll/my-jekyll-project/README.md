@@ -143,6 +143,8 @@ http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 gitbook
 https://docs.gitbook.com/
 
+https://www.tutorialspoint.com/cprogramming/c_passing_arrays_to_functions.htm
+
 # TODO
 
 * 博客https改造
