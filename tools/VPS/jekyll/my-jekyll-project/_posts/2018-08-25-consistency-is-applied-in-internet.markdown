@@ -147,7 +147,11 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 
 ![raft](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/raft.png)
 
-更多介绍：[The Raft Consensus Algorithm] [寻找一种易于理解的一致性算法（扩展版）]
+More：
+
+* [The Raft Consensus Algorithm] 
+* [寻找一种易于理解的一致性算法（扩展版）]
+* [Raft: Understandable Distributed Consensus]
 
 ## 算法7：PBFT
 
@@ -193,6 +197,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 2. [FLP]
 3. [Paxos]
 4. [The Raft Consensus Algorithm]
+5. [Raft: Understandable Distributed Consensus]
 
 
 [分布式系统的事务处理]: https://coolshell.cn/articles/10910.html
@@ -200,4 +205,4 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 [Paxos]: https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/paxos.html
 [The Raft Consensus Algorithm]: https://raft.github.io/
 [寻找一种易于理解的一致性算法（扩展版）]: https://github.com/maemual/raft-zh_cn/blob/master/raft-zh_cn.md
-
+[Raft: Understandable Distributed Consensus]: http://thesecretlivesofdata.com/raft

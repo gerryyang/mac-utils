@@ -145,6 +145,10 @@ https://docs.gitbook.com/
 
 https://www.tutorialspoint.com/cprogramming/c_passing_arrays_to_functions.htm
 
+raft可视化
+[Raft: Understandable Distributed Consensus]: http://thesecretlivesofdata.com/raft
+
+
 # TODO
 
 * 博客https改造
