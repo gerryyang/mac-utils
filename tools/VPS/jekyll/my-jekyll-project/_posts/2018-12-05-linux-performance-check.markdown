@@ -199,15 +199,15 @@ CONFIG_HZ=250
 	- man proc
 	- 第一列是CPU编号。而第一行没有编号的cpu表示是所有cpu的累加。其他列则表示不同场景下cpu的累加节拍数，它的单位是USER_HZ(即，1/100秒，10ms)
 	- 每一列的含义：
-		+ `user`(缩写为`us`)，代表`用户态CPU时间`。注意，它不包括nice时间，但包括了guest时间。
-		+ `nice`(缩写为`ni`)，代表`低优先级用户态CPU时间`。也就是进程的nice值被调整为1-19之间时的CPU时间。(nice可取值范围是`-20到19`，数值越大，优先级反而越低)。
-		+ `system`(缩写为`sys`)，代表`内核态CPU时间`。
-		+ `idle`(缩写为`id`)，代表`CPU空闲时间`。注意，它不包括等待I/O的时间(iowait)。
-		+ `iowait`(缩写为`wa`)，代表`等待I/O的CPU时间`。
-		+ `irq`(缩写为`hi`)，代表`处理硬中断的CPU时间`。
-		+ `softirq`(缩写为`si`)，代表`处理软中断的CPU时间`。
-		+ `steal`(缩写为`st`)，代表`当系统运行在虚拟机中的时候，被其他虚拟机占用的CPU时间`。
-		+ `guest`(缩写为`guest`)，代表`通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间`。
+		+ `user`(缩写为`us`)，代表**用户态CPU时间**。注意，它不包括nice时间，但包括了guest时间。
+		+ `nice`(缩写为`ni`)，代表**低优先级用户态CPU时间**。也就是进程的nice值被调整为1-19之间时的CPU时间。(nice可取值范围是**-20到19**，数值越大，优先级反而越低)。
+		+ `system`(缩写为`sys`)，代表**内核态CPU时间**。
+		+ `idle`(缩写为`id`)，代表**CPU空闲时间**。注意，它不包括等待I/O的时间(iowait)。
+		+ `iowait`(缩写为`wa`)，代表**等待I/O的CPU时间**。
+		+ `irq`(缩写为`hi`)，代表**处理硬中断的CPU时间**。
+		+ `softirq`(缩写为`si`)，代表**处理软中断的CPU时间**。
+		+ `steal`(缩写为`st`)，代表**当系统运行在虚拟机中的时候，被其他虚拟机占用的CPU时间**。
+		+ `guest`(缩写为`guest`)，代表**通过虚拟化运行其他操作系统的时间，也就是运行虚拟机的CPU时间**。
 
 ```
 $cat /proc/stat | grep ^cpu
@@ -477,13 +477,15 @@ $ pcstat /bin/ls
 * 大部分`文件页`都可以直接回收，以后需要时，再从磁盘重新读取就可以了。而那些被应用程序修改过，并且暂时还没有写入磁盘的数据（即，脏页），就得先写入磁盘，然后才能进行内存释放。这些`脏页`一般通过两种方式写入磁盘。
 	- 在应用程序中，通过系统调用`fsync`，把脏页同步到磁盘中
 	- 交给系统，由内核线程`pdflush`负责这些脏页的刷新
-* SWAP机制，把这些不常访问的内存先写到磁盘中，然后释放掉这些内存，给其他更需要的进程使用。再次访问这些内存时，重新从磁盘读入内存就可以了。
+
+* **SWAP机制**：Linux通过SWAP，把不常访问的内存（即，匿名页）先写到磁盘中，然后释放掉这些内存，给其他更需要的进程使用。再次访问这些内存时，重新从磁盘读入内存就可以了。
 
 > **SWAP原理**：就是把一块磁盘空间或者一个本地文件，当成内存来使用。它包括**换出**和**换入**两个过程。
 > **换出**：把进程暂时不用的内存数据存储到磁盘中，并释放这些数据占用的内存。
 > **换入**：在进程再次访问这些内存的时候，把它们从磁盘读到内存中来。
 
 例子：电脑休眠功能。也是基于SWAP。休眠时，把系统的内存存入磁盘，这样等到再次开机时，只要从磁盘中加载内存就可以，这样省去了很多应用程序的初始化过程，加速了开机速度。
+
 
 **Q: SWAP是为了回收内存，那么Linux到底在什么时候需要回收内存？**
 
@@ -492,14 +494,15 @@ A:
 2. 除了方式1，还有一个专门的内核线程用来定期回收内存，也就是`kswapd0`。为了衡量内存的使用情况，`kswapd0`定义了三个内存阈值（`watermark`，也称为`水位`），分别是：页最小阈值（pages_min），页低阈值（pages_low）和页高阈值（pages_high）。剩余内存，则使用pages_free表示。
 
 `kswapd0`定期扫描内存的使用情况，并根据剩余内存落在这三个阈值的空间位置，进行内存的回收操作。
+
 | 阈值范围 | 说明
 | -- | -- |
-| 剩余内存 <  pages_min | 进程可用内存都耗尽了，只有内核才可以分配内存
-| pages_min < 剩余内存 < pages_low | 内存压力比较大，剩余内存不多了。这时kswapd0会执行内存回收，直到剩余内存大于pages_high
-| pages_low < 剩余内存 < pages_high | 内存有一定压力，但还可以满足新内存请求
-| 剩余内存 > pages_high | 剩余内存比较多，没有内存压力
+| **pages_free** <  pages_min | 进程可用内存都耗尽了，只有内核才可以分配内存
+| pages_min < **pages_free** < pages_low | 内存压力比较大，pages_free不多了。这时kswapd0会执行内存回收，直到pages_free大于pages_high
+| pages_low < **pages_free** < pages_high | 内存有一定压力，但还可以满足新内存请求
+| pages_free > **pages_high** | pages_free比较多，没有内存压力
 
-可以看到，一旦剩余内存小于pages_low，就会触发内存的回收。这个pages_low可以通过内核选项`/proc/sys/vm/min_free_kbytes`来间接设置。min_free_kbytes设置了pages_min，其他两个阈值，都是根据pages_min计算生成的，计算方法如下：
+可以看到，一旦**pages_free**小于pages_low，就会触发内存的回收。这个pages_low可以通过内核选项`/proc/sys/vm/min_free_kbytes`来间接设置。min_free_kbytes设置了pages_min，其他两个阈值，都是根据pages_min计算生成的，计算方法如下：
 
 ```
 pages_low  = pages_min * 5 / 4
@@ -509,7 +512,7 @@ pages_high = pages_min * 3 / 2
 **Q: 很多情况下，发现SWAP升高，可是在分析系统的内存使用时，却很可能发现系统剩余内存还多着呢，为什么剩余内存很多的情况下，也会发生SWAP？**
 
 
-A: 这是处理器的NUMA (Non-Uniform Memory Access)架构导致的。在NUMA架构下，多个处理器被划分到不同的Node下，且每个Node都拥有自己的本地内存空间。当本地内存不足时，默认既可以从其他Node寻找空闲内存，也可以从本地内存回收。可以设置`/proc/sys/vm/zone_reclaim_mode`来调整NUMA本地内存的回收策略。
+A: 这是处理器的`NUMA (Non-Uniform Memory Access)`架构导致的。在NUMA架构下，多个处理器被划分到不同的Node下，且每个Node都拥有自己的本地内存空间。当本地内存不足时，默认既可以从其他Node寻找空闲内存，也可以从本地内存回收。可以设置`/proc/sys/vm/zone_reclaim_mode`来调整NUMA本地内存的回收策略。
 
 ```
 $ numactl --hardware
@@ -541,9 +544,149 @@ A: Linux提供了一个`/proc/sys/vm/swappiness`选项，取值0 - 100（表示�
 
 | swappiness程度 | 说明 |
 | -- | -- |
-| 数值越大 | 越积极使用SWAP，即更倾向于回收匿名页
-| 数值越小 | 越消极使用SWAP，即更倾向于回收文件页
+| 数值越大 | 越积极使用SWAP，即更倾向于**回收匿名页**
+| 数值越小 | 越消极使用SWAP，即更倾向于**回收文件页**
 
+
+**Q: SWAP如何开启？**
+
+A: 通过`free`命令可以查看SWAP是否开启。如果Swap的大小都是0，说明机器没有配置SWAP。
+
+```
+$ free
+             total        used        free      shared  buff/cache   available
+Mem:        8169348      331668     6715972         696     1121708     7522896
+Swap:             0           0           0
+```
+
+开启SWAP的方法：Linux本身支持两种类型的SWAP，即**SWAP分区**和**SWAP文件**。以SWAP文件为例，配置开启SWAP：
+```
+# 创建 Swap 文件，这里配置SWAP文件的大小为8GB
+$ fallocate -l 8G /mnt/swapfile
+
+# 修改权限只有根用户可以访问
+$ chmod 600 /mnt/swapfile
+
+# 配置 Swap 文件
+$ mkswap /mnt/swapfile
+
+# 开启 Swap
+$ swapon /mnt/swapfile
+```
+
+再次用`free`命令查看，确认SWAP配置成功。
+
+```
+$ free
+             total        used        free      shared  buff/cache   available
+Mem:        8169348      331668     6715972         696     1121708     7522896
+Swap:       8388604           0     8388604
+```
+
+如果需要关闭SWAP，执行下面命令：
+
+```
+$ swapoff -a
+```
+
+实际上，关闭SWAP后再重新打开，也是一种常用的SWAP空间清理方法：
+
+```
+$ swapoff -a && swapon -a 
+```
+
+
+**Q: SWAP换出的是哪些进程的内存？**
+
+A: 通过`proc`文件系统来查看进程SWAP换出的虚拟内存大小。它保存在`/proc/pid/status`中的`VmSwap`中。
+
+```
+# 按 VmSwap 使用量对进程排序，输出进程名称、进程 ID 以及 SWAP 用量
+$ for file in /proc/*/status ; do awk '/VmSwap|Name|^Pid/ {printf $2 " " $3} END{ print ""}' $file; done | sort -k 3 -n -r | head
+dockerd 2226 10728 kB
+docker-containe 2251 8516 kB
+snapd 936 4020 kB
+networkd-dispat 911 836 kB
+polkitd 1004 44 kB
+```
+
+或者：
+
+```
+# apt install smem
+# smem --sort swap
+```
+
+**Q: 通常降低SWAP的使用，可以提高系统的整体性能，需要怎么做呢？**
+
+A: 几种常见的降低方法：
+
+1. 禁止SWAP。现在服务器的内存足够大，所以除非有必要，禁用SWAP就可以了。随着云计算的普及，大部分云平台中的虚拟机都默认禁止SWAP。
+2. 如果实在需要用到SWAP，可以尝试降低swappiness的值，减少内存回收时SWAP的使用倾向。
+3. 响应延迟敏感的应用，如果它们可能在开启SWAP的服务器中运行，可以用库函数mlock()或者mlockall()锁定内存，组织它们的内存换出。
+
+**测试：当开启SWAP时，通过dd命令和sar命令查看SWAP指标的变化情况**
+
+模拟大文件的读取：
+
+```
+# 写入空设备，实际上只有磁盘的读请求
+$ dd if=/dev/sda1 of=/dev/null bs=1G count=2048
+```
+
+在其他终端运行sar命令，查看内存各个指标的变化情况：
+
+```
+# 间隔 1 秒输出一组数据
+# -r 表示显示内存使用情况，-S 表示显示 Swap 使用情况
+$ sar -r -S 1
+04:39:56    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+04:39:57      6249676   6839824   1919632     23.50    740512     67316   1691736     10.22    815156    841868         4
+
+04:39:56    kbswpfree kbswpused  %swpused  kbswpcad   %swpcad
+04:39:57      8388604         0      0.00         0      0.00
+
+04:39:57    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+04:39:58      6184472   6807064   1984836     24.30    772768     67380   1691736     10.22    847932    874224        20
+
+04:39:57    kbswpfree kbswpused  %swpused  kbswpcad   %swpcad
+04:39:58      8388604         0      0.00         0      0.00
+
+…
+
+
+04:44:06    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+04:44:07       152780   6525716   8016528     98.13   6530440     51316   1691736     10.22    867124   6869332         0
+
+04:44:06    kbswpfree kbswpused  %swpused  kbswpcad   %swpcad
+04:44:07      8384508      4096      0.05        52      1.27
+```
+
+通过`/proc/zoneinfo`观察剩余内存，内存阈值，以及匿名页和文件页的使用情况：
+
+```
+# -d 表示高亮变化的字段
+# -A 表示仅显示 Normal 行以及之后的 15 行输出
+$ watch -d grep -A 15 'Normal' /proc/zoneinfo
+Node 0, zone   Normal
+  pages free     21328
+        min      14896
+        low      18620
+        high     22344
+        spanned  1835008
+        present  1835008
+        managed  1796710
+        protection: (0, 0, 0, 0, 0)
+      nr_free_pages 21328
+      nr_zone_inactive_anon 79776
+      nr_zone_active_anon 206854
+      nr_zone_inactive_file 918561
+      nr_zone_active_file 496695
+      nr_zone_unevictable 2251
+      nr_zone_write_pending 0
+```
+
+可以发现，系统回收内存时，有时候会回收更多的文件页，有时候又回收更多的匿名页。通过`/proc/sys/vm/swappiness`选项设置内存回收的倾向。
 
 
 
