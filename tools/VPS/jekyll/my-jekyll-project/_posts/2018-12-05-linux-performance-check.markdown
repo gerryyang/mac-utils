@@ -346,7 +346,7 @@ MIS:          0
 ![memory_process](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/memory_process.png)
 
 
-如何查看内存的使用情况？
+如何查看内存的使用情况？(数值都默认以`字节`为单位)
 
 ```
 # free
@@ -355,9 +355,6 @@ Mem:       1017796     819720     198076      16784      46240     468880
 -/+ buffers/cache:     304600     713196
 Swap:            0          0          0
 ```
-
-* 数值都默认以`字节`为单位
-
 
 ![top](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/top.png)
 
@@ -688,13 +685,121 @@ Node 0, zone   Normal
 
 可以发现，系统回收内存时，有时候会回收更多的文件页，有时候又回收更多的匿名页。通过`/proc/sys/vm/swappiness`选项设置内存回收的倾向。
 
+## 性能工具
 
+* free
+
+最常用的内存工具，可以查看系统的整体内存，和SWAP使用情况。
+
+* vmstat
+
+可以动态查看内存变化，还可以区分缓存和缓冲区，SWAP换入和换出的内存大小。
+
+* cachestat
+
+查看整个系统缓存的读写命中情况。
+
+* cachetop
+
+查看每个进程缓存的读写命中情况。
+
+* memleak
+
+检查内存泄露。
+
+* sar
+
+检查缓冲区，SWAP的使用情况。
+
+* proc
+
+/proc/zoneinfo
+
+查看内存阈。
+
+/proc/meminfo
+
+```
+# grep 表示只保留包含 active 的指标（忽略大小写）
+# sort 表示按照字母顺序排序
+$ cat /proc/meminfo | grep -i active | sort
+Active(anon):     167976 kB
+Active(file):     971488 kB
+Active:          1139464 kB
+Inactive(anon):      720 kB
+Inactive(file):  2109536 kB
+Inactive:        2110256 kB
+
+```
+
+/proc/pid/smaps
+
+```
+# 使用 grep 查找 Pss 指标后，再用 awk 计算累加值
+$ grep Pss /proc/[1-9]*/smaps | awk '{total+=$2}; END {printf "%d kB\n", total }'
+391266 kB
+
+```
+
+
+| 内存指标 | 性能工具
+| -- | --
+| 系统已用，可用，剩余内存 | free, vmstat, sar, /proc/meminfo
+| 进程虚拟内存，常驻内存，共享内存 | ps, top
+| 进程内存分布 | pmap
+| 进程SWAP换出内存 | top, /proc/pid/status
+| 进程缺页异常 | ps, top
+| 系统换页情况 | sar
+| 缓存/缓冲区用量 | free, vmstat, sar, cachestat
+| 缓存/缓冲区命中率 | cachetop
+| SWAP已用空间和剩余空间 | free, sar
+| SWAP换入换出 | vmstat
+| 内存泄露检测 | memleak, valgrind
+| 指定文件的缓存大小 | pcstat
+
+![mem_check](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/mem_check.png)
+
+
+## 性能调优
+
+优化思路：
+
+* 最好禁止SWAP。如果必须开启SWAP，则降低swappiness的值，减少内存回收时SWAP的使用倾向。
+* 减少内存的动态分配。比如，使用内存池，大页(HugePage)等。
+* 尽量使用缓存和缓冲区访问数据。比如，可以使用堆栈明确声明内存空间，来存储需要缓存的数据；或者使用Redis这类外部缓存组件，优化数据的访问。
+* 使用cgroups等方式限制进程的内存使用情况。这样确保系统内存不会被异常进程耗尽。
+* 通过`/proc/pid/oom_adj`，调整核心应用的oom_score。这样可以保证即使内存紧张，核心应用也不会被OOM杀死。
+
+
+# I/O相关
+
+* 磁盘为系统提供了最基本的持久化存储。
+* 文件系统则在磁盘的基础上，提供了一个用来管理文件的树状结构。
+
+## 文件系统原理
+
+**索引节点和目录项**
+
+* 文件系统，是对存储设备上的文件，进行组织管理的机制。组织方式不同，就会形成不同的文件系统。
+* Linux中一切皆文件。不仅普通的文件和目录，就连块设备，套接字，管道等，也都要通过统一的文件系统来管理。
+* 为了方便管理，Linux文件系统为每个文件都分配了两个数据结构，**索引节点(inode)**和**目录项(directory entry)**，它们主要用来记录文件的**元信息和目录结构**。 
+
+## 虚拟文件系统
+
+为了支持不同的文件系统，Linux内核在用户进程和文件系统中间，又引入了一个抽象层，也就是虚拟文件系统`VFS(Virtual File System)`。VFS定义了一组所有文件 系统都支持的数据结构和标准接口。这样，用户进程和内核中的其他子系统，只需要跟VFS提供的统一接口进行交互就可以了，而不需要再关心底层各种文件系统的实现细节。
+
+![VFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/VFS.png)
+
+## 文件系统I/O
+
+
+TODO
 
 
 
 # 性能测试工具
 
-* stress
+## stress
 	- 一个Linux系统压力测试工具。
 	- apt install stress 
 	- 模拟一个CPU使用率100%的场景。stress --cpu 1 --timeout 600 
@@ -702,7 +807,7 @@ Node 0, zone   Normal
 	- 模拟大量进程场景。stress -c 8 --timeout 600
 	- 动态且高亮显示变化的区域 watch -d uptime
 
-* top
+## top
 	- 显示了系统总体的CPU和内存使用情况，以及各个进程的资源使用情况。
 	- top默认显示的是所有CPU的平均值，按数字1可以切换到每个CPU的使用率。('1' single/separate states)
 	- `-H`显示线程。('H' Threads)
@@ -740,15 +845,15 @@ Swap:  2104508k total,        0k used,  2104508k free,  3361592k cached
     9 root      20   0     0    0    0 S  0.0  0.0   0:00.00 rcuob/0         
 ```
 
-* ps
+## ps
 	- 显示了每个进程的资源使用情况。
 
-* mpstat
+## mpstat
 	- 一个常用的多核CPU性能分析工具，用来实时查看每个CPU的性能指标，以及所有CPU的平均指标。
 	- apt install sysstat
 	- 监控所有CPU且5秒输出一次 mpstat -P ALL 5 
 
-* pidstat
+## pidstat
 	- 一个常用的进程性能分析工具，用来实时查看进程的CPU，内存，I/O以及上下文切换等性能指标。
 	- apt install sysstat
 	- 间隔5秒输出一组数据 pidstat -u 5 1
@@ -779,15 +884,19 @@ Linux 3.10.107-1-tlinux2_kvm_guest-0046 (VM_4_14_centos)        12/20/18        
 09:27:02        0         -        19     27.87      0.00  |__rcuos/1
 ```
 
-* vmstat
-	- vmstat输出的第一行数据为什么和其他行差别巨大？回答：The  first  report  produced gives averages since the last reboot.  Additional reports give information on a sampling period of length delay. The process and memory reports are instantaneous in either case. (man vmstat) 
-	- 数据指标：
-		+ r (Running or Runnable)是就绪队列的长度，也就是正在运行和等待CPU的进程数。
-		+ b (Blocked)是处于不可中断睡眠状态的进程数。
-		+ cs (context switch)是每秒上下文切换的次数。
-		+ in (interrupt)是每秒中断的次数。
-		+ bi 块设备读取的大小，单位为块/秒(因为Linux中块的大小是1KB，所以单位等价于KB/s)
-		+ bo 块设备写入的大小，单位为块/秒
+## vmstat
+
+Q: vmstat输出的第一行数据为什么和其他行差别巨大？
+
+A: The  first  report  produced gives averages since the last reboot.  Additional reports give information on a sampling period of length delay. The process and memory reports are instantaneous in either case. (man vmstat) 
+
+数据指标：
++ r (Running or Runnable)是就绪队列的长度，也就是正在运行和等待CPU的进程数。
++ b (Blocked)是处于不可中断睡眠状态的进程数。
++ cs (context switch)是每秒上下文切换的次数。
++ in (interrupt)是每秒中断的次数。
++ bi 块设备读取的大小，单位为块/秒(因为Linux中块的大小是1KB，所以单位等价于KB/s)
++ bo 块设备写入的大小，单位为块/秒
 
 ```
 # 每隔5秒输出1组数据
@@ -800,29 +909,37 @@ procs -----------memory---------- ---swap-- -----io---- -system-- -----cpu------
  0  0 1032316 6471632 388012 5093548    0    0     0   242  326 10559  0  0 99  1  0
 ```
 
-* sysbench
-	- sysbench --num-threads=10 --max-time=300 --max-requests=1000000 --test=threads --thread-yields=1000 --thread-locks=8 run (CentOS)
+## sysbench
 
-* proc
-	- watch -d cat /proc/interrupts 查看中断使用情况，其中`RES`表示**重调度中断(唤醒空闲状态的CPU来调度新的任务运行)**  
+CentOS
 
+```
+sysbench --num-threads=10 --max-time=300 --max-requests=1000000 --test=threads --thread-yields=1000 --thread-locks=8 run 
+```
+
+## proc
+
+查看中断使用情况，其中`RES`表示**重调度中断(唤醒空闲状态的CPU来调度新的任务运行)**
+```
+watch -d cat /proc/interrupts   
+```
 
 ![proc_interrupts](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/proc_interrupts.png)
 
 
+## perf
 
-* perf
-	+ 实时统计。
-		- perf top (实时显示占用CPU时钟最多的函数或指令，用来查找热点函数，缺点是无法离线保存数据用于事后分析)
-		- 第一行包含三个数据，分别是：采样数(Samples)，事件类型(event)，事件总量(Event count)
-		- 表格中，第一行包含四列：
-			= 第一列`Overhead`，是该符号的性能事件在所有采样中的比例，用百分比来表示。
-			= 第二列`Shared`，是该函数或指令所在的动态共享对象(Dynamic Shared Object)，如内核，进程名，动态链接库名，内核模块名等。
-			= 第三列`Object`，是动态共享对象的类型。比如，`[.]`表示用户空间的可执行程序，或者动态链接库；`[k]`表示内核空间。
-			= 第四列`Symbol`，是符号名(即，函数名)。当函数名未知时，用十六进制的地址来表示。
-	+ 离线分析。
-		- perf record -ag 记录性能事件，等待x秒后Ctrl+C退出
-		- perf report 查看报告
++ 实时统计。
+	- perf top (实时显示占用CPU时钟最多的函数或指令，用来查找热点函数，缺点是无法离线保存数据用于事后分析)
+	- 第一行包含三个数据，分别是：采样数(Samples)，事件类型(event)，事件总量(Event count)
+	- 表格中，第一行包含四列：
+		= 第一列`Overhead`，是该符号的性能事件在所有采样中的比例，用百分比来表示。
+		= 第二列`Shared`，是该函数或指令所在的动态共享对象(Dynamic Shared Object)，如内核，进程名，动态链接库名，内核模块名等。
+		= 第三列`Object`，是动态共享对象的类型。比如，`[.]`表示用户空间的可执行程序，或者动态链接库；`[k]`表示内核空间。
+		= 第四列`Symbol`，是符号名(即，函数名)。当函数名未知时，用十六进制的地址来表示。
++ 离线分析。
+	- perf record -ag 记录性能事件，等待x秒后Ctrl+C退出
+	- perf report 查看报告
 
 ![perf_top](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/perf_top.png)
 
@@ -834,14 +951,18 @@ refer: [brendangregg: perf Examples]
 
 [brendangregg: perf Examples]: http://www.brendangregg.com/perf.html
 
-* strace
+## strace
 
-* ab
-	- ab -c 10 -n 10000 http://ip:port
+## ab
 
-* sar
-	+ Collect, report, or save system activity information.
-	+ 一个系统活动报告工具，既可以实时查看系统的当前活动，又可以配置保存和报告历史统计数
+```
+ab -c 10 -n 10000 http://ip:port
+```
+
+## sar
+
++ Collect, report, or save system activity information.
++ 一个系统活动报告工具，既可以实时查看系统的当前活动，又可以配置保存和报告历史统计数
 
 ```
 # 查看CPU使用率
@@ -863,8 +984,9 @@ IFACE，是网卡。
 rxpck/s和txpck/s，分别是每秒接收，发送的网络帧数。
 rxkB/s和txkB/s，分别是每秒接收，发送的千字节数。
 
-* hping3
-	+ 一个可以构造TCP/IP协议数据包的工具，可以对系统进行安全审计，防火墙测试等
+## hping3
+
+一个可以构造TCP/IP协议数据包的工具，可以对系统进行安全审计，防火墙测试等
 
 ```
 # 模拟SYN FLOOD攻击
@@ -876,11 +998,14 @@ $ hping3 -S -p 80 -i u100 192.168.0.30
 
 PS: SYN FLOOD问题最简单的解决方法，是从交换机或硬件防火墙中封掉来源IP，这样SYN FLOOD网络帧就不会发送到服务器中。
 
-* tcpdump
-	+ 一个常用的网络抓包工具，用于分析网络问题	
-	+ tcpdump -i eth0 -n tcp  port 80
+## tcpdump
 
-* dd
+一个常用的网络抓包工具，用于分析网络问题	
+```
+tcpdump -i eth0 -n tcp  port 80
+```
+
+## dd
 
 注意，如果使用dd测试文件系统性能，由于缓存的存在，就会导致测试结果严重失真。
 
@@ -928,11 +1053,11 @@ dd if=/tmp/file of=/dev/null
 
 ![cachestat](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/cachestat.png)
 
-* cachetop
+## cachetop
 
 提供了每个进程的缓存命中情况
 
-* pcstat
+## pcstat
 
 [pcstat]是一个基于Go开发的工具，指定和查看文件的缓存大小。
 
@@ -942,8 +1067,6 @@ go get github.com/tobert/pcstat
 
 [pcstat]: https://github.com/tobert/pcstat
 
-* htop
-* atop 
 
 
 # 开发语言性能比较
