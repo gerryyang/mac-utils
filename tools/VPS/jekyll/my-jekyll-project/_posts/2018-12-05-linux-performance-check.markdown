@@ -874,7 +874,7 @@ ssize_t write(int fd, const void *buf, size_t count);
 [Linux Storage Stack Diagram]
 
 
-![Linux Storage Stack Diagram](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
+![Linux_Storage_Stack_DiagramFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
 
 
 [Linux Storage Stack Diagram]: https://www.thomas-krenn.com/en/wiki/Linux_Storage_Stack_Diagram
