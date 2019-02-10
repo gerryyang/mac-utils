@@ -786,7 +786,7 @@ $ grep Pss /proc/[1-9]*/smaps | awk '{total+=$2}; END {printf "%d kB\n", total }
 
 **虚拟文件系统**
 
-为了支持不同的文件系统，Linux内核在用户进程和文件系统中间，又引入了一个抽象层，也就是虚拟文件系统`VFS(Virtual File System)`。VFS定义了一组所有文件 系统都支持的数据结构和标准接口。这样，用户进程和内核中的其他子系统，只需要跟VFS提供的统一接口进行交互就可以了，而不需要再关心底层各种文件系统的实现细节。
+为了支持不同的文件系统，Linux内核在用户进程和文件系统中间，又引入了一个抽象层，也就是虚拟文件系统`VFS(Virtual File System)`。VFS定义了一组所有文件系统都支持的数据结构和标准接口。这样，用户进程和内核中的其他子系统，只需要跟VFS提供的统一接口进行交互就可以了，而不需要再关心底层各种文件系统的实现细节。
 
 VFS内部通过**目录项，索引节点，逻辑块，以及超级块**等数据结构来管理文件。
 
@@ -874,7 +874,7 @@ ssize_t write(int fd, const void *buf, size_t count);
 [Linux Storage Stack Diagram]
 
 
-![Linux Storage Stack Diagram](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux Storage Stack DiagramFS.png)
+![Linux Storage Stack Diagram](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
 
 
 [Linux Storage Stack Diagram]: https://www.thomas-krenn.com/en/wiki/Linux_Storage_Stack_Diagram
