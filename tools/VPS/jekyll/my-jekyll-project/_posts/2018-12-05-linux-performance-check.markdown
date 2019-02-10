@@ -871,13 +871,13 @@ ssize_t write(int fd, const void *buf, size_t count);
 2. 通用块层。包括设备I/O队列和I/O调度器。它会对文件系统的I/O请求进行排队，再通过重新排序和请求合并，然后才要发送给下一级的设备层。
 3. 设备层。包括存储设备和相应的驱动程序，负责最终物理设备的I/O操作。
 
-[Linux Storage Stack Diagram]
-
 
 ![Linux_Storage_Stack_DiagramFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
 
 
-[Linux Storage Stack Diagram]: https://www.thomas-krenn.com/en/wiki/Linux_Storage_Stack_Diagram
+[refer: Linux Storage Stack Diagram]
+
+[refer: Linux Storage Stack Diagram]: https://www.thomas-krenn.com/en/wiki/Linux_Storage_Stack_Diagram
 
 
 # 性能测试工具
