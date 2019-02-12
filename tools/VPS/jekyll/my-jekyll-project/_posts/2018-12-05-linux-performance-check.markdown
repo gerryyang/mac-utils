@@ -867,9 +867,9 @@ ssize_t write(int fd, const void *buf, size_t count);
 ## I/O栈
 
 可以把Linux存储系统的I/O栈，由上到下分为三个层次：
-1. 文件系统层。包括虚拟文件系统，和其他各种文件系统的具体实现。它为上层的应用程序提供标准的文件访问接口，对下会通过通用块层，来存储和管理磁盘数据。
-2. 通用块层。包括设备I/O队列和I/O调度器。它会对文件系统的I/O请求进行排队，再通过重新排序和请求合并，然后才要发送给下一级的设备层。
-3. 设备层。包括存储设备和相应的驱动程序，负责最终物理设备的I/O操作。
+1. **文件系统层**。包括虚拟文件系统，和其他各种文件系统的具体实现。它为上层的应用程序提供标准的文件访问接口，对下会通过通用块层，来存储和管理磁盘数据。
+2. **通用块层**。包括设备I/O队列和I/O调度器。它会对文件系统的I/O请求进行排队，再通过重新排序和请求合并，然后才要发送给下一级的设备层。
+3. **设备层**。包括存储设备和相应的驱动程序，负责最终物理设备的I/O操作。
 
 
 ![Linux_Storage_Stack_DiagramFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
@@ -878,6 +878,532 @@ ssize_t write(int fd, const void *buf, size_t count);
 [Linux Storage Stack Diagram]
 
 [Linux Storage Stack Diagram]: https://www.thomas-krenn.com/en/wiki/Linux_Storage_Stack_Diagram
+
+
+## 磁盘I/O的性能指标
+
+五个常见的指标：
+
+* **使用率**。磁盘处理I/O的时间百分比。(注意，使用率只考虑有没有I/O，而不考虑I/O的大小。当使用率为100%的时候，磁盘依然有可能接受新的I/O请求)
+* **饱和度**。磁盘处理I/O的繁忙程度。(注意，当饱和度为100%时，磁盘无法接受新的I/O请求。饱和度一般没法直接观测到，所以一般是通过实际观测值跟基准测试结果对比来分析)
+* **IOPS (Input/Output Per Second)**。每秒的I/O请求数。
+* **吞吐量**。每秒的I/O请求大小。
+* **响应时间**。I/O请求从发出到收到响应的间隔时间。
+
+
+> 注意：不能孤立的看待这些指标，而要结合读写比例，I/O类型（随机，连续），以及I/O大小综合来分析。比如，在数据库，大量小文件等这类随机读写比较多的场景中，IOPS更能反映系统的整体性能；而在多媒体等顺序读写比较多的场景中，吞吐量才更能反映系统的整体性能。
+
+
+一般，在为应用程序的服务器选型时，要先对磁盘的I/O性能进行基准测试，以便可以准确评估，磁盘性能是否可以满足应用程序的需求。推荐使用性能测试工具`fio`，来测试磁盘的IOPS，吞吐量，以及响应时间等核心指标。当然，需要测试出，不同I/O大小（一般是512B至1MB中间的若干值）分别在**随机读，顺序读，随机写，顺序写**等各种场景下的性能情况。用性能工具得到这些指标，可以作为后续分析应用程序性能的依据，一旦发现性能问题，就可以把它们作为磁盘性能的极限值，进而评估磁盘I/O的使用情况。
+
+## 性能工具
+
+### 磁盘I/O观测
+
+观测每块磁盘的使用情况，常用`iostat`工具，其指标数据来自于`/proc/diskstats`。
+
+```
+# -d -x 表示显示所有磁盘 I/O 的指标
+$ iostat -dx 1 
+Device            r/s     w/s     rkB/s     wkB/s   rrqm/s   wrqm/s  %rrqm  %wrqm r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util 
+loop0            0.00    0.00      0.00      0.00     0.00     0.00   0.00   0.00    0.00    0.00   0.00     0.00     0.00   0.00   0.00 
+loop1            0.00    0.00      0.00      0.00     0.00     0.00   0.00   0.00    0.00    0.00   0.00     0.00     0.00   0.00   0.00 
+sda              0.00    0.00      0.00      0.00     0.00     0.00   0.00   0.00    0.00    0.00   0.00     0.00     0.00   0.00   0.00 
+sdb              0.00    0.00      0.00      0.00     0.00     0.00   0.00   0.00    0.00    0.00   0.00     0.00     0.00   0.00   0.00 
+```
+
+各指标含义如下：
+
+| 指标 | 含义
+| -- | --
+| Device | 磁盘设备的名字
+| r/s | 每秒发送给磁盘的读请求数 (合并后的请求数)
+| w/s | 每秒发送给磁盘的写请求数 (合并后的请求数)
+| rkB/s | 每秒从磁盘读取的数据量 (单位为kB)
+| wkB/s | 每秒从磁盘写入的数据量 (单位为kB)
+| rrpm/s | 每秒合并的读请求数 (%rrqm/s表示合并读请求的百分比)
+| wrpm/s | 每秒合并的写请求数 (%wrqm/s表示合并写请求的百分比)
+| r_await | 读请求处理完成等待时间 (包括队列中的等待时间和设备实际处理的时间，单位为毫秒)
+| w_await | 写请求处理完成等待时间 (包括队列中的等待时间和设备实际处理的时间，单位为毫秒)
+| aqu-sz | 平均请求队列长度
+| rareq_sz | 平均读请求大小 (单位为kB)
+| wareq-sz | 平均写请求大小 (单位为kB)
+| svctm | 处理I/O请求所需的平均时间 (不包括等待时间)，单位为毫秒，注意这是推断的数据，并不保证完全准确
+| %util | 磁盘处理I/O的时间百分比 (即，使用率，由于可能存在并行I/O，100%并不一定表明磁盘I/O饱和)
+
+> %util = 磁盘的I/O使用率
+
+> r/s + w/s = IOPS
+
+> rkB/s + wkB/s = 吞吐量
+ 
+> r_await + w_await = 响应时间
+
+
+### 进程I/O观测
+
+除了每块磁盘的I/O情况，每个进程的I/O情况也是需要关注的重点。可以使用`pidstat`和`iotop`工具来查看进程的I/O情况。
+
+```
+$ pidstat -d 1 
+13:39:51      UID       PID   kB_rd/s   kB_wr/s kB_ccwr/s iodelay  Command 
+13:39:52      102       916      0.00      4.00      0.00       0  rsyslogd
+```
+
+各指标含义如下：
+
+| 指标 | 含义
+| -- | --
+| UID | 用户ID
+| PID | 进程ID
+| kB_rd/s | 每秒读取的数据大小 (单位是kB)
+| kB_wr/s | 每秒写入的数据大小 (单位是kB)
+| kB_ccwr/s | 每秒取消的写请求数据大小 (单位是kB)
+| iodelay | 块I/O延迟，包括等待同步块I/O和换入块I/O结束的时间，单位是时钟周期
+
+
+```
+$ iotop
+Total DISK READ :       0.00 B/s | Total DISK WRITE :       7.85 K/s 
+Actual DISK READ:       0.00 B/s | Actual DISK WRITE:       0.00 B/s 
+  TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN     IO>    COMMAND 
+15055 be/3 root        0.00 B/s    7.85 K/s  0.00 %  0.00 % systemd-journald 
+
+```
+
+注意，前两行分别表示，进程的磁盘读写大小总数和磁盘真实的读写大小总数。因为缓存，缓冲区，I/O合并等因素的影响，它们可能并不相等。
+
+## I/O基准测试
+
+为了更客观合理地评估优化效果，首先应该对磁盘和文件系统进行基准测试，得到文件系统或磁盘I/O的极限性能。
+
+**fio (Flexible I/O Tester)**是最常用的文件系统和磁盘I/O性能基准测试工具。
+
+**几个常见场景的测试方法：**
+
+```
+# 随机读
+fio -name=randread -direct=1 -iodepth=64 -rw=randread -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
+
+# 随机写
+fio -name=randwrite -direct=1 -iodepth=64 -rw=randwrite -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
+
+# 顺序读
+fio -name=read -direct=1 -iodepth=64 -rw=read -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
+
+# 顺序写
+fio -name=write -direct=1 -iodepth=64 -rw=write -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb 
+```
+
+
+参数说明：
+
+| 参数名称 | 含义 |
+| -- | --
+| direct | 表示是否跳过缓存。设置1表示跳过系统缓存
+| iodepth | 表示使用异步I/O (asynchronous I/O)时，同时发出的I/O请求上限
+| rw | 表示I/O模式。read/write分别表示顺序读/写；randread/randwrite分别表示随机读/写
+| ioengine | 表示I/O引擎，支持同步(sync)，异步(libaio)，内存映射(mmap)，网络(net)等各种I/O引擎
+| bs | 表示I/O的大小
+| filename | 表示文件路径，可以是磁盘路径(测试磁盘性能)，也可以是文件路径(测试文件系统性能)。**注意：用磁盘路径测试写，会破坏这个磁盘的文件系统，所以在使用前需要做好数据备份**
+
+fio支持**I/O重放**，可以得到应用程序I/O模式的基准测试报告：
+
+```
+# 使用 blktrace 跟踪磁盘 I/O，注意指定应用程序正在操作的磁盘
+$ blktrace /dev/sdb
+
+# 查看 blktrace 记录的结果
+# ls
+sdb.blktrace.0  sdb.blktrace.1
+
+# 将结果转化为二进制文件
+$ blkparse sdb -d sdb.bin
+
+# 使用 fio 重放日志
+$ fio --name=replay --filename=/dev/sdb --direct=1 --read_iolog=sdb.bin 
+```
+
+## 性能调优
+
+**应用程序优化：**
+
+1. 用追加写代替随机写，减少寻址开销，加快I/O写的速度。
+2. 借助缓存I/O，充分利用系统缓存，降低实际I/O的次数。
+3. 在应用程序内部构建自己的缓存，或者用Redis这类外部缓存系统。
+4. 在需要频繁读写同一块磁盘空间时，可以用mmap代替read/write，减少内存的拷贝次数。
+5. 在需要同步写的场景中，尽量将写请求合并，而不是让每个请求都同步写入磁盘，即可以用fsync()取代O_SYNC。
+6. 在多个应用程序共享相同磁盘时，为了保证I/O不被某个应用程序完全占用，推荐使用cgroups的I/O子系统，来限制进程、进程组的IOPS以及吞吐量。
+7. 在使用CFQ调度器时，可以用ionice来调整进程的I/O调度优先级，特别是提高核心应用的I/O优先级。
+
+**文件系统优化：**
+
+1. 可以根据实际负载场景的不同，选择最合适的文件系统。比如，Ubuntu默认使用ext4文件系统，CentOS 7默认使用xfs文件系统。相比于ext4，xfs支持更大的磁盘分区和更大的文件数量，如，xfs支持大于16TB的磁盘，但是缺点在于无法收缩，而ext4可以。
+2. 在选好文件系统后，可以进一步优化文件系统的配置选项，包括文件系统的特性，日志模式，挂载选项等。
+3. 优化文件系统的缓存。
+4. 在不需要持久化时，还可以用内存文件系统tmpfs，以获得更好的I/O性能。比如，/dev/shm/，就是大多数Linux默认配置的一个内存文件系统，它的大小默认为总内存的一半。
+
+
+**磁盘优化：**
+
+1. 换用性能更好的磁盘，比如，用SSD替代HDD。
+2. 可以使用RAID，把多块磁盘组合成一个逻辑磁盘，构成冗余独立磁盘阵列。
+3. 针对磁盘和应用程序模式的特征，可以选择最合适的I/O调度算法。
+4. 可以对应用程序的数据，进行磁盘级别的隔离。
+5. 在顺序读比较多的场景中，可以增大磁盘的预读数据。
+6. 可以优化内核块设备I/O的选项。
+7. 防止磁盘硬件错误。
+
+
+# 网络相关
+
+## 网络模型
+
+开放式系统互联通信参考模型(Open System Interconnection reference Model)，简称为**OSI网络模型**。为了解决网络互联中，异构设备的兼容性问题，并解耦复杂的网络包处理流程，OSI模型把网络互联的框架分为七层，每层负责不同的功能。
+
+| 名称 | 作用
+| -- | --
+| 应用层 | 负责为应用程序提供统一的接口
+| 表示层 | 负责把数据转换成兼容接收系统的格式
+| 会话层 | 负责维护计算机之间的通信连接
+| 传输层 | 负责为数据加上传输表头，形成数据包
+| 网络层 | 负责数据的路由和转发
+| 数据链路层 | 负责MAC寻址，错误侦测和改错
+| 物理层 | 负责在物理网络中传输数据帧
+
+但是，OSI模型太复杂，也没能提供一个可实现的方法。所以，在Linux中，实际上使用的是另一个更实用的**四层模型**，即，**TCP/IP网络模型**。
+
+| 名称 | 作用
+| -- | --
+| 应用层 | 负责向用户提供一组应用程序，比如，HTTP, FTP, DNS等
+| 传输层 | 负责端到端的通信，比如，TCP, UDP等
+| 网络层 | 负责网络包的封装，寻址和路由，比如，IP, ICMP等
+| 网络接口层 | 负责网络包在物理网络中的传输，比如，MAC寻址，错误侦测，以及通过网卡传输网络帧等
+
+
+![osi_tcpip](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/osi_tcpip.png)
+
+## Linux网络收发流程
+
+Linux是怎么收发网络包的？
+
+> 注意，以下以物理网卡为例，事实上，Linux还支持众多的虚拟网络设备，而它们的网络收发流程会有一些差别。
+
+**接收流程**
+
+当一个网络帧达到网卡后，网卡会通过DMA方式，把这个网络包放到收包队列中，然后通过**硬中断**，告诉**中断处理程序**已经收到了网络包。接着，网卡中断处理程序会为网络帧分配**内核数据结构（sk_buff）**，并将其拷贝到sk_buff缓冲区中，然后再通过**软中断**，通知内核收到了新的网络帧。接下来，内核协议栈从缓冲区中取出网络帧，**并通过网络协议栈，从下到上逐层处理这个网络帧**。
+
+* 在链路层检查报文的合法性，找出上层协议的类型（IPv4还是IPv6），再去掉帧头，帧尾，然后交给网络层。
+* 网络层取出IP头，判断网络包下一步的走向，比如，是交给上层处理，还是转发。当网络层确认这个包是要发送到本机后，就会取出上层协议的类型（TCP还是UDP），去掉IP头，再交给传输层处理。
+* 传输层取出TCP头或者UDP头后，根据**<源IP, 源端口, 目的IP, 目的端口>**四元组作为标识，找出对应的Socket，并把数据拷贝到Socket的接收缓存中。
+* 最后，应用程序就可以使用Socket接口，读取到新接收的数据了。
+
+**发送流程**
+
+* 应用程序调用Socket API发送网络包。这是一个系统调用，所以会陷入到内核态的套接字层中，套接字层会把数据包放到Socket发送缓冲区中。
+* 接下来，网络协议栈从Socket发送缓冲区中，取出数据包；再按照TCP/IP栈，从上到下逐层处理。传输层为其增加TCP头，网络层为其增加IP头，执行路由查找确认下一跳的IP，并按照MTU大小进行分片。
+* 分片后的网络包，再送到网络接口层，进行物理地址寻址，以找到下一跳的MAC地址。然后添加帧头和帧尾，放到发包队列中。这一切完成后，会有软中断通知驱动程序，发包队列中有新的网络帧需要发送。最后，驱动程序通过DMA，从发包队列中读出网络帧，并通过物理网卡把它发送出去。
+
+
+![recv_send](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/recv_send.png)
+
+
+## 性能指标
+
+| 指标 | 含义
+| -- | --
+| 带宽 | 表示链路的最大传输速率，单位通常为b/s(比特/秒)
+| 吞吐量 | 表示没丢包时的最大数据传输速率。吞吐量/带宽 = 网络使用率
+| 延时 | 表示从网络请求发出后，一直到收到远端响应，所需要的时间延迟。在不同场景中，这一指标可能含义不同
+| PPS (Packet Per Second) | 表示以网络包为单位的传输速率
+
+## 网络配置
+
+`ifconfig`和`ip`分别属于软件包net-tools和iproute2，iproute2是net-tools的下一代。**推荐使用ip工具**。
+
+```
+$ ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST> mtu 1500
+      inet 10.240.0.30 netmask 255.240.0.0 broadcast 10.255.255.255
+      inet6 fe80::20d:3aff:fe07:cf2a prefixlen 64 scopeid 0x20<link>
+      ether 78:0d:3a:07:cf:3a txqueuelen 1000 (Ethernet)
+      RX packets 40809142 bytes 9542369803 (9.5 GB)
+      RX errors 0 dropped 0 overruns 0 frame 0
+      TX packets 32637401 bytes 4815573306 (4.8 GB)
+      TX errors 0 dropped 0 overruns 0 carrier 0 collisions 0
+​
+$ ip -s addr show dev eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+  link/ether 78:0d:3a:07:cf:3a brd ff:ff:ff:ff:ff:ff
+  inet 10.240.0.30/12 brd 10.255.255.255 scope global eth0
+      valid_lft forever preferred_lft forever
+  inet6 fe80::20d:3aff:fe07:cf2a/64 scope link
+      valid_lft forever preferred_lft forever
+  RX: bytes packets errors dropped overrun mcast
+   9542432350 40809397 0       0       0       193
+  TX: bytes packets errors dropped carrier collsns
+   4815625265 32637658 0       0       0       0
+```
+
+* **网络接口状态标志**。ifconfig输出中的`RUNNING`，或者ip输出中的`LOWER_UP`都表示物理网络层是连通的，即网卡已经连接到了交换机或者路由器中。如果看不到，通常表示网线被拔掉了。
+* **MTU的大小**。MTU默认大小是1500，根据网络架构的不同，可能需要调整MTU的数值。
+* **网络接口的IP地址，子网，以及MAC地址**。
+* **网络收发的字节数，包数，错误数，以及丢包情况**。
+	+ errors，表示发生错误的数据包数，比如，校验错误，帧同步错误等
+	+ dropped，表示丢弃的数据包数，即数据包已经收到了Ring Buffer，但因为内存不足等原因丢包
+	+ overruns，表示超限数据包数，即网络I/O速度过快，导致Ring Buffer中的数据包来不及处理（队列满）而导致的丢包
+	+ carrier，表示发生carrier错误的数据包数，比如，双工模式不匹配，物理电缆出现问题等
+	+ collisions，表示碰撞数据包数
+
+## 套接字信息
+
+除了ifconfig和ip只显示了网络接口收发数据包的统计信息，网络协议栈中的统计信息也需要关注。可以使用`netstat`或`ss`来查看套接字，网络栈，网络接口以及路由表的信息。推荐使用`ss`来查询网络的连接信息，因为它比`netstat`速度更快。
+
+```
+# head -n 3 表示只显示前面 3 行
+# -l 表示只显示监听套接字
+# -n 表示显示数字地址和端口 (而不是名字)
+# -p 表示显示进程信息
+$ netstat -nlp | head -n 3
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      840/systemd-resolve
+
+# -l 表示只显示监听套接字
+# -t 表示只显示 TCP 套接字
+# -n 表示显示数字地址和端口 (而不是名字)
+# -p 表示显示进程信息
+$ ss -ltnp | head -n 3
+State    Recv-Q    Send-Q        Local Address:Port        Peer Address:Port
+LISTEN   0         128           127.0.0.53%lo:53               0.0.0.0:*        users:(("systemd-resolve",pid=840,fd=13))
+LISTEN   0         128                 0.0.0.0:22               0.0.0.0:*        users:(("sshd",pid=1459,fd=3))
+```
+
+都展示了，套接字的状态，接收队列，发送队列，本地地址，远端地址，进程PID和进程名称等。
+
+> 注意，Recv-Q和Send-Q通常应该为0，当不为0时，说明有网络包的堆积发生。但在不同套接字状态下的含义不同。
+
+* 当套接字处于**连接状态(Established)**时
+	+ Recv-Q表示套接字缓冲还没有被应用程序取走的字节数
+	+ Send-Q表示还没有被远端主机确认的字节数
+* 当套接字处于**监听(Listening)**时
+	+ Recv-Q表示syn backlog的当前值
+	+ Send-Q表示最大的syn backlog值
+
+> **半连接**。syn backlog是TCP协议栈中的**半连接队列长度**(即，还没有完成TCP三次握手的连接，连接只进行了一半，而服务器收到了客户端的SYN包后，就会把这个连接放到半连接队列中，然后再向客户端发送SYN+ACK包)，相应的也有一个**全连接队列(accept queue)**，它们都是维护TCP状态的重要机制。
+
+> **全连接**。是指服务器收到了客户端的ACK，完成了TCP三次握手，然后就会把这个连接挪到全连接队列中。这些全连接中的套接字，还需要再被accept()系统调用取走，这样服务器就可以开始真正处理客户端的请求了。
+
+## 协议栈统计信息
+
+使用netstat可以展示，TCP协议的**主动连接，被动连接，失败重试，发送和接收的分段数量**等各种信息。
+
+```
+$ netstat -s
+...
+Tcp:
+    3244906 active connection openings
+    23143 passive connection openings
+    115732 failed connection attempts
+    2964 connection resets received
+    1 connections established
+    13025010 segments received
+    17606946 segments sent out
+    44438 segments retransmitted
+    42 bad segments received
+    5315 resets sent
+    InCsumErrors: 42
+...
+
+$ ss -s
+Total: 186 (kernel 1446)
+TCP:   4 (estab 1, closed 0, orphaned 0, synrecv 0, timewait 0/0), ports 0
+
+Transport Total     IP        IPv6
+*	  1446      -         -
+RAW	  2         1         1
+UDP	  2         2         0
+TCP	  4         3         1
+...
+
+```
+
+## 网络吞吐和PPS
+
+使用`sar -n`查看网络的统计信息。
+
+```
+# 数字 1 表示每隔 1 秒输出一组数据
+$ sar -n DEV 1
+Linux 4.15.0-1035-azure (ubuntu) 	01/06/19 	_x86_64_	(2 CPU)
+
+13:21:40        IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s   %ifutil
+13:21:41         eth0     18.00     20.00      5.79      4.25      0.00      0.00      0.00      0.00
+13:21:41      docker0      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+13:21:41           lo      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00
+
+```
+
+使用`ethtool`来查询带宽：(**注意，单位是比特，小写字母b**)
+
+```
+# 一个千兆网卡
+$ ethtool eth0 | grep Speed
+	Speed: 1000Mb/s
+
+```
+
+## 连通性和延时
+
+使用`ping`来测试远程主机的连通性和延时，而这是基于**ICMP**协议。
+
+```
+# -c3 表示发送三次 ICMP 包后停止
+$ ping -c3 114.114.114.114
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+64 bytes from 114.114.114.114: icmp_seq=1 ttl=54 time=244 ms
+64 bytes from 114.114.114.114: icmp_seq=2 ttl=47 time=244 ms
+64 bytes from 114.114.114.114: icmp_seq=3 ttl=67 time=244 ms
+
+--- 114.114.114.114 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 244.023/244.070/244.105/0.034 ms
+
+```
+
+* 第一部分，是每个ICMP请求的信息。包括，ICMP序列号(icmp_seq)，TTL(生存时间或者跳数)，往返延时。
+* 第二部分，是三次ICMP请求的汇总。
+
+## C10K和C1000K问题
+
+C10K和C1000K的首字母C是Client的缩写。C10K就是单机同时处理1万个请求（并发连接1万）的问题，而C1000K就是单机支持处理100万个请求（并发连接100万）的问题。
+
+### C10K
+
+[The C10K problem]最早由Dan Kegel在1999年提出。那时的服务器还只是32位系统，运行着Linux2.2版本，只配置了很少的内存（2GB）和千兆网卡。怎么在这样的系统中支持并发1万的请求呢？
+
+从资源上说，对2GB内存和千兆网卡的服务器来说，同时处理1万个请求，只要每个请求处理占用不到200KB的内存和100Kbit的网络带宽就可以。所以，物理资源是足够的，接下来自然是软件的问题，特别是**网络的I/O模型问题**。
+
+在C10K以前，Linux中网络处理都用同步阻塞的方式，也就是每个请求都分配一个进程或线程。请求数只有100时，这种方式没有问题，但增加到1万个请求时，1万个进程或线程的调度，上下文切换，它们占用的内存都会成为瓶颈。既然每个请求分配一个线程的方式不合适，那么，为了支持1万个并发请求，这里就有两个问题需要我们解决。
+
+问题1：怎样在一个线程内处理多个请求，也就是要在一个线程内响应多个网络I/O。以前的同步阻塞方式下，一个线程只能处理一个请求，到这里不再适用。是不是可以用非阻塞I/O或异步I/O来处理多个网络请求？
+
+问题2：怎么更节省资源地处理客户请求，也就是要用更少的线程来服务这些请求。是不是可以继续使用原来的100个或更少的线程来服务现在的1万个请求？
+
+#### I/O模型优化
+
+
+使用**I/O多路复用**。两种I/O事件通知的方式：
+
+1. 水平触发。只要文件描述符可以非阻塞地执行I/O，就会触发通知。即，应用程序可以随时检查文件描述符的状态，然后再根据状态进行I/O操作。
+
+2. 边缘触发。只有在文件描述符的状态发生改变时，才发送一次通知。这时候，应用程序需要尽可能多地执行I/O，直到无法继续读写，才可以停止。如果I/O没有执行完，或者因为某种原因没来得及处理，那么这次通知也就丢失了。
+
+**具体的实现方法**
+
+**方法1：非阻塞I/O和水平触发通知（比如，使用selelct或poll）**
+
+根据水平触发的原理，select和poll需要从文件描述符列表中，找出哪些可以执行I/O，然后进行真正的网络I/O读写。由于I/O是非阻塞的，一个线程中就可以同时监控一批套接字的文件描述符，这样就达到了单线程处理多请求的目的。
+
+优点：对应用程序比较友好，API简单。
+缺点：
+* 应用程序使用select和poll时，需要对这些文件描述符列表进行轮询，这样请求数多的时候就会比较耗时。
+* select使用固定长度的位相量，表示文件描述符的集合，因此会有最大描述符数量的限制。比如，在32位系统中，默认限制是1024。并且，在select内部，检查套接字状态是用轮询的方法，再加上应用程序使用时的轮询，就变成了一个O(N^2)的关系。
+* poll改进了select的表示方法，换成了一个没有固定长度的数组，这样就没有了最大描述符数量的限制（当然还会受到系统文件描述符限制）。但应用程序在使用poll时，同样需要对文件描述符列表进行轮询，这样，处理时耗跟描述符数量是O(N)的关系。
+* 应用程序每次调用select和poll时，需要把文件描述符的集合，从用户空间传入内核空间，由内核修改后再传出到用户空间。这一来一回的内核空间与用户空间的切换，也增加了处理成本。
+
+**方法2：非阻塞I/O和边缘触发通知（比如，epoll）**
+
+* epoll是在Linux 2.6中才新增的功能（2.4虽然也有，但功能不完善）
+* epoll使用红黑树，在内核中管理文件描述符的集合，这样就不需要应用程序在每次操作时都传入，传出这个集合。
+* epoll使用事件驱动的机制，只关注有I/O事件发生的文件描述符，不需要轮询扫描整个集合。
+* 由于边缘触发只在文件描述可读或可写事件发生时才通知，那么应用程序就需要尽可能多地执行I/O，并要处理更多的异常事件。
+
+**方法3：使用异步I/O（Asynchronous I/O，AIO）**
+
+* 异步I/O运行应用程序同时发起很多I/O操作，而不用等待这些操作完成。而在I/O完成后，系统会用事件通知（比如，信号或回调函数）的方式告诉应用程序，这时，应用程序才会去查询I/O操作的结果。
+* 异步I/O也是到了Linux 2.6才支持，并且不太完善，使用难度比较高。
+
+#### 工作模型优化
+
+**第1种：主进程 + 多个worker子进程**
+
+* 主进程执行bind() + listen()后，创建多个子进程。
+* 然后，在每个子进程中，都通过accept()或epoll_wait()，来处理相同的套接字。
+
+比如，常见的反向代理服务器Nginx就是这么工作的。它也是由主进程和多个worker进程组成。主进程主要用来初始化套接字，并管理子进程的生命周期；而worker进程，则负责实际的请求处理。
+
+> 注意：这种方式，在accept()或epoll_wait()调用时，存在一个惊群的问题。当网络I/O事件发生时，多个进程被同时唤醒，但实际上只有一个进程来响应这个事件，其他被唤醒的进程都会重新休眠。其中，accept()的惊群问题，已经在Linux 2.6中解决；而epoll_wait()的问题，到了Linux 4.5，才通过`EPOLLEXCLUSIVE`解决。为了避免惊群问题，Nginx在每个worker进程中，都增加了一个全局锁（accept_mutex）。这些worker进程需要首先竞争到锁，只有竞争到锁的进程，才会加入到epoll中，这样就确保只有一个worker子进程被唤醒。
+
+Q: 为什么使用多进程模式的Nginx，却具有非常好的性能呢？
+
+最主要的一个原因是，这些worker进程，实际上并不需要经常创建和销毁，而是在没任务时休眠，有任务时唤醒。只有在worker异常退出时，主进程才需要创建新的进程来代替它。
+
+**第2种：监听到相同端口的多进程模型**
+
+* 在这种方式下，所有进程都监听相同的端口，并且开启`SO_REUSEPORT`选项，由内核负责将请求负载均衡到这些监听进程中去。由于内核确保了只有一个进程被唤醒，就不会出现惊群问题了。比如，Nginx在1.9.1中就已经支持了这种模式。
+* 注意，使用`SO_REUSEPORT`选项，需要使用Linux 3.9以上的版本才可以。
+
+### C1000K
+
+基于I/O多路复用和请求处理的优化，C10K问题很容易就可以解决。不过，随着摩尔定律带来的服务器性能提升，以及互联网的普及，新兴服务会对性能提出更高的要求。很快，原来的C10K已经不能满足需求，所以又有了C100K和C1000K，即，并发从原来的1万，增加到10万，乃至100万。从1万到10万，其实还是基于C10K的这些理论，epoll配合线程池，再加上CPU，内存和网络接口的性能和容量提升，C100K也可以达到。
+
+Q: C1000K可以达到吗？
+
+* 从**物理资源**上，100万个请求需要大量的系统资源。比如：
+	+ 假设每个请求需要16KB内存，那么总共就需要大约15GB内存。
+	+ 从带宽上来说，即使每个连接只需要1KB/s的吞吐量，总共也需要1.6Gb/s的吞吐量。因此，千兆网卡无法满足，需要配置万兆网卡，或者基于多网卡Bonding承载更大的吞吐量。
+* 从**软件资源**上，大量的连接会占用大量的软件资源，比如，文件描述符数量，网络协议栈的缓存大小等等。
+* 大量请求带来的中断处理，也会带来非常高的处理成本。这样，就需要多队列网卡，中断负责均衡，CPU绑定，RPS/RFS(软中断负责均衡到多个CPU核上)，以及将网络包的处理卸载(offload)到网络设备等各种硬件和软件的优化。
+
+本质上，C1000K的解决方法还是构建在epoll的非阻塞I/O模型上。只不过，除了I/O模型之外，还需要从应用程序到Linux内核，再到CPU，内存和网络等各个层次的深度优化，特别是需要借助硬件，来卸载那些原来通过软件处理的大量功能。
+
+### C10M
+
+Q: 有没有可能在单机中，同时处理1000万的请求？
+
+实际上，在C1000K问题中，各种软件，硬件的优化很可能都已经做到头了。想实现1000万请求并发，都是极其困难的。究其根本，还是Linux内核协议栈做了太繁重的工作。从网卡中断带来的硬件中断处理程序开始，到软件中断中的各层网络协议处理，最后再到应用程序。这个路径实在是太长了，就会导致网络包的处理优化，到了一定程度后就无法更进一步了。
+
+**要解决这个问题，最重要就是跳过内核协议栈的冗长路径，把网络包直接送到要处理的应用程序那里去。这里有两种常见机制。**
+
+1. **DPDK**。
+
+是用户态网络的标准，它跳过内核协议栈，直接由用户态进程通过轮询的方式来处理网络接收。
+
+* 在PPS非常高的场景中，查询时间比实际工作时间少了很多，绝大部分时间都在处理网络包。
+* 而跳过内核协议栈后，就省去了繁杂的硬件中断，软中断再到Linux网络协议栈逐层处理的过程。应用程序可以针对应用的实际场景，有针对性地优化网络包的处理逻辑，而不需要关注所有的细节。
+* DPDK还通过大页，CPU绑定，内存对齐，流水线并发等多种机制，优化网络包的处理效率。
+
+[Introduction to DPDK: Architecture and Principles]
+
+![dpdk](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dpdk.png)
+
+2. **XDP (eXpress Data Path)**
+
+是Linux内核提供的一种高性能网络数据路径。它允许网络包，在进入内核协议栈之前，就进行处理，也可以带来更高的性能。XDP底层跟之前用到的bcc-tools一样，都是基于Linux内核的eBPF机制实现的。
+
+注意，XDP对内核要求比较高，需要Linux 4.8以上版本，并且它也不提供缓存队列。基于XDP的应用程序通常是专用的网络应用，比如，IDS(入侵检测系统)，DDoS防御系统等。
+
+[Introduction to XDP]
+
+![xdp](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/xdp.png)
+
+3. other
+
+[The Secret To 10 Million Concurrent Connections -The Kernel Is The Problem, Not The Solution]
+
+
+[The C10K problem]: http://www.kegel.com/c10k.html
+
+[Introduction to DPDK: Architecture and Principles]: https://blog.selectel.com/introduction-dpdk-architecture-principles/
+
+[Introduction to XDP]: https://www.iovisor.org/technology/xdp
+
+[The Secret To 10 Million Concurrent Connections -The Kernel Is The Problem, Not The Solution]: http://highscalability.com/blog/2013/5/13/the-secret-to-10-million-concurrent-connections-the-kernel-i.html
+
+
+
+
 
 
 # 性能测试工具
