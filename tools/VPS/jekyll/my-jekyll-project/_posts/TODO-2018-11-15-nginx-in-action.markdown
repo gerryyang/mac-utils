@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Nginx in Action"
-date:   2018-11-15 12:30:00 +0800
+date:   2019-02-12 20:30:00 +0800
 categories: nginx
 ---
 

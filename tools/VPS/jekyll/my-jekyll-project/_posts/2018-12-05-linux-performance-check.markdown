@@ -1366,7 +1366,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 
 **要解决这个问题，最重要就是跳过内核协议栈的冗长路径，把网络包直接送到要处理的应用程序那里去。这里有两种常见机制。**
 
-1. **DPDK**。
+**机制1：DPDK**。
 
 是用户态网络的标准，它跳过内核协议栈，直接由用户态进程通过轮询的方式来处理网络接收。
 
@@ -1378,7 +1378,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 
 ![dpdk](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dpdk.png)
 
-2. **XDP (eXpress Data Path)**
+**机制2：XDP (eXpress Data Path)**
 
 是Linux内核提供的一种高性能网络数据路径。它允许网络包，在进入内核协议栈之前，就进行处理，也可以带来更高的性能。XDP底层跟之前用到的bcc-tools一样，都是基于Linux内核的eBPF机制实现的。
 
@@ -1388,7 +1388,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 
 ![xdp](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/xdp.png)
 
-3. other
+**其他：**
 
 [The Secret To 10 Million Concurrent Connections -The Kernel Is The Problem, Not The Solution]
 
