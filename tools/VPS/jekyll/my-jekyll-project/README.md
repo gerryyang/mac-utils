@@ -157,3 +157,21 @@ raft可视化
 * gcc attri
 https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html
 
+# C++
+
+How does the std::piecewise_construct syntax work?
+https://stackoverflow.com/questions/27230458/how-does-the-stdpiecewise-construct-syntax-work
+https://en.cppreference.com/w/cpp/container/map/emplace
+https://en.cppreference.com/w/cpp/utility/tuple/forward_as_tuple
+
+
+https://www.geeksforgeeks.org/upper_bound-and-lower_bound-for-vector-in-cpp-stl/
+
+## 无锁编程
+
+https://www.ibm.com/developerworks/cn/linux/l-cn-lockfree/index.html
+https://zhuanlan.zhihu.com/p/24983412
+
+## 变参
+
+http://man7.org/linux/man-pages/man3/stdarg.3.html
