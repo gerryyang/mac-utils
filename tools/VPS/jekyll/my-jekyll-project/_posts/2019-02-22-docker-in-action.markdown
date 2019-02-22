@@ -1,12 +1,13 @@
 ---
 layout: post
 title:  "Docker in Action"
-date:   2019-02-22 20:00:00 +0800
-categories: https
+date:   2019-02-22 08:00:00 +0800
+categories: docker
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
+
 
 # 核心技术
 
@@ -64,8 +65,6 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 [Docker Release Notes]
 
 [Docker development best practices]
-
----
 
 
 
