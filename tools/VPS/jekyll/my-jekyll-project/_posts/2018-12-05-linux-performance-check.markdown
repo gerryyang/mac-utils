@@ -363,6 +363,11 @@ Swap:            0          0          0
 * SHR，共享内存大小，比如，与其他进程共同使用的共享内存，加载的动态链接库以及程序的代码段等
 * %MEM，进程使用物理内存占系统总内存的百分比
 
+补充：
+
+[What is RSS and VSZ in Linux memory management](https://stackoverflow.com/questions/7880784/what-is-rss-and-vsz-in-linux-memory-management)
+
+
 
 ## 内存映射
 
