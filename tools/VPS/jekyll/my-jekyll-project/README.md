@@ -175,3 +175,12 @@ https://zhuanlan.zhihu.com/p/24983412
 ## 变参
 
 http://man7.org/linux/man-pages/man3/stdarg.3.html
+
+## 汇编指令
+
+https://www.cnblogs.com/lxgeek/archive/2011/01/01/1923738.html
+
+
+## 编译
+
+https://linux.die.net/man/1/ld
