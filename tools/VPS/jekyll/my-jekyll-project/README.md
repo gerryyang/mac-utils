@@ -184,3 +184,28 @@ https://www.cnblogs.com/lxgeek/archive/2011/01/01/1923738.html
 ## 编译
 
 https://linux.die.net/man/1/ld
+
+## hbase
+
+https://cloud.tencent.com/developer/article/1042713
+
+https://infoq.cn/article/trillion-log-and-data-storage-query-techniques
+
+## mysql-json
+
+http://www.mysqltutorial.org/mysql-json/
+http://www.mysqltutorial.org/mysql-generated-columns/
+
+## https
+
+https://curl.haxx.se/libcurl/c/https.html
+https://curl.haxx.se/libcurl/c/simplessl.html
+https://www.zhihu.com/question/41717174
+
+## HMAC SHA256 vs RSA SHA256 - which one to use
+
+https://crypto.stackexchange.com/questions/11293/hmac-sha256-vs-rsa-sha256-which-one-to-use
+
+## gdb
+
+[如何写gdb命令脚本](http://ifeve.com/gdb-script/)
