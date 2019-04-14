@@ -129,8 +129,16 @@ https://imququ.com/post/archives.html
 https://ericchiang.github.io/
 https://www.owent.net/about.html
 
-技术博客
+## 技术博客
+
 https://blog.tsunanet.net/
+
+https://bot-man-jl.github.io/articles/
+
+https://www.bthlt.com
+
+http://senlinzhan.github.io
+
 
 du和df的区别
 https://www.cnblogs.com/heyonggang/p/3644736.html
@@ -209,3 +217,11 @@ https://crypto.stackexchange.com/questions/11293/hmac-sha256-vs-rsa-sha256-which
 ## gdb
 
 [如何写gdb命令脚本](http://ifeve.com/gdb-script/)
+
+## 智能指针
+
+http://senlinzhan.github.io/2015/04/20/%E8%B0%88%E8%B0%88C-%E7%9A%84%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/
+
+## OpenResty 完全开发指南
+
+https://wiki.shileizcc.com/confluence/pages/viewpage.action?pageId=47415930
