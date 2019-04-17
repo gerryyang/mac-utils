@@ -8,7 +8,7 @@ categories: tech
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-在支付场景下一般需要对提供的服务保证事务能力。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。事务的核心是`锁`，在`并发`的场景下如何协调好不同的资源。同时，事务(锁)和性能是两个相悖的特性，因此在不影响业务的前提下，通常对事务的调优原则包括。
+在支付场景下一般需要对提供的服务保证事务能力。比如，先付钱后发货，付钱和发货可以看做一个完整的事务。在一些更复杂的场景，可能涉及数据库，消息服务，RPC服务等多个资源的操作。事务的核心是`锁`，在`并发`的场景下如何协调好不同的资源。同时，事务(锁)和性能是两个相悖的特性，因此在不影响业务的前提下，通常对事务的**调优原则**包括。
 
 1. 尽可能减少锁的覆盖范围。例如，MyISAM表锁到Innodb的行锁。
 2. 增加锁上可并行的线程数。例如，读锁和写锁分离，允许并行读取数据。
@@ -44,7 +44,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 例如，小Q想去国外旅游，需要在两个不同的网站上预定机票。在A网站预定从北京到深圳的机票，再在B网站预定深圳到国外的机票。如果小Q在预定B网站机票时失败了，就必须取消已经在A网站预定的机票。如果没有及时取消就会发生：
 
 1. 小Q需承担在A网站预定的机票钱。
-2. 在网站A预定机票的座位没有及时售卖出去，航空公司承担经济损失。
+2. 在A网站预定机票的座位没有及时售卖出去，航空公司承担经济损失。
 
 > PS: 在实际场景中，如果用户没有及时退票(cancel)，通常会根据退票的时间需要承担相应的罚金(penalties)。就像在12306上购买火车票，如果退票在开车时间前15天，不收取退票费，48小时以上的按票价5%计，24小时以上且不足48小时按票价10%计，不足24小时的按票价20%计。
 
@@ -135,6 +135,19 @@ COMMIT;
 4. SERIALIZABLE（可串行化） 
 此级别是最高的隔离级别。它通过强制事务串行执行，避免了“幻读”的问题。此级别，会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。（实际应用中也很少使用这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑使用此级别）
 ```
+
+例子： 
+
+```
+START TRANSACTION;
+事务A：在整个执行阶段，会将某数据项的值从1开始，加1操作，直到变成10之后进行事务提交。 
+事务B：查看此数据项的值，请问在不同的隔离级别下看到的值是多少？ 
+事务C：执行和事务A类似的操作，将此数据项从10累加到20，然后进行提交。
+COMMIT;
+```
+![mysql_trans_example](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/mysql_trans_example.png)
+
+[MySQL读书笔记－事务，隔离级别，死锁](https://blog.csdn.net/delphiwcdj/article/details/51874401)
 
 ## X/Open XA
 
@@ -290,9 +303,25 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 目前在工程上，关于处理事务问题的一些产品介绍。
 
-## 全局事务服务GTS
+## 全局事务服务GTS/Fescar
 
-GTS(Global Transaction Service)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
+`GTS`已更名为`Fescar`，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
+
+`Fescar`的发展历程：
+
+```
+阿里是国内最早一批进行应用分布式（微服务化）改造的企业，所以很早就遇到微服务架构下的分布式事务问题。
+
+2014年，阿里中间件团队发布 TXC（Taobao Transaction Constructor），为集团内应用提供分布式事务服务。
+
+2016年，TXC 经过产品化改造，以 GTS（Global Transaction Service）的身份登陆阿里云，成为当时业界唯一一款云上分布式事务产品，在阿云里的公有云、专有云解决方案中，开始服务于众多外部客户。
+
+2019年起，基于 TXC 和 GTS 的技术积累，阿里中间件团队发起了开源项目 Fescar（Fast & EaSy Commit And Rollback, FESCAR），和社区一起建设这个分布式事务解决方案。
+
+TXC/GTS/Fescar 一脉相承，为解决微服务架构下的分布式事务问题交出了一份与众不同的答卷。
+```
+
+`GTS`(`Global Transaction Service`)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
 
 1. 高性能(XA有性能问题)。
 2. 易用性(减少入侵)。
@@ -338,6 +367,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 11. [REST]
 12. [CompensatingAction]
 13. [程立谈大规模SOA系统]
+14. [阿里开源分布式事务解决方案 Fescar 全解析]
 
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
@@ -367,3 +397,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [程立谈大规模SOA系统]: http://www.infoq.com/cn/interviews/soa-chengli
 
 [面向生产环境的SOA系统设计]: https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/面向生产环境的SOA系统设计.ppt
+
+[阿里开源分布式事务解决方案 Fescar 全解析]: https://zhuanlan.zhihu.com/p/55958530
