@@ -305,7 +305,7 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 ## 全局事务服务GTS/Fescar
 
-`GTS`已更名为`Fescar`，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
+`GTS`已更名为`Fescar`，且已开源[Seata: Simple Extensible Autonomous Transaction Architecture]，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
 
 `Fescar`的发展历程：
 
@@ -368,7 +368,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 12. [CompensatingAction]
 13. [程立谈大规模SOA系统]
 14. [阿里开源分布式事务解决方案 Fescar 全解析]
-
+15. [Seata: Simple Extensible Autonomous Transaction Architecture]
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
@@ -399,3 +399,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [面向生产环境的SOA系统设计]: https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/面向生产环境的SOA系统设计.ppt
 
 [阿里开源分布式事务解决方案 Fescar 全解析]: https://zhuanlan.zhihu.com/p/55958530
+
+[Seata: Simple Extensible Autonomous Transaction Architecture]: https://github.com/seata/seata
