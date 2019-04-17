@@ -307,11 +307,41 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 `GTS`已更名为`Fescar`，且已开源[Seata: Simple Extensible Autonomous Transaction Architecture]，[Seata wiki]，[Seata Quick Start]，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
 
+**Fescar的发展历程：**
+
+阿里是国内最早一批进行应用分布式（微服务化）改造的企业，所以很早就遇到微服务架构下的分布式事务问题。
+
+* 2014年，阿里中间件团队发布 TXC（Taobao Transaction Constructor），为集团内应用提供分布式事务服务。
+* 2016年，TXC 经过产品化改造，以 GTS（Global Transaction Service）的身份登陆阿里云，成为当时业界唯一一款云上分布式事务产品，在阿云里的公有云、专有云解决方案中，开始服务于众多外部客户。
+* 2019年起，基于 TXC 和 GTS 的技术积累，阿里中间件团队发起了开源项目 Fescar（Fast & EaSy Commit And Rollback, FESCAR），和社区一起建设这个分布式事务解决方案。
+
+TXC/GTS/Fescar 一脉相承，为解决微服务架构下的分布式事务问题交出了一份与众不同的答卷。
+
+```
+Ant Financial
+
+* XTS: Extended Transaction Service. Ant Financial middleware team developed the distributed transaction middleware since 2007, which is widely used in Ant Financial and solves the problems of data consistency across databases and services.
+
+* DTX: Distributed Transaction Extended. Since 2013, XTS has been published on the Ant Financial Cloud, with the name of DTX .
+
+Alibaba
+
+* TXC: Taobao Transaction Constructor. Alibaba middleware team start this project since 2014 to meet distributed transaction problem caused by application architecture change from monolithic to microservices.
+
+* GTS: Global Transaction Service. TXC as an Aliyun middleware product with new name GTS was published since 2016.
+
+* Fescar: we start the open source project Fescar based on TXC/GTS since 2019 to work closely with the community in the future.
+
+Seata Community
+
+* Seata :Simple Extensible Autonomous Transaction Architecture. Ant Financial joins Fescar, which make it to be a more neutral and open community for distributed transaction，and Fescar be rename to Seata.
+```
+
 **设计的目标：**
 
 一个理想的分布式事务解决方案应该：像使用本地事务一样简单，业务逻辑只关注业务层面的需求，不需要考虑事务机制上的约束。
 
-* 对业务无侵入
+* **对业务无侵入**
 	- 因为分布式事务这个技术问题的制约，要求应用在业务层面进行设计和改造。这种设计和改造往往会给应用带来很高的研发和维护成本。希望把分布式事务问题在中间件这个层次解决掉，不要求应用在业务层面做额外的工作。
 	- 业务无侵入的方案。既有的主流分布式事务解决方案中，对业务无侵入的只有基于`XA`的方案，但应用`XA`方案存在3个方面的问题
 		+ 要求数据库提供对`XA`的支持。如果遇到不支持`XA`（或支持得不好，比如 MySQL 5.7 以前的版本）的数据库，则不能使用。
@@ -322,7 +352,7 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 		+ TCC
 		+ Saga
 
-* 高性能
+* **高性能**
 
 引入分布式事务的保障，必然会有额外的开销，引起性能的下降。希望把分布式事务引入的性能损耗降到非常低的水平，让应用不因为分布式事务的引入导致业务的可用性受影响。
 
@@ -332,7 +362,7 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 ![seata](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata.png)
 
-**Fescar定义3个组件来协议分布式事务的处理过程：** 
+**Fescar定义3个组件来协调分布式事务的处理过程：** 
 
 * Transaction Coordinator (TC)：事务协调器，维护全局事务的运行状态，负责协调并驱动全局事务的提交或回滚。
 * Transaction Manager (TM)：控制全局事务的边界，负责开启一个全局事务，并最终发起全局提交或全局回滚的决议。
@@ -349,10 +379,10 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 **Fescar 的协议机制总体上看与 XA 是一致的，与 XA 的差别在什么地方：**
 
-* 剥离了分布式事务方案对数据库在协议支持上的要求
+* **剥离了分布式事务方案对数据库在协议支持上的要求**
 	- XA 方案的 RM 实际上是在数据库层，RM 本质上就是数据库自身（通过提供支持 XA 的驱动程序来供应用使用）。
 	- 而 Fescar 的 RM 是以二方包的形式作为**中间件层**部署在应用程序这一侧的，**不依赖与数据库本身对协议的支持**，当然也不需要数据库支持 XA 协议。这点对于微服务化的架构来说是非常重要的：应用层不需要为本地事务和分布式事务两类不同场景来适配两套不同的数据库驱动。
-* 锁的粒度更小 
+* **锁的粒度更小**
 	- XA 的 2PC 过程，无论 Phase2 的决议是 commit 还是 rollback，事务性资源的锁都要保持到 Phase2 完成才释放。设想一个正常运行的业务，大概率是 90% 以上的事务最终应该是成功提交的，是否可以在 Phase1 就将本地事务提交呢？这样 90% 以上的情况下，可以省去 Phase2 持锁的时间，整体提高效率。
 	- 而Fescar的XA，在绝大多数场景减少了事务持锁时间，从而提高了事务的并发度。(当然，你肯定会问：Phase1 即提交的情况下，Phase2 如何回滚呢？)
 
@@ -360,9 +390,7 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 ![fescar-xa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-xa.png)
 
-xa.png
-
-**几种事务处理模式：**
+**Fescar的几种事务处理模式：**
 
 * [Fescar-AT](https://github.com/fescar-group/awesome-fescar/blob/master/wiki/en-us/Fescar-AT.md) - **Automatic (Branch) Transaction Mode**
 
@@ -420,37 +448,19 @@ XA的原生支持。(TBD)
 
 ![fescar-future](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-future.png)
 
+* 微服务框架的支持
+	- 事务上下文在微服务间的传播需要根据微服务框架本身的机制，订制最优的，对应用层透明的解决方案。
+* 所支持的数据库类型
+	- 因为 AT 涉及 SQL 的解析，所以在不同类型的数据库上工作，会有一些特定的适配。
+* 配置和服务注册发现
+	- 支持接入不同的配置和服务注册发现解决方案。比如：Nacos、Eureka、ZooKeeper 等。
+* MT 模式的场景拓展
+	- MT 模式的一个重要作用就是，可以把非关系型数据库的资源，通过 MT 模式分支的包装，纳入到全局事务的管辖中来。比如，Redis、HBase、RocketMQ 的事务消息等。
+* 事务协调器的分布式高可用方案
+	- 针对不同场景，支持不同的方式作为事务协调器 Server 端的高可用方案。比如，针对事务状态的持久化，可以是基于文件的实现方案，也可以是基于数据库的实现方案；集群间的状态同步，可以是基于 RPC 通信的方案，也可以是基于高可用 KV 存储的方案。
 
 
-**Fescar的发展历程：**
-
-阿里是国内最早一批进行应用分布式（微服务化）改造的企业，所以很早就遇到微服务架构下的分布式事务问题。
-
-* 2014年，阿里中间件团队发布 TXC（Taobao Transaction Constructor），为集团内应用提供分布式事务服务。
-* 2016年，TXC 经过产品化改造，以 GTS（Global Transaction Service）的身份登陆阿里云，成为当时业界唯一一款云上分布式事务产品，在阿云里的公有云、专有云解决方案中，开始服务于众多外部客户。
-* 2019年起，基于 TXC 和 GTS 的技术积累，阿里中间件团队发起了开源项目 Fescar（Fast & EaSy Commit And Rollback, FESCAR），和社区一起建设这个分布式事务解决方案。
-
-TXC/GTS/Fescar 一脉相承，为解决微服务架构下的分布式事务问题交出了一份与众不同的答卷。
-
-```
-Ant Financial
-
-* XTS: Extended Transaction Service. Ant Financial middleware team developed the distributed transaction middleware since 2007, which is widely used in Ant Financial and solves the problems of data consistency across databases and services.
-
-* DTX: Distributed Transaction Extended. Since 2013, XTS has been published on the Ant Financial Cloud, with the name of DTX .
-
-Alibaba
-
-* TXC: Taobao Transaction Constructor. Alibaba middleware team start this project since 2014 to meet distributed transaction problem caused by application architecture change from monolithic to microservices.
-
-* GTS: Global Transaction Service. TXC as an Aliyun middleware product with new name GTS was published since 2016.
-
-* Fescar: we start the open source project Fescar based on TXC/GTS since 2019 to work closely with the community in the future.
-
-Seata Community
-
-* Seata :Simple Extensible Autonomous Transaction Architecture. Ant Financial joins Fescar, which make it to be a more neutral and open community for distributed transaction，and Fescar be rename to Seata.
-```
+----------------------
 
 `GTS`(Global Transaction Service)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
 
