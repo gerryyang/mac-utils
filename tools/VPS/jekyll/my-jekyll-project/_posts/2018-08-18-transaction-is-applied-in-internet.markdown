@@ -311,6 +311,15 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 ![seata](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata.png)
 
+```
+A typical lifecycle of Seata managed distributed transaction:
+
+1. TM asks TC to begin a new global transaction. TC generates an XID representing the global transaction.
+2. XID is propagated through microservices' invoke chain.
+3. RM register local transaction as a branch of the corresponding global transaction of XID to TC.
+4. TM asks TC for committing or rollbacking the corresponding global transaction of XID.
+5. TC drives all branch transactions under the corresponding global transaction of XID to finish branch committing or rollbacking.
+```
 
 **几种事务处理模式：**
 
@@ -361,18 +370,7 @@ Two phase rollback behavior: Call the rollback logic of custom.
 **TBD**
 
 
-
-```
-A typical lifecycle of Seata managed distributed transaction:
-
-1. TM asks TC to begin a new global transaction. TC generates an XID representing the global transaction.
-2. XID is propagated through microservices' invoke chain.
-3. RM register local transaction as a branch of the corresponding global transaction of XID to TC.
-4. TM asks TC for committing or rollbacking the corresponding global transaction of XID.
-5. TC drives all branch transactions under the corresponding global transaction of XID to finish branch committing or rollbacking.
-```
-
-`Fescar`的发展历程：
+**Fescar的发展历程：**
 
 阿里是国内最早一批进行应用分布式（微服务化）改造的企业，所以很早就遇到微服务架构下的分布式事务问题。
 
@@ -384,6 +382,7 @@ TXC/GTS/Fescar 一脉相承，为解决微服务架构下的分布式事务问�
 
 ```
 Ant Financial
+
 * XTS: Extended Transaction Service. Ant Financial middleware team developed the distributed transaction middleware since 2007, which is widely used in Ant Financial and solves the problems of data consistency across databases and services.
 
 * DTX: Distributed Transaction Extended. Since 2013, XTS has been published on the Ant Financial Cloud, with the name of DTX .
@@ -401,7 +400,7 @@ Seata Community
 * Seata :Simple Extensible Autonomous Transaction Architecture. Ant Financial joins Fescar, which make it to be a more neutral and open community for distributed transaction，and Fescar be rename to Seata.
 ```
 
-`GTS`(`Global Transaction Service`)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
+`GTS`(Global Transaction Service)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
 
 1. 高性能(XA有性能问题)。
 2. 易用性(减少入侵)。
