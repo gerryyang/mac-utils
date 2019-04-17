@@ -307,25 +307,66 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 `GTS`已更名为`Fescar`，且已开源[Seata: Simple Extensible Autonomous Transaction Architecture]，[Seata wiki]，[Seata Quick Start]，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
 
+**设计的目标：**
+
+一个理想的分布式事务解决方案应该：像使用本地事务一样简单，业务逻辑只关注业务层面的需求，不需要考虑事务机制上的约束。
+
+* 对业务无侵入
+	- 因为分布式事务这个技术问题的制约，要求应用在业务层面进行设计和改造。这种设计和改造往往会给应用带来很高的研发和维护成本。希望把分布式事务问题在中间件这个层次解决掉，不要求应用在业务层面做额外的工作。
+	- 业务无侵入的方案。既有的主流分布式事务解决方案中，对业务无侵入的只有基于`XA`的方案，但应用`XA`方案存在3个方面的问题
+		+ 要求数据库提供对`XA`的支持。如果遇到不支持`XA`（或支持得不好，比如 MySQL 5.7 以前的版本）的数据库，则不能使用。
+		+ 受协议本身的约束，事务资源的锁定周期长。长周期的资源锁定从业务层面来看，往往是不必要的，而因为事务资源的管理器是数据库本身，应用层无法插手。这样形成的局面就是，基于`XA`的应用往往性能会比较差，而且很难优化。
+		+ 已经落地的基于`XA`的分布式解决方案，都依托于重量级的应用服务器（Tuxedo/WebLogic/WebSphere等)，这是不适用于微服务架构的。
+	- 实际上，最初分布式事务只有`XA`这个唯一方案。`XA`是完备的，但在实践过程中，由于种种原因往往不得不放弃，转而从**业务层面**着手来解决分布式事务问题。这些方案都要求在应用的业务层面把分布式事务技术约束考虑到设计中，**通常每一个服务都需要设计实现正向和反向的幂等接口**。这样的设计约束，往往会导致很高的研发和维护成本。
+		+ 基于可靠消息的最终一致性方案
+		+ TCC
+		+ Saga
+
+* 高性能
+
+引入分布式事务的保障，必然会有额外的开销，引起性能的下降。希望把分布式事务引入的性能损耗降到非常低的水平，让应用不因为分布式事务的引入导致业务的可用性受影响。
+
+
+
 ![seata-trans](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata-trans.png)
 
 ![seata](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata.png)
 
-```
-A typical lifecycle of Seata managed distributed transaction:
+**Fescar定义3个组件来协议分布式事务的处理过程：** 
 
-1. TM asks TC to begin a new global transaction. TC generates an XID representing the global transaction.
-2. XID is propagated through microservices' invoke chain.
-3. RM register local transaction as a branch of the corresponding global transaction of XID to TC.
-4. TM asks TC for committing or rollbacking the corresponding global transaction of XID.
-5. TC drives all branch transactions under the corresponding global transaction of XID to finish branch committing or rollbacking.
-```
+* Transaction Coordinator (TC)：事务协调器，维护全局事务的运行状态，负责协调并驱动全局事务的提交或回滚。
+* Transaction Manager (TM)：控制全局事务的边界，负责开启一个全局事务，并最终发起全局提交或全局回滚的决议。
+* Resource Manager (RM)：控制分支事务，负责分支注册、状态汇报，并接收事务协调器的指令，驱动分支（本地）事务的提交和回滚。
+
+**一个典型的分布式事务过程：**
+
+1. TM 向 TC 申请开启一个全局事务，全局事务创建成功并生成一个全局唯一的 XID。
+2. XID 在微服务调用链路的上下文中传播。
+3. RM 向 TC 注册分支事务，将其纳入 XID 对应全局事务的管辖。
+4. TM 向 TC 发起针对 XID 的全局提交或回滚决议。
+5. TC 调度 XID 下管辖的全部分支事务完成提交或回滚请求。
+
+
+**Fescar 的协议机制总体上看与 XA 是一致的，与 XA 的差别在什么地方：**
+
+* 剥离了分布式事务方案对数据库在协议支持上的要求
+	- XA 方案的 RM 实际上是在数据库层，RM 本质上就是数据库自身（通过提供支持 XA 的驱动程序来供应用使用）。
+	- 而 Fescar 的 RM 是以二方包的形式作为**中间件层**部署在应用程序这一侧的，**不依赖与数据库本身对协议的支持**，当然也不需要数据库支持 XA 协议。这点对于微服务化的架构来说是非常重要的：应用层不需要为本地事务和分布式事务两类不同场景来适配两套不同的数据库驱动。
+* 锁的粒度更小 
+	- XA 的 2PC 过程，无论 Phase2 的决议是 commit 还是 rollback，事务性资源的锁都要保持到 Phase2 完成才释放。设想一个正常运行的业务，大概率是 90% 以上的事务最终应该是成功提交的，是否可以在 Phase1 就将本地事务提交呢？这样 90% 以上的情况下，可以省去 Phase2 持锁的时间，整体提高效率。
+	- 而Fescar的XA，在绝大多数场景减少了事务持锁时间，从而提高了事务的并发度。(当然，你肯定会问：Phase1 即提交的情况下，Phase2 如何回滚呢？)
+
+![xa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/xa.png)
+
+![fescar-xa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-xa.png)
+
+xa.png
 
 **几种事务处理模式：**
 
 * [Fescar-AT](https://github.com/fescar-group/awesome-fescar/blob/master/wiki/en-us/Fescar-AT.md) - **Automatic (Branch) Transaction Mode**
 
-基于MySQL Innodb(local ACID transactions) + UNDO_LOG 的方式，业务本身不用关心回滚和提交逻辑。
+基于MySQL Innodb(local ACID transactions) + UNDO_LOG 的方式，这种模式对业务无入侵，业务本身不用关心回滚和提交逻辑。
 
 ```
 Evolution from the two phases commit protocol:
@@ -355,7 +396,7 @@ CREATE TABLE `undo_log` (
 
 * [Fescar-MT](https://github.com/fescar-group/awesome-fescar/blob/master/wiki/en-us/Fescar-MT.md) - **Manual (Branch) Transaction Mode**
 
-此模式不依赖于底层资源具体是什么，但是需要业务提供`prepare`，`commit`，`rollback`这三个接口供框架调用。
+此模式不依赖于底层资源具体是什么，分支事务需要应用自己来定义业务本身及提交和回滚的逻辑。需要业务提供`prepare`，`commit`，`rollback`这三个接口供框架调用。MT 模式一方面是 AT 模式的补充。另外，更重要的价值在于，通过 MT 模式可以把众多非事务性资源纳入全局事务的管理中。
 
 ```
 the MT mode does not rely on transaction support for the underlying data resources:
@@ -365,9 +406,20 @@ Two phase commit behavior: Call the commit logic of custom.
 Two phase rollback behavior: Call the rollback logic of custom.
 ```
 
+* 混合模式
+
+因为 AT 和 MT 模式的分支从根本上行为模式是一致的，所以可以完全兼容，即，一个全局事务中，可以同时存在 AT 和 MT 的分支。这样就可以达到全面覆盖业务场景的目的：AT 模式可以支持的，使用 AT 模式；AT 模式暂时支持不了的，用 MT 模式来替代。另外，自然的，MT 模式管理的非事务性资源也可以和支持事务的关系型数据库资源一起，纳入同一个分布式事务的管理中。
+
 * [Fescar-XA](https://github.com/seata/seata/wiki/XA-Mode)
 
-**TBD**
+XA的原生支持。(TBD)
+
+**未来规划：**
+
+设计的初衷：一个理想的分布式事务解决方案是不应该侵入业务的。MT 模式是在 AT 模式暂时不能完全覆盖所有场景的情况下，一个比较自然的补充方案。希望通过 AT 模式的不断演进增强，逐步扩大所支持的场景，MT 模式逐步收敛。未来会纳入对 XA 的原生支持，用 XA 这种无侵入的方式来覆盖 AT 模式无法触达的场景。
+
+![fescar-future](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-future.png)
+
 
 
 **Fescar的发展历程：**
@@ -409,6 +461,8 @@ Seata Community
 关于GTS的几个问题：
 
 问题1：GTS支持两种隔离级别，读未提交(RU)和读已提交(RC)。RU相比RC有明显性能优势，因此作为默认的隔离级别，但是RU对业务的影响大吗？
+
+全局事务的隔离性是建立在分支事务的本地隔离级别基础之上的。在数据库本地隔离级别读已提交或以上的前提下，GTS设计了由事务协调器维护的 全局写排他锁，来保证事务间的写隔离，将全局事务默认定义在读未提交的隔离级别上。
 
 RU -> 脏读 -> 会影响业务，导致应用逻辑并发处理不当。解决方法是：
 
