@@ -39,7 +39,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 	- If at least one reply is negative (or missing) then a rollback decision is sent to the remaining resource. This means that the remaining resource cancels (rolls back) the work done for the transaction.
 ```
 
-但是，当出现**多个不同的本地事务**时，如何保证一致性？
+但是，当出现**多个不同的本地事务(分布式事务)**时，如何保证一致性？
 
 例如，小Q想去国外旅游，需要在两个不同的网站上预定机票。在A网站预定从北京到深圳的机票，再在B网站预定深圳到国外的机票。如果小Q在预定B网站机票时失败了，就必须取消已经在A网站预定的机票。如果没有及时取消就会发生：
 
@@ -53,7 +53,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 1. 网站A在预定机票成功后，具备实时退票的能力，而不是通过人工介入。
 2. 和数据库不同，多个网站(资源方)互不信任，存在DOS攻击的风险。
 
-在实际场景下，上面两个条件一般都不能满足。是否还有其他方法？
+在实际场景下，上面两个条件一般都不能满足(对比本地数据库)。是否还有其他方法？
 
 可以考虑`compensation`(补偿)的方法。把每个操作都作为一个短的本地ACID事务，减少锁的时间。代价是牺牲了rollback的能力。而补偿(取消操作)需要根据具体的业务场景来实现。
 
@@ -305,20 +305,100 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 ## 全局事务服务GTS/Fescar
 
-`GTS`已更名为`Fescar`，且已开源[Seata: Simple Extensible Autonomous Transaction Architecture]，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
+`GTS`已更名为`Fescar`，且已开源[Seata: Simple Extensible Autonomous Transaction Architecture]，[Seata wiki]，[Seata Quick Start]，可参考[阿里开源分布式事务解决方案 Fescar 全解析]。
+
+![seata-trans](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata-trans.png)
+
+![seata](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata.png)
+
+
+**几种事务处理模式：**
+
+* [Fescar-AT](https://github.com/fescar-group/awesome-fescar/blob/master/wiki/en-us/Fescar-AT.md) - **Automatic (Branch) Transaction Mode**
+
+基于MySQL Innodb(local ACID transactions) + UNDO_LOG 的方式，业务本身不用关心回滚和提交逻辑。
+
+```
+Evolution from the two phases commit protocol:
+
+Phase 1：commit business data and rollback log in the same local transaction, then release local lock and connection resources.
+Phase 2：for commit case, do the work asynchronously and quickly. 
+         for rollback case, do compensation, base on the rollback log created in the phase 1.
+```
+
+但是此模式对支持的SQL回滚语句有限制，并非所有情况都可以UNDO。以下是在业务本地隐式创建的`undo_log`反操作信息表。
+
+``` sql
+-- 注意此处0.3.0+ 增加唯一索引 ux_undo_log
+CREATE TABLE `undo_log` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
+  `xid` varchar(100) NOT NULL,
+  `rollback_info` longblob NOT NULL,
+  `log_status` int(11) NOT NULL,
+  `log_created` datetime NOT NULL,
+  `log_modified` datetime NOT NULL,
+  `ext` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ux_undo_log` (`xid`,`branch_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+```
+
+* [Fescar-MT](https://github.com/fescar-group/awesome-fescar/blob/master/wiki/en-us/Fescar-MT.md) - **Manual (Branch) Transaction Mode**
+
+此模式不依赖于底层资源具体是什么，但是需要业务提供`prepare`，`commit`，`rollback`这三个接口供框架调用。
+
+```
+the MT mode does not rely on transaction support for the underlying data resources:
+
+One phase prepare behavior: Call the prepare logic of custom.
+Two phase commit behavior: Call the commit logic of custom.
+Two phase rollback behavior: Call the rollback logic of custom.
+```
+
+* [Fescar-XA](https://github.com/seata/seata/wiki/XA-Mode)
+
+**TBD**
+
+
+
+```
+A typical lifecycle of Seata managed distributed transaction:
+
+1. TM asks TC to begin a new global transaction. TC generates an XID representing the global transaction.
+2. XID is propagated through microservices' invoke chain.
+3. RM register local transaction as a branch of the corresponding global transaction of XID to TC.
+4. TM asks TC for committing or rollbacking the corresponding global transaction of XID.
+5. TC drives all branch transactions under the corresponding global transaction of XID to finish branch committing or rollbacking.
+```
 
 `Fescar`的发展历程：
 
-```
 阿里是国内最早一批进行应用分布式（微服务化）改造的企业，所以很早就遇到微服务架构下的分布式事务问题。
 
-2014年，阿里中间件团队发布 TXC（Taobao Transaction Constructor），为集团内应用提供分布式事务服务。
-
-2016年，TXC 经过产品化改造，以 GTS（Global Transaction Service）的身份登陆阿里云，成为当时业界唯一一款云上分布式事务产品，在阿云里的公有云、专有云解决方案中，开始服务于众多外部客户。
-
-2019年起，基于 TXC 和 GTS 的技术积累，阿里中间件团队发起了开源项目 Fescar（Fast & EaSy Commit And Rollback, FESCAR），和社区一起建设这个分布式事务解决方案。
+* 2014年，阿里中间件团队发布 TXC（Taobao Transaction Constructor），为集团内应用提供分布式事务服务。
+* 2016年，TXC 经过产品化改造，以 GTS（Global Transaction Service）的身份登陆阿里云，成为当时业界唯一一款云上分布式事务产品，在阿云里的公有云、专有云解决方案中，开始服务于众多外部客户。
+* 2019年起，基于 TXC 和 GTS 的技术积累，阿里中间件团队发起了开源项目 Fescar（Fast & EaSy Commit And Rollback, FESCAR），和社区一起建设这个分布式事务解决方案。
 
 TXC/GTS/Fescar 一脉相承，为解决微服务架构下的分布式事务问题交出了一份与众不同的答卷。
+
+```
+Ant Financial
+* XTS: Extended Transaction Service. Ant Financial middleware team developed the distributed transaction middleware since 2007, which is widely used in Ant Financial and solves the problems of data consistency across databases and services.
+
+* DTX: Distributed Transaction Extended. Since 2013, XTS has been published on the Ant Financial Cloud, with the name of DTX .
+
+Alibaba
+
+* TXC: Taobao Transaction Constructor. Alibaba middleware team start this project since 2014 to meet distributed transaction problem caused by application architecture change from monolithic to microservices.
+
+* GTS: Global Transaction Service. TXC as an Aliyun middleware product with new name GTS was published since 2016.
+
+* Fescar: we start the open source project Fescar based on TXC/GTS since 2019 to work closely with the community in the future.
+
+Seata Community
+
+* Seata :Simple Extensible Autonomous Transaction Architecture. Ant Financial joins Fescar, which make it to be a more neutral and open community for distributed transaction，and Fescar be rename to Seata.
 ```
 
 `GTS`(`Global Transaction Service`)在2017年3月开始在阿里云上公测。主要解决的用户诉求是：**数据的一致性**。并保证：
@@ -369,6 +449,11 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 13. [程立谈大规模SOA系统]
 14. [阿里开源分布式事务解决方案 Fescar 全解析]
 15. [Seata: Simple Extensible Autonomous Transaction Architecture]
+16. [Seata wiki]
+17. [Seata Quick Start]
+18. [Pattern: Database per service]
+19. [Understanding of Fescar Isolation]
+20. [分布式事务中间件 Fescar - RM 模块源码解读]
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
@@ -401,3 +486,13 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [阿里开源分布式事务解决方案 Fescar 全解析]: https://zhuanlan.zhihu.com/p/55958530
 
 [Seata: Simple Extensible Autonomous Transaction Architecture]: https://github.com/seata/seata
+
+[Seata wiki]: https://github.com/seata/seata/wiki
+
+[Seata Quick Start]: https://github.com/seata/seata/wiki/Quick-Start
+
+[Pattern: Database per service]: https://microservices.io/patterns/data/database-per-service.html
+
+[Understanding of Fescar Isolation]: https://www.jianshu.com/p/4cb127b737cf
+
+[分布式事务中间件 Fescar - RM 模块源码解读]: https://mp.weixin.qq.com/s/EzmZ-DAi-hxJhRkFvFhlJQ
