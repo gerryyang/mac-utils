@@ -22,6 +22,110 @@ categories: English
 | xxx | 认为对方说的很对 yes/right | Exactly/Tell me about it 就是啊
 | xxx | 当没听清对方需要别人重复时, Pardon | I'm sorry?/Excuse me? 通过升调表疑问语气，自然且地道  
 
+# 2019-04-13
+
+Teacher: Kayli & Diya
+
+## 学习内容
+
+关键单词:
+
+* Farm Animals (dogs/ducks/rabbits/frog/squirrel/birds/pig) 
+* elephant/kangaroo/monkey/penguin/snake/polar bear
+
+课堂目标:
+
+* 熟悉农场类动物
+* 可以通过模仿动物做基本的表演
+* 学习歌曲`Let's go to the zoo`
+
+上课内容:
+
+* Hello song + ABC songs
+* 自我介绍。Good morning, my name is __, I am __ years old, I like (color). I like (animal).
+* Teacher Says复习课堂规则。听老师说，安静坐好，不准打人或踢人，站立，看仔细等。
+* 重温日常用语。How are you?  I am fine/happy/hungry/angry/sad/tired/exciting. Thank you. Goodbye.
+* 学习熟悉动物单词，引入农场和动物园的概念，并让孩子们表演。
+* 重点学习歌曲`Let's go to the zoo`
+* 画图农场。
+
+功课: 
+* 反复听歌曲，熟悉音准和听力。
+* 下周会涉及让孩子根据歌词意思编舞，循序渐进能表演完整的歌曲。
+
+课堂表现:
+
+Scarlett的自我介绍终于可以在没有老师的引导下做出完整句式表达，值得表扬。参与课堂也越来越积极，再接再厉。
+
+[Song: Let's go to the zoo](http://supersimplelearning.com/songs/themes-series/animals/lets-go-to-the-zoo/)
+
+歌词：
+
+Let's Go To The Zoo
+
+Super Simple Songs: Animals - Song #02
+
+Key Gestures
+
+* Elephant - Move your hand downward away from your nose in a wavy motion.
+* Kangaroo - Put both hands in front of your chest and jump.
+* Monkey - Scratch under your arms with both hands and make a monkey face.
+* Penguin - Put both hands next to your waist, palms facing down, and move your body back and forth, waddling like a penguin.
+* Snake - Place your hands together in front of you and move the forward like a snake moving across the ground.
+* Polar bear - Spread your fingers wide like big paws, and move your arms slowly like a swimming polar bear.
+
+```
+Stomp like elephants !
+Let's go 
+And stomp like the elephants do.
+Let's go to the zoo.
+And stomp like the elephants do.
+[Stomp around the room like elephants]
+
+Jump like kangaroos.
+Let's go to the zoo.
+And jump like the kangaroos do.
+Let's go to the zoo.
+And jump like the kangaroos do.
+[Jump around the room like kangaroos]
+
+Swing like monkeys.
+Let's go to the zoo.
+And swing like the monkeys do.
+[Pretend to swing from a tree]
+Let's go to the zoo. 
+And swing like the monkeys do.
+[Swing around the room like monkeys]
+
+Waddle like penguins.
+Let's go to the zoo.
+And waddle like the penguins do.
+Let's go to the zoo.
+And waddle like the penguins do.
+[Waddle around the room like penguins]
+
+Slither like snakes. [Snake gesture]
+Let's go to the zoo.
+And slither like the snakes do.
+Let's go to the zoo.
+And slither like the snakes do.
+[Slither around the room like snakes]
+
+Swim like polar bears.
+Let's go to the zoo.
+And swim like the polar bears do.
+Let's go to the zoo.
+And swim like the polar bears do.
+[Swim around the room like polar bears]
+
+Let's go to the zoo.
+And dance like the animals do. [Do a silly dance !]
+Let's go to the zoo.
+And dance like the animals do.
+```
+
+
+
 # 2018-12-08
 
 Teacher: Joanna (乔安娜 /dʒəʊ'ænə/)
