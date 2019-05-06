@@ -80,7 +80,36 @@ ip addr show eth0 | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'
 curl http://icanhazip.com
 ```
 
-配置常用的服务 (注意先更新源 apt-get update)
+## Linode
+
+[Linode]
+
+[Linode]: https://www.linode.com/
+
+# VPS设置
+
+以下以`Ubuntu`为例。
+
+## 账户初始化配置
+
+[initial-server-setup-with-ubuntu-14-04]
+
+[initial-server-setup-with-ubuntu-14-04]: https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
+
+## 系统安全配置
+
+* HTTPS证书设置
+
+[证书安装指引]
+
+[证书安装指引]: https://cloud.tencent.com/document/product/400/4143
+
+## 开发工具配置
+
+注意先更新源 apt-get update。
+
+* git
+
 
 * gcc 
 
@@ -108,6 +137,19 @@ apt-get install gccgo-go
 apt-get install apache2
 apt-get install nginx
 ```
+
+[how-to-install-nginx-on-ubuntu-14-04-lts]
+
+[how-to-install-nginx-on-ubuntu-14-04-lts]: https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-14-04-lts
+
+反向代理设置：
+
+[NGINX Reverse Proxy]
+[nginx配置二级域名]
+
+[NGINX Reverse Proxy]: https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
+
+[nginx配置二级域名]: https://cloud.tencent.com/developer/article/1198752
 
 * mysql
 
@@ -139,13 +181,6 @@ http://104.131.173.242/phpmyadmin/
 [FileZilla]: https://filezilla-project.org/
 
 
-## Linode
-
-[Linode]
-
-[Linode]: https://www.linode.com/
-
-
 # 科学上网
 
 ## Shadowsocks
@@ -162,7 +197,7 @@ sudo ssserver -d stop
 tail -f /var/log/shadowsocks.log
 ```
 
-# jekyll设置
+# jekyll配置
 
 * 目录索引(TOC)
 
@@ -172,34 +207,7 @@ tail -f /var/log/shadowsocks.log
 [How I Add a Table of Contents to my Jekyll Blog Written in Markdown]: http://www.seanbuscay.com/blog/jekyll-toc-markdown/
 [kramdown]: https://kramdown.gettalong.org/
 
-# VPS设置
 
-* 账户初始化设置
-
-[initial-server-setup-with-ubuntu-14-04]
-
-[initial-server-setup-with-ubuntu-14-04]: https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
-
-* 安装nginx
-
-[how-to-install-nginx-on-ubuntu-14-04-lts]
-
-[how-to-install-nginx-on-ubuntu-14-04-lts]: https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-14-04-lts
-
-反向代理设置：
-
-[NGINX Reverse Proxy]
-[nginx配置二级域名]
-
-[NGINX Reverse Proxy]: https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
-
-[nginx配置二级域名]: https://cloud.tencent.com/developer/article/1198752
-
-* HTTPS证书设置
-
-[证书安装指引]
-
-[证书安装指引]: https://cloud.tencent.com/document/product/400/4143
 
 
 # 收藏站点
@@ -211,11 +219,31 @@ tail -f /var/log/shadowsocks.log
 [永远不上线-借筏度岸]: http://www.cnblogs.com/lookbackinside/
 
 
-## 工具
+# 工具
 
-[WolframAlpha]
+## 基础工具
 
-[时区图]
+* 浏览器
+	- chrome
+
+chrome常用扩展：
+
+| 名字 | 功能
+| -- | --
+| DragIt | 方便页面浏览
+| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
+
+[FeHelper]: https://chrome.google.com/webstore/search/fehelper?hl=zh-CN
+
+
+## MacOS
+
+TODO
+
+## 其他
+
+* [WolframAlpha]，一个在线数学工具。
+* [时区图]
 
 
 [WolframAlpha]: http://www27.wolframalpha.com/

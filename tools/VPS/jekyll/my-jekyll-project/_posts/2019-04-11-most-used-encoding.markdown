@@ -79,7 +79,7 @@ You should use Base64 whenever you intend to transmit binary data in a textual f
 2. [URL Encode and Decode From Dan's Tools]
 3. [Base64]
 4. [Base64 Encode From Dan's Tools]
-
+5. [字符编码笔记：ASCII，Unicode 和 UTF-8]
 
 [Percent-encoding]: https://en.wikipedia.org/wiki/Percent-encoding
 [URL Encode and Decode From Dan's Tools]: https://www.url-encode-decode.com/
@@ -92,3 +92,5 @@ You should use Base64 whenever you intend to transmit binary data in a textual f
 [Base64 Encode From Dan's Tools]: https://www.cleancss.com/base64-encode/?_ga=2.229358876.1655496866.1554943667-999204454.1554943666
 [MIME]: http://en.wikipedia.org/wiki/MIME
 [RFC 1420]: http://tools.ietf.org/html/rfc1421
+
+[字符编码笔记：ASCII，Unicode 和 UTF-8]: http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html

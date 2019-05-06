@@ -225,3 +225,12 @@ http://senlinzhan.github.io/2015/04/20/%E8%B0%88%E8%B0%88C-%E7%9A%84%E6%99%BA%E8
 ## OpenResty 完全开发指南
 
 https://wiki.shileizcc.com/confluence/pages/viewpage.action?pageId=47415930
+
+
+[The _Pragma Operator](http://books.gigatux.nl/mirror/cinanutshell/0596006977/cinanut-CHP-14-SECT-7.html)
+
+https://www.geeksforgeeks.org/pragma-directive-in-c-c/
+
+```
+#pragma GCC poison printf 
+```
