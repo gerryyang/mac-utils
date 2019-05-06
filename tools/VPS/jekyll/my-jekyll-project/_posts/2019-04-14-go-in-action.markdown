@@ -141,7 +141,7 @@ func main() {
 * 名为`main`的包用来定义一个独立的可执行程序，而不是库。
 * 必须精确地导入需要的包，在缺失导入，或存在不需要的包的情况下，编译会失败。(这种严格的要求可以防止程序演化中引用不需要的包)
 	- `goimports`工具可以按需管理导入声明的插入和移除。`go get golang.org/x/tools/cmd/goimports`
-* import声明必须跟在package声明之后。import导入声明后面，是组成程序的函数，变量，常量，类型声明。
+* `import声明`必须跟在`package声明`之后。import导入声明后面，是组成程序的函数，变量，常量，类型声明。
 * Go不需要在语句或声明后使用`分号结尾`，除非有多个语句或声明出现在同一行。事实上，跟在特定符号后面的换行符被转换为分号。在什么地方进行换行会影响对Go代码的解析。例如，`{`符号必须和关键字`func`在同一行，不能独自成行。
 * Go对代码的`格式化`要求非常严格。`gofmt`工具将代码以标准格式重写。go工具的fmt子命令会用gofmt工具来格式化指定包里的所有文件，或者当前文件夹中的文件(默认情况下)。许多文本编辑器可以配置为在每次保存文件时自动运行gofmt，因此源文件总可以保持正确的形式。
 * 命令行参数。`os包`提供了一些函数和变量，以平台无关的方式和操作系统打交道。命令行参数以os包中的`Args`名字的变量供程序访问。变量`os.Args`是一个字符串`slice`。
@@ -163,6 +163,92 @@ func main() {
 	}
 	fmt.Println(s)
 }
+```
+* 注释以`\\`开头。习惯上，在一个包声明前，使用注释对其进行描述。
+* `var`关键字声明了两个`string`类型的变量。变量可以在声明的时候初始化，如果变量没有明确地初始化，它将隐式地初始化为这个类型的空值。例如，对于数字初始化结果是0，对于字符串是空字符串。
+* 对于数字，Go提供常规的算术和逻辑操作符；对于字符串，`+`操作符表示追加操作。
+* `:=`符号用于`短变量声明`，这种语句声明一个或多个变量，并且根据初始化的值给予合适的类型。
+* 递增语句`i++`对i进行加1，它等价于`i += 1`，又等价于`i = i + 1`。**注意，这些是语句，而不像其他C族语言一样是表达式，所以`j = i ++`是不合法的。并且，仅支持后缀，`++i`也不合法。**
+* `for`是Go里面的`唯一循环语句`，它有几种形式。
+	- for循环的三个组成部分两边不用`小括号`，但`大括号`是必需的，左大括号必须和`post`语句在同一行。
+	- 可选的`initialization`语句在循环开始之前执行。如果存在，它必须是一个简单的语句。
+	- `condition`是一个布尔表达式，在循环的每一次迭代开始前推演。
+	- 三部分都可以省略。
+
+``` go
+for initialization; condition; post {
+	// ...
+}
+
+// while循环
+for condition {
+	// ...
+}
+
+// 无限循环
+for {
+	// ...
+	// break;
+	// return;
+}
+```
+
+* 另一种形式的for循环在字符串或slice数据上迭代。
+
+``` go
+// Echo2 prints its command-line arguments.
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	s, sep := "", ""
+	for _, arg := range os.Args[1:] {
+		s += sep + arg
+		sep = " "
+	}
+	fmt.Println(s)
+}
+```
+
+* 每一次迭代，`range`产生一对值：`索引`和`这个索引处元素的值`。
+* 在这个例子中，不需要索引，但是语法上range循环需要处理，因此也必须处理索引。一个主意是将索引赋予一个`临时变量`然后忽略它。但是，Go不允许存在无用的临时变量，不然会出现编译错误。解决方案是使用空标识符`_`，空标识符可以用在任何语法需要变量名但是程序逻辑不需要的地方。例如，丢弃每次迭代产生的无用的索引。
+* 这个版本使用`短的变量声明`来声明和初始化。原则：使用`显式的初始化`来说明初始化变量的重要性，使用`隐式的初始化`来表明初始化变量不重要。
+
+``` go
+// 以下几种声明字符串变量的方式是等价的
+s := ""              // 此方式，更加简洁，通常在一个函数内部使用，不适合包级别的变量 (推荐)
+var s string         // 默认初始化为空字符串 (推荐)
+var s = ""           // 很少用
+var s string = ""    // 显式的变量类型，在类型一致的情况下是冗余的信息，在类型不一致时是必需的
+```
+
+* 上面程序的问题：每次循环，字符串`s`有了新的内容，`+=`语句通过追加旧的字符串，空格字符，和下一个参数，生成一个新的字符串，然后把新字符串赋给`s`。旧的内容不再需要使用，会被`例行垃圾回收`。如果有大量的数据需要处理，这样的代价会比较大。
+
+* 一个高效的方式是使用strings包中的`Join`函数。
+
+``` go
+// Echo3 prints its command-line arguments.
+package main
+
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+func main() {
+	fmt.Println(strings.Join(os.Args[1:], " "))
+}
+```
+* 如果关心格式只是想看下值或调试，那么使用`Println`格式化结果就可以了。
+
+``` go
+// 任何slice都能以这样的方式输出
+fmt.Println(os.Args[1:])
 ```
 
 # Go程序组成
@@ -188,6 +274,8 @@ func main() {
 3. [Go在线测试]
 4. [Go在线交互式课程]
 5. [The Go Programming Language]
+6. [Dave Cheney的golang博客]
+7. [High Performance Go Workshop - Dave Cheney]
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org
@@ -195,3 +283,6 @@ func main() {
 [Go在线交互式课程]: https://tour.golang.org
 [The Go Programming Language]: http://www.gopl.io/
 [The Go Programming Language Example Programs]: https://github.com/adonovan/gopl.io/
+[Dave Cheney的golang博客]: dave.cheney.net
+[High Performance Go Workshop - Dave Cheney]: https://dave.cheney.net/high-performance-go-workshop/gopherchina-2019.html?from=singlemessage&isappinstalled=0
+
