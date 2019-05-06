@@ -133,7 +133,7 @@ func main() {
 ```
 
 
-# Go基础知识
+# Go入门示例
 
 * Go代码是使用`包`来组织的，包类似其他语言中的库和模块。一个包由一个或多个`.go`源文件组成，放在`一个文件夹`中，该`文件夹的名字`描述了包的作用。
 * 每一个源文件的开始都用`package`声明。例如，`package main`，指明了这个文件属于哪个包。后面跟着它导入的`其他包的列表`，然后是存储在文件中的`程序声明`。
@@ -144,7 +144,10 @@ func main() {
 * `import声明`必须跟在`package声明`之后。import导入声明后面，是组成程序的函数，变量，常量，类型声明。
 * Go不需要在语句或声明后使用`分号结尾`，除非有多个语句或声明出现在同一行。事实上，跟在特定符号后面的换行符被转换为分号。在什么地方进行换行会影响对Go代码的解析。例如，`{`符号必须和关键字`func`在同一行，不能独自成行。
 * Go对代码的`格式化`要求非常严格。`gofmt`工具将代码以标准格式重写。go工具的fmt子命令会用gofmt工具来格式化指定包里的所有文件，或者当前文件夹中的文件(默认情况下)。许多文本编辑器可以配置为在每次保存文件时自动运行gofmt，因此源文件总可以保持正确的形式。
-* 命令行参数。`os包`提供了一些函数和变量，以平台无关的方式和操作系统打交道。命令行参数以os包中的`Args`名字的变量供程序访问。变量`os.Args`是一个字符串`slice`。
+
+## 命令行参数
+
+* `os包`提供了一些函数和变量，以平台无关的方式和操作系统打交道。命令行参数以os包中的`Args`名字的变量供程序访问。变量`os.Args`是一个字符串`slice`。
 
 ``` go
 // go get gopl.io/ch1/echo1
@@ -250,6 +253,153 @@ func main() {
 // 任何slice都能以这样的方式输出
 fmt.Println(os.Args[1:])
 ```
+
+## 找出重复行
+
+* 用于文件复制，打印，检索，排序，统计的程序，通常有一个相似的结构：在输入接口上循环读取，然后对每一个元素进行一些计算。
+
+``` go
+// Dup1 prints the text of each line that appears more than
+// once in the standard input, preceded by its count.
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	counts := make(map[string]int)
+	input := bufio.NewScanner(os.Stdin)
+	for input.Scan() {
+		counts[input.Text()]++
+	}
+	// NOTE: ignoring potential errors from input.Err()
+	for line, n := range counts {
+		if n > 1 {
+			fmt.Printf("%d\t%s\n", n, line)
+		}
+	}
+}
+```
+* 像for一样，`if`语句中的条件部分也不放在圆括号里，但是程序体中需要用到大括号。
+* `map`存储一个`键/值对集合`，并且提供常量时间的操作来存储，获取，或测试集合中某个元素。内置的函数`make`可以用来新建map。
+	- `键`可以是其值能够进行相等比较的任意类型。比如，字符串。
+	- `值`可以是任意类型。
+* 每次从输入读取一行内容，这一行就作为map中的键，对应的值递增1。
+``` go
+counts[input.Text()]++
+// 等价于
+line := input.Text()
+counts[line] = counts[line] + 1
+```
+* `键`在map中不存在时也是没有问题的。当一个新的行第一次出现时，右边的表达式counts[line]根据值类型被推演为`零值`，int的零值是0。
+* 为了输出结果，使用基于`range`的for循环，这次在map类型的counts变量上遍历。每次迭代输出两个结果，map里面一个元素对应的键和值。
+* map里面的键的迭代顺序不是固定的，通常是随机地。每次运行都不一致，这是有意设计的，以防止程序依赖某种特定的序列，此处不对排序做任何保证。
+* `bufio`包，可以简便和高效地处理输入和输出。其中一个最有用的特性是称为扫描器(Scanner)的类型，它可以读取输入，以`行`或者`单词`为单位断开，这是处理以行为单位的输入内容的最简单方式。扫描器从程序的标准输入进行读取。每一次调用`input.Scan()`读取下一行，并且将结尾的`换行符`去掉。通过`input.Text()`来获取读到的内容。`Scan()`函数在读到新行时候返回`true`，在没有更多内容的时候返回`false`。
+* 函数`fmt.Printf`从一个`表达式列表`生成`格式化的输出`。`Printf`函数有超过10个这样的转义字符，Go称为`verb`。例如：
+
+| verb | 描述
+| -- | -- |
+| %d | 十进制整数
+| %x | 十六进制
+| %o | 八进制
+| %b | 二进制
+| %f, %g, %e | 浮点数: 如，3.141593, 3.141592653589793, 3.141593e+00
+| %t | 布尔型: true或false
+| %c | 字符（Unicode码点）
+| %s | 字符串
+| %q | 带引号字符串或字符
+| %v | 内置格式的任何值
+| %T | 任何值的类型
+| %% | 百分号本身
+
+* 除了从`标准输入`读取，也可以从具体的`文件`读取。使用`os.Open`函数来逐个打开。
+
+``` go
+// Dup2 prints the count and text of lines that appear more than once
+// in the input.  It reads from stdin or from a list of named files.
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	counts := make(map[string]int)
+	files := os.Args[1:]
+	if len(files) == 0 {
+		countLines(os.Stdin, counts)
+	} else {
+		for _, arg := range files {
+			f, err := os.Open(arg)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "dup2: %v\n", err)
+				continue
+			}
+			countLines(f, counts)
+			f.Close()
+		}
+	}
+	for line, n := range counts {
+		if n > 1 {
+			fmt.Printf("%d\t%s\n", n, line)
+		}
+	}
+}
+
+func countLines(f *os.File, counts map[string]int) {
+	input := bufio.NewScanner(f)
+	for input.Scan() {
+		counts[input.Text()]++
+	}
+	// NOTE: ignoring potential errors from input.Err()
+}
+```
+* 函数`os.Open`返回两个值，第一个是打开的文件`*os.File`；第二个是一个内置的`error`类型的值。
+	- 如果`error`等于特殊的内置`nil`值，表示文件成功打开。文件在被读到结尾的时候，`Close`函数关闭文件，然后释放相应的资源。
+	- 如果`error`不是`nil`，表示出错了。这时`error`的值描述错误原因。简单的错误处理是使用`Fprintf`和`%v`在标准错误流上输出一条消息，`%v`可以使用默认格式显示任意类型的值。错误处理后，开始处理下一个文件。`continue`语句让循环进入下一个迭代。
+
+* `map`是一个使用`make`创建的数据结构的`引用`。当一个map传递个一个函数时，函数接收到这个引用的副本，所以，被调用函数中对于map数据结构中的改变，对函数调用者使用的map引用也是`可见的`。
+* 第三种方式，是一次读取整个输入到大块内存中，一次性地分割所有行，然后处理这些行。使用`ReadFile`函数读取整个命名文件的内容，返回一个可以转化成字符串的字节`slice`，再用`string.Split`函数将一个字符串分割为一个由子串组成的`slice`。
+
+``` go
+// Dup3 prints the count and text of lines that
+// appear more than once in the named input files.
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+)
+
+func main() {
+	counts := make(map[string]int)
+	for _, filename := range os.Args[1:] {
+		data, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "dup3: %v\n", err)
+			continue
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			counts[line]++
+		}
+	}
+	for line, n := range counts {
+		if n > 1 {
+			fmt.Printf("%d\t%s\n", n, line)
+		}
+	}
+}
+```
+* 实际上，`bufio.Scanner`，`ioutil.ReadFile`以及`ioutil.WriteFile`使用`*os.File`中的`Read`和`Write`方法。但是大多数情况很少需要直接访问底层的函数，而是像`bufio`和`io/ioutil`包中的**上层的方法**更易使用。
+
+
 
 # Go程序组成
 
