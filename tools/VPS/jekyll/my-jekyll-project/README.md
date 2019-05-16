@@ -139,6 +139,9 @@ https://www.bthlt.com
 
 http://senlinzhan.github.io
 
+数据库领域
+http://wubx.net/about-me/
+
 
 du和df的区别
 https://www.cnblogs.com/heyonggang/p/3644736.html
@@ -234,3 +237,23 @@ https://www.geeksforgeeks.org/pragma-directive-in-c-c/
 ```
 #pragma GCC poison printf 
 ```
+
+[Understanding Storage Sizes for MySQL TEXT Data Types]: https://chartio.com/resources/tutorials/understanding-strorage-sizes-for-mysql-text-data-types/
+
+http://wubx.net/varchar-vs-text/
+
+http://yoshinorimatsunobu.blogspot.com/2010/11/handling-long-textsblobs-in-innodb-1-to.html
+
+https://nicj.net/mysql-text-vs-varchar-performance/
+
+
+前端安全系列（一）：如何防止XSS攻击？
+https://tech.meituan.com/2018/09/27/fe-security.html
+
+
+在微信H5网页中获取用户基本信息
+https://asyncoder.com/2018/09/21/%E5%9C%A8%E5%BE%AE%E4%BF%A1H5%E7%BD%91%E9%A1%B5%E4%B8%AD%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF/
+
+Tcpdump，从入门到不放弃
+https://cloud.tencent.com/developer/article/1005346
+

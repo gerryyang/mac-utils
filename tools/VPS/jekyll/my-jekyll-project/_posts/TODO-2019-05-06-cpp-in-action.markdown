@@ -17,3 +17,6 @@ categories: cpp
 
 [GCC online documentation]: https://gcc.gnu.org/onlinedocs/
 
+
+https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard
+
