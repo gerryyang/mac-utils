@@ -399,6 +399,133 @@ func main() {
 ```
 * 实际上，`bufio.Scanner`，`ioutil.ReadFile`以及`ioutil.WriteFile`使用`*os.File`中的`Read`和`Write`方法。但是大多数情况很少需要直接访问底层的函数，而是像`bufio`和`io/ioutil`包中的**上层的方法**更易使用。
 
+## GIF动画
+
+* Go标准的图像包的使用，来创建一系列的位图图像，然后将位图序列编码为GIF动画。
+* 在导入由多段路径，如`image/color`组成的包之后，使用路径最后的一段来引用这个包。所以，`color.White`属于`image/color`包。
+* `const`声明用来给常量命名。const声明可以出现在包级别，或在一个函数内。常量必须是数字，字符串或布尔值。
+* 表达式`[]color.Color{...}`是`复合字面量`，即用一系列元素的值初始化Go的复合类型的紧凑表达方式。这里，第一个是`slice`，第二个是`结构体`。
+
+``` go
+// Lissajous generates GIF animations of random Lissajous figures.
+package main
+
+import (
+	"image"
+	"image/color"
+	"image/gif"
+	"io"
+	"math"
+	"math/rand"
+	"os"
+)
+
+//!-main
+// Packages not needed by version in book.
+import (
+	"log"
+	"net/http"
+	"time"
+)
+
+//!+main
+
+var palette = []color.Color{color.White, color.Black}
+
+const (
+	whiteIndex = 0 // first color in palette
+	blackIndex = 1 // next color in palette
+)
+
+func main() {
+	//!-main
+	// The sequence of images is deterministic unless we seed
+	// the pseudo-random number generator using the current time.
+	// Thanks to Randall McPherson for pointing out the omission.
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	if len(os.Args) > 1 && os.Args[1] == "web" {
+		//!+http
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			lissajous(w)
+		}
+		http.HandleFunc("/", handler)
+		//!-http
+		log.Fatal(http.ListenAndServe("localhost:8000", nil))
+		return
+	}
+	//!+main
+	lissajous(os.Stdout)
+}
+
+func lissajous(out io.Writer) {
+	const (
+		cycles  = 5     // number of complete x oscillator revolutions
+		res     = 0.001 // angular resolution
+		size    = 100   // image canvas covers [-size..+size]
+		nframes = 64    // number of animation frames
+		delay   = 8     // delay between frames in 10ms units
+	)
+	freq := rand.Float64() * 3.0 // relative frequency of y oscillator
+	anim := gif.GIF{LoopCount: nframes}
+	phase := 0.0 // phase difference
+	for i := 0; i < nframes; i++ {
+		rect := image.Rect(0, 0, 2*size+1, 2*size+1)
+		img := image.NewPaletted(rect, palette)
+		for t := 0.0; t < cycles*2*math.Pi; t += res {
+			x := math.Sin(t)
+			y := math.Sin(t*freq + phase)
+			img.SetColorIndex(size+int(x*size+0.5), size+int(y*size+0.5),
+				blackIndex)
+		}
+		phase += 0.1
+		anim.Delay = append(anim.Delay, delay)
+		anim.Image = append(anim.Image, img)
+	}
+	gif.EncodeAll(out, &anim) // NOTE: ignoring encoding errors
+}
+```
+
+## 获取一个URL
+
+* 从互联网获取信息。它获取每个指定URL的内容，然后不加解析的输出。类似`curl`这个工具。
+* 使用两个包：`net/http`和`io/ioutil`。
+* 'http.Get'产生一个HTTP请求。如果没有错，返回结果存在响应结构`resp`里面。其中，`resp.Body`包含服务器端响应的一个可读取数据流，随后通过`ioutil.ReadAll`读取整个响应结果并存入`b`。
+
+``` go
+// Fetch prints the content found at each specified URL.
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+)
+
+func main() {
+	for _, url := range os.Args[1:] {
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
+			os.Exit(1)
+		}
+		b, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "fetch: reading %s: %v\n", url, err)
+			os.Exit(1)
+		}
+		fmt.Printf("%s", b)
+	}
+}
+```
+
+## 获取多个URL
+
+TODO
+
+
 
 
 # Go程序组成
