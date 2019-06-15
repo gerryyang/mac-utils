@@ -198,6 +198,7 @@ More：
 3. [Paxos]
 4. [The Raft Consensus Algorithm]
 5. [Raft: Understandable Distributed Consensus]
+6. [All Things Distributed]
 
 
 [分布式系统的事务处理]: https://coolshell.cn/articles/10910.html
@@ -206,3 +207,5 @@ More：
 [The Raft Consensus Algorithm]: https://raft.github.io/
 [寻找一种易于理解的一致性算法（扩展版）]: https://github.com/maemual/raft-zh_cn/blob/master/raft-zh_cn.md
 [Raft: Understandable Distributed Consensus]: http://thesecretlivesofdata.com/raft
+
+[All Things Distributed]: https://www.allthingsdistributed.com/2008/12/eventually_consistent.html

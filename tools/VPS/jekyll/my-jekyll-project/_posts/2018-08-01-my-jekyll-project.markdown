@@ -223,8 +223,8 @@ tail -f /var/log/shadowsocks.log
 
 ## 基础工具
 
-* 浏览器
-	- chrome
+* 浏览器chrome
+	- 使用Google账户登录，方便同步书签等信息，便于多终端使用。
 
 chrome常用扩展：
 
@@ -232,9 +232,16 @@ chrome常用扩展：
 | -- | --
 | DragIt | 方便页面浏览
 | FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
+| 印象笔记剪裁 | 保存网页
+| Vimium | vim快捷键
 
 [FeHelper]: https://chrome.google.com/webstore/search/fehelper?hl=zh-CN
 
+## 设计
+
+* [canva]，在线图形设计平台
+
+[canva]: https://www.canva.com/
 
 ## MacOS
 
@@ -249,6 +256,12 @@ TODO
 [WolframAlpha]: http://www27.wolframalpha.com/
 [时区图]: https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png
 
+
+# 图书
+
+* [All IT eBooks]
+
+[All IT eBooks]: http://www.allitebooks.org/
 
 
 # Refer

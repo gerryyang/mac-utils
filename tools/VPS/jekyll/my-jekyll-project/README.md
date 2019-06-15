@@ -257,3 +257,12 @@ https://asyncoder.com/2018/09/21/%E5%9C%A8%E5%BE%AE%E4%BF%A1H5%E7%BD%91%E9%A1%B5
 Tcpdump，从入门到不放弃
 https://cloud.tencent.com/developer/article/1005346
 
+使用 wireshark 查看 tcpdump 的抓包结果
+https://mozillazg.com/2015/05/open-tcpdump-result-with-wireshark-gui.html
+https://wiki.wireshark.org/CaptureFilters
+
+OpenResty 最佳实践
+https://legacy.gitbook.com/book/moonbingbing/openresty-best-practices/details
+
+
+
