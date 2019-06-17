@@ -8,8 +8,7 @@ categories: life
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-就像[这篇博文]的作者一样，最早在接触互联网的时候就开始养成写博客的习惯，因为上中学的时候对化学老师的`好记性不如烂笔头`一句话铭记于心。当时互联网还没有微博，微信，逛论坛和博客是那时的主流。最早写博文是在沪江英语的博客上，因为经常逛沪江论坛，后来由于沪江英语转型博客服务已经不再提供，之前写的一些文章也找不到了。后来又经常逛CSDN论坛，就改为在[CSDN的博客]上继续写博客，因为是免费的服务，天下没有免费的午餐，博客上的广告投放越来越多，有时还经常显示网站在维护不能访问，故而觉得有必要搭建一个自己的博客。目前是在[DigitalOcean]上购买的[VPS]服务，主要用于
-公众号和博客。其中博客选择的[jekyll]，因为它的哲学思想就是注重内容，界面简单，可以像hacker一样写文章，正如你看到的样子。工作和生活中难免存在很多琐碎的事情，维护博客目的是将一些有价值的事情记录下来，在以后的岁月里可以看到自己之前的轨迹。
+就像[这篇博文]的作者一样，最早在接触互联网的时候就开始养成写博客的习惯，因为上中学的时候对化学老师的`好记性不如烂笔头`一句话铭记于心。当时互联网还没有微博，微信，逛论坛和博客是那时的主流。最早写博文是在沪江英语的博客上，因为经常逛沪江论坛，后来由于沪江英语转型博客服务已经不再提供，之前写的一些文章也找不到了。后来又经常逛CSDN论坛，就改为在[CSDN的博客]上继续写博客，因为是免费的服务，天下没有免费的午餐，博客上的广告投放越来越多，有时还经常显示网站在维护不能访问，故而觉得有必要搭建一个自己的博客。目前是在[DigitalOcean]上购买的[VPS]服务，主要用于公众号和博客。其中博客选择的[jekyll]，因为它的哲学思想就是注重内容，界面简单，可以像hacker一样写文章，正如你看到的样子。工作和生活中难免存在很多琐碎的事情，维护博客目的是将一些有价值的事情记录下来，在以后的岁月里可以看到自己之前的轨迹。
 
 
 [这篇博文]: http://tom.preston-werner.com/2008/11/17/blogging-like-a-hacker.html
@@ -98,19 +97,15 @@ curl http://icanhazip.com
 
 ## 系统安全配置
 
-* HTTPS证书设置
-
-[证书安装指引]
+* HTTPS证书设置。参考[证书安装指引]。
 
 [证书安装指引]: https://cloud.tencent.com/document/product/400/4143
 
 ## 开发工具配置
 
-注意先更新源 apt-get update。
+注意先更新源`apt-get update`。
 
 * git
-
-
 * gcc 
 
 ```
@@ -197,26 +192,53 @@ sudo ssserver -d stop
 tail -f /var/log/shadowsocks.log
 ```
 
+[Shadowsocks](https://github.com/shadowsocks/shadowsocks)已被河蟹。可以找到一些[fork的版本](https://github.com/ziggear/shadowsocks)。
+
+
+> Q: 如何在iOS客户端使用？
+
+方案1：通过`Shadowsocks客户端`使用。
+
+1. 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。快速注册一个美区Apple ID(注册过程中全程挂美国线路代理) ，注册过程中需要的美国地址信息可以去[这个网站](https://www.fakeaddressgenerator.com/)
+
+2. 注册好后就可以下载下面几款客户端软件。
+
+* Potatso Lite (免费)
+* Potatso 2 ($2.99)
+* Shadowrocket($2.99)
+* Wingy - Proxy For Http(s),Socks5,Shadowsocks
+
+3. 打开下载的客户端软件，输入`服务器信息`配置即可使用。
+
+方案2：通过`AnyConnect`使用。
+
+由于政策和平台的封闭性，iOS目前可以使用AnyConnect协议。
+
+
+## 付费服务
+
+* [devpn.com](devpn.com)  
+
+[我的推广链接](https://goen.win/mygki8)
+
+
+* [云梯](https://yunti-16.xyz/index.html) 
+	- 主站：www.yuntiss.top
+	- 备用站：www.yuntiss.site
+
+
 # jekyll配置
 
 * 目录索引(TOC)
 
 [How I Add a Table of Contents to my Jekyll Blog Written in Markdown]
+
 [kramdown]
 
 [How I Add a Table of Contents to my Jekyll Blog Written in Markdown]: http://www.seanbuscay.com/blog/jekyll-toc-markdown/
+
 [kramdown]: https://kramdown.gettalong.org/
 
-
-
-
-# 收藏站点
-
-## 博客
-
-[永远不上线-借筏度岸]
-
-[永远不上线-借筏度岸]: http://www.cnblogs.com/lookbackinside/
 
 
 # 工具
@@ -237,15 +259,16 @@ chrome常用扩展：
 
 [FeHelper]: https://chrome.google.com/webstore/search/fehelper?hl=zh-CN
 
+## 编辑器
+
+* Sublime
+
+
 ## 设计
 
 * [canva]，在线图形设计平台
 
 [canva]: https://www.canva.com/
-
-## MacOS
-
-TODO
 
 ## 其他
 
@@ -263,8 +286,6 @@ TODO
 
 [All IT eBooks]: http://www.allitebooks.org/
 
-
-# Refer
 
 
 
