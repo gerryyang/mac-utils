@@ -8,7 +8,7 @@ categories: tools
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-Linux的创始人Linus Torvalds在2005年开发了[Git]的原型程序，主要用于对Linux内核开发的版本管理。作为开发者日常离不开对代码的管理，Git 采用了分布式版本库的方式，使得开发者更加自由，随时随地可以管理自己的代码，而不像集中式的版本控制工具(`VCSs`)，例如`CVS`，`Subversion`，需要对网络的依赖。使用Git让源代码的管理，以及团队间的协作更为高效，这也是为什么越来越多的科技公司都使用Git进行代码管理。
+Linux的创始人`Linus Torvalds`在2005年开发了[Git]的原型程序，主要用于对**Linux内核开发的版本管理**。作为开发者日常离不开对代码的管理，Git采用了**分布式版本库**的方式，使得开发者更加自由，随时随地在本地可以管理自己的代码，而不像**集中式的版本控制工具**(`VCSs`)，例如`CVS`，`Subversion`，代码管理需要依赖网络。使用Git让源代码的管理，以及团队间的协作更为高效，这也是为什么越来越多的科技公司都使用Git进行代码管理。
 
 [Git]: https://zh.wikipedia.org/wiki/Git
 
@@ -23,10 +23,11 @@ Git的操作流程：
 
 ![git-mode](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git-mode.jpg)
 
+```
+工作目录 ------------> 暂存区 ------------> 版本历史
+        git add files        git commit
+```
 
-更多：[阮一峰: 版本控制入门插图教程]
-
-[阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
 
 # [Git的设计思想]
 
@@ -82,7 +83,7 @@ This makes using Git a joy because we know we can experiment without the danger 
 
 请记住Git中的`三种`状态，通过命令行操作时，在命令行的提示信息中也可以看到当前执行到了哪个状态。
 
-1. **committed** (已提交到**本地**数据库)
+1. **committed** (已提交到`本地数据库`)
 2. **modified** (已修改但未提交)
 3. **staged** (对修改进行了标记以待提交)
 
@@ -116,11 +117,15 @@ If a particular version of a file is in the git directory, it's considered commi
 
 # Git的安装和配置
 
-[Git下载地址]，Git有两种使用方式，一种是命令行，一种是集成了git命令的客户端。安装后，对Git进行配置，通过命令行的方式：
+## 下载安装
+
+[Git下载地址]，Git有两种使用方式，一种是`命令行`，一种是集成了git命令的`GUI客户端`。本文主要使用命令行的方式。
 
 [Git下载地址]: http://git-scm.com/downloads
 
 ## 基础配置
+
+安装后，对Git进行配置，通过命令行的方式：
 
 ``` bash
 # Sets the default name for git to use when you commit
@@ -130,22 +135,52 @@ git config --global user.name "Your Name Here"
 git config --global user.email "your_email@example.com"
 ```
 
-注意上面的设置是对**全局**生效的，若想对某个repo使用不同的username或email可以通过下面方法进行设置：
+注意上面的设置是对`全局`生效的，若想对`某个repo`使用不同的username或email可以通过下面方法进行设置：
 
 ``` bash
 # Changes the working directory to the repository you need to switch info for
 cd my_other_repo
 
 # Sets the user's name for this specific repository
-git config user.name "Different Name"
+git config --local user.name "Different Name"
 
 # Sets the user's email for this specific repository
-git config user.email "differentemail@email.com"
+git config --local user.email "differentemail@email.com"
 ```
+
+查看配置：
+
+``` bash
+git config --list [--local | --global | --system]
+```
+
+区别:
+* local：只对某一个仓库生效
+* global：对当前用户的所有仓库生效 (常用)
+* system：对本系统的所有用户生效 (少用)
 
 更多：[Customizing-Git-Git-Configuration]
 
 [Customizing-Git-Git-Configuration]: https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_git_config
+
+## 创建Git仓库
+
+两种场景：
+
+* 把已有的项目代码纳入Git管理
+
+```
+$ cd your_project
+$ git init 
+```
+
+* 新建的项目直接使用Git管理
+
+```
+$ cd 某个文件夹
+$ git init your_project   # 会在当前路径下创建your_project目录
+$ cd your_project
+```
 
 ## 忽略文件
 
@@ -349,6 +384,7 @@ git log --since=2.weeks
 
 # 将每个提交版本信息缩减为一行
 git log --pretty=oneline 
+git log --oneline -n3 
 ```
 更多: [Git-基础-查看提交历史]
 
@@ -397,14 +433,12 @@ git checkout -b hotfix
 git commit -a -m 'fix the bug'
 git checkout master
 git merge hotfix
-# 最新的修改已经合到 master分支，hotfix分支可以退出历史舞台了，可以删掉   (建议，除非分支确实太多了)
+# 最新的修改已经合到 master分支，hotfix分支可以退出历史舞台了，可以删掉(建议，除非分支确实太多了)
 git branch -d hotfix
 
 ```
 
 注意：若在执行`git merge`时遇到代码冲突，需要先解决冲突。解决完冲突后，执行`git status`可以查看，任何因包含合并冲突而有待解决的文件，都会以未合并状态标识出来。而如果没有，说明所有的冲突都修复了，并且提醒你去提交一下。再执行`git commit -am <comment>`，至此冲突解决完毕并已提交代码。
-
-
 
 ## 撤销操作
 
@@ -517,7 +551,7 @@ git stash pop
 
 ``` bash
 # 使用 git log 找到起始 commit-id
-git reset commit-id  # 切记不要用 -- hard 参数
+git reset commit-id  # 切记不要用 --hard 参数
 # 重新 git add && git commit
 ```
 
@@ -570,8 +604,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ``` bash
 cd $HOME/.ssh
-ssh-keygen -t rsa -C <email>                                      # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
-ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"    # 指定生成的私钥文件名
+ssh-keygen -t rsa -C <email>                                 # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
+ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"  # 指定生成的私钥文件名
 ```
 
 生成公私钥后，复制公钥信息配置在Github上。并注意本地`.git/config`配置中的`url`为ssh要求的格式：
@@ -644,8 +678,13 @@ https://tortoisegit.org/
 
 更多关于Git的内容可以参考以下一些资料。
 
-1. Git官方的使用文档[Getting Started - About Version Control]
-2. [廖雪峰: Git教程]
+* [阮一峰: 版本控制入门插图教程]
+* Git官方的使用文档 [Getting Started - About Version Control]
+* [廖雪峰: Git教程]
+
+
+
+[阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
 
 [Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 
