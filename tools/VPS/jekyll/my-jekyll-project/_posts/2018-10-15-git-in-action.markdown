@@ -125,7 +125,19 @@ If a particular version of a file is in the git directory, it's considered commi
 
 ## 基础配置
 
-安装后，对Git进行配置，通过命令行的方式：
+安装后，对Git进行配置，通过命令行的方式。首先需要配置用户名和邮箱，如果没有配置在执行Git命令时会提示如下错误：
+
+```
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+```
 
 ``` bash
 # Sets the default name for git to use when you commit

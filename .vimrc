@@ -2,7 +2,7 @@
 "------------------------------
 " MacVim configuration settings
 " author: gerryyang
-" update time: 2014-11-09
+" update time: 2019-07-08
 "------------------------------
 
 " -------------
@@ -14,13 +14,13 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+"set rtp+=~/.vim/bundle/Vundle.vim
+"call vundle#begin()
 " alternatively, pass a path where Vundle should install plugins
 "call vundle#begin('~/some/path/here')
 
 " let Vundle manage Vundle, required
-Plugin 'gmarik/Vundle.vim'
+"Plugin 'gmarik/Vundle.vim'
 
 " The following are examples of different formats supported.
 " Keep Plugin commands between vundle#begin/end.
@@ -39,10 +39,10 @@ Plugin 'gmarik/Vundle.vim'
 ""Plugin 'user/L9', {'name': 'newL9'}
 
 " Install Vim-go
-Plugin 'fatih/vim-go'
+"Plugin 'fatih/vim-go'
 
 " All of your Plugins must be added before the following line
-call vundle#end()            " required
+"call vundle#end()            " required
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
 "filetype plugin on
