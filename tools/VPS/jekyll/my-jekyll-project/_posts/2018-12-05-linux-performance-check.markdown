@@ -366,7 +366,7 @@ Swap:            0          0          0
 补充：
 
 [What is RSS and VSZ in Linux memory management](https://stackoverflow.com/questions/7880784/what-is-rss-and-vsz-in-linux-memory-management)
-
+[RSS and PSS, Clean vs Dirty, Private vs Shared](http://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
 
 
 ## 内存映射
@@ -1547,10 +1547,11 @@ watch -d cat /proc/interrupts
 	- perf top (实时显示占用CPU时钟最多的函数或指令，用来查找热点函数，缺点是无法离线保存数据用于事后分析)
 	- 第一行包含三个数据，分别是：采样数(Samples)，事件类型(event)，事件总量(Event count)
 	- 表格中，第一行包含四列：
-		= 第一列`Overhead`，是该符号的性能事件在所有采样中的比例，用百分比来表示。
-		= 第二列`Shared`，是该函数或指令所在的动态共享对象(Dynamic Shared Object)，如内核，进程名，动态链接库名，内核模块名等。
-		= 第三列`Object`，是动态共享对象的类型。比如，`[.]`表示用户空间的可执行程序，或者动态链接库；`[k]`表示内核空间。
-		= 第四列`Symbol`，是符号名(即，函数名)。当函数名未知时，用十六进制的地址来表示。
+		+ 第一列`Overhead`，是该符号的性能事件在所有采样中的比例，用百分比来表示。
+		+ 第二列`Shared`，是该函数或指令所在的动态共享对象(Dynamic Shared Object)，如内核，进程名，动态链接库名，内核模块名等。
+		+ 第三列`Object`，是动态共享对象的类型。比如，`[.]`表示用户空间的可执行程序，或者动态链接库；`[k]`表示内核空间。
+		+ 第四列`Symbol`，是符号名(即，函数名)。当函数名未知时，用十六进制的地址来表示。
+
 + 离线分析。
 	- perf record -ag 记录性能事件，等待x秒后Ctrl+C退出
 	- perf report 查看报告
