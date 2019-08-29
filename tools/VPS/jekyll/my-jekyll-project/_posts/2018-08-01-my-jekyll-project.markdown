@@ -222,6 +222,10 @@ https://github.com/shadowsocks/shadowsocks-iOS/releases
 
 https://github.com/shadowsocks/ShadowsocksX-NG/releases/
 
+> Q: 如何在Windows上使用Shadowsocks代理
+
+https://github.com/shadowsocks/shadowsocks-windows/releases/
+
 
 
 ## 付费服务
