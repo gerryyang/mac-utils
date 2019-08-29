@@ -214,10 +214,19 @@ tail -f /var/log/shadowsocks.log
 
 由于政策和平台的封闭性，iOS目前可以使用AnyConnect协议。
 
+> Q: 如何在Mac OS X上使用Shadowsocks代理
+
+下载客户端并添加服务器，然后选择“自动代理模式”。
+
+https://github.com/shadowsocks/shadowsocks-iOS/releases
+
+https://github.com/shadowsocks/ShadowsocksX-NG/releases/
+
+
 
 ## 付费服务
 
-* [devpn.live/](https://devpn.live/)  
+* [devpn.live](https://devpn.live/)  
 
 [我的推广链接](https://goen.win/mygki8)
 
