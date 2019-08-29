@@ -217,7 +217,7 @@ tail -f /var/log/shadowsocks.log
 
 ## 付费服务
 
-* [devpn.com](devpn.com)  
+* [devpn.live/](https://devpn.live/)  
 
 [我的推广链接](https://goen.win/mygki8)
 
