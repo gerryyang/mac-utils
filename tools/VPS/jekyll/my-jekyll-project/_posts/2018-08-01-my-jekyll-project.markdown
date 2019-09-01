@@ -283,11 +283,21 @@ chrome常用扩展：
 * Sublime
 
 
-## 设计
+## 画图
 
 * [canva]，在线图形设计平台
 
 [canva]: https://www.canva.com/
+
+* websequencediagrams
+
+https://www.websequencediagrams.com/
+
+* flowchart.js
+
+https://github.com/adrai/flowchart.js
+https://github.com/francoislaberge/diagrams/#flowchart
+
 
 ## 其他
 

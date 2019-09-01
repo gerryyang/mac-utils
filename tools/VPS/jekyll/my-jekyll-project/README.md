@@ -265,4 +265,25 @@ OpenResty 最佳实践
 https://legacy.gitbook.com/book/moonbingbing/openresty-best-practices/details
 
 
+## rpc
+
+https://github.com/apache/incubator-brpc/blob/master/docs/cn/benchmark.md
+
+
+## naming
+
+http://mk.oa.com/q/257553?strict=true
+https://google.github.io/styleguide/cppguide.html#Naming
+https://unbug.github.io/codelf/
+
+## GDB 
+
+http://www.yolinux.com/TUTORIALS/src/dbinit_stl_views-1.03.txt
+
+## pb
+
+https://www.ibm.com/developerworks/cn/linux/l-cn-gpb/index.html
+https://github.com/thekvs/cpp-serializers
+https://github.com/protocolbuffers/protobuf/blob/master/docs/performance.md
+https://colobu.com/2015/09/28/Golang-Serializer-Benchmark-Comparison/
 
