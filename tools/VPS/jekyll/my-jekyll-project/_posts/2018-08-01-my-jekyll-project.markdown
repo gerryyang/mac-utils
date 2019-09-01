@@ -226,7 +226,13 @@ https://github.com/shadowsocks/ShadowsocksX-NG/releases/
 
 https://github.com/shadowsocks/shadowsocks-windows/releases/
 
+> Q: openssl升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误
 
+```
+EVP_CIPHER_CTX was made opaque in OpenSSL 1.1.0. As a result, EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup() disappeared.
+EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
+```
+需要修改`/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py`，将`EVP_CIPHER_CTX_cleanup`替换为`EVP_CIPHER_CTX_reset`.
 
 ## 付费服务
 
