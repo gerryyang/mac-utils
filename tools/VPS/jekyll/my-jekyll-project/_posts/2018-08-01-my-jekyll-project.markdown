@@ -293,11 +293,15 @@ chrome常用扩展：
 
 https://www.websequencediagrams.com/
 
-* flowchart.js
+* flowchart.js (流程图)
 
 https://github.com/adrai/flowchart.js
 https://github.com/francoislaberge/diagrams/#flowchart
 
+* Viz.js (标准的图，Graphviz in your browser)
+
+http://viz-js.com/
+https://github.com/mdaines/viz.js
 
 ## 其他
 
