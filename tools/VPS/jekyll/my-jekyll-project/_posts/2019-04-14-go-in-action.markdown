@@ -553,6 +553,12 @@ TODO
 5. [The Go Programming Language]
 6. [Dave Cheney的golang博客]
 7. [High Performance Go Workshop - Dave Cheney]
+8. [go-web-framework-benchmark]
+9. [fasthttp]
+10. [fasthttp-router]
+11. [awesome-go]
+12. [Jaeger]
+13. [go-chassis]
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org
@@ -563,3 +569,9 @@ TODO
 [Dave Cheney的golang博客]: dave.cheney.net
 [High Performance Go Workshop - Dave Cheney]: https://dave.cheney.net/high-performance-go-workshop/gopherchina-2019.html?from=singlemessage&isappinstalled=0
 
+[go-web-framework-benchmark]: https://github.com/smallnest/go-web-framework-benchmark
+[fasthttp]: https://github.com/valyala/fasthttp
+[fasthttp-router]: https://github.com/fasthttp/router
+[awesome-go]: https://github.com/avelino/awesome-go
+[Jaeger]: https://github.com/jaegertracing/jaeger
+[go-chassis]: https://github.com/go-chassis/go-chassis
