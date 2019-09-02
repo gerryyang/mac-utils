@@ -8,7 +8,7 @@ categories: life
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-就像[这篇博文]的作者一样，最早在接触互联网的时候就开始养成写博客的习惯，因为上中学的时候对化学老师的`好记性不如烂笔头`一句话铭记于心。当时互联网还没有微博，微信，逛论坛和博客是那时的主流。最早写博文是在沪江英语的博客上，因为经常逛沪江论坛，后来由于沪江英语转型博客服务已经不再提供，之前写的一些文章也找不到了。后来又经常逛CSDN论坛，就改为在[CSDN的博客]上继续写博客，因为是免费的服务，天下没有免费的午餐，博客上的广告投放越来越多，有时还经常显示网站在维护不能访问，故而觉得有必要搭建一个自己的博客。目前是在[DigitalOcean]上购买的[VPS]服务，主要用于公众号和博客。其中博客选择的[jekyll]，因为它的哲学思想就是注重内容，界面简单，可以像hacker一样写文章，正如你看到的样子。工作和生活中难免存在很多琐碎的事情，维护博客目的是将一些有价值的事情记录下来，在以后的岁月里可以看到自己之前的轨迹。
+就像[这篇博文]的作者一样，最早在接触互联网的时候就开始养成写博客的习惯，因为上中学的时候对化学老师的`好记性不如烂笔头`一句话铭记于心。当时互联网还没有微博，微信，逛论坛和博客是那时的主流。最早写博文是在沪江英语的博客上，因为经常逛沪江论坛，后来由于沪江英语转型博客服务已经不再提供，之前写的一些文章也找不到了。后来又经常逛CSDN论坛，就改为在[CSDN的博客]上继续写博客，因为是免费的服务，天下没有免费的午餐，博客上的广告投放越来越多，有时还经常显示网站在维护不能访问，故而觉得有必要搭建一个自己的博客。目前是在[DigitalOcean]上购买的[VPS]服务，主要用于公众号和博客。其中博客选择的[jekyll]，因为它的哲学思想就是注重内容，界面简单，可以像hacker一样写文章，正如你看到的样子。工作和生活中难免存在很多琐碎的事情，维护博客目的是将一些有价值的事情记录下来，让自己多一些思考。
 
 
 [这篇博文]: http://tom.preston-werner.com/2008/11/17/blogging-like-a-hacker.html
@@ -178,28 +178,31 @@ http://104.131.173.242/phpmyadmin/
 
 # 科学上网
 
-## Shadowsocks
+## 搭建Shadowsocks服务
 
 Shadowsocks is a cross-platform tunnel proxy which can help you get through firewalls.
 
-[Shadowsocks]: https://github.com/gerryyang/shadowsocks
-
-
-```
-sudo ssserver -p 443 -k password -m rc4-md5 --user nobody -d start
-sudo ssserver -d stop
-
-tail -f /var/log/shadowsocks.log
-```
-
-[Shadowsocks](https://github.com/shadowsocks/shadowsocks)已被河蟹。可以找到一些[fork的版本](https://github.com/ziggear/shadowsocks)。
+[Shadowsocks](https://github.com/shadowsocks/shadowsocks)已被河蟹。可以找到一些fork的版本[release 2.8.2](https://github.com/ziggear/shadowsocks)。
 
 
 > Q: 如何在iOS客户端使用？
 
-方案1：通过`Shadowsocks客户端`使用。
+1. 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后，请及时退出该账号[refer]。
 
-1. 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。快速注册一个美区Apple ID(注册过程中全程挂美国线路代理) ，注册过程中需要的美国地址信息可以去[这个网站](https://www.fakeaddressgenerator.com/)
+```
+kea6404w@icloud.com Dd112211
+z14g024g@icloud.com Dd112211
+s4778y1k@icloud.com Dd112211
+lnlf6h10@icloud.com Dd112211
+oy44mq3h@icloud.com Dd112211
+xz7x1npo@icloud.com Dd112211
+jl1y8uc7@icloud.com Dd112211
+d79b4z6y@icloud.com Dd112211 (验证可用)
+y188t17y@icloud.com Dd112211
+b27y8u2v@icloud.com Dd112211
+```
+
+[refer]: https://okmobiledev.github.io/download/okex/ios-store.html
 
 2. 注册好后就可以下载下面几款客户端软件。
 
@@ -210,29 +213,29 @@ tail -f /var/log/shadowsocks.log
 
 3. 打开下载的客户端软件，输入`服务器信息`配置即可使用。
 
-方案2：通过`AnyConnect`使用。
-
-由于政策和平台的封闭性，iOS目前可以使用AnyConnect协议。
-
 > Q: 如何在Mac OS X上使用Shadowsocks代理
 
 下载客户端并添加服务器，然后选择“自动代理模式”。
 
-https://github.com/shadowsocks/shadowsocks-iOS/releases
+[https://github.com/shadowsocks/shadowsocks-iOS/releases](https://github.com/shadowsocks/shadowsocks-iOS/releases)
 
-https://github.com/shadowsocks/ShadowsocksX-NG/releases/
+[https://github.com/shadowsocks/ShadowsocksX-NG/releases/](https://github.com/shadowsocks/ShadowsocksX-NG/releases/)
 
 > Q: 如何在Windows上使用Shadowsocks代理
 
-https://github.com/shadowsocks/shadowsocks-windows/releases/
+[https://github.com/shadowsocks/shadowsocks-windows/releases/](https://github.com/shadowsocks/shadowsocks-windows/releases/)
 
 > Q: openssl升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误
 
+错误原因：
 ```
 EVP_CIPHER_CTX was made opaque in OpenSSL 1.1.0. As a result, EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup() disappeared.
 EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 ```
-需要修改`/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py`，将`EVP_CIPHER_CTX_cleanup`替换为`EVP_CIPHER_CTX_reset`.
+
+解决方法：修改`/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py`，将`EVP_CIPHER_CTX_cleanup`替换为`EVP_CIPHER_CTX_reset`。
+
+
 
 ## 付费服务
 
@@ -262,17 +265,17 @@ EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 
 # 工具
 
-## 基础工具
 
-* 浏览器chrome
+## 浏览器
+
+* Google Chrome
 	- 使用Google账户登录，方便同步书签等信息，便于多终端使用。
-
-chrome常用扩展：
+	- Chrome常用扩展：
 
 | 名字 | 功能
 | -- | --
 | DragIt | 方便页面浏览
-| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
+| [FeHelper] | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
 | 印象笔记剪裁 | 保存网页
 | Vimium | vim快捷键
 
@@ -280,49 +283,40 @@ chrome常用扩展：
 
 ## 编辑器
 
+* Vim
 * Sublime
 
 
-## 画图
+## 画图工具
 
-* [canva]，在线图形设计平台
+* [canva](https://www.canva.com/)
+	- 在线图形设计平台
 
-[canva]: https://www.canva.com/
+* [websequencediagrams](https://www.websequencediagrams.com/)
+	- 通过脚本语言生成**时序图**。
 
-* websequencediagrams
+* [flowchart.js](https://github.com/adrai/flowchart.js) 
 
-https://www.websequencediagrams.com/
+	- 通过脚本语言生成**流程图**。
+	- 使用[diagrams](https://github.com/francoislaberge/diagrams/#flowchart)工具可以生成各种图形，包括flowchart。
 
-* flowchart.js (流程图)
+* [Viz.js](https://github.com/mdaines/viz.js) 
 
-https://github.com/adrai/flowchart.js
+	- 借助[Viz](http://viz-js.com/)Web平台使用`Graphviz`的`DOT`语言在浏览器中生成**广义的图形**。
 
-https://github.com/francoislaberge/diagrams/#flowchart
+refer:
 
-* Viz.js (标准的图，Graphviz in your browser)
+[使用 Graphviz 生成自动化系统图](https://www.ibm.com/developerworks/cn/aix/library/au-aix-graphviz/index.html)
+[graphviz-dotguide官方教程](http://www.graphviz.org/pdf/dotguide.pdf)
 
-http://viz-js.com/
 
-https://github.com/mdaines/viz.js
+# 文档
 
-http://www.graphviz.org/pdf/dotguide.pdf
+* [All IT eBooks](http://www.allitebooks.org/)
+
 
 ## 其他
 
-* [WolframAlpha]，一个在线数学工具。
-* [时区图]
-
-
-[WolframAlpha]: http://www27.wolframalpha.com/
-[时区图]: https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png
-
-
-# 图书
-
-* [All IT eBooks]
-
-[All IT eBooks]: http://www.allitebooks.org/
-
-
-
+* [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。
+* [时区图](https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png)
 
