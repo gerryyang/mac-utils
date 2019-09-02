@@ -187,33 +187,35 @@ Shadowsocks is a cross-platform tunnel proxy which can help you get through fire
 
 > Q: 如何在iOS客户端使用？
 
-1. 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后，请及时退出该账号[refer]。
+Step 1: 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后，请及时退出该账号([refer])。
 
-```
-kea6404w@icloud.com Dd112211
-z14g024g@icloud.com Dd112211
-s4778y1k@icloud.com Dd112211
-lnlf6h10@icloud.com Dd112211
-oy44mq3h@icloud.com Dd112211
-xz7x1npo@icloud.com Dd112211
-jl1y8uc7@icloud.com Dd112211
-d79b4z6y@icloud.com Dd112211 (验证可用)
-y188t17y@icloud.com Dd112211
-b27y8u2v@icloud.com Dd112211
-```
+| ID | KEY
+| -- | --
+| kea6404w@icloud.com  | Dd112211
+| z14g024g@icloud.com  | Dd112211
+| s4778y1k@icloud.com  | Dd112211
+| lnlf6h10@icloud.com  | Dd112211
+| oy44mq3h@icloud.com  | Dd112211
+| xz7x1npo@icloud.com  | Dd112211
+| jl1y8uc7@icloud.com  | Dd112211
+| d79b4z6y@icloud.com  | Dd112211 (验证可用)
+| y188t17y@icloud.com  | Dd112211
+| b27y8u2v@icloud.com  | Dd112211
 
 [refer]: https://okmobiledev.github.io/download/okex/ios-store.html
 
-2. 注册好后就可以下载下面几款客户端软件。
+Step 2: 注册好后就可以下载下面几款客户端软件。
 
+* Sockswitch (免费，验证可用)
 * Potatso Lite (免费)
 * Potatso 2 ($2.99)
 * Shadowrocket($2.99)
 * Wingy - Proxy For Http(s),Socks5,Shadowsocks
 
-3. 打开下载的客户端软件，输入`服务器信息`配置即可使用。
+Step 3: 打开下载的客户端软件，输入ss的`服务器信息`配置即可使用。
 
-> Q: 如何在Mac OS X上使用Shadowsocks代理
+
+> Q: 如何在Mac OS X上使用Shadowsocks代理？
 
 下载客户端并添加服务器，然后选择“自动代理模式”。
 
@@ -221,11 +223,11 @@ b27y8u2v@icloud.com Dd112211
 
 [https://github.com/shadowsocks/ShadowsocksX-NG/releases/](https://github.com/shadowsocks/ShadowsocksX-NG/releases/)
 
-> Q: 如何在Windows上使用Shadowsocks代理
+> Q: 如何在Windows上使用Shadowsocks代理？
 
 [https://github.com/shadowsocks/shadowsocks-windows/releases/](https://github.com/shadowsocks/shadowsocks-windows/releases/)
 
-> Q: openssl升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误
+> Q: OpenSSL升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误
 
 错误原因：
 ```
@@ -296,17 +298,16 @@ EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 	- 通过脚本语言生成**时序图**。
 
 * [flowchart.js](https://github.com/adrai/flowchart.js) 
-
 	- 通过脚本语言生成**流程图**。
 	- 使用[diagrams](https://github.com/francoislaberge/diagrams/#flowchart)工具可以生成各种图形，包括flowchart。
 
 * [Viz.js](https://github.com/mdaines/viz.js) 
-
 	- 借助[Viz](http://viz-js.com/)Web平台使用`Graphviz`的`DOT`语言在浏览器中生成**广义的图形**。
 
 refer:
 
 [使用 Graphviz 生成自动化系统图](https://www.ibm.com/developerworks/cn/aix/library/au-aix-graphviz/index.html)
+
 [graphviz-dotguide官方教程](http://www.graphviz.org/pdf/dotguide.pdf)
 
 
@@ -315,7 +316,7 @@ refer:
 * [All IT eBooks](http://www.allitebooks.org/)
 
 
-## 其他
+# 数学
 
 * [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。
 * [时区图](https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png)
