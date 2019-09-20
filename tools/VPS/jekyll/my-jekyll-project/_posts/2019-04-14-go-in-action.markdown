@@ -559,6 +559,7 @@ TODO
 11. [awesome-go]
 12. [Jaeger]
 13. [go-chassis]
+14. [learn-go-with-tests]
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org
@@ -575,3 +576,4 @@ TODO
 [awesome-go]: https://github.com/avelino/awesome-go
 [Jaeger]: https://github.com/jaegertracing/jaeger
 [go-chassis]: https://github.com/go-chassis/go-chassis
+[learn-go-with-tests]: https://github.com/quii/learn-go-with-tests

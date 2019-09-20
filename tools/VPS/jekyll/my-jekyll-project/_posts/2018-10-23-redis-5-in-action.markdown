@@ -1058,6 +1058,8 @@ multi
 exec
 ```
 
+refer: [transaction](https://redisbook.readthedocs.io/en/latest/feature/transaction.html)
+
 
 # Redis键的过期时间
 

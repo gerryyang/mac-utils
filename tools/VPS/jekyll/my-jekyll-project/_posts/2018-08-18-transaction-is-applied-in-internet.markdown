@@ -14,6 +14,7 @@ categories: tech
 2. 增加锁上可并行的线程数。例如，读锁和写锁分离，允许并行读取数据。
 3. 选择正确的锁类型。例如，悲观锁适合并发争抢比较严重的场景，乐观锁适合并发争抢不太严重的场景。
 
+关于MySQL的锁可以参考何登成的这篇文章[MySQL加锁处理分析](http://blog.sae.sina.com.cn/archives/2127)。
 
 # 背景
 
@@ -25,7 +26,7 @@ categories: tech
 
 ![acid_lock_time](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/acid_lock_time.png)
 
-内部是通过**Two-Phase Commit**来保证的。
+内部是通过**Two-Phase Commit**来保证的。2PL就是将加锁/解锁分为两个完全不相交的阶段。加锁阶段：只加锁，不放锁。解锁阶段：只放锁，不加锁。
 
 ```
 Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
@@ -517,6 +518,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 18. [Pattern: Database per service]
 19. [Understanding of Fescar Isolation]
 20. [分布式事务中间件 Fescar - RM 模块源码解读]
+21. [MySQL Cluster Index：聚簇索引]
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
@@ -559,3 +561,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [Understanding of Fescar Isolation]: https://www.jianshu.com/p/4cb127b737cf
 
 [分布式事务中间件 Fescar - RM 模块源码解读]: https://mp.weixin.qq.com/s/EzmZ-DAi-hxJhRkFvFhlJQ
+
+[MySQL Cluster Index：聚簇索引]: http://dev.mysql.com/doc/refman/5.0/en/innodb-index-types.html
