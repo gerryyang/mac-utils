@@ -108,6 +108,8 @@ UPDATE savings SET balance = balance + 200.00 WHERE customer_id = 'gerry';
 COMMIT;
 {% endhighlight %}
 
+### ACID
+
 `ACID`表示原子性，一致性，隔离性和持久性。一个运行良好的事务处理系统，必须具备这些标准特征。事务的ACID特性可以确保银行不会弄丢你的钱。
 
 ```
@@ -121,21 +123,70 @@ COMMIT;
 一旦事务提交，则其所做的修改就会永久保存在数据库中。
 ```
 
+### MVCC：Snapshot Read vs Current Read
+
+MySQL InnoDB存储引擎，实现的是基于多版本的并发控制协议——MVCC (Multi-Version Concurrency Control) (注：与MVCC相对的，是基于锁的并发控制，Lock-Based Concurrency Control)。MVCC最大的好处，相信也是耳熟能详：读不加锁，读写不冲突。在读多写少的OLTP应用中，读写不冲突是非常重要的，极大的增加了系统的并发性能，这也是为什么现阶段，几乎所有的RDBMS，都支持了MVCC。
+
+在MVCC并发控制中，读操作可以分成两类：快照读 (snapshot read)与当前读 (current read)。快照读，读取的是记录的可见版本 (有可能是历史版本)，不用加锁。当前读，读取的是记录的最新版本，并且，当前读返回的记录，都会加上锁，保证其他事务不会再并发修改这条记录。在一个支持MVCC并发控制的系统中，哪些读操作是快照读？哪些操作又是当前读呢？以MySQL InnoDB为例：
+
+ 
+快照读：简单的select操作，属于快照读，不加锁。(当然，也有例外，下面会分析)
+```
+select * from table where ?;
+ ```
+
+当前读：特殊的读操作，插入/更新/删除操作，属于当前读，需要加锁。
+```
+select * from table where ? lock in share mode;
+select * from table where ? for update;
+insert into table values (…);
+update table set ? where ?;
+delete from table where ?;
+```
+所有以上的语句，都属于当前读，读取记录的最新版本。并且，读取之后，还需要保证其他并发事务不能修改当前记录，对读取记录加锁。其中，除了第一条语句，对读取记录加S锁 (共享锁)外，其他的操作，都加的是X锁 (排它锁)。
+
+### Cluster Index：聚簇索引
+
+InnoDB存储引擎的数据组织方式，是聚簇索引表：完整的记录，存储在主键索引中，通过主键索引，就可以获取记录所有的列。关于聚簇索引表的组织方式，可以参考MySQL的官方文档：Clustered and Secondary Indexes 。
+
+### 2PL：Two-Phase Locking
+
+传统RDBMS加锁的一个原则，就是2PL (二阶段锁)：Two-Phase Locking。相对而言，2PL比较容易理解，说的是锁操作分为两个阶段：加锁阶段与解锁阶段，并且保证加锁阶段与解锁阶段不相交。
+
+
+### 隔离级别（Isolation Level）
+
 在SQL标准中定义了`四种`隔离级别。每一种级别都规定了一个事务中所做的修改，哪些在事务内和事务间是可见的，哪些是不可见的。较低级别的隔离通常可以执行更高的并发，系统的开销也更低。每种存储引擎实现的隔离级别不尽相同，请查阅具体相关手册。
 
-```
 1. READ UNCOMMITTED（未提交读） 
 在此级别，事务中的修改即使没有提交，对其他事务也都是可见的，即，“赃读”。（实际应用中，很少使用）
 
 2. READ COMMITTED（提交读，不可重复读） 
-大多数数据的默认隔离级别都是此级别（但MySQL不是）。此级别满足隔离性的简单定义：一个事务开始时，只能看见已经提交的事务所做的修改（或者，一个事务从开始直到提交之前，所做的任何修改对其他事务都是不可见的）。此级别，也称为“不可重复读”，因为两次执行同样的查询，可能会得到不一样的结果。
+大多数数据的默认隔离级别都是此级别（Oracle是，但MySQL不是）。此级别满足隔离性的简单定义：一个事务开始时，只能看见已经提交的事务所做的修改（或者，一个事务从开始直到提交之前，所做的任何修改对其他事务都是不可见的）。此级别，也称为“不可重复读”，因为两次执行同样的查询，可能会得到不一样的结果。此级别可以解决：`脏读`。
 
 3. REPEATABLE READ（可重复读） 
-此级别保证了在同一个事务中，多次读取同样纪录的结果是一致的。此级别，是MySQL的默认事务隔离级别。
+此级别保证了在同一个事务中，多次读取同样纪录的结果是一致的。此级别，是MySQL的默认事务隔离级别。此级别可以解决：`脏读`和`不可重复读`。
 
 4. SERIALIZABLE（可串行化） 
-此级别是最高的隔离级别。它通过强制事务串行执行，避免了“幻读”的问题。此级别，会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。（实际应用中也很少使用这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑使用此级别）
-```
+此级别是最高的隔离级别。它通过强制事务串行执行，避免了“幻读”的问题。此级别，会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。（实际应用中也很少使用这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑使用此级别）。此级别可以解决：`脏读`，`不可重复读`和`幻读`。
+
+| 隔离级别 | 功能
+| -- | --
+| RU | 可以看到未提交的数据（脏读），举个例子：别人说的话你都相信了，但是可能他只是说说，并不实际做。
+| RC | 读取提交的数据。但是，可能多次读取的数据结果不一致（不可重复读）。用读写的观点就是：读取的行数据，可以写。
+| RR | 可以重复读取，但有幻读。读写观点：读取（当前读）的数据行不可写，但是可以往表中新增数据。在MySQL中，其他事务新增的数据，看不到，不会产生幻读。采用多版本并发控制（MVCC）机制解决幻读问题。
+| SERIALIZABLE | 可读，不可写。写数据必须等待另一个事务结束。
+
+
+MySQL/InnoDB定义的4种隔离级别：
+
+| MySQL/InnoDB 隔离级别 | 功能
+| -- | --
+| Read Uncommited | 可以读取未提交记录。此隔离级别，不会使用，忽略。
+| Read Committed (RC) | 快照读忽略，本文不考虑。针对当前读，RC隔离级别保证对读取到的记录加锁 (记录锁)，存在幻读现象。
+| Repeatable Read (RR) | 快照读忽略，本文不考虑。针对当前读，RR隔离级别保证对读取到的记录加锁 (记录锁)，同时保证对读取的范围加锁，新的满足查询条件的记录不能够插入 (间隙锁)，不存在幻读现象。
+| Serializable | 从MVCC并发控制退化为基于锁的并发控制。不区别快照读与当前读，所有的读操作均为当前读，读加读锁 (S锁)，写加写锁 (X锁)。Serializable隔离级别下，读写冲突，因此并发度急剧下降，在MySQL/InnoDB下不建议使用。
+
 
 例子： 
 
@@ -149,6 +200,73 @@ COMMIT;
 ![mysql_trans_example](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/mysql_trans_example.png)
 
 [MySQL读书笔记－事务，隔离级别，死锁](https://blog.csdn.net/delphiwcdj/article/details/51874401)
+
+
+幻读：
+
+假设存在表：
+
+```
+create table t_gerry(id int(2)) engine=innodb default charset=utf8;
+insert into t_gerry(id) values(1);
+insert into t_gerry(id) values(2);
+```
+
+事务1和事务2，执行顺序如下：
+
+```
+mysql> select * from t_gerry;
++------+
+| id   |
++------+
+|    1 |
+|    2 |
++------+
+2 rows in set (0.00 sec)
+
+mysql> begin;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from t_gerry;
++------+
+| id   |
++------+
+|    1 |
+|    2 |
++------+
+2 rows in set (0.00 sec)
+
+mysql> select * from t_gerry;
++------+
+| id   |
++------+
+|    1 |
+|    2 |
++------+
+2 rows in set (0.00 sec)
+
+// 在此中间，事务2，执行 insert into t_gerry(id) values(3);
+
+
+mysql> update t_gerry set id = id + 1;
+Query OK, 3 rows affected (0.00 sec)
+Rows matched: 3  Changed: 3  Warnings: 0   // 这里出现了幻读，影响了3条记录
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from t_gerry;
++------+
+| id   |
++------+
+|    2 |
+|    3 |
+|    4 |
++------+
+3 rows in set (0.00 sec)
+```
+
+
 
 ## X/Open XA
 
@@ -519,6 +637,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 19. [Understanding of Fescar Isolation]
 20. [分布式事务中间件 Fescar - RM 模块源码解读]
 21. [MySQL Cluster Index：聚簇索引]
+22. [MySQL 加锁处理分析]
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
@@ -563,3 +682,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [分布式事务中间件 Fescar - RM 模块源码解读]: https://mp.weixin.qq.com/s/EzmZ-DAi-hxJhRkFvFhlJQ
 
 [MySQL Cluster Index：聚簇索引]: http://dev.mysql.com/doc/refman/5.0/en/innodb-index-types.html
+
+[MySQL 加锁处理分析]: http://blog.sae.sina.com.cn/archives/2127
