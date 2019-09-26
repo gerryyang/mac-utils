@@ -187,6 +187,7 @@ MySQL/InnoDB定义的4种隔离级别：
 | Repeatable Read (RR) | 快照读忽略，本文不考虑。针对当前读，RR隔离级别保证对读取到的记录加锁 (记录锁)，同时保证对读取的范围加锁，新的满足查询条件的记录不能够插入 (间隙锁)，不存在幻读现象。
 | Serializable | 从MVCC并发控制退化为基于锁的并发控制。不区别快照读与当前读，所有的读操作均为当前读，读加读锁 (S锁)，写加写锁 (X锁)。Serializable隔离级别下，读写冲突，因此并发度急剧下降，在MySQL/InnoDB下不建议使用。
 
+> 所谓幻读，就是同一个事务，连续做两次当前读 (例如：select * from t1 where id = 10 for update;)，那么这两次当前读返回的是完全相同的记录 (记录数量一致，记录本身也一致)，第二次的当前读，不会比第一次返回更多的记录 (幻象)。如何保证两次当前读返回一致的记录，那就需要在第一次当前读与第二次当前读之间，其他的事务不会插入新的满足条件的记录并提交。为了实现这个功能，GAP锁应运而生。GAP锁的目的，是为了防止同一事务的两次当前读，出现幻读的情况。
 
 例子： 
 
@@ -202,7 +203,7 @@ COMMIT;
 [MySQL读书笔记－事务，隔离级别，死锁](https://blog.csdn.net/delphiwcdj/article/details/51874401)
 
 
-幻读：
+关于幻读的一个测试例子：
 
 假设存在表：
 
@@ -245,12 +246,15 @@ mysql> select * from t_gerry;
 +------+
 2 rows in set (0.00 sec)
 
-// 在此中间，事务2，执行 insert into t_gerry(id) values(3);
+// 在此中间，事务2，执行 insert into t_gerry(id) values(3); 可以执行成功，因为事务1不会对记录加X锁和GAP锁。
 
 
 mysql> update t_gerry set id = id + 1;
 Query OK, 3 rows affected (0.00 sec)
 Rows matched: 3  Changed: 3  Warnings: 0   // 这里出现了幻读，影响了3条记录
+
+// 而此时，事务2，再次执行 insert into t_gerry(id) values(3); 执行后会阻塞，因为事务1对每条记录加了X锁，以及记录之间的GAP锁，防止出现幻读
+// 事务2可能阻塞并返回超时错误：ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction
 
 mysql> commit;
 Query OK, 0 rows affected (0.00 sec)
