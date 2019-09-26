@@ -665,6 +665,13 @@ Host github.com
    IdentityFile ~/.ssh/id_rsa
 ```
 
+若配置使用http协议，通过在`.gitconfig`配置中添加`credential`选项也可以实现免密操作，但是用户名和密码是以明文的形式存储的，存在安全风险。
+
+```
+[credential]
+        helper = store --file=/c/Users/gerryyang/.git_credentials
+```
+
 
 更多：[Connecting to GitHub with SSH]
 
