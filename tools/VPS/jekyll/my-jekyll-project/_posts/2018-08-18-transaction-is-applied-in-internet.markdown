@@ -98,7 +98,37 @@ defined in these interfaces. In other words, you can program JTA transactions in
 
 ## 数据库事务
 
-以MySQL为例。可以用`START TRANSACTION`语句开始一个事务，然后要么使用`COMMIT`提交事务将修改的数据持久保留，要么使用`ROLLBACK`撤销所有的修改。
+MySQL服务器逻辑架构从上往下可以分为三层：
+
+* 第一层：处理客户端连接、授权认证等。
+* 第二层：服务器层，负责查询语句的解析、优化、缓存以及内置函数的实现、存储过程等。
+* 第三层：存储引擎，负责MySQL中数据的存储和提取。**MySQL中服务器层不管理事务，事务是由存储引擎实现的**。MySQL支持事务的存储引擎有InnoDB、NDB Cluster等，其中InnoDB的使用最为广泛；其他存储引擎不支持事务，如MyIsam、Memory等。
+
+![mysql_arch](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/mysql_arch.png)
+
+MySQL中默认采用的是自动提交（`autocommit`）模式，在自动提交模式下，如果没有`start transaction`显式地开始一个事务，那么每个sql语句都会被当做一个事务执行提交操作。通过`set autocommit = 0;`可以关闭autocommit，需要注意的是，autocommit参数是`针对连接的`，在一个连接中修改了参数，不会对其他连接产生影响。如果关闭了autocommit，则所有的sql语句都在一个事务中，直到执行了commit或rollback，该事务结束，同时开始了另外一个事务。
+
+```
+mysql> show variables like 'autocommit';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| autocommit    | ON    |
++---------------+-------+
+1 row in set (0.00 sec)
+mysql> set autocommit = 0;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show variables like 'autocommit';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| autocommit    | OFF   |
++---------------+-------+
+1 row in set (0.00 sec)
+```
+
+也可以用`START TRANSACTION`语句开始一个事务，然后要么使用`COMMIT`提交事务将修改的数据持久保留，要么使用`ROLLBACK`撤销所有的修改。
 
 {% highlight sql %}
 START TRANSACTION;
@@ -187,6 +217,25 @@ MySQL/InnoDB定义的4种隔离级别：
 | Serializable | 从MVCC并发控制退化为基于锁的并发控制。不区别快照读与当前读，所有的读操作均为当前读，读加读锁 (S锁)，写加写锁 (X锁)。Serializable隔离级别下，读写冲突，因此并发度急剧下降，在MySQL/InnoDB下不建议使用。
 
 > 所谓幻读，就是同一个事务，连续做两次当前读 (例如：select * from t1 where id = 10 for update;)，那么这两次当前读返回的是完全相同的记录 (记录数量一致，记录本身也一致)，第二次的当前读，不会比第一次返回更多的记录 (幻象)。如何保证两次当前读返回一致的记录，那就需要在第一次当前读与第二次当前读之间，其他的事务不会插入新的满足条件的记录并提交。为了实现这个功能，GAP锁应运而生。GAP锁的目的，是为了防止同一事务的两次当前读，出现幻读的情况。
+
+MySQL中查看和设置隔离级别：
+
+```
+-- 查看当前会话隔离级别
+SELECT @@tx_isolation;
+
+-- 查看系统当前隔离级别
+select @@global.tx_isolation;
+
+-- 设置当前会话隔离级别
+set session transaction isolation level repeatable read | serializable | ...;
+
+-- 设置系统当前隔离级别
+set global transaction isolation level repeatable read | serializable | ...;
+
+-- 开始事务
+set autocommit=off 或者 start transaction
+```
 
 例子： 
 
@@ -641,6 +690,8 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 20. [分布式事务中间件 Fescar - RM 模块源码解读]
 21. [MySQL Cluster Index：聚簇索引]
 22. [MySQL 加锁处理分析]
+23. [深入学习MySQL事务：ACID特性的实现原理]
+
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
 
@@ -687,3 +738,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [MySQL Cluster Index：聚簇索引]: http://dev.mysql.com/doc/refman/5.0/en/innodb-index-types.html
 
 [MySQL 加锁处理分析]: http://blog.sae.sina.com.cn/archives/2127
+
+[深入学习MySQL事务：ACID特性的实现原理]: https://www.cnblogs.com/kismetv/p/10331633.html
