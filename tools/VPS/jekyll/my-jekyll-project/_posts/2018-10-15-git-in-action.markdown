@@ -445,31 +445,15 @@ jQuery
 $ git remote show <主机名>
 $ git remote show origin
 * remote origin
-  Fetch URL: http://git.code.oa.com/portal/portal_tdf1.git
-  Push  URL: http://git.code.oa.com/portal/portal_tdf1.git
+  Fetch URL: git@github.com:gerryyang/mac-utils.git
+  Push  URL: git@github.com:gerryyang/mac-utils.git
   HEAD branch: master
-  Remote branches:
-    V1.0R010              tracked
-    V1.0R020              tracked
-    V1.0R030              tracked
-    V1.0R040              tracked
-    V1.0R050              tracked
-    V1.0R060              tracked
-    V1.0R070              new (next fetch will store in remotes/origin)
-    V1.0R071              new (next fetch will store in remotes/origin)
-    V1.0R072              new (next fetch will store in remotes/origin)
-    V1.0R073              new (next fetch will store in remotes/origin)
-    V1.0R080              new (next fetch will store in remotes/origin)
-    V1.0R090              new (next fetch will store in remotes/origin)
-    master                tracked
-    tce_feature_fairergao new (next fetch will store in remotes/origin)
-    transfer              new (next fetch will store in remotes/origin)
-  Local branches configured for 'git pull':
-    V1.0R060 merges with remote V1.0R060
-    master   merges with remote master
-  Local refs configured for 'git push':
-    V1.0R060 pushes to V1.0R060 (up to date)
-    master   pushes to master   (up to date)
+  Remote branch:
+    master tracked
+  Local branch configured for 'git pull':
+    master merges with remote master
+  Local ref configured for 'git push':
+    master pushes to master (up to date)
 
 # 添加远程主机
 $ git remote add <主机名> <网址>
