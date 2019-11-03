@@ -16,7 +16,7 @@ categories: microservice
 
 如何在你的微服务网络中引入 Istio 并用它来解决微服务治理中的诸多难题呢？
 
-![istio_arch](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_arch.jpg)
+![istio_arch](/assets/images/201811/istio_arch.jpg)
 
 # 课程安排
 
@@ -159,7 +159,7 @@ A network for services
 * Security
 * Policy Enforcement
 
-![istio_arch_2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_arch_2.jpg)
+![istio_arch_2](/assets/images/201811/istio_arch_2.jpg)
 
 **Istio Installation:**
 
@@ -173,13 +173,13 @@ Example:
 
 https://istio.io/docs/examples/bookinfo
 
-![bookinfo_without_istio](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/bookinfo_without_istio.jpg)
+![bookinfo_without_istio](/assets/images/201811/bookinfo_without_istio.jpg)
 
 This application is polyglot, i.e., the microservices are written in different languages. It’s worth noting that these services have no dependencies on Istio, but make an interesting service mesh example, particularly because of the multitude of services, languages and versions for the reviews service.
 
 To run the sample with Istio requires no changes to the application itself. Instead, we simply need to configure and run the services in an Istio-enabled environment, with Envoy sidecars injected along side each service. The needed commands and configuration vary depending on the runtime environment although in all cases the resulting deployment will look like this:
 
-![bookinfo_with_istio](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/bookinfo_with_istio.jpg)
+![bookinfo_with_istio](/assets/images/201811/bookinfo_with_istio.jpg)
 
 All of the microservices will be packaged with an Envoy sidecar that intercepts incoming and outgoing calls for the services, providing the hooks needed to externally control, via the Istio control plane, routing, telemetry collection, and policy enforcement for the application as a whole.
 
@@ -189,7 +189,7 @@ Envoy - sidecar proxy in Istio:
 * Battle-tested (经过大规模验证)
 * Low memory footprint (非常高效)
 
-![envoy](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/envoy.jpg)
+![envoy](/assets/images/201811/envoy.jpg)
 
 [Envoy源码]
 
@@ -393,9 +393,9 @@ kubectl apply -f install/kubernetes/istio-demo.yaml
 
 查看Istio启动pods的情况，比较慢。
 
-![istio_pods](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_pods.png)
+![istio_pods](/assets/images/201811/istio_pods.png)
 
-![istio_svc](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/istio_svc.png)
+![istio_svc](/assets/images/201811/istio_svc.png)
 
 
 
