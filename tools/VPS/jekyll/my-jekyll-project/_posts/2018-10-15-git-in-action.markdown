@@ -21,17 +21,12 @@ Linux的创始人`Linus Torvalds`在2005年开发了[Git]的原型程序，主�
 
 Git的操作流程：
 
-![git-mode](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git-mode.jpg)
+![git-mode](/assets/images/201810/git-mode.jpg)
 
 ```
 工作目录 ------------> 暂存区 ------------> 版本历史
         git add files        git commit
 ```
-
-Git支持的协议：
-
-https://git-scm.com/book/en/v2/Git-on-the-Server-The-Protocols
-
 
 
 # [Git的设计思想]
@@ -40,7 +35,7 @@ https://git-scm.com/book/en/v2/Git-on-the-Server-The-Protocols
 
 如果要学习Git，请先忘记之前你知道的关于其他VCSs的用法(例如，SVN)，这样可以帮助你更好地理解和使用Git，因为Git的设计理念和其他的VCSs完全不同，下图非常形象地解释了二者的不同。
 
-![two_ways_vcs](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/two_ways_vcs.jpg)
+![two_ways_vcs](/assets/images/201810/two_ways_vcs.jpg)
 
 关于Git的一些基本概念：
 
@@ -50,11 +45,11 @@ Git通过快照的方式来记录每次变更，如果文件没有变更，新�
 
 * Other systems tend to store data as changes to a base version of each file.
 
-![git_svn_diff1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff1.jpg)
+![git_svn_diff1](/assets/images/201810/git_svn_diff1.jpg)
 
 * Git stores data as snapshots of the project over time.
 
-![git_svn_diff2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff2.jpg)
+![git_svn_diff2](/assets/images/201810/git_svn_diff2.jpg)
 
 ## Nearly Every Operation Is Local
 
@@ -92,7 +87,7 @@ This makes using Git a joy because we know we can experiment without the danger 
 2. **modified** (已修改但未提交)
 3. **staged** (对修改进行了标记以待提交)
 
-![git_local_operation](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_local_operation.jpg)
+![git_local_operation](/assets/images/201810/git_local_operation.jpg)
 
 
 Now, pay attention. This is the main thing to remember about Git if you want the rest of your learning process to go smoothly. Git has three main states that your files can reside in: committed, modified, and staged. 
@@ -220,7 +215,7 @@ git rm --cached *.log
 此命令会把暂存区域的文件移除，同时文件仍然保留在磁盘。
 
 
-![gitignore](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitignore.jpg)
+![gitignore](/assets/images/201810/gitignore.jpg)
 
 
 
@@ -238,7 +233,7 @@ git rm --cached *.log
 * Feature分支：某个功能的分支，从 Develop 分支切出，并且功能完成时又合并回 Develop 分支，不直接和Master 分支交互。
 * Release分支：通常对应一个迭代。将一个版本的功能全部合并到 Develop 分支之后，从 Develop 切出一个Release 分支。这个分支不再追加新需求，可以完成 bug 修复、完善文档等工作。务必记住，代码发布后，需要将其合并到 Master 分支，同时也要合并到 Develop 分支。
 
-![gitflow](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitflow.jpg)
+![gitflow](/assets/images/201810/gitflow.jpg)
 
 ## 功能分支模式  
 
@@ -296,6 +291,30 @@ git add sample.txt
 git commit --amend -m"说明"
 ```
 
+``` bash
+# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
+git reset HEAD <filename>
+
+# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
+git reset --hard <commit-id>
+
+# 将HEAD理解为当前分支的别名
+# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+git reset --hard HEAD^
+
+# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
+git checkout -- files
+```
+
+问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
+解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
+
+**总结**：
+
+* 场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`
+* 场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD file`，就回到了场景1，第二步按场景1操作。
+* 场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，则按照版本回退的办法，不过前提是没有推送到远程库。
+
 refer: [Git撤销&回滚操作]
 
 [Git撤销&回滚操作]: https://blog.csdn.net/ligang2585116/article/details/71094887
@@ -310,7 +329,7 @@ refer: [Git撤销&回滚操作]
 git checkout master          # 切换到master
 git pull                     # 拉取最新代码
 git log -l 5                 # 查看想退回到版本号并copy下来，后面到数字可以自己设置。或者使用git reflog
-git reset --hard `版本号`    # 强制将指针回退到指定版本
+git reset --hard `版本号`     # 强制将指针回退到指定版本
 git push -f                  # 强制push到远端master
 ```
 
@@ -601,85 +620,6 @@ git branch -d hotfix
 
 注意：若在执行`git merge`时遇到代码冲突，需要先解决冲突。解决完冲突后，执行`git status`可以查看，任何因包含合并冲突而有待解决的文件，都会以未合并状态标识出来。而如果没有，说明所有的冲突都修复了，并且提醒你去提交一下。再执行`git commit -am <comment>`，至此冲突解决完毕并已提交代码。
 
-## 撤销操作
-
-``` bash
-# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
-git reset HEAD <filename>
-
-# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
-git reset --hard <commit-id>
-
-# 将HEAD理解为当前分支的别名
-# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
-git reset --hard HEAD^
-
-# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
-git checkout -- files
-```
-
-问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
-解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
-
-**总结**：
-
-* 场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`
-* 场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD file`，就回到了场景1，第二步按场景1操作。
-* 场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，则按照版本回退的办法，不过前提是没有推送到远程库。
-
-## 远程仓库操作
-
-``` bash
-# 查看远程仓库的名称 (`origin`是Git默认的远程仓库名字)
-git remote
-
-# 查看远程仓库的详细信息
-git remote show origin
-
-# 将代码推送到远程仓库
-# git push $remote-name $branch-name
-git push origin master
-
-# 拉取远程仓库代码
-git fetch
-get merge
-# 等价于
-git pull
-
-# 将所有远程分支拉取下来
-git fetch -- all
-
-# 删除远端分支  (本地分支和远程分支的删除互不影响)                  
-git push origin -d <branch-name> 
-# 或者
-git push origin :<branch-name> 
-```
-
-例如：
-
-``` 
-$ git remote
-origin
-$ git remote show origin
-* remote origin
-  Fetch URL: git@git.code.oa.com:gerryyang/portal.git
-  Push  URL: git@git.code.oa.com:gerryyang/portal.git
-  HEAD branch: master
-  Remote branches:
-    V1.0R010 tracked
-    V1.0R020 tracked
-    master   tracked
-  Local branch configured for 'git pull':
-    master merges with remote master
-  Local refs configured for 'git push':
-    V1.0R010 pushes to V1.0R010 (local out of date)
-    V1.0R020 pushes to V1.0R020 (up to date)
-    master   pushes to master   (local out of date)
-```
-
-更多：[阮一峰: Git远程操作详解]
-
-[阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
 
 ## 变基(rebase)操作
 
@@ -844,18 +784,18 @@ https://tortoisegit.org/
 
 # Refer
 
-更多关于Git的内容可以参考以下一些资料。
 
 * [阮一峰: 版本控制入门插图教程]
 * [阮一峰: Git远程操作详解]
-* Git官方的使用文档 [Getting Started - About Version Control]
+* [Git官方的使用文档: Getting Started - About Version Control]
 * [廖雪峰: Git教程]
 
 
 
 [阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
 [阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
-
-[Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
-
+[Git官方的使用文档: Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 [廖雪峰: Git教程]: https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
+
+
+
