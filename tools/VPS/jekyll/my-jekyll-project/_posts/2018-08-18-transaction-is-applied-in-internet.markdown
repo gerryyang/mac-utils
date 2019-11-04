@@ -24,7 +24,7 @@ categories: tech
 
 一般，本地事务可以通过数据库的本地事务(ACID)来保证。当事务A在操作数据且commit或rollback前，其他事务都不能看到事务A对数据的修改。
 
-![acid_lock_time](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/acid_lock_time.png)
+![acid_lock_time](/assets/images/201808/acid_lock_time.png)
 
 内部是通过**Two-Phase Commit**来保证的。2PL就是将加锁/解锁分为两个完全不相交的阶段。加锁阶段：只加锁，不放锁。解锁阶段：只放锁，不加锁。
 
@@ -58,7 +58,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 
 可以考虑`compensation`(补偿)的方法。把每个操作都作为一个短的本地ACID事务，减少锁的时间。代价是牺牲了rollback的能力。而补偿(取消操作)需要根据具体的业务场景来实现。
 
-![compensation_lock_time](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/compensation_lock_time.png)
+![compensation_lock_time](/assets/images/201808/compensation_lock_time.png)
 
 通常，有两种不同的补偿方式：
 
@@ -70,7 +70,7 @@ Two-phase commit works in two phases: `a voting phase` and `a decision phase`.
 1. 买股票是一个事务，卖股票可以作为一种补偿事务，两个事务分别是独立的。
 2. 以定机票为例，先在A网站发起预定机票的请求，将当前的订单状态设置为`PENDING`状态，此时机票只是暂时被锁定，但是并没有出票成功。需要接收到第二阶段的`CONFIRM`或者`CANCEL`**补偿请求**后，此预定机票的事务才结束。
 
-![TCC](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/TCC.png)
+![TCC](/assets/images/201808/TCC.png)
 
 可以看出，有两种常见的补偿方式，一种是无状态的，比如买卖股票的场景。一种是有状态的，采用类似`two-phase protocol`的处理方式。
 
@@ -104,7 +104,7 @@ MySQL服务器逻辑架构从上往下可以分为三层：
 * 第二层：服务器层，负责查询语句的解析、优化、缓存以及内置函数的实现、存储过程等。
 * 第三层：存储引擎，负责MySQL中数据的存储和提取。**MySQL中服务器层不管理事务，事务是由存储引擎实现的**。MySQL支持事务的存储引擎有InnoDB、NDB Cluster等，其中InnoDB的使用最为广泛；其他存储引擎不支持事务，如MyIsam、Memory等。
 
-![mysql_arch](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/mysql_arch.png)
+![mysql_arch](/assets/images/201808/mysql_arch.png)
 
 MySQL中默认采用的是自动提交（`autocommit`）模式，在自动提交模式下，如果没有`start transaction`显式地开始一个事务，那么每个sql语句都会被当做一个事务执行提交操作。通过`set autocommit = 0;`可以关闭autocommit，需要注意的是，autocommit参数是`针对连接的`，在一个连接中修改了参数，不会对其他连接产生影响。如果关闭了autocommit，则所有的sql语句都在一个事务中，直到执行了commit或rollback，该事务结束，同时开始了另外一个事务。
 
@@ -246,7 +246,7 @@ START TRANSACTION;
 事务C：执行和事务A类似的操作，将此数据项从10累加到20，然后进行提交。
 COMMIT;
 ```
-![mysql_trans_example](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/mysql_trans_example.png)
+![mysql_trans_example](/assets/images/201808/mysql_trans_example.png)
 
 [MySQL读书笔记－事务，隔离级别，死锁](https://blog.csdn.net/delphiwcdj/article/details/51874401)
 
@@ -324,7 +324,7 @@ mysql> select * from t_gerry;
 
 [X/Open XA]，`XA`是e**X**tended **A**rchitecture的简称，提出了一种**Distributed Transaction Processing (DTP)**处理分布式事务的模型。采用[Two-phase commit protocol]来保证，对多种资源(databases, application servers, message queues, transactional caches, etc.)操作时，具备数据库ACID的事务能力。
 
-![DTP](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/DTP.png)
+![DTP](/assets/images/201808/DTP.png)
 
 ```
 **DTP**（Distributed Transaction Processing）systems are those where work in support of a
@@ -407,7 +407,7 @@ set session transaction isolation level SERIALIZABLE;
 
 Pat helland在2007年也发表了一篇相同观点的文章[Life beyond Distributed Transactions: an Apostate’s Opinion]，考虑在无限扩展的应用场景下，业务层不应该关心底层扩展所带来的问题，应该由统一的平台或者框架来屏蔽底层扩展所带来的差异。并提出了一种`Performing Tentative(不确定的) Business Operations`处理流程(**workflow**)，即`TCC流程`(**Tentative Operations, Confirmation, and Cancellation**)，来减少分布式场景可能导致的不一致(**uncertainty**)问题。
 
-![2007_scale_agnostic](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/2007_scale_agnostic.png)
+![2007_scale_agnostic](/assets/images/201808/2007_scale_agnostic.png)
 
 ``` 
 To reach an agreement across entities, one entity has to ask another to accept some uncertainty. This is done by sending a message which requests a commitment but leaves open the possibility of cancellation. This is called a tentative operation and it represented by a message
@@ -422,7 +422,7 @@ flowing between two entities. At the end of this step, one of the entities agree
 * Distributed conversations typically involve uncertainty: a participant cannot be certain that a conversation partner continues in the conversation or even exist after the last interaction. Participants should therefore allocate resources cautiously.
 ```
 
-![requestor_provider](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/requestor_provider.png)
+![requestor_provider](/assets/images/201808/requestor_provider.png)
 
 `Tentative Operation`有两种处理模型：
 
@@ -434,7 +434,7 @@ flowing between two entities. At the end of this step, one of the entities agree
 1. 如果`Confirm`操作不会失败，则需要显式的`Cancel`操作。此种模型属于**补偿模型**，另见[CompensatingAction]。
 2. 如果`Confirm`操作可能失败，则需要显式的`Confirm`操作。
 
-![tcc_state](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/tcc_state.png)
+![tcc_state](/assets/images/201808/tcc_state.png)
 
 在蚂蚁金服的[分布式事务解决方案与适用场景分析]一文中，也对`TCC`模型进行了介绍。
 
@@ -456,17 +456,17 @@ TCC 分布式事务模型直接作用于服务层。不与具体的服务框架�
 
 一个SOA应用由一系列服务松散复合而成。
 
-![soa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/soa.png)
+![soa](/assets/images/201808/soa.png)
 
 程立在2009年8月的北京IT168系统架构师大会上，关于[面向生产环境的SOA系统设计]的分享里，提出了两种分布式事务处理模式：
 
 > 基于TCC模式的分布事务
 
-![taobao_tcc](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/taobao_tcc.png)
+![taobao_tcc](/assets/images/201808/taobao_tcc.png)
 
 > 基于补偿模式的分布式事务
 
-![taobao_compensation](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/taobao_compensation.png)
+![taobao_compensation](/assets/images/201808/taobao_compensation.png)
 
 
 
@@ -529,9 +529,9 @@ Seata Community
 
 
 
-![seata-trans](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata-trans.png)
+![seata-trans](/assets/images/201808/seata-trans.png)
 
-![seata](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/seata.png)
+![seata](/assets/images/201808/seata.png)
 
 **Fescar定义3个组件来协调分布式事务的处理过程：** 
 
@@ -557,9 +557,9 @@ Seata Community
 	- XA 的 2PC 过程，无论 Phase2 的决议是 commit 还是 rollback，事务性资源的锁都要保持到 Phase2 完成才释放。设想一个正常运行的业务，大概率是 90% 以上的事务最终应该是成功提交的，是否可以在 Phase1 就将本地事务提交呢？这样 90% 以上的情况下，可以省去 Phase2 持锁的时间，整体提高效率。
 	- 而Fescar的XA，在绝大多数场景减少了事务持锁时间，从而提高了事务的并发度。(当然，你肯定会问：Phase1 即提交的情况下，Phase2 如何回滚呢？)
 
-![xa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/xa.png)
+![xa](/assets/images/201808/xa.png)
 
-![fescar-xa](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-xa.png)
+![fescar-xa](/assets/images/201808/fescar-xa.png)
 
 **Fescar的几种事务处理模式：**
 
@@ -617,7 +617,7 @@ XA的原生支持。(TBD)
 
 设计的初衷：一个理想的分布式事务解决方案是不应该侵入业务的。MT 模式是在 AT 模式暂时不能完全覆盖所有场景的情况下，一个比较自然的补充方案。希望通过 AT 模式的不断演进增强，逐步扩大所支持的场景，MT 模式逐步收敛。未来会纳入对 XA 的原生支持，用 XA 这种无侵入的方式来覆盖 AT 模式无法触达的场景。
 
-![fescar-future](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/fescar-future.png)
+![fescar-future](/assets/images/201808/fescar-future.png)
 
 * 微服务框架的支持
 	- 事务上下文在微服务间的传播需要根据微服务框架本身的机制，订制最优的，对应用层透明的解决方案。
@@ -719,7 +719,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 
 [程立谈大规模SOA系统]: http://www.infoq.com/cn/interviews/soa-chengli
 
-[面向生产环境的SOA系统设计]: https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/面向生产环境的SOA系统设计.ppt
+[面向生产环境的SOA系统设计]: /assets/images/201808/面向生产环境的SOA系统设计.ppt
 
 [阿里开源分布式事务解决方案 Fescar 全解析]: https://zhuanlan.zhihu.com/p/55958530
 

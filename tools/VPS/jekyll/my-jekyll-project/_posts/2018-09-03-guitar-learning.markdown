@@ -43,7 +43,7 @@ categories: life
 * 六弦 <- 一弦 (从**最细**的弦开始)
 * 一品 -> xxx 品 (从上往下)
 
-![guitar_struct](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/guitar_struct.gif)
+![guitar_struct](/assets/images/201809/guitar_struct.gif)
 
 吉他的选择：
 

@@ -19,7 +19,7 @@ categories: Linux
 从应用角度看，需要做到：高并发，低延时。
 从资源角度看，需要关心：资源使用率，饱和度。
 
-![linux-performance](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/linux-performance.jpeg)
+![linux-performance](/assets/images/201812/linux-performance.jpeg)
 
 随着应用负载的增加，系统资源的使用也会升高，甚至达到极限。而性能问题的本质，就是系统资源已经达到瓶颈，导致请求处理不过来。性能分析就是找出应用或系统的瓶颈，并设法去避免或者缓解它们，从而更高效地利用系统资源处理更多的请求。
 
@@ -29,7 +29,7 @@ Brendan Gregg描述的 [Linux性能工具图谱]，可以帮助我们在发现Li
 
 [Linux Performance]: http://www.brendangregg.com/linuxperf.html
 
-![brendangregg](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/brendangregg.jpeg)
+![brendangregg](/assets/images/201812/brendangregg.jpeg)
 
 
 以下是一张总的Linux性能优化的思维导图，包括：
@@ -45,7 +45,7 @@ Brendan Gregg描述的 [Linux性能工具图谱]，可以帮助我们在发现Li
 * 性能监控
 * 性能测试
 
-![linux-perf-mind](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/linux-perf-mind.png)
+![linux-perf-mind](/assets/images/201812/linux-perf-mind.png)
 
 # CPU相关
 
@@ -116,7 +116,7 @@ Linux是一个多任务操作系统，它支持远大于CPU数量的任务同时
 * CPU寄存器：CPU内置的容量小，但速度极快的内存。
 * 程序计数器：用来存储CPU正在执行的指令位置，或者即将执行的下一条指令位置。
 
-![cpu_context](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/cpu_context.jpg)
+![cpu_context](/assets/images/201812/cpu_context.jpg)
 
 ### CPU上下文切换
 
@@ -146,7 +146,7 @@ CPU上下文切换，就是把前一个任务的CPU上下文保存起来，然�
 			- 当有优先级更高的进程运行时，为了保证高优先级进程的运行，当前进程会被挂起，由高优先级的进程来运行。
 			- 发生硬件中断时，CPU上的进程会被中断挂起，转而执行内核中的中断服务程序。
 
-![process_switch](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/process_switch.jpg)
+![process_switch](/assets/images/201812/process_switch.jpg)
 
 
 [Tsuna's blog - How long does it take to make a context switch?]: https://blog.tsunanet.net/2010/11/how-long-does-it-take-to-make-context.html
@@ -343,7 +343,7 @@ MIS:          0
 	- 没正确回收分配后的内存，导致`内存泄露` 
 	- 访问的是已分配内存`边界外的地址`，导致程序异常退出。
 
-![memory_process](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/memory_process.png)
+![memory_process](/assets/images/201901/memory_process.png)
 
 
 如何查看内存的使用情况？(数值都默认以`字节`为单位)
@@ -356,7 +356,7 @@ Mem:       1017796     819720     198076      16784      46240     468880
 Swap:            0          0          0
 ```
 
-![top](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/top.png)
+![top](/assets/images/201901/top.png)
 
 * VIRT，进程虚拟内存的大小，虚拟内存并不会全部分配物理内存
 * RES，常驻内存的大小，是进程实际使用的物理内存大小，但不包括Swap和共享内存
@@ -373,7 +373,7 @@ Swap:            0          0          0
 
 每个进程都有一个这么大的地址空间，所有进程的虚拟内存加起来，要比实际的物理内存大得多。所以，并不是所有的虚拟内存都会分配物理内存，只有实际使用的虚拟内存才分配物理内存，并且分配后的物理内存，是通过**内存映射**来管理的。
 
-![memory_v_2_p](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/memory_v_2_p.png)
+![memory_v_2_p](/assets/images/201901/memory_v_2_p.png)
 
 * 内存映射，就是将**虚拟内存地址**映射到**物理内存地址**。为了完成内存映射，内核为每个进程都维护了一张页表，记录虚拟地址与物理地址的映射关系。
 * 页表，实际上存储在CPU的内存管理单元MMU中，正常情况下，处理器就可以直接通过硬件找出要访问的内存。
@@ -388,13 +388,13 @@ Swap:            0          0          0
 
 Linux用的正是**四级页表**来管理内存：
 
-![page_search](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/page_search.png)
+![page_search](/assets/images/201901/page_search.png)
 
 ## 虚拟内存空间分布
 
 以32位系统为例。
 
-![32_v_mem](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/32_v_mem.png)
+![32_v_mem](/assets/images/201901/32_v_mem.png)
 
 用户空间内存，从低到高分别是五种不同的内存段：
 
@@ -762,7 +762,7 @@ $ grep Pss /proc/[1-9]*/smaps | awk '{total+=$2}; END {printf "%d kB\n", total }
 | 内存泄露检测 | memleak, valgrind
 | 指定文件的缓存大小 | pcstat
 
-![mem_check](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/mem_check.png)
+![mem_check](/assets/images/201901/mem_check.png)
 
 
 ## 性能调优
@@ -800,7 +800,7 @@ VFS内部通过**目录项，索引节点，逻辑块，以及超级块**等数�
 * 逻辑块。是由连续磁盘扇区构成的最小读写单元，用来存储文件数据。
 * 超级块。用来记录文件系统整体的状态，如索引节点和逻辑块的使用情况。
 
-![VFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/VFS.png)
+![VFS](/assets/images/201901/VFS.png)
 
 
 **文件系统I/O**
@@ -877,7 +877,7 @@ ssize_t write(int fd, const void *buf, size_t count);
 3. **设备层**。包括存储设备和相应的驱动程序，负责最终物理设备的I/O操作。
 
 
-![Linux_Storage_Stack_DiagramFS](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
+![Linux_Storage_Stack_DiagramFS](/assets/images/201901/Linux_Storage_Stack_DiagramFS.png)
 
 
 [Linux Storage Stack Diagram]
@@ -1086,7 +1086,7 @@ $ fio --name=replay --filename=/dev/sdb --direct=1 --read_iolog=sdb.bin
 | 网络接口层 | 负责网络包在物理网络中的传输，比如，MAC寻址，错误侦测，以及通过网卡传输网络帧等
 
 
-![osi_tcpip](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/osi_tcpip.png)
+![osi_tcpip](/assets/images/201901/osi_tcpip.png)
 
 ## Linux网络收发流程
 
@@ -1110,7 +1110,7 @@ Linux是怎么收发网络包的？
 * 分片后的网络包，再送到网络接口层，进行物理地址寻址，以找到下一跳的MAC地址。然后添加帧头和帧尾，放到发包队列中。这一切完成后，会有软中断通知驱动程序，发包队列中有新的网络帧需要发送。最后，驱动程序通过DMA，从发包队列中读出网络帧，并通过物理网卡把它发送出去。
 
 
-![recv_send](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/recv_send.png)
+![recv_send](/assets/images/201901/recv_send.png)
 
 
 ## 性能指标
@@ -1381,7 +1381,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 
 [Introduction to DPDK: Architecture and Principles]
 
-![dpdk](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dpdk.png)
+![dpdk](/assets/images/201901/dpdk.png)
 
 **机制2：XDP (eXpress Data Path)**
 
@@ -1391,7 +1391,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 
 [Introduction to XDP]
 
-![xdp](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/xdp.png)
+![xdp](/assets/images/201901/xdp.png)
 
 **其他：**
 
@@ -1538,7 +1538,7 @@ sysbench --num-threads=10 --max-time=300 --max-requests=1000000 --test=threads -
 watch -d cat /proc/interrupts   
 ```
 
-![proc_interrupts](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/proc_interrupts.png)
+![proc_interrupts](/assets/images/201812/proc_interrupts.png)
 
 
 ## perf
@@ -1556,9 +1556,9 @@ watch -d cat /proc/interrupts
 	- perf record -ag 记录性能事件，等待x秒后Ctrl+C退出
 	- perf report 查看报告
 
-![perf_top](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/perf_top.png)
+![perf_top](/assets/images/201812/perf_top.png)
 
-![perf_call_graph](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201812/perf_call_graph.png)
+![perf_call_graph](/assets/images/201812/perf_call_graph.png)
 
 
 refer: [brendangregg: perf Examples]
@@ -1644,7 +1644,7 @@ vmstat 1
 # 通过读取随机设备，生成一个500MB大小的文件
 dd if=/dev/urandom of=/tmp/file bs=1M count=500
 ```
-![dd_r_w](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dd_r_w.png)
+![dd_r_w](/assets/images/201901/dd_r_w.png)
 
 bi和bo，分别表示块设备读取和写入的大小，单位为`块/秒`(因为Linux中块的大小是1KB，所以单位等价于KB/s)。将bo加起来就是写入的500MB。
 
@@ -1654,7 +1654,7 @@ bi和bo，分别表示块设备读取和写入的大小，单位为`块/秒`(因
 # 读
 dd if=/tmp/file of=/dev/null
 ```
-![dd_r](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/dd_r.png)
+![dd_r](/assets/images/201901/dd_r.png)
 
 * cachestat 
 	- 提供了整个操作系统缓存的读写命中情况
@@ -1666,7 +1666,7 @@ dd if=/tmp/file of=/dev/null
 	- CACHED_MB，Cache的大小，以MB为单位
 
 
-![cachestat](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201901/cachestat.png)
+![cachestat](/assets/images/201901/cachestat.png)
 
 ## cachetop
 

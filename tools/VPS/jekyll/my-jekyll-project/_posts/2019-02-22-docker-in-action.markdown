@@ -41,13 +41,13 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 * Vagrant适合管理虚拟机，而Docker适合管理应用环境。Docker不是虚拟机，而是进程隔离，对于资源的消耗很少，但是目前需要Linux环境支持。Vagrant是虚拟机上做的封装，虚拟机本身会消耗资源。
 
 
-![docker_dev_flow](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201902/docker_dev_flow.jpg)
+![docker_dev_flow](/assets/images/201902/docker_dev_flow.jpg)
 
-![docker_dev_flow_example](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201902/docker_dev_flow_example.jpg)
+![docker_dev_flow_example](/assets/images/201902/docker_dev_flow_example.jpg)
 
 ## 常用命令
 
-![docker_cmd](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201902/docker_cmd.jpg)
+![docker_cmd](/assets/images/201902/docker_cmd.jpg)
 
 
 ## 历史文章

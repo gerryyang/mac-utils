@@ -10,7 +10,7 @@ categories: redis
 
 一提起数据库，大多数人可能想到的是`Oracle`，`MySQL`以及`Microsoft SQL Server`这三大巨头。但除此外，很多新兴的数据库也开始被开发者使用。例如，基于海量日志查询的[Elasticsearch]，在高并发场景使用[Redis]做缓存。[DB-engines]上可以看到近期数据库的使用排名情况。可以看到Redis作为一款NoSQL数据库（非关系型数据库）其排名正处在一个上升的阶段。Redis使用ANSI C编写，目前是一位意大利的开发者[Salvatore Sanfilippo]来维护，他在twitter上非常活跃，可以帮助开发者了解更多最新的Redis信息，也可订阅官方的[Redis邮件组]。可以在GitHub上找到最新的[Redis源码]，也有一个[Redis在线测试]工具可以尝试Redis的一些基本用法。在了解完Redis之后，思考问题的方式也会发生改变，从原来怎样将数据塞到数据库表里，变为应该使用哪种Redis的数据结构来解决这个问题。
 
-![db_rank](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/db_rank.jpg)
+![db_rank](/assets/images/201810/db_rank.jpg)
 
 关于使用Cache的一个有趣的故事：[TutorialCachingStory]
 
@@ -126,7 +126,7 @@ redis-cli shutdown
 
 Redis的所有配置和一些状态信息，全部记录在`struct redisServer`结构里。
 
-![redisServer](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/redisServer.jpg)
+![redisServer](/assets/images/201810/redisServer.jpg)
 
 ``` cpp
 struct redisServer {

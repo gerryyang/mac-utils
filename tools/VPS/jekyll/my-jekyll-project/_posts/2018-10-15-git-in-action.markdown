@@ -21,7 +21,7 @@ Linux的创始人`Linus Torvalds`在2005年开发了[Git]的原型程序，主�
 
 Git的操作流程：
 
-![git-mode](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git-mode.jpg)
+![git-mode](/assets/images/201810/git-mode.jpg)
 
 ```
 工作目录 ------------> 暂存区 ------------> 版本历史
@@ -35,7 +35,7 @@ Git的操作流程：
 
 如果要学习Git，请先忘记之前你知道的关于其他VCSs的用法(例如，SVN)，这样可以帮助你更好地理解和使用Git，因为Git的设计理念和其他的VCSs完全不同，下图非常形象地解释了二者的不同。
 
-![two_ways_vcs](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/two_ways_vcs.jpg)
+![two_ways_vcs](/assets/images/201810/two_ways_vcs.jpg)
 
 关于Git的一些基本概念：
 
@@ -45,11 +45,11 @@ Git通过快照的方式来记录每次变更，如果文件没有变更，新�
 
 * Other systems tend to store data as changes to a base version of each file.
 
-![git_svn_diff1](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff1.jpg)
+![git_svn_diff1](/assets/images/201810/git_svn_diff1.jpg)
 
 * Git stores data as snapshots of the project over time.
 
-![git_svn_diff2](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_svn_diff2.jpg)
+![git_svn_diff2](/assets/images/201810/git_svn_diff2.jpg)
 
 ## Nearly Every Operation Is Local
 
@@ -87,7 +87,7 @@ This makes using Git a joy because we know we can experiment without the danger 
 2. **modified** (已修改但未提交)
 3. **staged** (对修改进行了标记以待提交)
 
-![git_local_operation](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/git_local_operation.jpg)
+![git_local_operation](/assets/images/201810/git_local_operation.jpg)
 
 
 Now, pay attention. This is the main thing to remember about Git if you want the rest of your learning process to go smoothly. Git has three main states that your files can reside in: committed, modified, and staged. 
@@ -181,14 +181,14 @@ git config --list [--local | --global | --system]
 
 * 把已有的项目代码纳入Git管理
 
-```
+``` bash
 $ cd your_project
 $ git init 
 ```
 
 * 新建的项目直接使用Git管理
 
-```
+``` bash
 $ cd 某个文件夹
 $ git init your_project   # 会在当前路径下创建your_project目录
 $ cd your_project
@@ -215,7 +215,7 @@ git rm --cached *.log
 此命令会把暂存区域的文件移除，同时文件仍然保留在磁盘。
 
 
-![gitignore](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitignore.jpg)
+![gitignore](/assets/images/201810/gitignore.jpg)
 
 
 
@@ -233,7 +233,7 @@ git rm --cached *.log
 * Feature分支：某个功能的分支，从 Develop 分支切出，并且功能完成时又合并回 Develop 分支，不直接和Master 分支交互。
 * Release分支：通常对应一个迭代。将一个版本的功能全部合并到 Develop 分支之后，从 Develop 切出一个Release 分支。这个分支不再追加新需求，可以完成 bug 修复、完善文档等工作。务必记住，代码发布后，需要将其合并到 Master 分支，同时也要合并到 Develop 分支。
 
-![gitflow](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201810/gitflow.jpg)
+![gitflow](/assets/images/201810/gitflow.jpg)
 
 ## 功能分支模式  
 
@@ -263,13 +263,13 @@ git rm --cached *.log
 在未进行`git push`前的所有操作，都是在本地仓库中执行的。将**本地仓库的代码还原操作**叫做**撤销**。
 
 * 文件被修改了，但未执行git add操作(working tree内撤销)
-```
+``` bash
 git checkout <fileName>
 git checkout .
 ```
 
 * 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件
-```
+``` bash
 git add *
 git status
 # 取消暂存
@@ -277,7 +277,7 @@ git reset HEAD <fileName>
 ```
 
 * 文件执行了`git add`操作，但想撤销对其的修改(index内回滚)
-```
+``` bash
 # 取消暂存
 git reset HEAD <fileName>
 # 撤销修改
@@ -285,11 +285,35 @@ git checkout <fileName>
 ```
 
 * 修改的文件已被`git commit`，但想再次修改不再产生新的Commit
-```
+``` bash
 # 修改最后一次提交 
 git add sample.txt
 git commit --amend -m"说明"
 ```
+
+``` bash
+# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
+git reset HEAD <filename>
+
+# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
+git reset --hard <commit-id>
+
+# 将HEAD理解为当前分支的别名
+# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+git reset --hard HEAD^
+
+# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
+git checkout -- files
+```
+
+问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
+解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
+
+**总结**：
+
+* 场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`
+* 场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD file`，就回到了场景1，第二步按场景1操作。
+* 场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，则按照版本回退的办法，不过前提是没有推送到远程库。
 
 refer: [Git撤销&回滚操作]
 
@@ -305,9 +329,10 @@ refer: [Git撤销&回滚操作]
 git checkout master          # 切换到master
 git pull                     # 拉取最新代码
 git log -l 5                 # 查看想退回到版本号并copy下来，后面到数字可以自己设置。或者使用git reflog
-git reset --hard `版本号`    # 强制将指针回退到指定版本
+git reset --hard `版本号`     # 强制将指针回退到指定版本
 git push -f                  # 强制push到远端master
 ```
+
 
 # Git的常用命令
 
@@ -344,6 +369,7 @@ git config --global user.email "your_email@example.com"
 
 ## 创建代码仓库
 
+
 ``` bash
 # 初始化并生成.git子目录存放Git仓库的配置文件
 git init
@@ -367,19 +393,145 @@ git remote add origin git@github.com:gerryyang/your_repo.git
 git push -u origin master
 ```
 
-## 克隆仓库
+## 远程仓库操作 - git clone
+
+从远程主机克隆一个版本库，使用`git clone`命令。该命令会在本地主机生成一个目录，与远程主机的版本库同名。如果要指定不同的目录名，可以将目录名作为`git clone`命令的第二个参数。`git clone`支持多种协议，除了HTTP(s)以外，还支持SSH、Git、本地文件协议等。通常来说，Git协议下载速度最快，SSH协议用于需要用户认证的场合。各种协议优劣的详细讨论请参考[官方文档](http://git-scm.com/book/en/Git-on-the-Server-The-Protocols)。
 
 ``` bash
+# 克隆一个版本库
+git clone <版本库的网址>
+
+# 指定不同的目录名
+git clone <版本库的网址> <本地目录名>
+
 # 获取master分支
 git clone https://github.com/gerryyang/mac-utils.git
 
 # 获取指定分支
 git clone -b $branch https://github.com/gerryyang/mac-utils.git
+
+# 不同协议
+git clone http[s]://example.com/path/to/repo.git/
+git clone ssh://example.com/path/to/repo.git/    # ssh协议
+git clone [user@]example.com:path/to/repo.git/   # ssh协议另一种表示方法
+git clone git://example.com/path/to/repo.git/
+git clone /opt/git/project.git 
+git clone file:///opt/git/project.git
+git clone ftp[s]://example.com/path/to/repo.git/
+git clone rsync://example.com/path/to/repo.git/
 ```
+
+
+## 远程仓库操作 - git remote
+
+为了便于管理，Git要求每个远程主机都必须指定一个`主机名`。`git remote`命令就用于管理主机名。不带选项的时候，git remote命令列出所有远程主机。使用`-v`选项，可以参看远程主机的网址。克隆版本库的时候，所使用的远程主机自动被Git命名为origin。如果想用其他的主机名，需要用git clone命令的`-o`选项指定。`git remote show`命令加上`主机名`，可以查看该主机的详细信息。
+
+``` bash
+# 命令列出所有远程主机
+$ git remote
+origin
+
+# 参看远程主机的网址
+$ git remote -v
+origin  git@github.com:jquery/jquery.git (fetch)
+origin  git@github.com:jquery/jquery.git (push)
+
+# 用其他的主机名
+$ git clone -o jQuery https://github.com/jquery/jquery.git
+$ git remote
+jQuery
+
+# 查看该远程主机的详细信息
+$ git remote show <主机名>
+$ git remote show origin
+* remote origin
+  Fetch URL: git@github.com:gerryyang/mac-utils.git
+  Push  URL: git@github.com:gerryyang/mac-utils.git
+  HEAD branch: master
+  Remote branch:
+    master tracked
+  Local branch configured for 'git pull':
+    master merges with remote master
+  Local ref configured for 'git push':
+    master pushes to master (up to date)
+
+# 添加远程主机
+$ git remote add <主机名> <网址>
+
+# 删除远程主机
+$ git remote rm <主机名>
+
+# 远程主机的改名
+$ git remote rename <原主机名> <新主机名>
+```
+
+## 远程仓库操作 - git fetch
+
+一旦远程主机的版本库有了更新（Git术语叫做commit），需要将这些更新取回本地，这时就要用到`git fetch`命令。`git fetch`命令通常用来查看其他人的进程，因为它取回的代码对你本地的开发代码没有影响。取回远程主机的更新以后，可以在它的基础上，使用`git checkout`命令创建一个新的分支。
+
+``` bash
+# 将某个远程主机的更新，全部取回本地
+$ git fetch <远程主机名>
+
+# 默认情况下，git fetch取回所有分支（branch）的更新。如果只想取回特定分支的更新，可以指定分支名
+$ git fetch <远程主机名> <分支名>
+
+# 取回origin主机的master分支
+# 所取回的更新，在本地主机上要用"远程主机名/分支名"的形式读取。比如origin主机的master，就要用origin/master读取
+$ git fetch origin master
+$ git branch -a
+* master
+  remotes/origin/master
+
+# 在origin/master的基础上，创建一个新分支
+$ git checkout -b newBrach origin/master
+
+# 也可以使用git merge命令或者git rebase命令，在本地分支上合并远程分支
+# 在当前分支上，合并origin/master
+$ git merge origin/master
+$ git rebase origin/master
+```
+
+## 远程仓库操作 - git pull
+
+`git pull`命令的作用是，取回远程主机某个分支的更新，再与本地的指定分支合并。它的完整格式稍稍有点复杂。
+
+``` bash
+$ git pull <远程主机名> <远程分支名>:<本地分支名>
+
+# 取回origin主机的next分支，与本地的master分支合并
+$ git pull origin next:master
+
+# 如果远程分支是与当前分支合并，则冒号后面的部分可以省略
+$ git pull origin next
+
+# 上面命令表示，取回origin/next分支，再与当前分支合并。实质上，这等同于先做git fetch，再做git merge
+$ git fetch origin
+$ git merge origin/next
+```
+
+## 远程仓库操作 - git push
+
+`git push`命令用于将本地分支的更新，推送到远程主机。它的格式与git pull命令相仿。注意，分支推送顺序的写法是`<来源地>:<目的地>`，所以`git pull`是`<远程分支>:<本地分支>`，而`git push`是`<本地分支>:<远程分支>`。如果省略远程分支名，则表示将本地分支推送与之存在"追踪关系"的远程分支（通常两者同名），如果该远程分支不存在，则会被新建。
+
+
+``` bash
+$ git push <远程主机名> <本地分支名>:<远程分支名>
+
+# 将本地的master分支推送到origin主机的master分支。如果后者不存在，则会被新建
+$ git push origin master
+
+# 如果省略本地分支名，则表示删除指定的远程分支，因为这等同于推送一个空的本地分支到远程分支。即表示删除origin主机的master分支
+$ git push origin :master
+# 等同于
+$ git push origin --delete master
+```
+
 
 ## 查看代码状态和历史提交信息
 
-```
+``` bash
+
 # 查看当前仓库代码状态
 git status
 
@@ -454,85 +606,6 @@ git branch -d hotfix
 
 更多：[处理合并冲突](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/merge-conflicts)
 
-## 撤销操作
-
-``` bash
-# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
-git reset HEAD <filename>
-
-# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
-git reset --hard <commit-id>
-
-# 将HEAD理解为当前分支的别名
-# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
-git reset --hard HEAD^
-
-# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
-git checkout -- files
-```
-
-问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
-解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
-
-**总结**：
-
-* 场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令`git checkout -- file`
-* 场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令`git reset HEAD file`，就回到了场景1，第二步按场景1操作。
-* 场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，则按照版本回退的办法，不过前提是没有推送到远程库。
-
-## 远程仓库操作
-
-``` bash
-# 查看远程仓库的名称 (`origin`是Git默认的远程仓库名字)
-git remote
-
-# 查看远程仓库的详细信息
-git remote show origin
-
-# 将代码推送到远程仓库
-# git push $remote-name $branch-name
-git push origin master
-
-# 拉取远程仓库代码
-git fetch
-get merge
-# 等价于
-git pull
-
-# 将所有远程分支拉取下来
-git fetch -- all
-
-# 删除远端分支  (本地分支和远程分支的删除互不影响)                  
-git push origin -d <branch-name> 
-# 或者
-git push origin :<branch-name> 
-```
-
-例如：
-
-``` 
-$ git remote
-origin
-$ git remote show origin
-* remote origin
-  Fetch URL: git@git.code.oa.com:gerryyang/portal.git
-  Push  URL: git@git.code.oa.com:gerryyang/portal.git
-  HEAD branch: master
-  Remote branches:
-    V1.0R010 tracked
-    V1.0R020 tracked
-    master   tracked
-  Local branch configured for 'git pull':
-    master merges with remote master
-  Local refs configured for 'git push':
-    V1.0R010 pushes to V1.0R010 (local out of date)
-    V1.0R020 pushes to V1.0R020 (up to date)
-    master   pushes to master   (local out of date)
-```
-
-更多：[阮一峰: Git远程操作详解]
-
-[阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
 
 ## 变基(rebase)操作
 
@@ -697,16 +770,18 @@ https://tortoisegit.org/
 
 # Refer
 
-更多关于Git的内容可以参考以下一些资料。
 
 * [阮一峰: 版本控制入门插图教程]
-* Git官方的使用文档 [Getting Started - About Version Control]
+* [阮一峰: Git远程操作详解]
+* [Git官方的使用文档: Getting Started - About Version Control]
 * [廖雪峰: Git教程]
 
 
 
 [阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
-
-[Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
-
+[阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
+[Git官方的使用文档: Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
 [廖雪峰: Git教程]: https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
+
+
+

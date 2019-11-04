@@ -18,7 +18,7 @@ categories: tech
 
 Google, LADIS 2009报告称：**硬件的不可靠性，必须从软件层面解决**。
 
-![hardware_err](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/hardware_err.png)
+![hardware_err](/assets/images/201808/hardware_err.png)
 
 [分布式系统的事务处理]的文章，讲述了常见的处理一致性问题的方法。一致性的问题主要来源于：
 
@@ -32,7 +32,7 @@ Google, LADIS 2009报告称：**硬件的不可靠性，必须从软件层面解
 
 通过上述做法，可以解决性能(A)和单点(p)问题，但是却无法在分区的情况下保证数据的一致性(C)。即，`CAP`只能满足其二。
 
-![Transaction-Across-DataCenter](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/Transaction-Across-DataCenter.png)
+![Transaction-Across-DataCenter](/assets/images/201808/Transaction-Across-DataCenter.png)
 
 # 分布式共识原理
 
@@ -78,7 +78,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 * MySQL XA分布式事务
 * 缺点：异常处理复杂
 
-![2PC](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/2PC.png)
+![2PC](/assets/images/201808/2PC.png)
 
 ## 算法4：朴素的基于投票的协议
 
@@ -86,7 +86,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 * 特点：解决宕机问题，票可重新发布，可以过期
 * 缺点：得到票并不意味着服务器会给客户端保留位置，客户端必须马上去竞争，否则会存在不一致问题
 
-![ticket](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/ticket.png)
+![ticket](/assets/images/201808/ticket.png)
 
 
 ## 算法5：Paxos (多个提案者+多个接收者)
@@ -104,7 +104,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 * 服务器不但发布票，而且也发布当前所存储的命令（解决执行顺序问题）
 * 客户端生成尝试的全局一致票号（保证最大票号是最新的命令）
 
-![Paxos](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/Paxos.png)
+![Paxos](/assets/images/201808/Paxos.png)
 
 * 优点：解决宕机问题。
 	- 如果客户端在告诉任何一个服务器执行命令之前就宕机了，所有服务器将只有等到下一个客户端成功获得提案之后才可以执行之前已保存的命令。
@@ -113,7 +113,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 	- 超过一半的服务器宕机，将不能工作。
 	- 是CFT，而不是BFT。
 
-![Paxos_define](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/Paxos_define.png)
+![Paxos_define](/assets/images/201808/Paxos_define.png)
 
 
 更多介绍：[Paxos]
@@ -145,7 +145,7 @@ FLP 原理实际上说明对于允许节点失效情况下，纯粹异步系统�
 3. 高可用性。少量节点故障或网络异常不影响可用性。
 4. 高性能。大多数节点成功即可。
 
-![raft](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201808/raft.png)
+![raft](/assets/images/201808/raft.png)
 
 More：
 

@@ -13,7 +13,7 @@ categories: golang
 
 # 起源
 
-![go_stem](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201904/go_stem.jpg)
+![go_stem](/assets/images/201904/go_stem.jpg)
 
 * Go形成构想是在2007年9月，并于`2009年11月`发布。其发明人是Robert Griesemer, Rob Pike和Ken Thompson，这几位都任职于Google。
 * Go是个开源项目，所以其编译器，库和工具的源代码都可免费获取。

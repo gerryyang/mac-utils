@@ -40,7 +40,7 @@ STL的实现版本百花齐放。`HP`版本是所有STL实现版本的始祖。�
 
 > 从实现角度看，配置器是一个实现了动态空间配置，空间管理，空间释放的class template
 
-![stl](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/stl.jpeg)
+![stl](/assets/images/201809/stl.jpeg)
 
 # 困惑的C++语法
 
@@ -300,9 +300,9 @@ STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
     * 当配置区块超过128B时，视之为“足够大”，便调用第一级配置器
     * 当配置区块小于128B时，视之为“过小”，为了降低额外负担，便采用复杂的`memory pool`整理方式，而不再求助于第一级配置器。
 
-![sgi_allocate_12_a](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_12_a.jpg)
+![sgi_allocate_12_a](/assets/images/201809/sgi_allocate_12_a.jpg)
 
-![sgi_allocate_12_b](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_12_b.jpg)
+![sgi_allocate_12_b](/assets/images/201809/sgi_allocate_12_b.jpg)
 
 ### 第二级配置器设计原理
 
@@ -394,7 +394,7 @@ __default_alloc_template<threads, inst>::free_list[__NFREELISTS] = {0, 0, 0, 0, 
 
 ### 空间配置函数的实现 - allocate
 
-![sgi_allocate_func](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate_func.jpg)
+![sgi_allocate_func](/assets/images/201809/sgi_allocate_func.jpg)
 
 {% highlight cpp %}
 static void * allocate(size_t n)
@@ -463,7 +463,7 @@ void * __default_alloc_template<threads, inst>::refill(size_t n)
 
 ### 空间释放函数的实现 - deallocate
 
-![sgi_deallocate_func](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_deallocate_func.jpg)
+![sgi_deallocate_func](/assets/images/201809/sgi_deallocate_func.jpg)
 
 {% highlight cpp %}
 static void deallocate(void *p, size_t n)
@@ -489,7 +489,7 @@ static void deallocate(void *p, size_t n)
 
 ## 内存池 (memory pool)
 
-![sgi_allocate](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201809/sgi_allocate.jpg)
+![sgi_allocate](/assets/images/201809/sgi_allocate.jpg)
 
 {% highlight cpp %}
 template <bool threads, int inst>

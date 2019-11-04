@@ -17,7 +17,7 @@ TLS([Transport Layer Security])协议的基本原理是，采用[Public-key cryp
 1. 如何保证公钥不被篡改？解决方法：将公钥放在数字证书([Public-key cryptography])中。只要证书是可信的，公钥就是可信的。
 2. 公钥加密计算量太大，如何减少耗用的时间？解决方法：每一次会话，客户端和服务器端都生成一个会话密钥，用它来加密信息。由于会话密钥是对称加密，所以运算速度非常快，而服务器公钥只用于加密会话密钥本身，这样就减少了加密运算的消耗时间。
 
-![tls](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/tls.jpg)
+![tls](/assets/images/201811/tls.jpg)
 
 > Note: When the SSL protocol was standardized by the IETF, it was renamed to Transport Layer Security (TLS). Many use the TLS and SSL names interchangeably, but technically, they are different, since each describes a different version of the protocol.
 
@@ -34,7 +34,7 @@ TLS([Transport Layer Security])协议的基本原理是，采用[Public-key cryp
 * 2006年和2008年，TLS进行了两次升级，分别为TLS 1.1版和TLS 1.2版。
 * 2018年8月，发布TLS 1.3版。
 
-![tls_history](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/tls_history.jpg)
+![tls_history](/assets/images/201811/tls_history.jpg)
 
 # TLS协议的交互流程
 
@@ -42,7 +42,7 @@ TLS([Transport Layer Security])协议的基本原理是，采用[Public-key cryp
 2. 双方协商生成会话密钥。
 3. 双方采用会话密钥进行加密通信。
 
-![tsl_handshake](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/tsl_handshake.jpg)
+![tsl_handshake](/assets/images/201811/tsl_handshake.jpg)
 
 > Note: Assumes the optimistic 28 millisecond one-way "light in fiber" delay between New York and London in TCP connection establishment.
 
@@ -60,7 +60,7 @@ TLS([Transport Layer Security])协议的基本原理是，采用[Public-key cryp
 * false start (requires ALPN and forward secrecy)
 * HTTP/2 protocol
 
-![tls_server](https://github.com/gerryyang/mac-utils/raw/master/tools/VPS/jekyll/my-jekyll-project/assets/images/201811/tls_server.jpg)
+![tls_server](/assets/images/201811/tls_server.jpg)
 
 [OCSP stapling]: https://en.wikipedia.org/wiki/OCSP_stapling
 
