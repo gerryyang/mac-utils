@@ -17,6 +17,41 @@ categories: cpp
 
 [std::chrono](https://blog.csdn.net/u013390476/article/details/50209603)
 
+# Time
+
+https://linux.die.net/man/3/strptime
+
+http://www.cplusplus.com/reference/ctime/mktime/
+
+[How to convert a string variable containing time to time_t type in c++?](https://stackoverflow.com/questions/11213326/how-to-convert-a-string-variable-containing-time-to-time-t-type-in-c/11213640#11213640)
+
+[Date/time conversion: string representation to time_t](https://stackoverflow.com/questions/321793/date-time-conversion-string-representation-to-time-t/321847#321847)
+
+```
+#define _XOPEN_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+
+int main()
+{
+        struct tm tm = {0};
+        char *res = strptime("2019-10-01 18:00:00", "%Y-%m-%d %H:%M:%S", &tm);
+        if (res == NULL) {
+                printf("strptime err\n");
+                return -1;
+        }
+        time_t t = mktime(&tm); 
+
+        // equal to `date -d "2019-10-01 18:00:00" +%s`
+        printf("t[%ld]\n", t);
+
+        return 0;
+}
+```
+
 
 # Regex
 
