@@ -39,9 +39,7 @@ mac-utils
 
 	按CPU排序是ocpu，按内存排序是ovsize
 
-	top -F -R -o cpu (降低top自身暂用的CPU使用率)
-
-	[更多](http://osxdaily.com/2009/10/06/monitoring-cpu-usage-on-your-mac-a-better-top-command/)
+	top -F -R -o cpu (降低top自身暂用的CPU使用率) [refer](http://osxdaily.com/2009/10/06/monitoring-cpu-usage-on-your-mac-a-better-top-command/)
 
 	在Linux上使用 `top 1` 可以查看每个cpu的使用率
 
