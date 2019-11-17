@@ -81,25 +81,22 @@ curl http://icanhazip.com
 
 ## Linode
 
-[Linode]
+[Linode](https://www.linode.com/)也是一种选择，目前还没有使用过。
 
-[Linode]: https://www.linode.com/
 
 # VPS设置
 
-以下以`Ubuntu`为例。
+以`Ubuntu`为例，在申请到一个VPS后我们需要做哪些事情。
 
 ## 账户初始化配置
 
-[initial-server-setup-with-ubuntu-14-04]
-
-[initial-server-setup-with-ubuntu-14-04]: https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04
+[initial-server-setup-with-ubuntu-14-04](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-14-04)
 
 ## 系统安全配置
 
-* HTTPS证书设置。参考[证书安装指引]。
+* HTTPS证书设置
 
-[证书安装指引]: https://cloud.tencent.com/document/product/400/4143
+参考[证书安装指引](https://cloud.tencent.com/document/product/400/4143)。
 
 ## 开发工具配置
 
@@ -133,18 +130,13 @@ apt-get install apache2
 apt-get install nginx
 ```
 
-[how-to-install-nginx-on-ubuntu-14-04-lts]
+[how-to-install-nginx-on-ubuntu-14-04-lts](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-14-04-lts)
 
-[how-to-install-nginx-on-ubuntu-14-04-lts]: https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-14-04-lts
 
 反向代理设置：
 
-[NGINX Reverse Proxy]
-[nginx配置二级域名]
-
-[NGINX Reverse Proxy]: https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
-
-[nginx配置二级域名]: https://cloud.tencent.com/developer/article/1198752
+[NGINX Reverse Proxy](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/)
+[nginx配置二级域名](https://cloud.tencent.com/developer/article/1198752)
 
 * mysql
 
@@ -171,23 +163,21 @@ apt-get install phpmyadmin apache2-utils
 http://104.131.173.242/phpmyadmin/
 ```
 
-* [FileZilla]
-
-[FileZilla]: https://filezilla-project.org/
+* [FileZilla](https://filezilla-project.org/)
 
 
 # 科学上网
 
-## 搭建Shadowsocks服务
+## 搭建ss服务
 
 Shadowsocks is a cross-platform tunnel proxy which can help you get through firewalls.
 
 [Shadowsocks](https://github.com/shadowsocks/shadowsocks)已被河蟹。可以找到一些fork的版本[release 2.8.2](https://github.com/ziggear/shadowsocks)。
 
 
-> Q: 如何在iOS客户端使用？
+### iOS 客户端
 
-Step 1: 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后，请及时退出该账号([refer])。
+Step 1: 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后及时退出该账号([refer])。
 
 | ID | KEY
 | -- | --
@@ -212,30 +202,29 @@ Step 2: 注册好后就可以下载下面几款客户端软件。
 * Shadowrocket($2.99)
 * Wingy - Proxy For Http(s),Socks5,Shadowsocks
 
-Step 3: 打开下载的客户端软件，输入ss的`服务器信息`配置即可使用。
+Step 3: 打开下载的客户端软件，输入ss的`服务器信息`配置即可使用。另见[iOS的开源客户端](https://github.com/shadowsocks/shadowsocks-iOS/releases)。
 
 
-> Q: 如何在Mac OS X上使用Shadowsocks代理？
+### Mac OS X 客户端
 
-下载客户端并添加服务器，然后选择“自动代理模式”。
+下载[Mac OS X 客户端](https://github.com/shadowsocks/ShadowsocksX-NG/releases/)并添加服务器，然后选择“自动代理模式”。
 
-[https://github.com/shadowsocks/shadowsocks-iOS/releases](https://github.com/shadowsocks/shadowsocks-iOS/releases)
 
-[https://github.com/shadowsocks/ShadowsocksX-NG/releases/](https://github.com/shadowsocks/ShadowsocksX-NG/releases/)
+### Windows 客户端
 
-> Q: 如何在Windows上使用Shadowsocks代理？
+下载[Windows 客户端](https://github.com/shadowsocks/shadowsocks-windows/releases/)，方法同上。
 
-[https://github.com/shadowsocks/shadowsocks-windows/releases/](https://github.com/shadowsocks/shadowsocks-windows/releases/)
 
-> Q: OpenSSL升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误
+问题：OpenSSL升级到1.1.0版本以后，运行ss提示`AttributeError: /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1: undefined symbol: EVP_CIPHER_CTX_cleanup`错误。
 
-错误原因：
+解决方法：
+
 ```
 EVP_CIPHER_CTX was made opaque in OpenSSL 1.1.0. As a result, EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup() disappeared.
 EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 ```
 
-解决方法：修改`/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py`，将`EVP_CIPHER_CTX_cleanup`替换为`EVP_CIPHER_CTX_reset`。
+修改`/usr/local/lib/python2.7/dist-packages/shadowsocks/crypto/openssl.py`，将`EVP_CIPHER_CTX_cleanup`替换为`EVP_CIPHER_CTX_reset`。
 
 
 
@@ -255,17 +244,38 @@ EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 
 * 目录索引(TOC)
 
-[How I Add a Table of Contents to my Jekyll Blog Written in Markdown]
+[How I Add a Table of Contents to my Jekyll Blog Written in Markdown](http://www.seanbuscay.com/blog/jekyll-toc-markdown/)
 
-[kramdown]
-
-[How I Add a Table of Contents to my Jekyll Blog Written in Markdown]: http://www.seanbuscay.com/blog/jekyll-toc-markdown/
-
-[kramdown]: https://kramdown.gettalong.org/
+[kramdown](https://kramdown.gettalong.org/)
 
 
 
 # 工具
+
+## MAC相关工具
+
+### 终端
+
+* [ITerm2](https://www.iterm2.com/)相比系统默认的Terminal提供了更多高级的功能。
+
+* [Oh My ZSH](https://ohmyz.sh/)，兼容bash，并集成了很多插件，用于使用Terminal更加高效。
+
+`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效。
+
+```
+$chsh -s zsh
+$chsh -s /bin/bash
+```
+
+| 常用插件 | 用途 | 安装方法
+| -- | -- | --
+| autojump | 目录跳转 | brew install autojump
+
+
+### Homebrew
+
+[Homebrew](https://brew.sh/)用于在Mac上查找和安装工具。
+
 
 
 ## 浏览器
@@ -285,9 +295,21 @@ EVP_CIPHER_CTX_init() remains as an alias for EVP_CIPHER_CTX_reset().
 
 ## 编辑器
 
-* Vim
-* Sublime
+### Vim
 
+一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
+
+### Sublime
+
+通过[Package Control](https://packagecontrol.io/installation)安装插件，一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/sublime)。
+
+| 插件名称 | 用途 | 获取地址
+| -- | -- | --
+| MarkdownPreview | Markdown文档预览 | https://packagecontrol.io/packages/MarkdownPreview https://facelessuser.github.io/MarkdownPreview/usage/
+| Alignment | 对齐 | https://packagecontrol.io/packages/Alignment
+| GoSublime (x) | GoLang配置 | https://packagecontrol.io/packages/GoSublime
+| ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
+| SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
 
 ## 画图工具
 
@@ -313,7 +335,15 @@ refer:
 * [graphviz-dotguide官方教程](http://www.graphviz.org/pdf/dotguide.pdf)
 
 
-# 文档
+## 云工具
+
+### 印象笔记
+
+### [马克飞象](https://maxiang.io/)
+
+### [微云](https://www.weiyun.com/download.html)
+
+# 资料
 
 * [All IT eBooks](http://www.allitebooks.org/)
 
