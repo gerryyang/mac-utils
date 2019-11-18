@@ -268,7 +268,7 @@ git checkout <fileName>
 git checkout .
 ```
 
-* 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件
+* 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件(这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区)
 ``` bash
 git add *
 git status
@@ -278,36 +278,31 @@ git reset HEAD <fileName>
 
 * 文件执行了`git add`操作，但想撤销对其的修改(index内回滚)
 ``` bash
-# 取消暂存
+# 1. 取消暂存
 git reset HEAD <fileName>
-# 撤销修改
+# 2. 撤销修改
 git checkout <fileName>
 ```
 
-* 修改的文件已被`git commit`，但想再次修改不再产生新的Commit
+* 修改的文件已被`git commit`，但想再次修改不再产生新的commit
 ``` bash
 # 修改最后一次提交 
 git add sample.txt
 git commit --amend -m"说明"
 ```
 
+* 版本已经commit，但是需要回退，会将提交记录和代码全部回滚
 ``` bash
-# 取消暂存的文件 (这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区，这种不会更改本地磁盘的文件)
-git reset HEAD <filename>
-
-# 版本回退(针对已经commit)，会将提交记录和代码全部回滚
 git reset --hard <commit-id>
-
-# 将HEAD理解为当前分支的别名
-# HEAD表示当前版本，上一个版本就HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
-git reset --hard HEAD^
-
-# 撤消对文件的修改  (这种情况是在工作区把一个文件修改了，但发现有问题，想撤销修改，这种会更改本地磁盘的文件，并且不可逆，所以这是一个危险的命令)
-git checkout -- files
 ```
 
-问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
-解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
+* 将`HEAD`理解为当前分支的别名，`HEAD`表示当前版本，上一个版本就`HEAD^`，上上一个版本就是`HEAD^^`，当然往上100个版本写100个^比较容易数不过来，所以写成`HEAD~100`
+``` bash
+git reset --hard HEAD^
+```
+
+> 问题：如果使用`git reset --hard <commit-id>`回退到某个版本，之后想撤回，使用`git log`已经找不到之前的提交记录，怎么办？
+> 解决方法：Git提供了一个`git reflog`命令用来记录你的每一次命令，可以找到之前的commit-id，然后再执行`git reset --hard <commit-id>`。
 
 **总结**：
 
@@ -599,6 +594,31 @@ git checkout master
 git merge hotfix
 # 最新的修改已经合到 master分支，hotfix分支可以退出历史舞台了，可以删掉(建议，除非分支确实太多了)
 git branch -d hotfix
+
+# 如何撤销一个合并
+git merge --abort
+# 如果合并后发现有问题需要撤销
+git reset --hard
+
+# 删除无效的远程追踪分支
+$ git remote show origin
+Warning: Permanently added the RSA host key for IP address '140.82.113.4' to the list of known hosts.
+* remote origin
+  Fetch URL: git@github.com:gerryyang/mac-utils.git
+  Push  URL: git@github.com:gerryyang/mac-utils.git
+  HEAD branch: master
+  Remote branches:
+    master                  tracked
+    refs/remotes/origin/tmp stale (use 'git remote prune' to remove)        # 此分支为无效分支，在远程仓库已经不存在，可以使用 git remote prune orign 命令来同步删除本地此仓库
+  Local branch configured for 'git pull':
+    master merges with remote master
+  Local ref configured for 'git push':
+    master pushes to master (up to date)
+
+$ git remote prune origin
+Pruning origin
+URL: git@github.com:gerryyang/mac-utils.git
+ * [pruned] origin/tmp
 
 ```
 
