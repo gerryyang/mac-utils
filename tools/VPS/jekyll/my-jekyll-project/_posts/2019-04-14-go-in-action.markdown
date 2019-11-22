@@ -544,6 +544,12 @@ TODO
 
 并发处理，基于CSP思想，采用goroutine和信道实现，共享变量
 
+# GitHub
+
+[Concurrency limiting goroutine pool](https://github.com/gammazero/workerpool)
+
+
+
 # Refer
 
 1. [Go官网]
