@@ -190,7 +190,7 @@ http://104.131.173.242/phpmyadmin/
 `bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效。
 
 ```
-$chsh -s zsh
+$chsh -s /bin/zsh
 $chsh -s /bin/bash
 ```
 
