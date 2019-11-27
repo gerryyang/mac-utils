@@ -544,10 +544,14 @@ TODO
 
 并发处理，基于CSP思想，采用goroutine和信道实现，共享变量
 
-# GitHub
+# Others
 
-[Concurrency limiting goroutine pool](https://github.com/gammazero/workerpool)
-
+* [DigitalOcean的How to code in go系列](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
+* [Concurrency limiting goroutine pool](https://github.com/gammazero/workerpool)
+* [High performance, minimalist Go web framework](https://github.com/labstack/echo)
+* [Running periodic background tasks in Golang](https://medium.com/@mkfeuhrer/running-periodic-background-tasks-in-golang-8baa1af9a1f6)
+* [Go: Goroutine, OS Thread and CPU Management](https://medium.com/a-journey-with-go/go-goroutine-os-thread-and-cpu-management-2f5a5eaf518a)
+* [Beating C with 70 Lines of Go](https://ajeetdsouza.github.io/blog/posts/beating-c-with-70-lines-of-go/)
 
 
 # Refer

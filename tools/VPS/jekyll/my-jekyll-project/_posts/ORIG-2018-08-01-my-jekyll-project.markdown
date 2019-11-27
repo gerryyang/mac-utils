@@ -241,6 +241,12 @@ refer: [Create a SOCKS5 Proxy Server with Shadowsocks on Ubuntu and CentOS 7](ht
 	- 备用站：www.yuntiss.site
 
 
+## 其他
+
+[科学/自由上网，免费ss/ssr/v2ray/goflyway账号，搭建教程](https://github.com/Alvin9999/new-pac)
+
+
+
 # jekyll配置
 
 * 目录索引(TOC)
