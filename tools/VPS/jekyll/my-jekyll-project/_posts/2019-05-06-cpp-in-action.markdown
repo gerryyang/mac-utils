@@ -26,6 +26,53 @@ categories: cpp
 
 ## 堆栈及布局
 
+* 本地变量所需内存在栈上分配，和函数执行所需的其他数据在一起。当函数执行完这些内存也就自然释放掉。
+    + 本地变量，包括简单类型`POD`(Plain Old Data)和非POD类型(有构造和析构的类型)，栈上的内存分配是一样的，只不过C++编译器会在生成代码的合适位置插入对构造和析构函数的调用
+    + 编译器会自动调用析构函数，包括在函数执行发生异常时。在发生异常时对析构函数的调用，成为`栈展开(stack unwinding)`
+    + 栈上的分配简单，移动栈指针而已
+    + 栈上的释放也简单，函数执行结束时移动一下栈指针
+    + 由于后进先出的执行过程，栈的分配不可能出现内存碎片
+
+``` cpp
+#include <cstdio>
+
+class obj {
+public:
+    obj() { puts("obj()"); }
+    ~obj() { puts("~obj()"); }
+};
+
+void foo(int n)
+{
+    obj o;
+    if (n == 1) {
+        throw "exception";
+    }
+}
+
+int main()
+{
+    try {
+        foo(0);
+        foo(1);
+    } catch (const char* err) {
+        puts(err);
+    }
+
+}
+
+/*
+$ g++ -o stack_unwinding stack_unwinding.cpp 
+$ ./stack_unwinding 
+obj()
+~obj()
+obj()
+~obj()
+exception
+*/
+```
+
+
 * 《程序员的自我修养》说栈的地址比堆高，栈是向下增长的，堆是向上增长的。但是在Windows上测试却不是。
 
 ``` cpp
@@ -49,7 +96,7 @@ int main()
     a3[1] = 1.0/5.0;
     a3[2] = 1.0/7.0;
     a3[3] = 1.0/9.0;
-    
+
     cout << "a0[2]: " << a0[2] << " at " << &a0[2] << endl;
     cout << "a1[2]: " << a1[2] << " at " << &a1[2] << endl;
     cout << "a1[3]: " << a1[3] << " at " << &a1[3] << endl;
@@ -84,7 +131,7 @@ a3[3]: 0.111111 at 0x1b64058
 
 * 而在一个栈帧内，局部变量是如何分布到栈帧里的（所谓栈帧布局，stack frame layout），这完全是编译器的自由。至于数组元素与栈的增长方向：C与C++语言规范都规定了数组元素是分布在连续递增的地址上的。
 
-> An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type.A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator [] is that E1[E2] is identical to (*((E1)+(E2))). Because of the conversion rules that apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th element of E1 (counting from zero).
+> An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type. A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator [] is that E1[E2] is identical to (*((E1)+(E2))). Because of the conversion rules that apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th element of E1 (counting from zero).
 
 * 以简化的Linux/x86模型为例。在简化的32位Linux/x86进程地址空间模型里，（主线程的）栈空间确实比堆空间的地址要高——它已经占据了用户态地址空间的最高可分配的区域，并且向下（向低地址）增长。借用Gustavo Duarte的[Anatomy of a Program in Memory](https://link.zhihu.com/?target=http%3A//duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)里的图。
 
