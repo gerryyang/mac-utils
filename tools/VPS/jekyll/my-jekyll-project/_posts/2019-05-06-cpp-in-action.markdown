@@ -188,7 +188,7 @@ std::mutex mtx;           // mutex for critical section
 void print_block (int n, char c) {
         // critical section (exclusive access to std::cout signaled by locking mtx):
         mtx.lock();
-        for (int i=0; i<n; ++i) { std::cout << c; }
+        for (int i = 0; i < n; ++i) { std::cout << c; }
         std::cout << '\n';
         mtx.unlock();
 }
@@ -202,7 +202,8 @@ int main ()
         th2.join();
 
         return 0;
-}/*
+}
+/*
 $ g++ -o mutex2 mutex2.cpp -lpthread
 $ ./mutex2
 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -301,6 +302,152 @@ refer:
 * [lock_guard](https://zh.cppreference.com/w/cpp/thread/lock_guard)
 * [https://zh.cppreference.com/w/cpp/thread/mutex](https://zh.cppreference.com/w/cpp/thread/mutex)
 * [http://www.cplusplus.com/reference/mutex/mutex/](http://www.cplusplus.com/reference/mutex/mutex/)
+
+
+## 智能指针
+
+智能指针本质上就是RAII资源管理功能的自然展现。
+
+``` cpp
+class shape_wrapper {
+public:
+        explicit shape_wrapper(shape* ptr = nullptr) : m_ptr(ptr) {}
+        ~shape_wrapper() { delete m_ptr; }
+
+        shape* get() const { return m_ptr; }
+
+private:
+        shape* m_ptr;
+};
+```
+
+上面的`shape`类完成了智能指针的最基本功能，对超出作用域的对象进行释放。但是仍缺少以下功能：
+
+* 只适用于某个类
+* 该类对象的行为不够像指针
+* 拷贝该类对象会引发程序行为异常
+
+### 模板化和易用性
+
+要让这个类能够包装任意类型的指针，需要把它变成一个模板类。在使用的时候将`shape_wrapper`改成`smart_ptr<shape>`。
+
+``` cpp
+template <typename T>
+class smart_ptr {
+public:
+        explicit smart_ptr(T* ptr = nullptr) : m_ptr(ptr) {}
+        ~smart_ptr() { delete m_ptr; }
+
+        T* get() const { return m_ptr; }
+
+private:
+        T* m_ptr;
+};
+```
+
+然后添加一些成员函数（*, ->, 布尔表达式），让其更像指针。
+
+``` cpp
+template <typename T>
+class smart_ptr {
+public:
+        explicit smart_ptr(T* ptr = nullptr) : m_ptr(ptr) {}
+        ~smart_ptr() { delete m_ptr; }
+
+        T* get() const { return m_ptr; }
+
+        // make it like pointer
+        T& operator*() const { return *m_ptr; }
+        T* operator->() const { return m_ptr; }
+        operator bool() const { return m_ptr; }
+
+private:
+        T* m_ptr;
+};
+```
+
+### 拷贝构造和赋值
+
+需要关心如何定义其`行为`。考虑如果允许拷贝，则会存在多次内存释放的问题，因此需要禁止拷贝。
+
+``` cpp
+template <typename T>
+class smart_ptr {
+public:
+        explicit smart_ptr(T* ptr = nullptr) : m_ptr(ptr) {}
+        ~smart_ptr() { delete m_ptr; }
+
+        // forbidden copy
+        smart_ptr(const smart_ptr&) = delete;
+        smart_ptr& operator=(const smart_ptr&) = delete;
+
+
+        T* get() const { return m_ptr; }
+
+        // make it like pointer
+        T& operator*() const { return *m_ptr; }
+        T* operator->() const { return m_ptr; }
+        operator bool() const { return m_ptr; }
+
+private:
+        T* m_ptr;
+};
+```
+通过禁止`拷贝构造`和`赋值构造`，就可以在`编译时`发现存在拷贝的错误，例如，`smart_ptr<shape> ptr2(ptr1);`的写法，而不是在`运行时`出现两次释放内存的错误导致程序崩溃。
+
+另一种解决思路是，**使用智能指针的目的是，减少对象的拷贝**。因此，可以将拷贝实现为**转移指针的所有权**。在拷贝构造函数中，通过release方法释放指针所有权。在赋值构造函数中，通过拷贝构造产生一个**临时对象**并调用swap来交换对指针的所有权。
+
+注意：
+1. 用临时对象是为了把要转移的赋值对象控制权去除，同时在转移后把被赋值对象的资源释放掉
+2. 此处赋值构造函数的用法，是一种惯用法（[参考: What is the copy-and-swap idiom?](https://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom)），保证了**强异常安全性**。赋值分为拷贝构造和交换两步，异常只可能在第一步发生，而第一步如果发生异常的话，this对象完全不受任何影响。无论拷贝构造成功与否，结果都是明确的两种状态，而不会发生因为赋值破坏了当前对象的场景。
+
+``` cpp
+template <typename T>
+class smart_ptr {
+public:
+        explicit smart_ptr(T* ptr = nullptr) : m_ptr(ptr) {}
+        ~smart_ptr() { delete m_ptr; }
+
+        // forbidden copy
+        //smart_ptr(const smart_ptr&) = delete;
+        //smart_ptr& operator=(const smart_ptr&) = delete;
+
+        // move resource to new object, and release old
+        smart_ptr(const smart_ptr& other) {
+                m_ptr = other.release();
+        }
+
+        smart_ptr& operator=(const smart_ptr& rhs) {
+                // release old and create tmp object, then to swap
+                smart_ptr(rhs).swap(*this);
+                return *this;
+        }
+
+        T* release() {
+                T* ptr = m_ptr;
+                m_ptr = nullptr;
+                return ptr;
+        }
+
+        void swap(smart_ptr& rhs) {
+                using std::swap;
+                swap(m_ptr, rhs.m_ptr);
+        }
+
+
+        T* get() const { return m_ptr; }
+
+        // make it like pointer
+        T& operator*() const { return *m_ptr; }
+        T* operator->() const { return m_ptr; }
+        operator bool() const { return m_ptr; }
+
+private:
+        T* m_ptr;
+};
+```
+
+
 
 
 # STL

@@ -552,6 +552,10 @@ TODO
 * [Running periodic background tasks in Golang](https://medium.com/@mkfeuhrer/running-periodic-background-tasks-in-golang-8baa1af9a1f6)
 * [Go: Goroutine, OS Thread and CPU Management](https://medium.com/a-journey-with-go/go-goroutine-os-thread-and-cpu-management-2f5a5eaf518a)
 * [Beating C with 70 Lines of Go](https://ajeetdsouza.github.io/blog/posts/beating-c-with-70-lines-of-go/)
+* [The Value in Go's Simplicity](https://benjamincongdon.me/blog/2019/11/11/The-Value-in-Gos-Simplicity/)
+* [Go 号称几行代码开启一个 HTTP Server，底层都做了什么？](https://mp.weixin.qq.com/s/n7mSUB6pxoYmr5u575Nqqg)
+* [Interrupt handling in Go](https://embeddedgo.github.io/2019/11/29/interrupt_handling_in_go.html)
+* [Go Composition vs Inheritance](http://jim-mcbeath.blogspot.com/2019/11/go-composition-vs-inheritance.html)
 
 
 # Refer
