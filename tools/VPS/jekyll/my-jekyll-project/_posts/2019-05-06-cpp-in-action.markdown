@@ -155,11 +155,9 @@ refer:
 
 ## RAII
 
-RAII(Resource Acquisition Is Initialization)，是C++用于管理资源的方式。
+RAII(Resource Acquisition Is Initialization, pronounced as "R, A, double I")，是C++用于管理资源的方式。
 
-问题示例，在不使用RAII的方法时存在的问题：
-1. 若delete之前的代码出现异常时，导致delete无法执行从而产生内存泄露。
-2. 不符合C++的惯用法，通常应该使用栈内存分配。
+> Resource acquisition is initialization (RAII) is a programming idiom used in several object-oriented languages to describe a particular language behavior. In RAII, holding a resource is a class invariant, and is tied to object lifetime: resource allocation (or acquisition) is done during object creation (specifically initialization), by the constructor, while resource deallocation (release) is done during object destruction (specifically finalization), by the destructor. In other words, resource acquisition must succeed for initialization to succeed. Thus the resource is guaranteed to be held between when initialization finishes and finalization starts (holding the resources is a class invariant), and to be held only when the object is alive. Thus if there are no object leaks, there are no resource leaks.
 
 ``` cpp
 void foo()
@@ -171,6 +169,138 @@ void foo()
     delete ptr;
 }
 ```
+
+上述示例，在不使用RAII的方法时存在的问题：
+1. 若delete之前的代码出现异常时，导致delete无法执行从而产生内存泄露。
+2. 不符合C++的惯用法，通常应该使用栈内存分配（意思是，借助本地变量，确保其析构函数删除该对象）。资源管理不限于内存，也可以是，关闭文件，释放同步锁，释放其他系统资源。
+
+例如：
+
+方法1（不推荐）：
+
+``` cpp
+#include <iostream>       // std::cout
+#include <thread>         // std::thread
+#include <mutex>          // std::mutex
+
+std::mutex mtx;           // mutex for critical section
+
+void print_block (int n, char c) {
+        // critical section (exclusive access to std::cout signaled by locking mtx):
+        mtx.lock();
+        for (int i=0; i<n; ++i) { std::cout << c; }
+        std::cout << '\n';
+        mtx.unlock();
+}
+
+int main ()
+{
+        std::thread th1 (print_block,50,'*');
+        std::thread th2 (print_block,50,'$');
+
+        th1.join();
+        th2.join();
+
+        return 0;
+}/*
+$ g++ -o mutex2 mutex2.cpp -lpthread
+$ ./mutex2
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+**************************************************
+*/
+```
+
+方法2（推荐）：
+
+``` cpp
+#include <iostream>
+#include <map>
+#include <string>
+#include <chrono>
+#include <thread>
+#include <mutex>
+ 
+std::map<std::string, std::string> g_pages;
+std::mutex g_pages_mutex;
+ 
+void save_page(const std::string &url)
+{
+    // 模拟长页面读取
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::string result = "fake content";
+ 
+    std::lock_guard<std::mutex> guard(g_pages_mutex);
+    g_pages[url] = result;
+}
+ 
+int main() 
+{
+    std::thread t1(save_page, "http://foo");
+    std::thread t2(save_page, "http://bar");
+    t1.join();
+    t2.join();
+ 
+    // 现在访问g_pages是安全的，因为线程t1/t2生命周期已结束
+    for (const auto &pair : g_pages) {
+        std::cout << pair.first << " => " << pair.second << '\n';
+    }
+}
+/*
+$ g++ -o mutex mutex.cpp -lpthread
+$ ./mutex 
+http://bar => fake content
+http://foo => fake content
+*/
+```
+
+方法3（推荐）：
+
+``` cpp
+#include <thread>
+#include <mutex>
+#include <iostream>
+
+int g_i = 0;
+std::mutex g_i_mutex;  // 保护 g_i
+
+void safe_increment()
+{
+        std::lock_guard<std::mutex> lock(g_i_mutex);
+        ++g_i;
+
+        std::cout << std::this_thread::get_id() << ": " << g_i << '\n';
+
+        // g_i_mutex 在锁离开作用域时自动释放
+}
+
+int main()
+{
+        std::cout << "main: " << g_i << '\n';
+
+        std::thread t1(safe_increment);
+        std::thread t2(safe_increment);
+
+        t1.join();
+        t2.join();
+
+        std::cout << "main: " << g_i << '\n';
+}
+/*
+$ g++ -o mutex3 mutex3.cpp -lpthread
+$ ./mutex3 
+main: 0
+139691703760640: 1
+139691712153344: 2
+main: 2
+*/
+```
+
+refer:
+
+* [Resource acquisition is initialization (RAII)](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization)
+* [lock_guard](https://zh.cppreference.com/w/cpp/thread/lock_guard)
+* [https://zh.cppreference.com/w/cpp/thread/mutex](https://zh.cppreference.com/w/cpp/thread/mutex)
+* [http://www.cplusplus.com/reference/mutex/mutex/](http://www.cplusplus.com/reference/mutex/mutex/)
 
 
 # STL
