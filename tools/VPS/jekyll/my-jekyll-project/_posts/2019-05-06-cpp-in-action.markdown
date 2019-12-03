@@ -29,6 +29,13 @@ categories: cpp
 * 在C++里所有变量缺省都是`值语义`，如果不使用`*`和`&`的话，变量不会像Java或Python一样引用一个堆上的对象。
 * 对于像`智能指针`这样的烈性，写`ptr->call()`和`ptr.get()`，语法上都是对的。而在大部分其他语言里，访问成员只用`.`。
 
+## 异常处理
+
+* 通过`异常`能够将问题的`检测`和问题的`解决`分离，这样程序的问题检测部分可以不必了解如何处理问题。
+* C++的异常处理中，需要由问题检测部分`抛出一个对象`给处理代码，通过这个`对象的类型和内容`，两个部分能够就出现了什么错误进行通信。
+* 异常是通过抛出（throw）对象而引发（raise）的，该对象的类型决定应该激活哪个处理代码，被选中的处理代码是调用链中与该对象类型匹配且离抛出异常位置最近的那个。
+
+
 ## 堆栈及布局
 
 * 本地变量所需内存在栈上分配，和函数执行所需的其他数据在一起。当函数执行完这些内存也就自然释放掉。
@@ -65,7 +72,6 @@ int main()
     }
 
 }
-
 /*
 $ g++ -o stack_unwinding stack_unwinding.cpp 
 $ ./stack_unwinding 
@@ -371,6 +377,10 @@ private:
 需要关心如何定义其`行为`。考虑如果允许拷贝，则会存在多次内存释放的问题，因此需要禁止拷贝。
 
 ``` cpp
+#define DISALLOW_COPY_AND_ASSIGN(Type) \
+    Type(const Type&) = delete; \
+    Type& operator=(const Type&) = delete
+
 template <typename T>
 class smart_ptr {
 public:
@@ -378,8 +388,10 @@ public:
         ~smart_ptr() { delete m_ptr; }
 
         // forbidden copy
-        smart_ptr(const smart_ptr&) = delete;
-        smart_ptr& operator=(const smart_ptr&) = delete;
+        //smart_ptr(const smart_ptr&) = delete;
+        //smart_ptr& operator=(const smart_ptr&) = delete;
+
+        DISALLOW_COPY_AND_ASSIGN(smart_ptr);
 
 
         T* get() const { return m_ptr; }
@@ -449,18 +461,18 @@ private:
 
 以上用法和标准库的`auto_ptr`类（为动态分配的对象提供异常安全）的行为类似。
 
-｜ 方法 ｜ 含义
-｜ －－ ｜ －－
-｜ auto_ptr<T> ap | 创建名为ap的未绑定的auto_ptr对象
-｜ auto_ptr<T> ap(p) | 创建名为ap的auto_ptr对象，ap拥有指针p指向的对象，该构造函数为explicit
-｜ auto_ptr<T> ap1(ap2) | 创建名为ap1的auto_ptr对象，ap1保存原来存储在ap2中的指针，将所有权转给ap1，使ap2成为未绑定的auto_ptr对象
-｜ ap1 = ap2 | 将所有权从ap2转给ap1，删除ap1指向的对象并且使ap1指向ap2指向的对象，使ap2成为未绑定的
-｜ ~ap |  析构函数，删除ap指向的对象
-｜ *ap | 返回对ap所绑定的对象的引用
-｜ ap-> | 返回ap保存的指针
-｜ ap.reset(p) | 如果p与ap的值不同，则删除ap指向的对象，并且将ap绑定到p
+| 方法 | 含义
+| -- | --
+| auto_ptr<T> ap | 创建名为ap的未绑定的auto_ptr对象
+| auto_ptr<T> ap(p) | 创建名为ap的auto_ptr对象，ap拥有指针p指向的对象，该构造函数为explicit
+| auto_ptr<T> ap1(ap2) | 创建名为ap1的auto_ptr对象，ap1保存原来存储在ap2中的指针，将所有权转给ap1，使ap2成为未绑定的auto_ptr对象
+| ap1 = ap2 | 将所有权从ap2转给ap1，删除ap1指向的对象并且使ap1指向ap2指向的对象，使ap2成为未绑定的
+| ~ap |  析构函数，删除ap指向的对象
+| *ap | 返回对ap所绑定的对象的引用
+| ap-> | 返回ap保存的指针
+| ap.reset(p) | 如果p与ap的值不同，则删除ap指向的对象，并且将ap绑定到p
 | ap.release() | 返回ap所保存的指针，并且使ap成为未绑定的
-｜ ap.get() | 返回ap保存的指针
+| ap.get() | 返回ap保存的指针
 
 > 注意：
 > 1. auto_ptr只能用于管理从new返回的一个对象，不能管理动态分配的数组（否则未定义行为）。由于auto_ptr被复制或赋值的时候有不寻常的行为，因此，不能将auto_ptr存储在标准容器类型中，标准库的容器类要求在复制或赋值之后两个对象相等，auto_ptr不满足这一要求。
@@ -597,6 +609,50 @@ void test_regex_ip()
 }
 ```
 
+## Unit Test
+
+[参考](https://github.com/idealvin/co/blob/master/base/time.h)
+
+``` cpp
+#include "test.h"
+
+std::string ss;
+
+def_test(100000);
+def_case(ss = "");
+def_case(ss = std::to_string(12345678));
+```
+
+``` cpp
+// test.h
+
+#include "base/def.h"
+#include "base/time.h"
+#include "base/log.h"
+
+#define def_test(n) \
+    int N = n; \
+    int64 _us; \
+    Timer _t
+
+#define def_case(func) \
+    do { \
+        _t.restart(); \
+        for (int i = 0; i < N; ++i) { \
+            func; \
+        } \
+        _us = _t.us(); \
+        CLOG << #func << ":\t" << (_us * 1.0 / N) << " us"; \
+    } while (0)
+```
+
+## Log
+
+[参考](https://github.com/idealvin/co/blob/master/base/log.h)
+
+
+
+
 # 编译器
 
 [is-pragma-once-a-safe-include-guard](https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard)
@@ -604,10 +660,14 @@ void test_regex_ip()
 
 # 文档
 
-1. [GCC online documentation]
+1. [GCC online documentation](https://gcc.gnu.org/onlinedocs/)
+
+# 开源
+
+* [An elegant and efficient C++ basic library for Linux, Windows and Mac](https://github.com/idealvin/co)
 
 
-[GCC online documentation]: https://gcc.gnu.org/onlinedocs/
+
 
 
 
