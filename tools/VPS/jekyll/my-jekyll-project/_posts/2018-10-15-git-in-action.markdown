@@ -794,18 +794,13 @@ https://tortoisegit.org/
 
 # Refer
 
-
-* [阮一峰: 版本控制入门插图教程]
-* [阮一峰: Git远程操作详解]
-* [Git官方的使用文档: Getting Started - About Version Control]
-* [廖雪峰: Git教程]
-
-
-
-[阮一峰: 版本控制入门插图教程]: http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html
-[阮一峰: Git远程操作详解]: http://www.ruanyifeng.com/blog/2014/06/git_remote.html
-[Git官方的使用文档: Getting Started - About Version Control]: https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control
-[廖雪峰: Git教程]: https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
+* [Scott Chacon, Ben Straub - Pro Git-Apress (2014)](https://git-scm.com/book/en/v2)
+* [图解Git](https://marklodato.github.io/visual-git-guide/index-zh-cn.html)
+* [阮一峰: 版本控制入门插图教程](http://www.ruanyifeng.com/blog/2008/12/a_visual_guide_to_version_control.html)
+* [阮一峰: Git远程操作详解](http://www.ruanyifeng.com/blog/2014/06/git_remote.html)
+* [这才是真正的GIT - GIT原理及实用技巧 - PPT](https://www.lzane.com/slide/git-under-the-hood/index.html#/)
+* [这才是真正的 Git（freeCodeConf 2019 深圳站）- video](https://www.bilibili.com/video/av77252063)
+* [廖雪峰: Git教程](https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000)
 
 
 

@@ -175,6 +175,13 @@ http://104.131.173.242/phpmyadmin/
 
 [kramdown](https://kramdown.gettalong.org/)
 
+More: 
+
+[https://jekyllrb.com/](https://jekyllrb.com/)
+
+参考博客：
+
+* [https://ianding.io/](https://ianding.io/)
 
 
 # 工具
@@ -225,6 +232,14 @@ $chsh -s /bin/bash
 ### Vim
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
+
+插件：
+
+* [YouCompleteMe - A code-completion engine for Vim](https://github.com/ycm-core/YouCompleteMe)
+* [ccls - C/C++/ObjC language server supporting cross references, hierarchies, completion and semantic highlighting](https://github.com/MaskRay/ccls)
+
+refer:
+* [Configure coc.nvim for C/C++ Development](https://ianding.io/2019/07/29/configure-coc-nvim-for-c-c++-development/)
 
 ### Sublime
 

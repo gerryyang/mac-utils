@@ -1159,6 +1159,10 @@ auto-aof-rewrite-min-size 64mb
 redis-benchmark -c 1 -1
 ```
 
+refer:
+
+* [How fast is Redis?](https://redis.io/topics/benchmarks)
+* [How to Benchmark the Performance of a Redis Server on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-perform-redis-benchmark-tests)
 
 # Redis的应用
 

@@ -181,5 +181,12 @@ refer:
 
 * [HowTo: Iterate Bash For Loop Variable Range Under Unix / Linux](https://www.cyberciti.biz/faq/unix-linux-iterate-over-a-variable-range-of-numbers-in-bash/)
 
+# Other
+
+* [Bash Programming Tutorial](https://ianding.io/2019/08/30/bash-programming-tutorial/)
+* [Don't Overuse hjkl in Vim](https://ianding.io/2019/08/16/dont-overuse-hjkl-in-vim/)
+* [Multi-file Search and Replace in Vim](https://ianding.io/2019/08/22/multi-file-search-and-replace-in-vim/)
+
+
 
 
