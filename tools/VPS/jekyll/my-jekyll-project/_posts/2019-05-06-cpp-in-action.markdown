@@ -487,6 +487,129 @@ private:
 
 # STL
 
+## const引用减少拷贝
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+vector<string> func()
+{
+        vector<string> vec = {"a", "b"};
+        return vec;
+}
+
+void print(const vector<string>& vec)
+{
+        for (auto& item : vec) {
+                cout << item << " ";
+        }
+        cout << endl;
+}
+
+int main()
+{
+        const vector<string>& res = func();
+        print(res);
+}
+```
+
+## 字符串分割
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <string>
+
+std::vector<std::string> split_str(const std::string& src, char split)
+{
+        std::vector<std::string> res;
+
+        if (src.empty()) {
+                return res;
+        }
+
+        std::string::size_type start = 0, next;
+        while ((next = src.find(split, start)) != std::string::npos) {
+                res.push_back(src.substr(start, next - start));
+                start = next + 1;
+        }
+        res.push_back(src.substr(start));
+        return res;
+}
+
+void print(std::vector<std::string> &vec)
+{
+        for (auto &item : vec) {
+                std::cout << item << "|";
+        }
+        std::cout << std::endl;
+}
+
+int main()
+{
+        std::vector<int> vec;
+        std::cout << "size: " << vec.size() 
+                << " capacity: " << vec.capacity() << std::endl;
+
+        vec.reserve(10);
+        vec.push_back(1);
+
+        std::cout << "size: " << vec.size() 
+                << " capacity: " << vec.capacity() << std::endl;
+
+
+        std::string s;
+        std::vector<std::string> res;
+
+        s = "1,2";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "1,2,";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",1,2";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "1";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",,";
+        res = split_str(s, ',');
+        print(res);
+
+}
+/*
+g++ -o test test.cpp -std=c++11
+./test
+size: 0 capacity: 0
+size: 1 capacity: 10
+1|2|
+1|2||
+|1|2|
+1|
+
+||
+|||
+*/
+```
+
 [range-for](https://zh.cppreference.com/w/cpp/language/range-for)
 
 [lambda](https://zh.cppreference.com/w/cpp/language/lambda)
@@ -495,6 +618,39 @@ private:
 
 
 # 代码片段
+
+## 浮点数精度问题
+
+``` cpp
+#include <cstdio>
+#include <math.h>
+
+int main()
+{
+        // 以下存在精度问题
+        double a = 12.03;
+        double b = 22; 
+        long long c = a * b * pow(10, 8);
+        printf("c[%lld]\n", c);
+
+        // 四舍五入
+        double d = (long long)(a * b * 100 + 0.5) / 100.0;
+        printf("d[%f]\n", d);
+        c = d * pow(10, 8);
+        printf("c[%lld]\n", c);
+
+        // 一种解决方法
+        long long e = (a * b + 1e-9) * 100000000;
+        printf("e[%lld]\n", e);
+
+}
+/*
+c[26465999999]
+d[264.660000]
+c[26466000000]
+e[26466000000]
+*/
+```
 
 ## Time
 
@@ -673,6 +829,9 @@ def_case(ss = std::to_string(12345678));
 
 
 
+# 文章
+
+* [6 Tips to supercharge C++11 vector performance](https://www.acodersjourney.com/6-tips-supercharge-cpp-11-vector-performance/)
 
 
 

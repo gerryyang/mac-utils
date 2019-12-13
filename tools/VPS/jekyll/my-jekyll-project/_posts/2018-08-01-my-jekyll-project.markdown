@@ -253,6 +253,15 @@ refer:
 | ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
 | SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
 
+### VSCode
+
+[VSCode](https://github.com/microsoft/vscode)是微软推出的一款IDE开发工具，拥有丰富的插件，支持Windows，OS X和Linux，此外内置JavaScript，TypeScript和Node.js支持。VSCode定位于编辑器与IDE之间，但是更像一个编辑器。
+
+### Typora
+
+[Typora](https://www.typora.io)用于Markdown编辑和可视化。
+
+
 ## 画图工具
 
 * [canva](https://www.canva.com/)
@@ -295,3 +304,13 @@ refer:
 * [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。
 * [时区图](https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png)
 
+# 编程语言
+
+## Java
+
+* [JavaGuide](https://github.com/snailclimb/javaguide)，一份涵盖大部分Java程序员所需要掌握的核心知识。
+
+# 算法
+
+* [Algorithm Visualizer](https://github.com/algorithm-visualizer/algorithm-visualizer)，Interactive Online Platform that Visualizes Algorithms from Code https://algorithm-visualizer.org/
+* [数据结构和算法必知必会的50个代码实现](https://github.com/wangzheng0822/algo)
