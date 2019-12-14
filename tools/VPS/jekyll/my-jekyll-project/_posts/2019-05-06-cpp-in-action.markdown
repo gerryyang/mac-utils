@@ -812,7 +812,25 @@ def_case(ss = std::to_string(12345678));
 [参考](https://github.com/idealvin/co/blob/master/base/log.h)
 
 
+# 内联汇编
 
+GCC为内联汇编提供特殊结构，其格式如下。`汇编程序模板`由`汇编指令`组成。`输入操作数`是充当指令输入操作数使用的C表达式。`输出操作数`是将对其执行汇编指令输出的C表达式。内联汇编的重要性体现在它能够灵活操作，而且可以使其输出通过C变量显示出来。因为它具有这种能力，所以"asm"可以用作汇编指令和包含它的C程序之间的接口。**简单内联汇编只包括指令，而扩展内联汇编包括操作数**。
+
+``` asm
+asm ( assembler template
+     
+: output operands               (optional)
+     
+: input operands                (optional)
+     
+: list of clobbered registers   
+    (optional)
+     
+);
+```
+
+* [Linux中x86的内联汇编](https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/index.html)
+* [What is a clobber?](https://stackoverflow.com/questions/41899881/what-is-a-clobber/41900500)
 
 # 编译器
 
