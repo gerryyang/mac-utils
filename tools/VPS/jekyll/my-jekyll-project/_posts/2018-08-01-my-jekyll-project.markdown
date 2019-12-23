@@ -182,6 +182,7 @@ More:
 参考博客：
 
 * [https://ianding.io/](https://ianding.io/)
+* [https://arthurchiao.github.io/about/](https://arthurchiao.github.io/about/)
 
 
 # 工具
@@ -239,7 +240,9 @@ $chsh -s /bin/bash
 * [ccls - C/C++/ObjC language server supporting cross references, hierarchies, completion and semantic highlighting](https://github.com/MaskRay/ccls)
 
 refer:
+
 * [Configure coc.nvim for C/C++ Development](https://ianding.io/2019/07/29/configure-coc-nvim-for-c-c++-development/)
+* [my vim configuration, based on amix's project](https://github.com/ArthurChiao/vim_awesome)
 
 ### Sublime
 

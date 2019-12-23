@@ -812,6 +812,27 @@ def_case(ss = std::to_string(12345678));
 [参考](https://github.com/idealvin/co/blob/master/base/log.h)
 
 
+## 浮点数计算精度问题
+
+``` cpp
+double a = 12.03;
+double b = 22; 
+long long c = a * b * 100000000L;
+printf("c[%lld]\n", c);              // 26465999999
+c = a * 100000000L * b;
+printf("c[%lld]\n", c);              // 26466000000
+```
+
+* Actually, the error is because there is no way to map 0.1 to a finite binary floating point number. 
+* Most fractions can't be converted to a decimal with exact precision. A good explanation is here:  [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
+
+refer:
+
+* [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
+* [如何理解double精度丢失问题？](https://www.zhihu.com/question/42024389/answer/93528601)
+* [How to deal with floating point number precision in JavaScript?](https://stackoverflow.com/questions/1458633/how-to-deal-with-floating-point-number-precision-in-javascript)
+* [The Perils of Floating Point](http://www.lahey.com/float.htm)
+
 # 内联汇编
 
 GCC为内联汇编提供特殊结构，其格式如下。`汇编程序模板`由`汇编指令`组成。`输入操作数`是充当指令输入操作数使用的C表达式。`输出操作数`是将对其执行汇编指令输出的C表达式。内联汇编的重要性体现在它能够灵活操作，而且可以使其输出通过C变量显示出来。因为它具有这种能力，所以"asm"可以用作汇编指令和包含它的C程序之间的接口。**简单内联汇编只包括指令，而扩展内联汇编包括操作数**。
@@ -830,12 +851,21 @@ asm ( assembler template
 ```
 
 * [Linux中x86的内联汇编](https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/index.html)
+* [x86 Assembly Guide](http://www.cs.virginia.edu/~evans/cs216/guides/x86.html)
+* [[译] 简明 x86 汇编指南](https://arthurchiao.github.io/blog/x86-asm-guide-trans-cn-zh/)
 * [What is a clobber?](https://stackoverflow.com/questions/41899881/what-is-a-clobber/41900500)
+
 
 # 编译器
 
 [is-pragma-once-a-safe-include-guard](https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard)
 
+
+# 网络
+
+* [tcpdump/wireshark 抓包及分析（2019）](https://arthurchiao.github.io/blog/tcpdump-practice-zh/)
+* [tcpdump: An Incomplete Guide](https://arthurchiao.github.io/blog/tcpdump/)
+* [[译] 使用 Linux tracepoint、perf 和 eBPF 跟踪数据包 (2017)](https://arthurchiao.github.io/blog/trace-packet-with-tracepoint-perf-ebpf-zh/)
 
 # 文档
 
