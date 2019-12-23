@@ -479,10 +479,281 @@ private:
 > 2. 与其他复制或赋值操作不同，auto_ptr的复制和赋值改变右操作数，因此，赋值的左右操作数必须都是可修改的左值。
 
 
-## 引用计数
+##＃ 引用计数
 
+实现一个类似标准[shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr)的智能指针，但是还缺少部分功能。
 
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <utility>  // std::swap
 
+// 共享计数类
+class shared_count {
+public:
+    shared_count() noexcept : count_(1) {}
+
+    void add_count() noexcept        // 增加计数
+    {
+        ++count_;
+    }
+    long reduce_count() noexcept     // 减少计数，并返回当前计数以用于调用者判断是否是最后一个共享计数
+    {
+        return --count_;
+    }
+    long get_count() const noexcept  // 获取计数
+    {
+        return count_;
+    }
+
+private:
+    long count_;
+};
+
+// 引用计数智能指针
+template <typename T>
+class smart_ptr {
+public:
+
+    //template <typename U>
+    //friend class smart_ptr;
+
+    explicit smart_ptr(T* ptr = nullptr) : ptr_(ptr)
+    {
+        if (ptr) {
+            shared_count_ = new shared_count();
+        }
+    }
+
+    ~smart_ptr()
+    {
+        // 当ptr_非空时，此时shared_count_也必然非空
+        if (ptr_ && !shared_count_->reduce_count()) {
+            delete ptr_;
+            delete shared_count_;
+        }
+    }
+
+    smart_ptr(const smart_ptr& other)
+    {
+        std::cout << "smart_ptr(const smart_ptr& other)\n";
+        ptr_ = other.ptr_;
+        if (ptr_) {
+            other.shared_count_->add_count();
+            shared_count_ = other.shared_count_;
+        }
+    }
+
+    template <typename U>
+        smart_ptr(const smart_ptr<U>& other) noexcept
+        {
+            std::cout << "smart_ptr(const smart_ptr<U>& other)\n";
+            ptr_ = other.ptr_;
+            if (ptr_) {
+                other.shard_count_->add_count();
+                shared_count_ = other.shared_count_;
+            }
+        }
+
+    template <typename U>
+        smart_ptr(smart_ptr<U>&& other)
+        {
+            std::cout << "smart_ptr(smart_ptr<U>&& other)\n";
+            ptr_ = other.ptr_;
+            if (ptr_) {
+                shared_count_ = other.shared_count_;
+                other.ptr_ = nullptr;
+            }
+        }
+
+    // 指针类型转换
+    template <typename U>
+        smart_ptr(const smart_ptr<U>& other, T* ptr) noexcept {
+            ptr_ = ptr;
+            if (ptr_) {
+                other.shared_count_->add_count();
+                shared_count_ = other.shared_count_;
+            }
+        }
+
+    smart_ptr& operator=(smart_ptr rhs) noexcept {
+        rhs.swap(*this);
+        return *this;
+    }
+
+    T* get() const noexcept {
+        return ptr_;
+    }
+
+    long use_count() const
+    {
+        if (ptr_) {
+            return shared_count_->get_count();
+        } else {
+            return 0;
+        }
+    }
+
+    void swap(smart_ptr& rhs) noexcept {
+        using std::swap;
+        swap(ptr_, rhs.ptr_);
+        swap(shared_count_, rhs.shared_count_);
+    }
+
+    T& operator*() const noexcept { return *ptr_; }
+    T* operator->() const noexcept { return ptr_; }
+    operator bool() const noexcept { return ptr_; }
+
+private:
+    T* ptr_;
+    shared_count* shared_count_;
+};
+
+template <typename T>
+void swap(smart_ptr<T>& lhs, smart_ptr<T>& rhs) noexcept {
+    lhs.swap(rhs);
+}
+
+template <typename T, typename U>
+smart_ptr<T> static_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = static_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> reinterpret_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = reinterpret_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> const_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = const_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> dynamic_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = dynamic_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+int main()
+{
+    int *ptr = new int(1);
+    std::cout << "ptr: " << *ptr << std::endl;
+
+    smart_ptr<int> sptr1(ptr);
+    std::cout << "sptr1 use conut: " << sptr1.use_count() << std::endl;
+
+    smart_ptr<int> sptr2;
+    std::cout << "sptr2 use conut: " << sptr2.use_count() << std::endl;
+    sptr2 = sptr1;
+    std::cout << "sptr2 use conut: " << sptr2.use_count() << std::endl;
+
+    smart_ptr<int> sptr3(sptr1);
+    std::cout << "sptr3 use conut: " << sptr3.use_count() << std::endl;
+
+    smart_ptr<int> sptr4(std::move(sptr1));
+    std::cout << "sptr4 use conut: " << sptr4.use_count() << std::endl;
+
+    if (sptr1) {
+        std::cout << "sptr1 is not empty\n";
+    } else {
+        std::cout << "sptr1 is empty\n";
+    }
+
+}
+/*
+$ g++ -std=c++11 -o shared_count shared_count.cpp 
+$./shared_count 
+ptr: 1
+sptr1 use conut: 1
+sptr2 use conut: 0
+sptr2 use conut: 1
+smart_ptr(const smart_ptr& other)
+sptr3 use conut: 2
+smart_ptr(smart_ptr<U>&& other)
+sptr4 use conut: 2
+sptr1 is empty
+*/
+
+```
+
+关于`shared_ptr`的一个使用例子：
+
+``` cpp
+#include <iostream>
+#include <memory>
+#include <thread>
+#include <chrono>
+#include <mutex>
+ 
+struct Base
+{
+    Base() { std::cout << "  Base::Base()\n"; }
+    // Note: non-virtual destructor is OK here
+    ~Base() { std::cout << "  Base::~Base()\n"; }
+};
+ 
+struct Derived: public Base
+{
+    Derived() { std::cout << "  Derived::Derived()\n"; }
+    ~Derived() { std::cout << "  Derived::~Derived()\n"; }
+};
+ 
+void thr(std::shared_ptr<Base> p)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::shared_ptr<Base> lp = p; // thread-safe, even though the
+                                  // shared use_count is incremented
+    {
+        static std::mutex io_mutex;
+        std::lock_guard<std::mutex> lk(io_mutex);
+        std::cout << "local pointer in a thread:\n"
+                  << "  lp.get() = " << lp.get()
+                  << ", lp.use_count() = " << lp.use_count() << '\n';
+    }
+}
+ 
+int main()
+{
+    std::shared_ptr<Base> p = std::make_shared<Derived>();
+ 
+    std::cout << "Created a shared Derived (as a pointer to Base)\n"
+              << "  p.get() = " << p.get()
+              << ", p.use_count() = " << p.use_count() << '\n';
+    std::thread t1(thr, p), t2(thr, p), t3(thr, p);
+    p.reset(); // release ownership from main
+    std::cout << "Shared ownership between 3 threads and released\n"
+              << "ownership from main:\n"
+              << "  p.get() = " << p.get()
+              << ", p.use_count() = " << p.use_count() << '\n';
+    t1.join(); t2.join(); t3.join();
+    std::cout << "All threads completed, the last one deleted Derived\n";
+}
+/*
+$ g++ -std=c++11 -o shared_ptr_demo shared_ptr_demo.cpp 
+$ ./shared_ptr_demo 
+  Base::Base()
+  Derived::Derived()
+Created a shared Derived (as a pointer to Base)
+  p.get() = 0x7f9978c04da8, p.use_count() = 1
+Shared ownership between 3 threads and released
+ownership from main:
+  p.get() = 0x0, p.use_count() = 0
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 6  // TODO ?
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 4
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 2
+  Derived::~Derived()
+  Base::~Base()
+All threads completed, the last one deleted Derived
+ */
+
+```
 
 
 # STL
