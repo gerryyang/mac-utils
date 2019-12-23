@@ -479,7 +479,7 @@ private:
 > 2. 与其他复制或赋值操作不同，auto_ptr的复制和赋值改变右操作数，因此，赋值的左右操作数必须都是可修改的左值。
 
 
-##＃ 引用计数
+### 引用计数
 
 实现一个类似标准[shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr)的智能指针，但是还缺少部分功能。
 
@@ -890,38 +890,6 @@ size: 1 capacity: 10
 
 # 代码片段
 
-## 浮点数精度问题
-
-``` cpp
-#include <cstdio>
-#include <math.h>
-
-int main()
-{
-        // 以下存在精度问题
-        double a = 12.03;
-        double b = 22; 
-        long long c = a * b * pow(10, 8);
-        printf("c[%lld]\n", c);
-
-        // 四舍五入
-        double d = (long long)(a * b * 100 + 0.5) / 100.0;
-        printf("d[%f]\n", d);
-        c = d * pow(10, 8);
-        printf("c[%lld]\n", c);
-
-        // 一种解决方法
-        long long e = (a * b + 1e-9) * 100000000;
-        printf("e[%lld]\n", e);
-
-}
-/*
-c[26465999999]
-d[264.660000]
-c[26466000000]
-e[26466000000]
-*/
-```
 
 ## Time
 
@@ -1085,6 +1053,8 @@ def_case(ss = std::to_string(12345678));
 
 ## 浮点数计算精度问题
 
+在`C/C++`中：
+
 ``` cpp
 double a = 12.03;
 double b = 22; 
@@ -1094,15 +1064,74 @@ c = a * 100000000L * b;
 printf("c[%lld]\n", c);              // 26466000000
 ```
 
+亦或在`python`中：
+
+```
+Python 2.7.5 (default, Jun 17 2014, 18:11:42) 
+[GCC 4.8.2 20140120 (Red Hat 4.8.2-16)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 1.1 + 0.1
+1.2000000000000002
+```
+
 * Actually, the error is because there is no way to map 0.1 to a finite binary floating point number. 
 * Most fractions can't be converted to a decimal with exact precision. A good explanation is here:  [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
 
+> **What can I do to avoid this problem?**
+> That depends on what kind of calculations you’re doing.
+> * If you really need your results to add up exactly, especially when you work with money: use a special decimal datatype.
+> * If you just don’t want to see all those extra decimal places: simply format your result rounded to a fixed number of decimal places when displaying it.
+> *If you have no decimal datatype available, an alternative is to work with integers, e.g. do money calculations entirely in cents. But this is more work and has some drawbacks.
+
 refer:
 
+* [What Every Programmer Should Know About Floating-Point Arithmetic](https://floating-point-gui.de/)
 * [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
 * [如何理解double精度丢失问题？](https://www.zhihu.com/question/42024389/answer/93528601)
 * [How to deal with floating point number precision in JavaScript?](https://stackoverflow.com/questions/1458633/how-to-deal-with-floating-point-number-precision-in-javascript)
 * [The Perils of Floating Point](http://www.lahey.com/float.htm)
+
+在`C/C++`中的一些解决方案：
+
+* [C++ decimal data types](https://stackoverflow.com/questions/14096026/c-decimal-data-types)
+* [开源库- decimal_for_cpp](https://github.com/vpiotr/decimal_for_cpp)
+
+> If you are looking for data type supporting money / currency then try this: decimal_for_cpp
+
+* [boost - cpp_dec_float](https://www.boost.org/doc/libs/1_68_0/libs/multiprecision/doc/html/boost_multiprecision/tut/floats/cpp_dec_float.html)
+
+> The cpp_dec_float back-end is used in conjunction with number: It acts as an entirely C++ (header only and dependency free) floating-point number type that is a drop-in replacement for the native C++ floating-point types, but with much greater precision.
+
+``` cpp
+#include <iostream>
+#include <iomanip>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+
+int main()
+{
+    namespace mp = boost::multiprecision;
+    // here I'm using a predefined type that stores 100 digits,
+    // but you can create custom types very easily with any level
+    // of precision you want.
+    typedef mp::cpp_dec_float_100 decimal;
+
+    decimal tiny("0.0000000000000000000000000000000000000000000001");
+    decimal huge("100000000000000000000000000000000000000000000000");
+    decimal a = tiny;         
+
+    while (a != huge)
+    {
+        std::cout.precision(100);
+        std::cout << std::fixed << a << '\n';
+        a *= 10;
+    }    
+}
+```
+
+* [Exact decimal datatype for C++?](https://stackoverflow.com/questions/15319967/exact-decimal-datatype-for-c)
+* [The GNU Multiple Precision arithmetic library](https://gmplib.org/)
+* [C++ Data Types](https://www.geeksforgeeks.org/c-data-types/)
+
 
 # 内联汇编
 
