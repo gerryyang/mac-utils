@@ -1081,7 +1081,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 > That depends on what kind of calculations you’re doing.
 > * If you really need your results to add up exactly, especially when you work with money: use a special decimal datatype.
 > * If you just don’t want to see all those extra decimal places: simply format your result rounded to a fixed number of decimal places when displaying it.
-> *If you have no decimal datatype available, an alternative is to work with integers, e.g. do money calculations entirely in cents. But this is more work and has some drawbacks.
+> * If you have no decimal datatype available, an alternative is to work with integers, e.g. do money calculations entirely in cents. But this is more work and has some drawbacks.
 
 refer:
 
