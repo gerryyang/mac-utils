@@ -356,6 +356,7 @@ mysql> show variables like '%innodb_buffer%';
 
 ## C++封装的MySQL操作
 
+[https://github.com/gerryyang/mac-utils/tree/master/tools/MySQL](https://github.com/gerryyang/mac-utils/tree/master/tools/MySQL)
 
 
 
