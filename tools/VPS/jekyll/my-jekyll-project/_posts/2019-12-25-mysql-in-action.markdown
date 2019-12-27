@@ -87,6 +87,131 @@ set autocommit=off 或者 start transaction
 
 # 实践之坑
 
+## INSERT ... ON DUPLICATE KEY UPDATE Statement
+
+If you specify an ON DUPLICATE KEY UPDATE clause and a row to be inserted would cause a duplicate value in a UNIQUE index or PRIMARY KEY, an UPDATE of the old row occurs. For example, if column a is declared as UNIQUE and contains the value 1, the following two statements have similar effect:
+
+``` sql
+INSERT INTO t1 (a,b,c) VALUES (1,2,3)
+  ON DUPLICATE KEY UPDATE c=c+1;
+
+UPDATE t1 SET c=c+1 WHERE a=1;
+```
+
+测试：
+
+``` sql
+mysql> desc t_gerry;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| id    | int(2)      | YES  | MUL | NULL    |       |
+| name  | varchar(64) | YES  | UNI | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+mysql> show index from t_gerry;
++---------+------------+-----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+| Table   | Non_unique | Key_name  | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment |
++---------+------------+-----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+| t_gerry |          0 | Fname_idx |            1 | name        | A         |           2 |     NULL | NULL   | YES  | BTREE      |         |               |
+| t_gerry |          1 | Fid_idx   |            1 | id          | A         |           8 |     NULL | NULL   | YES  | BTREE      |         |               |
++---------+------------+-----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+2 rows in set (0.00 sec)
+
+mysql> select * from t_gerry;
++------+------+
+| id   | name |
++------+------+
+|   10 | NULL |
+|   11 | 10   |
+|   12 | NULL |
+|   13 | NULL |
+|   14 | NULL |
+|   15 | NULL |
+|   15 | NULL |
+|   10 | NULL |
++------+------+
+8 rows in set (0.00 sec)
+
+mysql> insert into t_gerry(id, name) values(11, 10) on duplicate key update name = 20;
+Query OK, 2 rows affected (0.00 sec)
+
+mysql> select * from t_gerry;
++------+------+
+| id   | name |
++------+------+
+|   10 | NULL |
+|   11 | 20   |
+|   12 | NULL |
+|   13 | NULL |
+|   14 | NULL |
+|   15 | NULL |
+|   15 | NULL |
+|   10 | NULL |
++------+------+
+8 rows in set (0.00 sec)
+mysql> insert into t_gerry(name) values(20) on duplicate key update name = 30;
+Query OK, 2 rows affected (0.00 sec)
+
+mysql> select * from t_gerry;
++------+------+
+| id   | name |
++------+------+
+|   10 | NULL |
+|   11 | 30   |
+|   12 | NULL |
+|   13 | NULL |
+|   14 | NULL |
+|   15 | NULL |
+|   15 | NULL |
+|   10 | NULL |
++------+------+
+10 rows in set (0.00 sec)
+mysql> insert into t_gerry(name) values(20) on duplicate key update name = 20;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from t_gerry;
++------+------+
+| id   | name |
++------+------+
+|   10 | NULL |
+|   11 | 30   |
+|   12 | NULL |
+|   13 | NULL |
+|   14 | NULL |
+|   15 | NULL |
+|   15 | NULL |
+|   10 | NULL |
+|   11 | 10   |
+|   13 | NULL |
+| NULL | 20   |
++------+------+
+11 rows in set (0.00 sec)
+```
+
+refer:
+* [INSERT ... ON DUPLICATE KEY UPDATE Statement](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html)
+
+## 批量操作
+
+By default, [mysql_query()](https://dev.mysql.com/doc/refman/8.0/en/mysql-query.html) and [mysql_real_query()](https://dev.mysql.com/doc/refman/8.0/en/mysql-real-query.html) interpret their statement string argument as **a single statement to be executed**, and you process the result according to whether the statement produces a result set (a set of rows, as for SELECT) or an affected-rows count (as for INSERT, UPDATE, and so forth).
+
+MySQL also supports the execution of a string containing multiple statements separated by semicolon (;) characters. This capability is enabled by special options that are specified either when you connect to the server with mysql_real_connect() or after connecting by calling [mysql_set_server_option()](https://dev.mysql.com/doc/refman/8.0/en/mysql-set-server-option.html).
+
+```
+If you enable multiple-statement support, **you should retrieve results from calls to mysql_query() or mysql_real_query() by using a loop that calls [mysql_next_result()](https://dev.mysql.com/doc/refman/8.0/en/mysql-next-result.html) to determine whether there are more results**. 
+
+Enabling multiple-statement support with **MYSQL_OPTION_MULTI_STATEMENTS_ON** does not have quite the same effect as enabling it by passing the **CLIENT_MULTI_STATEMENTS** flag to **mysql_real_connect()**.
+```
+
+Executing a multiple-statement string can produce multiple result sets or row-count indicators. Processing these results involves a different approach than for the single-statement case: After handling the result from the first statement, it is necessary to check whether more results exist and process them in turn if so. To support multiple-result processing, the C API includes the [mysql_more_results()](https://dev.mysql.com/doc/refman/8.0/en/mysql-more-results.html) and [mysql_next_result()](https://dev.mysql.com/doc/refman/8.0/en/mysql-next-result.html) functions. These functions are used at the end of a loop that iterates as long as more results are available. Failure to process the result this way may result in a dropped connection to the server.
+
+refer:
+
+* [Multiple Updates in MySQL](https://stackoverflow.com/questions/3432/multiple-updates-in-mysql)
+* [PHP- Multiple Statements](https://www.php.net/manual/en/mysqli.quickstart.multiple-statement.php)
+* [C API Multiple Statement Execution Support](https://dev.mysql.com/doc/refman/8.0/en/c-api-multiple-queries.html)
+
 ## MySQL事务能否嵌套
 
 根据官方[13.3.3 Statements That Cause an Implicit Commit](https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html)说明，MySQL不支持事务嵌套，若在同一个会话中，第二次执行`START TRANSACTION`开启一个事务，则第一个事务的操作会被隐式提交。
@@ -202,7 +327,7 @@ ALTER TABLE t_xxx ADD Fxxx1 varchar(24) NOT NULL default ''  COMMENT 'xxx' AFTER
 
 ## 索引创建，更新和删除
 
-在创建表时指定索引字段：
+在创建表时指定索引字段（INDEX）：
 
 ``` sql
 CREATE TABLE t_xxx (
@@ -236,6 +361,31 @@ explain select * from t_xxx where Fusr_name='10001'\G
 ```
 show index from t_xxx;
 ```
+
+创建唯一索引（UNIQUE INDEX）：
+
+``` sql
+CREATE UNIQUE INDEX index_name ON table_name(index_column_1,index_column_2,...);
+```
+
+创建唯一性限制（UNIQUE KEY）：
+
+``` sql
+CREATE TABLE table_name(
+   UNIQUE KEY(index_column_,index_column_2,...)
+);
+
+ALTER TABLE table_name ADD CONSTRAINT constraint_name UNIQUE KEY(column_1,column_2,...);
+```
+
+**MySQL UNIQUE Index & NULL的关系：**
+
+Unlike other database systems, MySQL considers `NULL` values as `distinct values`. Therefore, you can have multiple NULL values in the `UNIQUE index`. This is how MySQL was designed. It is not a bug even though it was reported as [a bug](http://bugs.mysql.com/bug.php?id=25544).
+
+
+refer:
+
+* [Using MySQL UNIQUE Index To Prevent Duplicates](http://www.mysqltutorial.org/mysql-unique/)
 
 ## 时间函数
 
@@ -359,9 +509,14 @@ mysql> show variables like '%innodb_buffer%';
 [https://github.com/gerryyang/mac-utils/tree/master/tools/MySQL](https://github.com/gerryyang/mac-utils/tree/master/tools/MySQL)
 
 
+# 官方API
+
+* [MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/introduction.html)
+
 
 # Refer
 
 * [Install MySQL on Mac OS X 10.9.1(x86, 64-bit)](http://blog.csdn.net/delphiwcdj/article/details/19297283)
 * [MySQL客户端2006(CR_SERVER_GONE_ERROR)错误测试和优化方法](http://blog.csdn.net/delphiwcdj/article/details/41576615)
 * [数据库：Mysql中“select ... for update”排他锁分析](https://blog.csdn.net/claram/article/details/54023216)
+

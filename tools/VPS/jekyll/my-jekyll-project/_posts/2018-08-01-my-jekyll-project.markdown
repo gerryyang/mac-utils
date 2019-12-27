@@ -228,7 +228,7 @@ $chsh -s /bin/bash
 
 [FeHelper]: https://chrome.google.com/webstore/search/fehelper?hl=zh-CN
 
-## 编辑器
+## 编辑器/IDE/开发工具
 
 ### Vim
 
@@ -263,6 +263,48 @@ refer:
 ### Typora
 
 [Typora](https://www.typora.io)用于Markdown编辑和可视化。
+
+### JetBrains全家桶
+
+#### CLion
+
+[JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。
+
+#### GoLand
+
+GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。
+
+#### IntelliJ IDEA
+
+2001年发布，一套智能的Java集成开发环境，特别专注与强调程序师的开发撰写效率提升。
+
+#### PyCharm
+
+PyCharm是一种Python IDE，可以帮助用户在使用Python语言开发时提高其效率的工具。
+
+#### PhpStorm
+
+PhpStorm是JetBrains公司开发的一款商业的PHP集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。
+
+#### WebStorm
+
+WebStorm是jetbrains公司旗下一款JavaScript 开发工具，被誉为Web前端开发神器。
+
+#### Rider
+
+JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。
+
+### Beyond Compare
+
+Beyond Compare是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
+
+### Source Insight
+
+Source Insight是一款功能强大的面向项目的编程编辑器，代码浏览器和分析器，可帮助您在工作和计划时更好的理解代码。
+
+### Visual Studio 2019
+
+Visual Studio Professional 2019，更快地进行代码编写，支持Windows，Mac平台。
 
 
 ## 画图工具
