@@ -315,7 +315,7 @@ refer:
 
 ### 值分左右
 
-C++标准里定义了**表达式的值类型**：
+C++标准里定义了**表达式的值类别**（注意，术语`值类型`，是与`引用类型`相对而言）：
 
 * `expression`分为`glvalue`和`rvalue`
 * `glvalue`分为`lvalue`和`xvalue`，`rvalue`分为`xvalue`和`prvalue`
