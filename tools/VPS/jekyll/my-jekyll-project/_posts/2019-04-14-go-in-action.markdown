@@ -556,6 +556,7 @@ TODO
 * [Go 号称几行代码开启一个 HTTP Server，底层都做了什么？](https://mp.weixin.qq.com/s/n7mSUB6pxoYmr5u575Nqqg)
 * [Interrupt handling in Go](https://embeddedgo.github.io/2019/11/29/interrupt_handling_in_go.html)
 * [Go Composition vs Inheritance](http://jim-mcbeath.blogspot.com/2019/11/go-composition-vs-inheritance.html)
+* [fasthttp-协程池](https://github.com/valyala/fasthttp/blob/master/workerpool.go)
 
 
 # Refer

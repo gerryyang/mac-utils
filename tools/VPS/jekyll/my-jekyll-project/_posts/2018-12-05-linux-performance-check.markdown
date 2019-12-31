@@ -363,10 +363,19 @@ Swap:            0          0          0
 * SHR，共享内存大小，比如，与其他进程共同使用的共享内存，加载的动态链接库以及程序的代码段等
 * %MEM，进程使用物理内存占系统总内存的百分比
 
+可以使用`pmap -xp $pid`分析下进程的内存分布，更详细的信息可以通过`cat /proc/$pid/smaps` (since Linux 2.6.14)来查看每个进程的内存消耗情况。
+
 补充：
 
-[What is RSS and VSZ in Linux memory management](https://stackoverflow.com/questions/7880784/what-is-rss-and-vsz-in-linux-memory-management)
-[RSS and PSS, Clean vs Dirty, Private vs Shared](http://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
+* [man - proc](http://manpages.ubuntu.com/manpages/eoan/en/man5/proc.5.html)
+* [man - pmap](http://manpages.ubuntu.com/manpages/eoan/en/man1/pmap.1.html)
+* [man - top](http://manpages.ubuntu.com/manpages/trusty/en/man1/top.1.html)
+* [What is RSS and VSZ in Linux memory management](https://stackoverflow.com/questions/7880784/what-is-rss-and-vsz-in-linux-memory-management)
+* [RSS and PSS, Clean vs Dirty, Private vs Shared](http://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
+* [Need explanation on Resident Set Size/Virtual Size](https://unix.stackexchange.com/questions/35129/need-explanation-on-resident-set-size-virtual-size)
+* [How does x86 paging work?](https://stackoverflow.com/questions/18431261/how-does-x86-paging-work)
+* [Memory usage of current process in C](https://stackoverflow.com/questions/1558402/memory-usage-of-current-process-in-c)
+
 
 
 ## 内存映射

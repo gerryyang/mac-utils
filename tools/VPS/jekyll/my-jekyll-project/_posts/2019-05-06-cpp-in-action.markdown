@@ -309,6 +309,169 @@ refer:
 * [https://zh.cppreference.com/w/cpp/thread/mutex](https://zh.cppreference.com/w/cpp/thread/mutex)
 * [http://www.cplusplus.com/reference/mutex/mutex/](http://www.cplusplus.com/reference/mutex/mutex/)
 
+## 移动语义
+
+`移动语义`是C++11里引入的一个重要概念，理解这个概念是理解很多现代C++里的优化的基础。
+
+### 值分左右
+
+C++标准里定义了**表达式的值类型**：
+
+* `expression`分为`glvalue`和`rvalue`
+* `glvalue`分为`lvalue`和`xvalue`，`rvalue`分为`xvalue`和`prvalue`
+
+含义：
+
+* 一个`lvalue`通常可以放在等号左边的表达式，称为**左值**
+* 一个`rvalue`通常只能放在等号右边的表达式，称为**右值**
+* 一个`glvalue`是`generalized lvalue`，称为**广义左值**
+* 一个`xvalue`是`expiring lvalue`，称为**将亡值**
+* 一个`prvalue`是`pure rvalue`，称为**纯右值**
+
+#### 左值
+
+**左值（lvalue）**是有标识符，可以取地址的表达式，常见的有：
+
+* 变量，函数，或数据成员的名字
+* 返回左值引用的表达式，如，`++x`，`x = 1`，`cout << ""`
+* 字符串字面量，如"hello world"
+
+在函数调用时，**左值**可以绑定到**左值引用的参数**，如`T&`，一个**常量**只能绑定到**常左值引用**，如`const T&`
+
+#### 右值
+
+**纯右值prvalue**是没有标识符，不可以取地址的表达式，一般称之为**临时对象**，常见有：
+
+* 返回非引用类型的表达式，如，`x++`，`x + 1`，`make_shared<int>(42)`
+* 除字符串字面量之外的字面量，如，`42`，`true`
+
+> 总结
+
+* 在C++11之前，**右值**可以绑定到**常左值引用（const lvalue reference）**的参数，如，`const T&`，但不可以绑定到**非常左值引用（non-const lvalue reference）**，如，`T&`。
+* 从C++11开始，新增了一种**右值引用（T&&）**，通过不同的引用类型进行重载，从而可以实现不同的行为，比如，性能优化。
+
+``` cpp
+smart_ptr<shape> ptr1{new circle()};
+smart_ptr<shape> ptr2 = std::move(ptr1);
+```
+
+第一个表达式，`new circle()`是一个**纯右值prvalue**，对于指针通常使用值传递，并不关心它是左值还是右值。
+第二个表达式，`std::move(ptr1)`的作用是，**把一个左值引用强制转换成一个右值引用，而并不改变其内容**。可以把`std::move(ptr1)`看作是**一个有名字的右值**，为了和无名的纯右值prvalue相区别，C++里目前把这种表达式称为**xvalue**。与左值lvalue不同，xvalue仍然是不能取地址的（xvalue与prvalue相同），因此xvalue和prvalue都被归为**右值rvalue**。
+
+
+#### 临时对象特殊的生命周期延长规则
+
+为了方便对临时对象的使用，C++对临时对象有特殊的生命周期延长规则：
+
+**如果一个prvalue被绑定到一个引用上，它的生命周期会延长到跟这个引用变量一样长。且注意，这条生命周期延长规则只对prvalue有效，而对xvalue无效。**
+
+测试：
+
+``` cpp
+#include <cstdio>
+
+class shape {
+public:
+        virtual ~shape() {}
+};
+
+class circle : public shape {
+public:
+        circle() { puts("circle()"); }
+        ~circle() { puts("~circle()"); }
+};
+
+class triangle : public shape {
+public:
+        triangle() { puts("triangle()"); }
+        ~triangle() { puts("~triangle()"); }
+};
+
+class result {
+public:
+        result() { puts("result()"); }
+        ~result() { puts("~result()"); }
+};
+
+result process_shape(const shape& shape1,
+                const shape& shape2)
+{
+        puts("process_shape()");
+        return result();
+}
+
+int main()
+{
+        puts("main()");
+        process_shape(circle(), triangle());
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~result()
+~circle()
+~triangle()
+something else
+*/
+```
+
+修改代码，将prvalue绑定到引用（const T& 或者 T&&）后，临时对象的生命周期则会和引用对象的生命周期一致：
+
+``` cpp
+int main()
+{
+        puts("main()");
+        //const result &r = process_shape(circle(), triangle());   // ok
+        result&& r = process_shape(circle(), triangle());          // ok
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~circle()
+~triangle()
+something else
+~result()
+*/
+```
+
+如果改为xvalue，则此规则无效。注意，有效变量r指向的对象已经不存在了，对r解引用是一个**未定义行为**。
+
+``` cpp
+#include <utility>
+int main()
+{
+        puts("main()");
+        //const result &r = process_shape(circle(), triangle());
+        //result&& r = process_shape(circle(), triangle());
+        result&& r = std::move(process_shape(circle(), triangle())); // xvalue, no
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~result()
+~circle()
+~triangle()
+something else
+*/
+```
+
+### 移动的意义
+
+TODO
+
+
 
 ## 智能指针
 
@@ -479,17 +642,407 @@ private:
 > 2. 与其他复制或赋值操作不同，auto_ptr的复制和赋值改变右操作数，因此，赋值的左右操作数必须都是可修改的左值。
 
 
-## 引用计数
+### 引用计数
 
-一个对象只能被单个`unique_ptr`所拥有；`shared_ptr`允许多个智能指针同时拥有一个对象，当它们全部都失效时（共享计数），这个对象也同时会被删除。
+一个对象只能被单个`unique_ptr`所拥有；`shared_ptr`允许多个智能指针同时拥有一个对象，当它们全部都失效时（共享计数），这个对象也同时会被删除。以下实现一个类似标准[shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr)的智能指针，但是还缺少部分功能。
 
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <utility>  // std::swap
 
+// 共享计数类
+class shared_count {
+public:
+    shared_count() noexcept : count_(1) {}
 
+    void add_count() noexcept        // 增加计数
+    {
+        ++count_;
+    }
+    long reduce_count() noexcept     // 减少计数，并返回当前计数以用于调用者判断是否是最后一个共享计数
+    {
+        return --count_;
+    }
+    long get_count() const noexcept  // 获取计数
+    {
+        return count_;
+    }
 
+private:
+    long count_;
+};
 
+// 引用计数智能指针
+template <typename T>
+class smart_ptr {
+public:
+
+    //template <typename U>
+    //friend class smart_ptr;
+
+    explicit smart_ptr(T* ptr = nullptr) : ptr_(ptr)
+    {
+        if (ptr) {
+            shared_count_ = new shared_count();
+        }
+    }
+
+    ~smart_ptr()
+    {
+        // 当ptr_非空时，此时shared_count_也必然非空
+        if (ptr_ && !shared_count_->reduce_count()) {
+            delete ptr_;
+            delete shared_count_;
+        }
+    }
+
+    smart_ptr(const smart_ptr& other)
+    {
+        std::cout << "smart_ptr(const smart_ptr& other)\n";
+        ptr_ = other.ptr_;
+        if (ptr_) {
+            other.shared_count_->add_count();
+            shared_count_ = other.shared_count_;
+        }
+    }
+
+    template <typename U>
+        smart_ptr(const smart_ptr<U>& other) noexcept
+        {
+            std::cout << "smart_ptr(const smart_ptr<U>& other)\n";
+            ptr_ = other.ptr_;
+            if (ptr_) {
+                other.shard_count_->add_count();
+                shared_count_ = other.shared_count_;
+            }
+        }
+
+    template <typename U>
+        smart_ptr(smart_ptr<U>&& other)
+        {
+            std::cout << "smart_ptr(smart_ptr<U>&& other)\n";
+            ptr_ = other.ptr_;
+            if (ptr_) {
+                shared_count_ = other.shared_count_;
+                other.ptr_ = nullptr;
+            }
+        }
+
+    // 指针类型转换
+    template <typename U>
+        smart_ptr(const smart_ptr<U>& other, T* ptr) noexcept {
+            ptr_ = ptr;
+            if (ptr_) {
+                other.shared_count_->add_count();
+                shared_count_ = other.shared_count_;
+            }
+        }
+
+    smart_ptr& operator=(smart_ptr rhs) noexcept {
+        rhs.swap(*this);
+        return *this;
+    }
+
+    T* get() const noexcept {
+        return ptr_;
+    }
+
+    long use_count() const
+    {
+        if (ptr_) {
+            return shared_count_->get_count();
+        } else {
+            return 0;
+        }
+    }
+
+    void swap(smart_ptr& rhs) noexcept {
+        using std::swap;
+        swap(ptr_, rhs.ptr_);
+        swap(shared_count_, rhs.shared_count_);
+    }
+
+    T& operator*() const noexcept { return *ptr_; }
+    T* operator->() const noexcept { return ptr_; }
+    operator bool() const noexcept { return ptr_; }
+
+private:
+    T* ptr_;
+    shared_count* shared_count_;
+};
+
+template <typename T>
+void swap(smart_ptr<T>& lhs, smart_ptr<T>& rhs) noexcept {
+    lhs.swap(rhs);
+}
+
+template <typename T, typename U>
+smart_ptr<T> static_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = static_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> reinterpret_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = reinterpret_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> const_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = const_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+template <typename T, typename U>
+smart_ptr<T> dynamic_pointer_cast(const smart_ptr<U>& other) noexcept {
+    T* ptr = dynamic_cast<T*>(other.get());
+    return smart_ptr<T>(other, ptr);
+}
+
+int main()
+{
+    int *ptr = new int(1);
+    std::cout << "ptr: " << *ptr << std::endl;
+
+    smart_ptr<int> sptr1(ptr);
+    std::cout << "sptr1 use conut: " << sptr1.use_count() << std::endl;
+
+    smart_ptr<int> sptr2;
+    std::cout << "sptr2 use conut: " << sptr2.use_count() << std::endl;
+    sptr2 = sptr1;
+    std::cout << "sptr2 use conut: " << sptr2.use_count() << std::endl;
+
+    smart_ptr<int> sptr3(sptr1);
+    std::cout << "sptr3 use conut: " << sptr3.use_count() << std::endl;
+
+    smart_ptr<int> sptr4(std::move(sptr1));
+    std::cout << "sptr4 use conut: " << sptr4.use_count() << std::endl;
+
+    if (sptr1) {
+        std::cout << "sptr1 is not empty\n";
+    } else {
+        std::cout << "sptr1 is empty\n";
+    }
+
+}
+/*
+$ g++ -std=c++11 -o shared_count shared_count.cpp 
+$./shared_count 
+ptr: 1
+sptr1 use conut: 1
+sptr2 use conut: 0
+sptr2 use conut: 1
+smart_ptr(const smart_ptr& other)
+sptr3 use conut: 2
+smart_ptr(smart_ptr<U>&& other)
+sptr4 use conut: 2
+sptr1 is empty
+*/
+
+```
+
+关于`shared_ptr`的一个使用例子：
+
+``` cpp
+#include <iostream>
+#include <memory>
+#include <thread>
+#include <chrono>
+#include <mutex>
+ 
+struct Base
+{
+    Base() { std::cout << "  Base::Base()\n"; }
+    // Note: non-virtual destructor is OK here
+    ~Base() { std::cout << "  Base::~Base()\n"; }
+};
+ 
+struct Derived: public Base
+{
+    Derived() { std::cout << "  Derived::Derived()\n"; }
+    ~Derived() { std::cout << "  Derived::~Derived()\n"; }
+};
+ 
+void thr(std::shared_ptr<Base> p)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::shared_ptr<Base> lp = p; // thread-safe, even though the
+                                  // shared use_count is incremented
+    {
+        static std::mutex io_mutex;
+        std::lock_guard<std::mutex> lk(io_mutex);
+        std::cout << "local pointer in a thread:\n"
+                  << "  lp.get() = " << lp.get()
+                  << ", lp.use_count() = " << lp.use_count() << '\n';
+    }
+}
+ 
+int main()
+{
+    std::shared_ptr<Base> p = std::make_shared<Derived>();
+ 
+    std::cout << "Created a shared Derived (as a pointer to Base)\n"
+              << "  p.get() = " << p.get()
+              << ", p.use_count() = " << p.use_count() << '\n';
+    std::thread t1(thr, p), t2(thr, p), t3(thr, p);
+    p.reset(); // release ownership from main
+    std::cout << "Shared ownership between 3 threads and released\n"
+              << "ownership from main:\n"
+              << "  p.get() = " << p.get()
+              << ", p.use_count() = " << p.use_count() << '\n';
+    t1.join(); t2.join(); t3.join();
+    std::cout << "All threads completed, the last one deleted Derived\n";
+}
+/*
+$ g++ -std=c++11 -o shared_ptr_demo shared_ptr_demo.cpp 
+$ ./shared_ptr_demo 
+  Base::Base()
+  Derived::Derived()
+Created a shared Derived (as a pointer to Base)
+  p.get() = 0x7f9978c04da8, p.use_count() = 1
+Shared ownership between 3 threads and released
+ownership from main:
+  p.get() = 0x0, p.use_count() = 0
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 6  // TODO ?
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 4
+local pointer in a thread:
+  lp.get() = 0x7f9978c04da8, lp.use_count() = 2
+  Derived::~Derived()
+  Base::~Base()
+All threads completed, the last one deleted Derived
+ */
+
+```
 
 
 # STL
+
+## const引用减少拷贝
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+vector<string> func()
+{
+        vector<string> vec = {"a", "b"};
+        return vec;
+}
+
+void print(const vector<string>& vec)
+{
+        for (auto& item : vec) {
+                cout << item << " ";
+        }
+        cout << endl;
+}
+
+int main()
+{
+        const vector<string>& res = func();
+        print(res);
+}
+```
+
+## 字符串分割
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <string>
+
+std::vector<std::string> split_str(const std::string& src, char split)
+{
+        std::vector<std::string> res;
+
+        if (src.empty()) {
+                return res;
+        }
+
+        std::string::size_type start = 0, next;
+        while ((next = src.find(split, start)) != std::string::npos) {
+                res.push_back(src.substr(start, next - start));
+                start = next + 1;
+        }
+        res.push_back(src.substr(start));
+        return res;
+}
+
+void print(std::vector<std::string> &vec)
+{
+        for (auto &item : vec) {
+                std::cout << item << "|";
+        }
+        std::cout << std::endl;
+}
+
+int main()
+{
+        std::vector<int> vec;
+        std::cout << "size: " << vec.size() 
+                << " capacity: " << vec.capacity() << std::endl;
+
+        vec.reserve(10);
+        vec.push_back(1);
+
+        std::cout << "size: " << vec.size() 
+                << " capacity: " << vec.capacity() << std::endl;
+
+
+        std::string s;
+        std::vector<std::string> res;
+
+        s = "1,2";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "1,2,";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",1,2";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "1";
+        res = split_str(s, ',');
+        print(res);
+
+        s = "";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",";
+        res = split_str(s, ',');
+        print(res);
+
+        s = ",,";
+        res = split_str(s, ',');
+        print(res);
+
+}
+/*
+g++ -o test test.cpp -std=c++11
+./test
+size: 0 capacity: 0
+size: 1 capacity: 10
+1|2|
+1|2||
+|1|2|
+1|
+
+||
+|||
+*/
+```
 
 [range-for](https://zh.cppreference.com/w/cpp/language/range-for)
 
@@ -499,6 +1052,7 @@ private:
 
 
 # 代码片段
+
 
 ## Time
 
@@ -660,12 +1214,121 @@ def_case(ss = std::to_string(12345678));
 [参考](https://github.com/idealvin/co/blob/master/base/log.h)
 
 
+## 浮点数计算精度问题
+
+在`C/C++`中：
+
+``` cpp
+double a = 12.03;
+double b = 22; 
+long long c = a * b * 100000000L;
+printf("c[%lld]\n", c);              // 26465999999
+c = a * 100000000L * b;
+printf("c[%lld]\n", c);              // 26466000000
+```
+
+亦或在`python`中：
+
+```
+Python 2.7.5 (default, Jun 17 2014, 18:11:42) 
+[GCC 4.8.2 20140120 (Red Hat 4.8.2-16)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 1.1 + 0.1
+1.2000000000000002
+```
+
+* Actually, the error is because there is no way to map 0.1 to a finite binary floating point number. 
+* Most fractions can't be converted to a decimal with exact precision. A good explanation is here:  [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
+
+> **What can I do to avoid this problem?**
+> That depends on what kind of calculations you’re doing.
+> * If you really need your results to add up exactly, especially when you work with money: use a special decimal datatype.
+> * If you just don’t want to see all those extra decimal places: simply format your result rounded to a fixed number of decimal places when displaying it.
+> * If you have no decimal datatype available, an alternative is to work with integers, e.g. do money calculations entirely in cents. But this is more work and has some drawbacks.
+
+refer:
+
+* [What Every Programmer Should Know About Floating-Point Arithmetic](https://floating-point-gui.de/)
+* [Floating Point Arithmetic: Issues and Limitations](https://docs.python.org/release/2.5.1/tut/node16.html)
+* [如何理解double精度丢失问题？](https://www.zhihu.com/question/42024389/answer/93528601)
+* [How to deal with floating point number precision in JavaScript?](https://stackoverflow.com/questions/1458633/how-to-deal-with-floating-point-number-precision-in-javascript)
+* [The Perils of Floating Point](http://www.lahey.com/float.htm)
+
+在`C/C++`中的一些解决方案：
+
+* [C++ decimal data types](https://stackoverflow.com/questions/14096026/c-decimal-data-types)
+* [开源库- decimal_for_cpp](https://github.com/vpiotr/decimal_for_cpp)
+
+> If you are looking for data type supporting money / currency then try this: decimal_for_cpp
+
+* [boost - cpp_dec_float](https://www.boost.org/doc/libs/1_68_0/libs/multiprecision/doc/html/boost_multiprecision/tut/floats/cpp_dec_float.html)
+
+> The cpp_dec_float back-end is used in conjunction with number: It acts as an entirely C++ (header only and dependency free) floating-point number type that is a drop-in replacement for the native C++ floating-point types, but with much greater precision.
+
+``` cpp
+#include <iostream>
+#include <iomanip>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+
+int main()
+{
+    namespace mp = boost::multiprecision;
+    // here I'm using a predefined type that stores 100 digits,
+    // but you can create custom types very easily with any level
+    // of precision you want.
+    typedef mp::cpp_dec_float_100 decimal;
+
+    decimal tiny("0.0000000000000000000000000000000000000000000001");
+    decimal huge("100000000000000000000000000000000000000000000000");
+    decimal a = tiny;         
+
+    while (a != huge)
+    {
+        std::cout.precision(100);
+        std::cout << std::fixed << a << '\n';
+        a *= 10;
+    }    
+}
+```
+
+* [Exact decimal datatype for C++?](https://stackoverflow.com/questions/15319967/exact-decimal-datatype-for-c)
+* [The GNU Multiple Precision arithmetic library](https://gmplib.org/)
+* [C++ Data Types](https://www.geeksforgeeks.org/c-data-types/)
+
+
+# 内联汇编
+
+GCC为内联汇编提供特殊结构，其格式如下。`汇编程序模板`由`汇编指令`组成。`输入操作数`是充当指令输入操作数使用的C表达式。`输出操作数`是将对其执行汇编指令输出的C表达式。内联汇编的重要性体现在它能够灵活操作，而且可以使其输出通过C变量显示出来。因为它具有这种能力，所以"asm"可以用作汇编指令和包含它的C程序之间的接口。**简单内联汇编只包括指令，而扩展内联汇编包括操作数**。
+
+``` asm
+asm ( assembler template
+     
+: output operands               (optional)
+     
+: input operands                (optional)
+     
+: list of clobbered registers   
+    (optional)
+     
+);
+```
+
+* [Linux中x86的内联汇编](https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/index.html)
+* [x86 Assembly Guide](http://www.cs.virginia.edu/~evans/cs216/guides/x86.html)
+* [[译] 简明 x86 汇编指南](https://arthurchiao.github.io/blog/x86-asm-guide-trans-cn-zh/)
+* [What is a clobber?](https://stackoverflow.com/questions/41899881/what-is-a-clobber/41900500)
 
 
 # 编译器
 
 [is-pragma-once-a-safe-include-guard](https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard)
 
+
+# 网络
+
+* [tcpdump/wireshark 抓包及分析（2019）](https://arthurchiao.github.io/blog/tcpdump-practice-zh/)
+* [tcpdump: An Incomplete Guide](https://arthurchiao.github.io/blog/tcpdump/)
+* [[译] 使用 Linux tracepoint、perf 和 eBPF 跟踪数据包 (2017)](https://arthurchiao.github.io/blog/trace-packet-with-tracepoint-perf-ebpf-zh/)
 
 # 文档
 
@@ -677,6 +1340,9 @@ def_case(ss = std::to_string(12345678));
 
 
 
+# 文章
+
+* [6 Tips to supercharge C++11 vector performance](https://www.acodersjourney.com/6-tips-supercharge-cpp-11-vector-performance/)
 
 
 
