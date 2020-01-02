@@ -2,7 +2,7 @@
 layout: post
 title:  "English Reading"
 date:   2019-06-01 11:12:00 +0800
-categories: English
+categories: 英语学习
 ---
 
 * Do not remove this line (it will not be displayed)

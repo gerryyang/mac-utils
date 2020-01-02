@@ -2,7 +2,7 @@
 layout: post
 title:  "Github Favor Project"
 date:   2019-07-10 08:30:00 +0800
-categories: https
+categories: Git
 ---
 
 * Do not remove this line (it will not be displayed)

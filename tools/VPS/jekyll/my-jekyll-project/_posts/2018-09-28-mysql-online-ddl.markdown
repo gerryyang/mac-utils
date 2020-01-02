@@ -2,7 +2,7 @@
 layout: post
 title:  "MySQL online DDL原理"
 date:   2018-09-28 09:15:00 +0800
-categories: mysql
+categories: MySQL
 ---
 
 * Do not remove this line (it will not be displayed)

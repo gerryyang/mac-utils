@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "常用编码方法"
+title:  "计算机常用编码方法"
 date:   2019-04-11 08:00:00 +0800
-categories: encoding
+categories: 基础理论
 ---
 
 * Do not remove this line (it will not be displayed)

@@ -2,7 +2,7 @@
 layout: post
 title:  "事务在互联网场景中的应用"
 date:   2018-08-18 14:08:00 +0800
-categories: tech
+categories: 分布式
 ---
 
 * Do not remove this line (it will not be displayed)

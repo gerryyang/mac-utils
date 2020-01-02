@@ -2,7 +2,7 @@
 layout: post
 title:  "一致性共识算法在互联网场景中的应用"
 date:   2018-08-25 23:30:00 +0800
-categories: tech
+categories: 分布式
 ---
 
 * Do not remove this line (it will not be displayed)

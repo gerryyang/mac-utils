@@ -2,7 +2,7 @@
 layout: post
 title:  "CPP in Action"
 date:   2019-05-06 17:00:00 +0800
-categories: cpp
+categories: [C/C++, 编程语言]
 ---
 
 * Do not remove this line (it will not be displayed)

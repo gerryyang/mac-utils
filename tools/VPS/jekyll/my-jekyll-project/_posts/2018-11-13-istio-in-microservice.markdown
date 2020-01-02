@@ -2,7 +2,7 @@
 layout: post
 title:  "Istio一个开源的Service Mesh平台 - 微服务网格技术"
 date:   2018-11-13 08:30:00 +0800
-categories: microservice
+categories: 微服务
 ---
 
 * Do not remove this line (it will not be displayed)

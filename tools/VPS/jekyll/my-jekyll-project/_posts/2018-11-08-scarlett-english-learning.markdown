@@ -2,7 +2,7 @@
 layout: post
 title:  "Scarlett话剧英语学习记录"
 date:   2018-11-08 19:55:00 +0800
-categories: English
+categories: 英语学习
 ---
 
 * Do not remove this line (it will not be displayed)

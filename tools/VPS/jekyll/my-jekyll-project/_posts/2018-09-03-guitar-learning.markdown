@@ -2,7 +2,7 @@
 layout: post
 title:  "guitar学习"
 date:   2018-09-03 22:00:00 +0800
-categories: life
+categories: 生活
 ---
 
 * Do not remove this line (it will not be displayed)

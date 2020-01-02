@@ -2,7 +2,7 @@
 layout: post
 title:  "MySQL in Action"
 date:   2019-12-25 09:15:00 +0800
-categories: mysql
+categories: MySQL
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -86,6 +86,38 @@ set autocommit=off 或者 start transaction
 
 
 # 实践之坑
+
+## MySQL乱码之utf8mb4
+
+Q:
+
+* What is the difference between utf8mb4 and utf8 charsets in MySQL? I already know about ASCII, UTF-8, UTF-16 and UTF-32 encodings; but I'm curious to know whats the difference of utf8mb4 group of encodings with other encoding types defined in MySQL Server. Are there any special benefits/proposes of using utf8mb4 rather than utf8?
+
+A:
+
+[UTF-8](https://en.wikipedia.org/wiki/UTF-8) is **a variable-length encoding**. In the case of UTF-8, this means that **storing one code point requires one to four bytes**. However, MySQL's encoding called "utf8" (alias of "utf8mb3") **only stores a maximum of three bytes** per code point. So the character set "utf8"/"utf8mb3" cannot store all Unicode code points: it only supports the range 0x000 to 0xFFFF, which is called the ["Basic Multilingual Plane"](https://en.wikipedia.org/wiki/Plane_%28Unicode%29#Basic_Multilingual_Plane). See also [Comparison of Unicode encodings](https://en.wikipedia.org/wiki/Comparison_of_Unicode_encodings#In_detail).
+
+This is what (a previous version of the same page at) the [MySQL documentation - 10.9.1 The utf8mb4 Character Set (4-Byte UTF-8 Unicode Encoding)](https://dev.mysql.com/doc/refman/5.5/en/charset-unicode-utf8mb4.html) has to say about it:
+
+> The character set named utf8[/utf8mb3] uses a maximum of three bytes per character and contains only BMP characters. As of MySQL 5.5.3, the utf8mb4 character set uses a maximum of four bytes per character supports supplemental characters:
+> For a BMP character, utf8[/utf8mb3] and utf8mb4 have identical storage characteristics: same code values, same encoding, same length.
+> For a supplementary character, **utf8[/utf8mb3] cannot store the character at all**, while utf8mb4 requires four bytes to store it. Since utf8[/utf8mb3] cannot store the character at all, you do not have any supplementary characters in utf8[/utf8mb3] columns and you need not worry about converting characters or losing data when upgrading utf8[/utf8mb3] data from older versions of MySQL.
+
+So if you want your column to support storing characters lying outside the BMP (and you usually want to), such as [emoji](https://en.wikipedia.org/wiki/Emoji), use "utf8mb4". See also [What are the most common non-BMP Unicode characters in actual use?](https://stackoverflow.com/questions/5567249/what-are-the-most-common-non-bmp-unicode-characters-in-actual-use).
+
+**Emoji** are now the most common **non-BMP characters** by far. Otherwise known as U+1F602 FACE WITH TEARS OF JOY, is the most common one on Twitter's public stream. It occurs more frequently than the tilde!
+
+From [10.10.1 Unicode Character Sets](https://dev.mysql.com/doc/refman/8.0/en/charset-unicode-sets.html):
+
+* utf8mb4: A UTF-8 encoding of the Unicode character set using one to four bytes per character.
+* utf8mb3: A UTF-8 encoding of the Unicode character set using one to three bytes per character.
+
+In MySQL `utf8` is currently an alias for `utf8mb3` which **is deprecated** and will be removed in a future MySQL release. At that point `utf8` **will become a reference to** `utf8mb4`.
+
+refer:
+
+* [What is the difference between utf8mb4 and utf8 charsets in MySQL?](https://stackoverflow.com/questions/30074492/what-is-the-difference-between-utf8mb4-and-utf8-charsets-in-mysql)
+* [How to support full Unicode in MySQL databases](https://mathiasbynens.be/notes/mysql-utf8mb4)
 
 ## INSERT ... ON DUPLICATE KEY UPDATE Statement
 

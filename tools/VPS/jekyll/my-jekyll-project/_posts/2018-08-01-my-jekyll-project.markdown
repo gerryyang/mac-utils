@@ -2,7 +2,7 @@
 layout: post
 title:  "开始新的学习和写作"
 date:   2018-08-01 23:25:00 +0800
-categories: life
+categories: 杂记
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -167,13 +167,24 @@ http://104.131.173.242/phpmyadmin/
 
 
 
-# jekyll配置
+# jekyll用法拾萃
+
+如何通过jekyll发表blog，基本的用法可参考官方文档[Posts](https://jekyllrb.com/docs/posts/)。
+
 
 * 目录索引(TOC)
 
 [How I Add a Table of Contents to my Jekyll Blog Written in Markdown](http://www.seanbuscay.com/blog/jekyll-toc-markdown/)
 
 [kramdown](https://kramdown.gettalong.org/)
+
+* 主题
+
+参考[Overriding theme defaultsPermalink](https://jekyllrb.com/docs/themes/#overriding-theme-defaults)实现如何修改主题。
+
+第三方主题：
+
+[long-haul](https://github.com/brianmaierjr/long-haul) - A minimal, type-focused Jekyll theme. http://brianmaierjr.com/long-haul
 
 More: 
 
@@ -359,3 +370,7 @@ refer:
 
 * [Algorithm Visualizer](https://github.com/algorithm-visualizer/algorithm-visualizer)，Interactive Online Platform that Visualizes Algorithms from Code https://algorithm-visualizer.org/
 * [数据结构和算法必知必会的50个代码实现](https://github.com/wangzheng0822/algo)
+
+
+--------
+*END - I hope you like it!*

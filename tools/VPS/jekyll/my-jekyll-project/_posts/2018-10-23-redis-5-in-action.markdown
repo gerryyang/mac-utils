@@ -2,7 +2,7 @@
 layout: post
 title:  "Redis 5.0.0 in Action"
 date:   2018-10-23 13:00:00 +0800
-categories: redis
+categories: Redis
 ---
 
 * Do not remove this line (it will not be displayed)

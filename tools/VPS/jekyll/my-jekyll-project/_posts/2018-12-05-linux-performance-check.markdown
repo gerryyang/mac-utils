@@ -2,7 +2,7 @@
 layout: post
 title:  "Linux Performance诊断"
 date:   2018-12-05 20:00:00 +0800
-categories: Linux
+categories: 性能优化
 ---
 
 * Do not remove this line (it will not be displayed)

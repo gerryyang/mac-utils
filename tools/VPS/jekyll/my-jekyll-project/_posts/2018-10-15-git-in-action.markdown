@@ -2,7 +2,7 @@
 layout: post
 title:  "Git in Action"
 date:   2018-10-15 13:00:00 +0800
-categories: tools
+categories: Git
 ---
 
 * Do not remove this line (it will not be displayed)
