@@ -309,6 +309,169 @@ refer:
 * [https://zh.cppreference.com/w/cpp/thread/mutex](https://zh.cppreference.com/w/cpp/thread/mutex)
 * [http://www.cplusplus.com/reference/mutex/mutex/](http://www.cplusplus.com/reference/mutex/mutex/)
 
+## 移动语义
+
+`移动语义`是C++11里引入的一个重要概念，理解这个概念是理解很多现代C++里的优化的基础。
+
+### 值分左右
+
+C++标准里定义了**表达式的值类别**（注意，术语`值类型`，是与`引用类型`相对而言）：
+
+* `expression`分为`glvalue`和`rvalue`
+* `glvalue`分为`lvalue`和`xvalue`，`rvalue`分为`xvalue`和`prvalue`
+
+含义：
+
+* 一个`lvalue`通常可以放在等号左边的表达式，称为**左值**
+* 一个`rvalue`通常只能放在等号右边的表达式，称为**右值**
+* 一个`glvalue`是`generalized lvalue`，称为**广义左值**
+* 一个`xvalue`是`expiring lvalue`，称为**将亡值**
+* 一个`prvalue`是`pure rvalue`，称为**纯右值**
+
+#### 左值
+
+**左值（lvalue）**是有标识符，可以取地址的表达式，常见的有：
+
+* 变量，函数，或数据成员的名字
+* 返回左值引用的表达式，如，`++x`，`x = 1`，`cout << ""`
+* 字符串字面量，如"hello world"
+
+在函数调用时，**左值**可以绑定到**左值引用的参数**，如`T&`，一个**常量**只能绑定到**常左值引用**，如`const T&`
+
+#### 右值
+
+**纯右值prvalue**是没有标识符，不可以取地址的表达式，一般称之为**临时对象**，常见有：
+
+* 返回非引用类型的表达式，如，`x++`，`x + 1`，`make_shared<int>(42)`
+* 除字符串字面量之外的字面量，如，`42`，`true`
+
+> 总结
+
+* 在C++11之前，**右值**可以绑定到**常左值引用（const lvalue reference）**的参数，如，`const T&`，但不可以绑定到**非常左值引用（non-const lvalue reference）**，如，`T&`。
+* 从C++11开始，新增了一种**右值引用（T&&）**，通过不同的引用类型进行重载，从而可以实现不同的行为，比如，性能优化。
+
+``` cpp
+smart_ptr<shape> ptr1{new circle()};
+smart_ptr<shape> ptr2 = std::move(ptr1);
+```
+
+第一个表达式，`new circle()`是一个**纯右值prvalue**，对于指针通常使用值传递，并不关心它是左值还是右值。
+第二个表达式，`std::move(ptr1)`的作用是，**把一个左值引用强制转换成一个右值引用，而并不改变其内容**。可以把`std::move(ptr1)`看作是**一个有名字的右值**，为了和无名的纯右值prvalue相区别，C++里目前把这种表达式称为**xvalue**。与左值lvalue不同，xvalue仍然是不能取地址的（xvalue与prvalue相同），因此xvalue和prvalue都被归为**右值rvalue**。
+
+
+#### 临时对象特殊的生命周期延长规则
+
+为了方便对临时对象的使用，C++对临时对象有特殊的生命周期延长规则：
+
+**如果一个prvalue被绑定到一个引用上，它的生命周期会延长到跟这个引用变量一样长。且注意，这条生命周期延长规则只对prvalue有效，而对xvalue无效。**
+
+测试：
+
+``` cpp
+#include <cstdio>
+
+class shape {
+public:
+        virtual ~shape() {}
+};
+
+class circle : public shape {
+public:
+        circle() { puts("circle()"); }
+        ~circle() { puts("~circle()"); }
+};
+
+class triangle : public shape {
+public:
+        triangle() { puts("triangle()"); }
+        ~triangle() { puts("~triangle()"); }
+};
+
+class result {
+public:
+        result() { puts("result()"); }
+        ~result() { puts("~result()"); }
+};
+
+result process_shape(const shape& shape1,
+                const shape& shape2)
+{
+        puts("process_shape()");
+        return result();
+}
+
+int main()
+{
+        puts("main()");
+        process_shape(circle(), triangle());
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~result()
+~circle()
+~triangle()
+something else
+*/
+```
+
+修改代码，将prvalue绑定到引用（const T& 或者 T&&）后，临时对象的生命周期则会和引用对象的生命周期一致：
+
+``` cpp
+int main()
+{
+        puts("main()");
+        //const result &r = process_shape(circle(), triangle());   // ok
+        result&& r = process_shape(circle(), triangle());          // ok
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~circle()
+~triangle()
+something else
+~result()
+*/
+```
+
+如果改为xvalue，则此规则无效。注意，有效变量r指向的对象已经不存在了，对r解引用是一个**未定义行为**。
+
+``` cpp
+#include <utility>
+int main()
+{
+        puts("main()");
+        //const result &r = process_shape(circle(), triangle());
+        //result&& r = process_shape(circle(), triangle());
+        result&& r = std::move(process_shape(circle(), triangle())); // xvalue, no
+        puts("something else");
+}
+/*
+main()
+triangle()
+circle()
+process_shape()
+result()
+~result()
+~circle()
+~triangle()
+something else
+*/
+```
+
+### 移动的意义
+
+TODO
+
+
 
 ## 智能指针
 
@@ -481,7 +644,7 @@ private:
 
 ### 引用计数
 
-实现一个类似标准[shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr)的智能指针，但是还缺少部分功能。
+一个对象只能被单个`unique_ptr`所拥有；`shared_ptr`允许多个智能指针同时拥有一个对象，当它们全部都失效时（共享计数），这个对象也同时会被删除。以下实现一个类似标准[shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr)的智能指针，但是还缺少部分功能。
 
 ``` cpp
 #include <cstdio>
