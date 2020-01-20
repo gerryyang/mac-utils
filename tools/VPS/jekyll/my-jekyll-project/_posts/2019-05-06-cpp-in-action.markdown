@@ -311,11 +311,11 @@ refer:
 
 ## 移动语义
 
-`移动语义`是C++11里引入的一个重要概念，理解这个概念是理解很多现代C++里的优化的基础。
+`移动语义`是C++11里引入的一个重要概念，理解这个概念是理解很多现代C++里的**优化的基础**。
 
 ### 值分左右
 
-C++标准里定义了**表达式的值类别**（注意，术语`值类型`，是与`引用类型`相对而言）：
+C++标准里定义了**表达式的值类别**（注意，区别术语`值类型`，是与`引用类型`相对而言，在C++里，所有的原生类型，枚举，结构，联合，类都代表`值类型`，只有引用`&`和指针`*`才是引用类型）：
 
 * `expression`分为`glvalue`和`rvalue`
 * `glvalue`分为`lvalue`和`xvalue`，`rvalue`分为`xvalue`和`prvalue`
@@ -358,12 +358,100 @@ smart_ptr<shape> ptr2 = std::move(ptr1);
 第一个表达式，`new circle()`是一个**纯右值prvalue**，对于指针通常使用值传递，并不关心它是左值还是右值。
 第二个表达式，`std::move(ptr1)`的作用是，**把一个左值引用强制转换成一个右值引用，而并不改变其内容**。可以把`std::move(ptr1)`看作是**一个有名字的右值**，为了和无名的纯右值prvalue相区别，C++里目前把这种表达式称为**xvalue**。与左值lvalue不同，xvalue仍然是不能取地址的（xvalue与prvalue相同），因此xvalue和prvalue都被归为**右值rvalue**。
 
+| 表达式值类别 | 不可移动 | 可移动 |
+| -- | -- | -- | 
+| glvalue | lvalue（有标识符）| xvalue（有标识符）
+| rvalue |  | prvalue（无标识符）xvalue（有标识符）
+
 
 #### 临时对象特殊的生命周期延长规则
 
-为了方便对临时对象的使用，C++对临时对象有特殊的生命周期延长规则：
+[GotW #88: A Candidate For the “Most Important const”](https://herbsutter.com/2008/01/01/gotw-88-a-candidate-for-the-most-important-const/)提出了一个问题：
 
-**如果一个prvalue被绑定到一个引用上，它的生命周期会延长到跟这个引用变量一样长。且注意，这条生命周期延长规则只对prvalue有效，而对xvalue无效。**
+``` cpp
+// Is the following code legal C++?
+string f() { return "abc"; }
+
+void g() {
+    const string& s = f();
+    cout << s << endl;    // can we still use the "temporary" object? Yes
+}
+```
+
+如果把`const`去掉呢？
+
+``` cpp
+// What if we take out the const… is Example 2 still legal C++?
+string f() { return "abc"; }
+
+void g() {
+    string& s = f();       // still legal? No
+    cout << s << endl;
+```
+
+另一个例子，当引用生命周期结束时，对象是如何析构的？
+
+``` cpp
+Derived factory(); // construct a Derived object
+
+void g() {
+  const Base& b = factory(); // calls Derived::Derived here
+  // … use b …
+} // calls Derived::~Derived directly here — not Base::~Base + virtual dispatch!
+```
+
+
+``` cpp
+// When the reference goes out of scope, which destructor gets called?
+
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+        Base() { cout << "Base()\n"; }
+        ~Base() { cout << "~Base()\n"; }
+};
+
+class Derived : public Base
+{
+public:
+        Derived() { cout << "Derived()\n"; }
+        ~Derived() { cout << "~Derived()\n"; }
+};
+
+Derived Factory()
+{
+        return Derived();
+}
+
+int main()
+{
+        //Base* obj = new Derived();
+        //const Base* obj = new Derived();
+        //delete obj;
+
+        // error: cannot bind non-const lvalue reference of type ‘Base&’ to an rvalue of type ‘Base’
+        //Base& obj = Factory();
+
+        const Base& obj = Factory();  // ok
+        //Base&& obj = Factory();     // ok
+
+        cout << "end\n";
+}
+/*
+Base()
+Derived()
+end
+~Derived()
+~Base()
+*/
+```
+即，你可以把一个没有虚析构函数的子类对象绑定到基类的引用变量上，这个子类对象的析构仍然是完全正常的。这是因为这条规则只是延后了临时对象的析构而已，不是利用引用计数等复杂的方法，因而只要引用绑定成功，其类型并没有什么影响。
+
+> 为了方便对临时对象的使用，C++对临时对象有特殊的生命周期延长规则：
+> **如果一个prvalue被绑定到一个引用上，它的生命周期会延长到和这个引用变量一样长。且注意，这条生命周期延长规则只对prvalue有效，而对xvalue无效。**
 
 测试：
 
@@ -469,8 +557,157 @@ something else
 
 ### 移动的意义
 
-TODO
+使用右值引用的目的是实现移动，而实现移动的意义是减少运行的开销。
 
+
+在使用容器类的情况下，移动更有意义。例如：
+
+``` cpp
+string result = string("Hello, ") + name + ".";
+```
+
+执行流程大致如下：
+
+1. 调用构造函数 string(const char*)，生成临时对象1："Hello, "  
+2. 调用 operator+(const string&, const string&)，生成临时对象2："Hello, " 
+3. 调用 operator+(const string&, const char*)，生成临时对象3："Hello, ." 
+4. 假设返回值优化能够生效（最佳情况），对象 3 可以直接在 result 里构造完成
+5. 临时对象 2 析构，释放指向 string("Hello, ") + name 的内存
+6. 临时对象 1 析构，释放指向 string("Hello, ") 的内存
+
+因此，建议的写法是：
+
+``` cpp
+// 只会调用构造函数一次和 string::operator+= 两次，没有任何临时对象需要生成和析构
+string result = "Hello, ";
+result += name;
+result += ".";
+```
+
+但是，从 C++11 开始，以上`+=`的写法不再是必须的。同样上面那个单行的语句，执行流程大致如下：
+
+1. 调用构造函数 string(const char*)，生成临时对象 1："Hello, "
+2. 调用 operator+(string&&, const string&)，直接在临时对象 1 上面执行追加操作，并把结果移动到临时对象 2
+3. 调用 operator+(string&&, const char*)，直接在临时对象 2 上面执行追加操作，并把结果移动到 result
+4. 临时对象 2 析构，内容已经为空，不需要释放任何内存
+5. 临时对象 1 析构，内容已经为空，不需要释放任何内存
+
+性能上，所有的字符串只复制了一次；虽然比啰嗦的写法仍然要增加临时对象的构造和析构，但由于这些操作不牵涉到额外的内存分配和释放，是相当廉价的。程序员只需要牺牲一点点性能，就可以大大增加代码的可读性。
+
+所有的现代 C++ 的标准容器都针对移动进行了优化。
+
+### 实现移动
+
+让设计的对象支持移动，通常需要：
+
+* 对象有，分开的拷贝构造和移动构造函数（例如，unique_ptr只支持移动，所以只有移动构造，不支持拷贝）
+* 对象有，swap成员函数，支持和另一个对象快速交换
+* 在对象的命名空间下，应当有一个全局的swap函数，调用成员函数swap来实现交换。（支持这种用法可以方便在其他对象里包含你的对象，并快速实现它们的swap函数）
+* 实现通用的 operator=
+* 上面各个函数如果不抛异常的话，应当标为`noexcept`，这对**移动构造函数**尤为重要
+
+### 移动和NRVO（Named Return Value Optimization）
+
+在 C++11 之前，返回一个本地对象意味着这个对象会被拷贝，除非编译器发现可以做**返回值优化（named return value optimization，或 NRVO）**，能把对象直接构造到调用者的栈上。**从 C++11 开始，返回值优化仍可以发生，但在没有返回值优化的情况下，编译器将试图把本地对象移动出去，而不是拷贝出去**。这一行为不需要程序员手工用 std::move 进行干预——使用 std::move 对于移动行为没有帮助，反而会影响返回值优化。
+
+例子：
+
+``` cpp
+#include <iostream>  // std::cout/endl
+#include <utility>   // std::move
+
+using namespace std;
+
+class Obj {
+public:
+        Obj()
+        {
+                cout << "Obj()" << endl;
+        }
+        Obj(const Obj&)
+        {
+                cout << "Obj(const Obj&)" << endl;
+        }
+        Obj(Obj&&)
+        {
+                cout << "Obj(Obj&&)" << endl;
+        }
+};
+
+Obj simple()
+{ 
+        Obj obj;
+        //  简单返回对象；一般有 NRVO
+        return obj;
+}
+
+Obj simple_with_move()
+{ 
+        Obj obj;
+        // move会禁止 NRVO
+        // 需要生成一个 Obj，给了一个 Obj&&，因此会调用构造函数，所以就是多产生了一次Obj(Obj&&) 的调用
+        return std::move(obj);
+}
+
+Obj complicated(int n)
+{ 
+        Obj obj1;
+        Obj obj2;
+        //  有分支，一般无 NRVO
+        if (n % 2 == 0) {
+                return obj1;
+        } else {
+                return obj2;
+        }
+}
+
+int main()
+{
+        cout << "*** 1 ***" << endl;
+        auto obj1 = simple();
+        cout << "*** 2 ***" << endl;
+        auto obj2 = simple_with_move();
+        cout << "*** 3 ***" << endl;
+        auto obj3 = complicated(42);
+}
+/*
+*** 1 ***
+Obj()
+*** 2 ***
+Obj()
+Obj(Obj&&)
+*** 3 ***
+Obj()
+Obj()
+Obj(Obj&&)
+*/
+```
+
+### 引用坍缩（引用折叠）和完美转发
+
+对于一个实际的类型`T`，它的左值引用是`T&`，右值引用是`T&&`。那么：
+
+1. 是不是看到`T&`，就一定是个**左值引用**？ -- 是
+2. 是不是看到`T&&`，就一定是个**右值引用**？ -- 否
+
+关键在于，在有模板的代码里，对于类型参数的推导结果可能是引用。
+
+* 对于 template foo(T&&) 这样的代码，如果传递过去的参数是**左值**，T 的推导结果是**左值引用**；如果传递过去的参数是**右值**，T 的推导结果是**参数的类型本身**。
+* 如果 T 是**左值引用**，那 T&& 的结果仍然是**左值引用**，即 type& && 坍缩成了 type&。
+* 如果 T 是一个**实际类型**，那 T&& 的结果自然就是一个**右值引用**。
+
+事实上，很多标准库里的函数，连目标的参数类型都不知道，但我们仍然需要能够保持参数的值类别：左值的仍然是左值，右值的仍然是右值。这个功能在 C++ 标准库中已经提供了，叫 std::forward。它和 std::move 一样都是利用引用坍缩机制来实现。
+
+因为在 T 是模板参数时，T&& 的作用主要是保持值类别进行转发，它有个名字就叫“转发引用”（forwarding reference）。因为既可以是左值引用，也可以是右值引用，它也曾经被叫做“万能引用”（universal reference）。
+
+
+``` cpp
+template <typename T>
+void bar(T&& s)
+{
+  foo(std::forward<T>(s));
+}
+```
 
 
 ## 智能指针
@@ -1337,7 +1574,7 @@ asm ( assembler template
 # 开源
 
 * [An elegant and efficient C++ basic library for Linux, Windows and Mac](https://github.com/idealvin/co)
-
+* [My small collection of C++ utilities](https://github.com/adah1972/nvwa)
 
 
 # 文章
