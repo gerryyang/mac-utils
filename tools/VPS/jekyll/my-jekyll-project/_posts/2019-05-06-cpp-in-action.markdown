@@ -1603,10 +1603,8 @@ int main()
   };
   cout << s << endl;
 
-  unordered_map<complex<double>,
-                double>
-    umc{{{1.0, 1.0}, 1.4142},
-        {{3.0, 4.0}, 5.0}};
+  unordered_map< complex<double>, double > umc{ { {1.0, 1.0}, 1.4142}, { {3.0, 4.0}, 5.0} };
+
   cout << umc << endl;
 }
 ```
@@ -1624,7 +1622,176 @@ int main()
 
 ### array
 
-`array`容器是**C 数组**的替代品。C 数组在 C++ 里继续存在，主要是为了保留和 C 的向后兼容性。C 数组本身和 C++ 的容器相差是非常大的。
+`array`容器是**C 数组**的替代品。C 数组在 C++ 里继续存在，主要是为了保留和 C 的向后兼容性。C 数组本身和 C++ 的容器相差是非常大的：
+
+* C 数组没有 begin 和 end 成员函数（虽然可以使用全局的 begin 和 end 函数）
+* C 数组没有 size 成员函数（得用一些模板技巧来获取其长度）
+* C 数组作为参数有退化行为，传递给另外一个函数后那个函数不再能获得 C 数组的长度和结束位置
+
+获得数组的长度：
+
+``` cpp
+#define ARRAY_LEN(a) \
+  (sizeof(a) / sizeof((a)[0]))
+```
+
+C++17 直接提供了一个 `size` 方法，可以用于提供数组长度，并且在数组退化成指针的情况下会直接失败：
+
+``` cpp
+#include <iostream>  // std::cout/endl
+#include <iterator>  // std::size
+
+void test(int arr[])
+{
+  //  不能编译
+  // std::cout << std::size(arr)
+  //           << std::endl;
+}
+
+int main()
+{
+  int arr[] = {1, 2, 3, 4, 5};
+  std::cout << "The array length is "
+            << std::size(arr)
+            << std::endl;
+  test(arr);
+}
+```
+
+如果不用 C 数组的话，该用什么来替代？
+
+* 如果数组较大的话，应该考虑 vector。vector 有最大的灵活性和不错的性能。
+* 对于字符串数组，当然应该考虑 string。
+* 如果数组大小固定（C 的数组在 C++ 里本来就是大小固定的）并且较小的话，应该考虑 array。array 保留了 C 数组在栈上分配的特点，同时，提供了 begin、end、size 等通用成员函数。
+
+``` cpp
+#include <array>     // std::array
+#include <iostream>  // std::cout/endl
+#include <map>       // std::map
+#include "output_container.h"
+
+typedef std::array<char, 8> mykey_t;
+
+int main()
+{
+  std::map<mykey_t, int> mp;
+  mykey_t mykey{"hello"};
+  mp[mykey] = 5;  // OK
+  std::cout << mp << std::endl;
+}
+```
+
+# 异常
+
+异常，用还是不用，这是个问题。
+
+首先，开宗明义，如果你不知道到底该不该用异常的话，那答案就是该用。如果你需要避免使用异常，原因必须是你有明确的需要避免使用异常的理由。
+
+## 没有异常的世界（C）
+
+我们可能有大量需要判断错误的代码，零散分布在代码各处。
+
+``` cpp
+  matrix c;
+
+  //  不清零的话，错误处理和资源清理会更复杂
+  memset(c, 0, sizeof(matrix));
+
+  errcode = matrix_multiply(c, a, b);
+  if (errcode != MATRIX_SUCCESS) {
+    goto error_exit;
+  }
+  //  使用乘法的结果做其他处理
+
+error_exit:
+  matrix_dealloc(&c);
+  return errcode;
+```
+
+上面还只展示了单层的函数调用。事实上，如果出错位置离处理错误的位置相差很远的话，每一层的函数调用里都得有判断错误码的代码，这就既对写代码的人提出了严格要求，也对读代码的人造成了视觉上的干扰。
+
+上面是 C 代码无法用异常，如果是 C++ 用异常可以改善吗？（当然可以，但你会发现结果好不了多少）
+
+## 使用异常（C++）
+
+* 异常处理并不意味着需要写显式的 try 和 catch。**异常安全的代码，可以没有任何 try 和 catch。**
+* **异常安全**，是指当异常发生时，既不会发生资源泄漏，系统也不会处于一个不一致的状态。
+* 只要我们适当地组织好代码、利用好 RAII，实现的代码都可以更短、更清晰。我们可以统一在外层某个地方处理异常——通常会记日志、或在界面上向用户报告错误了。
+
+## 避免异常的风格指南？
+
+但大名鼎鼎的 Google 的 C++ 风格指南不是说**要避免异常吗**？这又是怎么回事呢？
+
+> Given that Google’s existing code is not exception-tolerant, the costs of using exceptions are somewhat greater than the costs in a new project. The conversion process would be slow and error-prone. We don’t believe that the available alternatives to exceptions, such as error codes and assertions, introduce a significant burden.Our advice against using exceptions is not predicated on philosophical or moral grounds, but practical ones. Because we’d like to use our open-source projects at Google and it’s difficult to do so if those projects use exceptions, we need to advise against exceptions in Google open-source projects as well. Things would probably be different if we had to do it all over again from scratch.
+> 鉴于 Google 的现有代码不能承受异常，**使用异常的代价要比在全新的项目中使用异常大一些**。转换[代码来使用异常的]过程会缓慢而容易出错。我们不认为可代替异常的方法，如错误码或断言，会带来明显的负担。我们反对异常的建议并非出于哲学或道德的立场，而是出于实际考虑。因为我们希望在 Google 使用我们的开源项目，而如果这些项目使用异常的话就会对我们的使用带来困难，我们也需要反对在 Google 的开源项目中使用异常。**如果我们从头再来一次的话，事情可能就会不一样了**。
+
+这个如果还比较官方、委婉的话，Reddit 上还能找到一个更个人化的表述：
+
+> I use [sic] to work at Google, and Craig Silverstein, who wrote the first draft of the style guideline, said that he regretted the ban on exceptions, but he had no choice; when he wrote it, it wasn’t only that the compiler they had at the time did a very bad job on exceptions, but that they already had a huge volume of non-exception-safe code.
+> 我过去在 Google 工作，写了风格指南初稿的 Craig Silverstein 说过**他对禁用异常感到遗憾**，但他当时别无选择。在他写风格指南的时候，不仅**他们使用的编译器在异常上工作得很糟糕，而且他们已经有了一大堆异常不安全的代码了**。
+
+当然，除了历史原因以外，也有出于性能等其他原因禁用异常的。美国国防部的联合攻击战斗机（JSF）项目的 C++ 编码规范就禁用异常，因为工具链不能保证抛出异常时的实时性能。不过在那种项目里，被禁用的 C++ 特性就多了，比如动态内存分配都不能使用。
+
+一些游戏项目为了追求高性能，也禁用异常。这个实际上也有一定的历史原因，**因为今天的主流 C++ 编译器，在异常关闭和开启时应该已经能够产生性能差不多的代码（在异常未抛出时）。代价是产生的二进制文件大小的增加，因为异常产生的位置决定了需要如何做栈展开，这些数据需要存储在表里**。典型情况，**使用异常和不使用异常比，二进制文件大小会有约`百分之十到二十`的上升**。[LLVM 项目的编码规范里就明确指出这是不使用 RTTI 和异常的原因](https://llvm.org/docs/CodingStandards.html#do-not-use-rtti-or-exceptions)。
+
+> In an effort to reduce code and executable size, LLVM does not use RTTI (e.g. dynamic_cast<>;) or exceptions.
+
+你得想想是否值得这么去做。你的项目对二进制文件的大小和性能有这么渴求吗？需要这么去拼吗？
+
+## 异常的问题
+
+异常当然不是一个完美的特性，否则也不会招来这些批评和禁用了。对它的批评主要有两条：
+
+1. **异常违反了“你不用就不需要付出代价”的 C++ 原则。只要开启了异常，即使不使用异常你编译出的二进制代码通常也会膨胀。**
+2. **异常比较隐蔽，不容易看出来哪些地方会发生异常和发生什么异常。**
+
+解释：
+
+GCC/Clang 下的 `-fexceptions`（缺省开启）。用 GCC，加上 `-fno-exceptions` 命令行参数，对于下面这样的小程序，也能看到产生的可执行文件的大小的变化。
+
+``` cpp
+#include <vector>
+int main()
+{
+    std::vector<int> v{1, 2, 3, 4, 5};
+    v.push_back(20);
+}
+```
+
+1. 对于第一条，开发者没有什么可做的。事实上，这也算是 C++ 实现的一个折中了。目前的主流异常实现中，都倾向于牺牲可执行文件大小、提高主流程（happy path）的性能。[只要程序不抛异常，C++ 代码的性能比起完全不做错误检查的代码，都只有几个百分点的性能损失](https://isocpp.org/wiki/faq/exceptions)。除了非常有限的一些场景，可执行文件大小通常不会是个问题。
+2. 第二条可以算作是一个真正有效的批评。和 Java 不同，C++ 里不会对异常规约进行编译时的检查。**从 C++17 开始，C++ 甚至完全禁止了以往的动态异常规约，你不再能在函数声明里写你可能会抛出某某异常。你唯一能声明的，就是某函数不会抛出异常——noexcept、noexcept(true) 或 throw()。这也是 C++ 的运行时唯一会检查的东西了。如果一个函数声明了不会抛出异常、结果却抛出了异常，C++ 运行时会调用 std::terminate 来终止应用程序**。不管是程序员的声明，还是编译器的检查，都不会告诉你哪些函数会抛出哪些异常。**当然，不声明异常是有理由的。特别是在泛型编程的代码里，几乎不可能预知会发生些什么异常**。
+
+对避免异常带来的问题有几点建议：
+
+* 写异常安全的代码，尤其在模板里。可能的话，[提供强异常安全保证](https://en.cppreference.com/w/cpp/language/exceptions)，在任何第三方代码发生异常的情况下，不改变对象的内容，也不产生任何资源泄漏。
+* 如果你的代码可能抛出异常的话，在文档里明确声明可能发生的异常类型和发生条件。确保使用你的代码的人，能在不检查你的实现的情况，了解需要准备处理哪些异常。
+* 对于肯定不会抛出异常的代码，将其标为 noexcept。注意类的特殊成员（构造函数、析构函数、赋值函数等）会自动成为 noexcept，如果它们调用的代码都是 noexcept 的话。所以，像 swap 这样的成员函数应当尽可能标成 noexcept。
+
+## 使用异常的理由
+
+**异常是渗透在 C++ 中的标准错误处理方式。标准库的错误处理方式就是异常**。其中不仅包括运行时错误，甚至包括一些逻辑错误。比如，在说容器的时候，在能使用 [] 运算符的地方，C++ 的标准容器也提供了 at 成员函数，能够在下标不存在的时候抛出异常，作为一种额外的帮助调试的手段。
+
+``` cpp
+vector<int> v{1, 2, 3};
+int a = v[0];
+int b = v.at(0)
+
+int c = v[3];    // no exception, 越界的数值
+
+// at函数会抛异常
+try {
+  c = v.at(3);
+}
+catch (const out_of_range& e) {
+  cerr << e.what() << endl;
+}
+```
+
+* **C++ 的标准容器在大部分情况下提供了强异常保证，即，一旦异常发生，现场会恢复到调用函数之前的状态，容器的内容不会发生改变，也没有任何资源泄漏**。前面提到过，vector 会在元素类型没有提供保证不抛异常的**移动构造函数**的情况下，在移动元素时会使用**拷贝构造函数**。这是因为一旦某个操作发生了异常，被移动的元素已经被破坏，处于只能析构的状态，异常安全性就不能得到保证了。
+* **只要你使用了标准容器，不管你自己用不用异常，你都得处理标准容器可能引发的异常**。至少有 bad_alloc，除非你明确知道你的目标运行环境不会产生这个异常。
+* 虽然对于运行时错误，开发者并没有什么选择余地；但对于代码中的逻辑错误，开发者则是可以选择不同的处理方式的：你**可以使用异常，也可以使用 assert**，在调试环境中报告错误并中断程序运行。由于测试通常不能覆盖所有的代码和分支，assert 在发布模式下一般被禁用，两者并不是完全的替代关系。在允许异常的情况下，使用异常可以获得在调试和发布模式下都良好、一致的效果。
+* 标准 C++ 可能会产生哪些异常，可以查看[参考资料](https://zh.cppreference.com/w/cpp/error/exception)。
+
 
 
 
