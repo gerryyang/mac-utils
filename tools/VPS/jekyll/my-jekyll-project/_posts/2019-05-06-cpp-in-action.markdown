@@ -1793,6 +1793,658 @@ catch (const out_of_range& e) {
 * 标准 C++ 可能会产生哪些异常，可以查看[参考资料](https://zh.cppreference.com/w/cpp/error/exception)。
 
 
+## 迭代器
+
+[迭代器](https://en.cppreference.com/w/cpp/iterator)是一个很通用的概念，并不是一个特定的类型。**它实际上是一组对类型的要求**。
+
+迭代器通常是对象。但需要注意的是，**`指针`可以满足上面所有的迭代器要求，因而也是迭代器**。这应该并不让人惊讶，**因为本来迭代器就是根据指针的特性，对其进行抽象的结果**。事实上，vector 的迭代器，在很多实现里就直接是使用指针的。
+
+迭代器的**基本要求**是：
+
+* 对象可以被`拷贝构造`、`拷贝赋值`和`析构`。
+* 对象支持 `*` 运算符。
+* 对象支持前置 `++` 运算符。
+
+### 常用迭代器
+
+最常用的迭代器就是容器的 `iterator` 类型了。以顺序容器为例，它们都定义了嵌套的 `iterator` 类型和 `const_iterator` 类型。一般而言，iterator 可写入，const_iterator 类型不可写入，但这些迭代器都被定义为**输入迭代器**或其**派生类型**：
+
+* vector::iterator 和 array::iterator 可以满足到**连续迭代器**
+* deque::iterator 可以满足到**随机访问迭代器**（记得它的内存只有部分连续）
+* list::iterator 可以满足到**双向迭代器**（链表不能快速跳转）
+* forward_list::iterator 可以满足到**前向迭代器**（单向链表不能反向遍历）
+
+如果一个类型像输入迭代器，但 `*i` 只能作为左值来写而不能读，那它就是个**输出迭代器（output iterator）**。
+
+``` cpp
+#include <algorithm>  // std::copy
+#include <iterator>   // std::back_inserter
+#include <vector>     // std::vector
+#include <iostream>   // std::cout
+using namespace std;
+
+vector<int> v1{1, 2, 3, 4, 5};
+vector<int> v2;
+copy(v1.begin(), v1.end(), back_inserter(v2));
+
+// output v2 is { 1, 2, 3, 4, 5 }
+
+copy(v2.begin(), v2.end(), ostream_iterator<int>(cout, " "));
+```
+
+* 输出迭代器是`back_inserter` 返回的类型 `back_inserter_iterator` ，用它可以很方便地在容器的尾部进行插入操作。
+* 输出迭代器`ostream_iterator`，方便把容器内容“拷贝”到一个输出流。
+
+总结：
+
+``` cpp
+cout << *it  // 输入迭代器，就是读
+*it = 42     // 输出迭代器，就是写
+```
+
+### 使用输入行迭代器（例子）
+
+通过自定义的输入迭代器。它的功能本身很简单，就是把一个输入流（istream）的内容一行行读进来。配上 C++11 引入的基于范围的 for 循环的语法，我们可以把遍历输入流的代码以一种自然、非过程式的方式写出来。
+
+``` cpp
+for (const string& line : istream_line_reader(is)) {
+  //  示例循环体中仅进行简单输出
+  cout << line << endl;
+}
+```
+
+对比一下以传统的方式写的 C++ 代码，其中需要照顾不少细节：(从 is 读入输入行的逻辑，在前面的代码里一个语句就全部搞定了，在这儿用了 5 个语句)
+
+``` cpp
+string line;
+for (;;) {
+  getline(is, line);
+  if (!is) {
+    break;
+  }
+  cout << line << endl;
+}
+```
+
+基于范围的 for 循环这个语法。虽然这可以说是个语法糖，但它对提高代码的可读性真的非常重要。如果不用这个语法糖的话，简洁性上的优势就小多了。我们直接把这个循环改写成等价的普通 for 循环的样子。
+
+``` cpp
+{
+  // auto&& 是用一个“万能”引用捕获一个对象，左值和右值都可以。C++ 的生命期延长规则，保证了引用有效期间，istream_line_reader 这个“临时”对象一直存在。没有生命期延长的话，临时对象在当前语句执行结束后即销毁
+  auto&& r = istream_line_reader(is);
+  auto it = r.begin();
+  auto end = r.end();
+  for (; it != end; ++it) {
+    const string& line = *it;
+    cout << line << endl;
+  }
+}
+```
+
+### 定义输入行迭代器（例子）
+
+如何实现这个输入行迭代器？
+
+C++ 里有些固定的类型要求规范。对于一个迭代器，我们需要定义下面的类型：
+
+``` cpp
+class istream_line_reader {
+public:
+  class iterator {  //  实现  InputIterator
+  public:
+    typedef ptrdiff_t difference_type;
+    typedef string value_type;
+    typedef const value_type* pointer;
+    typedef const value_type& reference;
+    typedef input_iterator_tag iterator_category;
+    …
+  };
+  …
+};
+```
+
+仿照一般的容器，我们把迭代器定义为 istream_line_reader 的嵌套类。它里面的这**五个类型是必须定义的（其他泛型 C++ 代码可能会用到这五个类型**。[之前标准库定义了一个可以继承的类模板 std::iterator 来产生这些类型定义，但这个类目前已经被废弃](https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/)）。其中：
+
+* `difference_type` 是代表迭代器之间距离的类型，定义为 `ptrdiff_t` 只是种标准做法（指针间差值的类型），对这个类型没什么特别作用。
+* `value_type` 是迭代器指向的对象的值类型，我们使用 `string`，表示迭代器指向的是字符串。
+* `pointer` 是迭代器指向的对象的指针类型，这儿就平淡无奇地定义为 `value_type` 的常指针了（我们可不希望别人来更改指针指向的内容）。
+* 类似的，reference 是 value_type 的常引用。
+* `iterator_category` 被定义为 `input_iterator_tag`，标识这个迭代器的类型是 input iterator（输入迭代器）。
+
+一种实现方式如下：
+
+让 `++` 负责读取，`*` 负责返回读取的内容。这个 iterator 类需要有一个数据成员指向输入流，一个数据成员来存放读取的结果。
+
+``` cpp
+class istream_line_reader {
+public:
+  class iterator {
+    …
+    iterator() noexcept
+      : stream_(nullptr) {}
+    explicit iterator(istream& is)
+      : stream_(&is)
+    {
+      ++*this;   // 注意，调用 前置++，读取内容，保证构造后可以通过 * 获取内容
+    }
+
+    reference operator*() const noexcept
+    {
+      return line_;
+    }
+    pointer operator->() const noexcept
+    {
+      return &line_;
+    }
+
+    // 前置++
+    iterator& operator++()
+    {
+      getline(*stream_, line_);
+      if (!*stream_) {
+        stream_ = nullptr;
+      }
+      return *this;
+    }
+
+    // 后置++，通过 前置++ 和 拷贝构造 实现（迭代器要求前置和后置 ++ 都要定义）
+    iterator operator++(int)
+    {
+      iterator temp(*this);
+      ++*this;
+      return temp;
+    }
+
+  private:
+    istream* stream_;
+    string line_;
+  };
+  …
+};
+```
+
+* 定义了默认构造函数，将 stream_ 清空
+* 在带参数的构造函数里，根据传入的输入流来设置 stream_
+* 定义了 `*` 和 `->` 运算符来取得迭代器指向的文本行的引用和指针
+* 用 `++` 来读取输入流的内容（`后置 ++` 则以惯常方式使用`前置 ++` 和`拷贝构造`来实现）
+
+注意：唯一“特别”点的地方，是在构造函数里调用了 `++`，确保在构造后调用 `*` 运算符时可以读取内容，符合日常先使用 `*`、再使用 `++` 的习惯。一旦文件读取到尾部（或出错），则 stream_ 被清空，回到默认构造的情况。
+
+对于迭代器之间的比较，则主要考虑文件有没有读到尾部的情况，简单定义为：
+
+``` cpp
+    bool operator==(const iterator& rhs) const noexcept
+    {
+      return stream_ == rhs.stream_;
+    }
+
+    bool operator!=(const iterator& rhs) const noexcept
+    {
+      return !operator==(rhs);
+    }
+```
+
+有了这个 iterator 的定义后，istream_line_reader 的定义就简单得很了：
+
+``` cpp
+class istream_line_reader {
+public:
+  class iterator {…};
+
+  istream_line_reader() noexcept
+    : stream_(nullptr) {}
+  explicit istream_line_reader(
+    istream& is) noexcept
+    : stream_(&is) {}
+
+  iterator begin()
+  {
+    return iterator(*stream_);
+  }
+
+  iterator end() const noexcept
+  {
+    return iterator();
+  }
+
+private:
+  istream* stream_;
+};
+```
+
+* 构造函数只是简单地把输入流的指针赋给 stream_ 成员变量
+* begin 成员函数则负责构造一个真正有意义的迭代器
+* end 成员函数则只是返回一个默认构造的迭代器而已
+
+以上就是一个完整的基于输入流的行迭代器了。这个行输入模板的设计动机和性能测试结果可参见参考资料 [Python yield and C++ coroutines](https://yongweiwu.wordpress.com/2016/08/16/python-yield-and-cplusplus-coroutines/) 和 [Performance of my line readers](https://yongweiwu.wordpress.com/2016/11/12/performance-of-my-line-readers/)；完整的工程可用代码，请参见[https://github.com/adah1972/nvwa/](https://github.com/adah1972/nvwa/)。该项目中还提供了利用 C 文件接口的 file_line_reader 和基于内存映射文件的 mmap_line_reader。
+
+注意以上实现存在一定的使用限制，不能多次调用begin。
+
+``` cpp
+#include <fstream>
+#include <iostream>
+#include "istream_line_reader.h"
+
+using namespace std;
+
+int main()
+{
+    ifstream ifs{"test.cpp"};
+    istream_line_reader reader{ifs};
+    auto begin = reader.begin();
+    for (auto it = reader.begin();
+         it != reader.end(); ++it) {
+        cout << *it << '\n';
+    }
+}
+
+// 以上代码，因为 begin 多调用了一次，输出就少了一行……
+```
+
+## C++易用性改进
+
+### auto
+
+`auto` 自动类型推断，顾名思义，就是编译器能够根据表达式的类型，自动决定变量的类型（从 C++14 开始，还有函数的返回类型），不再需要程序员手工声明。**但需要说明的是，auto 并没有改变 C++ 是静态类型语言这一事实——使用 auto 的变量（或函数返回值）的类型仍然是编译时就确定了，只不过编译器能自动帮你填充而已**。
+
+```cpp
+// 完整的写法
+vector<int> v;
+for (vector<int>::iterator
+       it = v.begin(),
+       end = v.end();
+     it != end; ++it) {
+  //  循环体
+}
+
+// auto的简化写法
+for (auto it = v.begin(), end = v.end();
+     it != end; ++it) {
+  //  循环体
+}
+```
+
+不使用自动类型推断时，**如果容器类型未知的话，还需要加上 typename**：
+
+``` cpp
+template <typename T>
+void foo(const T& container)
+{
+  for (typename T::const_iterator
+         it = v.begin(),
+         // …
+      ) {}
+}
+```
+
+### decltype
+
+`decltype` 的用途是获得一个表达式的类型，结果可以跟类型一样使用。它有两个基本用法：
+
+* `decltype(变量名)` 可以获得变量的精确类型。
+* `decltype(表达式)` （表达式不是变量名，但包括 decltype((变量名)) 的情况）可以获得表达式的**引用类型**；除非表达式的结果是个纯右值（prvalue），此时结果仍然是值类型。
+
+例如：`int a;`，那么：
+
+* decltype(a) 会获得 int（因为 a 是 int）
+* decltype((a)) 会获得 int&（因为 a 是 lvalue）
+* decltype(a + a) 会获得 int（因为 a + a 是 prvalue）
+
+### decltype(auto)
+
+decltype(expr) 既可以是值类型，也可以是引用类型。
+
+``` cpp
+decltype(expr) a = expr;
+```
+
+这种写法明显不能让人满意，特别是表达式很长的情况（而且，任何代码重复都是潜在的问题）。为此，C++14 引入了 `decltype(auto)` 语法。对于上面的情况，只需要像下面这样写就行了。
+
+``` cpp
+decltype(auto) a = expr;
+```
+这种代码主要用在通用的转发函数模板中：你可能根本不知道你调用的函数是不是会返回一个引用。这时使用这种语法就会方便很多。
+
+### 函数返回值类型推断
+
+后置返回值类型声明。通常，在返回类型比较复杂、特别是返回类型跟参数类型有某种推导关系时会使用这种语法。
+
+``` cpp
+auto foo(参数) ->  返回值类型声明
+{
+  //  函数体
+}
+```
+
+### 类模板的模板参数推导
+
+因为函数模板有模板参数推导，使得调用者不必手工指定参数类型；但 C++17 之前的类模板却**没有这个功能，也因而催生了像 make_pair 这样的工具函数**：
+``` cpp
+pair pr{1, 42};            // 一般不这样写
+auto pr = make_pair(1, 42);// 一般这样写
+```
+
+在进入了 C++17 的世界后，这类函数变得不必要了。现在可以直接写：
+
+``` cpp
+pair pr{1, 42};
+```
+
+这种自动推导机制，可以是编译器根据构造函数来自动生成：
+
+``` cpp
+template <typename T>
+struct MyObj {
+  MyObj(T value);
+  …
+};
+
+MyObj obj1{string("hello")};
+//  得到  MyObj<string>
+MyObj obj2{"hello"};
+//  得到  MyObj<const char*>
+```
+
+### 结构化绑定
+
+``` cpp
+multimap<string, int>::iterator lower, upper;
+std::tie(lower, upper) = mmp.equal_range("four");
+```
+
+返回值是个 pair，希望用两个变量来接收数值，就不得不声明了两个变量，然后使用 tie 来接收结果。在 C++11/14 里，这里是没法使用 auto 的。好在 C++17 引入了一个新语法，解决了这个问题。可以把上面的代码简化为：
+
+
+``` cpp
+auto [lower, upper] = mmp.equal_range("four");
+```
+
+### 列表初始化
+
+在 C++98 里，标准容器比起 C 风格数组至少有一个明显的劣势：不能在代码里方便地初始化容器的内容。比如，对于数组可以写：
+
+``` cpp
+int a[] = {1, 2, 3, 4, 5};
+```
+
+而对于 vector 却得写：
+
+``` cpp
+vector<int> v;
+v.push(1);
+v.push(2);
+```
+
+于是，C++ 标准委员会引入了**列表初始化**，允许以更简单的方式来初始化对象。现在初始化容器也可以和初始化数组一样简单了：
+
+``` cpp
+vector<int> v{1, 2, 3, 4, 5};
+```
+
+从技术角度，编译器的魔法只是对 {1, 2, 3} 这样的表达式自动生成一个初始化列表，在这个例子里其类型是 initializer_list。程序员只需要声明一个接受 initializer_list 的构造函数即可使用。
+
+### 统一初始化
+
+几乎可以在所有初始化对象的地方使用大括号而不是小括号。
+
+``` cpp
+Obj getObj()
+{
+  return {1.0};
+}
+```
+
+{1.0} 跟 Obj(1.0) 的主要区别是，后者可以用来调用 Obj(int)，而使用大括号时编译器会拒绝“窄”转换，不接受以 {1.0} 或 Obj{1.0} 的形式调用构造函数 Obj(int)。
+
+这个语法主要的限制是，如果一个类既有使用初始化列表的构造函数，又有不使用初始化列表的构造函数，那编译器会千方百计地试图调用使用初始化列表的构造函数，导致各种意外。所以，如果给一个推荐的话，那就是：
+
+* 如果一个类没有使用初始化列表的构造函数时，初始化该类对象可全部使用统一初始化语法。
+* 如果一个类有使用初始化列表的构造函数时，则只应用在初始化列表构造的情况。
+
+
+### 类数据成员的默认初始化
+
+按照 C++98 的语法，数据成员可以在构造函数里进行初始化。这本身不是问题，**但实践中，如果数据成员比较多、构造函数又有多个的话，逐个去初始化是个累赘，并且很容易在增加数据成员时漏掉在某个构造函数中进行初始化**。为此，**C++11 增加了一个语法，允许在声明数据成员时直接给予一个初始化表达式**。这样，当且仅当构造函数的初始化列表中不包含该数据成员时，这个数据成员就会自动使用初始化表达式进行初始化。
+
+使用数据成员的默认初始化的话，可以这么写：
+
+``` cpp
+class Complex {
+public:
+  Complex() {}
+  Complex(float re) : re_(re) {}
+  Complex(float re, float im)
+    : re_(re) , im_(im) {}
+
+private:
+  float re_{0};
+  float im_{0};
+};
+```
+
+* 第一个构造函数没有任何初始化列表，所以类数据成员的初始化全部由默认初始化完成，re_ 和 im_ 都是 0。
+* 第二个构造函数提供了 re_ 的初始化，im_ 仍由默认初始化完成。
+* 第三个构造函数则完全不使用默认初始化。
+
+
+### 自定义字面量
+
+字面量（literal）是指在源代码中写出的固定常量，它们在 C++98 里只能是原生类型，如：
+
+* `"hello"`，字符串字面量，类型是 `const char[6]`
+* `1`，整数字面量，类型是 `int`
+* `0.0`，浮点数字面量，类型是 `double`
+* `3.14f`，浮点数字面量，类型是 `float`
+* `123456789ul`，无符号长整数字面量，类型是 `unsigned long`
+
+C++11 引入了自定义字面量，可以使用 `operator""` 后缀，来将用户提供的字面量转换成实际的类型。
+
+``` cpp
+#include <chrono>
+#include <complex>
+#include <iostream>
+#include <string>
+#include <thread>
+
+using namespace std;
+
+int main()
+{
+  cout << "i * i = " << 1i * 1i
+       << endl;
+  cout << "Waiting for 500ms"
+       << endl;
+  this_thread::sleep_for(500ms);
+  cout << "Hello world"s.substr(0, 5)
+       << endl;
+}
+```
+
+上面这个例子展示了 C++ 标准里提供的帮助生成虚数、时间和 basic_string 字面量的后缀。
+
+如何在自己的类里支持字面量？
+
+``` cpp
+struct length {
+  double value;
+  enum unit {
+    metre,
+    kilometre,
+    millimetre,
+    centimetre,
+    inch,
+    foot,
+    yard,
+    mile,
+  };
+  static constexpr double factors[] =
+    {1.0,    1000.0,  1e-3,
+     1e-2,   0.0254,  0.3048,
+     0.9144, 1609.344};
+  explicit length(double v,
+                  unit u = metre)
+  {
+    value = v * factors[u];
+  }
+};
+
+length operator+(length lhs,
+                 length rhs)
+{
+  return length(lhs.value +
+                rhs.value);
+}
+
+//  可能有其他运算符
+```
+
+可以手写 `length(1.0, length::metre)` 这样的表达式，但估计大部分开发人员都不愿意这么做，而更希望是 `1.0_m + 10.0_cm`。要允许这个表达式，只需要提供下面的运算符即可：
+
+``` cpp
+length operator"" _m(long double v)
+{
+  return length(v, length::metre);
+}
+
+length operator"" _cm(long double v)
+{
+  return length(v, length::centimetre);
+}
+```
+
+### 二进制字面量
+
+从 C++14 开始，对于二进制也有了直接的字面量：
+
+``` cpp
+unsigned mask = 0b111000000;
+```
+
+这在需要比特级操作等场合还是非常有用的。
+
+
+### 数字分隔符
+
+数字长了之后，看清位数就变得麻烦了。有了二进制字面量，这个问题变得分外明显。C++14 开始，允许在数字型字面量中任意添加 `'` 来使其更可读。具体怎么添加，完全由程序员根据实际情况进行约定。某些常见的情况可能会是：
+
+* 十进制数字使用三位的分隔，对应英文习惯的 thousand、million 等单位。
+* 十进制数字使用四位的分隔，对应中文习惯的万、亿等单位。
+* 十六进制数字使用两位或四位的分隔，对应字节或双字节。
+* 二进制数字使用三位的分隔，对应文件系统的权限分组。
+* 等等。
+
+例子：
+
+``` cpp
+unsigned mask = 0b111'000'000;
+long r_earth_equatorial = 6'378'137;
+double pi = 3.14159'26535'89793;
+const unsigned magic = 0x44'42'47'4E;
+```
+
+### 静态断言
+
+C++98 的 assert 允许在**运行时**检查一个函数的前置条件是否成立。**没有一种方法允许开发人员在编译的时候检查假设是否成立**。
+
+C++11 直接从语言层面提供了静态断言机制，不仅能输出更好的信息，而且适用性也更好，可以直接放在类的定义中。
+
+``` cpp
+static_assert(编译期条件表达式,
+               可选输出信息);
+```
+
+例如：
+
+``` cpp
+static_assert((alignment & (alignment - 1)) == 0,
+  "Alignment must be power of two");
+```
+
+### default 和 delete 成员函数
+
+在类的定义时，C++ 有一些规则决定是否生成**默认的特殊成员函数**。这些特殊成员函数可能包括：
+
+默认构造函数/析构函数/拷贝构造函数/拷贝赋值函数/移动构造函数/移动赋值函数
+
+生成这些特殊成员函数（或不生成）的规则比较复杂。
+
+每个特殊成员函数**有几种不同的状态**：
+
+* 隐式声明还是用户声明
+* 默认提供还是用户提供
+* 正常状态还是删除状态
+
+这三个状态是可组合的，虽然不是所有的组合都有效。隐式声明的必然是默认提供的；默认提供的才可能被删除；用户提供的也必然是用户声明的。
+
+**经验：**
+
+* 如果正常情况不需要复制行为、只是想防止其他开发人员误操作时，可以简单地在类的定义中加入：
+
+``` cpp
+
+class shape_wrapper {
+  …
+  shape_wrapper(
+    const shape_wrapper&) = delete;
+  shape_wrapper& operator=(
+    const shape_wrapper&) = delete;
+  …
+};
+```
+
+**在 C++11 之前，我们可能会用在 private 段里声明这些成员函数的方法，来达到相似的目的**。但目前这个语法效果更好，可以产生更明确的错误信息。另外，你可以注意一下，用户声明成删除也是一种声明，因此编译器不会提供默认版本的移动构造和移动赋值函数。
+
+### override 和 final 说明符
+
+override 和 final 是两个 C++11 引入的新说明符。它们不是关键词，仅在出现在函数声明尾部时起作用，不影响我们使用这两个词作变量名等其他用途。这两个说明符可以单个或组合使用，都是加在类成员函数声明的尾部。
+
+override 显式声明了成员函数是一个虚函数且覆盖了基类中的该函数。如果有 override 声明的函数不是虚函数，或基类中不存在这个虚函数，编译器会报告错误。这个说明符的主要作用有两个：
+
+1. 给开发人员更明确的提示，这个函数覆写了基类的成员函数；
+2. 让编译器进行额外的检查，防止程序员由于拼写错误或代码改动没有让基类和派生类中的成员函数名称完全一致；
+
+final 则声明了成员函数是一个虚函数，且该虚函数不可在派生类中被覆盖。如果有一点没有得到满足的话，编译器就会报错。
+
+final 还有一个作用是标志某个类或结构不可被派生。同样，这时应将其放在被定义的类或结构名后面。
+
+例子：
+
+``` cpp
+class A {
+public:
+  virtual void foo();
+  virtual void bar();
+  void foobar();
+};
+
+class B : public A {
+public:
+  void foo() override; // OK
+  void bar() override final; // OK
+  //void foobar() override;   //  非虚函数不能  override
+  
+};
+
+class C final : public B {
+public:
+  void foo() override; // OK
+  //void bar() override;  // final  函数不可  override
+  
+};
+
+class D : public C {
+  //  错误：final  类不可派生
+  …
+};
+```
+
+## 到底应不应该返回对象？
+
+
+
+
+
+
 
 
 # STL
