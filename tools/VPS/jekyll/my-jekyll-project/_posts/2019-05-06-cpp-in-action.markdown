@@ -2440,6 +2440,193 @@ class D : public C {
 
 ## 到底应不应该返回对象？
 
+《C++ 核心指南》的 [Bjarne Stroustrup and Herb Sutter (editors), “C++ core guidelines”, item F.20](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-out) 或者[非官方版本](https://github.com/lynnboy/CppCoreGuidelines-zh-CN)，这一条款是这么说的：
+
+> F.20: For “out” output values, prefer return values to output parameters
+
+在函数输出数值时，尽量使用返回值而非输出参数。
+
+**之前的做法：调用者负责管理内存，接口负责生成**
+
+一种常见的做法是，接口的调用者负责分配一个对象所需的内存并负责其生命周期，接口负责生成或修改该对象。这种做法意味着对象可以默认构造（甚至只是一个结构），代码一般使用错误码而非异常。例如：
+
+``` cpp
+MyObj obj;
+ec = initialize(&obj);
+// …
+```
+
+**另一种做法：接口负责对象的堆上生成和内存管理**
+
+另外一种可能的做法是接口提供生成和销毁对象的函数，对象在堆上维护。fopen 和 fclose 就是这样的接口的实例。
+
+
+### 如何返回一个对象？
+
+* 一个用来返回的对象，通常应当是**可移动构造 / 赋值的**，一般也同时是**可拷贝构造 / 赋值的**。
+* 如果这样一个对象同时又可以**默认构造**，我们就称其为**一个半正则（semiregular）的对象**。如果可能的话，应当尽量让我们的类满足**半正则**这个要求。
+
+``` cpp
+class matrix {
+public:
+  //  普通构造
+  matrix(size_t rows, size_t cols);
+
+  //  半正则要求的构造
+  matrix();
+  matrix(const matrix&);
+  matrix(matrix&&);
+
+  //  半正则要求的赋值
+  matrix& operator=(const matrix&);
+  matrix& operator=(matrix&&);
+};
+```
+
+在**没有返回值优化**的情况下 C++ 是怎样返回对象的？
+
+``` cpp
+matrix operator*(const matrix& lhs,
+                 const matrix& rhs)
+{
+  if (lhs.cols() != rhs.rows()) {
+    throw runtime_error("sizes mismatch");
+  }
+
+  matrix result(lhs.rows(), rhs.cols());
+
+  //  具体计算过程
+  return result;
+}
+```
+
+* 注意对于一个本地变量，我们永远不应该返回其引用（或指针），不管是作为左值还是右值。从标准的角度，这会导致未定义行为（undefined behavior）
+* 从实际的角度，这样的对象一般放在栈上可以被调用者正常覆盖使用的部分，随便一个函数调用或变量定义就可能覆盖这个对象占据的内存。这还是这个对象的析构不做事情的情况：如果析构函数会释放内存或破坏数据的话，那你访问到的对象即使内存没有被覆盖，也早就不是有合法数据的对象了……
+* **返回非引用类型的表达式结果是个纯右值（prvalue）**。在执行 auto r = … 的时候，编译器会认为我们实际是在构造 matrix r(…)，而“…”部分是一个纯右值。因此编译器会首先试图匹配 `matrix(matrix&&)`，在没有时则试图匹配 `matrix(const matrix&)`；也就是说，有移动支持时使用移动，没有移动支持时则拷贝。
+
+### 返回值优化（拷贝消除）
+
+``` cpp
+#include <iostream>
+
+using namespace std;
+
+// Can copy and move
+class A {
+public:
+  A() { cout << "Create A\n"; }
+  ~A() { cout << "Destroy A\n"; }
+  A(const A&) { cout << "Copy A\n"; }
+  A(A&&) { cout << "Move A\n"; }
+};
+
+A getA_unnamed()
+{
+  return A();
+}
+
+int main()
+{
+  auto a = getA_unnamed();
+}
+```
+
+如果你认为执行结果里应当有一行“Copy A”或“Move A”的话，你就忽视了**返回值优化**的威力了。
+
+**即使完全关闭优化**，三种主流编译器（GCC、Clang 和 MSVC）都只输出两行：
+
+```
+Create A
+Destroy A
+```
+
+把代码稍稍改一下：
+
+``` cpp
+A getA_named()
+{
+  A a;
+  return a;
+}
+
+int main()
+{
+  auto a = getA_named();
+}
+```
+
+这回结果有了一点点小变化。虽然 GCC 和 Clang 的结果完全不变，但 MSVC 在非优化编译的情况下产生了不同的输出（优化编译——使用命令行参数 /O1、/O2 或 /Ox——则不变）：
+
+```
+Create A
+Move A
+Destroy A
+Destroy A
+```
+
+也就是说，返回内容被移动构造了。
+
+继续变形一下：
+
+``` cpp
+#include <stdlib.h>
+
+A getA_duang()
+{
+  A a1;
+  A a2;
+  if (rand() > 42) {
+    return a1;
+
+  } else {
+    return a2;
+  }
+}
+
+int main()
+{
+  auto a = getA_duang();
+}
+```
+
+这回所有的编译器都被难倒了，输出是：
+
+```
+Create A
+Create A
+Move A
+Destroy A
+Destroy A
+Destroy A
+```
+
+关于返回值优化的实验我们就做到这里。下一步，我们试验一下把移动构造函数删除：
+
+``` cpp
+A(A&&) = delete;
+```
+
+可以立即看到“Copy A”出现在了结果输出中，说明目前结果变成**拷贝构造**了。
+
+如果再进一步，把**拷贝构造函数**也删除呢？是不是上面的 getA_unnamed、getA_named 和 getA_duang 都不能工作了？
+
+
+在 C++14 及之前确实是这样的。但从 C++17 开始，对于类似于 getA_unnamed 这样的情况，即使对象不可拷贝、不可移动，这个对象仍然是可以被返回的！**C++17 要求对于这种情况，对象必须被直接构造在目标位置上，不经过任何拷贝或移动的步骤**。[refer: cppreference.com, “Copy elision”](https://en.cppreference.com/w/cpp/language/copy_elision)
+
+
+理解了 C++ 里的对返回值的处理和返回值优化之后，我们再回过头看一下 `F.20` 里陈述的理由的话，应该就显得很自然了：
+
+> A return value is self-documenting, whereas a & could be either in-out or out-only and is liable to be misused.
+> 
+> 返回值是可以自我描述的；而 & 参数既可能是输入输出，也可能是仅输出，且很容易被误用。（当然也有一些例外的情况）
+
+**总结：**
+
+在 C++11 之前，返回一个本地对象意味着这个对象会被拷贝，除非编译器发现可以做**返回值优化（named return value optimization，或 NRVO）**，能把对象直接构造到调用者的栈上。从 C++11 开始，返回值优化仍可以发生，但在没有返回值优化的情况下，编译器将试图把本地对象移动出去，而不是拷贝出去。这一行为不需要程序员手工用 `std::move` 进行干预——使用`std::move` 对于移动行为没有帮助，反而会影响返回值优化。
+
+## Unicode：进入多文字支持的世界
+
+
 
 
 
@@ -2848,6 +3035,12 @@ asm ( assembler template
 
 
 # 编译器
+
+## 标准
+
+https://en.cppreference.com/w/cpp/compiler_support
+
+## 用法
 
 [is-pragma-once-a-safe-include-guard](https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard)
 
