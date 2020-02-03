@@ -22,6 +22,11 @@ categories: [C/C++, 编程语言]
 * Clang 9.0
 * Visual Studio 2019 16.3 (MSVC 19.23)
 
+编译器对标准的支持情况，可见 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)。
+
+通过工具 [https://cppinsights.io/](https://cppinsights.io/) 可以展示实例化的过程。
+
+
 # 核心概念
 
 ## 值语义和引用语义
@@ -143,6 +148,7 @@ a3[3]: 0.111111 at 0x1b64058
 * 而在一个栈帧内，局部变量是如何分布到栈帧里的（所谓栈帧布局，stack frame layout），这完全是编译器的自由。至于数组元素与栈的增长方向：C与C++语言规范都规定了数组元素是分布在连续递增的地址上的。
 
 > An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type. A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator [] is that E1[E2] is identical to (*((E1)+(E2))). Because of the conversion rules that apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th element of E1 (counting from zero).
+
 
 * 以简化的Linux/x86模型为例。在简化的32位Linux/x86进程地址空间模型里，（主线程的）栈空间确实比堆空间的地址要高——它已经占据了用户态地址空间的最高可分配的区域，并且向下（向低地址）增长。借用Gustavo Duarte的[Anatomy of a Program in Memory](https://link.zhihu.com/?target=http%3A//duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)里的图。
 
@@ -751,7 +757,7 @@ private:
 };
 ```
 
-然后添加一些成员函数（解引用操作符*, 箭头操作符->, 布尔表达式），从而可以用类似内置的指针方式使用其对象。
+然后添加一些成员函数（解引用操作符`*`, 箭头操作符`->`, 布尔表达式），从而可以用类似内置的指针方式使用其对象。
 
 ``` cpp
 template <typename T>
@@ -3210,7 +3216,7 @@ int main()
 
 ## SFINAE：不是错误的替换失败是怎么回事?
 
-**替换失败非错（substituion failure is not an error）**，英文简称为 `SFINAE`。
+**替换失败非错（Substituion Failure is Not An Error）**，英文简称为 `SFINAE`。
 
 ### 函数模板的重载决议
 
@@ -3268,6 +3274,263 @@ int main()
 **总结：体现的是 SFINAE 设计的最初用法：如果模板实例化中发生了失败，没有理由编译就此出错终止，因为还是可能有其他可用的函数重载的。** 这儿的失败仅指函数模板的原型声明，即参数和返回值。函数体内的失败不考虑在内。如果重载决议选择了某个函数模板，而函数体在实例化的过程中出错，那仍然会得到一个编译错误。
 
 ### 编译期成员检测
+
+根据某个实例化的成功或失败来在编译期检测类的特性。
+
+下面这个模板，就可以检测一个类是否有一个名叫 reserve、参数类型为 size_t 的成员函数：
+
+``` cpp
+template <typename T>
+struct has_reserve {
+
+  struct good { char dummy; };
+
+  struct bad { char dummy[2]; };
+
+  template <class U,
+            void (U::*)(size_t)>
+  struct SFINAE {};
+
+  template <class U>
+  static good
+  reserve(SFINAE<U, &U::reserve>*);
+
+  template <class U>
+  static bad reserve(...);
+
+  static const bool value =
+    sizeof(reserve<T>(nullptr))
+    == sizeof(good);
+};
+```
+
+* 首先定义了两个结构 good 和 bad；它们的内容不重要，我们只关心它们的大小必须不一样。
+* 然后定义了一个 SFINAE 模板，内容也同样不重要，但模板的第二个参数需要是第一个参数的成员函数指针，并且参数类型是 size_t，返回值是 void。
+* 随后，定义了一个要求 SFINAE* 类型的 reserve 成员函数模板，返回值是 good；再定义了一个对参数类型无要求的 reserve 成员函数模板，返回值是 bad。
+* 最后，我们定义常整型布尔值 value，结果是 true 还是 false，取决于 nullptr 能不能和 SFINAE* 匹配成功，而这又取决于模板参数 T 有没有返回类型是 void、接受一个参数并且类型为 size_t 的成员函数 reserve。
+
+### SFINAE 模板技巧
+
+C++11 开始，标准库里有了一个叫 `enable_if` 的模板（定义在 `<type_traits>` 里）([refer: cppreference.com, “std::enable_if”](https://en.cppreference.com/w/cpp/types/enable_if))，可以用它来选择性地启用**某个函数的重载**。
+
+假设有一个函数，用来往一个容器尾部追加元素。我们希望原型是这个样子的：
+
+``` cpp
+template <typename C, typename T>
+void append(C& container, T* ptr,
+            size_t size);
+```
+
+显然，container 有没有 `reserve` 成员函数，是对性能有影响的——如果有的话，我们通常应该预留好内存空间，以免产生不必要的对象移动甚至拷贝操作。利用 `enable_if` 和上面的 `has_reserve` 模板，我们就可以这么写：
+
+``` cpp
+// 有 reserve 的 append 版本
+template <typename C, typename T>
+enable_if_t<has_reserve<C>::value,
+            void>
+append(C& container, T* ptr,
+       size_t size)
+{
+  container.reserve(
+    container.size() + size);
+  for (size_t i = 0; i < size;
+       ++i) {
+    container.push_back(ptr[i]);
+  }
+}
+
+// 没有 reserve 的 append 版本
+template <typename C, typename T>
+enable_if_t<!has_reserve<C>::value,
+            void>
+append(C& container, T* ptr,
+       size_t size)
+{
+  for (size_t i = 0; i < size;
+       ++i) {
+    container.push_back(ptr[i]);
+  }
+}
+```
+
+我们可以用 `enable_if_t` 来取到结果的类型。
+
+`enable_if_t<has_reserve<C>::value, void>` 的意思可以理解成：如果类型 C 有 reserve 成员的话，那我们启用下面的成员函数，它的返回类型为 void。
+
+
+### decltype 返回值
+
+如果只需要在某个操作有效的情况下启用某个函数，而不需要考虑相反的情况的话。
+
+``` cpp
+template <typename C, typename T>
+auto append(C& container, T* ptr,
+            size_t size)
+  -> decltype(
+    declval<C&>().reserve(1U),
+    void())
+{
+  container.reserve(container.size() + size);
+
+  for (size_t i = 0; i < size;
+       ++i) {
+    container.push_back(ptr[i]);
+  }
+}
+```
+
+上面使用到了 `declval` （[refer: cppreference.com, “std::declval”](https://en.cppreference.com/w/cpp/utility/declval)）
+
+* 这个模板用来声明一个某个类型的参数，但这个参数只是用来参加模板的匹配，不允许实际使用。使用这个模板，我们可以在某类型没有默认构造函数的情况下，假想出一个该类的对象来进行类型推导。
+* `declval<C&>().reserve(1U)` 用来测试 C& 类型的对象是不是可以拿 1U 作为参数来调用 reserve 成员函数。此外，我们需要记得，C++ 里的逗号表达式的意思是按顺序逐个估值，并返回最后一项。所以，上面这个函数的返回值类型是 void。
+* 这个方式和 `enable_if` 不同，很难表示否定的条件。如果要提供一个专门给没有 reserve 成员函数的 C 类型的 append 重载，这种方式就不太方便了。因而，**这种方式的主要用途是避免错误的重载**。
+
+### void_t
+
+void_t 是 C++17 新引入的一个模板。它的定义简单得令人吃惊：
+
+``` cpp
+template <typename...>
+using void_t = void;
+```
+
+这个类型模板会把任意类型映射到 void。它的特殊性在于，在这个看似无聊的过程中，编译器会检查那个“任意类型”的有效性。
+
+## constexpr：一个常态的世界
+
+存在两类 constexpr 对象：
+
+* 一个 constexpr 变量是一个编译时完全确定的常数。
+* 一个 constexpr 函数至少对于某一组实参可以在编译期间产生一个编译期常数。
+
+``` cpp
+#include <array>
+
+constexpr int sqr(int n)
+{
+  return n * n;
+}
+
+int main()
+{
+  constexpr int n = sqr(3);
+  std::array<int, n> a;
+  int b[n];
+}
+```
+
+以阶乘函数为例：
+
+``` cpp
+#include <cstdio>
+#include <stdexcept>
+
+constexpr int factorial(int n)
+{
+        if (n < 0) {
+                throw std::invalid_argument(
+                                "Arg must be non-negative");
+        }
+
+        if (n == 0) {
+                return 1;
+        } else {
+                return n * factorial(n - 1);
+        }
+}
+
+int main()
+{
+        //constexpr int n = factorial(10);   // ok
+        constexpr int n = factorial(-1);     // compile error
+        printf("%d\n", n);
+}
+/*
+$ g++ -o constexpr constexpr.cpp 
+constexpr.cpp: In function ‘int main()’:
+constexpr.cpp:21:29:   in constexpr expansion of ‘factorial(-1)’
+constexpr.cpp:8:31: error: expression ‘<throw-expression>’ is not a constant expression
+     "Arg must be non-negative");
+                               ^
+*/
+```
+
+验证确实得到了一个编译期常量。如果看产生的汇编代码的话，一样可以直接看到常量 3628800。
+
+注意：这里有一个问题：在这个 constexpr 函数里，是不能写 `static_assert(n >= 0)` 的。一个 constexpr 函数仍然可以作为普通函数使用——显然，传入一个普通 int 是不能使用静态断言的。
+
+如果没有检查判断，编译展开时会报错：
+
+```
+$ g++ -o constexpr constexpr.cpp 
+constexpr.cpp: In function ‘int main()’:
+constexpr.cpp:23:29:   in constexpr expansion of ‘factorial(-1)’
+constexpr.cpp:16:23:   in constexpr expansion of ‘factorial((n + -1))’
+constexpr.cpp:16:23:   in constexpr expansion of ‘factorial((n + -1))’
+...
+
+constexpr.cpp:16:23:   in constexpr expansion of ‘factorial((n + -1))’
+constexpr.cpp:23:32: error: constexpr evaluation depth exceeds maximum of 512 (use -fconstexpr-depth= to increase the maximum)
+  constexpr int n = factorial(-1);
+                                ^
+```
+
+### constexpr 和 const
+
+初学 `constexpr` 时，一个很可能有的困惑是，它跟 `const` 用法上的区别到底是什么？产生这种困惑是正常的，毕竟 `const` 是个重载了很多不同含义的关键字。`const` 的原本和基础的含义，自然是表示**它修饰的内容不会变化**，如：
+
+``` cpp
+const int n = 1:
+n = 2;  //  出错！
+```
+
+注意: **`const` 在类型声明的不同位置会产生不同的结果**。对于常见的 `const char*` 这样的类型声明，意义和 `char const*` 相同，**是指向常字符的指针，指针指向的内容不可更改**；但和 `char * const` 不同，那代表**指向字符的常指针，指针本身不可更改**。本质上，`const` 用来表示一个**运行时常量**。
+
+在 C++ 里，`const` 后面渐渐带上了现在的 `constexpr` 用法，也代表**编译期常数**。现在在有了 `constexpr` 之后——我们应该使用 `constexpr` 在这些用法中替换 `const` 了。从编译器的角度，为了向后兼容性，`const` 和 `constexpr` 在很多情况下还是等价的。但有时候，它们也有些细微的区别，其中之一为是否内联的问题。
+
+**constexpr 变量仍是 const。**
+
+一个 constexpr 变量仍然是 const 常类型。需要注意的是，就像 const char* 类型是指向常量的指针、自身不是 const 常量一样，**下面这个表达式里的 const 也是不能缺少的**：
+
+``` cpp
+constexpr int a = 42;
+constexpr const int& b = a;
+```
+
+constexpr 表示 b 是一个编译期常量，const 表示这个引用是常量引用。去掉这个 const 的话，编译器就会认为你是试图将一个普通引用绑定到一个常数上，报一个类似下面的错误信息：`error: binding reference of type ‘int&’ to ‘const int’ discards qualifiers`
+
+
+## 函数对象和lambda：进入函数式编程
+
+### C++98 的函数对象
+
+**[函数对象（function object）](https://en.wikipedia.org/wiki/Function_object)** 自 C++98 开始就已经被标准化了。从概念上来说，函数对象是一个可以被当作函数来用的对象。它有时也会被叫做 functor，但这个术语在范畴论里有着完全不同的含义，还是不用为妙——否则玩函数式编程的人可能会朝着你大皱眉头的。
+
+下面定义了一个简单的加 n 的**函数对象类**：
+
+``` cpp
+struct adder {
+  adder(int n) : n_(n) {}
+  int operator()(int x) const
+  {
+    return x + n_;
+  }
+private:
+  int n_;
+};
+
+adder add_2(2);
+int res = add_2(5);       // 2 + 5 = 7 
+```
+
+### 函数的指针和引用
+
+
+
+
+
+
+
 
 
 
@@ -3674,12 +3937,6 @@ asm ( assembler template
 
 # 编译器
 
-## 标准
-
-https://en.cppreference.com/w/cpp/compiler_support
-
-## 用法
-
 [is-pragma-once-a-safe-include-guard](https://stackoverflow.com/questions/787533/is-pragma-once-a-safe-include-guard)
 
 
@@ -3704,6 +3961,10 @@ https://en.cppreference.com/w/cpp/compiler_support
 # 文章
 
 * [6 Tips to supercharge C++11 vector performance](https://www.acodersjourney.com/6-tips-supercharge-cpp-11-vector-performance/)
+
+
+
+
 
 
 
