@@ -3525,7 +3525,850 @@ int res = add_2(5);       // 2 + 5 = 7
 
 ### 函数的指针和引用
 
+除非用一个**引用模板参数**来捕捉函数类型，传递给一个函数的**函数实参**会退化成为一个**函数指针**。不管是**函数指针**还是**函数引用**，都可以当成**函数对象**来用。
 
+``` cpp
+#include <cstdio>
+
+template <typename T>
+auto test1(T fn)
+{
+        return fn(2);
+}
+
+template <typename T>
+auto test2(T& fn)
+{
+        return fn(2);
+}
+
+template <typename T>
+auto test3(T* fn)
+{
+        return (*fn)(2);
+}
+
+int add_2(int x)
+{
+        return x + 2;
+}
+
+int main()
+{
+        printf("%d\n", test1(add_2));
+}
+/*
+test1(T fn)
+add_2(int x)
+4
+*/
+```
+
+当用 `add_2` 去调用这三个函数模板时，`fn` 的类型将分别被推导为 `int (*)(int)`、`int (&)(int)` 和 `int (*)(int)`。不管得到的是**指针**还是**引用**，都可以直接拿它当普通的函数用。当然，在函数指针的情况下，直接写 `*value` 也可以。因而上面三个函数拿 add_2 作为实参调用的结果都是 4。
+
+### Lambda 表达式
+
+``` cpp
+auto add_2 = [](int x) {
+  return x + 2;
+};
+```
+
+* Lambda 表达式以一对**中括号**开始
+* 跟函数定义一样，有**参数列表**
+* 跟正常的函数定义一样，会有一个**函数体**，里面会**有 return 语句**
+* Lambda 表达式一般不需要说明返回值（相当于 auto）；有特殊情况需要说明时，则应使用**箭头语法的方式**
+* 每个 lambda 表达式都有一个全局唯一的类型，要精确捕捉 lambda 表达式到一个变量中，只能通过 auto 声明的方式
+
+定义一个通用的 adder：
+
+``` cpp
+auto adder = [](int n) {
+  return [n](int x) {
+    return x + n;
+  };
+};
+
+auto seven = adder(2)(5);
+```
+
+不过，最常见的情况是，写匿名函数就是希望不需要起名字。以前面的把所有容器元素值加 2 的操作为例，使用匿名函数可以得到更简洁可读的代码：
+
+``` cpp
+transform(v.begin(), v.end(),
+          v.begin(),
+          [](int x) {
+            return x + 2;
+          });
+```
+
+一个 lambda 表达式除了没有名字之外，还有一个特点是你可以**立即进行求值**。一个 lambda 表达式默认就是 constexpr 函数。
+
+``` cpp
+// 9
+[](int x) { return x * x; }(3)
+```
+
+另外一种用途是**解决多重初始化路径**的问题。假设有这样的代码：
+
+``` cpp
+Obj obj;
+switch (init_mode) {
+
+case init_mode1:
+  obj = Obj(…);
+  break;
+
+case init_mode2;
+  obj = Obj(…);
+  break;
+…
+}
+```
+
+这样的代码，实际上是调用了默认构造函数、带参数的构造函数和（移动）赋值函数：既可能有性能损失，也对 Obj 提出了**有默认构造函数的额外要求**。对于这样的代码，有一种重构意见是把这样的代码分离成独立的函数。**不过，有时候更直截了当的做法是用一个 lambda 表达式来进行改造，既可以提升性能（不需要默认函数或拷贝 / 移动），又让初始化部分显得更清晰**：
+
+``` cpp
+auto obj = [init_mode]() {
+  switch (init_mode) {
+
+  case init_mode1:
+    return Obj(…);
+    break;
+
+  case init_mode2:
+    return Obj(…);
+    break;
+  …
+  }
+}();
+```
+
+### 变量捕获
+
+lambda 表达式中变量捕获的细节：
+
+**变量捕获的开头**是**可选的默认捕获符** `=` 或 `&`，表示会自动**按值**或**按引用**捕获用到的**本地变量**，然后后面可以跟（**逗号分隔**）：
+
+* 本地变量名标明对其按值捕获
+* `&` 加本地变量名标明对其按引用捕获
+* `this` 标明按引用捕获外围对象（针对 lambda 表达式定义出现在一个非静态类成员内的情况）
+* `*this` 标明按值捕获外围对象（针对 lambda 表达式定义出现在一个非静态类成员内的情况；C++17 新增语法）
+* `变量名 = 表达式` 标明按值捕获表达式的结果（可理解为 auto 变量名 = 表达式）
+* `&变量名 = 表达式` 标明按引用捕获表达式的结果（可理解为 auto& 变量名 = 表达式）
+
+
+** 经验：**
+1. **从工程的角度，大部分情况不推荐使用默认捕获符。更一般化的一条工程原则是：显式的代码比隐式的代码更容易维护**。当然，在这条原则上走多远是需要权衡的，你也不愿意写出非常啰嗦的代码吧？否则的话，大家就全部去写 C 了。
+2. 一般而言，按值捕获是比较安全的做法。按引用捕获时则需要更小心些，必须能够确保被捕获的变量和 lambda 表达式的生命期至少一样长，并在有下面需求之一时才使用：
+    + 需要在 lambda 表达式中修改这个变量并让外部观察到
+    + 需要看到这个变量在外部被修改的结果
+    + 这个变量的复制代价比较高
+
+例子：
+
+按引用捕获：按引用捕获 v1 和 v2，因为需要修改它们的内容。
+
+``` cpp
+vector<int> v1;
+vector<int> v2;
+…
+auto push_data = [&](int n) {
+  // 或使用 [&v1, &v2] 捕捉
+  v1.push_back(n);
+  v2.push_back(n)
+};
+
+push_data(2);
+push_data(3);
+```
+
+按值捕获外围对象：
+
+``` cpp
+#include <chrono>
+#include <iostream>
+#include <sstream>
+#include <thread>
+
+using namespace std;
+
+int get_count()
+{
+  static int count = 0;
+  return ++count;
+}
+
+class task {
+public:
+  task(int data) : data_(data) {}
+  auto lazy_launch()
+  {
+    return
+      [*this, count = get_count()]()
+      mutable {
+        ostringstream oss;
+        oss << "Done work " << data_
+            << " (No. " << count
+            << ") in thread "
+            << this_thread::get_id()
+            << '\n';
+        msg_ = oss.str();
+        calculate();
+      };
+  }
+  void calculate()
+  {
+    this_thread::sleep_for(100ms);
+    cout << msg_;
+  }
+
+private:
+  int data_;
+  string msg_;
+};
+
+int main()
+{
+  auto t = task{37};
+  thread t1{t.lazy_launch()};
+  thread t2{t.lazy_launch()};
+  t1.join();
+  t2.join();
+}
+/*
+g++ -o lambda lambda.cpp -std=c++1z -lpthread
+$ ./lambda 
+Done work 37 (No. 2) in thread 140555858978560
+Done work 37 (No. 1) in thread 140555867371264
+*/
+```
+
+如果将 `*this`（按值） 改成 `this`（按引用），则结果为：
+
+```
+Done work 37 (No. 1) in thread 139984678594304
+Done work 37 (No. 1) in thread 139984678594304
+```
+
+### 泛型 lambda 表达式
+
+在 lambda 表达式的定义过程中是没法写 `template` 关键字的。
+
+``` cpp
+template <typename T1,
+          typename T2>
+auto sum(T1 x, T2 y)
+{
+  return x + y;
+}
+```
+
+跟上面的函数等价的 lambda 表达式是：
+
+``` cpp
+auto sum = [](auto x, auto y)
+{
+  return x + y;
+}
+```
+
+你可能要问，这么写有什么用呢？问得好。简单来说，答案是**可组合性**。上面这个 sum，就跟标准库里的 plus 模板一样，**是可以传递给其他接受函数对象的函数的**，而 + 本身则不行。
+
+``` cpp
+#include <array>    // std::array
+#include <iostream> // std::cout/endl
+#include <numeric>  // std::accumulate
+
+using namespace std;
+
+int main()
+{
+  array a{1, 2, 3, 4, 5};
+  auto s = accumulate(
+    a.begin(), a.end(), 0,
+    [](auto x, auto y) {
+      return x + y;
+    });
+  cout << s << endl;
+}
+```
+
+### function 模板
+
+每一个 lambda 表达式都是一个单独的类型，所以只能使用 auto 或模板参数来接收结果。在很多情况下，我们需要使用一个更方便的通用类型来接收，这时我们就可以使用 function 模板。function 模板的参数就是函数的类型，一个函数对象放到 function 里之后，外界可以观察到的就只剩下它的参数、返回值类型和执行效果了。**注意 function 对象的创建还是比较耗资源的，所以请你只在用 auto 等方法解决不了问题的时候使用这个模板**。
+
+``` cpp
+map<string, function<int(int, int)>>
+  op_dict{
+    {"+",
+     [](int x, int y) {
+       return x + y;
+     }},
+    {"-",
+     [](int x, int y) {
+       return x - y;
+     }},
+    {"*",
+     [](int x, int y) {
+       return x * y;
+     }},
+    {"/",
+     [](int x, int y) {
+       return x / y;
+     }},
+  };
+
+op_dict.at("+")(1, 6);
+```
+
+
+## 函数式编程：一种越来越流行的编程范式
+
+### 函数式编程的特点
+
+**函数式编程**期望函数的行为像**数学上的函数**，**而非一个计算机上的子程序**。这样的函数一般被称为**纯函数（pure function）**，要点在于：
+
+* 会影响函数结果的只是函数的参数，没有对环境的依赖
+* 返回的结果就是函数执行的唯一后果，不产生对环境的其他影响
+
+### 高阶函数
+
+既然函数（对象）可以被传递、使用和返回，自然就有函数会接受函数作为参数或者把函数作为返回值，这样的函数就被称为**高阶函数**。
+
+C++ 里以 algorithm（算法）名义提供的很多函数都是高阶函数。
+
+* `Map` 在 C++ 中的直接映射是 `transform`（在 头文件中提供）。它所做的事情也是数学上的映射，把一个范围里的对象转换成相同数量的另外一些对象。这个函数的基本实现非常简单，但这是一种强大的抽象，在很多场合都用得上。
+
+* `Reduce` 在 C++ 中的直接映射是 `accumulate`（在 头文件中提供）。它的功能是在指定的范围里，使用给定的初值和函数对象，从左到右对数值进行归并。在不提供函数对象作为第四个参数时，功能上相当于默认提供了加法函数对象，这时相当于做累加；提供了其他函数对象时，那当然就是使用该函数对象进行归并了。
+
+### 命令式编程和说明式编程
+
+传统上 C++ 属于**命令式编程**。命令式编程里，代码会描述程序的具体执行步骤。好处是代码显得比较直截了当；缺点就是容易让人只见树木、不见森林，只能看到代码啰嗦地怎么做（how），而不是做什么（what），更不用说为什么（why）了。
+
+**说明式编程**则相反。以数据库查询语言 SQL 为例，SQL 描述的是类似于下面的操作：你想从什么地方（from）选择（select）满足什么条件（where）的什么数据，并可选指定排序（order by）或分组（group by）条件。你不需要告诉数据库引擎具体该如何去执行这个操作。事实上，在选择查询策略上，大部分数据库用户都不及数据库引擎“聪明”；正如大部分开发者在写出优化汇编代码上也不及编译器聪明一样。
+
+**说明式编程（优雅）**和**命令式编程（高效）**可以结合起来产生既优雅又高效的代码。
+
+### 不可变性和并发
+
+在**多核的时代**里，函数式编程比以前更受青睐，一个重要的原因是**函数式编程对并行并发天然友好**。影响多核性能的一个重要因素是数据的竞争条件——由于共享内存数据需要加锁带来的延迟。**函数式编程强调不可变性（immutability）、无副作用，天然就适合并发**。更妙的是，如果你使用高层抽象的话，有时可以轻轻松松“免费”得到性能提升。
+
+启用 C++17 的并行执行策略（[refer: cppreference.com, “Standard library header <execution>”](https://en.cppreference.com/w/cpp/header/execution)），就能自动获得在多核环境下的性能提升：
+
+``` cpp
+int count_lines(const char** begin,
+                const char** end)
+{
+  vector<int> count(end - begin);
+  transform(execution::par,
+            begin, end,
+            count.begin(),
+            count_file);
+  return reduce(
+    execution::par,
+    count.begin(), count.end());
+}
+```
+
+两个高阶函数的调用中都加入了 `execution::par`，来**启动自动并行计算**。
+
+
+refer: [Functional Programming in C++. Manning, 2019](https://www.manning.com/books/functional-programming-in-c-plus-plus)
+
+
+## 应用可变模板和tuple的编译期技巧
+
+如何使用**可变模板**和**tuple**来完成一些常见的功能，尤其是**编译期计算**。
+
+### 可变模板
+
+**可变模板（[refer: cppreference.com, “Parameter pack”](https://en.cppreference.com/w/cpp/language/parameter_pack)）是 C++11 引入的一项新功能**，使我们可以在模板参数里表达不定个数和类型的参数。从实际的角度，它有两个明显的用途：
+
+* 用于在通用工具模板中转发参数到另外一个函数
+* 用于在递归的模板中表达通用的情况（另外会有至少一个模板特化来表达边界情况）
+
+#### 转发用法
+
+以标准库里的 `make_unique` 为例，它的定义差不多是下面这个样子：
+
+``` cpp
+template <typename T,
+          typename... Args>
+inline unique_ptr<T>
+make_unique(Args&&... args)
+{
+  return unique_ptr<T>(
+    new T(forward<Args>(args)...));
+}
+```
+
+这样，它就**可以把传递给自己的全部参数转发到模板参数类的构造函数上去**。注意，在这种情况下，我们通常会使用 `std::forward`，确保参数转发时仍然**保持正确的左值或右值引用类型**。
+
+解释一下上面三处出现的 `...`：
+
+* `typename... Args` 声明了一系列的类型——`class...` 或 `typename...` 表示后面的标识符代表了一系列的类型。
+* `Args&&... args` 声明了一系列的形参 args，其类型是 `Args&&`。
+* `forward<Args>(args)...` 会在编译时实际逐项展开 `Args` 和 `args` ，参数有多少项，展开后就是多少项。
+
+
+例如，如果需要在堆上传递一个 vector，假设希望初始构造的大小为 100，每个元素都是 1：
+
+``` cpp
+make_unique<vector<int>>(100, 1)
+```
+
+模板实例化之后，会得到相当于下面的代码：
+
+``` cpp
+template <>
+inline unique_ptr<vector<int>>
+make_unique(int&& arg1, int&& arg2)
+{
+  return unique_ptr<vector<int>>(
+    new vector<int>(
+      forward<int>(arg1),
+      forward<int>(arg2)));
+}
+```
+
+#### 递归用法
+
+也可以用可变模板来实现编译期递归。
+
+``` cpp
+template <typename T>
+constexpr auto sum(T x)
+{
+  return x;
+}
+
+template <typename T1, typename T2,
+          typename... Targ>
+constexpr auto sum(T1 x, T2 y,
+                   Targ... args)
+{
+  return sum(x + y, args...);
+}
+```
+
+在上面的定义里，如果 sum 得到的参数只有一个，会走到上面那个重载。如果有两个或更多参数，编译器就会选择下面那个重载，执行一次加法，随后你的参数数量就少了一个，因而递归总会终止到上面那个重载，结束计算。
+
+要使用上面这个模板，就可以写出像下面这样的函数调用：
+
+``` cpp
+auto result = sum(1, 2, 3.5, x);
+```
+
+模板会这样依次展开：
+
+```
+sum(1 + 2, 3.5, x)
+sum(3 + 3.5, x)
+sum(6.5 + x)
+6.5 + x
+```
+
+注意我们都不必使用相同的数据类型：只要这些数据之间可以应用 `+`，它们的类型无关紧要。
+
+### tuple
+
+在 C++ 里，要通用地**用一个变量来表达多个值**，那就得看**多元组 `tuple` 模板**了。tuple 算是 C++98 里的 pair 类型的一般化，可以表达任意多个固定数量、固定类型的值的组合。
+
+``` cpp
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
+
+using namespace std;
+
+// 整数、字符串、字符串的三元组
+using num_tuple =
+  tuple<int, string, string>;
+
+ostream&
+operator<<(ostream& os,
+           const num_tuple& value)
+{
+  os << get<0>(value) << ','
+     << get<1>(value) << ','
+     << get<2>(value);
+  return os;
+}
+
+int main()
+{
+  // 阿拉伯数字、英文、法文
+  vector<num_tuple> vn{
+    {1, "one",   "un"},
+    {2, "two",   "deux"},
+    {3, "three", "trois"},
+    {4, "four",  "quatre"}};
+  // 修改第 0 项的法文
+  get<2>(vn[0]) = "une";
+  // 按法文进行排序
+  sort(vn.begin(), vn.end(),
+       [](auto&& x, auto&& y) {
+         return get<2>(x) <
+                get<2>(y);
+       });
+  // 输出内容
+  for (auto&& value : vn) {
+    cout << value << endl;
+  }
+  // 输出多元组项数
+  constexpr auto size = \
+    tuple_size_v<num_tuple>;
+  cout << "Tuple size is " << size << endl;
+}
+```
+
+可以看到：
+
+* tuple 的成员数量由尖括号里写的类型数量决定。
+* 可以使用 `get` 函数对 tuple 的内容进行读和写。
+* 可以用 `tuple_size_v` （在编译期）取得多元组里面的项数。
+
+
+### 数值预算
+
+需求：希望快速地计算一串二进制数中 1 比特的数量。举个例子，如果有十进制的 31 和 254，转换成二进制是 00011111 和 11111110，那我们应该得到 5 + 7 = 12。
+
+利用 `constexpr` 函数，可以通过**编译期完成计算**：
+
+``` cpp
+constexpr int
+count_bits(unsigned char value)
+{
+  if (value == 0) {
+    return 0;
+  } else {
+    return (value & 1) +
+           count_bits(value >> 1);
+  }
+}
+```
+
+定义一个模板，它的参数是一个序列，在初始化时这个模板会对参数里的每一项计算比特数，并放到数组成员里。
+
+``` cpp
+template <size_t... V>
+struct bit_count_t {
+  unsigned char
+    count[sizeof...(V)] = {
+      static_cast<unsigned char>(
+        count_bits(V))...};
+};
+```
+
+* 用 `sizeof...(V)` 可以获得参数的个数。
+
+
+## thread和future：领略异步中的未来
+
+为什么要使用并发编程？
+
+伴随摩尔定律免费午餐的结束，计算要求则从单线程变成了多线程甚至异构——不仅要使用 CPU，还得使用 GPU。
+
+我们讲 C++ 里的并发，主要讲的就是**多线程**。它对开发人员的挑战是全方位的。从纯逻辑的角度，并发的思维模式就比单线程更为困难。在其之上，还得加上：
+
+* 编译器和处理器的重排问题
+* 原子操作和数据竞争
+* 互斥锁和死锁问题
+* 无锁算法
+* 条件变量
+* 信号量
+* etc.
+
+对于并发的基本挑战，Herb Sutter 在他的 [Effective Concurrency](https://herbsutter.com/2010/09/24/effective-concurrency-know-when-to-use-an-active-object-instead-of-a-mutex/) 专栏给出了一个较为全面的概述。
+
+### 基于 thread 的多线程开发
+
+一个使用**thread 线程类**的例子：
+
+```cpp
+#include <chrono>
+#include <iostream>
+#include <mutex>
+#include <thread>
+
+using namespace std;
+
+mutex output_lock;
+
+void func(const char* name)
+{
+  this_thread::sleep_for(100ms);
+  lock_guard<mutex> guard{output_lock};
+
+  cout << "I am thread " << name << '\n';
+}
+
+int main()
+{
+  thread t1{func, "A"};
+  thread t2{func, "B"};
+  t1.join();
+  t2.join();
+}
+```
+
+这是某次执行的结果：
+
+```
+I am thread B
+I am thread A
+```
+
+> 注意：一个平台细节，在 Linux 上编译线程相关的代码都需要加上 `-pthread` 命令行参数。Windows 和 macOS 上则不需要。
+
+* thread 的构造函数的第一个参数是**函数（对象）**，后面跟的是这个函数所需的**参数**。
+* thread 要求在析构之前要么 `join`（阻塞直到线程退出），要么 `detach`（放弃对线程的管理），否则程序会异常退出。
+* `sleep_for` 是 `this_thread` 名空间下的一个自由函数，表示**当前线程休眠指定的时间**。
+* 如果没有 output_lock 的同步，**输出通常会交错到一起**。
+
+
+thread 不能在析构时自动 join 有点不那么自然，这可以算是一个缺陷吧。在 C++20 的 [jthread](https://en.cppreference.com/w/cpp/thread/jthread) 到来之前，我们只能自己小小封装一下了。
+
+``` cpp
+class scoped_thread {
+public:
+  template <typename... Arg>
+  scoped_thread(Arg&&... arg)
+    : thread_(
+        std::forward<Arg>(arg)...)
+  {}
+  scoped_thread(
+    scoped_thread&& other)
+    : thread_(
+        std::move(other.thread_))
+  {}
+  scoped_thread(
+    const scoped_thread&) = delete;
+  ~scoped_thread()
+  {
+    if (thread_.joinable()) {
+      thread_.join();
+    }
+  }
+
+private:
+  thread thread_;
+};
+
+int main()
+{
+  scoped_thread t1{func, "A"};
+  scoped_thread t2{func, "B"};
+}
+```
+
+* 使用了可变模板和完美转发来构造 thread 对象。
+* thread 不能拷贝，但可以移动。
+* 只有 joinable（已经 join 的、已经 detach 的或者空的线程对象都不满足 joinable）的 thread 才可以对其调用 join 成员函数，否则会引发异常。
+
+通过上面的例子，可以发现并发程序的特点：
+
+1. 执行顺序不可预期，或者说不具有决定性。
+2. 如果没有互斥量的帮助，我们连完整地输出一整行信息都成问题。
+
+### mutex（互斥量）
+
+**互斥量**的基本语义是，**一个互斥量只能被一个线程锁定，用来保护某个代码块在同一时间只能被一个线程执行**。在前面那个多线程的例子里，我们就需要限制同时只有一个线程在使用 cout，否则输出就会错乱。
+
+目前的 C++ 标准中，事实上提供了不止一个**互斥量类**。我们先看最简单、也最常用的 [mutex 类](https://en.cppreference.com/w/cpp/thread/mutex)。**mutex 只可默认构造，不可拷贝（或移动），不可赋值**，主要提供的方法是：
+
+* `lock`：锁定，锁已经被其他线程获得时则阻塞执行
+* `try_lock`：尝试锁定，获得锁返回 true，在锁被其他线程获得时返回 false
+* `unlock`：解除锁定（只允许在已获得锁时调用）
+
+> 注意：
+> 1. 如果一个线程已经锁定了某个互斥量，再次锁定会发生什么？对于 mutex，回答是危险的**未定义行为**。
+>
+> 2. 头文件<mutex>中也定义了锁的 **RAII 包装类**，如 `lock_guard`。为了避免手动加锁、解锁的麻烦，以及在有异常或出错返回时发生漏解锁，一般应当使用 `lock_guard`，而不是手工调用互斥量的 `lock` 和 `unlock` 方法。
+
+
+### 执行任务，返回数据
+
+如果我们要在某个线程执行一些后台任务，然后取回结果，该怎么做呢？
+
+比较传统的做法是使用**信号量**或者**条件变量**。
+
+``` cpp
+#include <chrono>
+#include <condition_variable>
+#include <functional>
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <utility>
+
+using namespace std;
+
+class scoped_thread {
+  … // 定义同上，略
+};
+
+void work(condition_variable& cv,
+          int& result)
+{
+  // 假装我们计算了很久
+  this_thread::sleep_for(2s);
+  result = 42;
+  cv.notify_one();
+}
+
+int main()
+{
+  condition_variable cv;
+  mutex cv_mut;
+  int result;
+
+  scoped_thread th{work, ref(cv),
+                   ref(result)};
+  // 干一些其他事
+  cout << "I am waiting now\n";
+  unique_lock lock{cv_mut};// 单一锁
+  cv.wait(lock);
+
+  cout << "Answer: " << result << '\n';
+}
+```
+
+用 `ref` 模板来告诉 thread 的构造函数，我们需要传递条件变量和结果变量的**引用**，因为 thread **默认复制或移动所有的参数作为线程函数的参数**。
+
+### future
+
+更简单的方法是，把上面的代码直接翻译成使用 [async](https://en.cppreference.com/w/cpp/thread/async)（它会返回一个 `future`）：
+
+``` cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+#include <thread>
+
+using namespace std;
+
+int work()
+{
+  // 假装我们计算了很久
+  this_thread::sleep_for(2s);
+  return 42;
+}
+
+int main()
+{
+  auto fut = async(launch::async, work);
+  // 干一些其他事
+  cout << "I am waiting now\n";
+  cout << "Answer: " << fut.get() << '\n';
+}
+```
+
+* work 函数现在不需要考虑条件变量之类的实现细节了，专心干好自己的计算活、老老实实返回结果就可以了。
+* 调用 async 可以获得一个未来量，`launch::async` 是运行策略，告诉函数模板 async 应当在新线程里异步调用目标函数。在一些老版本的 GCC 里，不指定运行策略，默认不会起新线程。
+* async 函数模板可以根据参数来推导出返回类型，在例子里，返回类型是 `future<int>`。
+* 在未来量上调用 `get` 成员函数可以获得其结果。这个结果可以是返回值，也可以是异常，即，如果 work 抛出了异常，那 main 里在执行 `fut.get()` 时也会得到同样的异常，需要有相应的异常处理代码程序才能正常工作。
+
+**注意：**
+
+1. 一个 future 上只能调用一次 get 函数，**第二次调用为未定义行为，通常导致程序崩溃**。
+2. 这样一来，自然一个 future 是不能直接在多个线程里用的。
+
+### promise
+
+上面用 async 函数生成了未来量，但这不是唯一的方式。另外有一种常用的方式是 [promise](https://zh.cppreference.com/w/cpp/thread/promise)，我称之为**“承诺量”**。用 promise 该怎么写：
+
+``` cpp
+#include <chrono>
+#include <future>
+#include <iostream>
+#include <thread>
+
+using namespace std;
+
+class scoped_thread {
+  … // 定义同上，略
+};
+
+void work(promise<int> prom)
+{
+  // 假装我们计算了很久
+  this_thread::sleep_for(2s);
+  prom.set_value(42);
+}
+
+int main()
+{
+  promise<int> prom;
+  auto fut = prom.get_future();
+  scoped_thread th{work,
+                   move(prom)};
+  // 干一些其他事
+  cout << "I am waiting now\n";
+  cout << "Answer: " << fut.get() << '\n';
+}
+```
+
+`promise` 和 `future` 在这里成对出现，**可以看作是一个一次性管道：有人需要兑现承诺，往 promise 里放东西（set_value）；有人就像收期货一样，到时间去 future（写到这里想到，期货英文不就是 future 么，是不是该翻译成**期货量**呢？）里拿（get）就行了**。我们把 prom 移动给新线程，这样老线程就完全不需要管理它的生命周期了。
+
+`promise` 和 `future` 还有个有趣的用法是使用 void 类型模板参数。**这种情况下，两个线程之间不是传递参数，而是进行同步**：当一个线程在一个 future 上等待时（使用 get() 或 wait()），另外一个线程可以通过调用 promise 上的 set_value() 让其结束等待、继续往下执行。
+
+
+## 内存模型和atomic：理解并发的复杂性
+
+C++ 里的**内存模型**和**原子量**。
+
+### C++98 的执行顺序问题
+
+C++98 的年代里，开发者们已经了解了线程的概念，但 C++ 的标准里则完全没有提到线程。从实践上，估计大家觉得不提线程，C++ 也一样能实现多线程的应用程序吧。不过，很多聪明人都忽略了，下面的事实可能会产生不符合直觉预期的结果：
+
+* 为了优化的必要，编译器是可以调整代码的执行顺序的。唯一的要求是，程序的“可观测”外部行为是一致的。
+* 处理器也会对代码的执行顺序进行调整（所谓的 CPU 乱序执行）。在单处理器的情况下，这种乱序无法被程序观察到；但在多处理器的情况下，在另外一个处理器上运行的另一个线程就可能会察觉到这种不同顺序的后果了。
+
+对于上面的后一点，大部分开发者并没有意识到。原因有好几个方面：
+
+1. 多处理器的系统在那时还不常见
+2. 主流的 x86 体系架构仍保持着较严格的内存访问顺序
+3. 只有在数据竞争（data race）激烈的情况下才能看到“意外”的后果
+
+例子，假设有**两个全局变量**：
+
+``` cpp
+int x = 0;
+int y = 0;
+```
+
+然后在一个线程里执行：
+
+``` cpp
+x = 1;
+y = 2;
+```
+
+在另一个线程里执行：
+
+``` cpp
+if (y == 2) {
+  x = 3;
+  y = 4;
+}
+```
+
+想一下，x、y 的数值有几种可能？
+
+你如果认为有两种可能，1、2 和 3、4 的话，那说明你是**按典型程序员的思维模式看问题的——没有像编译器和处理器一样处理问题**。事实上，**1、4 也是一种结果的可能**。有两个基本的原因可以造成这一后果：
+
+1. **编译器没有义务一定按代码里给出的顺序产生代码。事实上，跟据上下文调整代码的执行顺序，使其最有利于处理器的架构，是优化中很重要的一步**。就单个线程而言，先执行 x = 1 还是先执行 y = 2 完全是件无关紧要的事：它们没有外部“可观察”的区别。
+2. **在多处理器架构中，各个处理器可能存在缓存不一致性问题**。取决于具体的处理器类型、缓存策略和变量地址，对变量 y 的写入有可能先反映到主内存中去。之所以这个问题似乎并不常见，是因为常见的 x86 和 x86-64 处理器是在顺序执行方面做得最保守的——大部分其他处理器，如 ARM、DEC Alpha、PA-RISC、IBM Power、IBM z/ 架构和 Intel Itanium 在内存序问题上都比较“松散”。x86 使用的内存模型基本提供了顺序一致性（sequential consistency）；相对的，ARM 使用的内存模型就只是松散一致性（relaxed consistency）。
+
+虽说 Intel 架构处理器的顺序一致性比较好，但在多处理器（包括多核）的情况下仍然能够出现写读序列变成读写序列的情况，产生意料之外的后果。
+
+[Jeff Preshing, “Memory reordering caught in the act”](https://preshing.com/20120515/memory-reordering-caught-in-the-act/) 中提供了完整的例子，包括示例代码。对于缓存不一致性问题的一般中文介绍，可以查看参考[王欢明, 《多处理器编程：从缓存一致性到内存模型》](https://zhuanlan.zhihu.com/p/35386457)。
+
+### 双重检查锁定
 
 
 
@@ -3961,6 +4804,13 @@ asm ( assembler template
 # 文章
 
 * [6 Tips to supercharge C++11 vector performance](https://www.acodersjourney.com/6-tips-supercharge-cpp-11-vector-performance/)
+
+
+# 工具
+
+## cpplint（Google）
+
+扫描代码。
 
 
 
