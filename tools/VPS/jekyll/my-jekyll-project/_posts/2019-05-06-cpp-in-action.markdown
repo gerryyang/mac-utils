@@ -4368,7 +4368,264 @@ if (y == 2) {
 
 [Jeff Preshing, “Memory reordering caught in the act”](https://preshing.com/20120515/memory-reordering-caught-in-the-act/) 中提供了完整的例子，包括示例代码。对于缓存不一致性问题的一般中文介绍，可以查看参考[王欢明, 《多处理器编程：从缓存一致性到内存模型》](https://zhuanlan.zhihu.com/p/35386457)。
 
-### 双重检查锁定
+#### 双重检查锁定
+
+在**多线程**可能对**同一个单件进行初始化**的情况下，有一个**双重检查锁定**的技巧，可基本示意如下：
+
+``` cpp
+// 头文件
+class singleton {
+public:
+  static singleton* instance();
+  …
+private:
+  static singleton* inst_ptr_;
+};
+
+// 实现文件
+singleton* singleton::inst_ptr_ = nullptr;
+
+singleton* singleton::instance()
+{
+  if (inst_ptr_ == nullptr) {
+    lock_guard lock;  // 加锁
+    if (inst_ptr_ == nullptr) {
+      inst_ptr_ = new singleton();
+    }
+  }
+  return inst_ptr_;
+}
+```
+
+**这个代码的目的是消除大部分执行路径上的加锁开销**。原本的意图是：**如果 inst_ptr_ 没有被初始化，执行才会进入加锁的路径，防止单件被构造多次；如果 inst_ptr_ 已经被初始化，那它就会被直接返回，不会产生额外的开销**。虽然看上去很美，**但它一样有着上面提到的问题**。**Scott Meyers 和 Andrei Alexandrecu 详尽地分析了这个用法（[refer: Scott Meyers and Andrei Alexandrescu, “C++ and the perils of double-checked locking”](https://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf)），然后得出结论：即使花上再大的力气，这个用法仍然有着非常多的难以填补的漏洞**。本质上还是上面说的，**优化编译器会努力击败你试图想防止优化的努力，而多处理器会以令人意外的方式让代码走到错误的执行路径上去**。
+
+#### volatile
+
+在某些编译器里，使用 `volatile` 关键字可以达到内存同步的效果。但我们必须记住，这不是 `volatile` 的设计意图，也不能通用地达到内存同步的效果。**`volatile` 的语义只是防止编译器“优化”掉对内存的读写而已。它的合适用法，目前主要是用来读写映射到内存地址上的 I/O 操作**。
+
+> 注意：由于 volatile 不能在**多处理器**的环境下确保**多个线程**能看到同样顺序的数据变化，**在今天的通用应用程序中，不应该再看到 volatile 的出现**。
+
+
+### C++11 的内存模型
+
+为了从根本上消除这些漏洞，C++11 里引入了适合**多线程的内存模型**。（[refer: cppreference.com, “Memory model”](https://en.cppreference.com/w/cpp/language/memory_model)）
+
+跟我们开发密切相关的是：现在我们有了**原子对象**（`atomic`）和使用原子对象的**获得**（`acquire`）、**释放**（`release`）语义，可以真正精确地控制内存访问的顺序性，保证我们需要的内存序。
+
+#### 内存屏障和获得、释放语义
+
+拿刚才的那个例子来说，如果我们希望结果只能是 1、2 或 3、4，即满足程序员心中的完全存储序（total store ordering），我们需要在 x = 1 和 y = 2 两句语句之间加入**内存屏障**，**禁止这两句语句交换顺序**。
+
+* **获得**是一个对内存的**读操作**，**当前线程**的任何**后面的读写操作**都**不允许**重排到这个操作的**前面**去。（即，读操作，先完成）
+* **释放**是一个对内存的**写操作**，**当前线程**的任何**前面的读写操作**都**不允许**重排到这个操作的**后面**去。（即，写操作，最后完成）
+
+实现方法：
+
+在**线程 1** 需要使用释放语义：
+
+``` cpp
+atomic<int> y;
+
+x = 1;
+y.store(2, memory_order_release); // 释放，写操作
+```
+
+在**线程 2** 对 y 的读取应当使用获得语义，但存储只需要松散内存序即可：
+
+``` cpp
+if (y.load(memory_order_acquire) == 2) { // 获得，读操作
+  x = 3;
+  y.store(4, memory_order_relaxed);
+}
+```
+
+用下图示意一下，**每一边的代码都不允许重排越过黄色区域**，且如果 y 上的释放早于 y 上的获取的话，释放前对内存的修改都在另一个线程的获取操作后可见：
+
+![atomic](/assets/images/201911/atomic.png)
+
+事实上，在把 y 改成 `atomic` 之后，两个线程的代码一行不改，执行结果都会是符合我们的期望的。**因为 atomic 变量的写操作缺省就是释放语义，读操作缺省就是获得语义**。即：
+
+* `y = 2` 相当于 `y.store(2, memory_order_release)`
+* `y == 2` 相当于 `y.load(memory_order_acquire) == 2`
+
+**注意：**
+
+1. 缺省行为可能是对性能不利的：我们并不需要在任何情况下都保证操作的顺序性。
+2. acquire 和 release 通常都是配对出现的，目的是保证如果对同一个原子对象的 release 发生在 acquire 之前的话，release 之前发生的内存修改能够被 acquire 之后的内存读取全部看到。
+
+#### atomic
+
+C++11 在 头文件中引入了 [atomic])(https://en.cppreference.com/w/cpp/atomic/atomic) 模板，对**原子对象**进行了封装。
+
+我们可以将其应用到**任何类型**上去。当然**对于不同的类型效果还是有所不同的**：
+
+* 对于**整型量**和**指针**等**简单类型**，通常结果是**无锁的原子对象**；
+* 而对于另外一些类型，比如 64 位机器上大小不是 1、2、4、8（有些平台 / 编译器也支持对更大的数据进行无锁原子操作）的类型，**编译器会自动为这些原子对象的操作加上锁**。
+* 编译器提供了一个原子对象的成员函数 `is_lock_free`，**可以检查这个原子对象上的操作是否是无锁的**。
+
+**原子操作有三类：**
+
+1. **读**：在读取的过程中，读取位置的内容不会发生任何变动。
+2. **写**：在写入的过程中，其他执行线程不会看到部分写入的结果。
+3. **读‐修改‐写**：读取内存、修改数值、然后写回内存，整个操作的过程中间不会有其他写入操作插入，其他执行线程不会看到部分写入的结果。
+
+`<atomic>`头文件中还定义了**内存序**，分别是：
+
+* memory_order_relaxed：松散内存序，只用来保证对原子对象的操作是原子的
+* memory_order_consume：目前不鼓励使用
+* memory_order_acquire：获得操作，在读取某原子对象时，当前线程的任何后面的读写操作都不允许重排到这个操作的前面去，并且其他线程在对同一个原子对象释放之前的所有内存写入都在当前线程可见
+* memory_order_release：释放操作，在写入某原子对象时，当前线程的任何前面的读写操作都不允许重排到这个操作的后面去，并且当前线程的所有内存写入都在对同一个原子对象进行获取的其他线程可见
+* memory_order_acq_rel：获得释放操作，一个读‐修改‐写操作同时具有获得语义和释放语义，即它前后的任何读写操作都不允许重排，并且其他线程在对同一个原子对象释放之前的所有内存写入都在当前线程可见，当前线程的所有内存写入都在对同一个原子对象进行获取的其他线程可见
+* memory_order_seq_cst：顺序一致性语义，对于读操作相当于获取，对于写操作相当于释放，对于读‐修改‐写操作相当于获得释放，**是所有原子操作的默认内存序**
+
+如何实现多线程计数的例子：
+
+由于我们并不需要 `++` 之后计数值影响其他行为，在 add_count 中执行简单的 ++、使用顺序一致性语义略有浪费。更好的做法是将其实现成：
+
+``` cpp
+#include <atomic>
+
+std::atomic_long count_;// atomic_long 是 atomic<long> 的类型别名
+
+void add_count() noexcept
+{
+count_.fetch_add(
+  1, std::memory_order_relaxed);
+}
+```
+
+> 注意：is_lock_free 的可能问题
+>
+> macOS 上在使用 Clang 时似乎不支持对需要加锁的对象使用 `is_lock_free` 成员函数，此时链接会出错。而 GCC 在这种情况下，需要确保系统上装了 libatomic。以 CentOS 7 下的 GCC 7 为例，我们可以使用下面的语句来安装：
+>
+> sudo yum install devtoolset-7-libatomic-devel
+> 
+> 然后，用下面的语句编译可以通过：
+>
+> g++ -pthread test.cpp -latomic
+> 
+> Windows 下使用 MSVC 则没有问题。
+
+
+#### mutex
+
+* 互斥量的加锁操作（lock）具有获得语义
+* 互斥量的解锁操作（unlock）具有释放语义
+
+实现一个真正**安全的双重检查锁定**：
+
+``` cpp
+// 头文件
+class singleton {
+public:
+  static singleton* instance();
+  …
+private:
+  static mutex lock_;
+  static atomic<singleton*>
+    inst_ptr_;
+};
+
+// 实现文件
+mutex singleton::lock_;
+atomic<singleton*>
+  singleton::inst_ptr_;
+
+singleton* singleton::instance()
+{
+  singleton* ptr = inst_ptr_.load(
+    memory_order_acquire);
+  if (ptr == nullptr) {
+    lock_guard<mutex> guard{lock_};
+    ptr = inst_ptr_.load(
+      memory_order_relaxed);
+    if (ptr == nullptr) {
+      ptr = new singleton();
+      inst_ptr_.store(
+        ptr, memory_order_release);
+    }
+  }
+  return inst_ptr_;
+}
+```
+
+> 注意：对互斥量和原子量的区别。
+> 
+> 用原子量的地方，粗想一下，你用锁都可以。但如果锁导致阻塞的话，性能比起原子量那是会有好几个数量级的差异了。锁即使不导致阻塞，性能也会比原子量低——锁本身的实现就会用到原子量，是个复杂的复合操作。
+>
+> 反过来不成立，用互斥量的地方不能都改用原子量。原子量本身没有阻塞机制，没有保护代码段的功能。
+
+
+
+
+### 并发队列的接口（无锁队列）
+
+标准库里 queue 有下面这样的接口：
+
+``` cpp
+template <typename T>
+class queue {
+public:
+  …
+  T& front();
+  const T& front() const;
+  void pop();
+  …
+}
+```
+
+会不会在我们正在访问 front() 的时候，这个元素就被 pop 掉了？
+
+事实上，上面这样的接口是不可能做到并发安全的。并发安全的接口大概长下面这个样子：
+
+``` cpp
+template <typename T>
+class queue {
+public:
+  …
+  void wait_and_pop(T& dest)
+  bool try_pop(T& dest);
+  …
+}
+```
+
+换句话说，要准备好位置去接收；然后如果接收成功了，才安安静静地在自己的线程里处理已经被弹出队列的对象。接收方式还得分两种，阻塞式的和非阻塞式的……
+
+并发队列的实现，经常是用**原子量**来达到**无锁和高性能的**。
+
+* 单生产者、单消费者的并发队列，用原子量和获得、释放语义就能简单实现。
+* 对于多生产者或多消费者的情况，那实现就比较复杂了，一般会使用 compare_exchange_strong 或 compare_exchange_weak。
+
+参考：
+
+* [nvwa::fc_queue](https://github.com/adah1972/nvwa) 给出了一个单生产者、单消费者的无锁并发定长环形队列，代码长度是几百行的量级。
+* [moodycamel::ConcurrentQueue](https://github.com/cameron314/concurrentqueue) 给出了一个多生产者、多消费者的无锁通用并发队列，代码长度是几千行的量级。
+* 陈皓给出了一篇很棒的对[无锁队列](https://coolshell.cn/articles/8239.html)的中文描述，推荐阅读。
+
+
+### 讨论
+
+感觉这里的无锁操作就像分布式系统里面谈到的乐观锁，普通的互斥量就像悲观锁。只是CPU级的乐观锁由CPU提供指令集级别的支持。
+
+内存重排会引起内存数据的不一致性，尤其是在多CPU的系统里。这又让我想起分布式系统里讲的CAP理论。
+
+多线程就像分布式系统里的多个节点，每个CPU对自己缓存的写操作在CPU同步之前就造成了主内存中数据的值在每个CPU缓存中的不一致，相当于分布式系统中的分区。
+
+我大概看了参考文献一眼，因为一级缓存相对主内存速度有数量级上的优势，所以各个缓存选择的策略相当于分布式系统中的可用性，即保留了AP（分区容错性与可用性，放弃数据的一致性），然后在涉及到缓存数据一致性问题上，相当于采取了最终一致性。
+
+其实我觉得不论是什么系统，时间颗足够小的话，都会存在数据的不一致，只是CPU的速度太快了，所以看起来都是最终一致性。在保证可用性的时候，整个程序的某个变量或内存中的值看起来就是进行了重排。
+
+分布式系统中将多个节点解耦的方式是用异步、用对列。生产者把变化事件写到对列里就返回，然后由消费者取出来异步的实施这些操作，达到数据的最终一致性。
+
+看资料里，多CPU同步时，也有在CPU之间引入对列。当需要“释放前对内存的修改都在另一个线程的获取操作后可见”时，我的理解就是用了所谓的“内存屏障”强制让消费者消费完对列里的"CPU级的事物"。所以才会在达到严格内存序的过程中降低了程序的性能。
+
+也许，这个和操作系统在调度线程时，过多的上下文切换会导致系统性能降低有关系。
+
+> 操作系统的上下文切换和内存序的关系我略有不同意见。内存屏障的开销我查下来大概是 100、200 个时钟周期，也就是约 50 纳秒左右吧。而 Linux 的上下文切换开销约在 1 微秒多，也就是两者之前的性能差异超过 20 倍。因此，内存屏障不太可能是上下文切换性能开销的主因。上下文切换实际需要做的事情非常多，那应该才是主要原因。
+
+
+
+# 工具漫谈：编译、格式化、代码检查、排错各显身手
 
 
 
@@ -4811,6 +5068,11 @@ asm ( assembler template
 ## cpplint（Google）
 
 扫描代码。
+
+## 汇编
+
+https://godbolt.org/
+
 
 
 
