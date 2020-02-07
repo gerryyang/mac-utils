@@ -4624,11 +4624,650 @@ public:
 > 操作系统的上下文切换和内存序的关系我略有不同意见。内存屏障的开销我查下来大概是 100、200 个时钟周期，也就是约 50 纳秒左右吧。而 Linux 的上下文切换开销约在 1 微秒多，也就是两者之前的性能差异超过 20 倍。因此，内存屏障不太可能是上下文切换性能开销的主因。上下文切换实际需要做的事情非常多，那应该才是主要原因。
 
 
+## 处理数据类型变化和错误：optional、variant、expected和Herbception
+
+### optional
+
+在面向对象（引用语义）的语言里，我们有时候会使用空值 `null` 表示没有找到需要的对象。也有人推荐使用一个特殊的空对象，来避免[空值带来的一些问题](https://en.wikipedia.org/wiki/Null_object_pattern)。可不管是空值，还是空对象，对于一个返回普通对象（值语义）的 C++ 函数都是不适用的——空值和空对象只能用在返回引用 / 指针的场合，一般情况下需要堆内存分配，在 C++ 里会引致额外的开销。
+
+C++17 引入的 [optional 模板](https://en.cppreference.com/w/cpp/utility/optional) 可以（部分）解决这个问题。语义上来说，optional 代表一个“也许有效”“可选”的对象。语法上来说，一个 optional 对象有点像一个指针，但它所管理的对象是直接放在 `optional` 里的，没有额外的内存分配。
+
+### variant
+
+`optional` 是一个非常简单而又好用的模板，很多情况下，使用它就足够解决问题了。在某种意义上，可以把它看作是允许有**两种数值的对象**：要么是你想放进去的对象，要么是 `nullopt`（再次提醒，联想 `nullptr`）。
+
+如果希望除了想放进去的对象，还可以是 `nullopt` 之外的对象怎么办呢（比如，某种出错的状态）？又比如，如果希望有三种或更多不同的类型呢？这种情况下，[variant](https://en.cppreference.com/w/cpp/utility/variant) 可能就是一个合适的解决方案。
+
+在没有 `variant` 类型之前，你要达到类似的目的，恐怕会使用一种叫做**带标签的联合（tagged union）**的数据结构。比如，下面就是一个可能的数据结构定义：
+
+``` cpp
+struct FloatIntChar {
+  enum {
+    Float,
+    Int,
+    Char
+  } type;
+
+  union {
+    float float_value;
+    int int_value;
+    char char_value;
+  };
+};
+```
+
+这个数据结构的最大问题，就是它实际上有很多复杂情况需要特殊处理。对于上面例子里的 **POD 类型**，这么写就可以了。如果把其中一个类型换成**非 POD 类型**，就会有复杂问题出现（编译器会很合理地看到在 union 里使用 string 类型会带来构造和析构上的问题，所以会拒绝工作）。
+
+所以，**目前的主流建议是，应该避免使用“裸” union 了。替换为 `variant`**。
+
+``` cpp
+variant<string, int, char> obj{"Hello world"};
+cout << get<string>(obj) << endl;
+```
+
+* 可以注意到我上面构造时使用的是 `const char*`，但构造函数仍然能够正确地选择 `string` 类型，这是**因为标准要求实现在没有一个完全匹配的类型的情况下，会选择成员类型中能够以传入的类型来构造的那个类型进行初始化（有且只有一个时）**。`string` 类存在形式为 `string(const char*)` 的构造函数（不精确地说），所以上面的构造能够正确进行。
+* 跟 `tuple` 相似，`variant` 上可以使用 `get` 函数模板，其模板参数可以是代表序号的**数字**，也可以是**类型**。如果编译时可以确定序号或类型不合法，在编译时就会出错。如果序号或类型合法，但运行时发现 variant 里存储的并不是该类对象，则会得到一个异常 `bad_variant_access`。
+* `variant` 上还有一个重要的成员函数是 `index`，通过它能获得当前的数值的序号。就上面的例子而言，**obj.index() 即为 1**。正常情况下，`variant` 里总有一个有效的数值（缺省为第一个类型的默认构造结果），但如果 `emplace` 等修改操作中发生了异常，`variant` 里也可能没有任何有效数值，此时 `index()` 将会得到 `variant_npos`。
+
+> 总结：从基本概念来讲，variant 就是一个安全的 union。
+
+### expected
+
+`expected` 不是 C++ 标准里的类型。但概念上这三者有相关性。
+
+`optional` 可以作为**一种代替异常的方式：在原本该抛异常的地方，我们可以改而返回一个空的 optional 对象**。当然，此时只知道没有返回一个合法的对象，而不知道为什么没有返回合法对象了。可以考虑改用一个 `variant`，但此时需要给错误类型一个独特的类型才行，因为这是 variant 模板的要求。比如：
+
+``` cpp
+enum class error_code {
+  success,
+  operation_failure,
+  object_not_found,
+  …
+};
+
+variant<Obj, error_code>
+  get_object(…);
+```
+
+这当然是一种可行的错误处理方式：我们可以判断返回值的 `index()`，来决定是否发生了错误。但这种方式不那么直截了当，也要求实现对允许的错误类型作出规定。
+
+Andrei Alexandrescu 在 2012 年首先提出的 [Expected 模板](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Andrei-Alexandrescu-Systematic-Error-Handling-in-C)，提供了另外一种错误处理方式。他的方法的要点在于，**把完整的异常信息放在返回值，并在必要的时候，可以“重放”出来，或者手工检查是不是某种类型的异常**。
+
+他的概念并没有被广泛推广，最主要的原因可能是性能。异常最被人诟病的地方是性能，而他的方式对性能完全没有帮助。不过，后面的类似模板都汲取了他的部分思想，至少会用一种显式的方式来明确说明当前是异常情况还是正常情况。在目前的 expected 的标准提案（[refer: Vicente J. Botet Escribá and JF Bastien, “Utility class to represent expected object”](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0323r3.pdf)）里，用法有点是 `optional` 和 `variant` 的某种混合：**模板的声明形式像 variant，使用正常返回值像 optional**。
+
+例子：[Simon Brand, expected](https://github.com/TartanLlama/expected)展示了`expected`的用法。
+
+> 思考：错误处理是一个非常复杂的问题，在 C++ 诞生之后这么多年仍然没有该如何处理的定论。如何对易用性和性能进行取舍，一直是一个有矛盾的老大难问题。
+
+refer：
+
+* [异常机制](http://baiy.cn/doc/cpp/inside_exception.htm)
+
+## 数字计算
+
+### Boost.Multiprecision
+
+众所周知，C 和 C++（甚至推而广之到大部分的常用编程语言）里的数值类型是有精度限制的。比如，上一讲的代码里我们就用到了 INT_MIN，最小的整数。很多情况下，使用目前这些类型是够用的（最高一般是 64 位整数和 80 位浮点数）。但也有很多情况，这些标准的类型远远不能满足需要。这时你就需要一个高精度的数值类型了。
+
+``` cpp
+#include <iomanip>
+#include <iostream>
+#include <boost/multiprecision/cpp_int.hpp>
+
+using namespace std;
+
+int main()
+{
+  using namespace boost::
+    multiprecision::literals;
+
+  using boost::multiprecision::
+    cpp_int;
+
+  cpp_int a =
+    0x123456789abcdef0_cppi;
+  cpp_int b = 16;
+  cpp_int c{"0400"};
+  cpp_int result = a * b / c;
+  cout << hex << result << endl;
+  cout << dec << result << endl;
+}
+```
+
+可以看到，cpp_int 可以通过自定义字面量（后缀 `_cppi`；只能十六进制）来初始化，可以通过一个普通整数来初始化，也可以通过字符串来初始化（并可以使用 0x 和 0 前缀来选择十六进制和八进制）。拿它可以正常地进行加减乘除操作，也可以通过 IO 流来输入输出。
+
+Boost.Multiprecision 使用了表达式模板和 C++11 的移动来避免不必要的拷贝。
+
+
+# Boost：你需要的“瑞士军刀”
+
+Boost 作为 C++ 世界里标准库之外最知名的开放源码程序库。
+
+Boost 的网站把 Boost 描述成为经过同行评审的、可移植的 C++ 源码库（peer-reviewed portable C++ source libraries）。换句话说，它跟很多个人开源库不一样的地方在于，它的代码是经过评审的。事实上，Boost 项目的背后有很多 C++ 专家，比如发起人之一的 Dave Abarahams 是 C++ 标准委员会的成员，也是《C++ 模板元编程》一书的作者。这也就使得 Boost 有了很不一样的特殊地位：它既是 C++ 标准库的灵感来源之一，也是 C++ 标准库的试验田。
+
+下面这些 C++ 标准库就源自 Boost：
+
+智能指针/thread/regex/random/array/bind/tuple/optional/variant/any/string_view/filesystem/等等
+
+当然，将来还会有新的库从 Boost 进入 C++ 标准，如网络库的标准化就是基于 `Boost.Asio` 进行的。因此，即使相关的功能没有被标准化，我们也可能可以从 Boost 里看到某个功能可能会被标准化的样子——当然，最终标准化之后的样子还是经常有所变化的。
+
+我们也可以在编译器落后于标准、不能提供标准库的某个功能时**使用 Boost 里的替代品**。比如，老版本的 macOS 上苹果的编译器不支持 optional 和 variant。除了我描述的不正规做法，改用 Boost 也是方法之一。
+
+## Boost.TypeIndex
+
+TypeIndex 是一个很轻量级的库，它不需要链接，解决的也是使用模板时的一个常见问题，如何精确地知道**一个表达式或变量的类型**。
+
+``` cpp
+#include <iostream>
+#include <typeinfo>
+#include <utility>
+#include <vector>
+#include <boost/type_index.hpp>
+
+using namespace std;
+using boost::typeindex::type_id;
+using boost::typeindex::type_id_with_cvr;
+
+int main()
+{
+  vector<int> v;
+  auto it = v.cbegin();
+
+  cout << "*** Using typeid\n";
+  cout << typeid(const int).name()
+       << endl;
+  cout << typeid(v).name() << endl;
+  cout << typeid(it).name() << endl;
+
+  cout << "*** Using type_id\n";
+  cout << type_id<const int>() << endl;
+  cout << type_id<decltype(v)>()
+       << endl;
+  cout << type_id<decltype(it)>()
+       << endl;
+
+  cout << "*** Using "
+          "type_id_with_cvr\n";
+  cout
+    << type_id_with_cvr<const int>()
+    << endl;
+  cout << type_id_with_cvr<decltype(
+            (v))>()
+       << endl;
+  cout << type_id_with_cvr<decltype(
+            move((v)))>()
+       << endl;
+  cout << type_id_with_cvr<decltype(
+            (it))>()
+       << endl;
+}
+```
+
+* `typeid` 是标准 C++ 的关键字，可以应用到变量或类型上，返回一个 `std::type_info`。我们可以用它的 `name` 成员函数把结果转换成一个字符串，**但标准不保证这个字符串的可读性和唯一性**。
+* `type_id` 是 Boost 提供的函数模板，必须提供类型作为模板参数——所以对于表达式和变量我们需要使用 `decltype`。结果可以直接输出到 IO 流上。
+* `type_id_with_cvr` 和 `type_id` 相似，但它获得的结果会包含 const/volatile 状态及引用类型。
+
+另外一个例子：
+
+``` cpp
+#include <iostream>
+#include <typeinfo>
+#include <boost/type_index.hpp>
+
+using namespace std;
+using boost::typeindex::type_id;
+
+class shape {
+public:
+  virtual ~shape() {}
+};
+
+class circle : public shape {};
+
+#define CHECK_TYPEID(object, type) \
+  cout << "typeid(" #object << ")" \
+       << (typeid(object) ==       \
+               typeid(type)        \
+             ? " is "              \
+             : " is NOT ")         \
+       << #type << endl
+
+#define CHECK_TYPE_ID(object,      \
+                      type)        \
+  cout << "type_id(" #object       \
+       << ")"                      \
+       << (type_id<decltype(       \
+                 object)>() ==     \
+               type_id<type>()     \
+             ? " is "              \
+             : " is NOT ")         \
+       << #type << endl
+
+int main()
+{
+  shape* ptr = new circle();
+  CHECK_TYPEID(*ptr, shape);
+  CHECK_TYPEID(*ptr, circle);
+  CHECK_TYPE_ID(*ptr, shape);
+  CHECK_TYPE_ID(*ptr, circle);
+  delete ptr;
+}
+```
+
+输出：
+
+```
+typeid(*ptr) is NOT shape
+typeid(*ptr) is circle
+type_id(*ptr) is shape
+type_id(*ptr) is NOT circle
+```
+
+## Boost.Core
+
+Core 里面提供了一些通用的工具，这些工具常常被 Boost 的其他库用到，而我们也可以使用，不需要链接任何库。
+
+* `addressof`，在即使用户定义了 `operator&` 时也能获得对象的地址
+* `enable_if`
+* `is_same`，判断两个类型是否相同，C++11 开始在 中定义
+* `ref`，和标准库的相同
+
+### boost::core::demangle
+
+`boost::core::demangle` 能够用来把 `typeid` 返回的内部名称“反粉碎”（demangle）成**可读的形式**。
+
+``` cpp
+#include <iostream>
+#include <typeinfo>
+#include <utility>
+#include <vector>
+#include <boost/core/demangle.hpp>
+
+using namespace std;
+using boost::core::demangle;
+
+int main()
+{
+  vector<int> v;
+  auto it = v.cbegin();
+
+  cout << "*** Using typeid\n";
+  cout << typeid(const int).name()
+       << endl;
+  cout << typeid(v).name() << endl;
+  cout << typeid(it).name() << endl;
+
+  cout << "*** Demangled\n";
+  cout << demangle(typeid(const int)
+                     .name())
+       << endl;
+  cout << demangle(typeid(v).name())
+       << endl;
+  cout << demangle(
+            typeid(it).name())
+       << endl;
+}
+```
+
+### boost::noncopyable
+
+`boost::noncopyable` 提供了一种非常简单也很直白的把类声明成**不可拷贝的方式**。
+
+``` cpp
+#include <boost/core/noncopyable.hpp>
+
+class shape_wrapper
+  : private boost::noncopyable {
+  …
+};
+```
+
+你当然也可以自己把拷贝构造和拷贝赋值函数声明成 `= delete`，不过，上面的写法是不是可读性更佳？
+
+### boost::swap
+
+在通用的代码如何对一个不知道类型的对象执行交换操作？
+
+``` cpp
+{
+  using std::swap;
+  swap(lhs, rhs);
+}
+```
+
+即，我们需要（在某个小作用域里）引入 `std::swap`，然后让编译器在“看得到” `std::swap` 的情况下去编译 swap 指令。根据 ADL，如果在被交换的对象所属类型的名空间下有 swap 函数，那个函数会被优先使用，否则，编译器会选择通用的 `std::swap`。似乎有点小啰嗦。使用 Boost 的话，你可以一行搞定：
+
+``` cpp
+#include <boost/core/swap.hpp>
+
+boost::swap(lhs, rhs);
+```
+
+### Boost.Conversion
+
+Conversion 同样是一个不需要链接的轻量级的库。它解决了标准 C++ 里的另一个问题，标准类型之间的转换不够方便。在 C++11 之前，这个问题尤为严重。在 C++11 里，标准引入了一系列的函数，已经可以满足常用类型之间的转换。但使用 Boost.Conversion 里的 lexical_cast 更不需要去查阅方法名称或动脑子去努力记忆。
+
+``` cpp
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <boost/lexical_cast.hpp>
+
+using namespace std;
+using boost::bad_lexical_cast;
+using boost::lexical_cast;
+
+int main()
+{
+  // 整数到字符串的转换
+  int d = 42;
+  auto d_str =
+    lexical_cast<string>(d);
+  cout << d_str << endl;
+
+  // 字符串到浮点数的转换
+  auto f =
+    lexical_cast<float>(d_str) /
+    4.0;
+  cout << f << endl;
+
+  // 测试 lexical_cast 的转换异常
+  try {
+    int t = lexical_cast<int>("x");
+    cout << t << endl;
+  }
+  catch (bad_lexical_cast& e) {
+    cout << e.what() << endl;
+  }
+
+  // 测试标准库 stoi 的转换异常
+  try {
+    int t = std::stoi("x");
+    cout << t << endl;
+  }
+  catch (invalid_argument& e) {
+    cout << e.what() << endl;
+  }
+}
+```
+
+输出：
+
+```
+42
+10.5
+bad lexical cast: source type value could not be interpreted as target
+stoi
+```
+
+GCC 里 stoi 的异常输出有点太言简意赅了。而 lexical_cast 的异常输出在不同的平台上有很好的一致性。
+
+### Boost.ScopeExit
+
+`RAII` 是推荐的 C++ 里管理资源的方式。不过，作为 C++ 程序员，跟 C 函数打交道也很正常。每次都写个新的 RAII 封装也有点浪费。Boost 里提供了一个简单的封装，你可以从下面的示例代码里看到它是如何使用的：
+
+```cpp
+#include <stdio.h>
+#include <boost/scope_exit.hpp>
+
+void test()
+{
+  FILE* fp = fopen("test.cpp", "r");
+  if (fp == NULL) {
+    perror("Cannot open file");
+  }
+
+  BOOST_SCOPE_EXIT(&fp) {
+    if (fp) {
+      fclose(fp);
+      puts("File is closed");
+    }
+  } BOOST_SCOPE_EXIT_END
+
+  puts("Faking an exception");
+  throw 42;
+}
+
+int main()
+{
+  try {
+    test();
+  }
+  catch (int) {
+    puts("Exception received");
+  }
+}
+```
+
+唯一需要说明的可能就是 `BOOST_SCOPE_EXIT` 里的那个 `&` 符号了——把它理解成 lambda 表达式的按引用捕获就对了（虽然 `BOOST_SCOPE_EXIT` 可以支持 C++98 的代码）。如果不需要捕获任何变量，`BOOST_SCOPE_EXIT` 的参数必须填为 `void`。
+
+```
+Faking an exception
+File is closed
+Exception received
+```
+
+注意：使用这个库也只需要头文件。注意实现类似的功能在 C++11 里相当容易，但由于 ScopeExit 可以支持 C++98 的代码，因而它的实现还是相当复杂的。
+
+### Boost.Program_options
+
+传统上 C 代码里处理命令行参数会使用 `getopt`。比如在下面的代码中：
+
+[https://github.com/adah1972/breaktext/blob/master/breaktext.c](https://github.com/adah1972/breaktext/blob/master/breaktext.c)
+
+这种方式有不少缺陷：
+
+* 一个选项通常要在三个地方重复：说明文本里，getopt 的参数里，以及对 getopt 的返回结果进行处理时。
+* 对选项的附加参数需要手工写代码处理，因而常常不够严格（C 的类型转换不够方便，尤其是检查错误）。
+
+`Program_options` 正是解决这个问题的。这个代码有点老了，不过还挺实用；懒得去找特别的处理库时，至少这个伸手可用。使用这个库需要链接 `boost_program_options` 库。
+
+``` cpp
+#include <iostream>
+#include <string>
+#include <stdlib.h>
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+using std::cout;
+using std::endl;
+using std::string;
+
+string locale;
+string lang;
+int width = 72;
+bool keep_indent = false;
+bool verbose = false;
+
+int main(int argc, char* argv[])
+{
+  po::options_description desc(
+    "Usage: breaktext [OPTION]... "
+    "<Input File> [Output File]\n"
+    "\n"
+    "Available options");
+
+  desc.add_options()
+    ("locale,L",
+     po::value<string>(&locale),
+     "Locale of the console (system locale by default)")
+    ("lang,l",
+     po::value<string>(&lang),
+     "Language of input (asssume no language by default)")
+    ("width,w",
+     po::value<int>(&width),
+     "Width of output text (72 by default)")
+    ("help,h", "Show this help message and exit")
+    (",i",
+     po::bool_switch(&keep_indent),
+     "Keep space indentation")
+    (",v",
+     po::bool_switch(&verbose),
+     "Be verbose");
+
+  po::variables_map vm;
+  try {
+    po::store(
+      po::parse_command_line(
+        argc, argv, desc),
+      vm);
+  }
+  catch (po::error& e) {
+    cout << e.what() << endl;
+    exit(1);
+  }
+  vm.notify();
+
+  if (vm.count("help")) {
+    cout << desc << "\n";
+    exit(1);
+  }
+}
+```
+
+* `options_description` 是基本的选项描述对象的类型，构造时我们给出对选项的基本描述。
+* `options_description` 对象的 `add_options` 成员函数会返回一个函数对象，然后我们直接用括号就可以添加一系列的选项。
+* 每个选项初始化时可以有两个或三个参数，**第一项是选项的形式，使用长短选项用逗号隔开的字符串（可以只提供一种**），最后一项是选项的文字描述，中间如果还有一项的话，就是选项的值描述。
+* 选项的值描述可以用 `value`，`bool_switch` 等方法，参数是**输出变量的指针**。
+* `variables_map`，**变量映射表**，用来存储对命令行的扫描结果；它继承了标准的 `std::map`。
+* `notify` 成员函数**用来把变量映射表的内容实际传送到选项值描述里提供的那些变量里去**。
+* `count` 成员函数继承自 std::map，只能得到 0 或 1 的结果。
+
+这样，程序就能处理上面的那些选项了。如果运行时在命令行加上 `-h` 或 `--help` 选项，程序就会输出跟原来类似的帮助输出——额外的好处是选项的描述信息较长时还能自动帮你折行，不需要手工排版了。
+
+
+# 单元测试
+
+两个单元测试库：C++里如何进行单元测试?
+
+
+
+
+
 
 # 工具漫谈：编译、格式化、代码检查、排错各显身手
 
+## 编译器
+
+### MSVC
+
+三种编译器里最老资格的就是 MSVC 了。据微软员工在 2015 年的一篇博客，在 MSVC 的代码里还能找到 1982 年写下的注释。这意味着 MSVC 是最历史悠久、最成熟，但也是最有历史包袱的编译器。
+
+微软的编译器在传统代码的优化方面做得一直不错，但对模板的支持则是它的软肋，在 Visual Studio 2015 之前尤其不行——之前模板问题数量巨大，之后就好多了。而 2018 年 11 月 MSVC 宣布终于能够编译 range-v3 库，也成了一件值得庆贺的事。此外，我已经提过，微软对代码的“容忍度”一直有点太高（缺省情况下，不使用 /Za 选项），能接受 C++ 标准认为非法的代码，这至少对写跨平台的代码而言，绝不是一件好事。
+
+MSVC 当然也有领先的地方。它对标准库的实现一直不算慢，较早就提供了比较健壮的线程、正则表达式等标准库。在并发方面，微软也是比较领先的，并主导了协程的技术规格书（[ISO/IEC JTC1 SC22 WG21, “Programming languages—C++extensions for coroutines”](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4680.pdf)）。微软一开始支持 C++ 标准的速度比较慢，但慢慢地，微软已经把全面支持 C++ 标准当作了目标，并在 2018 年宣布已全面支持 C++17 标准；虽然同时也承认仍有一些重大问题影响了其编译一些重要的开源 C++ 项目。
+
+另外，在免费的 C++ 集成开发环境里，Visual Studio Community Edition 恐怕可以算是最好的了，至少在 Windows 上是这样。在自动完成功能和调试功能上 Visual Studio 做得特别好，为其他的免费工具所不及。如果你开发的 C++ 程序主要在 Windows 上运行，那 MSVC 就应该是首选了。
+
+### Clang
+
+在三个编译器里，最新的就是 Clang。作为 LLVM 项目的一部分，它的最早发布是在 2007 年，然后流行程度一路飙升，到现在成了一个通用的跨平台编译器。其中有不少苹果的支持——因为苹果对 GCC 的许可要求不满意，苹果把 LLVM 开发者 Chris Lattner 招致麾下（2005—2017），期间他除了为苹果设计开发了全新的语言 Swift，Clang 的 C++ 支持也得到了飞速的发展。
+
+作为后来者，Clang 在错误信息易用性上做出了极大的改善。Clang 虽然一直在模拟 GCC 的功能和命令行，但错误信息的友好性是它的最大亮点。在语言层面，Clang 对 C++ 标准的支持也是飞速。
+
+Clang 目前在 macOS 下是默认的 C/C++ 编译器。在 Linux 和 Windows 下当然也都能安装：这种情况下，Clang 会使用平台上的主流 C++ 库，也就是在 Linux 上使用 `libstdc++`，在 Windows 上使用 MSVC 的 C++ 运行时。只有在 macOS 上，Clang 才会使用其原生 C++ 库，`libc++`。顺便说一句，如果你想阅读一下现代 C++ 标准库的参考实现的话，libc++ 是可读性最好的——不过，任何一个软件产品的源代码都不是以可读性为第一考量，比起教科书、专栏里的代码例子，libc++ 肯定是要复杂多了。
+
+要想使用最新版本的 Clang，最方便的方式是使用 Homebrew 安装 llvm：
+
+```
+brew install llvm
+```
+
+安装完之后，新的 clang 和 clang++ 工具在 `/usr/local/opt/llvm/bin` 目录下，和系统原有的命令不会发生冲突。你如果需要使用新的工具的话，需要改变路径的顺序，或者自己创建命令的别名（alias）。
 
 
+### GCC
+
+GCC 的第一个版本发布于 1987 年，是由自由软件运动的发起人 Richard Stallman（常常被缩写为 RMS）亲自写的。因而，从诞生伊始，GCC 就带着很强的意识形态，承担着振兴自由软件的任务。在 GNU/Linux 平台上，GCC 自然是首选的编译器。自由软件的开发者，大部分也选择了 GCC。由于 GCC 是用 GPL 发布的，任何对 GCC 的修改都必须以 GPL 协议发布。这就迫使想修改 GCC 的人要为 GCC 做出贡献。这对自由软件当然是件好事，但对一家公司来讲就未必了。此外，你想拆出 GCC 的一部分来做其他事情，比如对代码进行分析，也绝不是件容易的事。这些问题，实际上就是迫使苹果公司在 LLVM/Clang 上投资的动机了。
+
+初期 GCC 在出错信息的友好程度上一直做得不太好。但 Clang 的出现刺激出了一种和 GCC 之间的良性竞争，到今天，GCC 的错误信息反而是最友好的了。如果遇到程序编译出错在 Clang 里看不明白的话，试着用 GCC 再编译看看，在某些情况下，可能 GCC 的出错信息会更让人明白一些。在可预见的将来，在自由 / 开源软件的开发上，GCC 一直会是编译器的标准。
+
+## 格式化工具（Clang-Format）
+
+Clang 有着非常模块化的设计，容易被其他工具复用其代码分析功能。LLVM 团队自己也提供一些工具，其中我个人最常用的就是 [Clang-Format](https://clang.llvm.org/docs/ClangFormat.html)。
+
+## 代码检查工具
+
+### Clang-Tidy
+
+Clang 项目也提供了其他一些工具，包括代码的静态检查工具 [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) 。这是一个比较全面的工具，它除了会提示你危险的用法，也会告诉你如何去现代化你的代码。默认情况下，Clang-Tidy 只做基本的分析。你也可以告诉它你想现代化你的代码和提高代码的可读性：
+
+```
+clang-tidy --checks='clang-analyzer-*,modernize-*,readability-*' test.cpp
+```
+
+### Cppcheck
+
+Clang-Tidy 还是一个比较“重”的工具。它需要有一定的配置，需要能看到文件用到的头文件，运行的时间也会较长。而 [Cppcheck](https://github.com/danmar/cppcheck) 就是一个非常轻量的工具了。它运行速度飞快，看不到头文件、不需要配置就能使用。它跟 Clang-Tidy 的重点也不太一样：它强调的是发现代码可能出问题的地方，而不太着重代码风格问题，两者功能并不完全重叠。有条件的情况下，这两个工具可以一起使用。
+
+## 排错工具
+
+### Valgrind
+
+[Valgrind](https://valgrind.org/) 算是一个老牌工具了。它是一个非侵入式的排错工具。根据 Valgrind 的文档，它会导致可执行文件的速度减慢 20 至 30 倍。但它可以在不改变可执行文件的情况下，只要求你在编译时增加产生调试信息的命令行参数（`-g`），即可查出内存相关的错误。
+
+``` cpp
+int main()
+{
+  char* ptr = new char[20];
+}
+```
+
+在 Linux 上使用 `g++ -g test.cpp` 编译之后，然后使用 `valgrind --leak-check=full ./a.out` 检查运行结果，得到的输出会如下所示：
+
+![valgrind](/assets/images/201911/valgrind.png)
+
+即其中包含了内存泄漏的信息，包括内存是从什么地方泄漏的。Valgrind 的功能并不只是内存查错，也包含了多线程问题分析等其他功能。要进一步了解相关信息，请查阅其文档。
+
+### nvwa::debug_new
+
+在 [nvwa](https://github.com/adah1972/nvwa/) 项目里，我也包含了一个很小的内存泄漏检查工具。它的最大优点是小巧，并且对程序运行性能影响极小；缺点主要是不及 Valgrind 易用和强大，只能检查 new 导致的内存泄漏，并需要侵入式地对项目做修改。
+
+```
+c++ test.cpp \../nvwa/nvwa/debug_new.cpp
+```
+
+## 网页工具
+
+### Compiler Explorer
+
+编译器都有输出汇编代码的功能：在 MSVC 上可使用 `/Fa`，在 GCC 和 Clang 上可使用 `-S`。不过，要把源代码和汇编对应起来，就需要一定的功力了。在这点上，[godbolt.org](https://godbolt.org/)  可以提供很大的帮助。它配置了多个不同的编译器，可以过滤掉编译器产生的汇编中开发者一般不关心的部分，并能够使用颜色和提示来帮助你关联源代码和产生的汇编。使用这个网站，你不仅可以快速查看你的代码在不同编译器里的优化结果，还能快速分享结果。比如，下面这个链接，就可以展示之前的一个模板元编程代码的编译结果：[https://godbolt.org/z/zPNEJ4](https://godbolt.org/z/zPNEJ4)
+
+![compiler_explorer](/assets/images/201911/compiler_explorer.jpeg)
+
+当然，作为一个网站，godbolt.org 对代码的复杂度有一定的限制，也不能任意使用你在代码里用到的第三方库（不过，它已经装了不少主流的 C++ 库，如 Boost、Catch2、range-v3 和 cppcoro）。要解决这个问题，你可以在你自己的机器上本地安装它背后的引擎，[compiler-explorer](https://github.com/mattgodbolt/compiler-explorer) 。如果你的代码较复杂，或者有安全、隐私方面的顾虑的话，可以考虑这个方案。
+
+### C++ Insights
+
+如果你在上面的链接里点击了“CppInsights”按钮的话，你就会跳转到 [C++ Insights](https://cppinsights.io/) 网站，并且你贴在 godbolt.org 的代码也会一起被带过去。这个网站提供了另外一个编译器目前没有提供、但十分有用的功能：**展示模板的展开过程**。
+
+回想在模板编程时的痛苦之一来自于我们需要在脑子中想象模板是如何展开的，而这个过程非常容易出错。当编译器出错时，我们得通过冗长的错误信息来寻找出错原因的蛛丝马迹；当编译器成功编译了一段我们不那么理解的模板代码时，我们在感到庆幸的同时，也往往会仍然很困惑——而使用这个网站，你就可以看到一个正确工作的模板是如何展开的。
+
+
+## 编辑器
+
+### Vim
+
+和 C++ 开发有关：
+
+* clang_complete
+* nerdcommenter（注释）
+* vim-fugitive（git）
+* vim-gitgutter（git）
+* code_complete
+* echofunc
+
+另外，在 .vimrc 里加了下面几句来集成 clang-format：
+
+```
+" Key mappings to use clang-format
+noremap <silent> <Tab> :pyxf /usr/local/opt/llvm/share/clang/clang-format.py<CR>
+inoremap <silent> <C-F> <ESC>:pyxf /usr/local/opt/llvm/share/clang/clang-format.py<CR>
+```
+
+## 第三方库管理工具
+
+### vcpkg
 
 
 
