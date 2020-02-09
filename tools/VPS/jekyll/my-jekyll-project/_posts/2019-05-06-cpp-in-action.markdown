@@ -4707,7 +4707,7 @@ refer：
 
 ### Boost.Multiprecision
 
-众所周知，C 和 C++（甚至推而广之到大部分的常用编程语言）里的数值类型是有精度限制的。比如，上一讲的代码里我们就用到了 INT_MIN，最小的整数。很多情况下，使用目前这些类型是够用的（最高一般是 64 位整数和 80 位浮点数）。但也有很多情况，这些标准的类型远远不能满足需要。这时你就需要一个高精度的数值类型了。
+众所周知，C 和 C++（甚至推而广之到大部分的常用编程语言）里的数值类型是有精度限制的。比如，`INT_MIN`，最小的整数。很多情况下，使用目前这些类型是够用的（最高一般是 64 位整数和 80 位浮点数）。但也有很多情况，这些标准的类型远远不能满足需要。这时你就需要一个**高精度的数值类型**了。
 
 ``` cpp
 #include <iomanip>
@@ -5139,6 +5139,432 @@ int main(int argc, char* argv[])
 # 单元测试
 
 两个单元测试库：C++里如何进行单元测试?
+
+## Boost.Test
+
+``` cpp
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
+#include <stdexcept>
+
+void test(int n)
+{
+  if (n == 42) {
+    return;
+  }
+  throw std::runtime_error(
+    "Not the answer");
+}
+
+// 一个测试用例
+BOOST_AUTO_TEST_CASE(my_test)
+{
+  // 多个测试语句
+  BOOST_TEST_MESSAGE("Testing");
+  BOOST_TEST(1 + 1 == 2);
+  BOOST_CHECK_THROW(test(41), std::runtime_error);
+  BOOST_CHECK_NO_THROW(test(42));
+
+  int expected = 5;
+  BOOST_TEST(2 + 2 == expected);
+  BOOST_CHECK(2 + 2 == expected);
+}
+
+BOOST_AUTO_TEST_CASE(null_test)
+{
+}
+```
+
+* 在包含单元测试的头文件之前定义了 `BOOST_TEST_MAIN`。**如果编译时用到了多个源文件，只有一个应该定义该宏**。多文件测试的时候，一般会考虑把这个定义这个宏加包含放在一个单独的文件里（只有两行）。
+* 用 `BOOST_AUTO_TEST_CASE` 来定义**一个测试用例**。一个测试用例里应当有**多个测试语句**（如 `BOOST_CHECK`）。
+* 用 `BOOST_CHECK` 或 `BOOST_TEST` 来检查一个应当成立的布尔表达式。区别：`BOOST_TEST`能利用模板技巧来输出表达式的具体内容。但在某些情况下，`BOOST_TEST` 试图输出表达式的内容会导致编译出错，这时可以改用更简单的 `BOOST_CHECK`。
+* 用 `BOOST_CHECK_THROW` 来检查一个应当抛出异常的语句。
+* 用 `BOOST_CHECK_NO_THROW` 来检查一个不应当抛出异常的语句。
+* 不管是 `BOOST_CHECK` 还是 `BOOST_TEST`，在测试失败时，执行仍然会继续。在某些情况下，一个测试失败后继续执行后面的测试已经没有意义，这时，就可以考虑使用 `BOOST_REQUIRE` 或 `BOOST_TEST_REQUIRE`——**表达式一旦失败，整个测试用例会停止执行（但其他测试用例仍会正常执行）**。
+* 缺省情况下单元测试的输出只包含错误信息和结果摘要，但输出的详细程度是可以通过命令行选项来进行控制的。如在运行测试程序时加上命令行参数 `--log_level=all`（或 `-l all`）
+    + 在进入、退出测试模块和用例时的提示
+    + BOOST_TEST_MESSAGE 的输出
+    + 正常通过的测试的输出
+    + 用例里无测试断言的警告
+* Boost.Test 产生的可执行代码支持很多**命令行参数**，可以用 `--help` 命令行选项来查看。
+    + build_info 可用来展示构建信息
+    + color_output 可用来打开或关闭输出中的色彩
+    + log_format 可用来指定日志输出的格式，包括纯文本、XML、JUnit 等
+    + log_level 可指定日志输出的级别，有 all、test_suite、error、fatal_error、nothing 等一共 11 个级别
+    + run_test 可选择只运行指定的测试用例
+    + show_progress 可在测试时显示进度，在测试数量较大时比较有用
+
+编译方式：
+
+* MSVC：`cl /DBOOST_TEST_DYN_LINK /EHsc /MD test.cpp`
+* GCC：`g++ -DBOOST_TEST_DYN_LINK test.cpp -lboost_unit_test_framework`
+* Clang：`clang++ -DBOOST_TEST_DYN_LINK test.cpp -lboost_unit_test_framework`
+
+例子：[https://github.com/adah1972/nvwa/blob/master/test/boosttest_split.cpp](https://github.com/adah1972/nvwa/blob/master/test/boosttest_split.cpp)
+
+## Catch2
+
+要选择 Boost 之外的库，一定有一个比较强的理由。[Catch2](https://github.com/catchorg/Catch2) 有着它自己独有的优点：
+
+* 只需要单个头文件即可使用，不需要安装和链接，简单方便
+* 可选使用 `BDD（Behavior-Driven Development）`风格的分节形式
+* 测试失败可选直接进入调试器（Windows 和 macOS 上）
+
+``` cpp
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
+#include <stdexcept>
+
+void test(int n)
+{
+  if (n == 42) {
+    return;
+  }
+  throw std::runtime_error(
+    "Not the answer");
+}
+
+TEST_CASE("My first test", "[my]")
+{
+  INFO("Testing");
+  CHECK(1 + 1 == 2);
+  CHECK_THROWS_AS(
+    test(41), std::runtime_error);
+  CHECK_NOTHROW(test(42));
+
+  int expected = 5;
+  CHECK(2 + 2 == expected);
+}
+
+TEST_CASE("A null test", "[null]")
+{
+}
+```
+
+**什么是 [BDD (Behavior-driven development) 风格的测试](https://en.wikipedia.org/wiki/Behavior-driven_development) ？**
+
+BDD 风格的测试一般采用这样的结构：
+
+* Scenario：场景，我要做某某事
+* Given：给定，已有的条件
+* When：当，某个事件发生时
+* Then：那样，就应该发生什么
+
+假设测试一个容器，那代码就应该是这个样子的：
+
+``` cpp
+SCENARIO("Int container can be accessed and modified",
+         "[container]")
+{
+  GIVEN("A container with initialized items")
+  {
+    IntContainer c{1, 2, 3, 4, 5};
+    REQUIRE(c.size() == 5);
+
+    WHEN("I access existing items")
+    {
+      THEN("The items can be retrieved intact")
+      {
+          CHECK(c[0] == 1);
+          CHECK(c[1] == 2);
+          CHECK(c[2] == 3);
+          CHECK(c[3] == 4);
+          CHECK(c[4] == 5);
+      }
+    }
+
+    WHEN("I modify items")
+    {
+      c[1] = -2;
+      c[3] = -4;
+
+      THEN("Only modified items are changed")
+      {
+        CHECK(c[0] == 1);
+        CHECK(c[1] == -2);
+        CHECK(c[2] == 3);
+        CHECK(c[3] == -4);
+        CHECK(c[4] == 5);
+      }
+    }
+  }
+}
+```
+
+Catch2 是一个很现代、很好用的测试框架。它的宏更简单，一个 CHECK 可以替代 Boost.Test 中的 BOOST_TEST 和 BOOST_CHECK，也没有 BOOST_TEST 在某些情况下不能用、必须换用 BOOST_CHECK 的问题。对于一个新项目，使用 Catch2 应该是件更简单、更容易上手的事——尤其如果你在 Windows 上开发的话。
+
+refer:
+
+[https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++](https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++)
+
+# 日志库
+
+[Easylogging++](https://github.com/amrayn/easyloggingpp)和[spdlog](https://github.com/gabime/spdlog)：两个好用的日志库。
+
+## Easylogging++
+
+Easylogging++ 一共只有**两个文件**，一个是**头文件**，一个是**普通 C++ 源文件**。事实上，它的一个较早版本只有一个文件。正如 Catch2 里一旦定义了 CATCH_CONFIG_MAIN 编译速度会大大减慢一样，把什么东西都放一起最终证明对编译速度还是相当不利的，因此，有人提交了一个补丁，把代码拆成了两个文件。使用 Easylogging++ 也只需要这两个文件——除此之外，就只有对标准和系统头文件的依赖了。
+
+要使用 Easylogging++，推荐直接把这两个文件放到你的项目里。
+
+Easylogging++ 有很多的配置项会影响编译结果，常用的可配置项：
+
+* ELPP_UNICODE：启用 Unicode 支持，为在 Windows 上输出混合语言所必需
+* ELPP_THREAD_SAFE：启用多线程支持
+* ELPP_DISABLE_LOGS：全局禁用日志输出
+* ELPP_DEFAULT_LOG_FILE：定义缺省日志文件名称
+* ELPP_NO_DEFAULT_LOG_FILE：不使用缺省的日志输出文件
+* ELPP_UTC_DATETIME：在日志里使用协调世界时而非本地时间
+* ELPP_FEATURE_PERFORMANCE_TRACKING：开启性能跟踪功能
+* ELPP_FEATURE_CRASH_LOG：启用 GCC 专有的崩溃日志功能
+* ELPP_SYSLOG：允许使用系统日志（Unix 世界的 syslog）来记录日志
+* ELPP_STL_LOGGING：允许在日志里输出常用的标准容器对象（std::vector 等）
+* ELPP_QT_LOGGING：允许在日志里输出 Qt 的核心对象（QVector 等）
+* ELPP_BOOST_LOGGING：允许在日志里输出某些 Boost 的容器（boost::container::vector 等）
+
+例子：
+
+``` cpp
+#include "easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
+
+int main()
+{
+  LOG(INFO) << "My first info log";
+}
+```
+
+g++ -std=c++17 test.cpp easylogging++.cc
+
+运行生成的可执行程序，就可以看到结果输出到**终端**和 **myeasylog.log** 文件里，包含了日期、时间、级别、日志名称和日志信息，形如：
+
+```
+2020-01-25 20:47:50,990 INFO [default] My first info log
+```
+
+`INITIALIZE_EASYLOGGINGPP` 展开后（可以用编译器的 `-E` 参数查看宏展开后的结果）是定义了 `Easylogging++` 使用到的**全局对象**，而 `LOG(INFO)` 则是 Info 级别的日志记录器，同时传递了文件名、行号、函数名等日志需要的信息。
+
+
+**改变输出文件名：**
+
+`Easylogging++` 的缺省输出日志名为 `myeasylog.log`，这在大部分情况下都是不适用的。可以直接在命令行上使用宏定义来修改（当然，稍大点的项目就应该放在项目的编译配置文件里了，如 Makefile）。比如，要把输出文件名改成 test.log，只需要在命令行上加入下面的选项就可以：
+
+```
+-DELPP_DEFAULT_LOG_FILE=\"test.log\"
+```
+
+**使用配置文件设置日志选项：**
+
+Easylogging++ 库自己支持配置文件，推荐使用一个专门的配置文件，并让 Easylogging++ 自己来加载配置文件。
+
+```
+* GLOBAL:
+   FORMAT               =  "%datetime{%Y-%M-%d %H:%m:%s.%g} %levshort %msg"
+   FILENAME             =  "test.log"
+   ENABLED              =  true
+   TO_FILE              =  true     ## 输出到文件
+   TO_STANDARD_OUTPUT   =  true     ## 输出到标准输出
+   SUBSECOND_PRECISION  =  6        ## 秒后面保留 6 位
+   MAX_LOG_FILE_SIZE    =  2097152  ## 最大日志文件大小设为 2MB
+   LOG_FLUSH_THRESHOLD  =  10       ## 写 10 条日志刷新一次缓存
+* DEBUG:
+   FORMAT               = "%datetime{%Y-%M-%d %H:%m:%s.%g} %levshort [%fbase:%line] %msg"
+   TO_FILE              =  true
+   TO_STANDARD_OUTPUT   =  false    ## 调试日志不输出到标准输出
+```
+
+* 第一节是全局（global）配置，配置了适用于所有级别的日志选项
+* 第二节是专门用于调试（debug）级别的配置（你当然也可以自己配置 fatal、error、warning 等其他级别）
+
+假设这个配置文件的名字是 `log.conf`，在代码中可以这样使用：
+
+``` cpp
+#include "easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
+
+int main()
+{
+  el::Configurations conf{
+    "log.conf"};
+  el::Loggers::
+    reconfigureAllLoggers(conf);
+  LOG(DEBUG) << "A debug message";
+  LOG(INFO) << "An info message";
+}
+```
+
+注意编译命令行上应当加上 `-DELPP_NO_DEFAULT_LOG_FILE`，否则 Easylogging++ 仍然会生成缺省的日志文件。
+
+运行生成的可执行程序，会在终端上看到一条信息，但在日志文件里则可以看到两条信息。如下所示：
+
+```
+2020-01-26 12:54:58.986739 D [test.cpp:11] A debug message
+2020-01-26 12:54:58.987444 I An info message
+```
+
+推荐在编译时定义宏 `ELPP_DEBUG_ASSERT_FAILURE`，这样能在找不到配置文件时直接终止程序，而不是继续往下执行、在终端上以缺省的方式输出日志了。
+
+### 性能跟踪
+
+Easylogging++ 可以用来在日志中**记录程序执行的性能数据**。这个功能还是很方便的。下面的代码展示了用于性能跟踪的三个宏的用法：
+
+``` cpp
+#include <chrono>
+#include <thread>
+#include "easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
+
+void foo()
+{
+  TIMED_FUNC(timer);
+  LOG(WARNING) << "A warning message";
+}
+
+void bar()
+{
+  using namespace std::literals;
+  TIMED_SCOPE(timer1, "void bar()");
+  foo();
+  foo();
+  TIMED_BLOCK(timer2, "a block") {
+    foo();
+    std::this_thread::sleep_for(100us);
+  }
+}
+
+int main()
+{
+  el::Configurations conf{
+    "log.conf"};
+  el::Loggers::
+    reconfigureAllLoggers(conf);
+  bar();
+}
+```
+
+* `TIMED_FUNC` 接受一个参数，是用于性能跟踪的对象的名字。它能自动产生函数的名称。示例中的 `TIMED_FUNC` 和 `TIMED_SCOPE` 的作用是完全相同的。
+* `TIMED_SCOPE` 接受两个参数，分别是用于性能跟踪的对象的名字，以及用于记录的名字。如果你不喜欢 `TIMED_FUNC` 生成的函数名字，可以用 `TIMED_SCOPE` 来代替。
+* `TIMED_BLOCK` 用于对下面的代码块进行性能跟踪，参数形式和 `TIMED_SCOPE` 相同。
+
+在编译含有上面三个宏的代码时，需要定义宏 `ELPP_FEATURE_PERFORMANCE_TRACKING`。你一般也应该定义 `ELPP_PERFORMANCE_MICROSECONDS`，来获取微秒级的精度。下面是定义了上面两个宏编译的程序的某次执行的结果：
+
+```
+2020-01-26 15:00:11.99736 W A warning message
+2020-01-26 15:00:11.99748 I Executed [void foo()] in [110 us]
+2020-01-26 15:00:11.99749 W A warning message
+2020-01-26 15:00:11.99750 I Executed [void foo()] in [5 us]
+2020-01-26 15:00:11.99750 W A warning message
+2020-01-26 15:00:11.99751 I Executed [void foo()] in [4 us]
+2020-01-26 15:00:11.99774 I Executed [a block] in [232 us]
+2020-01-26 15:00:11.99776 I Executed [void bar()] in [398 us]
+```
+
+> 注意：
+> 1. 由于 Easylogging++ 本身有一定开销，且开销有一定的不确定性，这种方式**只适合颗粒度要求比较粗的性能跟踪**。
+> 
+> 2. 性能跟踪产生的日志级别固定为 Info。性能跟踪本身可以在配置文件里的 GLOBAL 节下用 `PERFORMANCE_TRACKING = false` 来关闭。当然，关闭所有 Info 级别的输出也能达到关闭性能跟踪的效果。
+
+
+### 记录崩溃日志
+
+在 GCC 和 Clang 下，通过定义宏 `ELPP_FEATURE_CRASH_LOG` 可以启用崩溃日志。此时，**当程序崩溃时，Easylogging++ 会自动在日志中记录程序的调用栈信息**。通过记录下的信息，再利用 `addr2line` 这样的工具，就能知道是程序的哪一行引发了崩溃。
+
+``` cpp
+#include "easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
+
+void boom()
+{
+  char* ptr = nullptr;
+  *ptr = '\0';
+}
+
+int main()
+{
+  el::Configurations conf{
+    "log.conf"};
+  el::Loggers::
+    reconfigureAllLoggers(conf);
+  boom();
+}
+```
+
+注意：使用 macOS 的需要特别注意一下：由于缺省方式产生的可执行文件是位置独立的，系统每次加载程序会在不同的地址，导致无法通过地址定位到程序行。在编译命令行尾部加上 -Wl,-no_pie 可以解决这个问题。
+
+
+## spdlog
+
+``` cpp
+#include "spdlog/spdlog.h"
+
+int main()
+{
+  spdlog::info("My first info log");
+}
+```
+
+从代码中已经注意到，spdlog 不是使用 IO 流风格的输出了。它采用跟 Python 里的 str.format 一样的方式，使用大括号——可选使用序号和格式化要求——来对参数进行格式化。
+
+``` cpp
+  spdlog::warn(
+    "Message with arg {}", 42);
+  spdlog::error(
+    "{0:d}, {0:x}, {0:o}, {0:b}",
+    42);
+```
+
+输出：
+
+```
+[2020-01-26 17:20:08.355] [warning] Message with arg 42
+[2020-01-26 17:20:08.355] [error] 42, 2a, 52, 101010
+```
+
+事实上，这就是 C++20 的 format 的风格了——spdlog 就是使用了一个 [format 的库](https://github.com/fmtlib/fmt)实现 fmt。
+
+### 设置输出文件
+
+在 spdlog 里，要输出文件得打开**专门的文件日志记录器**。
+
+``` cpp
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
+int main()
+{
+  auto file_logger =
+    spdlog::basic_logger_mt(
+      "basic_logger",
+      "test.log");
+  spdlog::set_default_logger(
+    file_logger);
+  spdlog::info("Into file: {1} {0}",
+               "world", "hello");
+}
+```
+执行之后，终端上没有任何输出，但 test.log 文件里就会增加如下的内容：
+
+```
+[2020-01-26 17:47:37.864] [basic_logger] [info] Into file: hello world
+```
+
+### 日志文件切
+
+在 Easylogging++ 里实现日志文件切换是需要写代码的，而且完善的多文件切换代码需要写上几十行代码才能实现。这项工作在 spdlog 则是超级简单的，因为 spdlog 直接提供了一个实现该功能的日志槽。把上面的例子改造成带日志文件切换只需要修改两处：
+
+``` cpp
+#include "spdlog/sinks/rotating_file_sink.h"
+// 替换 basic_file_sink.h
+…
+  auto file_sink = make_shared<
+    rotating_file_sink_mt>(
+    "test.log", 1048576 * 5, 3);
+  // 替换 basic_file_sink_mt，文件大
+  // 小为 5MB，一共保留 3 个日志文件
+```
+
+
+
 
 
 
@@ -5683,6 +6109,139 @@ asm ( assembler template
 
 网络就看 Boost.Asio 吧。这个将是未来 C++ 网络标准库的基础。
 
+## C++ REST SDK：使用现代C++开发网络应用
+
+C++ REST SDK（也写作 [cpprestsdk](https://github.com/microsoft/cpprestsdk))，一个支持 HTTP 协议、主要用于 [RESTful](https://restfulapi.net/) 接口开发的 C++ 库。
+
+> 问题，你认为用多少行代码可以写出一个类似于 curl 的 HTTP 客户端？
+> 
+> 答案：使用 C++ REST SDK 的话，只需要五十多行有效代码（即使是适配到目前的窄小的手机屏幕上）。
+
+``` cpp
+#include <iostream>
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+#include <cpprest/http_client.h>
+
+using namespace utility;
+using namespace web::http;
+using namespace web::http::client;
+using std::cerr;
+using std::endl;
+
+#ifdef _WIN32
+#define tcout std::wcout
+#else
+#define tcout std::cout
+#endif
+
+auto get_headers(http_response resp)
+{
+  auto headers = resp.to_string();
+  auto end =
+    headers.find(U("\r\n\r\n"));
+  if (end != string_t::npos) {
+    headers.resize(end + 4);
+  };
+  return headers;
+}
+
+auto get_request(string_t uri)
+{
+  http_client client{uri};
+  // 用 GET 方式发起一个客户端请求
+  auto request =
+    client.request(methods::GET)
+      .then([](http_response resp) {
+        if (resp.status_code() !=
+            status_codes::OK) {
+          // 不 OK，显示当前响应信息
+          auto headers =
+            get_headers(resp);
+          tcout << headers;
+        }
+        // 进一步取出完整响应
+        return resp
+          .extract_string();
+      })
+      .then([](string_t str) {
+        // 输出到终端
+        tcout << str;
+      });
+  return request;
+}
+
+#ifdef _WIN32
+int wmain(int argc, wchar_t* argv[])
+#else
+int main(int argc, char* argv[])
+#endif
+{
+#ifdef _WIN32
+  _setmode(_fileno(stdout),
+           _O_WTEXT);
+#endif
+
+  if (argc != 2) {
+    cerr << "A URL is needed\n";
+    return 1;
+  }
+
+  // 等待请求及其关联处理全部完成
+  try {
+    auto request =
+      get_request(argv[1]);
+    request.wait();
+  }
+  // 处理请求过程中产生的异常
+  catch (const std::exception& e) {
+    cerr << "Error exception: "
+         << e.what() << endl;
+    return 1;
+  }
+}
+```
+
+* 根据平台来定义 `tcout`，确保多语言的文字能够正确输出。
+* 定义了 get_headers，来从 http_response 中取出头部的字符串表示。
+* `client.request(methods::GET).then` 构造了一个客户端请求，并使用 `then` 方法串联了两个下一步的动作。`http_client::request` 的返回值是 `pplx::task<http_response>`。`then` 是 `pplx::task` 类模板的成员函数，**参数是能接受其类型参数对象的函数对象**。**除了最后一个 `then` 块，其他每个 `then` 里都应该返回一个 `pplx::task`，而 `task` 的内部类型就是下一个 then 块里函数对象接受的参数的类型**。
+* `.then([](http_response resp)` 之后，是第一段**异步处理代码**。参数类型是 `http_response`——因为`http_client::request` 的返回值是 `pplx::task<http_response>`。代码中判断如果响应的 HTTP 状态码不是 200 OK，就会显示响应头来帮助调试。然后，进一步取出所有的响应内容（可能需要进一步的异步处理，等待后续的 HTTP 响应到达）。
+* `.then([](string_t str)` 之后，是第二段异步处理代码。参数类型是 `string_t`——因为上一段 `then` 块的返回值是 `pplx::task<string_t>`。代码中就是简单地把需要输出的内容输出到终端。
+* 根据平台来定义合适的程序入口，确保命令行参数的正确处理。
+* 在 Windows 上把标准输出设置成宽字符模式，来确保宽字符（串）能正确输出。注意 `string_t` 在 Windows 上是 `wstring`，在其他平台上是 `string`。
+* 程序主体，产生 HTTP 请求、等待 HTTP 请求完成，并处理相关的异常。
+
+整体而言，这个代码还是很简单的，虽然这种代码风格，对于之前没有接触过这种**函数式编程风格**的人来讲会有点奇怪——这被称作持**续传递风格（continuation-passing style）**，**显式地把上一段处理的结果传递到下一个函数中**。这个代码已经处理了 Windows 环境和 Unix 环境的差异，底下是相当复杂的。
+
+
+**安装和编译**
+
+上面的代码本身虽然简单，但要把它编译成可执行文件却比较复杂——C++ REST SDK 有外部依赖，在 Windows 上和 Unix 上还不太一样。它的编译和安装也略复杂，如果你没有这方面的经验的话，建议尽量使用平台推荐的二进制包的安装方式。由于其依赖较多，使用它的编译命令行也较为复杂。正式项目中绝对是需要使用项目管理软件的（如 cmake）。此处，给出手工编译的典型命令行，仅供尝试编译上面的例子作参考。
+
+* Windows MSVC：
+
+```
+cl /EHsc /std:c++17 test.cpp cpprest.lib zlib.lib libeay32.lib ssleay32.lib winhttp.lib httpapi.lib bcrypt.lib crypt32.lib advapi32.lib gdi32.lib user32.lib
+```
+
+* Linux GCC：
+
+```
+g++ -std=c++17 -pthread test.cpp -lcpprest -lcrypto -lssl -lboost_thread -lboost_chrono -lboost_system
+```
+
+* macOS Clang：
+
+```
+clang++ -std=c++17 test.cpp -lcpprest -lcrypto -lssl -lboost_thread-mt -lboost_chrono-mt
+```
+
+
+
+## tcpdump
+
 * [tcpdump/wireshark 抓包及分析（2019）](https://arthurchiao.github.io/blog/tcpdump-practice-zh/)
 * [tcpdump: An Incomplete Guide](https://arthurchiao.github.io/blog/tcpdump/)
 * [[译] 使用 Linux tracepoint、perf 和 eBPF 跟踪数据包 (2017)](https://arthurchiao.github.io/blog/trace-packet-with-tracepoint-perf-ebpf-zh/)
@@ -5702,21 +6261,166 @@ asm ( assembler template
 * [6 Tips to supercharge C++11 vector performance](https://www.acodersjourney.com/6-tips-supercharge-cpp-11-vector-performance/)
 
 
-# 工具
-
-## cpplint（Google）
-
-扫描代码。
-
-## 汇编
+# 汇编
 
 https://godbolt.org/
 
+# C++好书荐读
+
+## 入门介绍
+
+* Bjarne Stroustrup, A Tour of C++, 2nd ed. Addison-Wesley, 2018（推荐指数：★★★★★）
+
+中文版：王刚译，《C++ 语言导学》(第二版）。机械工业出版社，2019
+
+这是唯一一本较为浅显的全面介绍现代 C++ 的入门书。书虽然较薄，但 C++ 之父的功力在那里，时有精妙之论。书的覆盖面很广，介绍了 C++ 的基本功能和惯用法。这本书的讲授方式，也体现了他的透过高层抽象来教授 C++ 的理念。
+
+## 最佳实践
+
+* Scott Meyers, Effective C++: 55 Specific Ways to Improve Your Programs and Designs, 3rd ed. Addison-Wesley, 2005（推荐指数：★★★★）
+
+中文版：侯捷译《Effective C++ 中文版》（第三版）。电子工业出版社，2011
+
+* Scott Meyers, Effective STL: 50 Specific Ways to Improve Your Use of the Standard Template Library. Addison-Wesley, 2001（推荐指数：★★★★）
+
+中文版：潘爱民、陈铭、邹开红译《Effective STL 中文版》。清华大学出版社，2006
+
+* Scott Meyers, Effective Modern C++: 42 Specific Ways to Improve Your Use of C++11 and C++14. O’Reilly, 2014（推荐指数：★★★★★）
+
+中文版：高博译《Effective Modern C++ 中文版》。中国电力出版社，2018
+
+C++ 的大牛中有三人尤其让我觉得高山仰止，Scott Meyers 就是其中之一——Bjarne 让人感觉是睿智，而 Scott Meyers、Andrei Alexandrescu 和 Herb Sutter 则会让人感觉智商被碾压。Scott 对 C++ 语言的理解无疑是非常深入的，并以良好的文笔写出了好几代的 C++ 最佳实践。
+
+## 深入学习
+
+* Herb Sutter, Exceptional C++: 47 Engineering Puzzles, Programming Problems, and Solutions. Addison-Wesley, 1999（推荐指数：★★★★）
+
+中文版：卓小涛译《Exceptional C++ 中文版》。中国电力出版社，2003
+
+* Herb Sutter and Andrei Alexandrescu, C++ Coding Standards: 101 Rules, Guidelines, and Best Practices. Addison-Wesley, 2004（推荐指数：★★★★）
+
+中文版：刘基诚译《C++ 编程规范：101 条规则准则与最佳实践》。人民邮电出版社，2006
+
+* 侯捷，《STL 源码剖析》。华中科技大学出版社，2002（推荐指数：★★★★）
+
+## 高级专题
+
+* Alexander A. Stepanov and Daniel E. Rose, From Mathematics to Generic Programming. Addison-Wesley, 2014（推荐指数：★★★★★）
+
+中文版：爱飞翔译《数学与泛型编程：高效编程的奥秘》。机械工业出版社，2017
+
+* Andrei Alexandrescu, Modern C++ Design: Generic Programming and Design Patterns Applied. Addison-Wesley, 2001（推荐指数：★★★★）
+
+中文版：侯捷、於春景译《C++ 设计新思维》。华中科技大学出版社，2003
+
+* Anthony Williams, C++ Concurrency in Action, 2nd ed. Manning, 2019（推荐指数：★★★★）
+
+* Ivan Čukić, Functional Programming in C++. Manning, 2019（推荐指数：★★★★）
+
+## 参考书
+
+* Bjarne Stroustrup, The C++ Programming Language, 4th ed. Addison-Wesley, 2013（推荐指数：★★★★）
+
+中文版：王刚、杨巨峰译《C++ 程序设计语言》。机械工业出版社， 2016
+
+没什么可多说的，C++ 之父亲自执笔写的 C++ 语言。主要遗憾是没有覆盖 C++14/17 的内容。中文版分为两卷出版，内容实在是有点多了。不过，如果你没有看过之前的版本，并且对 C++ 已经有一定经验的话，这个新版还是会让你觉得，姜还是老的辣！
+
+* Nicolai M. Josuttis, The C++ Standard Library: A Tutorial and Reference, 2nd ed. Addison-Wesley, 2012（推荐指数：★★★★）
+
+Nicolai 写的这本经典书被人称为既完备又通俗易懂，也是殊为不易。从 C++11 的角度，这本书堪称完美。当然，超过一千页的大部头，要看完也是颇为不容易了。
+
+## C++ 的设计哲学
+
+* Bjarne Stroustrup, The Design and Evolution of C++. Addison-Wesley, 1994（推荐指数：★★★）
+
+中文版：裘宗燕译《C++ 语言的设计与演化》。科学出版社， 2002
+
+这本书不是给所有的 C++ 开发者准备的。它讨论的是为什么 C++ 会成为今天（1994 年）这个样子。如果你对 C++ 的设计思想感兴趣，那这本书会比较有用些。如果你对历史不感兴趣，那这本书不看也不会有很大问题。
+
+* Bruce Eckel, Thinking in C++, Vol. 1: Introduction to Standard C++, 2nd ed. Prentice-Hall, 2000 / Bruce Eckel and Chuck Allison, Thinking in C++, Vol. 2: Practical Programming. Pearson, 2003
+
+中文版：刘宗田等译《C++ 编程思想》。机械工业出版社，2011
+
+## 非 C++ 的经典书目
+
+* W. Richard Stevens, TCP/IP Illustrated Volume 1: The Protocols. Addison-Wesley, 1994
+* Gary R. Wright and W. Richard Stevens, TCP/IP Illustrated Volume 2: The Implementation. Addison-Wesley, 1995
+* W. Richard Stevens, TCP/IP Illustrated Volume 3: TCP for Transactions, HTTP, NNTP and the Unix Domain Protocols. Addison-Wesley 1996
+
+不是所有的书都是越新越好，《TCP/IP 详解》就是其中一例。W. Richard Stevens 写的卷一比后人补写的卷一第二版评价更高，就是其中一例。关于 TCP/IP 的编程，这恐怕是难以超越的经典了。不管你使用什么语言开发，如果你的工作牵涉到网络协议的话，这套书恐怕都值得一读——尤其是卷一。
+
+* W. Richard Stevens and Stephen A. Rago, Advanced Programming in the UNIX Environment, 3rd, ed… Addison-Wesley, 2013
+
+中文版： 戚正伟、张亚英、尤晋元译《UNIX 环境高级编程》。人民邮电出版社，2014
+
+从事 C/C++ 编程应当对操作系统有深入的了解，而这本书就是讨论 Unix 环境下的编程的。鉴于 Windows 下都有了 Unix 的编程环境，Unix 恐怕是开发人员必学的一课了。这本书是经典，而它的第三版至少没有损坏前两版的名声。
+
+* Erich Gamma, Richard Helm, Ralph Johson, John Vlissides, and Grady Booch, Design Patterns: Elements of Reusable Object-Oriented Software. Addison-Wesley, 1994
+
+中文版：李英军、马晓星、蔡敏、刘建中等译《设计模式》。机械工业出版社，2000
+
+经典就是经典，没什么可多说的。提示：如果你感觉这本书很枯燥、没用，那就等你有了更多的项目经验再回过头来看一下，也许就有了不同的体验。
+
+* Eric S. Raymond, The Art of UNIX Programming. Addison-Wesley, 2003
+
+中文版：姜宏、何源、蔡晓骏译《UNIX 编程艺术》。电子工业出版社，2006
+
+抱歉，这仍然是一本 Unix 相关的经典。如果你对 Unix 设计哲学有兴趣的话，那这本书仍然无可替代。如果你愿意看英文的话，这本书的英文一直是有在线免费版本的。
+
+* Pete McBreen, Software Craftsmanship: The New Imperative. Addison-Wesley, 2001
+
+中文版：熊节译《软件工艺》。人民邮电出版社，2004
+
+这本书讲的是软件开发的过程，强调的是软件开发中人的作用。相比其他的推荐书，这本要“软”不少。但不等于这本书不重要。如果你之前只关注纯技术问题的话，那现在是时间关注一下软件开发中人的问题了。
+
+* Paul Graham, Hackers & Painters: Big Ideas From The Computer Age. O’Reilly, 2008
+
+中文版：阮一峰译《黑客与画家》。人民邮电出版社，2011
+
+这本讲的是一个更玄的问题：黑客是如何工作的。作者 Paul Graham 也是一名计算机界的大神了，用 Lisp 写出了被 Yahoo! 收购的网上商店，然后又从事风险投资，创办了著名的孵化器公司 Y Combinator。这本书是他的一本文集，讨论了黑客——即优秀程序员——的爱好、动机、工作方法等等。你可以从中学习一下，一个优秀的程序员是如何工作的，包括为什么脚本语言比静态类型语言受欢迎。
+
+* Robert C. Martin, Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall, 2008
+
+中文版：韩磊译《代码整洁之道》。人民邮电出版社，2010
+
+Bob 大叔的书如果你之前没看过的话，这本是必看的。这本也是语言无关的，讲述的是如何写出干净的代码。有些建议初看也许有点出乎意料，但细想之下又符合常理。推荐。
+
+## 其他
+
+别忘了下面这两个重要的免费网站：
+
+* C++ Reference：[https://en.cppreference.com](https://en.cppreference.com)
+
+* C++ Core Guidelines：[https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 
 
+# 一万小时定律
 
+在大部分的领域里，从普通人变为专家需要投入至少约一万小时的时间。如果按每天工作八个小时、一周工作五天计算，那么成为一个领域的专家至少需要五年。如果投入时间不那么多，或者问题领域更复杂，“十年磨一剑”也是件很自然的事。注意这是个约数，也只是必要条件，而非充分条件。时间少了，肯定完全没有希望；大于等于一万小时，也不能保证你一定成为专家。即使天才也需要勤学苦练。而如果天资真的不足，那估计投入再多也不会有啥效果。如果你看得更仔细一点，你在了解一万小时定律时，应该会注意到不是随便练习一万小时就有用的。你需要的是刻意的练习。换句话说，练习是为了磨练你的思维（或肌肉，或其他需要训练的部分），而不能只是枯燥的练习而已。
 
+目标和计划，并每天坚持。比如：
 
+* 每天阅读一篇英语的编程文章
+* 每天看一条英文的 [C++ Core Guideline](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+* 每天看 5 页 C++ 之父的 The C++ Programming Language（或其他的英文编程书籍）
+* 每天在 Stack Overflow 上看 3 个问答
+* xxx
+
+# 程序员该有的三大美德
+
+Larry Wall 认为程序员该有的三大美德：懒惰，急切，傲慢（laziness, impatience, hubris；初次阐释于 Programming Perl 第二版）。翻译出完整的原文：
+
+* 懒惰
+
+使得你花费极大努力来减少总体能量开销的品质。懒惰使你去写能让别人觉得有用、并减少繁杂工作的程序；你也会用文档描述你的程序，免得你不得不去回答别人的问题。因此，这是程序员的第一大美德。
+
+* 急切
+
+当计算机不能满足你的需求时你所感到的愤怒。这使得你写的程序不仅满足自己的需求，还能预期其他需求。至少努力去这么做。因此，这是程序员的第二大美德。
+
+* 傲慢
+
+老天都受不了你的极度骄傲。这种品质使得你写程序（和维护程序）时不允许别人有机会来说三道四。因此这是程序员的第三大美德。
 
 
 
