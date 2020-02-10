@@ -691,6 +691,7 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 21. [MySQL Cluster Index：聚簇索引]
 22. [MySQL 加锁处理分析]
 23. [深入学习MySQL事务：ACID特性的实现原理]
+24. [基于大中台架构的电商业务中台最佳实践之三：交易中台技术要点设计之高性能]
 
 
 [Business Transactions, Compensation and the TryCancel/Confirm (TCC) Approach for Web Services]: https://cdn.ttgtmedia.com/searchWebServices/downloads/Business_Activities.pdf
@@ -740,3 +741,5 @@ DRDS，Oracle，MySQL，RDS，PostgreSQL，MQ等。
 [MySQL 加锁处理分析]: http://blog.sae.sina.com.cn/archives/2127
 
 [深入学习MySQL事务：ACID特性的实现原理]: https://www.cnblogs.com/kismetv/p/10331633.html
+
+[基于大中台架构的电商业务中台最佳实践之三：交易中台技术要点设计之高性能]: https://zhuanlan.zhihu.com/p/48693144
