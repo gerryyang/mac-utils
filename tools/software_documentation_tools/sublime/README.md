@@ -1,6 +1,6 @@
 
 
-###Max OS X
+### Max OS X
 
 
 **1 多重选择和编辑功能**
@@ -35,7 +35,7 @@
 
 作用: 实现多个tab并行编辑和对比
 
-(5) Control + `
+(5) Control + \`
 
 作用: 显示和隐藏控制台
 
@@ -59,7 +59,7 @@ PS: 详细的package列表可以在 https://sublime.wbond.net/ 查询。
 
 -----------
 
-###Windows
+### Windows
 
 **1 多重选择和编辑功能**
 
@@ -101,7 +101,7 @@ ctrl + k, ctrl + 1 折叠所有函数
 ctrl + k, ctrl + j 展开所有函数
 
 
-###小技巧
+### 小技巧
 
 [Sublime 小技巧：文本自动换行显示](https://www.jianshu.com/p/c75d21d2e967)
 

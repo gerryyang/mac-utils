@@ -5347,11 +5347,7 @@ g++ -std=c++17 test.cpp easylogging++.cc
 
 **改变输出文件名：**
 
-`Easylogging++` 的缺省输出日志名为 `myeasylog.log`，这在大部分情况下都是不适用的。可以直接在命令行上使用宏定义来修改（当然，稍大点的项目就应该放在项目的编译配置文件里了，如 Makefile）。比如，要把输出文件名改成 test.log，只需要在命令行上加入下面的选项就可以：
-
-```
--DELPP_DEFAULT_LOG_FILE=\"test.log\"
-```
+`Easylogging++` 的缺省输出日志名为 `myeasylog.log`，这在大部分情况下都是不适用的。可以直接在命令行上使用宏定义来修改（当然，稍大点的项目就应该放在项目的编译配置文件里了，如 Makefile）。比如，要把输出文件名改成 test.log，只需要在命令行上加入下面的选项就可以：`-DELPP_DEFAULT_LOG_FILE=test.log`
 
 **使用配置文件设置日志选项：**
 
@@ -5359,7 +5355,7 @@ Easylogging++ 库自己支持配置文件，推荐使用一个专门的配置文
 
 ```
 * GLOBAL:
-   FORMAT               =  "%datetime{%Y-%M-%d %H:%m:%s.%g} %levshort %msg"
+   FORMAT               =  "%datetime{\%Y-%M-%d %H:%m:%s.%g} %levshort %msg"
    FILENAME             =  "test.log"
    ENABLED              =  true
    TO_FILE              =  true     ## 输出到文件
@@ -5368,7 +5364,7 @@ Easylogging++ 库自己支持配置文件，推荐使用一个专门的配置文
    MAX_LOG_FILE_SIZE    =  2097152  ## 最大日志文件大小设为 2MB
    LOG_FLUSH_THRESHOLD  =  10       ## 写 10 条日志刷新一次缓存
 * DEBUG:
-   FORMAT               = "%datetime{%Y-%M-%d %H:%m:%s.%g} %levshort [%fbase:%line] %msg"
+   FORMAT               = "%datetime{\%Y-%M-%d %H:%m:%s.%g} %levshort [%fbase:%line] %msg"
    TO_FILE              =  true
    TO_STANDARD_OUTPUT   =  false    ## 调试日志不输出到标准输出
 ```

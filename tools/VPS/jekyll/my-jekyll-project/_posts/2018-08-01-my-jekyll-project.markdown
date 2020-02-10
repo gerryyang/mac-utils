@@ -263,6 +263,11 @@ refer:
 
 通过[Package Control](https://packagecontrol.io/installation)安装插件，一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/sublime)。
 
+安装/删除
+
+* Press `Ctrl+Shift+P` (or `Shift+⌘+P` on a Mac) type `Install`.
+* Press `Ctrl+Shift+P` (or `Shift+⌘+P` on a Mac) type `Remove`, All the packages that can be removed will be shown in the list below. Select one and this is it.
+
 | 插件名称 | 用途 | 获取地址
 | -- | -- | --
 | MarkdownPreview | Markdown文档预览 | https://packagecontrol.io/packages/MarkdownPreview https://facelessuser.github.io/MarkdownPreview/usage/
@@ -270,6 +275,10 @@ refer:
 | GoSublime (x) | GoLang配置 | https://packagecontrol.io/packages/GoSublime
 | ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
 | SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
+| URLEncode | https://packagecontrol.io/packages/URLEncode
+
+
+
 
 ### VSCode
 
