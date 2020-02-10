@@ -71,6 +71,11 @@ set fenc=utf-8
 " set fenc=cp936
 set fileencodings=ucs-bom,utf-8,cp936,gb2312,gb18030,big5
 
+" 设置粘贴格式
+set clipboard+=unnamed  " use the clipboards of vim and win
+set paste               " Paste from a windows or from vim
+set go+=a               " Visual selection automatically copied to the clipboard
+
 " 显示行号
 se nu
 
