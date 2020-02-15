@@ -5993,6 +5993,30 @@ def_case(ss = std::to_string(12345678));
 
 ## 浮点数计算精度问题
 
+The portable way to get epsilon in C++ is:
+
+``` cpp
+#include <limits>
+std::numeric_limits<double>::epsilon()
+```
+
+Then the comparison function becomes:
+
+``` cpp
+#include <cmath>
+#include <limits>
+
+bool AreSame(double a, double b) {
+    return std::fabs(a - b) < std::numeric_limits<double>::epsilon();
+}
+```
+
+* [What is the difference between float and double?](https://stackoverflow.com/questions/2386772/what-is-the-difference-between-float-and-double)
+* [Double-precision floating-point format](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
+* [What is the most effective way for float and double comparison?](https://stackoverflow.com/questions/17333/what-is-the-most-effective-way-for-float-and-double-comparison/41405501)
+* [Comparing Floating Point Numbers, 2012 Edition](https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/)
+
+
 在`C/C++`中：
 
 ``` cpp

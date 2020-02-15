@@ -100,29 +100,6 @@ curl http://icanhazip.com
 
 ## 开发工具配置
 
-注意先更新源`apt-get update`。
-
-* git
-* gcc 
-
-```
-apt-get install gcc
-```
-
-* docker 
-
-```
-apt-get install -y docker.io
-ln -sf /usr/bin/docker.io /usr/local/bin/docker
-sed -i `$acomplete -F _docker docker` /etc/bash_completion.d/docker.io
-```
-
-* golang
-
-```
-apt-get install gccgo-go
-```
-
 * apache/nginx
 
 ```
@@ -131,7 +108,6 @@ apt-get install nginx
 ```
 
 [how-to-install-nginx-on-ubuntu-14-04-lts](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-14-04-lts)
-
 
 反向代理设置：
 
@@ -166,10 +142,9 @@ http://104.131.173.242/phpmyadmin/
 * [FileZilla](https://filezilla-project.org/)
 
 
+# jekyll配置
 
-# jekyll用法拾萃
-
-如何通过jekyll发表blog，基本的用法可参考官方文档[Posts](https://jekyllrb.com/docs/posts/)。
+如何通过jekyll发表blog，基本的用法可参考官方文档[Posts章节](https://jekyllrb.com/docs/posts/)。
 
 
 * 目录索引(TOC)
@@ -198,13 +173,13 @@ More:
 
 # 工具
 
-## MAC相关工具
+## MAC系统工具
 
 ### 终端
 
-* [ITerm2](https://www.iterm2.com/)相比系统默认的Terminal提供了更多高级的功能。
+* [ITerm2](https://www.iterm2.com/)相比系统默认的`Terminal`提供了更多高级的功能。
 
-* [Oh My ZSH](https://ohmyz.sh/)，兼容bash，并集成了很多插件，用于使用Terminal更加高效。
+* [Oh My ZSH](https://ohmyz.sh/)，兼容bash，并集成了很多插件，使用Terminal更加高效。
 
 `bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效。
 
@@ -218,30 +193,77 @@ $chsh -s /bin/bash
 | autojump | 目录跳转 | brew install autojump
 
 
-### Homebrew
+### 包管理器
 
 [Homebrew](https://brew.sh/)用于在Mac上查找和安装工具。
 
+### Git客户端
+
+[sourcetree](https://www.sourcetreeapp.com/)
+
+### SVN客户端
+
+[Cornerstone 4](https://cornerstone.assembla.com/)
 
 ### 效率
 
-* Trello
+* Trello，可以多终端使用，记录日常工作的TODO。
+
+### 播放器
+
+* quicktime player 苹果自带播放器，功能较弱
+* [IINA - The modern media player for macOS](https://iina.io/)，功能强大
+
+### 解压缩工具
+
+* [Keka](https://www.keka.io/en/)，the macOS file archiver
+
+### 英语字典
+
+* [欧陆词典](https://www.eudic.net/v4/en/app/eudic)，优点是没有广告，支持微信账户同步。
+* 有道词典
+
+### 快捷键工具
+
+* Cheatsheet，通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档。
+
+### 窗口管理工具
+
+* [spectacle](https://www.spectacleapp.com/)，Move and resize windows with ease.
+
+### 系统日期
+
+* [itsycal](https://www.mowglii.com/itsycal/)，比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的。
+
+### 系统免休眠工具
+
+* amphetamine，可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的[节能]配置使用方便。
+
+### 截图工具
+
+* [snip](https://snip.qq.com/)。默认mac可以通过`shift+command+5`来截图或录制屏幕。而snip的优点是可以滚动截屏（注：从 Mac App Store 下载的 Snip 不支持滚动截屏）。
+
+### Mac 4K 屏保
+
+[Aerial](https://github.com/JohnCoates/Aerial) - Apple TV Aerial Screensaver for Mac.
 
 
-## 浏览器
+### 浏览器
 
-* Google Chrome
-	- 使用Google账户登录，方便同步书签等信息，便于多终端使用。
-	- Chrome常用扩展：
+* Google Chrome。使用Google账户登录，方便同步书签信息，便于多终端使用，并且有丰富的扩展程序。
 
-| 名字 | 功能
+| **扩展程序** | **功能**
 | -- | --
 | DragIt | 方便页面浏览
-| [FeHelper] | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
+| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
 | 印象笔记剪裁 | 保存网页
-| Vimium | vim快捷键
+| Vimium | 可以使用Vim快捷键浏览网页
+| Video DownloadHelper | 下载页面上的多媒体资源，当检测到有可下载的资源图标会变为彩色，否则为灰色
+| Adblock Plus | 浏览器广告拦截
+| Talend API Tester | Visually interact with REST, SOAP and HTTP APIs
+| 替换字体的中文部分为雅黑 | 将页面中文显示雅黑字体
+| Yet Another Drag and Go | 向四个方向拖拽文字即可进行相应的搜索
 
-[FeHelper]: https://chrome.google.com/webstore/search/fehelper?hl=zh-CN
 
 ## 编辑器/IDE/开发工具
 
@@ -249,12 +271,12 @@ $chsh -s /bin/bash
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
 
-插件：
+**常用插件：**
 
 * [YouCompleteMe - A code-completion engine for Vim](https://github.com/ycm-core/YouCompleteMe)
 * [ccls - C/C++/ObjC language server supporting cross references, hierarchies, completion and semantic highlighting](https://github.com/MaskRay/ccls)
 
-refer:
+**refer:**
 
 * [Configure coc.nvim for C/C++ Development](https://ianding.io/2019/07/29/configure-coc-nvim-for-c-c++-development/)
 * [my vim configuration, based on amix's project](https://github.com/ArthurChiao/vim_awesome)
@@ -263,10 +285,10 @@ refer:
 
 通过[Package Control](https://packagecontrol.io/installation)安装插件，一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/sublime)。
 
-安装/删除
+**安装/删除插件：**
 
 * Press `Ctrl+Shift+P` (or `Shift+⌘+P` on a Mac) type `Install`.
-* Press `Ctrl+Shift+P` (or `Shift+⌘+P` on a Mac) type `Remove`, All the packages that can be removed will be shown in the list below. Select one and this is it.
+* Press `Ctrl+Shift+P` (or `Shift+⌘+P` on a Mac) type `Remove`, All the packages that can be removed will be shown in the list below.
 
 | 插件名称 | 用途 | 获取地址
 | -- | -- | --
@@ -275,60 +297,36 @@ refer:
 | GoSublime (x) | GoLang配置 | https://packagecontrol.io/packages/GoSublime
 | ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
 | SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
-| URLEncode | https://packagecontrol.io/packages/URLEncode
-
-
+| URLEncode | url编解码 | https://packagecontrol.io/packages/URLEncode
 
 
 ### VSCode
 
 [VSCode](https://github.com/microsoft/vscode)是微软推出的一款IDE开发工具，拥有丰富的插件，支持Windows，OS X和Linux，此外内置JavaScript，TypeScript和Node.js支持。VSCode定位于编辑器与IDE之间，但是更像一个编辑器。
 
-### Typora
+### Markdown工具
 
 [Typora](https://www.typora.io)用于Markdown编辑和可视化。
 
+### 代码对比工具
+
+* Beyond Compare，是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
+
+### 代码查看工具
+
+* Source Insight，是一款功能强大的面向项目的编程编辑器，代码浏览器和分析器，可帮助您在工作和计划时更好的理解代码。
+
 ### JetBrains全家桶
 
-#### CLion
-
-[JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。
-
-#### GoLand
-
-GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。
-
-#### IntelliJ IDEA
-
-2001年发布，一套智能的Java集成开发环境，特别专注与强调程序师的开发撰写效率提升。
-
-#### PyCharm
-
-PyCharm是一种Python IDE，可以帮助用户在使用Python语言开发时提高其效率的工具。
-
-#### PhpStorm
-
-PhpStorm是JetBrains公司开发的一款商业的PHP集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。
-
-#### WebStorm
-
-WebStorm是jetbrains公司旗下一款JavaScript 开发工具，被誉为Web前端开发神器。
-
-#### Rider
-
-JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。
-
-### Beyond Compare
-
-Beyond Compare是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
-
-### Source Insight
-
-Source Insight是一款功能强大的面向项目的编程编辑器，代码浏览器和分析器，可帮助您在工作和计划时更好的理解代码。
-
-### Visual Studio 2019
-
-Visual Studio Professional 2019，更快地进行代码编写，支持Windows，Mac平台。
+| IDE 工具 | 功能
+| -- | --
+| CLion | [JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。
+| GoLand | GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。
+| IntelliJ IDEA | 2001年发布，一套智能的Java集成开发环境，特别专注与强调程序师的开发撰写效率提升。
+| PyCharm | PyCharm是一种Python IDE，可以帮助用户在使用Python语言开发时提高其效率的工具。
+| PhpStorm | PhpStorm是JetBrains公司开发的一款商业的PHP集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。
+| WebStorm | WebStorm是jetbrains公司旗下一款JavaScript 开发工具，被誉为Web前端开发神器。
+| Rider | JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。
 
 
 ## 画图工具
@@ -349,7 +347,7 @@ Visual Studio Professional 2019，更快地进行代码编写，支持Windows，
 * [Evolus Pencil](http://pencil.evolus.vn/)
 	- An open-source GUI prototyping tool that's available for ALL platforms.
 
-refer:
+**refer:**
 
 * [使用 Graphviz 生成自动化系统图](https://www.ibm.com/developerworks/cn/aix/library/au-aix-graphviz/index.html)
 * [graphviz-dotguide官方教程](http://www.graphviz.org/pdf/dotguide.pdf)
@@ -357,27 +355,16 @@ refer:
 
 ## 云工具
 
-### 印象笔记
-
-### [马克飞象](https://maxiang.io/)
-
-### [微云](https://www.weiyun.com/download.html)
-
-# 资料
-
-* [All IT eBooks](http://www.allitebooks.org/)
+* 印象笔记
+* [马克飞象](https://maxiang.io/)，web工具，可以结合印象笔记使用。
+* [微云](https://www.weiyun.com/download.html)，文件备份。
 
 
-# 数学
+# 数学工具
 
 * [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。
 * [时区图](https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png)
 
-# 编程语言
-
-## Java
-
-* [JavaGuide](https://github.com/snailclimb/javaguide)，一份涵盖大部分Java程序员所需要掌握的核心知识。
 
 # 算法
 
@@ -387,3 +374,6 @@ refer:
 
 --------
 *END - I hope you like it!*
+
+
+
