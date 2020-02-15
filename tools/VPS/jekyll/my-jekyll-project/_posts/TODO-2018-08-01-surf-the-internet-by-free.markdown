@@ -20,22 +20,10 @@ Shadowsocks is a cross-platform tunnel proxy which can help you get through fire
 
 ### iOS 客户端
 
-Step 1: 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud。使用下载过后及时退出该账号([refer])。
+Step 1: 下载iOS系统可用的Shadowsocks软件，由于苹果中国区下架的原因，可以切换到`非中国区`下载(需要其他区域的Apple ID)。以下香港ID供参考使用，注意，为防止自己的手机信息泄露，请务必不要使用以下Apple ID登录iCloud，使用下载过后及时退出该账号。
 
-| ID | KEY
-| -- | --
-| kea6404w@icloud.com  | Dd112211
-| z14g024g@icloud.com  | Dd112211
-| s4778y1k@icloud.com  | Dd112211
-| lnlf6h10@icloud.com  | Dd112211
-| oy44mq3h@icloud.com  | Dd112211
-| xz7x1npo@icloud.com  | Dd112211
-| jl1y8uc7@icloud.com  | Dd112211
-| d79b4z6y@icloud.com  | Dd112211 (验证可用)
-| y188t17y@icloud.com  | Dd112211
-| b27y8u2v@icloud.com  | Dd112211
-
-[refer]: https://okmobiledev.github.io/download/okex/ios-store.html
+* [hk账号](https://okmobiledev.github.io/download/okex/ios-store.html)
+* [免费注册香港Apple ID教程：总会有需要的时候](https://zhuanlan.zhihu.com/p/65771804)
 
 Step 2: 注册好后就可以下载下面几款客户端软件。
 
