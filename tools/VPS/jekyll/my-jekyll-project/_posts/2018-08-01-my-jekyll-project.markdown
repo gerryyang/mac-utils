@@ -142,7 +142,7 @@ http://104.131.173.242/phpmyadmin/
 * [FileZilla](https://filezilla-project.org/)
 
 
-# jekyll配置
+# Jekyll 配置
 
 如何通过jekyll发表blog，基本的用法可参考官方文档[Posts章节](https://jekyllrb.com/docs/posts/)。
 
@@ -175,77 +175,31 @@ More:
 
 ## MAC系统工具
 
-### 终端
+### 系统工具
 
-* [ITerm2](https://www.iterm2.com/)相比系统默认的`Terminal`提供了更多高级的功能。
+| 工具 | 功能
+| -- | --
+| [Homebrew](https://brew.sh/) | 包管理
+| [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起
+| [ITerm2](https://www.iterm2.com/) | 相比系统默认的`Terminal`提供了更多高级的功能
+| [Oh My ZSH](https://ohmyz.sh/) | 兼容bash，并集成了很多插件，使用Terminal更加高效。`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效：`$chsh -s /bin/zsh`或则`$chsh -s /bin/bash`。常用插件：`autojump`用于目录跳转（`brew install autojump`）
+| Easy New File | 添加右键新建文件
+| [itsycal](https://www.mowglii.com/itsycal/) | 比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的
+| [spectacle](https://www.spectacleapp.com/) | 窗口管理工具
+| Cheatsheet | 通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档
+| [Keka](https://www.keka.io/en/) | 解压缩工具
+| [IINA](https://iina.io/) | The modern media player for macOS，比苹果自带quicktime player播放器功能强大
+| Amphetamine | 可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的`节能`配置使用方便
+| [Snip](https://snip.qq.com/) | 默认mac可以通过`shift+command+5`来截图或录制屏幕。而Snip的优点是可以滚动截屏（从 Mac App Store 下载的 Snip 不支持滚动截屏）
+| [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
 
-* [Oh My ZSH](https://ohmyz.sh/)，兼容bash，并集成了很多插件，使用Terminal更加高效。
 
-`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效。
+### 效率工具
 
-```
-$chsh -s /bin/zsh
-$chsh -s /bin/bash
-```
-
-| 常用插件 | 用途 | 安装方法
-| -- | -- | --
-| autojump | 目录跳转 | brew install autojump
-
-
-### 包管理器
-
-[Homebrew](https://brew.sh/)用于在Mac上查找和安装工具。
-
-### Git客户端
-
-[sourcetree](https://www.sourcetreeapp.com/)
-
-### SVN客户端
-
-[Cornerstone 4](https://cornerstone.assembla.com/)
-
-### 效率
-
-* Trello，可以多终端使用，记录日常工作的TODO。
-
-### 播放器
-
-* quicktime player 苹果自带播放器，功能较弱
-* [IINA - The modern media player for macOS](https://iina.io/)，功能强大
-
-### 解压缩工具
-
-* [Keka](https://www.keka.io/en/)，the macOS file archiver
-
-### 英语字典
-
-* [欧陆词典](https://www.eudic.net/v4/en/app/eudic)，优点是没有广告，支持微信账户同步。
-* 有道词典
-
-### 快捷键工具
-
-* Cheatsheet，通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档。
-
-### 窗口管理工具
-
-* [spectacle](https://www.spectacleapp.com/)，Move and resize windows with ease.
-
-### 系统日期
-
-* [itsycal](https://www.mowglii.com/itsycal/)，比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的。
-
-### 系统免休眠工具
-
-* amphetamine，可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的[节能]配置使用方便。
-
-### 截图工具
-
-* [snip](https://snip.qq.com/)。默认mac可以通过`shift+command+5`来截图或录制屏幕。而snip的优点是可以滚动截屏（注：从 Mac App Store 下载的 Snip 不支持滚动截屏）。
-
-### Mac 4K 屏保
-
-[Aerial](https://github.com/JohnCoates/Aerial) - Apple TV Aerial Screensaver for Mac.
+| 工具 | 功能
+| -- | --
+| Trello | 多终端使用，记录日常工作的TODO
+| [欧陆词典](https://www.eudic.net/v4/en/app/eudic) | 相对有道词典的优点是没有广告，支持微信账户同步
 
 
 ### 浏览器
@@ -265,7 +219,14 @@ $chsh -s /bin/bash
 | Yet Another Drag and Go | 向四个方向拖拽文字即可进行相应的搜索
 
 
-## 编辑器/IDE/开发工具
+## 开发工具
+
+### 代码管理工具
+
+| 工具 | 功能
+| -- | --
+| [Sourcetree](https://www.sourcetreeapp.com/) | Mac Git客户端
+| [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端
 
 ### Vim
 
@@ -360,11 +321,9 @@ $chsh -s /bin/bash
 * [微云](https://www.weiyun.com/download.html)，文件备份。
 
 
-# 数学工具
+# 数学
 
 * [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。
-* [时区图](https://zh.wikipedia.org/wiki/%E6%97%B6%E5%8C%BA#/media/File:Standard_World_Time_Zones.png)
-
 
 # 算法
 
