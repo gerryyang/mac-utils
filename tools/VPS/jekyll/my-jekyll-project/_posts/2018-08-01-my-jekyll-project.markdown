@@ -173,9 +173,9 @@ More:
 
 # 工具
 
-## MAC系统工具
+## MAC环境
 
-### 系统工具
+### 系统
 
 | 工具 | 功能
 | -- | --
@@ -194,7 +194,7 @@ More:
 | [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
 
 
-### 效率工具
+### 效率
 
 | 工具 | 功能
 | -- | --
@@ -202,26 +202,27 @@ More:
 | [欧陆词典](https://www.eudic.net/v4/en/app/eudic) | 相对有道词典的优点是没有广告，支持微信账户同步
 
 
-### 浏览器
+### Google Chrome
 
-* Google Chrome。使用Google账户登录，方便同步书签信息，便于多终端使用，并且有丰富的扩展程序。
+使用Google账户登录，方便同步书签信息，便于多终端使用，并且有丰富的扩展程序。
 
 | **扩展程序** | **功能**
 | -- | --
-| DragIt | 方便页面浏览
-| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
 | 印象笔记剪裁 | 保存网页
+| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
 | Vimium | 可以使用Vim快捷键浏览网页
-| Video DownloadHelper | 下载页面上的多媒体资源，当检测到有可下载的资源图标会变为彩色，否则为灰色
+| [Video DownloadHelper](https://chrome.google.com/webstore/detail/video-downloadhelper/lmjnegcaeklhafolokijcfjliaokphfk) | 下载页面上的多媒体资源，当检测到有可下载的资源图标会变为彩色，否则为灰色
 | Adblock Plus | 浏览器广告拦截
-| Talend API Tester | Visually interact with REST, SOAP and HTTP APIs
 | 替换字体的中文部分为雅黑 | 将页面中文显示雅黑字体
-| Yet Another Drag and Go | 向四个方向拖拽文字即可进行相应的搜索
+| [类似的网站](http://bit.ly/3bqQvDW) | 发现相关网站
+| [Grammarly for Chrome](http://bit.ly/37e0jOs) | 英语写作纠正
+| [高效网页截图编辑插件](http://bit.ly/2SDgdwv) | 支持长截图
+| [CLEAN crxMouse Gestures](http://bit.ly/2uxtUVF) | 手势，支持各种设置
 
 
-## 开发工具
+## 开发
 
-### 代码管理工具
+### 代码管理
 
 | 工具 | 功能
 | -- | --
@@ -265,21 +266,21 @@ More:
 
 [VSCode](https://github.com/microsoft/vscode)是微软推出的一款IDE开发工具，拥有丰富的插件，支持Windows，OS X和Linux，此外内置JavaScript，TypeScript和Node.js支持。VSCode定位于编辑器与IDE之间，但是更像一个编辑器。
 
-### Markdown工具
+### Markdown
 
 [Typora](https://www.typora.io)用于Markdown编辑和可视化。
 
-### 代码对比工具
+### 代码对比
 
 * Beyond Compare，是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
 
-### 代码查看工具
+### 代码查看
 
 * Source Insight，是一款功能强大的面向项目的编程编辑器，代码浏览器和分析器，可帮助您在工作和计划时更好的理解代码。
 
 ### JetBrains全家桶
 
-| IDE 工具 | 功能
+| IDE | 功能
 | -- | --
 | CLion | [JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。
 | GoLand | GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。
@@ -290,7 +291,7 @@ More:
 | Rider | JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。
 
 
-## 画图工具
+## 画图
 
 * [canva](https://www.canva.com/)
 	- 在线图形设计平台
@@ -314,7 +315,7 @@ More:
 * [graphviz-dotguide官方教程](http://www.graphviz.org/pdf/dotguide.pdf)
 
 
-## 云工具
+## 云同步
 
 * 印象笔记
 * [马克飞象](https://maxiang.io/)，web工具，可以结合印象笔记使用。
