@@ -179,19 +179,21 @@ More:
 
 | 工具 | 功能
 | -- | --
-| [Homebrew](https://brew.sh/) | 包管理
-| [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起
+| [Homebrew](https://brew.sh/) | 软件包管理，第二个AppStore
+| [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起，例如，`open xxx`打开一个目录或文件
 | [ITerm2](https://www.iterm2.com/) | 相比系统默认的`Terminal`提供了更多高级的功能
 | [Oh My ZSH](https://ohmyz.sh/) | 兼容bash，并集成了很多插件，使用Terminal更加高效。`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效：`$chsh -s /bin/zsh`或则`$chsh -s /bin/bash`。常用插件：`autojump`用于目录跳转（`brew install autojump`）
 | Easy New File | 添加右键新建文件
-| [itsycal](https://www.mowglii.com/itsycal/) | 比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的
-| [spectacle](https://www.spectacleapp.com/) | 窗口管理工具
+| [Itsycal](https://www.mowglii.com/itsycal/) | 比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的
+| [Spectacle](https://www.spectacleapp.com/) | 窗口管理工具
 | Cheatsheet | 通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档
 | [Keka](https://www.keka.io/en/) | 解压缩工具
 | [IINA](https://iina.io/) | The modern media player for macOS，比苹果自带quicktime player播放器功能强大
 | Amphetamine | 可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的`节能`配置使用方便
 | [Snip](https://snip.qq.com/) | 默认mac可以通过`shift+command+5`来截图或录制屏幕。而Snip的优点是可以滚动截屏（从 Mac App Store 下载的 Snip 不支持滚动截屏）
 | [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
+| [Dozer](https://github.com/Mortennn/Dozer) | Hide status bar icons on macOS，用于隐藏状态栏上不必要的图标，通过`command + drag`将范围内的图标隐藏
+| [LICEcap](https://github.com/justinfrankel/licecap) | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF
 
 
 ### 效率
@@ -272,7 +274,8 @@ More:
 
 ### 代码对比
 
-* Beyond Compare，是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
+* [Beyond Compare](http://www.scootersoftware.com/download.php)，是一套由Scooter Software推出的內容比较工具软件，提供Win、Mac、Linux等多平台下载。
+
 
 ### 代码查看
 

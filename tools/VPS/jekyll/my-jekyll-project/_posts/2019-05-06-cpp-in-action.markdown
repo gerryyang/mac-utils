@@ -150,7 +150,7 @@ a3[3]: 0.111111 at 0x1b64058
 
 * 而在一个栈帧内，局部变量是如何分布到栈帧里的（所谓栈帧布局，stack frame layout），这完全是编译器的自由。至于数组元素与栈的增长方向：C与C++语言规范都规定了数组元素是分布在连续递增的地址上的。
 
-> An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type. A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator [] is that E1[E2] is identical to (*((E1)+(E2))). Because of the conversion rules that apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th element of E1 (counting from zero).
+> An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type. A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator [] is that E1[E2] is identical to `(*((E1)+(E2)))`. Because of the conversion rules that apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th element of E1 (counting from zero).
 
 
 * 以简化的Linux/x86模型为例。在简化的32位Linux/x86进程地址空间模型里，（主线程的）栈空间确实比堆空间的地址要高——它已经占据了用户态地址空间的最高可分配的区域，并且向下（向低地址）增长。借用Gustavo Duarte的[Anatomy of a Program in Memory](https://link.zhihu.com/?target=http%3A//duartes.org/gustavo/blog/post/anatomy-of-a-program-in-memory/)里的图。
@@ -4444,7 +4444,9 @@ if (y.load(memory_order_acquire) == 2) { // 获得，读操作
 
 用下图示意一下，**每一边的代码都不允许重排越过黄色区域**，且如果 y 上的释放早于 y 上的获取的话，释放前对内存的修改都在另一个线程的获取操作后可见：
 
+
 ![atomic](/assets/images/201911/atomic.png)
+
 
 事实上，在把 y 改成 `atomic` 之后，两个线程的代码一行不改，执行结果都会是符合我们的期望的。**因为 atomic 变量的写操作缺省就是释放语义，读操作缺省就是获得语义**。即：
 
@@ -4458,7 +4460,7 @@ if (y.load(memory_order_acquire) == 2) { // 获得，读操作
 
 #### atomic
 
-C++11 在 头文件中引入了 [atomic])(https://en.cppreference.com/w/cpp/atomic/atomic) 模板，对**原子对象**进行了封装。
+C++11 在 头文件中引入了 [atomic](https://en.cppreference.com/w/cpp/atomic/atomic) 模板，对**原子对象**进行了封装。
 
 我们可以将其应用到**任何类型**上去。当然**对于不同的类型效果还是有所不同的**：
 
@@ -6444,6 +6446,18 @@ Larry Wall 认为程序员该有的三大美德：懒惰，急切，傲慢（laz
 * 傲慢
 
 老天都受不了你的极度骄傲。这种品质使得你写程序（和维护程序）时不允许别人有机会来说三道四。因此这是程序员的第三大美德。
+
+
+
+# Refer
+
+
+[What are Aggregates and PODs and how/why are they special?](https://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special)
+
+
+# 专栏
+
+[https://blog.petrzemek.net/tag/c/](https://blog.petrzemek.net/tag/c/)
 
 
 

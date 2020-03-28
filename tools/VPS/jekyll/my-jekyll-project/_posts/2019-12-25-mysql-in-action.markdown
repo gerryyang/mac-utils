@@ -87,6 +87,44 @@ set autocommit=off 或者 start transaction
 
 # 实践之坑
 
+## MySQL 事务 `set autocommit = 0` 与 `begin transaction` 的区别
+
+
+问题背景：新开发了一个订单系统，提供了db事务的操作接口，此事务接口在每次执行前都会执行`set autocommit = 0`，然后执行业务sql，最后根据结果执行`commit`或`rollback`。结果在联调时，发现一个诡异的情况，事务接口显示执行成功了，但是查询数据库时却显示没有生效。最后与dba一起排查问题，发现是用法不对，`set autocommit = 0`导致当前会话都不会提交事务，并且此会话会被其他请求复用，在其他请求处理失败时若执行了`rollback`，就会把之前提交的操作都全部回滚，因此在最后查询时发现已经提交的数据却没有生效。正确的做法是，开启事务应该用`begin transaction`，保证每次`commit`或`rollback`都会对当前事务提交，而不会出现事务交错的情况出现，导致数据提交错误。
+
+以下是数据库日志，通过分析会话链接可以发现，事务提交出现了错乱的情况：
+
+```
+[2020-03-28 10:04:00 114016] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.294(ms) inj_id:5 sql:3,24 "set session autocommit=0"
+[2020-03-28 10:04:00 114248] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.536(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787c-5e7eb090-39'"
+[2020-03-28 10:04:00 114700] ERROR tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:1.002(ms) inj_id:1 sql:3,314 "insert into `order_center`.t_midas_order_info (FOfferId, FOrderId, FOrderType, FLoginId, FLoginIdType, FProvideId, FProvideIdType, FPayId, FPayIdType, FCreateTime)  values  ('TC10100', 'skycfwu_tdeatest003', '2', '773632134', 'hy_gameid', '773632134', 'hy_gameid', '773632134', 'hy_gameid', '2020-03-28 10:03:59') "
+[2020-03-28 10:04:00 150632] DEBUG tid:13583 con:0x7f8ae8c33c00 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.247(ms) inj_id:9 sql:3,39 "XA END '36c73128-ba-87787c-5e7eb090-39'"
+[2020-03-28 10:04:00 150833] DEBUG tid:13583 con:0x7f8ae8c33c00 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.450(ms) inj_id:14 sql:3,44 "XA ROLLBACK '36c73128-ba-87787c-5e7eb090-39'"
+[2020-03-28 10:04:00 187419] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.305(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 188104] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:1.001(ms) inj_id:1 sql:3,205 "select FLoginId,FLoginIdType,FProvideId,FProvideIdType,FPayId,FPayIdType from `order_center`.t_midas_order_info where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FOrderType = '2')) "
+[2020-03-28 10:04:00 224509] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.795(ms) inj_id:1 sql:3,204 "select FSubOrderId,FState,FPayChannel,FPayChannelSubId,FGoodsDetail from `order_center`.t_midas_suborder_state where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FOrderType = '2')) "
+[2020-03-28 10:04:00 305495] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.737(ms) inj_id:1 sql:3,180 "select FOfferId,FOrderId,FSubOrderId,FState from `order_center`.t_midas_suborder_state where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FOrderType = '2')) "
+[2020-03-28 10:04:00 343019] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.708(ms) inj_id:1 sql:3,174 "update `order_center`.t_midas_suborder_state SET FState='601' where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FOrderType = '2') and (FState = '0')) "
+[2020-03-28 10:04:00 380000] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.740(ms) inj_id:1 sql:3,210 "select FOfferId,FOrderId,FPayChannel,FPayChannelSubId,FState,FChannelOrderId from `order_center`.t_midas_order_state where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FOrderType = '2')) "
+[2020-03-28 10:04:00 416701] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.462(ms) inj_id:1 sql:3,339 "insert into `order_center`.t_midas_order_state (FOfferId, FOrderId, FPayChannel, FPayChannelSubId, FOrderType, FPortalSerialNo, FState, FChannelOrderId, FCreateTime, FOrderTime)  values  ('TC10100', 'skycfwu_tdeatest003', 'account', '1', '2', 'OPENTCGSX107943-20200328-A401oiVYCcGW', '0', '', '2020-03-28 10:04:00', '2020-03-28 10:04:00') "
+[2020-03-28 10:04:00 453952] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.367(ms) inj_id:5 sql:3,24 "set session autocommit=0"
+[2020-03-28 10:04:00 454150] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.572(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 454751] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:1.185(ms) inj_id:1 sql:3,251 "select FOfferId,FOrderId,FSubOrderId,FRefundInfo,FPayAmt from `order_center`.t_midas_suborder_state where ((FOfferId = 'TC10100') and (FOrderId = '20200323676000000000066606_6') and (FSubOrderId = '20200323676000000001117752') and (FOrderType = '1')) "
+[2020-03-28 10:04:00 527307] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.609(ms) inj_id:1 sql:3,385 "update order_center.t_midas_suborder_state SET FRefundInfo=JSON_SET(FRefundInfo,'$.refund_id','skycfwu_tdeatest003') where ((FOfferId = 'TC10100') and (FOrderId = '20200323676000000000066606_6') and (FSubOrderId = '20200323676000000001117752') and (FOrderType = '1') and (JSON_EXTRACT(FRefundInfo,'$.refund_id') = '') and ((JSON_EXTRACT(FRefundInfo,'$.refund_amt') + '1') <= FPayAmt)) "
+[2020-03-28 10:04:00 563267] DEBUG tid:13583 con:0x7f8ae8c33c00 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.331(ms) inj_id:9 sql:3,39 "XA END '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 563610] DEBUG tid:13583 con:0x7f8ae8c34800 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.666(ms) inj_id:9 sql:3,39 "XA END '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 563671] DEBUG tid:13583 con:0x7f8ae8c33c00 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.751(ms) inj_id:14 sql:3,44 "XA ROLLBACK '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 564393] DEBUG tid:13583 con:0x7f8ae8c34800 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:1.453(ms) inj_id:14 sql:3,44 "XA ROLLBACK '36c73128-ba-87787d-5e7eb090-39'"
+[2020-03-28 10:04:00 637401] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.296(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787e-5e7eb090-39'"
+[2020-03-28 10:04:00 637855] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.767(ms) inj_id:1 sql:3,234 "update `order_center`.t_midas_suborder_state SET FState='604' where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FSubOrderId = '20200323676000000001117752') and (FOrderType = '2') and (FState in ('601','502'))) "
+[2020-03-28 10:04:00 673744] DEBUG tid:13583 con:0x7f8ae8c34800 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.285(ms) inj_id:9 sql:3,39 "XA END '36c73128-ba-87787e-5e7eb090-39'"
+[2020-03-28 10:04:00 673994] DEBUG tid:13583 con:0x7f8ae8c34800 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.539(ms) inj_id:14 sql:3,44 "XA ROLLBACK '36c73128-ba-87787e-5e7eb090-39'"
+[2020-03-28 10:04:00 711017] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.433(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787f-5e7eb090-39'"
+[2020-03-28 10:04:00 711617] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:1.045(ms) inj_id:1 sql:3,258 "select FOfferId,FOrderId,FSubOrderId,FPayChannel,FPayChannelSubId,FState from `order_center`.t_midas_suborder_state where ((FOfferId = 'TC10100') and (FOrderId = 'skycfwu_tdeatest003') and (FSubOrderId = '20200323676000000001117752') and (FOrderType = '2')) "
+[2020-03-28 10:04:30 748321] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:32340 S:100.125.130.85:4002 timecost:0.299(ms) inj_id:7 sql:3,41 "XA START '36c73128-ba-87787f-5e7eb090-39'"
+
+```
+
 ## MySQL乱码之utf8mb4
 
 Q:
@@ -419,6 +457,16 @@ refer:
 
 * [Using MySQL UNIQUE Index To Prevent Duplicates](http://www.mysqltutorial.org/mysql-unique/)
 
+## 更改字段类型
+
+
+``` sql
+ALTER TABLE tablename MODIFY columnname INTEGER;
+```
+
+https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
+
+
 ## 时间函数
 
 ```
@@ -462,6 +510,21 @@ mysql> select localtime();
 +---------------------+
 1 row in set (0.00 sec)
 ```
+
+## MySQL 5.7.8 JSON
+
+JSON data type provides these advantages over storing JSON-format strings in a string column:
+
+* Automatic validation of JSON documents stored in JSON columns. Invalid documents produce an error.
+* Optimized storage format. JSON documents stored in JSON columns are converted to an internal format that permits quick read access to document elements. When the server later must read a JSON value stored in this binary format, the value need not be parsed from a text representation. The binary format is structured to enable the server to look up subobjects or nested values directly by key or array index without reading all values before or after them in the document.
+
+The size of JSON documents stored in JSON columns is limited to the value of the `max_allowed_packet` system variable. (While the server manipulates a JSON value internally in memory, it can be larger; the limit applies when the server stores it.)
+
+* [https://dev.mysql.com/doc/refman/5.7/en/json.html](https://dev.mysql.com/doc/refman/5.7/en/json.html)
+* [Max JSON column length in MySQL](https://stackoverflow.com/questions/40711101/max-json-column-length-in-mysql)
+* [Storing Data in MySQL as JSON](https://stackoverflow.com/questions/3564024/storing-data-in-mysql-as-json)
+* [How FriendFeed uses MySQL to store schema-less data](https://backchannel.org/blog/friendfeed-schemaless-mysql)
+
 
 # 性能优化
 
