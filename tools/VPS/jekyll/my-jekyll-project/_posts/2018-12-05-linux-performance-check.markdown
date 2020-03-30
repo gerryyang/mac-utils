@@ -1735,4 +1735,8 @@ mtr - a network diagnostic tool
 
 [Superscalar processor]: https://en.wikipedia.org/wiki/Superscalar_processor
 	
-	
+
+[Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
+
+
+

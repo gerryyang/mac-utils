@@ -181,6 +181,99 @@ refer:
 
 * [HowTo: Iterate Bash For Loop Variable Range Under Unix / Linux](https://www.cyberciti.biz/faq/unix-linux-iterate-over-a-variable-range-of-numbers-in-bash/)
 
+
+## [How to Check if a File or Directory Exists in Bash](https://linuxize.com/post/bash-check-if-file-exists/)
+
+
+In Bash, you can use the `test` command to check whether a file exists and determine the type of the file.
+
+``` bash
+test EXPRESSION
+[ EXPRESSION ]
+[[ EXPRESSION ]]
+```
+
+> If you want your script to be portable you should prefer using the old test `[` command which is available on all POSIX shells. The new upgraded version of the test command `[[` (double brackets) is supported on most modern systems using Bash, Zsh, and Ksh as a default shell.
+
+``` bash
+FILE=/etc/resolv.conf
+if test -f "$FILE"; then
+    echo "$FILE exist"
+fi
+
+if [ -f "$FILE" ]; then
+    echo "$FILE exist"
+fi
+
+if [[ -f "$FILE" ]]; then
+    echo "$FILE exist"
+fi
+
+if [ -f "$FILE" ]; then
+    echo "$FILE exist"
+else 
+    echo "$FILE does not exist"
+fi
+
+test -f /etc/resolv.conf && echo "$FILE exist"
+
+[ -f /etc/resolv.conf ] && echo "$FILE exist"
+
+[[ -f /etc/resolv.conf ]] && echo "$FILE exist"
+
+FILE=/etc/docker
+if [ -d "$FILE" ]; then
+    echo "$FILE is a directory"
+fi
+
+FILE=/etc/docker
+if [ ! -f "$FILE" ]; then
+    echo "$FILE does not exist"
+fi
+
+# Check if Multiple Files Exist
+FILE=/etc/docker
+if [ -f /etc/resolv.conf -a -f /etc/hosts ]; then
+    echo "$FILE is a directory"
+fi
+
+if [ -f /etc/resolv.conf && -f /etc/hosts ]; then
+    echo "$FILE is a directory"
+fi
+
+[ -f /etc/resolv.conf -a -f /etc/hosts ] && echo "both files exist"
+
+[[ -f /etc/resolv.conf && -f /etc/hosts ]] && echo "both files exist"
+
+```
+
+> Always use double quotes to avoid issues when dealing with files containing whitespace in their names.
+
+**File test operators**
+
+```
+-b FILE - True if the FILE exists and is a block special file.
+-c FILE - True if the FILE exists and is a special character file.
+-d FILE - True if the FILE exists and is a directory.
+-e FILE - True if the FILE exists and is a file, regardless of type (node, directory, socket, etc.).
+-f FILE - True if the FILE exists and is a regular file (not a directory or device).
+-G FILE - True if the FILE exists and has the same group as the user running the command.
+-h FILE - True if the FILE exists and is a symbolic link.
+-g FILE - True if the FILE exists and has set-group-id (sgid) flag set.
+-k FILE - True if the FILE exists and has a sticky bit flag set.
+-L FILE - True if the FILE exists and is a symbolic link.
+-O FILE - True if the FILE exists and is owned by the user running the command.
+-p FILE - True if the FILE exists and is a pipe.
+-r FILE - True if the FILE exists and is readable.
+-S FILE - True if the FILE exists and is socket.
+-s FILE - True if the FILE exists and has nonzero size.
+-u FILE - True if the exists and set-user-id (suid) flag is set.
+-w FILE - True if the FILE exists and is writable.
+-x FILE - True if the FILE exists and is executable.
+```
+
+
+
 # Other
 
 * [Bash Programming Tutorial](https://ianding.io/2019/08/30/bash-programming-tutorial/)
