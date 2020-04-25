@@ -87,6 +87,21 @@ set autocommit=off 或者 start transaction
 
 # 实践之坑
 
+## 利用 force index 优化sql语句性能
+
+
+``` sql
+select customer,count(1) c  
+from upv_1  force index(idx_created)  
+where created between "2015-07-06" and "2015-07-07"  
+group by customer   
+having c > 15  
+order by c desc  
+```
+
+https://www.jianshu.com/p/df2bb6ca178e
+
+
 ## MySQL 事务 `set autocommit = 0` 与 `start transaction` 的区别
 
 * `set autocommit = 0`。当前session禁用自动提交事务，自此句执行以后，每个SQL语句或者语句块所在的事务都需要显示`commit`才能提交事务。
