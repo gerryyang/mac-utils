@@ -45,14 +45,14 @@
 | | Command + [ or ] | 向前缩进，或向后缩进
 | | Control + ⇧ + W | 对所选内容自动生成配对的tag
 | | Command + / | 对当前行或所选内容注释
+| | Command + K then U | 转为大写
+| | Command + K then L | 转为小写
 | UI界面显示功能 | 
 | | Command + K; Command + B | 实现对侧边栏文件列表的打开和关闭显示
 | | Control + Command + F | 全屏模式
 | | Command + `=` 或者 Command + `-` | 字体大小动态调整
 | | Command + Option + 数字 | 实现多个tab并行编辑和对比
 | | Control + \` | 显示和隐藏控制台
-
-
 
 
 ## 常用插件
