@@ -255,12 +255,42 @@ More: https://github.com/hzlzh/Best-App
 | 插件名称 | 用途 | 获取地址
 | -- | -- | --
 | MarkdownPreview | Markdown文档预览 | https://packagecontrol.io/packages/MarkdownPreview https://facelessuser.github.io/MarkdownPreview/usage/
-| Alignment | 对齐 | https://packagecontrol.io/packages/Alignment
+| AlignTab | 对齐，The most flexible alignment plugin for Sublime Text 3. This plugin is inspired by the excellent VIM plugin, [tabular](https://github.com/godlygeek/tabular) | https://github.com/randy3k/AlignTab
 | Sublime​AStyle​Formatter | C/C++/C#/Java code formatter/beautifier with AStyle, For OSX, control + option + f to format current file | https://packagecontrol.io/packages/SublimeAStyleFormatter
 | GoSublime (x) | GoLang配置 | https://packagecontrol.io/packages/GoSublime
 | ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
 | SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
 | URLEncode | url编解码 | https://packagecontrol.io/packages/URLEncode
+
+* AlignTab 使用说明
+
+安装完AlignTab后，对选择的内容在右键菜单中可以进行常见的格式化，或者根据自己的需求将常用的格式化命令配置为快捷键。(Custom User Bindings for using AlignTab with ='s, =>'s, and :'s in Sublime Text
+)
+
+"Preferences" -> "Key Bindings"，配置以下快捷键，之后即可通过`super+ctrl+=`来格式化`=`的语句。
+
+```
+[
+  {
+    "keys": ["super+ctrl+;"], "command": "align_tab",
+    "args" : {
+      "user_input" : ":/f"
+    }
+  },
+  {
+    "keys": ["super+ctrl+="], "command": "align_tab",
+    "args" : {
+      "user_input" : "=/f"
+    }
+  },
+  {
+    "keys": ["super+ctrl+."], "command": "align_tab",
+    "args" : {
+      "user_input" : "=>/f"
+    }
+  }
+]
+```
 
 
 ### VSCode
@@ -335,7 +365,7 @@ More: https://github.com/hzlzh/Best-App
 
 
 --------
-*END - I hope you like it!*
+*END - Enjoy!*
 
 
 
