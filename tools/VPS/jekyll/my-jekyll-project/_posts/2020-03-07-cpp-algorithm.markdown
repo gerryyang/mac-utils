@@ -9,6 +9,104 @@ categories: [C/C++]
 {: toc}
 
 
+# 封装迭代器
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <map>
+#include <string>
+#include <iterator>
+
+using record = std::map<std::string, std::string>;
+using second_map_t = std::map<std::string, record>;
+
+class A
+{
+
+public:
+        record m_var{{"a", "b"}, {"c", "d"}};
+
+};
+
+class B
+{
+public:
+        class iterator {
+
+        public:
+
+                using value_type = std::string;
+                using reference = const value_type&;
+                using pointer = const value_type*;
+
+                iterator(const std::string tag, record *ref) : m_ref(ref), m_iter(ref->end()) {}
+                iterator(record *ref) : m_ref(ref), m_iter(ref->begin()) {
+                }
+
+                reference operator*() const noexcept {
+                        return m_iter->first;
+                }
+                iterator& operator++() {
+                        ++m_iter;
+                        return *this;
+                }
+
+                bool operator==(const iterator& rhs) const noexcept {
+                        return m_iter == rhs.m_iter;
+                }
+
+                bool operator!=(const iterator& rhs) const noexcept {
+                        return !operator==(rhs);
+                }
+
+        private:
+                record* m_ref;
+                record::iterator m_iter;
+        };
+
+        B(record* ref) : m_ref(ref) {
+        }
+
+        iterator begin() {
+                return iterator(m_ref);
+        }
+
+        iterator end() const noexcept {
+                return iterator("END", m_ref);
+        }
+
+private:
+        record* m_ref;
+
+};
+
+int main()
+{
+        A a;
+
+#if 0
+        for (auto& v : a.m_var) {
+                std::cout << v.first << "\n";
+        }
+#endif
+
+        B b(&a.m_var);
+        for (auto& v : b) {
+                std::cout << v << "\n";
+        }
+
+        return 0;
+}
+```
+
+refer:
+
+* https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls/8054856
+* http://www.cplusplus.com/reference/iterator/
+* https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+
+
 # 2020 TPC腾讯程序设计竞赛 Group the Integers (正赛)
 
 请将从 1 至 n （包括 1 与 n）的所有整数分成若干组，使得每一组内的整数互质。每个整数应恰好属于一个分组。求最少的分组数。
