@@ -19,7 +19,6 @@ categories: [C/C++]
 #include <iterator>
 
 using record = std::map<std::string, std::string>;
-using second_map_t = std::map<std::string, record>;
 
 class A
 {
@@ -87,12 +86,9 @@ private:
 int main()
 {
         A a;
-
-#if 0
         for (auto& v : a.m_var) {
                 std::cout << v.first << "\n";
         }
-#endif
 
         B b(&a.m_var);
         for (auto& v : b) {
