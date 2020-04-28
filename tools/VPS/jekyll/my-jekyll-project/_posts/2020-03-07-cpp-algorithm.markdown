@@ -25,7 +25,10 @@ class A
 {
 
 public:
-        record m_var{{"a", "b"}, {"c", "d"}};
+        record m_var{
+        	{"a", "b"}, 
+        	{"c", "d"}
+        };
 
 };
 
