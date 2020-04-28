@@ -108,6 +108,7 @@ refer:
 * https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls/8054856
 * http://www.cplusplus.com/reference/iterator/
 * https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+* https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
 
 
 # 2020 TPC腾讯程序设计竞赛 Group the Integers (正赛)
