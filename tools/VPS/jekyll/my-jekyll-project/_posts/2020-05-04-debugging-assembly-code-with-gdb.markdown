@@ -162,6 +162,27 @@ show detach-on-fork
 https://sourceware.org/gdb/current/onlinedocs/gdb/Forks.html#Forks
 
 
+## Breakpoints
+
+A `breakpoint` makes your program stop whenever a certain point in the program is reached. For each breakpoint, you can add conditions to control in finer detail whether your program stops. You can set breakpoints with the break command and its variants (see [Setting Breakpoints](https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Breaks.html#Set-Breaks)), to specify the place where your program should stop **by line number, function name or exact address in the program**.
+
+On some systems, **you can set breakpoints in shared libraries before the executable is run**.
+
+https://sourceware.org/gdb/current/onlinedocs/gdb/Breakpoints.html#Breakpoints
+
+## Watchpoints
+
+
+A `watchpoint` is **a special breakpoint** that stops your program **when the value of an expression changes**. The expression may be a value of a variable, or it could involve values of one or more variables combined by operators, such as ‘a + b’. **This is sometimes called data breakpoints**. You must use a different command to set watchpoints (see [Setting Watchpoints](https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Watchpoints.html#Set-Watchpoints)), but aside from that, you can manage a watchpoint like any other breakpoint: you enable, disable, and delete both breakpoints and watchpoints using the same commands.
+
+
+You can arrange to have values from your program displayed automatically whenever GDB stops at a breakpoint. See [Automatic Display](https://sourceware.org/gdb/current/onlinedocs/gdb/Auto-Display.html#Auto-Display).
+
+## Catchpoints
+
+A `catchpoint` is another special breakpoint that stops your program **when a certain kind of event occurs**, such as the throwing of a C++ exception or the loading of a library. As with watchpoints, you use a different command to set a catchpoint (see [Setting Catchpoints](https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints)), but aside from that, you can manage a catchpoint like any other breakpoint. (To stop when your program receives a signal, use the `handle` command; see [Signals](https://sourceware.org/gdb/current/onlinedocs/gdb/Signals.html#Signals).)
+
+
 ## Other
 
 
@@ -284,8 +305,8 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 | ptype VarName | 显示变量的类型
 | frame 0 | 显示栈顶的信息
 | frame 1 | 显示堆栈栈顶下一层信息
-| up <n> | 表示向栈的上面移动n层，可以不打n，表示向上移动一层。
-| down <n> | 表示向栈的下面移动n层，可以不打n，表示向下移动一层。                                
+| up <n> | 表示向栈的上面移动n层，可以不打n，表示向上移动一层
+| down <n> | 表示向栈的下面移动n层，可以不打n，表示向下移动一层                              
 | info break | 查看所有断点的信息  
 | info threads | 查看所有线程的信息
 | info registers | 查看所有寄存器的信息
