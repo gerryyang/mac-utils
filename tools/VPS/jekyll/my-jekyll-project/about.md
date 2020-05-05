@@ -3,7 +3,12 @@ layout: page
 title: About
 permalink: /about/
 ---
-Hello, My name is Gerry, I'm a developer based in Shenzhen. Some information could find from my [Blog], [Forum] and [GitHub].
+
+Hello buddy,
+
+My name is Gerry, I'm a computer developer based in Shenzhen and this is my blog. I like computers and enjoy learning about them. Whenever I learn something new I try to write about it. It is very likely that I’ll make mistakes in my posts, so feel free to correct me if I’m wrong. Questions are also welcome, but I might not have the time or knowledge to answer all of them. If you want to know more about me, you can take a look at my another [Blog] or [GitHub]. Enjoy yourself :)
+
+More infos:
 
 * Computer Skills
 	- Windows, Linux, MacOS
@@ -30,7 +35,6 @@ Hello, My name is Gerry, I'm a developer based in Shenzhen. Some information cou
 My personal Wechat account is `delphiwcdj` and Wechat public account is `tencentgerryyang`. 
 
 [Blog]: http://blog.gerryyang.com
-[Forum]: http://forum.gerryyang.com
 [GitHub]: https://github.com/gerryyang
 
 

@@ -364,6 +364,11 @@ More: https://github.com/hzlzh/Best-App
 * [数据结构和算法必知必会的50个代码实现](https://github.com/wangzheng0822/algo)
 
 
+# Computer Blogs
+
+* [ncona.com - Learning about computers](https://ncona.com/)
+
+
 --------
 *END - Enjoy!*
 

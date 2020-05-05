@@ -305,8 +305,8 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 | ptype VarName | 显示变量的类型
 | frame 0 | 显示栈顶的信息
 | frame 1 | 显示堆栈栈顶下一层信息
-| up <n> | 表示向栈的上面移动n层，可以不打n，表示向上移动一层
-| down <n> | 表示向栈的下面移动n层，可以不打n，表示向下移动一层                              
+| up n | 表示向栈的上面移动n层，可以不打n，表示向上移动一层
+| down n | 表示向栈的下面移动n层，可以不打n，表示向下移动一层                              
 | info break | 查看所有断点的信息  
 | info threads | 查看所有线程的信息
 | info registers | 查看所有寄存器的信息
@@ -324,6 +324,6 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 * [Debugging Assembly Code with gdb](http://web.cecs.pdx.edu/~apt/cs491/gdb.pdf)
 * [100个gdb小技巧](https://github.com/hellogcc/100-gdb-tips)
 * [GDB中应该知道的几个调试方法 - CoolShell](http://coolshell.cn/articles/3643.html)
-
-
+* [Introduction to GDB - Posted by adrian.ancona on February 9, 2018](https://ncona.com/2018/02/introduction-to-gdb/)
+* [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
 
