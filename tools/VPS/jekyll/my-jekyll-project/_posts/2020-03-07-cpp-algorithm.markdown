@@ -108,6 +108,192 @@ refer:
 * https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
 
 
+# 2020 TPC腾讯程序设计竞赛 A IPv6 (正赛)
+
+网际协议第 6 版（IPv6）是网际协议（IP）的最新版本。该协议用以鉴别并定位网络上的计算机，并对网络流量进行路由。该协议使用 128 个二进制位代表一个网络地址，其设计目的是为了替换第 4 版协议。
+
+IPv6 的 128 位地址可以分为 8 组，每组各 16 位。我们可以将每组二进制位写成 4 个十六进制数，各组之间用冒号（:）分隔。例如，2001:0db8:0000:0000:0000:ff00:0042:8329 就是一个 IPv6 地址。
+
+方便起见，一个 IPv6 地址可以按以下规则缩写为一个更加简短的表现形式：
+
+* 每一组十六进制数的前导零会被去除。例如，0042 将变为 42。
+* 连续多组十六进制表示的 0 会被一对双冒号（::）替换。请注意，一个地址中双冒号至多出现一次，否则该缩写对应的完整 IPv6 地址可能无法确定。
+
+以下是这些简写规则的使用范例：
+
+* 完整 IPv6 地址：2001:0db8:0000:0000:0000:ff00:0042:8329
+* 去除每组十六进制数中的前导零后：2001:db8:0:0:0:ff00:42:8329
+* 省略连续的十六进制零后：2001:db8::ff00:42:8329
+
+根据上述规则，回环地址 0000:0000:0000:0000:0000:0000:0000:0001 可以被简写为 ::1
+
+你的任务就是将一个缩写后的 IPv6 地址改写为一个完整的地址。
+
+输入格式：
+
+有多组测试数据。第一行输入一个整数 T（约 1000）代表测试数据组数。对于每组测试数据：
+
+第一行输入一个字符串 s 代表一个合法的缩写后的 IPv6 地址，保证 s 只包含数字、小写字母和冒号。
+
+输出格式：
+
+每组数据输出一行一个字符串，代表完整的 IPv6 地址。
+
+样例输入：
+
+```
+4
+7abc::00ff:fffc
+fc:0:0:8976:0:0:0:ff
+2c0f:9981::
+::
+```
+
+样例输出：
+
+```
+7abc:0000:0000:0000:0000:0000:00ff:fffc
+00fc:0000:0000:8976:0000:0000:0000:00ff
+2c0f:9981:0000:0000:0000:0000:0000:0000
+0000:0000:0000:0000:0000:0000:0000:0000
+```
+
+
+``` cpp
+#include <cstdio>
+#include <string>
+#include <vector>
+
+bool g_find_double_colon = false;
+std::vector<std::string> g_res_vec;
+
+void split_str(const std::string& str, const std::string& delimiters, std::vector<std::string>& tokens)
+{
+        // skip delimiters at beginning
+        // ,a,b,c, -> [a, b, c]
+        std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+        std::string::size_type pos     = str.find_first_of(delimiters, lastPos);
+
+        while (std::string::npos != pos || std::string::npos != lastPos)
+        {
+                tokens.push_back(str.substr(lastPos, pos - lastPos));
+                lastPos = str.find_first_not_of(delimiters, pos);
+                pos = str.find_first_of(delimiters, lastPos);
+        }
+}
+
+void replace(std::string& str)
+{
+        // :: -> :*:
+        size_t index = str.find("::", index);
+        if (index != std::string::npos) {
+                str.replace(index, 2, ":*:");
+        }
+}
+
+void print_res(const std::string& s)
+{
+        // print ab -> 00ab
+        size_t s_len = s.length();
+        if (s_len != 4) {
+                for (int i = 0; i != 4 - s_len; ++i) {
+                        printf("0");
+                }
+                printf("%s", s.c_str());
+        } else {
+                printf("%s", s.c_str());
+
+        }
+}
+
+void func()
+{
+        // ex. 0000:0000:0000:0000:0000:0000:0000:0000
+        char s[64] = {0};
+        scanf("%s", s);
+
+        std::string src = s;
+        int src_len = src.length();
+
+        // :: has only one in IPv6
+        size_t found = src.find("::");
+        if (found != std::string::npos) {
+ 
+                // a::b:c -> a:*:b:c
+                replace(src);
+
+                std::vector<std::string> colon_vec;
+                split_str(src, ":", colon_vec);
+
+                size_t colon_vec_size = colon_vec.size();
+                size_t left_size = 8 - (colon_vec_size - 1);
+
+                for (auto& item : colon_vec) {
+                        //printf("item[%s]\n", item.c_str());
+
+                        if (item != "*") {
+                                g_res_vec.push_back(item);
+
+                        } else {
+                                for (int i = 0; i != left_size; ++i) {
+                                        g_res_vec.push_back("0000");
+                                }
+                        }
+                }
+
+        } else {
+
+                // no find ::
+                std::vector<std::string> colon_vec;
+                split_str(src, ":", colon_vec);
+
+                for (auto& item : colon_vec) {
+                        g_res_vec.push_back(item);
+                }
+        }
+
+        int i = 1;
+        for (auto& res : g_res_vec) {
+                if (i < g_res_vec.size()) {
+                        print_res(res);
+                        printf(".");
+                } else {
+                        print_res(res);
+                        printf("\n");
+
+                }
+                ++i;
+        }
+
+        return;
+}
+
+int main()
+{
+        int group_cnt = 0;
+        scanf("%d", &group_cnt);
+
+        for (int i = 0; i != group_cnt; ++i) {
+                g_res_vec.clear();
+                func();
+        }
+
+        return 0;
+}
+/*
+4
+7abc::00ff:fffc
+7abc.0000.0000.0000.0000.0000.00ff.fffc
+fc:0:0:8976:0:0:0:ff
+00fc.0000.0000.8976.0000.0000.0000.00ff
+2c0f:9981::
+2c0f.9981.0000.0000.0000.0000.0000.0000
+::
+0000:0000:0000:0000:0000:0000:0000:0000
+*/
+```
+
+
 # 2020 TPC腾讯程序设计竞赛 Group the Integers (正赛)
 
 请将从 1 至 n （包括 1 与 n）的所有整数分成若干组，使得每一组内的整数互质。每个整数应恰好属于一个分组。求最少的分组数。
