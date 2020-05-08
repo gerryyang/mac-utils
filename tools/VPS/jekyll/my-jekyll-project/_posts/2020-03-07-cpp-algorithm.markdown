@@ -180,15 +180,17 @@ void split_str(const std::string& str, const std::string& delimiters, std::vecto
                 lastPos = str.find_first_not_of(delimiters, pos);
                 pos = str.find_first_of(delimiters, lastPos);
         }
+        return;
 }
 
 void replace(std::string& str)
 {
         // :: -> :*:
-        size_t index = str.find("::", index);
+        size_t index = str.find("::");
         if (index != std::string::npos) {
                 str.replace(index, 2, ":*:");
         }
+        return;
 }
 
 void print_res(const std::string& s)
@@ -196,7 +198,7 @@ void print_res(const std::string& s)
         // print ab -> 00ab
         size_t s_len = s.length();
         if (s_len != 4) {
-                for (int i = 0; i != 4 - s_len; ++i) {
+                for (size_t i = 0; i != 4 - s_len; ++i) {
                         printf("0");
                 }
                 printf("%s", s.c_str());
@@ -204,6 +206,7 @@ void print_res(const std::string& s)
                 printf("%s", s.c_str());
 
         }
+        return;
 }
 
 void func()
@@ -213,7 +216,7 @@ void func()
         scanf("%s", s);
 
         std::string src = s;
-        int src_len = src.length();
+        size_t src_len = src.length();
 
         // :: has only one in IPv6
         size_t found = src.find("::");
@@ -235,7 +238,7 @@ void func()
                                 g_res_vec.push_back(item);
 
                         } else {
-                                for (int i = 0; i != left_size; ++i) {
+                                for (size_t i = 0; i != left_size; ++i) {
                                         g_res_vec.push_back("0000");
                                 }
                         }
@@ -252,11 +255,11 @@ void func()
                 }
         }
 
-        int i = 1;
+        size_t i = 1;
         for (auto& res : g_res_vec) {
                 if (i < g_res_vec.size()) {
                         print_res(res);
-                        printf(".");
+                        printf(":");
                 } else {
                         print_res(res);
                         printf("\n");
@@ -264,7 +267,6 @@ void func()
                 }
                 ++i;
         }
-
         return;
 }
 
@@ -280,17 +282,6 @@ int main()
 
         return 0;
 }
-/*
-4
-7abc::00ff:fffc
-7abc.0000.0000.0000.0000.0000.00ff.fffc
-fc:0:0:8976:0:0:0:ff
-00fc.0000.0000.8976.0000.0000.0000.00ff
-2c0f:9981::
-2c0f.9981.0000.0000.0000.0000.0000.0000
-::
-0000:0000:0000:0000:0000:0000:0000:0000
-*/
 ```
 
 
