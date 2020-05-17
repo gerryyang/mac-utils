@@ -6,7 +6,7 @@ permalink: /about/
 
 Hello buddy,
 
-My name is Gerry, I'm a computer developer based in Shenzhen and this is my blog. I like computers and enjoy learning about them. Whenever I learn something new I try to write about it. It is very likely that I’ll make mistakes in my posts, so feel free to correct me if I’m wrong. Questions are also welcome, but I might not have the time or knowledge to answer all of them. If you want to know more about me, you can take a look at my another [Blog] or [GitHub]. Enjoy yourself :)
+My name is Gerry, I'm a computer programmer based in Shenzhen and this is my blog. I like computers and enjoy learning about them. Whenever I learn something new I try to write about it. It is very likely that I’ll make mistakes in my posts, so feel free to correct me if I’m wrong. Questions are also welcome, but I might not have the time or knowledge to answer all of them. If you want to know more about me, you can take a look at my another [Blog] or [GitHub]. Enjoy yourself :)
 
 More infos:
 
