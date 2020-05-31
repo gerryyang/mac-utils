@@ -1,0 +1,141 @@
+---
+layout: post
+title:  "CPP Trick"
+date:   2020-05-28 20:00:00 +0800
+categories: [C/C++]
+---
+
+* Do not remove this line (it will not be displayed)
+{: toc}
+
+
+# 输出520
+
+规则: 用尽可能不一样的方式输出520, 代码里面不能出现5/2/0。进阶规则: 代码里面不能使用数字/字符/字符串常量。PS: `sizeof(int)`这种算常量, 因为`int a[sizeof(int)]`是合法的
+
+方法1:
+
+``` bash
+# 请求会返回 HTTP 错误码 502 Bad Gateway
+curl -s -w "%{http_code}\n" https://ifish.dev/hello | grep -o . | sort -r | tr -d "\n"
+```
+
+方法2:
+
+``` cpp
+int main()
+{
+#define S(n) std::to_string(n)
+#define CONCAT(a, b, c) S(a)+S(b)+S(c)
+
+        auto f = [](){
+                std::cout << CONCAT(__ATOMIC_SEQ_CST, __SIZEOF_SHORT__, __FINITE_MATH_ONLY__) << std::endl;
+        };
+        f();
+
+        return 0;
+}
+```
+
+方法3:
+
+``` cpp
+int main()
+{
+    static unsigned char a;
+    int v;
+    a--;
+    v = a;
+    v++;
+    v++;
+    v++;
+    v++;
+    v++;
+    cout << v+v << endl;
+}
+```
+
+
+# static_assert 声明
+
+作用：C++11起, 进行编译时断言检查。
+
+
+``` cpp
+#include <type_traits>
+
+template <class T>
+void swap(T& a, T& b)
+{
+        static_assert(std::is_copy_constructible<T>::value,
+                        "Swap requires copying");
+        static_assert(std::is_nothrow_copy_constructible<T>::value
+                        && std::is_nothrow_copy_assignable<T>::value,
+                        "Swap requires nothrow copy/assign");
+        auto c = b;
+        b = a;
+        a = c;
+}
+
+template <class T>
+struct data_structure
+{
+        static_assert(std::is_default_constructible<T>::value,
+                        "Data Structure requires default-constructible elements");
+};
+
+struct no_copy
+{
+        no_copy ( const no_copy& ) = delete;
+        no_copy () = default;
+};
+
+struct no_default
+{
+        no_default () = delete;
+};
+
+int main()
+{
+        int a, b;
+        swap(a, b);
+
+        no_copy nc_a, nc_b;
+        swap(nc_a, nc_b); // 1
+
+        data_structure<int> ds_ok;
+        data_structure<no_default> ds_error; // 2
+}
+```
+
+```
+// 1
+$g++ static_assert.cpp -std=c++11
+static_assert.cpp: In instantiation of 'void swap(T&, T&) [with T = no_copy]':
+static_assert.cpp:40:17:   required from here
+static_assert.cpp:6:2: error: static assertion failed: Swap requires copying
+  static_assert(std::is_copy_constructible<T>::value,
+  ^
+static_assert.cpp:8:2: error: static assertion failed: Swap requires nothrow copy/assign
+  static_assert(std::is_nothrow_copy_constructible<T>::value
+  ^
+static_assert.cpp:11:11: error: use of deleted function 'no_copy::no_copy(const no_copy&)'
+  auto c = b;
+           ^
+static_assert.cpp:25:2: error: declared here
+  no_copy ( const no_copy& ) = delete;
+  ^
+```
+
+```
+// 2
+$g++ static_assert.cpp -std=c++11
+static_assert.cpp: In instantiation of 'struct data_structure<no_default>':
+static_assert.cpp:43:29:   required from here
+static_assert.cpp:19:2: error: static assertion failed: Data Structure requires default-constructible elements
+  static_assert(std::is_default_constructible<T>::value,
+  ^
+```
+
+
+refer: https://zh.cppreference.com/w/cpp/language/static_assert

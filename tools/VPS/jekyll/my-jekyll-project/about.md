@@ -34,7 +34,7 @@ More infos:
 
 My personal Wechat account is `delphiwcdj` and Wechat public account is `tencentgerryyang`. 
 
-[Blog]: http://blog.gerryyang.com
+[Blog]: https://blog.csdn.net/delphiwcdj
 [GitHub]: https://github.com/gerryyang
 
 

@@ -341,6 +341,9 @@ More: https://github.com/hzlzh/Best-App
 * [Evolus Pencil](http://pencil.evolus.vn/)
 	- An open-source GUI prototyping tool that's available for ALL platforms.
 
+* [MacOS - OmniGraffle](https://support.omnigroup.com/documentation/omnigraffle/mac/7.11/en/basic-concepts/#basic-concepts)
+
+
 **refer:**
 
 * [使用 Graphviz 生成自动化系统图](https://www.ibm.com/developerworks/cn/aix/library/au-aix-graphviz/index.html)
