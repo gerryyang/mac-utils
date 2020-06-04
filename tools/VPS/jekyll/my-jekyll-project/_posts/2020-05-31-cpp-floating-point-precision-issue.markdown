@@ -174,8 +174,6 @@ System.out.println(123.3 / 100);  // 1.2329999999999999
 
 `BigDecimal`使用方法：
 
-注意，在使用BigDecimal时，使用它的`BigDecimal(String)`构造器创建对象才有意义。其他的如`BigDecimal b = new BigDecimal(1)`这种，还是会发生精度丢失的问题。
-
 ``` java
 // 构造函数
 BigDecimal(int);       // 创建一个具有参数，所指定整数值的对象
@@ -195,22 +193,55 @@ longValue();           // 将BigDecimal对象中的值以长整数返回
 intValue();            // 将BigDecimal对象中的值以整数返回
 ```
 
+注意，在使用BigDecimal时，使用它的`BigDecimal(String)`构造器创建对象才有意义。其他的如`BigDecimal b = new BigDecimal(1)`这种，还是会发生精度丢失的问题。
+
+源码说明：
+
+``` java
+    /* The results of this constructor can be somewhat unpredictable.  
+     * One might assume that writing {@codenew BigDecimal(0.1)} in  
+     * Java creates a {@code BigDecimal} which is exactly equal to  
+     * 0.1 (an unscaled value of 1, with a scale of 1), but it is  
+     * actually equal to  
+     * 0.1000000000000000055511151231257827021181583404541015625.  
+     * This is because 0.1 cannot be represented exactly as a  
+     * {@codedouble} (or, for that matter, as a binary fraction of  
+     * any finite length).  Thus, the value that is being passed  
+     * <i>in</i> to the constructor is not exactly equal to 0.1,  
+     * appearances notwithstanding.  
+       ……  
+        * When a {@codedouble} must be used as a source for a  
+     * {@code BigDecimal}, note that this constructor provides an  
+     * exact conversion; it does not give the same result as  
+     * converting the {@codedouble} to a {@code String} using the  
+     * {@link Double#toString(double)} method and then using the  
+     * {@link #BigDecimal(String)} constructor.  To get that result,  
+     * use the {@codestatic} {@link #valueOf(double)} method.  
+     * </ol>  
+     */
+public BigDecimal(double val) {  
+    this(val,MathContext.UNLIMITED);  
+}  
+```
+
+
 例子：
 
 ``` java
-BigDecimal a = new BigDecimal(0.1);
-System.out.println("a="+a); // 0.1000000000000000055511151231257827021181583404541015625
-        
-BigDecimal b = new BigDecimal("0.1");
-System.out.println("b="+b); // 0.1
+import java.math.BigDecimal;
 
+public class Main {
+        public static void main(String[] args) {
+                System.out.println("Hello, World!");
 
-BigDecimal a = new BigDecimal(1.01);
-BigDecimal b = new BigDecimal(1.02);
-BigDecimal c = new BigDecimal("1.01");
-BigDecimal d = new BigDecimal("1.02");
-System.out.println(a.add(b)); // 2.0300000000000000266453525910037569701671600341796875
-System.out.println(c.add(d)); // 2.03
+                BigDecimal a = new BigDecimal(1.01);
+                BigDecimal b = new BigDecimal(1.02);
+                BigDecimal c = new BigDecimal("1.01");
+                BigDecimal d = new BigDecimal("1.02");
+                System.out.println(a.add(b)); // 2.0300000000000000266453525910037569701671600341796875
+                System.out.println(c.add(d)); // 2.03
+        }
+}
 ```
 
 * [BigDecimal一定不会丢失精度吗？](https://mp.weixin.qq.com/s/ctdLy0Kqd52p-PuYH2-HOw)

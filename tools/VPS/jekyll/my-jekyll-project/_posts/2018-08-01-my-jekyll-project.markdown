@@ -370,7 +370,12 @@ More: https://github.com/hzlzh/Best-App
 # Computer Blogs
 
 * [ncona.com - Learning about computers](https://ncona.com/)
+* [John Washam - software engineering and computer science](https://startupnextdoor.com/)
 
+
+# Tech Website
+
+* [Better Programming](https://medium.com/better-programming)
 
 --------
 *END - Enjoy!*
