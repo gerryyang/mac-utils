@@ -10,11 +10,11 @@ categories: [C/C++]
 
 # std::find/std::find_if
 
-Returns the first element in the range [first, last) that satisfies specific criteria:
+Returns **the first element** in the range **[first, last)** that satisfies specific criteria:
 
-1) `find` searches for an element equal to value
-3) `find_if` searches for an element for which `predicate p` returns `true`
-5) `find_if_not` searches for an element for which `predicate q` returns `false`
+* `find` searches for an element equal to value
+* `find_if` searches for an element for which `predicate p` returns `true`
+* `find_if_not` searches for an element for which `predicate q` returns `false`
 
 ``` cpp
 #include <iostream>
