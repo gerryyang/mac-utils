@@ -108,6 +108,86 @@ refer:
 * https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
 
 
+# 2020 TPC腾讯程序设计竞赛 3-B Not Fibonacc (正赛)
+
+二进制字符串是由数字 0 和 1 组成的字符串。给定一个二进制字符串 s=s1s2...sn(n >= 3)，您需要将里面的数字重新排列，使得重新排列后的字符串对于所有 3 <= i <= n 满足 s(i-2) + s(i-1) != s(i)。
+​
+输入格式：
+
+有多组测试数据。第一行输入一个整数 T 代表测试数据组数。对于每组测试数据：
+
+第一行输入一个二进制字符串 s (3 <= num(s) <= 10^5, s(i) ∈ {0, 1})，保证所有数据中 num(s) 之和不超过 10^6。
+
+​​输出格式：
+
+对于每组数据，若存在符合要求的重排列，输出一行重排列后的字符串（若有多种合理答案，您可以输出任意一种），否则输出 "Impossible"（不输出引号）。
+
+样例输入：
+
+```
+2
+01110
+000
+```
+
+样例输出：
+
+```
+11100
+Impossible
+```
+
+
+``` cpp
+#include <iostream>
+#include <algorithm>
+#include <string>
+
+std::string proc(const std::string &str)
+{
+  int cnt1 = 0, cnt0 = 0;
+  for (auto &c : str) {
+    if (c == '0') {
+      ++cnt0;
+
+    } else if (c == '1') {
+      ++cnt1;
+    }
+  }
+
+  std::string ans;
+  while (cnt0 >= 2 && cnt1 >= 1) {
+    ans += "001";
+    cnt0 -= 2;
+    --cnt1;
+  }
+
+  if (cnt0 > 2 && cnt1 == 0) {
+    return "Impossible";
+  }
+
+  ans += std::string(cnt0, '0');
+  ans.insert(0, cnt1, '1');
+
+  return ans;
+}
+
+int main()
+{
+  int n = 0;
+  std::cin >> n;
+
+  while (n-- > 0) {
+    std::string str;
+    std::cin >> str;
+    std::cout << proc(str) << std::endl;
+  }
+
+  return 0;
+}
+```
+
+
 # 2020 TPC腾讯程序设计竞赛 A IPv6 (正赛)
 
 网际协议第 6 版（IPv6）是网际协议（IP）的最新版本。该协议用以鉴别并定位网络上的计算机，并对网络流量进行路由。该协议使用 128 个二进制位代表一个网络地址，其设计目的是为了替换第 4 版协议。

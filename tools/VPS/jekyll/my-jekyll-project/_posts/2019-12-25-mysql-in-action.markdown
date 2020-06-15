@@ -84,6 +84,35 @@ set global transaction isolation level repeatable read | serializable | ...;
 set autocommit=off 或者 start transaction
 ```
 
+# MySQL索引
+
+## 索引原理
+
+* Indexes are used to find rows with specific column values quickly. Without an index, MySQL must begin with the first row and then read through the entire table to find the relevant rows. The larger the table, the more this costs. If the table has an index for the columns in question, MySQL can quickly determine the position to seek to in the middle of the data file without having to look at all the data. This is much faster than reading every row sequentially.
+* Most MySQL indexes (PRIMARY KEY, UNIQUE, INDEX, and FULLTEXT) are stored in [B-trees](https://dev.mysql.com/doc/refman/8.0/en/glossary.html#glos_b_tree). Exceptions: Indexes on spatial data types use R-trees; MEMORY tables also support [hash indexes](https://dev.mysql.com/doc/refman/8.0/en/glossary.html#glos_hash_index); InnoDB uses inverted lists for FULLTEXT indexes.
+
+
+## 联合索引
+
+``` sql
+CREATE TABLE test (
+    id         INT NOT NULL,
+    last_name  CHAR(30) NOT NULL,
+    first_name CHAR(30) NOT NULL,
+    PRIMARY KEY (id),
+    INDEX name (last_name, first_name)
+);
+```
+
+* MySQL can create composite indexes (that is, indexes on multiple columns). An index may consist of up to 16 columns. 
+* MySQL can use multiple-column indexes for queries that test all the columns in the index, or queries that test just the first column, the first two columns, the first three columns, and so on. If you specify the columns in the right order in the index definition, a single composite index can speed up several kinds of queries on the same table.
+* MySQL cannot use the index to perform lookups if the columns do not form `a leftmost prefix of the index`.
+
+refer:
+
+* [Multiple-Column Indexes](https://dev.mysql.com/doc/refman/8.0/en/multiple-column-indexes.html)
+* [How MySQL Uses Indexes](https://dev.mysql.com/doc/refman/8.0/en/mysql-indexes.html)
+
 
 # 实践之坑
 
@@ -551,6 +580,17 @@ The size of JSON documents stored in JSON columns is limited to the value of the
 
 
 # 性能优化
+
+## MySQL EXPLAIN
+
+* The EXPLAIN statement provides information about how MySQL executes statements. EXPLAIN works with SELECT, DELETE, INSERT, REPLACE, and UPDATE statements. 
+* When you issue a query, the MySQL Query Optimizer tries to devise an optimal plan for query execution. You can see information about the plan by prefixing the query with EXPLAIN.
+
+refer :
+
+* [EXPLAIN Output Format](https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#explain_key)
+* [Using EXPLAIN to Write Better MySQL Queries](https://www.sitepoint.com/using-explain-to-write-better-mysql-queries/)
+
 
 ## MySQL查询缓存
 

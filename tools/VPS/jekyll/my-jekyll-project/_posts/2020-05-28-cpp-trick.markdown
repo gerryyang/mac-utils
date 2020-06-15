@@ -8,6 +8,71 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {: toc}
 
+# std::find/std::find_if
+
+Returns the first element in the range [first, last) that satisfies specific criteria:
+
+1) `find` searches for an element equal to value
+3) `find_if` searches for an element for which `predicate p` returns `true`
+5) `find_if_not` searches for an element for which `predicate q` returns `false`
+
+``` cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+int main()
+{
+  int n1 = 3;
+  int n2 = 5;
+
+  std::vector<int> v{0, 1, 2, 3, 4};
+
+  auto result1 = std::find(std::begin(v), std::end(v), n1);
+  auto result2 = std::find(std::begin(v), std::end(v), n2);
+
+  if (result1 != std::end(v)) {
+    std::cout << "v contains: " << n1 << '\n';
+  } else {
+    std::cout << "v does not contain: " << n1 << '\n';
+  }
+
+  if (result2 != std::end(v)) {
+    std::cout << "v contains: " << n2 << '\n';
+  } else {
+    std::cout << "v does not contain: " << n2 << '\n';
+  }
+
+
+  std::vector<int> v2 = {3, 1, 8, 5, 0};
+  // 标准库里的查找算法
+  std::cout << *find_if(std::begin(v2), std::end(v2),
+  [](int x) { // 匿名lambda表达式, 不需要auto赋值
+    return x >= 5; // 用做算法的谓词判断条件
+  })
+          << std::endl; // 语句执行完, lambda表达式就不存在了
+
+
+  std::string str = "001001";
+  std::cout << *find_if(std::begin(str), std::end(str),
+  [](char c) {
+    return c == '1';
+  })
+          << std::endl;
+
+  return 0;
+}
+/*
+v contains: 3
+v does not contain: 5
+8
+1
+*/
+```
+
+[https://en.cppreference.com/w/cpp/algorithm/find](https://en.cppreference.com/w/cpp/algorithm/find)
+
 
 # 输出520
 

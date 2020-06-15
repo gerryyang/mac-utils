@@ -34,7 +34,7 @@ C: select id from table where A = “x”
 
 D: select id from table where A = “x” and C = “z”
 
-正确答案：A,B,C
+正确答案：A,B,C,D
 
 
 * C++多态

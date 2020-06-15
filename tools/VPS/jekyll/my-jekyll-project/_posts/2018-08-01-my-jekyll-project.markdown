@@ -238,6 +238,14 @@ More: https://github.com/hzlzh/Best-App
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
 
+```
+# To turn off autoindent when you paste code
+:set paste
+
+# After you pasted your code, turn off the paste-mode, so that auto-indenting when you type works correctly again
+:set nopaste
+```
+
 **常用插件：**
 
 * [YouCompleteMe - A code-completion engine for Vim](https://github.com/ycm-core/YouCompleteMe)
@@ -247,6 +255,7 @@ More: https://github.com/hzlzh/Best-App
 
 * [Configure coc.nvim for C/C++ Development](https://ianding.io/2019/07/29/configure-coc-nvim-for-c-c++-development/)
 * [my vim configuration, based on amix's project](https://github.com/ArthurChiao/vim_awesome)
+* [Turning off auto indent when pasting text into vim](https://stackoverflow.com/questions/2514445/turning-off-auto-indent-when-pasting-text-into-vim)
 
 ### Sublime
 
