@@ -1700,9 +1700,9 @@ mtr - a network diagnostic tool
 
 # 开发语言性能比较
 
-[langs-performance]
+* [langs-performance]
+* [cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3]
 
-[cpp-vs-python-vs-php-vs-java-vs-others-performance-benchmark-2016-q3]
 
 [langs-performance]: https://github.com/famzah/langs-performance
 
@@ -1711,11 +1711,9 @@ mtr - a network diagnostic tool
 
 # Web服务性能比较
 
-[Web-server-performance-comparison]
-
-[nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there]
-
-[How_does_Apache_httpd_performance_compare_to_other_servers]
+* [Web-server-performance-comparison]
+* [nginx-vs-apache-are-there-any-actual-usage-comparisons-and-statistcs-out-there]
+* [How_does_Apache_httpd_performance_compare_to_other_servers]
 
 
 [Web-server-performance-comparison]: https://help.dreamhost.com/hc/en-us/articles/215945987-Web-server-performance-comparison
@@ -1725,7 +1723,13 @@ mtr - a network diagnostic tool
 [How_does_Apache_httpd_performance_compare_to_other_servers]: https://wiki.apache.org/httpd/FAQ#How_does_Apache_httpd_performance_compare_to_other_servers.3F
 
 
-# Refer
+# Other
+
+* [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
+* [Linux Performance Analysis in 60,000 Milliseconds](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55)
+
+------
+
 
 [Hyper-threading]: https://en.wikipedia.org/wiki/Hyper-threading
 
@@ -1735,8 +1739,5 @@ mtr - a network diagnostic tool
 
 [Superscalar processor]: https://en.wikipedia.org/wiki/Superscalar_processor
 	
-
-[Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
-
 
 
