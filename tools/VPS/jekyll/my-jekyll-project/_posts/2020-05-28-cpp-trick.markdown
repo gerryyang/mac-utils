@@ -34,6 +34,11 @@ int main() {
 2. 模板实例化不检查参数的访问属性，因此模板实例化时模板参数可以传递私有成员的指针。
 3. 在模板类里就地定义友员，从而通过模板参数偷取了成员指针。
 
+> 17.7.2 Explicit instantiation 
+> http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf
+> The usual access checking rules do not apply to names used to specify explicit instantiations. [ Note: In particular, the template arguments and names used in the function declarator (including parameter types, return types and exception specifications) may be private types or objects which would normally not be accessible and the template may be a member template or member function which would not normally be accessible. — end note ]
+
+
 ``` cpp
 #include <iostream>
 #include <string>

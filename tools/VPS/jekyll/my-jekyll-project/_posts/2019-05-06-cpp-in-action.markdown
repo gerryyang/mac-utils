@@ -24,11 +24,19 @@ categories: [C/C++, 编程语言]
 
 # 标准参考
 
-* 编译器对标准的支持情况，可见 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)。
-* 通过工具 [https://cppinsights.io/](https://cppinsights.io/) 可以展示实例化的过程。
-* 在线编译服务 [https://wandbox.org/](https://wandbox.org/)。
-* GCC编译选项 [https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html](https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html)。
-* C++标准 [https://isocpp.org/](https://isocpp.org/)。
+* 编译器对标准的支持情况 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)
+* 实例化展示工具 [https://cppinsights.io/](https://cppinsights.io/) 
+* 在线多语言编译服务 [https://wandbox.org/](https://wandbox.org/)
+* GCC reference 
+    + [https://gcc.gnu.org/](https://gcc.gnu.org/)
+    + GCC编译选项 [https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html](https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html)
+* C++ language references 
+    + [https://isocpp.org/](https://isocpp.org/)
+    + [https://cppreference.com/](https://cppreference.com/)
+    + [http://www.open-std.org/jtc1/sc22/wg21/](http://www.open-std.org/jtc1/sc22/wg21/)
+    + [http://www.open-std.org/jtc1/sc22/wg21/docs/standards](http://www.open-std.org/jtc1/sc22/wg21/docs/standards)
+* Boost libraries references
+    + [https://www.boost.org/doc/](https://www.boost.org/doc/)
 
 
 # 核心概念
