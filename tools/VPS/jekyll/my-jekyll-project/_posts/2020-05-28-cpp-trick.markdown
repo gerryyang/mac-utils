@@ -8,6 +8,134 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {: toc}
 
+
+# 优雅访问并修改C++中私有成员的方法
+
+方法1：
+
+``` cpp
+#include <iostream>
+
+#define private public
+#include <memory>
+#undef private
+
+int main() {
+  std::shared_ptr<int> a;
+  a._M_refcount;  // gcc, access private member
+}
+```
+
+方法2：
+
+原理：获取成员指针，通过成员指针进行访问。
+
+1. 类成员变量指针是个常量，比如`&C::member`是个常量，类型是`int C::*`。
+2. 模板实例化不检查参数的访问属性，因此模板实例化时模板参数可以传递私有成员的指针。
+3. 在模板类里就地定义友员，从而通过模板参数偷取了成员指针。
+
+``` cpp
+#include <iostream>
+#include <string>
+
+class A {
+ private:
+  int member;
+};
+
+struct AccessA {
+  typedef int A::*type;
+  friend type FiledPtr(AccessA);
+};
+
+template <typename Tag, typename Tag::type M>
+struct Rob {
+  friend typename Tag::type FiledPtr(Tag) { return M; }
+};
+
+template struct Rob<AccessA, &A::member>;
+
+int main() {
+  A a;
+  a.*FiledPtr(AccessA()) = 42;  // write 42 to it
+  std::cout << "proof: " << a.*FiledPtr(AccessA()) << std::endl;
+}
+```
+
+对上面作一些简化：
+
+``` cpp
+#include <iostream>
+#include <string>
+
+class A {
+ private:
+  int member;
+};
+
+int A::* FiledPtr();
+
+template <typename Tag, int Tag::* M>
+struct Rob {
+  friend int A::* FiledPtr() { return M; }
+};
+
+template struct Rob<A, &A::member>;
+
+int main() {
+  A a;
+
+  auto mp = FiledPtr(); // mp: member pointer
+
+  a.*mp = 42;  // write 42 to it
+  std::cout << "proof: " << a.*mp << std::endl;
+}
+```
+
+通过全局变量把成员变量的指针暴漏出来：
+
+``` cpp
+#include <iostream>
+#include <string>
+
+class A {
+ private:
+  int member;
+};
+
+using mem_ptr_t = int A::*;
+
+mem_ptr_t ptr_to_member;
+
+template <auto kMemPtr>
+struct PtrExporter {
+  // Initialized prior to `main` is entered.
+  inline static const int lets_initialize_global_ptr = [] {
+    ptr_to_member = kMemPtr;  // `ptr_to_member` is initialized here.
+    return 0;
+  }();
+};
+
+// Explicit instantiatation of `PtrExporter` (hence, its member
+// `lets_initialize_global_ptr`.)
+//
+// Lambda above is run as a result of this instantiation.
+template struct PtrExporter<&A::member>;
+
+int main() {
+  // By now `ptr_to_member` is initialized.
+
+  A a;
+  a.*ptr_to_member = 42;
+  std::cout << "proof: " << a.*ptr_to_member << std::endl;
+}
+```
+
+其他方法：
+
+https://github.com/martong/access_private/blob/master/include/access_private.hpp
+
+
 # std::find/std::find_if
 
 Returns **the first element** in the range **[first, last)** that satisfies specific criteria:

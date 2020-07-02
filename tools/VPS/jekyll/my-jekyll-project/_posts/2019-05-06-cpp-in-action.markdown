@@ -22,9 +22,13 @@ categories: [C/C++, 编程语言]
 * Clang 9.0
 * Visual Studio 2019 16.3 (MSVC 19.23)
 
-编译器对标准的支持情况，可见 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)。
+# 标准参考
 
-通过工具 [https://cppinsights.io/](https://cppinsights.io/) 可以展示实例化的过程。
+* 编译器对标准的支持情况，可见 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)。
+* 通过工具 [https://cppinsights.io/](https://cppinsights.io/) 可以展示实例化的过程。
+* 在线编译服务 [https://wandbox.org/](https://wandbox.org/)。
+* GCC编译选项 [https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html](https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html)。
+* C++标准 [https://isocpp.org/](https://isocpp.org/)。
 
 
 # 核心概念
