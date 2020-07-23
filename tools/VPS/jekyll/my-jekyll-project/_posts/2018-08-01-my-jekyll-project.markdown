@@ -194,6 +194,7 @@ More:
 | [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
 | [Dozer](https://github.com/Mortennn/Dozer) | Hide status bar icons on macOS，用于隐藏状态栏上不必要的图标，通过`command + drag`将范围内的图标隐藏
 | [LICEcap](https://github.com/justinfrankel/licecap) | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF
+| [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展 
 
 
 More: https://github.com/hzlzh/Best-App
@@ -351,7 +352,12 @@ More: https://github.com/hzlzh/Best-App
 	- An open-source GUI prototyping tool that's available for ALL platforms.
 
 * [MacOS - OmniGraffle](https://support.omnigroup.com/documentation/omnigraffle/mac/7.11/en/basic-concepts/#basic-concepts)
+  - MacOS 画图工具
 
+* [MacOS - StarUML3](http://staruml.io/)
+  - MacOS UML建模工具
+
+* [UML-The Unified Modeling Language](https://www.uml-diagrams.org/)
 
 **refer:**
 
