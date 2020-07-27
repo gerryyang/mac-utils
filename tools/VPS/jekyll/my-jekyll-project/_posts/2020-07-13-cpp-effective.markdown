@@ -1052,6 +1052,7 @@ derived()
 
 using namespace std;
 
+// https://en.cppreference.com/w/cpp/string/basic_string
 class Dummy : public std::string
 {
 
@@ -1067,7 +1068,7 @@ public:
     
     Dummy(const char *str) : std::string(str) { 
         cout << "Dummy(const char *str)" << endl; 
-        no_del_member = new char[8];
+        no_del_member = new char[8]();
         snprintf(no_del_member, 8, "hello");
         cout << no_del_member << endl;
     }
