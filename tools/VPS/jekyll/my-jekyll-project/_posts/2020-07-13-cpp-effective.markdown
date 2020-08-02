@@ -25,7 +25,7 @@ public:
 
 ## 2 对象的复制
  
- `copy构造函数`被用来**“以同型对象初始化自我对象”**，`copy assignment操作符`被用来“从另一个同型对象中拷贝其值到自我对象”。
+ `copy构造函数`被用来“以同型对象初始化自我对象”，`copy assignment操作符`被用来“从另一个同型对象中拷贝其值到自我对象”。
 
 ```cpp
 class Widget {
@@ -41,7 +41,7 @@ w1 = w2;          // 调用copy assignment操作符
 Widget w3 = w2;   // 调用copy构造函数
 ```
 
-> **copy构造和copy赋值的区别**：如果一个新对象被定义，一定会有一个构造函数被调用，不可能调用赋值操作。如果没有新对象被定义，就不会有构造函数被调用，那么就是赋值操作被调用。
+> **copy构造和copy assignment操作符的区别**：如果一个新对象被定义，一定会有一个构造函数被调用，不可能调用赋值操作。如果没有新对象被定义，就不会有构造函数被调用，那么就是赋值操作被调用。
 
 ## 3 命名习惯
 
@@ -50,8 +50,8 @@ Widget w3 = w2;   // 调用copy构造函数
 
 ## 4 TR1和Boost
 
-`TR1`（Technical Report 1）是一份规范，描述加入C++标准程序库的诸多新机能。这些机能以新的`class templates`和`function templates`形式体现。所有`TR1`组件都被置于命名空间`tr1`内。
-`Boost`是个组织，亦是一个网站，提供可移植，源代码开放的C++程序库。大多数`TR1`机能是以`Boost`的工作为基础。
+* `TR1`（Technical Report 1）是一份规范，描述加入C++标准程序库的诸多新机能。这些机能以新的`class templates`和`function templates`形式体现。所有`TR1`组件都被置于命名空间`tr1`内。
+* `Boost`是个组织，亦是一个网站，提供可移植，源代码开放的C++程序库。大多数`TR1`机能是以`Boost`的工作为基础。
 
 ## 5 视C++为一个语言联邦
 
@@ -112,8 +112,9 @@ int main ()
   // C语言可以通过不同的函数指针来模拟overload重载
   int n;
   qsort (values, 6, sizeof(int), compare);
-  for (n=0; n<6; n++)
+  for (n = 0; n < 6; ++n) {
     printf ("%d ",values[n]);
+  }
 
   return 0;
 }
@@ -323,7 +324,7 @@ inline void callWithMax(const T& a, const T& b)
     f(a > b ? a : b);
 }
 ```
-这个`template`根据实例化可以产出一整群函数，每个函数都接受两个同类型对象，并以其中较大的调用f。这里不需要在函数本体中为参数加上括号，也不需要操心参数被计算的次数，同时，由于callWithMax是个真正的函数，它遵守作用域和访问规则，因此可以写出一个class内的private inline函数，而对于宏是无法完成的。
+这个`template`根据实例化可以产出一整群函数，每个函数都接受两个同类型对象，并以其中较大的调用f。这里不需要在函数本体中为参数加上括号，也不需要操心参数被计算的次数，同时，由于callWithMax是个真正的函数，它遵守作用域和访问规则，因此可以写出**一个class内的private inline函数，而对于宏是无法完成的**。
 
 > 请记住：
 > 
@@ -2629,7 +2630,7 @@ main
 例如：
 C++标准程序库头文件`<iosfwd>`内含`iostream`各组件的声明式，其对应定义则分布在若干不同的头文件内，包括`<sstream>`，`<streambuf>`，`<fstream>`和`<iostream>`。
 
-### **Handle classes**
+### Handle classes
  像`Person`这样使用`pimpl idiom`的classes，往往被称为`Handle classes`。意思是，对于`Person`这样的class，如果要做点实事：
 
 一种办法是，将它们的所有函数转交给相应的实现类，并由后者完成实际工作。
