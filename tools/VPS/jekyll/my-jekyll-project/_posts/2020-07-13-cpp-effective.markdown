@@ -352,7 +352,7 @@ void f1(const Widget* pw);
 void f2(Widget const * pw);
 ```
 
-STL迭代器系以指针为根据塑模出来，所以迭代器的作用就像个`T*`指针。如果你希望迭代器所指的东西不可被改变，则需要使用`const_iterator`。
+`STL迭代器`系以`指针`为根据塑模出来，所以迭代器的作用就像个`T*`指针。如果你希望迭代器所指的东西不可被改变，则需要使用`const_iterator`。
 
 ```cpp
 std::vector<int> vec;
@@ -495,7 +495,7 @@ public:
   {
     if (!lengthIsValid) {
       printf("do strlen... ");
-      textLength = std::strlen(pText);    // error? 在const成员函数内不能修改non-static成员变量
+      textLength = strlen(pText);    // error? 在const成员函数内不能修改non-static成员变量
       lengthIsValid = true;               // 同上
     }
     return textLength;
@@ -786,6 +786,11 @@ int main()
 
   return 0;
 }
+/*
+NamedObject(const char* name, const T& value)
+NamedObject(const char* name, const T& value)
+gerry
+*/
 ```
 
 NamedObject没有声明`copy`构造函数，也没有声明`copy assignment`操作符，所以编译器会创建这些函数当它们被调用的时候。编译器生成的`copy`构造函数必须以`no1.nameValue`和`no1.objectValue`为初值设定`no2.nameValue`和`no2.objectValue`。两者之中，`nameValue`的类型是`string`，而标准的`string`有个`copy`构造函数，所以`no2.nameValue`的初始化方式是调用`string`的`copy`构造函数并以`no1.nameValue`为实参。另一个成员`NameObject<int>::objectValue`的类型是`int`（对此template具现体而言`T`是`int`），是个内置类型，所以`no2.objectValue`会以拷贝`no1.objectValue`内的**每一个bits**来完成初始化。编译器为`NamedObject<int>`所生成的`copy assignment`操作符，其行为基本上与`copy`构造函数一样。
@@ -845,8 +850,8 @@ public:
   std::string name;
 
 private:
-  HomeForSale(const HomeForSale&);
-  HomeForSale& operator=(const HomeForSale&);
+  HomeForSale(const HomeForSale&);             // 未实现
+  HomeForSale& operator=(const HomeForSale&);  // 未实现
 };
 
 int main()
@@ -875,13 +880,55 @@ int main()
 
 当用户企图拷贝HomeForSale对象，编译器会阻挠他。如果你不慎在member函数或friend函数之内那么做，会轮到连接器发出抱怨。
 
+> 若为private且提供了实现，则通过friend的方式仍然可以实现复制。
+
+``` cpp
+#include<iostream>
+#include<string>
+
+class HomeForSale 
+{
+  friend void copy_friend(HomeForSale& lhs, HomeForSale& rhs);
+
+public:
+  HomeForSale() 
+  {
+  }
+  HomeForSale(const std::string& lhs) :
+    name(lhs)
+  {
+  }
+
+  std::string name;
+
+private:
+  HomeForSale(const HomeForSale& rhs) { name = rhs.name; }
+  HomeForSale& operator=(const HomeForSale& rhs) { name = rhs.name; return *this; }
+};
+
+void copy_friend(HomeForSale& lhs, HomeForSale& rhs)
+{
+  lhs = rhs;
+}
+
+int main()
+{
+  HomeForSale h1("first");
+  HomeForSale h2("second");
+  copy_friend(h2, h1);
+  std::cout << h2.name << std::endl;
+
+  return 0;
+}
+```
+
 *另一种方法*
 
-将连接器错误移植编译器是可能的，而且那是好事，毕竟越早发现错误越好。方法是：在一个专门为了阻止copying动作而设计的`base class`内，将`copy构造函数`和`copy assignment操作符`声明为`private`。
+将`链接器`错误移植`编译器`是可能的，而且那是好事，毕竟越早发现错误越好。方法是：在一个专门为了阻止copying动作而设计的`base class`内，将`copy构造函数`和`copy assignment操作符`声明为`private`。
 
 因为，只要任何人，甚至是member函数或friend函数，尝试拷贝HomeForSale对象，编译器便试着生成一个`copy构造函数`和一个`copy assignment操作符`，这些函数的“编译器生成版”会尝试调用其`base class`的对应兄弟，那些调用会被编译器拒绝，因为其`base class`的拷贝构造函数是`private`。
 
-这种方法也有一个问题，由于它总是扮演`base class`，因此使用此项技术可能导致多重继承，因为你往往还可能需要继承其他class，而多重继承有时会阻止`empty base class optimization`。
+这种方法也有一个问题，由于它总是扮演`base class`，因此使用此项技术可能导致**多重继承**，因为你往往还可能需要继承其他class，而多重继承有时会阻止`empty base class optimization`。
 
 ```cpp
 #include<iostream>
@@ -929,9 +976,9 @@ private:
 int main()
 {
   HomeForSale h1("first");
-
-  HomeForSale h3(h1);     // error
+  
   HomeForSale h2 = h1;    // error
+  HomeForSale h3(h1);     // error
 
   HomeForSale h4("fouth");
   h4 = h1;                // error
@@ -952,9 +999,9 @@ int main()
 
 ## 3 为多态基类声明virtual析构函数
 
-C++指出，当`derived class`对象经由一个`base class`指针被删除，而该`base class`带着一个`non-virtual`析构函数，其结果未定义 —— 实际执行时通常发生的是，对象的`derived`成分没被销毁。于是造成一个诡异的“局部销毁”对象，从而导致资源泄露。
+C++指出，当`derived class`对象经由一个`base class`指针被删除，而该`base class`带着一个`non-virtual`析构函数，其结果未定义 —— **实际执行时通常发生的是，对象的`derived`成分没被销毁**。于是造成一个诡异的“局部销毁”对象，从而导致资源泄露。
 
-base类没有使用virtual析构函数
+base类没有使用virtual析构函数：
 
 ```cpp
 #include <stdio.h>
@@ -981,8 +1028,7 @@ private:
 
 int main() 
 {
-  //derived obj;
-
+  // derived obj;
   base *b = new derived;
   // do something
   delete b;
@@ -997,7 +1043,7 @@ derived()
  */
 ```
 
-base类使用virtual析构函数
+base类使用virtual析构函数：
 
 ```cpp
 #include <stdio.h>
@@ -1024,8 +1070,7 @@ private:
 
 int main() 
 {
-  //derived obj;
-
+  // derived obj;
   base *b = new derived;
   // do something
   delete b;
@@ -1045,7 +1090,7 @@ derived()
 > 
 > *观点2*：如果class不含virtual函数，通常表示它并不意图被用做一个base class。当class不企图被当做base class，令其析构函数为virtual往往是一个馊主意。因为，欲实现出virtual函数，对象必须携带某些信息，主要用来在运行期决定哪一个virtual函数该被调用。这份信息通常是由一个所谓`vptr(virtual table pointer)`指出，`vptr`指向一个由函数指针构成的数组，称为`vtbl(virtual table)`。每一个带有virtual函数的class都有一个相应的`vtbl`。当对象调用某一virtual函数，实际被调用的函数取决于该对象的`vptr`所指的那个`vtbl`（编译器在其中寻找合适的函数指针）。这样，如果base class内含virtual函数，那么其对象的体积会增加，在32-bits计算机体系结构中将多占用32bits（vptr大小）；而在64-bits计算机体系结构中多占用64bits（指针大小为8字节）。
 > 
-> *观点3*：标准库string不含任何virtual函数，但有时程序员会错误地把它当做base class。那么，当你在程序任意某处无意间将一个`pointer-to-specialstring`转换为一个`pointer-to-string`，然后将转换所得的那个`string指针`delete掉，则立刻被流放到"不明确行为上"。很不幸C++目前没有提供类似Java的`final classes`禁止派生的机制。
+> *观点3*：**标准库string不含任何virtual函数，但有时程序员会错误地把它当做base class**。那么，当你在程序任意某处无意间将一个`pointer-to-specialstring`转换为一个`pointer-to-string`，然后将转换所得的那个`string指针`delete掉，则立刻被流放到"不明确行为上"。很不幸C++目前没有提供类似Java的`final classes`禁止派生的机制。
 
 ``` cpp
 #include <iostream>
@@ -1080,12 +1125,10 @@ private:
 
 int main()
 {
-    Dummy obj("gerry");
-    cout << obj.size() << endl;
-    
-    std::string *str = new Dummy("yang");
+    std::string *str = new Dummy("gerry");
     cout << str->size() << endl;
-    delete str; // error, no delete no_del_member
+
+    delete str; // error, no delete no_del_member, Memory leak !
     
     return 0;
 }
@@ -1093,11 +1136,6 @@ int main()
 Dummy(const char *str)
 hello
 5
-Dummy(const char *str)
-hello
-4
-~Dummy()
-delete[] no_del_member
 */
 ```
 

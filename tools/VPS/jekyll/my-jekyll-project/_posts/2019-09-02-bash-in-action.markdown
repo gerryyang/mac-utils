@@ -8,6 +8,109 @@ categories: [Bash, 编程语言]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Bash Tips
+
+## 日志输出
+
+通过指定日志级别控制日志输出。
+
+``` bash
+#!/bin/bash
+
+_log() {
+    if [ "$_DEBUG" == "true" ]; then
+        echo 1>&2 "$@"
+    fi
+}
+
+_log "do something..."
+echo "Hello $USER"
+```
+
+执行：
+
+```
+$ sh ./test.sh 
+Hello gerryyang
+
+$ _DEBUG=true sh ./test.sh 
+do something...
+Hello gerryyang
+```
+
+
+## Debug
+
+``` bash
+#!/bin/bash
+
+echo "Hello $USER,"
+echo "Today is $(date +'%Y-%m-%d')"
+```
+
+执行或调试：
+
+```
+sh ./test.sh 
+Hello gerryyang,
+Today is 2020-08-03
+
+$ sh -x ./test.sh 
++ echo 'Hello gerryyang,'
+Hello gerryyang,
+++ date +%Y-%m-%d
++ echo 'Today is 2020-08-03'
+Today is 2020-08-03
+```
+
+输出行号，需设置 `export PS4='+${BASH_SOURCE}:${LINENO}:${FUNCNAME[0]}: '`
+
+```
+$ sh -x ./test.sh 
++./test.sh:3:: echo 'Hello gerryyang,'
+Hello gerryyang,
+++./test.sh:4:: date +%Y-%m-%d
++./test.sh:4:: echo 'Today is 2020-08-03'
+Today is 2020-08-03
+```
+
+调试部份的脚本：
+
+``` bash
+#!/bin/bash
+
+echo "Hello $USER,"
+set -x
+echo "Today is $(date +'%Y-%m-%d')"
+set +x
+```
+
+调试：
+
+``` 
+$ sh -x./test.sh 
++./test.sh:3:: echo 'Hello gerryyang,'
+Hello gerryyang,
++./test.sh:4:: set -x
+++./test.sh:5:: date +%Y-%m-%d
++./test.sh:5:: echo 'Today is 2020-08-03'
+Today is 2020-08-03
++./test.sh:6:: set +x
+```
+
+可以不用`-x`调试选项：
+
+```
+$ sh ./test.sh 
+Hello gerryyang,
+++./test.sh:5:: date +%Y-%m-%d
++./test.sh:5:: echo 'Today is 2020-08-03'
+Today is 2020-08-03
++./test.sh:6:: set +x
+```
+
+如果需要更强大的功能，可以使用[BASH Debugger](http://bashdb.sourceforge.net/)。
+
 
 # Bash Utils
 
