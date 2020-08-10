@@ -107,6 +107,106 @@ refer:
 * https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
 * https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
 
+# 2020 TPC腾讯程序设计竞赛 1-B Source of Happiness (正赛 R2)
+
+The famous instant message software QQ has recently released its badge system. Users are awarded with different types of badges when using the software if they meet certain conditions. One of the badge, the Source of Happiness badge, requires the users to send at least m memes in total during 3 continuous days. The user will be awarded with Source of Happiness at the end of the 3rd day.
+
+
+![tpc_2r_1](/assets/images/202008/tpc_2r_1.png)
+
+Hint:
+
+For the first sample test case, one valid record array after filling the unknown integers is {5, 5, 15, 0, 5}, so the answer is 5 + 5 + 15 + 0 + 5 = 30.
+
+``` cpp
+#include <bits/stdc++.h>
+#include <algorithm>
+
+typedef struct A {
+    long long ori;
+    long long cur;
+} t_a;
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        int n, m;
+        scanf("%d %d", &n, &m);
+
+        std::list<t_a> v;
+        long long res = 0;
+
+        for (int i = 0; i < n; ++i) {
+            int x;
+            scanf("%d", &x);
+
+            t_a a;
+            a.ori = a.cur = x;
+            v.emplace_back(a);
+
+            if (a.ori != -1) {
+                res += a.ori;
+            }
+        }
+
+        bool impos = false;
+        while (v.size() > 2) {
+
+            std::list<int> lost_pos_list;
+            long long has = 0;
+
+            auto iter = v.begin();
+            for (int i = 1; iter != v.end(); ++iter, ++i) {
+
+                if (iter->ori == -1) {
+                    lost_pos_list.emplace_back(i - 1);
+                }
+
+                if (iter->cur != -1)  {
+                    has += iter->cur;
+                }
+
+                if (i % 3 == 0) {
+                    if (has < m) {
+                        if (lost_pos_list.empty()) {
+                            impos = true;
+                            break;
+                        }
+
+                        auto update_idx = lost_pos_list.back();
+                        auto update_iter = v.begin();
+                        for (int i = 0; i != update_idx; ++i, ++update_iter);
+
+                        int left = m - has;
+                        res += left;
+
+                        update_iter->cur = std::max(update_iter->cur, 0LL) + left;
+
+                    }
+                    v.pop_front();
+                    break;
+                }
+            }// for
+
+            if (impos) {
+                break;
+            }
+        }// while
+
+        if (impos) {
+            printf("Impossible\n");
+        } else {
+            printf("%lld\n", res);
+        }
+
+    }// while
+
+    return 0;
+}
+```
+
 
 # 2020 TPC腾讯程序设计竞赛 3-B Not Fibonacc (正赛)
 
@@ -423,6 +523,63 @@ int main()
 }
 ```
 
+``` cpp
+#include<bits/stdc++.h>
+
+int main()
+{
+    int T, n;
+    scanf("%d", &T);
+    while(T--) {
+        scanf("%d", &n);
+        printf("%d\n", std::max(1, n >> 1));
+    }
+    return 0;
+}
+```
+
+使用GoLang实现：
+
+``` golang
+package main
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strconv"
+    "strings"
+)
+func ReadLine(reader *bufio.Reader) string {
+    line, _ := reader.ReadString('\n')
+    return strings.TrimRight(line, "\n")
+}
+func ReadInt(reader *bufio.Reader) int {
+    num, _ := strconv.Atoi(ReadLine(reader))
+    return num
+}
+func ReadArray(reader *bufio.Reader) []int {
+    line := ReadLine(reader);
+    strs := strings.Split(line, " ")
+    nums := make([]int, len(strs))
+    for i, s := range strs {
+        nums[i], _ = strconv.Atoi(s)
+    }
+    return nums
+}
+func main() {
+    reader := bufio.NewReader(os.Stdin)
+    T := ReadInt(reader)
+    for casi := int(0); casi < T; casi++ {
+        n := ReadInt(reader)
+        n = n / 2
+        if n == 0 {
+            n = 1
+        }
+        fmt.Println(n)
+    }
+}
+```
+
 # 2020 TPC腾讯程序设计竞赛 A Easy Task (热身赛)
 
 给定 n 个整数，每次可以进行如下操作：选择其中最大的整数 a 与最小的整数 b，并将它们都替换为 (a−b)。是否可以在有限次操作内使得所有整数都相等？如果是，最后的结果是什么？
@@ -447,100 +604,41 @@ int main()
 5 5
 ```
 
+样例输出：
+
+```
+2
+5
+```
 
 ``` cpp
-#include <cstdio>
-#include <vector>
-#include <cmath>
+#include <bits/stdc++.h>
 
-#define MIN_VAL (-1 * pow(10, 6))
-#define MAX_VAL (pow(10, 6))
-
-// case1:
-// 0 3 5
-// 5 3 5
-// 2 2 2
-
-// case2:
-// -1 1 2
-// 3 1 3
-
-void calc_func(std::vector<int> &integer_vec)
+int main()
 {
-	// 使用 sort 排序会更简单
-	int min = MIN_VAL;
-	int max = MAX_VAL;
-	for (auto &i : integer_vec) {
-		if (min == MIN_VAL) min = i;
-		if (max == MAX_VAL) max = i;
-		if (i <= min) {
-			min = i;
-		}
-		if (i >= max) {
-			max = i;
-		}
-	}
-	//printf("min[%d] max[%d]\n", min, max);
-
-	bool first = true;
-	int first_val = 0;
-	bool final = true;
-
-	for (auto &i : integer_vec) {
-		if (first) {
-			first = false;
-			first_val = i;
-		} else if (first_val == i) {
-			continue;
-		} else {
-			final = false;
-			break;
-		}
-	}
-
-	if (final) {
-		printf("%d\n", first_val);
-		return;
-	}
-
-	for (auto &i : integer_vec) {
-		if (i == min || i == max) {
-			i = max - min;
-		}
-	}
-
-	calc_func(integer_vec);
-
-	return;
-}
-
-void start_func()
-{
-	int integer_cnt = 0;
-	scanf("%d", &integer_cnt);
-
-	std::vector<int> integer_vec;
-	for (int i = 0; i != integer_cnt; ++i) {
-		int item = 0;
-		scanf("%d", &item);
-		integer_vec.push_back(item);
-	}
-
-	calc_func(integer_vec);
-
-	return;
-}
-
-int main(int argc, char **argv)
-{
-	int test_group_cnt = 0;
-	scanf("%d", &test_group_cnt);
-
-	for (int i = 0; i != test_group_cnt; ++i) {
-		start_func();
-	}
-
-	return 0;
+        int cas;
+        scanf("%d", &cas);
+        while (cas--) {
+                int n;
+                scanf("%d", &n);
+                std::multiset<int> a;
+                for (int i = 0; i < n; ++i) {
+                        int x;
+                        scanf("%d", &x);
+                        a.insert(x);
+                }
+                while (*a.begin() != *a.rbegin()) {
+                        auto p1 = a.begin();
+                        auto p2 = std::prev(a.end());
+                        a.erase(p1);
+                        a.erase(p2);
+                        int nval = *p2 - *p1;
+                        a.insert(nval);
+                        a.insert(nval);
+                }
+                printf("%d\n", *a.begin());
+        }
+        return 0;
 }
 ```
 

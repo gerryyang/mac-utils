@@ -302,6 +302,38 @@ More: https://github.com/hzlzh/Best-App
 ]
 ```
 
+* Sublime​AStyle​Formatter 使用说明
+
+用于对代码文件进行格式化配置。在`User->SublimeAStyleFormatter.sublime-settings`配置中添加个性化配置：
+
+1. 保存文件时自动格式化。
+2. 配置缩进格式为4个空格。
+3. 配置bracket style。
+
+```
+{
+    // Auto format on file save
+    "autoformat_on_save": true,
+
+    "options_default":
+    {
+        // Default bracket style
+        // Can be one of "allman", "bsd", "break", "java", "attach", "kr", "k&r",
+        // "k/r" "stroustrup", "whitesmith", "banner", "gnu", "linux", "horstmann",
+        // "1tbs", "otbs ", "google", "pico", "lisp", "python", "vtk", or null
+        // for default.
+        "style": "stroustrup",
+
+        // Use x spaces for indentation
+        "indent": "spaces",
+        "indent-spaces": 4,
+
+    }
+}
+```
+
+详细用法：http://astyle.sourceforge.net/astyle.html
+
 
 ### VSCode
 
