@@ -2,112 +2,14 @@
 layout: post
 title:  "CPP Algorithm"
 date:   2020-04-25 14:00:00 +0800
-categories: [C/C++]
+categories: [C/C++, Data Structure/Algorithm]
 ---
 
 * Do not remove this line (it will not be displayed)
 {: toc}
 
 
-# 封装迭代器
-
-``` cpp
-#include <cstdio>
-#include <iostream>
-#include <map>
-#include <string>
-#include <iterator>
-
-using record = std::map<std::string, std::string>;
-
-class A
-{
-
-public:
-        record m_var{
-        	{"a", "b"}, 
-        	{"c", "d"}
-        };
-
-};
-
-class B
-{
-public:
-        class iterator {
-
-        public:
-
-                using value_type = std::string;
-                using reference = const value_type&;
-                using pointer = const value_type*;
-
-                iterator(const std::string tag, record *ref) : m_ref(ref), m_iter(ref->end()) {}
-                iterator(record *ref) : m_ref(ref), m_iter(ref->begin()) {
-                }
-
-                reference operator*() const noexcept {
-                        return m_iter->first;
-                }
-                iterator& operator++() {
-                        ++m_iter;
-                        return *this;
-                }
-
-                bool operator==(const iterator& rhs) const noexcept {
-                        return m_iter == rhs.m_iter;
-                }
-
-                bool operator!=(const iterator& rhs) const noexcept {
-                        return !operator==(rhs);
-                }
-
-        private:
-                record* m_ref;
-                record::iterator m_iter;
-        };
-
-        B(record* ref) : m_ref(ref) {
-        }
-
-        iterator begin() {
-                return iterator(m_ref);
-        }
-
-        iterator end() const noexcept {
-                return iterator("END", m_ref);
-        }
-
-private:
-        record* m_ref;
-
-};
-
-int main()
-{
-        A a;
-        for (auto& v : a.m_var) {
-                std::cout << v.first << "\n";
-        }
-
-        B b(&a.m_var);
-        for (auto& v : b) {
-                std::cout << v << "\n";
-        }
-
-        return 0;
-}
-```
-
-refer:
-
-* http://www.cplusplus.com/reference/iterator/
-* https://zh.cppreference.com/w/cpp/iterator/iterator_tags
-* https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls/8054856
-* https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
-* https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
-
-# 2020 TPC腾讯程序设计竞赛 1-B Source of Happiness (正赛 R2)
+# 2020 TPC腾讯程序设计竞赛 Source of Happiness (正赛)
 
 The famous instant message software QQ has recently released its badge system. Users are awarded with different types of badges when using the software if they meet certain conditions. One of the badge, the Source of Happiness badge, requires the users to send at least m memes in total during 3 continuous days. The user will be awarded with Source of Happiness at the end of the 3rd day.
 
@@ -208,7 +110,7 @@ int main()
 ```
 
 
-# 2020 TPC腾讯程序设计竞赛 3-B Not Fibonacc (正赛)
+# 2020 TPC腾讯程序设计竞赛 Not Fibonacc (正赛)
 
 二进制字符串是由数字 0 和 1 组成的字符串。给定一个二进制字符串 s=s1s2...sn(n >= 3)，您需要将里面的数字重新排列，使得重新排列后的字符串对于所有 3 <= i <= n 满足 s(i-2) + s(i-1) != s(i)。
 ​
@@ -825,6 +727,105 @@ lru.get(1) = -1
 done
 */
 ```
+
+# 封装迭代器
+
+``` cpp
+#include <cstdio>
+#include <iostream>
+#include <map>
+#include <string>
+#include <iterator>
+
+using record = std::map<std::string, std::string>;
+
+class A
+{
+
+public:
+        record m_var{
+            {"a", "b"}, 
+            {"c", "d"}
+        };
+
+};
+
+class B
+{
+public:
+        class iterator {
+
+        public:
+
+                using value_type = std::string;
+                using reference = const value_type&;
+                using pointer = const value_type*;
+
+                iterator(const std::string tag, record *ref) : m_ref(ref), m_iter(ref->end()) {}
+                iterator(record *ref) : m_ref(ref), m_iter(ref->begin()) {
+                }
+
+                reference operator*() const noexcept {
+                        return m_iter->first;
+                }
+                iterator& operator++() {
+                        ++m_iter;
+                        return *this;
+                }
+
+                bool operator==(const iterator& rhs) const noexcept {
+                        return m_iter == rhs.m_iter;
+                }
+
+                bool operator!=(const iterator& rhs) const noexcept {
+                        return !operator==(rhs);
+                }
+
+        private:
+                record* m_ref;
+                record::iterator m_iter;
+        };
+
+        B(record* ref) : m_ref(ref) {
+        }
+
+        iterator begin() {
+                return iterator(m_ref);
+        }
+
+        iterator end() const noexcept {
+                return iterator("END", m_ref);
+        }
+
+private:
+        record* m_ref;
+
+};
+
+int main()
+{
+        A a;
+        for (auto& v : a.m_var) {
+                std::cout << v.first << "\n";
+        }
+
+        B b(&a.m_var);
+        for (auto& v : b) {
+                std::cout << v << "\n";
+        }
+
+        return 0;
+}
+```
+
+refer:
+
+* http://www.cplusplus.com/reference/iterator/
+* https://zh.cppreference.com/w/cpp/iterator/iterator_tags
+* https://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls/8054856
+* https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
+* https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
+
 
 
 
