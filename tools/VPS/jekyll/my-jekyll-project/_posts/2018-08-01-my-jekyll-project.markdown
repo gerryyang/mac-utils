@@ -414,15 +414,13 @@ More: https://github.com/hzlzh/Best-App
 * [数据结构和算法必知必会的50个代码实现](https://github.com/wangzheng0822/algo)
 
 
-# Computer Blogs
+# Tech Website
 
 * [ncona.com - Learning about computers](https://ncona.com/)
 * [John Washam - software engineering and computer science](https://startupnextdoor.com/)
-
-
-# Tech Website
-
+* [I'm talking dev](https://www.jesuisundev.com/en/)
 * [Better Programming](https://medium.com/better-programming)
+* [云图](https://huataihuang.gitbooks.io/cloud-atlas/content/)
 
 --------
 *END - Enjoy!*

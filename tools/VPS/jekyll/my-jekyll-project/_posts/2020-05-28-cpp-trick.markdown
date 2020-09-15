@@ -371,8 +371,36 @@ Time to fill and iterate a vector of 100000000 ints : 2.97886 s
 */
 ```
 
+``` cpp
+#include <iostream>
+#include <chrono>
+#include <thread>
+ 
+int main()
+{
+    using namespace std::chrono_literals;
+    std::cout << "Hello waiter\n" << std::flush;
+    auto start = std::chrono::high_resolution_clock::now();
 
-refer: https://en.cppreference.com/w/cpp/chrono/high_resolution_clock/now
+    std::this_thread::sleep_for(2s);
+    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end-start;
+    std::cout << "Waited " << elapsed.count() << " ms\n";
+}
+/*
+Hello waiter
+Waited 2000.12 ms
+*/
+```
+
+refer:
+
+* https://en.cppreference.com/w/cpp/chrono/high_resolution_clock/now
+* https://en.cppreference.com/w/cpp/thread/sleep_for
+
+
 
 
 

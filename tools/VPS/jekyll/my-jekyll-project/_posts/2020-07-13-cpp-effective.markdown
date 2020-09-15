@@ -1822,9 +1822,9 @@ int days = daysHeld(pInv); // 错误，无法通过编译，因为daysHeld需要
 
 ### 解决方法
 
-这个时候需要一个函数可将RAII class对象（tr1::shared_ptr）转换为其所内含之原始资源（`Investment*`）。有两个方法可以达到：
+这个时候需要一个函数可将RAII class对象（`tr1::shared_ptr`）转换为其所内含之原始资源（`Investment*`）。有两个方法可以达到：
 
-1. 显示转换
+* 显示转换
 
 `shared_ptr`和`auto_ptr`都提供了一个`get成员函数`（它会返回智能指针内部的原始指针），用来执行显式转换。
 
@@ -1832,7 +1832,7 @@ int days = daysHeld(pInv); // 错误，无法通过编译，因为daysHeld需要
 int days = daysHeld(pInv.get()); // ok
 ```
 
-2. 隐式转换
+* 隐式转换
 
 `shared_ptr`和`auto_ptr`也重载了指针取值操作符（`operator->`和`operator*`），它们允许隐式转换至底部原始指针。
 
@@ -1864,10 +1864,10 @@ delete array;
 
 当你使用`new`，有两件事情发生：
 1. 内存被分配出来（通过`operator new`的函数）
-2. 针对此内存会有一个（或更多）构造函数被调用
+2. 针对此内存会有一个（或更多）**构造函数**被调用
 
 当你使用`delete`，也有两件事情发生：
-1. 针对此内存会有一个（或更多）构造函数被调用
+1. 针对此内存会有一个（或更多）**析构函数**被调用
 2. 内存被释放（通过`operator delete`的函数）
 
 > delete的最大问题在于：即将被删除的内存究竟存有多少对象，这个问题的答案决定了有多少个析构函数必须被调用。
@@ -2159,7 +2159,7 @@ inline const Rational operator * (const Rational& lhs, const Rational& rhs)
 当你必须在"返回一个reference和返回一个object之间抉择时"，你的工作就是选出行为正确的那个。让编译器厂商为"尽可能降低成本"鞠躬尽瘁，你可以享受你的生活。
 
 > 请记住
-> 绝不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或
+> 绝不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或reference指向一个local static对象。
 
 ## 5 Declare data members private
 
@@ -2293,7 +2293,7 @@ namespace std {
 ```cpp
 Widget w;
 for (int i = 0; i < n; ++i) {
-    w = 取决于i的某个值;
+    w = "取决于i的某个值";
     // ...
 }
 ```
@@ -2302,7 +2302,7 @@ for (int i = 0; i < n; ++i) {
 
 ```cpp
 for (int i = 0; i < n; ++i) {
-    Widget w(取决于i的某个值);
+    Widget w("取决于i的某个值");
     // ...
 }
 ```
