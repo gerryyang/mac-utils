@@ -11,25 +11,25 @@ COMPILE_MODE=clang
 
 ## use `ccmake .` to use cmake gui
 if [ $COMPILE_MODE == "gcc"  ]; then
-	export CC=/usr/bin/cc
-	export CXX=/usr/bin/c++
+	export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
+	export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
 
-	cmake ..
+	cmake -G "Unix Makefiles" -DCMAKE_USER_MAKE_RULES_OVERRIDE=./GccOverrides.txt  ..
 
 elif [ $COMPILE_MODE == "clang" ]; then
 
 	export CC=/root/compile/llvm_install/bin/clang
 	export CXX=/root/compile/llvm_install/bin/clang++
 	
-	cmake -fuse-ld=lld  -DCMAKE_USER_MAKE_RULES_OVERRIDE=./ClangOverrides.txt  ..
-	#cmake -fuse-ld=lld  -DCMAKE_TOOLCHAIN_FILE=./LinuxToolchains.cmake  ..
+	cmake -G "Unix Makefiles" -fuse-ld=lld  -DCMAKE_USER_MAKE_RULES_OVERRIDE=./ClangOverrides.txt  ..
+	#cmake -G "Unix Makefiles" -fuse-ld=lld  -DCMAKE_TOOLCHAIN_FILE=./ClangToolchains.cmake  ..
 
 else
 	echo "error: $COMPILE_MODE invalid"
 	exit 1
 fi
 
-make -j VERBOSE=1
+/usr/bin/time -f "real %e user %U sys %S" make -j8 VERBOSE=1
 
 ## LLD leaves its name and version number to a .comment section in an output
 ## readelf --string-dump .comment <output-file>

@@ -6,15 +6,15 @@ rm -rf build
 mkdir -p build && cd build
 
 
-#COMPILE_MODE=gcc
-COMPILE_MODE=clang
+COMPILE_MODE=gcc
+#COMPILE_MODE=clang
 
 ## use `ccmake .` to use cmake gui
 if [ $COMPILE_MODE == "gcc"  ]; then
-	export CC=/usr/bin/cc
-	export CXX=/usr/bin/c++
+	export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
+	export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
 
-	cmake ..
+	cmake -G "Ninja" -DCMAKE_USER_MAKE_RULES_OVERRIDE=./GccOverrides.txt  ..
 
 elif [ $COMPILE_MODE == "clang" ]; then
 
@@ -22,14 +22,14 @@ elif [ $COMPILE_MODE == "clang" ]; then
 	export CXX=/root/compile/llvm_install/bin/clang++
 	
 	cmake -G "Ninja" -fuse-ld=lld  -DCMAKE_USER_MAKE_RULES_OVERRIDE=./ClangOverrides.txt  ..
-	#cmake -G "Ninja" -fuse-ld=lld  -DCMAKE_TOOLCHAIN_FILE=./LinuxToolchains.cmake  ..
+	#cmake -G "Ninja" -fuse-ld=lld  -DCMAKE_TOOLCHAIN_FILE=./ClangToolchains.cmake  ..
 
 else
 	echo "error: $COMPILE_MODE invalid"
 	exit 1
 fi
 
-ninja -j0 -v
+/usr/bin/time -f "real %e user %U sys %S" ninja -j8 -v
 
 ## LLD leaves its name and version number to a .comment section in an output
 ## readelf --string-dump .comment <output-file>
