@@ -47,7 +47,7 @@ https://github.com/gerryyang/mac-utils/tree/master/tools/CMake/helloworld
 
 > 测试结果：
 
-clang12 优于 gcc7，ninja 优于 make，lld 优于 ld。
+clang12 优于 gcc9/7，ninja 优于 make，lld 优于 ld。
 
 | Case | Time |
 | -- | -- |
@@ -59,6 +59,8 @@ clang12 优于 gcc7，ninja 优于 make，lld 优于 ld。
 | clang12 + make + lld   | 4.82s
 | gcc7 + ninja + lld   | 18.34s
 | clang12 + ninja + lld  | 4.15s
+| gcc9 + make + lld    | 10.03s
+| gcc9 + ninja + lld   | 7.90s
 
 
 # Cross Compiling
@@ -170,6 +172,7 @@ String dump of section '.comment':
 refer:
 
 * [LLD - The LLVM Linker](https://lld.llvm.org/#lld-the-llvm-linker)
+* [gold (linker)](https://en.wikipedia.org/wiki/Gold_%28linker%29)
 
 
 # [Ninja](https://ninja-build.org/)
@@ -271,7 +274,38 @@ user    301m22.380s
 sys     14m17.540s
 ```
 
-增加`ninja`并发可以增加速度，但是需要有较大的内存，否则编译时会报内部错误。
+增加`ninja`并发可以增加速度，但是需要有较大的内存。以下为256并发时内存空间已不足，编译时会报内部错误。
+
+
+```
+[71/6710] Building CXX object lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o
+FAILED: lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o 
+/opt/rh/devtoolset-7/root/usr/bin/c++  -DGTEST_HAS_RTTI=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -Ilib/Support -I/root/compile/test/llvm-project-11.0.0/llvm/lib/Support -Iinclude -I/root/compile/test/llvm-project-11.0.0/llvm/include -fPIC -fvisibility-inlines-hidden -Werror=date-time -Wall -Wextra -Wno-unused-parameter -Wwrite-strings -Wcast-qual -Wno-missing-field-initializers -pedantic -Wno-long-long -Wimplicit-fallthrough -Wno-maybe-uninitialized -Wno-noexcept-type -Wdelete-non-virtual-dtor -Wno-comment -fdiagnostics-color -ffunction-sections -fdata-sections -O3 -DNDEBUG   -std=c++14  -fno-exceptions -fno-rtti -MD -MT lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -MF lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o.d -o lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -c /root/compile/test/llvm-project-11.0.0/llvm/lib/Support/Debug.cpp
+c++: internal compiler error: Killed (program cc1plus)
+Please submit a full bug report,
+with preprocessed source if appropriate.
+See <http://bugzilla.redhat.com/bugzilla> for instructions.
+```
+
+```
+top - 23:38:58 up 181 days,  2:46,  4 users,  load average: 101.87, 24.81, 8.97
+Tasks: 693 total, 105 running, 587 sleeping,   0 stopped,   1 zombie
+%Cpu(s): 18.0 us, 17.8 sy,  0.0 ni,  0.2 id, 63.9 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16165976 total,   157708 free, 15388396 used,   619872 buff/cache
+KiB Swap:        0 total,        0 free,        0 used.   183040 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                                    
+   64 root      20   0       0      0      0 R  27.8  0.0   3:15.14 kswapd0                                                                                                                    
+    7 root      rt   0       0      0      0 S  15.2  0.0   1:25.26 migration/0                                                                                                                
+   22 root      rt   0       0      0      0 S  14.8  0.0   1:20.00 migration/3                                                                                                                
+12958 root      20   0       0      0      0 Z   5.1  0.0   4:09.43 base_agent_net                                                                                                             
+15647 root      20   0   84008  35320    896 D   3.3  0.2   0:00.31 cc1plus                                                                                                                    
+26692 root      20   0  286276   4072      0 D   3.0  0.0  72:34.73 sap1012                                                                                                                    
+15430 root      20   0  109000  60828   2428 D   2.9  0.4   0:00.48 cc1plus                                                                                                                    
+15158 root      20   0  166464 116372   1908 R   2.7  0.7   0:00.86 cc1plus                                                                                                                    
+15470 root      20   0   99312  49680    356 R   2.6  0.3   0:00.41 cc1plus                                                                                                                    
+15532 root      20   0   99356  49384    360 R   2.6  0.3   0:00.37 cc1plus  
+```
 
 
 
@@ -281,16 +315,20 @@ sys     14m17.540s
 TODO
 
 
+refer:
+
+* [Replacing Make with Ninja](https://jpospisil.com/2014/03/16/replacing-make-with-ninja.html)
+
+
 # Bazel
 
 * `bazel`默认会限制并发度到其估计的机器性能上限，实际使用需要通过--local_cpu_resources=9999999等参数绕过这一限制
 * 已知（部分版本的）bazel在并发度过高（如`-j320`）下，bazel自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时bazel自身CPU（`400~500%`）、内存（几G）占用很高。
 * 如果机器资源充足且对并发度有较高要求（几百并发），可以考虑使用其他构建系统构建。
 
-
 refer:
 
-* [Replacing Make with Ninja](https://jpospisil.com/2014/03/16/replacing-make-with-ninja.html)
+* [C / C++ Rules](https://docs.bazel.build/versions/master/be/c-cpp.html)
 
 
 # Building gRPC with CMake
