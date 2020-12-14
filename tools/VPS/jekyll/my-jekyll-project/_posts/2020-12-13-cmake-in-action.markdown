@@ -43,11 +43,14 @@ cmake --version
 
 # CMake Helloworld
 
-https://github.com/gerryyang/mac-utils/tree/master/tools/CMake/helloworld
+
+在8核CPU，16G内存机器，对比`gcc`, `clang`, `make`, `ninja`, `ld`, `lld`不同组合情况下的编译效率。
+
+[测试代码](https://github.com/gerryyang/mac-utils/tree/master/tools/CMake/helloworld)
 
 > 测试结果：
 
-clang12 优于 gcc9/7，ninja 优于 make，lld 优于 ld。
+clang12 优于 gcc4.8/9/7，ninja 优于 make，lld 优于 ld。
 
 | Case | Time |
 | -- | -- |
@@ -61,6 +64,8 @@ clang12 优于 gcc9/7，ninja 优于 make，lld 优于 ld。
 | clang12 + ninja + lld  | 4.15s
 | gcc9 + make + lld    | 10.03s
 | gcc9 + ninja + lld   | 7.90s
+| gcc4.8 + make + lld    | 8.93s
+| gcc4.8 + ninja + lld   | 8.30s
 
 
 # Cross Compiling
