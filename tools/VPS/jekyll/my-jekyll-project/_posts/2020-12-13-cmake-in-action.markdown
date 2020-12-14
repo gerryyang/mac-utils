@@ -43,6 +43,31 @@ cmake --version
 
 # CMake Helloworld
 
+* `cmake_minimum_required`：cmake 的最低版本要求
+* `project`：指定项目的名称
+* `set`：设置普通变量，缓存变量或环境变量
+* `add_executable`：使用列出的源文件构建可执行文件
+* `include_directories`：添加多个头文件搜索路径，路径之间用空格分隔；在 include 的时候就不需要使用相对路径了
+* `aux_source_directory`：在目录中查找所有源文件，并将这些源文件存储在变量 SOURCE_DIR 中；需要注意这个指令不会递归包含子目录
+* `link_directories`：指定静态库或动态库的搜索路径
+* `target_link_libraries`：将指定的静态库连接到可执行文件上，singleton 和 libsingleton.a 两种形式等价
+* `set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)`：命令将生成的二进制文件放到了 bin 目录下，注意这里的 bin 目录是使用 cmake 进行构建的目录（PROJECT_BINARY_DIR，即build/bin）
+* `add_library`：来使用指定的源文件生成库文件，`add_library(calculator_static STATIC ${static_lib_source_file})` 第一个参数指定库名字。
+* `target_link_libraries`：将生成的库文件添加到项目中
+
+Note:
+
+* cmake的指令是不区分大小写的，写作`CMAKE_MINIMUM_REQUIRED`或`cmake_minimum_required`，甚至是`cmAkE_mInImUm_rEquIrEd`（不建议）都是可以的
+* 在使用 set 指令指定`CMAKE_CXX_FLAGS`的时候通过空格来分隔多个编译选项，生成的`CMAKE_CXX_FLAGS`字符串是 “-g;-Wall”，需要用字符串替换将分号替换为空格
+* message 可以在构建的过程中向 stdout 输出一些信息
+* 类似于 bash 脚本，在 CMakeLists.txt 中输出变量时要使用`${CMAKE_CXX_FLAGS}`的形式，而不能直接使用`CMAKE_CXX_FLAGS`
+* 编辑好 CMakeLists.txt 之后，可以新建一个 build 目录，并在 build 目录下使用 cmake 来进行构建，构建成功的话再使用 make 来进行编译和链接，最终得到可执行文件
+* 除了直接引用外部的静态库，cmake 还可以先将源文件编译成静态库之后在进行构建
+	+ `target_link_libraries(Exp2 libcalculator.a)`
+	+ `target_link_libraries(Exp2 calculator)`
+
+
+# 编译效率对比
 
 在8核CPU，16G内存机器，对比`gcc`, `clang`, `make`, `ninja`, `ld`, `lld`不同组合情况下的编译效率。
 
@@ -50,7 +75,7 @@ cmake --version
 
 > 测试结果：
 
-clang12 优于 gcc4.8/9/7，ninja 优于 make，lld 优于 ld。
+clang12 优于 gcc4.8/7/9，ninja 优于 make，lld 优于 ld。
 
 | Case | Time |
 | -- | -- |
@@ -233,8 +258,8 @@ else
 fi
 
 ## 8 cpu, 16G mem
-time ninja -j8 -v
-#time ninja -j256
+/usr/bin/time -f "real %e user %U sys %S" ninja -j8 -v
+#/usr/bin/time -f "real %e user %U sys %S" ninja -j256
 
 ## LLD leaves its name and version number to a .comment section in an output
 ## readelf --string-dump .comment <output-file>
