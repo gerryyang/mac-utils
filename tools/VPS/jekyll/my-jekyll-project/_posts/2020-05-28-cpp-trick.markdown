@@ -9,6 +9,89 @@ categories: [C/C++]
 {: toc}
 
 
+# likely/unlikely
+
+```
+#define likely(x)  __builtin_expect(!!(x), 1)
+#define unlikely(x)  __builtin_expect(!!(x), 0)
+```
+
+`__builtin_expect`是gcc提供的宏，是编译器提供用来优化编译结果的。第一行代码意思是“x大概率为true”，第二行意思是“x大概率为false”，通过提供给编译器这样的信息，编译器可以在生成汇编代码时减少跳转指令被执行的概率。
+
+# C++ style cast from unsigned char * to const char *
+
+```
+unsigned char *foo();
+std::string str;
+str.append(reinterpret_cast<const char*>(foo()));
+```
+
+https://stackoverflow.com/questions/658913/c-style-cast-from-unsigned-char-to-const-char
+
+# C++ static member functions and variables
+
+``` cpp
+// .h
+class Environment
+{
+private:
+    static int maxRobots;
+public:
+    static void setMaxRobots(int max)
+    {
+        maxRobots = max;
+    }
+    void printMaxRobots();
+};
+
+void Environment::printMaxRobots()
+{
+    std::cout << maxRobots;
+}
+
+// .cpp
+int Environment::maxRobots = 0;
+
+// main.cpp
+Environment::setMaxRobots(5);
+
+Environment *env = new Environment;
+env->printMaxRobots();
+delete env;
+```
+
+https://stackoverflow.com/questions/13203999/c-static-member-functions-and-variables
+
+
+# How can I pass a class member function as a callback?
+
+``` cpp
+class Fred {
+public:
+  void memberFn();
+  static void staticMemberFn();  // A static member function can usually handle it
+  // ...
+};
+// Wrapper function uses a global to remember the object:
+Fred* object_which_will_handle_signal;
+void Fred_memberFn_wrapper()
+{
+  object_which_will_handle_signal->memberFn();
+}
+int main()
+{
+  /* signal(SIGINT, Fred::memberFn); */   // Can NOT do this
+  signal(SIGINT, Fred_memberFn_wrapper);  // Okay
+  signal(SIGINT, Fred::staticMemberFn);   // Okay usually; see below
+  // ...
+}
+```
+
+* https://stackoverflow.com/questions/400257/how-can-i-pass-a-class-member-function-as-a-callback
+* http://www.parashift.com/c++-faq-lite/pointers-to-members.html
+* https://isocpp.org/wiki/faq/pointers-to-members#memfnptr-vs-fnptr
+
+
 # 优雅访问并修改C++中私有成员的方法
 
 方法1：
@@ -384,7 +467,7 @@ int main()
 
     std::this_thread::sleep_for(2s);
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    
+
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Waited " << elapsed.count() << " ms\n";
@@ -401,7 +484,64 @@ refer:
 * https://en.cppreference.com/w/cpp/thread/sleep_for
 
 
+# Parse HTTP Header
 
+``` cpp
+#include <stdlib.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <map>
+#include <boost/algorithm/string.hpp>
+
+int main(int argc, char* argv[]) {
+  const char* s = "HTTP/1.1 200 OK\r\n"
+"Connection: close\r\n"
+"Content-Length: 43\r\n"
+"T-UUID: 5f608668-9b33-7ad3-8989-f9298065bd36\r\n"
+"T-Metric: 1\r\n"
+"Content-Type: text/html\r\n\r\n"
+"ResultCode=0&ResultInfo=&PayAmt=0&PayUnit=3";
+
+  std::map<std::string, std::string> m;
+
+  std::istringstream resp(s);
+  std::string header;
+  std::string::size_type index;
+  while (std::getline(resp, header) && header != "\r") {
+    index = header.find(':', 0);
+    if(index != std::string::npos) {
+      m.insert(std::make_pair(
+        boost::algorithm::trim_copy(header.substr(0, index)), 
+        boost::algorithm::trim_copy(header.substr(index + 1))
+      ));
+    }
+  }
+
+  for (auto& kv: m) {
+    std::cout << "KEY: `" << kv.first << "`, VALUE: `" << kv.second << '`' << std::endl;
+  }
+    
+  std::string data(s);
+  std::string msg(data.c_str() + data.rfind("\n") + 1);
+  std::cout << "msg: " << msg << std::endl;
+
+  if (msg.length() == std::stoul(m["Content-Length"])) {
+      std::cout << "Content-Length: " << msg.length() << std::endl;
+  }
+
+  return EXIT_SUCCESS;
+}
+/*
+KEY: `Connection`, VALUE: `close`
+KEY: `Content-Length`, VALUE: `43`
+KEY: `Content-Type`, VALUE: `text/html`
+KEY: `T-Metric`, VALUE: `1`
+KEY: `T-UUID`, VALUE: `5f608668-9b33-7ad3-8989-f9298065bd36`
+msg: ResultCode=0&ResultInfo=&PayAmt=0&PayUnit=3
+Content-Length: 43
+*/
+```
 
 
 

@@ -1366,7 +1366,7 @@ Q: C1000K可以达到吗？
 
 * 从**物理资源**上，100万个请求需要大量的系统资源。比如：
 	+ 假设每个请求需要16KB内存，那么总共就需要大约15GB内存。
-	+ 从带宽上来说，即使每个连接只需要1KB/s的吞吐量，总共也需要1.6Gb/s的吞吐量。因此，千兆网卡无法满足，需要配置万兆网卡，或者基于多网卡Bonding承载更大的吞吐量。
+	+ 从带宽上来说，即使每个连接只需要1KB/s的吞吐量，假设只有20%的活跃连接，总共也需要1.6Gb/s（`1 * 1000000 / 1024 / 1024 * 8 * 0.2`）的吞吐量。因此，千兆网卡无法满足，需要配置万兆网卡，或者基于多网卡Bonding承载更大的吞吐量。
 * 从**软件资源**上，大量的连接会占用大量的软件资源，比如，文件描述符数量，网络协议栈的缓存大小等等。
 * 大量请求带来的中断处理，也会带来非常高的处理成本。这样，就需要多队列网卡，中断负责均衡，CPU绑定，RPS/RFS(软中断负责均衡到多个CPU核上)，以及将网络包的处理卸载(offload)到网络设备等各种硬件和软件的优化。
 
@@ -1727,6 +1727,7 @@ mtr - a network diagnostic tool
 
 * [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
 * [Linux Performance Analysis in 60,000 Milliseconds](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55)
+* [Infographics: Operation Costs in CPU Clock Cycles](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/)
 
 ------
 
@@ -1739,5 +1740,8 @@ mtr - a network diagnostic tool
 
 [Superscalar processor]: https://en.wikipedia.org/wiki/Superscalar_processor
 	
+
+
+
 
 

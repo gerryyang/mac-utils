@@ -65,6 +65,8 @@ Note:
 * 除了直接引用外部的静态库，cmake 还可以先将源文件编译成静态库之后在进行构建
 	+ `target_link_libraries(Exp2 libcalculator.a)`
 	+ `target_link_libraries(Exp2 calculator)`
+* 使用`#[[ ... ]]`或`#`注释
+
 
 
 # 编译效率对比
@@ -126,7 +128,8 @@ cd build
 
 ## -DCMAKE_BUILD_TYPE=type — Valid options for type are Debug, Release, RelWithDebInfo, and MinSizeRel. Default is Debug
 ## -DCMAKE_INSTALL_PREFIX=directory — Specify for directory the full pathname of where you want the LLVM tools and libraries to be installed (default /usr/local)
-cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld" -DCMAKE_INSTALL_PREFIX=$LLVM_INSTALL_DIR ../llvm-project/llvm
+
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=On -DLLVM_TARGETS_TO_BUILD='X86' -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld" -DCMAKE_INSTALL_PREFIX=$LLVM_INSTALL_DIR ../llvm-project/llvm
 
 ## The --build option tells cmake to invoke the underlying build tool (make, ninja, xcodebuild, msbuild, etc.)
 cmake --build .
@@ -170,6 +173,7 @@ target_link_libraries(simple-tool ${llvm_libs})
 refer:
 
 * [Embedding LLVM in your project](http://llvm.org/docs/CMake.html#embedding-llvm-in-your-project)
+* [LLVM Pass入门导引](https://zhuanlan.zhihu.com/p/122522485)
 
 
 # LLD (The LLVM Linker)

@@ -147,7 +147,7 @@ If you want to follow the child process instead of the parent process, use the c
 
 ```
 # Set the debugger response to a program call of fork or vfork. A call to fork or vfork creates a new process.
-set follow-fork-mode mode
+set follow-fork-mode child
 
 # Display the current debugger response to a fork or vfork call.
 show follow-fork-mode
@@ -160,6 +160,8 @@ show detach-on-fork
 ```
 
 https://sourceware.org/gdb/current/onlinedocs/gdb/Forks.html#Forks
+
+https://stackoverflow.com/questions/15126925/debugging-child-process-after-fork-follow-fork-mode-child-configured
 
 
 ## Breakpoints
@@ -181,6 +183,35 @@ You can arrange to have values from your program displayed automatically wheneve
 ## Catchpoints
 
 A `catchpoint` is another special breakpoint that stops your program **when a certain kind of event occurs**, such as the throwing of a C++ exception or the loading of a library. As with watchpoints, you use a different command to set a catchpoint (see [Setting Catchpoints](https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints)), but aside from that, you can manage a catchpoint like any other breakpoint. (To stop when your program receives a signal, use the `handle` command; see [Signals](https://sourceware.org/gdb/current/onlinedocs/gdb/Signals.html#Signals).)
+
+## Disassemble
+
+
+Disassembles a specified function or a function fragment.
+
+```
+disassemble
+disassemble [Function]
+disassemble [Address]
+disassemble [Start],[End]
+disassemble [Function],+[Length]
+disassemble [Address],+[Length]
+disassemble /m [...]
+disassemble /r [...]
+```
+
+https://visualgdb.com/gdbreference/commands/disassemble
+
+
+## Add index files to speed up GDB
+
+对于比较大的二进制文件，为了缩短gdb的加载时间可以对程序文件事先创建符号索引。
+
+```
+gdb-add-index filename
+```
+
+https://man7.org/linux/man-pages/man1/gdb-add-index.1.html
 
 
 ## Other

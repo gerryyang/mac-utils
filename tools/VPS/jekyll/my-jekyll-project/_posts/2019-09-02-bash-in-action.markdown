@@ -8,6 +8,16 @@ categories: [Bash, 编程语言]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Chmod
+
+```
+#!/bin/bash
+
+find ../ -type f |  grep -E "*\.sh" | xargs chmod +x
+find ../ -type f |  grep -E "*\.sh" | xargs dos2unix
+```
+
+
 # Bash Tips
 
 ## 日志输出

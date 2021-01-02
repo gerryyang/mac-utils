@@ -234,6 +234,8 @@ More: https://github.com/hzlzh/Best-App
 | -- | --
 | [Sourcetree](https://www.sourcetreeapp.com/) | Mac Git客户端
 | [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端
+| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code
+
 
 ### Vim
 
@@ -390,6 +392,8 @@ More: https://github.com/hzlzh/Best-App
   - MacOS UML建模工具
 
 * [UML-The Unified Modeling Language](https://www.uml-diagrams.org/)
+
+* [sketch](https://www.sketch.com/)
 
 **refer:**
 

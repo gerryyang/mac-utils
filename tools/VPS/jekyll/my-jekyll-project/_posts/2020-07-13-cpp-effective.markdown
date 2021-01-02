@@ -2793,7 +2793,7 @@ public:
   // 让Base class内名为f1的函数在Derived class作用域内可见，如果不这样声明，下面d.f1(1)会找不到
   using Base::f1;
 
-    virtual void f1() {
+  virtual void f1() {
     std::cout << "virtual void Derived::f1()\n";
   }
   void f3() {

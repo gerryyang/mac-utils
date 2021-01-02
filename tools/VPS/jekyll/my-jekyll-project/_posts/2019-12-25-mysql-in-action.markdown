@@ -332,15 +332,18 @@ https://www.jianshu.com/p/df2bb6ca178e
 
 ## MySQL 事务 `set autocommit = 0` 与 `start transaction` 的区别
 
-* `set autocommit = 0`。当前session禁用自动提交事务，自此句执行以后，每个SQL语句或者语句块所在的事务都需要显示`commit`才能提交事务。
-* `start transaction`。指的是启动一个新事务。执行事务的常用办法是发出一条`START TRANSACTION`（或`BEGIN`）语句挂起自动提交模式，然后执行构成本次事务的各条语句，最后用一条 `COMMIT`语句结束事务并把它们作出的修改永久性地记入数据库。万一在事务过程中发生错误，用一条`ROLLBACK`语句撤销事务并把数据库恢复到事务开始之前的状态。
+首先，数据库的sql作为事务提交，可以分为：单个sql的事务提交 和 多个sql的事务提交。
+
+* 执行 `set autocommit = 0`，表示对当前session禁用自动提交事务，之后的每次的SQL操作都需要显式`commit/rollback`才能提交事务。
+* 执行 `start transaction`（通常在`set autocommit = 1`模式下），表示对当前session启动一个新事务，之后只有当前的SQL操作需要显式`commit/rollback`才能提交事务，而其他SQL操作不受影响，仍是自动的模式提交事务。	
 
 
-问题背景：
+之前遇到一个对 `set autocommit = 0` 误用的场景：
 
-新开发了一个订单系统，提供了db事务的操作接口，此事务接口在每次执行前都会执行`set autocommit = 0`，然后执行业务sql，最后根据结果执行`commit`或`rollback`。结果在联调时，发现一个诡异的情况，事务接口显示执行成功了，但是查询数据库时却显示没有生效。最后与dba一起排查问题，发现是用法不对，`set autocommit = 0`导致当前会话都不会提交事务，并且此会话会被其他请求复用，在其他请求处理失败时若执行了`rollback`，就会把之前提交的操作都全部回滚，因此在最后查询时发现已经提交的数据却没有生效。正确的做法是，开启事务应该用`start transaction`，保证每次`commit`或`rollback`都会对当前事务提交，而不会出现事务交错的情况出现，导致数据提交错误。
+某个订单系统，提供了db事务的操作接口，此事务接口在每次执行前都会执行`set autocommit = 0`，然后执行业务sql，最后根据结果执行`commit`或`rollback`。最后在测试时发现会偶现，非事务的接口（单条sql的事务）提交成功了，但是却没有生效。原因是，由于事务操作接口对当前的db连接使用`set autocommit = 0`后，会使当前连接上的sql操作都不会自动提交，并且此连接会被其他非事务的s	ql请求复用，而非事务的sql请求不会主动commit或rollback。当事务的sql操作在非事务的sql操作后执行了rollback，就会导致非事务的sql操作结果一起rollback。
 
-以下是数据库日志，通过分析会话链接可以发现，事务提交出现了错乱的情况：
+
+以下是数据库日志，可以看到非事务sql操作在提交后，没有显式commit，最后被其他事务sql操作的rollback执行后，之前非事务sql操作也rollback了：
 
 ```
 [2020-03-28 10:04:00 114016] DEBUG tid:13583 con:0x7f8ae8c35400 user:midas_w C:100.99.70.99:49055 G:100.125.130.83:35352 S:100.125.130.84:4003 timecost:0.294(ms) inj_id:5 sql:3,24 "set session autocommit=0"
