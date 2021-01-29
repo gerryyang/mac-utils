@@ -37,6 +37,9 @@ gamesvr   14407 14410 gerryyang   55u     IPv4         1098817885        0t0    
 
 # 进程
 
+## Process State (ps/top)
+
+
 ```
 PROCESS STATE CODES:
 
@@ -119,11 +122,9 @@ Thread 1 (Thread 0x7f13d3cb9780 (LWP 31310)):
 
 ## 编译优化(gcc/clang)
 
-
-编译环境：x86-64 gcc 4.8.5
-在线编译工具：https://gcc.godbolt.org/
-GCC优化选项说明：[Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Optimize-Options.html#Optimize-Options)
-
+* 编译环境：x86-64 gcc 4.8.5
+* 在线编译工具：https://gcc.godbolt.org/
+* GCC优化选项说明：[Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Optimize-Options.html#Optimize-Options)
 
 gcc默认使用`-O0`优化级别，可以通过`gcc -Q --help=optimizers -O<number>`查看每个优化级别的不同。
 
@@ -360,7 +361,7 @@ End of assembler dump.
 1. 添加编译选项`CFLAGS += -fdata-sections -ffunction-sections`
 2. 添加链接选项`-Wl,--gc-sections`
 
-使用gc的方式，会将函数代码生成为独立的section，而默认的方式不会生成独立的代码段。
+通过上面两步，会将函数代码生成为独立的section，并在链接的时候去除不用的Dead Codes。
 
 > 注意：此选项对gcc和clang都生效。
 
@@ -518,11 +519,12 @@ $objcopy --only-keep-debug mainO3 mainO3.symbol       
 # 拷贝出一个不包含调试信息的执行文件
 $objcopy --strip-debug mainO3 mainO3.bin
 
-
 $objcopy --add-gnu-debuglink=mainO3.symbol mainO3
 ```
 
-[linux中的strip命令简介------给文件脱衣服](https://blog.csdn.net/stpeace/article/details/47090255)
+refer:
+
+* [linux中的strip命令简介------给文件脱衣服](https://blog.csdn.net/stpeace/article/details/47090255)
 
 
 
