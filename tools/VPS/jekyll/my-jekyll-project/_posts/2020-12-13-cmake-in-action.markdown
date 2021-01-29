@@ -53,20 +53,49 @@ cmake --version
 * `target_link_libraries`：将指定的静态库连接到可执行文件上，singleton 和 libsingleton.a 两种形式等价
 * `set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin/)`：命令将生成的二进制文件放到了 bin 目录下，注意这里的 bin 目录是使用 cmake 进行构建的目录（PROJECT_BINARY_DIR，即build/bin）
 * `add_library`：来使用指定的源文件生成库文件，`add_library(calculator_static STATIC ${static_lib_source_file})` 第一个参数指定库名字。
-* `target_link_libraries`：将生成的库文件添加到项目中
 
 Note:
 
+* cmake默认使用彩色精简的输出方式，若需要输出详细的编译过程有两种方法
+  + 1. 通过参数`make VERBOSE = 1` 
+  + 2. 在CMakeLists.txt中设置`set(CMAKE_VERBOSE_MAKEFILE on)`
 * cmake的指令是不区分大小写的，写作`CMAKE_MINIMUM_REQUIRED`或`cmake_minimum_required`，甚至是`cmAkE_mInImUm_rEquIrEd`（不建议）都是可以的
-* 在使用 set 指令指定`CMAKE_CXX_FLAGS`的时候通过空格来分隔多个编译选项，生成的`CMAKE_CXX_FLAGS`字符串是 “-g;-Wall”，需要用字符串替换将分号替换为空格
-* message 可以在构建的过程中向 stdout 输出一些信息
+* 设置编译选项，例如，`SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall")`
+* 设置链接选项，例如，`SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")`
+
+* 在使用`set`指令指定`CMAKE_CXX_FLAGS`的时候通过空格来分隔多个编译选项，生成的`CMAKE_CXX_FLAGS`字符串是 `-g;-Wall`，需要用字符串替换将分号替换为空格。如果不想替换，可以通过引号的方式一次设置多个选项。
+
+```
+# 方式1
+set(CMAKE_CXX_FLAGS -g -Wall)
+
+message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
+string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
+
+# 方式2
+set(CMAKE_CXX_FLAGS "-g -Wall")
+message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
+
+# 方式3
+set(CMAKE_CXX_FLAGS -g)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
+```
+
+* `message`可以在构建的过程中向 stdout 输出一些信息
 * 类似于 bash 脚本，在 CMakeLists.txt 中输出变量时要使用`${CMAKE_CXX_FLAGS}`的形式，而不能直接使用`CMAKE_CXX_FLAGS`
 * 编辑好 CMakeLists.txt 之后，可以新建一个 build 目录，并在 build 目录下使用 cmake 来进行构建，构建成功的话再使用 make 来进行编译和链接，最终得到可执行文件
 * 除了直接引用外部的静态库，cmake 还可以先将源文件编译成静态库之后在进行构建
 	+ `target_link_libraries(Exp2 libcalculator.a)`
 	+ `target_link_libraries(Exp2 calculator)`
 * 使用`#[[ ... ]]`或`#`注释
+* 可通过命令行`cmake -j8 .. -DCMAKE_BUILD_TYPE=Debug`的方式编译的版本，cmake会在`CMAKE_CXX_FLAGS`之后添加对应编译版本额外的选项。注意：后面的选项优先级更高。也可以通过修改`CMAKE_CXX_FLAGS_DEBUG`或`CMAKE_CXX_FLAGS_RELEASE`变量，来修改默认的编译版本选项。
+  + 在命令行指定`-DCMAKE_BUILD_TYPE=Release`或在CMakeFile文件中设置`set(CMAKE_BUILD_TYPE Release)`时，修改`set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -Wall -O2")`才有效
+  + `CMAKE_CXX_FLAGS_DEBUG`默认选项：`-O0 -g`
+  + `CMAKE_CXX_FLAGS_RELEASE`默认选项：`-O3 -DNDEBUG`
 
+* 在Release版本会添加`-DNDEBUG`编译选项，用于消除assert断言。refer: https://en.cppreference.com/w/cpp/error/assert
 
 
 # 编译效率对比
