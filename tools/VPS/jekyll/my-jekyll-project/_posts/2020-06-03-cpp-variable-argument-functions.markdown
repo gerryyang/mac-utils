@@ -309,23 +309,59 @@ void debug_print(int dbg_lvl, char *fmt, Ts ... ts)
 # 在变参函数中如何传递变参参数
 
 ``` cpp
-void format_string(char *fmt, va_list argptr, char *formatted_string);
-
-void debug_print(int dbg_lvl, char *fmt, ...) 
-{    
-	char formatted_string[MAX_FMT_SIZE];
-
-	va_list argptr;
-	va_start(argptr, fmt);
-
-	format_string(fmt, argptr, formatted_string);
-
-	va_end(argptr);
-	
-	fprintf(stdout, "%s", formatted_string);
+void func2(const char *fmt, ...)
+{
+        va_list argptr;
+        va_start(argptr, fmt);
+        printf("fmt(%s)\n", fmt);
+        va_end(argptr);
 }
 
+void func1(const char *fmt, ...) 
+{    
+        va_list argptr;
+        va_start(argptr, fmt);
+        printf("fmt(%s)\n", fmt);
+        func2(fmt, argptr);
+        va_end(argptr);
+}
+
+int main()
+{
+        int a = 1;
+        char b = '2';
+        func1("a=%d&b=%c", a, &b);
+
+        return 0;
+}
 ```
+
+## Variadic Macros (可变参宏)
+
+https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+
+```
+#ifdef DEBUG_THRU_UART0
+#   define DEBUG(...)  printString (__VA_ARGS__)
+#else
+void dummyFunc(void);
+#   define DEBUG(...)  dummyFunc()   
+#endif
+DEBUG(1,2,3); //calls printString(1,2,3) or dummyFunc() depending on
+              //-DDEBUG_THRU_UART0 compiler define was given or not, when compiling.
+```
+
+`##__VA_ARGS__`的作用？
+
+```
+#define FOO(...)       printf(__VA_ARGS__)
+#define BAR(fmt, ...)  printf(fmt, __VA_ARGS__)
+
+FOO("this works fine");
+BAR("this breaks!");
+```
+
+* https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
 
 
 # Refer
