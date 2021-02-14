@@ -4,7 +4,7 @@
 
 void say_hello_hook()
 {
-	printf("Hello, World! hooked ...\n");
+	printf("say_hello, hooked ...\n");
 
 	say_hello();
 

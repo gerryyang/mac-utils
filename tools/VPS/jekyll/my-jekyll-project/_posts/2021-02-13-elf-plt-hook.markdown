@@ -259,7 +259,7 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 参考：一个共享库函数调用在`PLT+GOT`机制下工作的流程：
 
-![PLT_GOT](/assets/images/202102/PLT_GOT.png)
+![PLT_GOT](/assets/images/202102/PLT_GOT.jpg)
 
 
 # PLT Hook
@@ -267,31 +267,41 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 ## 参考代码
 
-https://github.com/kubo/plthook
+[https://github.com/kubo/plthook](https://github.com/kubo/plthook)
 
-> What is PLTHook.
-> A utility library to hook library function calls issued by specified object files (executable and libraries). This modifies PLT (Procedure Linkage Table) entries in ELF format used on most Unixes or IAT (Import Address Table) entries in PE format used on Windows.
-> Note that built-in functions cannot be hooked. For example the C compiler in macOS Sierra compiles ceil() as inline assembly code, not as function call of ceil in the system library.
+* What is PLTHook.
+* A utility library to hook library function calls issued by specified object files (executable and libraries). This modifies PLT (Procedure Linkage Table) entries in ELF format used on most Unixes or IAT (Import Address Table) entries in PE format used on Windows.
+* Note that built-in functions cannot be hooked. For example the C compiler in macOS Sierra compiles ceil() as inline assembly code, not as function call of ceil in the system library.
 
-> What is PLT (or IAT) ?
-> Note: This isn't precise explanation. Some details are omitted.
-> When a function calls another function in another file, it is called via PLT (on Unix using ELF) or IAT (on Windows).
-> In order to call foo_func() in libfoo.so, the address of the callee must be known. When callers are in the same file, the relative address to the callee is known at compile time regardless of the absolute address at run time. So some_func() calls foo_func() using relative addressing.
-> When callers are in other files, the address of the callee cannot be known at compile time. To resolve it, each file has a mapping from external function names to addresses. The callers directly look at the address in the PLT entry for foo_func() and jump to the address.
-> The addresses in PLT entries are resolved (1) at process startup or (2) at first function call (lazy binding). It depends on OSes or on settings.
+* What is PLT (or IAT) ?
+* Note: This isn't precise explanation. Some details are omitted.
+* When a function calls another function in another file, it is called via PLT (on Unix using ELF) or IAT (on Windows).
+* In order to call foo_func() in libfoo.so, the address of the callee must be known. When callers are in the same file, the relative address to the callee is known at compile time regardless of the absolute address at run time. So some_func() calls foo_func() using relative addressing.
+* When callers are in other files, the address of the callee cannot be known at compile time. To resolve it, each file has a mapping from external function names to addresses. The callers directly look at the address in the PLT entry for foo_func() and jump to the address.
+* The addresses in PLT entries are resolved (1) at process startup or (2) at first function call (lazy binding). It depends on OSes or on settings.
 
 ![figure1](/assets/images/202102/plthook/figure1.png)
 
+* What plthook does.
+* Plthook changes the address in PLT entries as above. When foo_func() is called from program, hook_foo_func() is called instead. It doesn't change function calls from libfoo.so and libbar.so.
+
 ![figure2](/assets/images/202102/plthook/figure2.png)
 
+* How to call original functions from hook functions.
+* When hook functions are outside of modified files
+  + When the hook function hook_foo_func() is in libbar.so, just call the original function foo_func(). It looks the PLT entry in libbar.so and jumps to the original.
+
 ![figure3](/assets/images/202102/plthook/figure3.png)
+
+* When hook functions are inside of modified files
+  + When the hook function hook_foo_func() is in program, do not call the original function foo_func() because it jumps to hook_foo_func() repeatedly and crashes the process after memory for stack is exhausted. You need to get the address of the original function and set it to the function pointer variable foo_func_addr. Use the fourth argument of plthook_replace() to get the address on Windows. Use the return value of dlsym(RTLD_DEFAULT, "foo_func") on Unixes. The fourth argument of plthook_replace() isn't available on Unixes because it doesn't set the address of the original before the address in the PLT entry is resolved.
 
 ![figure4](/assets/images/202102/plthook/figure4.png)
 
 
 ## 测试代码
 
-https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/got_plt
+[https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/got_plt](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/got_plt)
 
 
 ## link_map
@@ -342,10 +352,10 @@ struct link_map
     /* These first few members are part of the protocol with the debugger.
        This is the same format used in SVR4.  */
 
-    ElfW(Addr) l_addr;| |   /* Difference between the address in the ELF
-|   |   |   |      file and the addresses in memory.  */
-    char *l_name;|  |   /* Absolute file name object was found in.  */
-    ElfW(Dyn) *l_ld;|   |   /* Dynamic section of the shared object.  */
+    ElfW(Addr) l_addr;   /* Difference between the address in the ELF
+                            file and the addresses in memory.  */
+    char *l_name;        /* Absolute file name object was found in.  */
+    ElfW(Dyn) *l_ld;     /* Dynamic section of the shared object.  */
     struct link_map *l_next, *l_prev; /* Chain of loaded objects.  */
   };  
 ```

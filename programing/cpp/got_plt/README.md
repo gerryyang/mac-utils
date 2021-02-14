@@ -7,13 +7,13 @@ $make
 $export LD_LIBRARY_PATH=.:$
 
 $ ./demo1
-Hello, World! hooked
-Hello, World!
-ubuntu@VM-0-16-ubuntu:~/code/got_plt$ ./demo2
-Hello, World! hooked ...
-Hello, World!
+say_hello, hooked
+say_hello
+$ ./demo2
+say_hello, hooked ...
+say_hello
 call orig func
-ubuntu@VM-0-16-ubuntu:~/code/got_plt$ ./demo3
+$ ./demo3
 page_size(4096)
 name(free)
 name(__errno_location)
@@ -30,9 +30,18 @@ name(__printf_chk)
 name(mprotect)
 name(fopen)
 name(say_hello)
-Hello, World! hooked ...
-Hello, World!
+say_hello, hooked ...
+say_hello
 call orig func
+$ ./demo4
+0x7f8c613b4018(0x7f8c611b3516) puts
+0x7f8c613b3fe0((nil)) _ITM_deregisterTMCloneTable
+0x7f8c613b3fe8((nil)) __gmon_start__
+0x7f8c613b3ff0((nil)) _ITM_registerTMCloneTable
+0x7f8c613b3ff8(0x7f8c609fd520) __cxa_finalize
+say_hello
+puts_hook, hooked
+hello
 ```
 
 

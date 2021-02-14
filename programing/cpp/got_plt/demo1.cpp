@@ -11,7 +11,7 @@ static void (*say_hello_func)();
 // This function is called instead of say_hello() called by libatest.so
 static void my_say_hello()
 {
-	printf("Hello, World! hooked\n");
+	printf("say_hello, hooked\n");
 	(*say_hello_func)(); // call real say_hello
 }
 
