@@ -1,0 +1,3 @@
+NAME libtest.dll
+EXPORTS
+    strtod_export_by_ordinal @10 NONAME
