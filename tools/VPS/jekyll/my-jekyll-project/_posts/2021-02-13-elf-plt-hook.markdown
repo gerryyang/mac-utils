@@ -360,7 +360,53 @@ struct link_map
   };  
 ```
 
+## PLT Replace
 
+```
+int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, void **oldfunc)
+{
+    size_t funcnamelen = strlen(funcname);
+    unsigned int pos = 0;
+    const char *name;
+    void **addr;
+    int rv;
+
+    if (plthook == NULL) {
+        set_errmsg("invalid argument: The first argument is null.");
+        return PLTHOOK_INVALID_ARGUMENT;
+    }
+    while ((rv = plthook_enum(plthook, &pos, &name, &addr)) == 0) {
+        if (strncmp(name, funcname, funcnamelen) == 0) {
+            if (name[funcnamelen] == '\0' || name[funcnamelen] == '@') {
+                int prot = get_memory_permission(addr);
+                if (prot == 0) {
+                    return PLTHOOK_INTERNAL_ERROR;
+                }
+                if (!(prot & PROT_WRITE)) {
+                    if (mprotect(ALIGN_ADDR(addr), page_size, PROT_READ | PROT_WRITE) != 0) {
+                        set_errmsg("Could not change the process memory permission at %p: %s",
+                                   ALIGN_ADDR(addr), strerror(errno));
+                        return PLTHOOK_INTERNAL_ERROR;
+                    }
+                }
+                if (oldfunc) {
+                    *oldfunc = *addr;
+                }
+                *addr = funcaddr;
+                if (!(prot & PROT_WRITE)) {
+                    mprotect(ALIGN_ADDR(addr), page_size, prot);
+                }
+                return 0;
+            }
+        }
+    }
+    if (rv == EOF) {
+        set_errmsg("no such function: %s", funcname);
+        rv = PLTHOOK_FUNCTION_NOT_FOUND;
+    }
+    return rv;
+}
+```
 
 
 

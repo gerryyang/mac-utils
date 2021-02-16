@@ -119,6 +119,19 @@ static const Elf_Dyn *find_dyn_by_tag(const Elf_Dyn *dyn, Elf_Sxword tag)
 	return NULL;
 }
 
+#if 0
+struct link_map
+  {
+    /* These first few members are part of the protocol with the debugger.
+       This is the same format used in SVR4.  */
+
+    ElfW(Addr) l_addr;   /* Difference between the address in the ELF
+                            file and the addresses in memory.  */
+    char *l_name;        /* Absolute file name object was found in.  */
+    ElfW(Dyn) *l_ld;     /* Dynamic section of the shared object.  */
+    struct link_map *l_next, *l_prev; /* Chain of loaded objects.  */
+  }; 
+#endif
 static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
 {
 	plthook_t plthook = {NULL,};
@@ -127,7 +140,7 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
 
 	if (page_size == 0) {
 		page_size = sysconf(_SC_PAGESIZE);
-		printf("page_size(%lu)\n", page_size);
+		printf("page_size(%" SIZE_T_FMT ")\n", page_size);
 	}
 
 	plthook.plt_addr_base = (char*)lmap->l_addr;
@@ -224,10 +237,66 @@ static int plthook_open_real(plthook_t **plthook_out, struct link_map *lmap)
 	return 0;
 }
 
+#if 0
+/* Rendezvous structure used by the run-time dynamic linker to communicate
+   details of shared object loading to the debugger.  If the executable's
+   dynamic section has a DT_DEBUG element, the run-time linker sets that
+   element's value to the address where this structure can be found.  */
+
+struct r_debug
+  {
+    int r_version;              /* Version number for this protocol.  */
+
+    struct link_map *r_map;     /* Head of the chain of loaded objects.  */
+
+    /* This is the address of a function internal to the run-time linker,
+       that will always be called when the linker begins to map in a
+       library or unmap it, and again when the mapping change is complete.
+       The debugger can set a breakpoint at this address if it wants to
+       notice shared object mapping changes.  */
+    ElfW(Addr) r_brk;
+    enum
+      {
+        /* This state value describes the mapping change taking place when
+           the `r_brk' address is called.  */
+        RT_CONSISTENT,          /* Mapping change is complete.  */
+        RT_ADD,                 /* Beginning to add a new object.  */
+        RT_DELETE               /* Beginning to remove an object mapping.  */
+      } r_state;
+
+    ElfW(Addr) r_ldbase;        /* Base address the linker is loaded at.  */
+  };
+
+/* This is the instance of that structure used by the dynamic linker.  */
+extern struct r_debug _r_debug;
+#endif
 static int plthook_open_executable(plthook_t **plthook_out)
 {
+    // _r_debug.r_map: Head of the chain of loaded objects
 	return plthook_open_real(plthook_out, _r_debug.r_map);
 }
+
+static int plthook_open_shared_library(plthook_t **plthook_out, const char *filename)
+{
+    void *hndl = dlopen(filename, RTLD_LAZY | RTLD_NOLOAD);
+
+    struct link_map *lmap = NULL;
+
+    if (hndl == NULL) {
+        set_errmsg("dlopen error: %s", dlerror());
+        return PLTHOOK_FILE_NOT_FOUND;
+    }
+
+    if (dlinfo(hndl, RTLD_DI_LINKMAP, &lmap) != 0) {
+        set_errmsg("dlinfo error");
+        dlclose(hndl);
+        return PLTHOOK_FILE_NOT_FOUND;
+    }
+    dlclose(hndl);
+    
+    return plthook_open_real(plthook_out, lmap);
+}
+
 
 int plthook_open(plthook_t **plthook_out, const char *filename)
 {
@@ -235,7 +304,7 @@ int plthook_open(plthook_t **plthook_out, const char *filename)
 	if (filename == NULL) {
 		return plthook_open_executable(plthook_out);
 	} else {
-		//return plthook_open_shared_library(plthook_out, filename);
+		return plthook_open_shared_library(plthook_out, filename);
 	}
 	return 0;
 }
@@ -371,6 +440,7 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
         set_errmsg("invalid argument: The first argument is null.");
         return PLTHOOK_INVALID_ARGUMENT;
     }
+
     while ((rv = plthook_enum(plthook, &pos, &name, &addr)) == 0) {
 		printf("name(%s)\n", name);
 
@@ -405,20 +475,11 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
     return rv;
 }
 
-#if 0
-// This function is called instead of say_hello() called by libatest.so
-static void say_hello_hook()
-{
-	printf("Hello, World! hooked\n");
-	say_hello(); // call real say_hello
-}
-#endif
-
 int install_hook_function()
 {
 	plthook_t *plthook;
 
-	if (plthook_open(&plthook, nullptr) != 0) {
+	if (plthook_open(&plthook, NULL) != 0) {
 		printf("plthook_open error: %s\n", plthook_error());
 		return -1;
 	}
@@ -433,9 +494,9 @@ int install_hook_function()
 
 int main()
 {
-
 	install_hook_function();
 
 	say_hello();
+
 	return 0;
 }

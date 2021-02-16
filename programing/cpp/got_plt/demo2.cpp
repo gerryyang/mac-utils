@@ -9,7 +9,7 @@ int install_hook_function()
 {
 	plthook_t *plthook;
 
-	if (plthook_open(&plthook, nullptr) != 0) {
+	if (plthook_open(&plthook, NULL) != 0) {
 		printf("plthook_open error: %s\n", plthook_error());
 		return -1;
 	}
