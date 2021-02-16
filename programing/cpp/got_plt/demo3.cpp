@@ -66,6 +66,7 @@ typedef struct plthook plthook_t;
 #define Elf_Rel  Elf64_Rel
 #define Elf_Rela Elf64_Rela
 
+// https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h
 #ifndef ELF_R_SYM
 #define ELF_R_SYM ELF64_R_SYM
 #endif
@@ -293,7 +294,7 @@ static int plthook_open_shared_library(plthook_t **plthook_out, const char *file
         return PLTHOOK_FILE_NOT_FOUND;
     }
     dlclose(hndl);
-    
+
     return plthook_open_real(plthook_out, lmap);
 }
 
