@@ -25,20 +25,27 @@ categories: [GCC/Clang]
 
 # ELF (Executable and Linkable Format)
 
-> In computing, the Executable and Linkable Format (ELF, formerly named Extensible Linking Format), is a common standard file format for executable files, object code, shared libraries, and core dumps. First published in the specification for the application binary interface (ABI) of the Unix operating system version named System V Release 4 (SVR4), and later in the Tool Interface Standard, it was quickly accepted among different vendors of Unix systems. In 1999, it was chosen as the standard binary file format for Unix and Unix-like systems on x86 processors by the 86open project.
+![ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini](/assets/images/202102/ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini.png)
 
+> An executable file using the ELF file format consists of `an ELF header`, followed by `a program header table` or `a section header table`, or both. 
+>
+> `The ELF header` is always at offset zero of the file. `The program header table` and `the section header table`'s offset in the file are defined in the ELF header. The two tables describe the rest of the particularities of the file.
 
-每个`ELF文件`由`一个ELF头`和`文件数据`组成。这些数据包括：
+* **ELF header (Ehdr)**
+  + The ELF header is described by the type `Elf32_Ehdr` or `Elf64_Ehdr`
+* **Program header (Phdr)**
+  + An executable or shared object file's program header table is an array of structures, each describing a segment or other information the system needs to prepare the program for execution. An object file segment contains one or more sections. Program headers are meaningful only for executable and shared object files. A file specifies its own program header size with the ELF header's e_phentsize and e_phnum members. The ELF program header is described by the type `Elf32_Phdr` or `Elf64_Phdr` depending on the architecture
+* **Section header (Shdr)**
+  + A file's section header table lets one locate all the file's sections. The section header table is an array of `Elf32_Shdr` or `Elf64_Shdr` structures. The ELF header's `e_shoff` member gives the byte offset from the beginning of the file to the section header table.  `e_shnum` holds the number of entries the section header table contains. `e_shentsize` holds the size in bytes of each entry.
 
-* 程序头表，描述0或多个内存段
-* 节头表，描述0或多个段
-* 由程序头或节头表引用的数据
 
 ELF文件参与程序的**链接**和程序的**执行**，因此通常可以分别从**可链接文件角度**和**可执行文件角度**来看待ELF文件的格式。
 
 * 对于**编译链接**，则编译器和链接器把ELF文件看作是**节头表描述的节集合，而程序头表可选**
 * 对于**加载执行**，则加载器把ELF文件看作是**程序头表描述的段的集合，而节头表可选**
 * 如果是共享文件，则两者都包含
+
+![elf_view](/assets/images/202102/elf_view.png)
 
 动态链接和动态加载：
 
@@ -48,13 +55,141 @@ ELF文件参与程序的**链接**和程序的**执行**，因此通常可以分
   + 当所有的共享库都被加载完毕后，就开始执行**重定位的流程**。重定位是通过**过程链接表（PLT）和 全局偏移表（GOT）**的间接机制来处理的。这些表提供了外部函数和数据的地址，动态链接器需要根据全局符号表重定位每一个符号的地址，即修正GOT和PLT。
 
 
-![ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini](/assets/images/202102/ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini.png)
+## Various sections hold program and control information
 
-refer: 
+* `.bss`
+  + This section holds uninitialized data that contributes to the program's memory image.
+
+* `.data`
+  + This section holds initialized data that contribute to the program's memory image.
+
+* `.debug`
+  + This section holds information for symbolic debugging. The contents are unspecified. 
+
+* `.dynamic`
+  + This section holds dynamic linking information.
+
+* `.dynstr`
+  + This section holds strings needed for dynamic linking, most commonly the strings that represent the names associated with symbol table entries.  This section is of type `SHT_STRTAB`.
+
+* `.dynsym`
+  + This section holds the dynamic linking symbol table. This section is of type `SHT_DYNSYM`. 
+
+* `.got `
+  + This section holds the global offset table. This section is of type `SHT_PROGBITS`. The attributes are processor-specific.
+
+* `.plt`
+  + This section holds the procedure linkage table. This section is of type `SHT_PROGBITS`. The attributes are processor-specific.
+
+* `.symtab`
+  + This section holds a symbol table.
+
+* `.text`
+  + This section holds the "text", or executable instructions, of a program.  This section is of type `SHT_PROGBITS`.
+
+...
+
+
+## Dynamic tags (Dyn)
+
+The `.dynamic` section contains a series of structures that hold relevant dynamic linking information. The `d_tag` member controls the interpretation of `d_un`.
+
+``` c
+typedef struct {
+   Elf32_Sword    d_tag;
+   union {
+       Elf32_Word d_val;
+       Elf32_Addr d_ptr;
+   } d_un;
+} Elf32_Dyn;
+extern Elf32_Dyn _DYNAMIC[];
+
+typedef struct {
+   Elf64_Sxword    d_tag;
+   union {
+       Elf64_Xword d_val;
+       Elf64_Addr  d_ptr;
+   } d_un;
+} Elf64_Dyn;
+extern Elf64_Dyn _DYNAMIC[];
+```
+
+```
+DT_NEEDED
+
+This element holds the string table offset of a null-terminated string, giving the name of
+a needed library. The offset is an index into the table recorded in the DT_STRTAB
+entry. See ‘‘Shared Object Dependencies’’ for more information about these names.
+The dynamic array may contain multiple entries with this type. These entries’ relative
+order is significant, though their relation to entries of other types is not.
+
+
+DT_JMPREL
+
+If present, this entries’s d_ptr member holds the address of relocation entries associated solely with the procedure linkage table. 
+Separating these relocation entries lets the
+dynamic linker ignore them during process initialization, if lazy binding is enabled. If
+this entry is present, the related entries of types DT_PLTRELSZ and DT_PLTREL must
+also be present.
+
+...
+```
+
+例如：
+
+`DT_NEEDED`表示一个列表，列表里面以（NEEDED）为标志的项，就是当前库加载时要依赖的其它库，可以使用`ldd`或`readelf`查看。
+
+```
+$ ldd demo1
+        linux-vdso.so.1 (0x00007ffdab7fa000)
+        libtesta.so => ./libtesta.so (0x00007f5a2fd44000)
+        libplthook.so => ./libplthook.so (0x00007f5a2fb40000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f5a2f93c000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f5a2f54b000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f5a30149000)
+
+$ readelf -d demo1
+
+Dynamic section at offset 0x1d58 contains 30 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libtesta.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libplthook.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libdl.so.2]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x000000000000000c (INIT)               0x828
+ 0x000000000000000d (FINI)               0xb94
+ 0x0000000000000019 (INIT_ARRAY)         0x201d48
+ 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x201d50
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x298
+ 0x0000000000000005 (STRTAB)             0x4b0
+ 0x0000000000000006 (SYMTAB)             0x2d0
+ 0x000000000000000a (STRSZ)              339 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000015 (DEBUG)              0x0
+ 0x0000000000000003 (PLTGOT)             0x201f78
+ 0x0000000000000002 (PLTRELSZ)           216 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x750
+ 0x0000000000000007 (RELA)               0x690
+ 0x0000000000000008 (RELASZ)             192 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000000000001e (FLAGS)              BIND_NOW
+ 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE
+ 0x000000006ffffffe (VERNEED)            0x630
+ 0x000000006fffffff (VERNEEDNUM)         2
+ 0x000000006ffffff0 (VERSYM)             0x604
+ 0x000000006ffffff9 (RELACOUNT)          3
+ 0x0000000000000000 (NULL)               0x0
+```
+
+Refer: 
 
 * [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)
 * [linux/include/uapi/linux/elf.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h)
-
+* [Executable and Linkable Format (ELF)](http://www.skyfree.org/linux/references/ELF_Format.pdf)
+* [elf(5) — Linux manual page](https://man7.org/linux/man-pages/man5/elf.5.html)
 
 # GOT/PLT
 
@@ -70,7 +205,7 @@ refer:
 
 测试代码：
 
-```
+``` c
 // testa.h
 #include <cstdio>
 
@@ -90,14 +225,14 @@ void say_hello()
 
 void local_func()
 {
-        printf("local_func\n");
+  printf("local_func\n");
 }
 
 int main()
 {
-        local_func();
-        say_hello();
-        return 0;
+  local_func();
+  say_hello();
+  return 0;
 }
 ```
 
@@ -301,7 +436,7 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 ## 测试代码
 
-[https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/got_plt](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/got_plt)
+[https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/hook/got_plt](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/hook/got_plt)
 
 
 ## link_map
@@ -312,7 +447,7 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 * l_ld: Dynamic section of the shared object
 
 
-```
+``` c
 /* Rendezvous structure used by the run-time dynamic linker to communicate
    details of shared object loading to the debugger.  If the executable's
    dynamic section has a DT_DEBUG element, the run-time linker sets that
@@ -362,7 +497,7 @@ struct link_map
 
 ## PLT Replace
 
-```
+``` c
 int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, void **oldfunc)
 {
     size_t funcnamelen = strlen(funcname);
