@@ -83,13 +83,9 @@ refer:
 * [How to change the clock source in the system](https://access.redhat.com/solutions/18627)
 
 
-# gettimeofday性能优化
+# gettimeofday的实现
 
-系统时间对很多互联网应用来说，是一种很宝贵的资源，而一些高性能的后台服务往往因为频繁获取系统时间，使得CPU的利用率大大降低。
-
-在Linux的实现中，获得系统时间的函数主要有`time()`，`ftime()`和`gettimeofday()`三个函数，而前面两个基本上都是对`gettimeofday()`的封装，所以这里主要分析`gettimeofday()`这个函数。另外，从实用的角度出发，这里忽略`gettimeofday()`的第二个参数`timezone`，这个参数对绝大多数的应用意义都不大。
-
-* C library/kernel differences. On some architectures, an implementation of `gettimeofday()` is provided in the `vdso(7)`.
+gettimeofday定义：
 
 ``` c
 // https://man7.org/linux/man-pages/man2/gettimeofday.2.html
@@ -108,219 +104,123 @@ struct timezone {
 };
 ```
 
+系统时间对很多互联网应用来说，是一种很宝贵的资源，而一些高性能的后台服务往往因为频繁获取系统时间，使得CPU的利用率大大降低。
+
+在Linux的实现中，获得系统时间的函数主要有`time()`，`ftime()`和`gettimeofday()`三个函数，而前面两个基本上都是对`gettimeofday()`的封装，所以这里主要分析`gettimeofday()`这个函数。另外，从实用的角度出发，这里忽略`gettimeofday()`的第二个参数`timezone`，这个参数对绝大多数的应用意义都不大。
+
+传统的gettimeofday的实现基本上综合了Linux的墙上时间(xtime)和硬件相关的一些时间矫正。gettimeofday的操作可以分解为三步：
+
+1. 取得墙上时间xtime
+2. 访问时间设备，取得上次时间中断到当前的时间偏移
+3. 根据这个时间偏移计算出当前的精确时间
+
+可见，gettimeofday的精度和性能由具体的时间设备所决定。
+
+* `TSC`是由CPU内部实现的，只要访问CPU的寄存器即可以取得TSC计数，所以，其性能无疑是最好的，但是其可靠性却是比较低的。
+* 现在的很多Linux版本默认都是使用`HPET`作为时钟源的，可以满足大部分应用在时间和性能上的需求。
+* 一般的情况下，gettimeofday的执行性能应该在**500万/秒左右**，如果想获得更高的性能，就必须对现有的系统调用进行优化。
+
+
+# gettimeofday性能优化思路
+
+**优化思路：**
+
+1. vsyscall机制。
+
+* 在2.6的内核里面，实现了一种vsyscall的机制，允许应用程序不需要进入内核就可以获得内核的数据（比如系统时间），但是，这种机制只有在x86_64的Linux下才受到支持。(On some architectures, an implementation of `gettimeofday()` is provided in the `vdso(7)`.)
+
+* vsyscall的实现是通过内核映射一个专门的页面，用于存储一些对用户只读的数据（例如时间、CPU编号等），并定期更新这些数据。通过glibc提供的共享库，系统将这些页面映射到用户进程的地址空间，当用户进程调用glibc提供的接口（例如gettimeofday）时，glibc获得这些共享内存的数据，返回给用户，从而实现了原来需要进入内核才能实现的功能。
+
+* vsyscall可以和TSC结合使用，这个时候，gettimeofday将获得最大的性能，几乎可以认为就是简单的读内存操作。
+
+* 问题：vsyscall的最大不足在于只支持x86_64的系统，在32位的系统上无法使用，虽然在网上可以找到一些内核和glibc的patch，使得32位的系统也能使用vsyscall功能，但要求重新编译内核，操作十分繁琐。
+
+2. 在用户态下对gettimeofday进行优化。
+
+* 从最简单的情况说起，如果对精度的要求不是很高，那么，完全可以把上一次的调用结果缓存起来，当再次调用gettimeofday的时候，先判断一下两次调用的时间延时，如果延时小于1毫秒（也可以是10微妙，100毫秒等等），则返回上次调用的结果（或者加上从上次调用到现在的时延，有点像内核的gettimeofday实现，只是现在是在用户态）。
+
+* 问题：如果判断两次调用的时延？
+
+访问TSC寄存器可以使用`指令rdtsc`，下面的宏定义用于读取TSC的值：
 
 ``` c
-#include <stdint.h>
-#include <sys/time.h>
-#include <time.h>
-#include <string.h>
-#include <stdio.h>
+ #define RDTSC() ({ uint64_t tim; asm volatile( "rdtsc" : "=A" (tim) ); tim; })
+```
 
-/*
- * Checked against the Intel manual and GCC --hpreg
- *
- * volatile because the tsc always changes without the compiler knowing it.
- */
-#define RDTSC() ({ register uint64_t tim; __asm__ __volatile__( "rdtsc" : "=A" (tim) ); tim; })
-#define RDTSCP(aux) ({ register uint64_t tim; __asm__ __volatile__( "rdtscp" : "=A" (tim),"=c" (aux) ); tim; })
+TSC是一个64位的计算器，但我们所需要的是时间，而不是计数。由于TSC的值是每个CPU时钟周期增加1，所以只要知道了CPU的时间频率，就可以将这个值换算成时间。因为对精度的要求并不是很高（微秒级），我们只需要获得以兆为单位的大约值就可以了。下面的函数获得**CPU的频率**：
 
-// Static variables are initialized to 0
-static struct timeval walltime;
-static uint64_t walltick;
-static int cpuspeed_mhz;
-static int has_rdtscp;
-static int cpuid;
-
-static inline int test_rdtscp()
-{
-	register uint32_t edx;
-	__asm__ __volatile__(
-		"movl $0x80000001, %%eax \n\t"
-		"cpuid"
-		: "=d" (edx) : : "eax","ebx","ecx"
-	);
-	return (edx & (1U<<27));
-}
-
-
-/*
- * Returns CPU clock in mhz
- * Notice that the function will cost the calling thread to sleep wait_us us
- */
+``` c
 static inline int getcpuspeed_mhz(unsigned int wait_us)
 {
-	uint64_t tsc1, tsc2;
-	struct timespec t;
+   uint64_t tsc1, tsc2;
+   struct timespec t;
 
-	t.tv_sec = 0;
-	t.tv_nsec = wait_us * 1000;
+    t.tv_sec = 0;
+    t.tv_nsec = wait_us * 1000;
 
-	tsc1 = RDTSC();
+    tsc1 = RDTSC();
 
-	// If sleep failed, result is unexpected
-	if(nanosleep(&t, NULL))
-		return -1;
+    // If sleep failed, result is unexpected, the caller should retry
+    if (nanosleep(&t, NULL))
+            return -1;
 
-	tsc2 = RDTSC();
-
-	return (tsc2 - tsc1)/(wait_us);
-}
-
-static int getcpuspeed()
-{
-	static int speed = -1;
-
-	while(speed<100)
-		speed = getcpuspeed_mhz(50*1000);
-
-	return speed;
-}
-
-#define REGET_TIME_US	1
-
-//#define getcpuspeed() 2000
-
-# define TIME_ADD_US(a, usec)                      \
-  do {                                             \
-      (a)->tv_usec += usec;                        \
-      while((a)->tv_usec >= 1000000)               \
-      {                                            \
-        (a)->tv_sec ++;                            \
-        (a)->tv_usec -= 1000000;                   \
-      }                                            \
-  } while (0)
-
-
-//
-// Compile with -O2 to optimize mul/div instructions
-// The performance is restricted by 2 factors:
-//    1, the rdtsc instruction
-//    2, division
-//
-// Another restriction for this function:
-//    The caller thread should run on one CPU or on SMP with sinchronized TSCs,
-// otherwise, rdtsc instruction will differ between multiple CPUs.
-//    The good thing is that most multicore CPUs are shipped with sinchronized TSCs.
-//
-static int my_gettimeofday(struct timeval *tv)
-{
-	uint64_t tick = 0;
-	// max_time_us = max_ticks / cpuspeed_mhz > RELOAD_TIME_US us
-	static unsigned int max_ticks = 2000*REGET_TIME_US;
-
-	if(walltime.tv_sec==0 || cpuspeed_mhz==0 ||
-		// If we are on a different cpu with unsynchronized tsc,
-		// RDTSC() may be smaller than walltick
-		// in this case tick will be a negative number,
-		// whose unsigned value is much larger than max_ticks
-	 	(tick=RDTSC()-walltick) > max_ticks)
-	{
-		if(tick==0 || cpuspeed_mhz==0)
-		{
-			cpuspeed_mhz = getcpuspeed();
-			max_ticks = cpuspeed_mhz*REGET_TIME_US;
-		}
-
-		gettimeofday(tv, NULL);
-		memcpy(&walltime, tv, sizeof(walltime));
-		walltick = RDTSC();
-		return 0;
-	}
-
-	memcpy(tv, &walltime, sizeof(walltime));
-
-	// if REGET_TIME_US==1, we are currently in the same us, no need to adjust tv
-#if REGET_TIME_US > 1
-	{
-		uint32_t t;
-		t = ((uint32_t)tick) / cpuspeed_mhz;
-		TIME_ADD_US(tv, t);
-	}
-#endif
-	return 0;
-}
-
-
-int main(int argc, char *argv[])
-{
-	int i;
-	unsigned int loops = 10000000;
-	struct timeval t1, t2, t3;
-
-	if(argc<2)
-	{
-		printf("Please input an argument:\n\t1 compare time\n\t2 syscall\n\t3 fastcall\n");
-		return 0;
-	}
-
-	if(argc>2)
-		loops = strtoul(argv[2], NULL, 10);
-
-	if(argv[1][0]=='1')
-	{
-		int spd = getcpuspeed();
-		uint64_t max = 0, diff = 0, nr_diff1 = 0, nr_diff10 = 0;
-		uint64_t tsc = RDTSC();
-		uint64_t af = 1;
-		int hastscp = 0;
-		uint32_t aux = 0;
-
-		if((hastscp=test_rdtscp()))
-			printf("This machine supports rdtscp.\n");
-		else
-			printf("This machine does not support rdtscp.\n");
-
-		if(hastscp)
-			tsc = RDTSCP(aux);
-		else
-			tsc = RDTSC();
-
-		if(sched_setaffinity(0, sizeof(af), &af))
-			perror("failed to set affinity");
-
-		printf("tsc=%llu, aux=0x%x, cpu speed %d mhz\n", tsc, aux, spd);
-		printf("getspeed_010:%d\n", getcpuspeed_mhz(10*1000));
-		printf("getspeed_100:%d\n", getcpuspeed_mhz(100*1000));
-		printf("getspeed_500:%d\n", getcpuspeed_mhz(500*1000));
-	
-		for(i=0; i<loops; i++)
-		{
-		#if 1
-			my_gettimeofday(&t1);
-		#else
-			gettimeofday(&t1, NULL);
-		#endif
-			gettimeofday(&t2, NULL);
-
-			if(timercmp(&t1, &t2, >))
-				timersub(&t1, &t2, &t3);
-			else
-				timersub(&t2, &t1, &t3);
-
-//			printf("t1=%u.%06u\t", t1.tv_sec, t1.tv_usec);
-//			printf("t2=%u.%06u\t", t2.tv_sec, t2.tv_usec);
-//			printf("diff=%u.%06u\n", t3.tv_sec, t3.tv_usec);
-
-			if(max<t3.tv_usec) max = t3.tv_usec;
-			if(t3.tv_usec>1) nr_diff1 ++;
-			if(t3.tv_usec>10) nr_diff10 ++;
-			diff += t3.tv_usec;
-//			if(i%20==0) usleep((i%10)<<5);
-		}
-		printf("max diff=%llu, ave diff=%llu, diff1 count=%llu, diff10 count=%llu.\n", max, diff/i, nr_diff1, nr_diff10);
-	}
-	else if(argv[1][0]=='2')
-	{
-		for(i=0; i<loops; i++)
-			gettimeofday(&t1, NULL);
-	}
-	else if(argv[1][0]=='3')
-	{
-		for(i=0; i<loops; i++)
-			my_gettimeofday(&t1);
-	}
+     tsc2 = RDTSC();
+     return (tsc2 - tsc1) / (wait_us);
 }
 ```
+
+可以看出，CPU频率和TSC的换算公式如下：
+
+> cpu_speed_mhz = tsc_offset / time_offset_us
+
+反过来，如果我们知道了**TSC的偏移**和**CPU频率**，就可以获得**时间偏移**了：
+
+> time_offset_us = tsc_offset / cpu_speed_mhz
+
+
+# gettimeofday性能优化实现
+
+* 注意`RELOAD_TIME_US`这个宏的定义，它告诉my_gettimeofday()每隔多少微妙就重新读一些系统调用gettimeofday()，如果这个值是1，代码就会变得十分简洁，因为后面不需要对保留的时间做矫正。
+* 经过测试，在频率为2G的CPU上这个函数的执行效率在2000w/s左右，而相同条件下gettimeofday的执行效率在250w左右，精度方面也做了大概的测试，差异在10微妙以内大概占千份之一，而差异大于10微妙的比率在百万份只一以内，这个精度应该足以满足绝大多数的应用了。
+* 另外，值得一提的是，`rdtsc`的指令读取的是当前CPU的TSC值，而现在的多核系统，对TSC的处理是不太一致的，大多数的Intel CPU采用Synchronized TSC的方式，各个不同的CPU核间会同步TSC的值。但是，并不是所有的多CPU系统都会同步CPU间的TSC值，特别是，单不同CPU的主频不一样的时候，TSC是无法同步的。为此，如果要兼顾所有的情况，可以有三种解决方法：
+	+ 使用sched_setaffinity()将当前进程绑定到一个CPU上
+	+ 获得当前CPU的ID，当ID发生变化是重新调用gettimeofday()系统函数。较新的Intel系列CPU支持一个新的指令`rdtscp`，除了读取TSC的值外，还额外读了一个辅助寄存器到ECX，这个寄存器保留当前CPU的处理器ID（基于vsyscall的getcpu()会尝试使用rdtscp指令来读取CPU的ID，当然这个值也是内核写进去的。）有了这个指令，可以在读TSC的时候同时读出CPU ID，并将CPU ID保存在内存中，当下次读TSC的时候，将两个CPU ID进行比较，就可以检测出当前进程被调度到其它CPU的情况了。
+	+ 不处理。如果对精度要求不是特别高，完全可以不处理。这是基于以下的原因：1. Linux内核不会随便将进程调度到另外的CPU，就算调度，也会优先调度到同一个物理CPU上，TSC的值也往往是一致的。2. 就算TSC的值不一致，如果差异比较小，在精度允许的范围内，是可以接受的；如果差异比较大，会被my_gettimeofday()检测出来，并重新调用gettimeofday()。
+* 如果多CPU的时钟频率不一样，完全不处理也不大可行，因为如果getcpuspeed()返回错误的值，my_gettimeofday()就不准确了。可以加上一段逻辑，当TSC的差异大于某个值的时候，重新计算CPU的频率。
+
+
+测试环境：
+
+```
+$ lscpu
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              1
+On-line CPU(s) list: 0
+Thread(s) per core:  1
+Core(s) per socket:  1
+Socket(s):           1
+NUMA node(s):        1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               63
+Model name:          Intel(R) Xeon(R) CPU E5-26xx v3
+Stepping:            2
+CPU MHz:             2394.446
+BogoMIPS:            4788.89
+Hypervisor vendor:   KVM
+Virtualization type: full
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            4096K
+NUMA node0 CPU(s):   0
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx lm constant_tsc rep_good nopl cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm pti bmi1 avx2 bmi2 xsaveopt
+```
+
+测试代码：
+
+[https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/performance/gettimeofday](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/performance/gettimeofday)
 
 测试结果：
 
