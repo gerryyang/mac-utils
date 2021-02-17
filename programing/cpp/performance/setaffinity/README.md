@@ -24,10 +24,72 @@ CPU sets is described in CPU_SET(3).
 
 # Test
 
+First employ `lscpu` to determine that this (x86) system has one cores, each with sixteen CPUs
+
+```
+$lscpu | egrep -i 'core.*:|socket'
+Thread(s) per core:    1
+Core(s) per socket:    16
+
+$lscpu
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                16
+On-line CPU(s) list:   0-15
+Thread(s) per core:    1
+Core(s) per socket:    16
+座：                 1
+NUMA 节点：         1
+厂商 ID：           GenuineIntel
+CPU 系列：          6
+型号：              85
+型号名称：        Intel(R) Xeon(R) Platinum 8255C CPU @ 2.50GHz
+步进：              5
+CPU MHz：             2494.140
+BogoMIPS：            4988.28
+超管理器厂商：  KVM
+虚拟化类型：     完全
+L1d 缓存：          32K
+L1i 缓存：          32K
+L2 缓存：           4096K
+L3 缓存：           36608K
+NUMA 节点0 CPU：    0-15
+```
+
+Then time the operation of the example program for three cases: 
+
+* both processes running on the same CPU; 
+* both processes running on different CPUs on the same core; 
+* and both processes running on different CPUs on different cores.
+
 ```
 $ make
-$ time -p ./test 0 0 10000000
-real 4.93
-user 2.00
-sys 2.85
+
+# case 1
+$ time -p ./test 0 0 100000000
+real 10.05
+user 3.91
+sys 6.13
+
+# case 2
+$ time -p ./test 0 1 100000000
+real 4.95
+user 3.84
+sys 6.01
+
+# case 2
+$ time -p ./test 0 2 100000000
+real 4.95
+user 3.85
+sys 6.04
+```
+
+```
+$pidstat -h
+Linux 3.10.107-1-tlinux2_kvm_guest-0049 (qsm_cloud_dev-15)      2021年02月17日  _x86_64_        (16 CPU)
+
+#      Time   UID       PID    %usr %system  %guest    %CPU   CPU  Command
+ 1613577124  1000       477    0.00    0.00    0.00    0.00     0  test
+ 1613577124  1000       478    0.00    0.00    0.00    0.00     0  test
 ```
