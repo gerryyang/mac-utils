@@ -52,7 +52,7 @@ install:
 	@echo "nothing to install"
 
 clean:
-	rm -f $(TARGET1_OBJS) $(TARGET1) $(TARGET2_OBJS) $(TARGET2) $(TARGET3_OBJS) $(TARGET3) $(TARGET4) *.so
+	rm -f $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) *.o *.so
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $<
