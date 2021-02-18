@@ -16,6 +16,7 @@ int test_error_inc()
 	atomic_counter_init(&ac, SHM_KEY, 0);
 	atomic_counter_set(&ac, 0);
 
+	// fork 9 child process
 	for (i = 0; i < 9; ++i)
 	{
 		if (fork() == 0)
@@ -33,6 +34,9 @@ int test_error_inc()
 	
 	if (p == 0)
 	{
+		// parent process
+
+		// parent waits for child to teminate
 		while (wait(NULL) != -1);
 
 		// result
@@ -40,6 +44,7 @@ int test_error_inc()
 	}
 	else
 	{
+		// 9 child process
 		printf("dec%d: val=%u\n", p, ac.ptr->dwCounter);
 		exit(0);
 	}
@@ -109,14 +114,14 @@ int test_add()
 		atomic_counter_add(&ac, 1);
 	}
 	
-	printf("add%d: val=%u\n", p, ac.ptr->dwCounter);
-
 	if (p == 0)
 	{
 		while (wait(NULL) != -1);
+		printf("add%d: val=%u\n", p, ac.ptr->dwCounter);
 	}
 	else
 	{
+		printf("add%d: val=%u\n", p, ac.ptr->dwCounter);
 		exit(0);
 	}
 
@@ -161,7 +166,6 @@ int test_dec()
 	else
 	{
 		// 9 child process
-
 		printf("dec%d: val=%u\n", p, ac.ptr->dwCounter);
 		exit(0);
 	}
