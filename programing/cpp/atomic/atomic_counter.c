@@ -46,6 +46,8 @@ int atomic_counter_inc(atomic_counter * pstCounter)
     {
         return -1;
     }
+
+    // 用户需要指定lock前缀
     asm volatile( "lock; incl %0" : "+m" (pstCounter->ptr->dwCounter));
     return 0;
 }
@@ -82,12 +84,19 @@ int atomic_counter_dec(atomic_counter * pstCounter)
     {
         dec = c - 1;
         if (dec == (uint32_t)-1) // c is zero, return
+        {
             break;
+        }
+
         old = cmpxchg(&pstCounter->ptr->dwCounter, c, dec);
         if (old == c) // value is not changed by others, operation successful
+        {
             break;
+        }
+
         c = old; // someone is accessing the counter, do it again
     }
+    
     return 0;
 }
 
@@ -97,6 +106,7 @@ int atomic_counter_set(atomic_counter * pstCounter, uint32_t val)
     {
         return -1;
     }
+
     (pstCounter->ptr->dwCounter) = val;
     return 0;
 }
@@ -107,6 +117,7 @@ int atomic_counter_get(atomic_counter * pstCounter, uint32_t *pval)
     {
         return -1;
     }
+
     *pval = (pstCounter->ptr->dwCounter) ;
     return 0;
 }
@@ -117,6 +128,8 @@ int atomic_counter_add(atomic_counter * pstCounter, uint32_t val)
     {
         return -1;
     }
+
+    // 用户需要指定lock前缀
     __asm__ __volatile__( "lock ; addl %1,%0" :"+m" (pstCounter->ptr->dwCounter) :"ir" (val));
     return 0;
 }

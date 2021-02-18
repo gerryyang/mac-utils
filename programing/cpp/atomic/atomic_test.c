@@ -135,8 +135,49 @@ int test_add()
 	return 0;
 }
 
+int test_error_inc()
+{
+	printf("test_error_inc:\n");
+
+	int i, j, p = 0;
+
+	atomic_counter ac;
+	atomic_counter_init(&ac, SHM_KEY, 0);
+	atomic_counter_set(&ac, 0);
+
+	for (i = 0; i < 9; ++i)
+	{
+		if (fork() == 0)
+		{
+			p = i + 1;
+			break;
+		}
+	}
+
+	for (j = 0; j < 1000000; ++j)
+	{
+		// error, no atomic
+		++(ac.ptr->dwCounter);
+	}
+	
+	printf("inc%d: val=%u\n", p, ac.ptr->dwCounter);
+
+	if (p == 0)
+	{
+		while (wait(NULL) != -1);
+	}
+	else
+	{
+		exit(0);
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
+	test_error_inc();
+
 	test_dec();
 
 	test_inc();
