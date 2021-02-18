@@ -160,14 +160,16 @@ int test_error_inc()
 		++(ac.ptr->dwCounter);
 	}
 	
-	printf("inc%d: val=%u\n", p, ac.ptr->dwCounter);
-
 	if (p == 0)
 	{
 		while (wait(NULL) != -1);
+
+		// result
+		printf("dec%d: val=%u\n", p, ac.ptr->dwCounter);
 	}
 	else
 	{
+		printf("dec%d: val=%u\n", p, ac.ptr->dwCounter);
 		exit(0);
 	}
 
