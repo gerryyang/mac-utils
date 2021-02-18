@@ -1,9 +1,10 @@
 #include <sys/shm.h>
 #include "atomic_counter.h"
 
-int get_shm(void **ptr, int key, int size, int flag)
+int get_shm(void **ptr, int key, int size)
 {
-	int id, ret = 0;
+	int id;
+	int ret = 0;
 
 	if ((id = shmget(key, size, 0666)) < 0) {
 		if((id = shmget(key, size, 0666|IPC_CREAT)) < 0) {
