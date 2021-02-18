@@ -47,6 +47,9 @@ type __sync_nand_and_fetch (type *ptr, type value, ...)
 # Usage
 
 ```
+$ cd asm_lock
+$ make
+
 $ ./atomic_test 
 test_error_inc:
 dec3: val=3428565
