@@ -53,9 +53,9 @@ int test_dec()
 	return 0;
 }
 
-int test_dec2()
+int test_inc()
 {
-	printf("test_dec2:\n");
+	printf("test_inc:\n");
 
 	int i, j, p = 0;
 
@@ -74,14 +74,14 @@ int test_dec2()
 
 	for (j = 0; j < 1000000; ++j)
 	{
-		atomic_counter_dec(&ac);
+		atomic_counter_inc(&ac);
 	}
 	
 	printf("inc%d: val1=%u\n", p, ac.ptr->dwCounter);
 
 	for (j = 0; j < 1000100; ++j)
 	{
-		atomic_counter_dec(&ac);
+		atomic_counter_inc(&ac);
 	}
 	printf("inc%d: val2=%u\n", p, ac.ptr->dwCounter);
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 {
 	test_dec();
 
-	test_dec2();
+	test_inc();
 
 	test_add();
 

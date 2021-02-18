@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#define SHM_KEY 0xac00ac
+
 #pragma pack(1)
 typedef struct
 {
