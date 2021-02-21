@@ -880,7 +880,7 @@ $2 = 11
 * [Assembly - Variables, instructions and addressing modes - Posted by adrian.ancona on February 27, 2019](https://ncona.com/2019/02/assembly-variables-instructions-and-addressing-modes/)
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
 * [Introduction to x64 Assembly - Published on March 19, 2012](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
-
+* [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 
 
 
