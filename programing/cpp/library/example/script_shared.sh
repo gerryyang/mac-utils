@@ -4,6 +4,7 @@
 # Create shared library's object file, libhello.o.
 
 gcc -fPIC -Wall -g -c libhello.c
+#gcc -Wall -g -c libhello.c
 
 # Create shared library.
 # Use -lc to link it against C library, since libhello
