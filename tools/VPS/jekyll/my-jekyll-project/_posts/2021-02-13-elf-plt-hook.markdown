@@ -9,18 +9,381 @@ categories: [GCC/Clang]
 {:toc}
 
 
-# 动态链接
+# Tips
 
-* 在动态链接方式实现以前，普遍采用**静态链接**的方式来生成可执行文件。如果一个程序使用了外部的库函数，那么整个库都会被直接编译到可执行文件中。
-* ELF支持**动态链接**，当一个程序被加载进内存时，动态链接器会把需要的共享库加载并绑定到该进程的地址空间中。随后在调用某个函数时，对该函数地址进行解析，以达到对该函数调用的目的。
+## 安装和使用动态库
 
-# -fPIC作用
+Once you've created a shared library, you'll want to install it. The simple approach is simply to copy the library into one of the standard directories (e.g., `/usr/lib`) and run `ldconfig`.
+
+First, you'll need to create the shared libraries somewhere. Then, you'll need to set up the necessary symbolic links, in particular a link from a `soname` to the real name (as well as from a versionless soname, that is, a soname that ends in `.so` for users who don't specify a version at all). The simplest approach is to run:
+
+```
+ldconfig -n directory_with_shared_libraries
+```
+
+Finally, when you compile your programs, you'll need to tell the linker about any static and shared libraries that you're using. Use the `-l` and `-L` options for this.
+
+If you can't or don't want to install a library in a standard place (e.g., you don't have the right to modify `/usr/lib`), then you'll need to change your approach. In that case, you'll need to install it somewhere, and then give your program enough information so the program can find the library and there are several ways to do that. You can use gcc's `-L` flag in simple cases. You can use the `rpath` approach, particularly if you only have a specific program to use the library being placed in a `non-standard` place. You can also use environment variables to control things. In particular, you can set `LD_LIBRARY_PATH`, which is a colon-separated list of directories in which to search for shared libraries before the usual places. If you're using bash, you could invoke my_program this way using:
+
+```
+LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH  ./my_program
+```
+
+## 动态加载共享库（插件场景）
+
+`Dynamically loaded` (DL) libraries are libraries that are loaded at times other than during the startup of a program. They're particularly useful for implementing plugins or modules, because they permit waiting to load the plugin until it's needed.
+
+In Linux, DL libraries aren't actually special from the point-of-view of their format; they are built as standard object files or standard shared libraries as discussed above. The main difference is that the libraries aren't automatically loaded at program link time or start-up; instead, there is an API for opening a library, looking up symbols, handling errors, and closing the library. C users will need to include the header file `<dlfcn.h>` to use this API.
+
+
+## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
+
+```
+# 查看帮助
+LD_DEBUG=help ./bin
+
+# display library search paths
+LD_DEBUG=libs ./bin
+
+# 将信息输出到log中
+LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
+```
+
+## 使用`rpath`编译时指定动态库搜索路径
+
+During development, there's the potential problem of modifying a library that's also used by many other programs -- and **you don't want the other programs to use the developmental library**, only a particular application that you're testing against it. One link option you might use is ld's `rpath` option, which specifies the runtime library search path of that particular program being compiled. **From gcc, you can invoke the rpath option by specifying it this way**:
+
+```
+-Wl,-rpath,$(DEFAULT_LIB_INSTALL_PATH)
+```
+
+If you use this option when building the library client program, you don't need to bother with `LD_LIBRARY_PATH` other than to ensure it's not conflicting, or using other techniques to hide the library.
+
+## LD_PRELOAD
+
+在GNU C Library的主要开发成员Ulrich Drepper写的[How to Write Shared Libraries, 2011](http://www.akkadia.org/drepper/dsohowto.pdf)中有如下描述：
+
+> scope中包含两个以上的同名标识符的定义也没有关系。标识符查找的算法，只需采用最先发现的来定义就好了，这种概念非常有用。使用`LD_PRELOAD`的功能就是其中的一例。
+
+这样一来，无论是静态链接库，还是共享库，即时定义了同名标识符，程序也可以正常的进行链接和运行。在进行这个操作时可能会发生**“莫名其妙地调用非预期的函数“**这样的bug，所以必须引起注意。**解决方法是：使用命名空间来避免冲突。**
+
+### 用`LD_PRELOAD`更换共享库
+
+通过将共享对象指定为环境变量`LD_PRELOAD`并运行，先链接`LD_PRELOAD`的共享对象。
+
+If you want to **override just a few selected functions, you can do this by creating an overriding object file and setting `LD_PRELOAD`; the functions in this object file will override just those functions (leaving others as they were)**.
+
+
+例子：
+
+```
+$ hostname
+VM-0-16-ubuntu
+
+$ ltrace hostname
+rindex("hostname", '/')                                                                             = nil
+strcmp("hostname", "domainname")                                                                    = 4
+strcmp("hostname", "ypdomainname")                                                                  = -17
+strcmp("hostname", "nisdomainname")                                                                 = -6
+getopt_long(1, 0x7ffc89e23d28, "aAdfbF:h?iIsVy", 0x55fc0d41faa0, nil)                               = -1
+__errno_location()                                                                                  = 0x7fae1faed480
+malloc(128)                                                                                         = 0x55fc0d831260
+gethostname("VM-0-16-ubuntu", 128)                                                                  = 0
+memchr("VM-0-16-ubuntu", '\0', 128)                                                                 = 0x55fc0d83126e
+puts("VM-0-16-ubuntu"VM-0-16-ubuntu
+)                                                                              = 15
++++ exited (status 0) +++
+```
+
+```
+$ nm -D /bin/hostname |grep gethostname
+                 U gethostname
+
+$ ldd /bin/hostname 
+        linux-vdso.so.1 (0x00007fff071f5000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fc62282b000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fc622e21000)
+
+$ nm -D /lib/x86_64-linux-gnu/libc.so.6 | grep hostname
+0000000000116e30 W gethostname
+...
+```
+
+测试代码：
+
+``` c
+// gethostname.c
+
+#include <stdlib.h>
+#include <string.h>
+
+int gethostname(char *name, size_t len)
+{
+        char *p = getenv("FAKE_HOSTNAME");
+        if (p == NULL) {
+                p = "localhost";
+        }
+        strncpy(name, p, len - 1);
+        name[len - 1] = '\0';
+
+        return 0;
+}
+```
+
+输出：
+
+``` bash
+#!/bin/bash
+
+# origin
+hostname
+
+# hook
+FAKE_HOSTNAME=gerryyang.com LD_PRELOAD=./gethostname.so hostname
+```
+
+### 用`LD_PRELOAD`来lap既存的函数
+
+使用handle `RTLD_NEXT`，用dlsym调出原始的调用函数。handle是`RTLD_NEXT`扩展的特殊代名，在共享对象的下一个共享对象以后取得寻找符号值。`RTLD_NEXT`是GNU的扩展，在包含`dlfcn.h`之前有必要先定义`GNU_SOURCE`。
+
+``` c
+#define _GNU_SOURCE
+#include <dlfcn.h>
+
+static int (*bind0)(int sockfd, const struct sockaddr *myaddr, socklen_t addrlen);
+
+...
+
+bind0 = dlsym(RTLD_NEXT, "bind");
+```
+
+使用方法：
+
+``` sh
+$ LD_PRELOAD=./bindwrap.so BIND_ADDR=127.0.0.1 daemon-program
+```
+
+
+## 使用`ldd`查看共享库依赖
+
+* 使用`objdump -p`和`readelf -d`可以查询共享库的依赖关系（通过动态节的NEEDED），但是要查看和动态库相关的全部依赖关系，就比较麻烦。
+* 在GUN/Linux里，`ldd`实际上仅是shell脚本，若将环境变量`LD_TRACE_LOADED_OBJECTS`设置为1后执行程序，解释器（ld-linux-x86-64.so.2）将在执行实际的程序之前查看程序必要的共享库，将其载入内存并把它的信息显示出来。因此，不用ldd，只用环境变量`LD_TRACE_LOADED_OBJECTS`也可以得到同样的结果。
+
+```
+# /usr/bin/ldd
+
+# This is the `ldd' command, which lists what shared libraries are
+# used by given dynamically-linked executables.  It works by invoking the
+# run-time dynamic linker as a command and setting the environment
+# variable LD_TRACE_LOADED_OBJECTS to a non-empty value.  
+```
+
+```
+$ ldd demo1
+        linux-vdso.so.1 (0x00007fff6e92c000)
+        libtesta.so => ./libtesta.so (0x00007ff426f1e000)
+        libplthook.so => ./libplthook.so (0x00007ff426d1a000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007ff426b16000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ff426725000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007ff427323000)
+
+$ LD_TRACE_LOADED_OBJECTS=1 demo1
+        linux-vdso.so.1 (0x00007ffc55f6d000)
+        libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f419dffc000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f419ddf8000)
+        libutil.so.1 => /lib/x86_64-linux-gnu/libutil.so.1 (0x00007f419dbf5000)
+        libexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x00007f419d9c3000)
+        libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f419d7a6000)
+        libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f419d408000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f419d017000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f419e21b000)
+```
+
+
+You can see the list of the shared libraries used by a program using `ldd`. So, for example, you can see the shared libraries used by ls by typing:
+
+```
+ldd /bin/ls
+```
+
+Generally you'll see a list of the sonames being depended on, along with the directory that those names resolve to. In practically all cases you'll have at least two dependencies:
+
+```
+/lib/ld-linux.so.N (where N is 1 or more, usually at least 2). This is the library that loads all other libraries.
+
+libc.so.N (where N is 6 or more). This is the C library. Even other languages tend to use the C library (at least to implement their own libraries), so most programs at least include this one.
+```
+
+Beware: do not run `ldd` on a program you don't trust. As is clearly stated in the `ldd` manual, ldd works by (in certain cases) by setting a special environment variable (for ELF objects, LD_TRACE_LOADED_OBJECTS) and then executing the program. It may be possible for an untrusted program to force the ldd user to run arbitrary code (instead of simply showing the ldd information). So, for safety's sake, don't use ldd on programs you don't trust to execute.
+
+## C/C++共享库不兼容的情况
+
+When a new version of a library is binary-incompatible with the old one the soname needs to change. In C, there are four basic reasons that a library would cease to be binary compatible:
+
+1. The behavior of a function changes so that it no longer meets its original specification,
+2. Exported data items change (exception: adding optional items to the ends of structures is okay, as long as those structures are only allocated within the library).
+3. An exported function is removed.
+4. The interface of an exported function changes.
+
+If you can avoid these reasons, you can keep your libraries binary-compatible. Said another way, you can keep your `Application Binary Interface (ABI)` compatible if you avoid such changes. For example, you might want to add new functions but not delete the old ones. You can add items to structures but only if you can make sure that old programs won't be sensitive to such changes by adding items only to the end of the structure, only allowing the library (and not the application) to allocate the structure, making the extra items optional (or having the library fill them in), and so on. Watch out - you probably can't expand structures if users are using them in arrays.
+
+For C++ (and other languages supporting compiled-in templates and/or compiled dispatched methods), the situation is trickier. All of the above issues apply, plus many more issues. The reason is that some information is implemented **under the covers** in the compiled code, resulting in dependencies that may not be obvious if you don't know how C++ is typically implemented. Strictly speaking, they aren't **new issues**, it's just that compiled C++ code invokes them in ways that may be surprising to you. The following is a (probably incomplete) list of things that you can and can't do in C++ and retain binary compatibility (these were originally reported by **Troll Tech's Technical FAQ; a more up-to-date list is in KDE's Policies/Binary Compatibility Issues With C++**):
+
+1. add reimplementations of virtual functions (unless it it safe for older binaries to call the original implementation), because the compiler evaluates SuperClass::virtualFunction() calls at compile-time (not link-time).
+2. add or remove virtual member functions, because this would change the size and layout of the vtbl of every subclass.
+3. change the type of any data members or move any data members that can be accessed via inline member functions.
+4. change the class hierarchy, except to add new leaves.
+5. add or remove private data members, because this would change the size and layout of every subclass.
+6. remove public or protected member functions unless they are inline.
+7. make a public or protected member function inline.
+8. change what an inline function does, unless the old version continues working.
+9. change the access rights (i.e. public, protected or private) of a member function in a portable program, because some compilers mangle the access rights into the function name.
+
+Given this lengthy list, developers of C++ libraries in particular must plan for more than occasional updates that break binary compatibility. Fortunately, on Unix-like systems (including Linux) you can have multiple versions of a library loaded at the same time, so while there is some disk space loss, users can still run old programs needing old libraries.
+
+
+## 使用`nm`查找符号 
+
+The `nm` command can report the list of symbols in a given library. It works on both static and shared libraries. For a given library nm can list the symbol names defined, each symbol's value, and the symbol's type. It can also identify where the symbol was defined in the source code (by filename and line number), if that information is available in the library (see the -l option).
+
+The symbol type requires a little more explanation. The type is displayed as a letter; lowercase means that the symbol is local, while uppercase means that the symbol is global (external). Typical symbol types include `T` (a normal definition in the code section), `D` (initialized data section), `B` (uninitialized data section), `U` (undefined; the symbol is used by the library but not defined by the library), and `W` (weak; if another library also defines this symbol, that definition overrides this one).
+
+If you know the name of a function, but you truly can't remember what library it was defined in, you can use nm's `-o` option (which prefixes the filename in each line) along with grep to find the library name. From a Bourne shell, you can search all the libraries in /lib, /usr/lib, direct subdirectories of /usr/lib, and /usr/local/lib for `cos` as follows:
+
+```
+nm -o /lib/* /usr/lib/* /usr/lib/*/* \
+      /usr/local/lib/* 2> /dev/null | grep 'cos$' 
+```
+
+## 生成大的共享库
+
+What if you want to first create smaller libraries, then later merge them into larger libraries? In this case, you may find ld's `--whole-archive` option useful, which can be used to forcibly bring `.a` files and link them into an `.so` file.
+
+Here's an example of how to use `--whole-archive`:
+
+```
+gcc -shared -Wl,-soname,libmylib.$(VER) -o libmylib.so $(OBJECTS) \
+            -Wl,--whole-archive $(LIBS_TO_LINK) -Wl,--no-whole-archive $(REGULAR_LIBS)
+```
+
+As the `ld` documentation notes, be sure to use `--no-whole-archive` option at the end, or gcc will try to merge in the standard libraries as well. 
+
+
+## 共享库为什么要用PIC编译
+
+``` 
+# 不使用PIC
+gcc -o fpic-no-pic.s -S fpic.c
+
+# 使用PIC
+gcc -fPIC -o fpic-pic.s -S fpic.c
+```
+
+建立共享库：
+
+```
+gcc -shared -o fpic-no-pic.so fpic.c
+
+gcc -shared -fPIC -o fpic-pic.so fpic.c
+```
+
+* 用PIC编译必须把`-fpic`或`-fPIC`传递给gcc。`-fpic`可以生成小而高效的代码，但是不同的处理器中`-fpic`生成的GOT（Global Offset Table，全局偏移表）的大小有限制。
+* 通过生成的汇编代码，可知道PIC版通过`PLT（Procedure Linkage Table）`调用`printf`。 
 
 * `-fPIC`参数作用于**编译阶段**，是告诉编译器生成与位置无关（Position Independent Code）的代码。
 * 对于共享库来说，如果不加`-fPIC`，则`.so`文件的代码段在被加载时，代码段引用的数据对象需要重新定位，重新定位会修改代码段的内容，这就造成每个使用这个`.so`文件代码段的进程在内核中都需要生成这个`.so`文件代码段的副本，每个副本都不一样，具体取决于这个`.so`文件代码和数据段内存映射的位置。
 * 当添加`-fPIC`参数后，则产生的代码中，没有绝对地址，全部使用相对地址，故而代码可以被加载器加载到内存的任意位置，都可以正确执行。
 
-因此，对于动态库来说，一般产生位置无关的代码。
+**结论：虽然也能建立非PIC的共享库，但运行时的再配置不但花费时间，还存在不能和其他路径代码（.text）共享这一大缺点。因此，建立共享库请用PIC编译c文件。**
+
+
+
+## 查看是否使用了PIC
+
+检查目标文件在编译时是否使用了`–fPIC`选项，即检查目标文件符号表中是否存在名称`_GLOBAL_OFFSET_TABLE_`。
+
+```
+# 没有使用
+$nm -s foo.o |grep "_GLOBAL" 
+                 U _GLOBAL_OFFSET_TABLE_
+
+$readelf -s foo.o | grep "_GLOBAL"
+   219: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _GLOBAL_OFFSET_TABLE_
+
+# 有使用
+$ nm -s libhello.so | grep GLOBAL
+0000000000201000 d _GLOBAL_OFFSET_TABLE_
+
+$ readelf -s libhello.so | grep GLOBAL_
+    46: 0000000000201000     0 OBJECT  LOCAL  DEFAULT   21 _GLOBAL_OFFSET_TABLE_
+```
+
+ 
+
+# 静态链接
+
+* 静态链接库，是包含了各种程序中所使用的函数等模块的各个目标文件，这样一个集合。即，静态库是多个目标文件的存档。
+* `ar`命令
+  + 可以把多个目标文件归纳整理成一个文件：`ar rcus libhoge.a foo.o bar.o baz.o`
+  + 可以查看库的内容：`ar tv libhoge.a`
+  + 可以展开存档：`ar xv libhoge.a`
+* 静态链接过程：链接器，先从其他目标文件中查找未定义的符号，再从指定的静态链接库中读取定义符号的目标文件的副本，加入到可执行文件中，完成链接。
+* 使用静态链接库，执行生成的可执行文件时，即时没有静态链接库也可以正常执行，因为必要的代码副本包含在可执行二进制文件里了。
+* 选项`s`可与`ranlib`进行相同处理并建立索引。若不建立索引，链接的速度就会降低，在不同的环境中可能会产生不同的错误。这种索引可用`nm -s`浏览。
+* 注意：操作是以库中的目标文件为单位进行的。
+
+静态链接库的编写如下：
+
+```
+# 生成静态库
+cc -c -o foo.o foo.c
+cc -c -o bar.o bar.c
+ar ruv libfoo.a foo.o bar.o
+
+# 查看静态库
+$ ar tv libfoo.a 
+rw-r--r-- 0/0  12504 Jan  1 08:00 1970 foo.o
+```
+
+选项解释：
+
+
+```
+r   Insert the files member... into archive (with replacement).
+
+c   Create the archive.
+
+s   Add an index to the archive, or update it if it already exists.
+
+u   Normally, ar r... inserts all files listed into the archive.  If you would like to insert only those of the files you list that are newer than existing members of the same names, use this modifier.  The u modifier is allowed only for the operation r (replace).  In particular, the combination qu is not allowed, since checking the timestamps would lose any speed advantage from the operation q.
+
+v   This modifier requests the verbose version of an operation.  Many operations display additional information, such as filenames processed, when the modifier v is appended.
+
+x   Extract members (named member) from the archive.
+```
+
+
+# 动态链接
+
+* 静态库是多个目标文件的存档，而动态库则把多个目标文件复制成一个巨大的目标文件中进行共享。
+* ELF支持**动态链接**，当一个程序被加载进内存时，动态链接器会把需要的共享库加载并绑定到该进程的地址空间中。随后在调用某个函数时，对该函数地址进行解析，以达到对该函数调用的目的。
+
+静态链接库的编写如下：
+
+```
+cc -fPIC -c -o foo.o foo.c
+cc -fPIC -c -o bar.o bar.c
+cc -shared -Wl,-soname,libfoo.so.0 -o libfoo.so.0.0 foo.o bar.o
+
+# equal to `ln -sf libhello.so.0.0 libhello.so.0` but let's let ldconfig figure it out
+/sbin/ldconfig -n .
+ln -sf libhello.so.0 libhello.so
+```
+
+* 加入`-shared`选项，生成共享目标。
+* 通过`-Wl,-soname`选项，指定该共享目标的`SONAME`
+* 注意，操作是以共享库为单位进行的。链接时，只要把需要的共享库`SONAME`作为`NEEDED`登记到可执行文件里就可以了。
+* 执行链接里共享库的可执行文件时，动态链接加载器使用`NEEDED`的信息找到必要的共享库，执行的时候，操作该进程中的内存映射，可以在同样的空间里使用共享库和可执行二进制文件。因为实际的库代码没有包含在可执行文件中，必须保证在系统中已经存在共享库。
 
 
 # ELF (Executable and Linkable Format)
@@ -53,6 +416,32 @@ ELF文件参与程序的**链接**和程序的**执行**，因此通常可以分
 * 动态链接过程
   + 操作系统在加载一个可执行的ELF文件，内核首先将ELF映像加载到用户空间虚拟内存，在加载完动态链接器后（lib/ld-linux.so），系统会读取`.dynamic`段中的`DT_NEEDED`条目，该条目中列出该可执行文件所依赖的共享库，之后动态链接器就会去依次加载这些共享库，共享库本身依赖了其他库，这些库也会被加载。
   + 当所有的共享库都被加载完毕后，就开始执行**重定位的流程**。重定位是通过**过程链接表（PLT）和 全局偏移表（GOT）**的间接机制来处理的。这些表提供了外部函数和数据的地址，动态链接器需要根据全局符号表重定位每一个符号的地址，即修正GOT和PLT。
+
+
+## 用readelf表示ELF文件的信息
+
+* 读出ELF头
+
+| 需要的头 | 选项 | long option
+| --- | --- | ---
+| ELF文件头 | -h | --file-header
+| 程序头 | -l | --program-headers, --segments
+| 节头 | -S | --section-headers, --sections
+| 以上3个头 | -e | --headers
+
+* 读出ELF信息
+
+| 需要的信息 | 选项 | long option
+| --- | --- | ---
+| 符号表 | -s | --syms, -symbols
+| 再配置信息 | -r | --relocs
+| 动态段 | -d | --dynamic
+| 版本信息 | -V | --version-info
+| 依赖设计 | -A | --arch-specific
+| 长的直方图 | -I | --histogram
+| 所有的头和以上全部 | -a | --all
+| 核标记 | -n | --notes
+| unwind信息 | -u | --unwind
 
 
 ## Various sections hold program and control information
@@ -193,11 +582,13 @@ Refer:
 
 # GOT/PLT
 
-* GOT (The Global Offset Table)
+* 全局偏移表GOT (`The Global Offset Table`)
+  + 实现位置无关代码PIC（Position Independent Code）的必要数据，在PIC中，使用GOT间接引用对全局数据进行存取。
   + 在程序中以`.got.plt`表示，该表处于**数据段**，每一个表项存储的都是一个地址，每个表项长度是当前程序的对应需要寻址长度（32位程序：4字节，64位程序：8字节）。
   + 问题：如果一个引用的函数是在共享库中，而共享库在加载时没有固定地址，所以在GOT表中无法直接保存该符号的地址，此时就需要引入PLT表。
 
-* PLT (The Procedure Linkage Table)
+* 程序链接表PLT (`The Procedure Linkage Table`)
+  + 实现动态链接的必要数据，与GOT同时使用，间接调用动态链接的共享库的函数。
   + 在程序中以`.plt`节表示，该表处于**代码段**，每一个表项表示了一个与要重定位的函数相关的若干条指令，每个表项长度为`16`个字节，存储的是用于做延迟绑定的代码。
 
 
@@ -542,6 +933,13 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
     return rv;
 }
 ```
+
+# Refer
+
+* [Linux下ELF共享库使用摘记](http://blog.csdn.net/delphiwcdj/article/details/43647435)
+* [Controlling Symbol Visibility 在C/C++中控制符号的可见性](http://blog.csdn.net/delphiwcdj/article/details/45225889)
+* [How to Write Shared Libraries, 2011](http://www.akkadia.org/drepper/dsohowto.pdf)
+* [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 
 
 

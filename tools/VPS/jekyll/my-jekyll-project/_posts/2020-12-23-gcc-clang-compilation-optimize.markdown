@@ -329,7 +329,7 @@ Discarded input sections
 ...               
 ```
 
-```
+``` bash
 $objdump -s -j .text._Z5func2v demo.o
 
 demo.o:     file format elf64-x86-64
@@ -346,79 +346,53 @@ refer:
 
 
 
-# strip & objcopy (对可执行文件瘦身)
+# strip 
 
+* `strip`用于删除目标文件中的符号（Discard symbols from object files），通常用于删除已生成的可执行文件和库中不需要的符号。
+* 在想要减少文件的大小，并保留对调试有用的信息时，使用`-d`选项，可以删除不使用的信息（文件名和行号等），并可以保留函数名等一般的符号，用gdb进行调试时，只要保留了函数名，即便不知道文件名和行号，也可以进行调试。
+* 使用`-R`选项，是可删除其他任意信息的选项，在执行`strip -R .text demo1`后，程序的text部分（代码部分）会被完全删除，从而导致程序的无法运行。
+* 实际上，对`.o`文件以及`.a`文件使用strip后，就不能进行和其他目标文件的链接操作。这是由于文件对链接器符号有依赖性，所以最好不要从`.o`和`.a`文件中删除符号。
+* 对release的版本strip，当用户环境产生coredump后，可以通过包含调试信息的开发版本在开发环境进行调试。
+* 虽然在磁盘容量足够大的PC中，可能不会出现想要将可执行文件变小的情况。但在容量有限的环境，或想要通过网络复制并运行程序时，`strip`却是一个方便的工具。
+
+
+``` bash
+# 去除目标文件中的符号
+$ strip objfile
+$ nm objfile
+nm: objfile: no symbols
+
+# 删除代码段
+$ strip -R .text demo1
+$ ./demo1
+Segmentation fault (core dumped)
 ```
-strip - Discard symbols from object files
-```
 
-```
-objcopy - copy and translate object file
 
--g
---strip-debug
-Do not copy debugging symbols or sections from the source file.
+# objcopy
 
---only-keep-debug
-Strip a file, removing contents of any sections that would not be stripped by --strip-debug and leaving the debugging sections intact. In ELF files, this preserves all note sections in the output.
-
-Note - the section headers of the stripped sections are preserved, including their sizes, but the contents of the section are discarded. The section headers are preserved so that other tools can match up the debuginfo file with the real executable, even if that executable has been relocated to a different address space.
-
-The intention is that this option will be used in conjunction with --add-gnu-debuglink to create a two part executable. One a stripped binary which will occupy less space in RAM and in a distribution and the second a debugging information file which is only needed if debugging abilities are required. The suggested procedure to create these files is as follows:
-
-Link the executable as normal. Assuming that it is called foo then...
-Run objcopy --only-keep-debug foo foo.dbg to create a file containing the debugging info.
-Run objcopy --strip-debug foo to create a stripped executable.
-Run objcopy --add-gnu-debuglink=foo.dbg foo to add a link to the debugging info into the stripped executable.
-Note—the choice of .dbg as an extension for the debug info file is arbitrary. Also the --only-keep-debug step is optional. You could instead do this:
-
-Link the executable as normal.
-Copy foo to foo.full
-Run objcopy --strip-debug foo
-Run objcopy --add-gnu-debuglink=foo.full foo
-i.e., the file pointed to by the --add-gnu-debuglink can be the full executable. It does not have to be a file created by the --only-keep-debug switch.
-
-Note—this switch is only intended for use on fully linked files. It does not make sense to use it on object files where the debugging information may be incomplete. Besides the gnu_debuglink feature currently only supports the presence of one filename containing debugging information, not multiple filenames on a one-per-object-file basis.
-
---add-gnu-debuglink=path-to-file
-Creates a .gnu_debuglink section which contains a reference to path-to-file and adds it to the output file. Note: the file at path-to-file must exist. Part of the process of adding the .gnu_debuglink section involves embedding a checksum of the contents of the debug info file into the section.
-
-If the debug info file is built in one location but it is going to be installed at a later time into a different location then do not use the path to the installed location. The --add-gnu-debuglink option will fail because the installed file does not exist yet. Instead put the debug info file in the current directory and use the --add-gnu-debuglink option without any directory components, like this:
-
- objcopy --add-gnu-debuglink=foo.debug
-At debug time the debugger will attempt to look for the separate debug info file in a set of known locations. The exact set of these locations varies depending upon the distribution being used, but it typically includes:
-
-* The same directory as the executable.
-* A sub-directory of the directory containing the executable
-called .debug
-
-* A global debug directory such as /usr/lib/debug.
-As long as the debug info file has been installed into one of these locations before the debugger is run everything should work correctly.
-```
+* `objcopy` - copy and translate object file
+* 实际上，在`objcopy`上使用`-strip-*`选项后也能进行与`strip`同样的处理。
 
 例如：
 
-```
-# 去除目标文件中的符号
-$strip objfile
-$nm objfile
-nm: objfile: no symbols
-
+``` bash
 # 拷贝出一个符号表文件
-$objcopy --only-keep-debug mainO3 mainO3.symbol       
+$ objcopy --only-keep-debug mainO3 mainO3.symbol       
 
 # 拷贝出一个不包含调试信息的执行文件
-$objcopy --strip-debug mainO3 mainO3.bin
+$ objcopy --strip-debug mainO3 mainO3.bin
 
-$objcopy --add-gnu-debuglink=mainO3.symbol mainO3
+$ objcopy --add-gnu-debuglink=mainO3.symbol mainO3
 ```
 
-refer:
 
-* [linux中的strip命令简介------给文件脱衣服](https://blog.csdn.net/stpeace/article/details/47090255)
+* 用`objcopy`嵌入可执行文件的数据，`objcopy`可以将任意文件转换为可以链接的目标文件。
 
+例如：可以将`foo.jpg`转换为x86用的ELF32形式的目标文件`foo.o`
 
-
-
+``` bash
+$ objcopy -I binary -O elf32-i386 -B i386 foo.jpg foo.o
+```
 
 
