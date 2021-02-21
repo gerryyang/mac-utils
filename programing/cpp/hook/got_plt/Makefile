@@ -7,6 +7,8 @@ LIBPATH = -L.
 LIBS = -ltesta -ltesta_hook -lplthook -ldl 
 TARGET3_LIBS = -ltesta -ltesta_hook -ldl 
 
+OPTIONS = -Wl,-rpath,./
+
 TARGET1 = demo1
 TARGET1_OBJS = demo1.o
 
@@ -33,19 +35,19 @@ plthook:
 	$(CXX) $(CFLAGS) plthook/plthook_elf.c -fPIC -shared -o libplthook.so
 
 $(TARGET1): $(TARGET1_OBJS)
-	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) $(OPTIONS)
 	@echo "build $(TARGET1) ok"
 
 $(TARGET2): $(TARGET2_OBJS)
-	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) $(OPTIONS)
 	@echo "build $(TARGET2) ok"
 
 $(TARGET3): $(TARGET3_OBJS)
-	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET3_LIBS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET3_LIBS) $(OPTIONS)
 	@echo "build $(TARGET3) ok"
 
 $(TARGET4): $(TARGET4_OBJS)
-	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) $(OPTIONS)
 	@echo "build $(TARGET4) ok"
 
 install:
