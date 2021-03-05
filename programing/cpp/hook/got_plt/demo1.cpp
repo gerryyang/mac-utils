@@ -6,6 +6,7 @@
 #include "testa.h"
 #include "plthook.h"
 
+
 static void (*say_hello_func)();
 
 // This function is called instead of say_hello() called by libatest.so
