@@ -1,6 +1,6 @@
 # mac-utils
 
-> Some stuff about Mac OSX system.
+> This is a toolbox on Mac OSX or Linux.
 
 ## Table of Contents
 
