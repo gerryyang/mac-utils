@@ -1,0 +1,12 @@
+all : main
+
+CC = gcc
+INCLUDE = 
+CFLAGS = -Wno-deprecated-declarations
+
+main : main.c coroutine.c
+	gcc -D_XOPEN_SOURCE -g -Wall $(CFLAGS) -o $@ $^
+
+
+clean :
+	rm main
