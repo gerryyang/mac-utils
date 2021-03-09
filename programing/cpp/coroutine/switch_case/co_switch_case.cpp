@@ -90,3 +90,17 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/*
+$ ./co_switch_case 
+function() return [0]
+function() return [1]
+function2() return [0]
+function2() return [1]
+function3() return [0]
+function3() return [1]
+function4() return [0]
+function4() return [1]
+function5() return [0]
+function5() return [1]
+*/

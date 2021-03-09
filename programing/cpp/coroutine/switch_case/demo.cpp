@@ -12,5 +12,12 @@ int main()
 	printf("out switch-case\n");
 
 	return 0;
-}
+ }
+
+/*
+$ ./demo 
+case 1
+case 2
+out switch-case
+*/
 

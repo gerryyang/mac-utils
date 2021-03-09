@@ -8,6 +8,7 @@ NOTE: this example is not consistent with the manual page or the specification.[
 #include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
+#include <signal.h>
 
 /* The three contexts:
  *    (1) main_context1 : The point in main to which loop will return.
@@ -50,7 +51,8 @@ void loop(
 int main(void)
 {
 	/* The stack for the iterator function. */
-	char iterator_stack[SIGSTKSZ];
+	//char iterator_stack[SIGSTKSZ];
+	char iterator_stack[1024];
 
 	/* Flag indicating that the iterator has completed. */
 	volatile int iterator_finished;
