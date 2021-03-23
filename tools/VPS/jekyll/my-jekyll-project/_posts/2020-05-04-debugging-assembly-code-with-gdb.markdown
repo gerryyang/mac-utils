@@ -138,6 +138,15 @@ https://sourceware.org/gdb/current/onlinedocs/gdb/Input_002fOutput.html#Input_00
 
 In some operating systems, such as GNU/Linux and Solaris, a single program may have more than one thread of execution. The precise semantics of threads differ from one operating system to another, but in general the threads of a single program are akin to multiple processes—except that they share one address space (that is, they can all examine and modify the same variables). On the other hand, each thread has its own registers and execution stack, and perhaps private memory.
 
+GDB provides these facilities for debugging multi-thread programs:
+
+* automatic notification of new threads
+* `thread thread-id`, a command to switch among threads
+* `info threads`, a command to inquire about existing threads
+* `thread apply [thread-id-list | all] args`, a command to apply a command to a list of threads
+* thread-specific breakpoints
+* `set print thread-events`, which controls printing of messages on thread start and exit.
+
 
 https://sourceware.org/gdb/current/onlinedocs/gdb/Threads.html#Threads
 

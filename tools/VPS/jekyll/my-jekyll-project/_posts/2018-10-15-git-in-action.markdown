@@ -140,8 +140,14 @@ Omit --global to set the identity only in this repository.
 ```
 
 ``` bash
+# Sets the some repo name for git to use when you commit
+git config --local user.name "your_name"
+
+# Sets the some repo email for git to use when you commit
+git config --local user.email "your_email@example.com"
+
 # Sets the default name for git to use when you commit
-git config --global user.name "Your Name Here"
+git config --global user.name "your_name"
 
 # Sets the default email for git to use when you commit
 git config --global user.email "your_email@example.com"
@@ -702,9 +708,8 @@ git clone --recursive https://github.com/chaconinc/MainProject
 git submodule deinit --all
 ```
 
-[Git 工具 - 子模块]
-
-[Git 工具 - 子模块]: https://git-scm.com/book/zh/v2/Git-工具-子模块
+* [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
+* [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 
 
 # Git与GitHub 
@@ -778,7 +783,7 @@ ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"  # 指定
 Host git.code.oa.com
    HostName git.code.oa.com
    PreferredAuthentications publickey
-   IdentityFile ~/.ssh/oa_rsa
+   IdentityFile ~/.ssh/oa_id_rsa
 
 # github
 Host github.com
