@@ -8,6 +8,15 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# Alignment and Bit Fields
+
+[测试代码](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/alignment)
+
+* [pragma pack effect](https://stackoverflow.com/questions/3318410/pragma-pack-effect)
+* [C - Bit Fields](https://www.tutorialspoint.com/cprogramming/c_bit_fields.htm)
+
+
 # 网络
 
 ## Tracing socket (file) descriptor back to bound address

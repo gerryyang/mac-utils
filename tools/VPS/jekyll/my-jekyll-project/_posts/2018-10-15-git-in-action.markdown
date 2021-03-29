@@ -140,8 +140,14 @@ Omit --global to set the identity only in this repository.
 ```
 
 ``` bash
+# Sets the some repo name for git to use when you commit
+git config --local user.name "your_name"
+
+# Sets the some repo email for git to use when you commit
+git config --local user.email "your_email@example.com"
+
 # Sets the default name for git to use when you commit
-git config --global user.name "Your Name Here"
+git config --global user.name "your_name"
 
 # Sets the default email for git to use when you commit
 git config --global user.email "your_email@example.com"
@@ -689,9 +695,11 @@ git reset commit-id  # 切记不要用 --hard 参数
 
 ## 子模块submodule
 
-默认情况下，子模块会将子项目放到一个与仓库同名的目录中，本例中是 “DbConnector”。 如果你想要放到其他地方，那么可以在命令结尾添加一个不同的路径。虽然 DbConnector 是工作目录中的一个子目录，但 Git 还是会将它视作一个子模块。当你不在那个目录中时，Git 并不会跟踪它的内容， 而是将它看作该仓库中的一个特殊提交。如果你想看到更漂亮的差异输出，可以给 git diff 传递 --submodule 选项。
 
 ``` bash
+# 含有子模块项目的clone
+git clone git@github.com:gerryyang/mac-utils.git mac-utils --recurse-submodule --remote-submodules
+
 # 添加子模块
 git submodule add https://github.com/chaconinc/DbConnector
 git clone --recursive https://github.com/chaconinc/MainProject
@@ -700,9 +708,8 @@ git clone --recursive https://github.com/chaconinc/MainProject
 git submodule deinit --all
 ```
 
-[Git 工具 - 子模块]
-
-[Git 工具 - 子模块]: https://git-scm.com/book/zh/v2/Git-工具-子模块
+* [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
+* [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 
 
 # Git与GitHub 
@@ -776,7 +783,7 @@ ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"  # 指定
 Host git.code.oa.com
    HostName git.code.oa.com
    PreferredAuthentications publickey
-   IdentityFile ~/.ssh/oa_rsa
+   IdentityFile ~/.ssh/oa_id_rsa
 
 # github
 Host github.com

@@ -247,7 +247,7 @@ End of assembler dump.
 
 # 去除Dead Codes (删除未使用的函数)
 
-参考[Compilation options](https://gcc.gnu.org/onlinedocs/gnat_ugn/Compilation-options.html)通过下面两步，去除编译种没有使用的函数：
+参考[Compilation options](https://gcc.gnu.org/onlinedocs/gnat_ugn/Compilation-options.html)通过下面两步，去除代码没有使用的函数：
 
 1. 添加编译选项`CFLAGS += -fdata-sections -ffunction-sections`
 2. 添加链接选项`-Wl,--gc-sections`

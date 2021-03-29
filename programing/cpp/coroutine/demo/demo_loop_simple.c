@@ -6,7 +6,8 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-int main(int argc, const char *argv[]){
+int main(int argc, const char *argv[])
+{
 	ucontext_t context;
 
 	getcontext(&context);
