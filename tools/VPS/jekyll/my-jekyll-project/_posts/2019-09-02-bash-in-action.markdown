@@ -8,6 +8,91 @@ categories: [Bash, 编程语言]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Compare
+
+``` bash
+if [[ $# -eq 0 ]]; then
+  # digital compare
+  # -eq / -lt / -le / -gt / -ge / -ne
+fi
+
+if [[ $1 = "start" ]]; then
+  # string compare
+  # 等于 = (plain sh) / == (only bash)
+  # 不等于 !=
+fi
+
+if [[ -n $VarName ]]; then
+  # not empty
+fi
+
+if [[ -f "proc.pid" ]]; then
+  pid=`cat proc.pid`
+fi
+
+./run.sh 
+if [[ $? -ne 0 ]];then
+  echo "run.sh failed"
+  exit 1
+fi
+```
+
+
+# ForceStopAll
+
+``` bash
+ps aux | grep `pwd` | grep -v grep | awk '{print $2}' | xargs kill -9
+```
+
+# Color
+
+``` bash
+function PrintColor {
+        echo -e "\e[1;31m$@\e[0m"
+}
+PrintColor "Oops!"
+```
+
+# CurrentPath
+
+``` bash
+CurPath=$(dirname $(readlink -f $0))
+```
+
+# Function
+
+``` bash
+#!/bin/bash 
+function quit {
+   exit
+}
+function hello {
+   echo Hello!
+}
+hello
+quit
+echo foo 
+```
+
+Functions with parameters sample
+
+``` bash
+#!/bin/bash 
+function quit {
+   exit
+}  
+function e {
+    echo $1 
+}  
+e Hello
+e World
+quit
+echo foo 
+```
+
+https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-8.html
+
+
 # Chmod
 
 ```

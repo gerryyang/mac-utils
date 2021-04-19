@@ -196,7 +196,7 @@ More:
 | [LICEcap](https://github.com/justinfrankel/licecap) | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF
 | [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展 
 | [MacVim](https://macvim-dev.github.io/macvim/) | Vim - the text editor - for macOS
-
+| [VS Code](https://code.visualstudio.com/) | For Windows, macOS and Linux, 扩展丰富
 
 More: https://github.com/hzlzh/Best-App
 
@@ -344,7 +344,9 @@ More: https://github.com/hzlzh/Best-App
 
 ### Markdown
 
-[Typora](https://www.typora.io)用于Markdown编辑和可视化。
+* [Typora](https://www.typora.io)用于Markdown编辑和可视化。
+* [如何用markdown写复杂公式？](https://www.zhihu.com/question/283899554/answer/450837583)
+
 
 ### 代码对比
 

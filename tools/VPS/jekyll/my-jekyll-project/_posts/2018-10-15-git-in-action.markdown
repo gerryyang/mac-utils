@@ -696,6 +696,9 @@ git reset commit-id  # 切记不要用 --hard 参数
 ## 子模块submodule
 
 
+克隆一个含有子模块的项目。当你在克隆这样的项目时，默认会包含该子模块目录，但其中还没有任何文件。你必须运行两个命令：`git submodule init` 用来初始化本地配置文件，而 `git submodule update` 则从该项目中抓取所有数据并检出父项目中列出的合适的提交。现在子目录是处在和之前提交时相同的状态了。不过还有更简单一点的方式。 如果给 `git clone` 命令传递 `--recurse-submodules` 选项，它就会自动初始化并更新仓库中的每一个子模块， 包括可能存在的嵌套子模块。如果你已经克隆了项目但忘记了 `--recurse-submodules`，那么可以运行 `git submodule update --init` 将 `git submodule init` 和 `git submodule update` 合并成一步。如果还要初始化、抓取并检出任何嵌套的子模块， 请使用简明的 `git submodule update --init --recursive`。
+
+
 ``` bash
 # 含有子模块项目的clone
 git clone git@github.com:gerryyang/mac-utils.git mac-utils --recurse-submodule --remote-submodules
