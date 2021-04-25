@@ -255,4 +255,38 @@ real    0m0.191s
 user    0m0.100s
 sys     0m0.040s
 ```
-  
+
+rdtsc测试代码 (Linux, GCC)：
+
+``` cpp
+/* define this somewhere */
+#ifdef __i386
+__inline__ uint64_t rdtsc() {
+  uint64_t x;
+  __asm__ volatile ("rdtsc" : "=A" (x));
+  return x;
+}
+#elif __amd64
+__inline__ uint64_t rdtsc() {
+  uint64_t a, d;
+  __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
+  return (d<<32) | a;
+}
+#endif
+
+/* now, in your function, do the following */
+uint64_t t;
+t = rdtsc();
+// ... the stuff that you want to time ...
+t = rdtsc() - t;
+// t now contains the number of cycles elapsed
+```
+
+
+# Refer
+
+* https://stackoverflow.com/questions/9887839/how-to-count-clock-cycles-with-rdtsc-in-gcc-x86
+* https://www.mcs.anl.gov/~kazutomo/rdtsc.html
+* https://www.mcs.anl.gov/~kazutomo/rdtsc.h
+* https://en.wikipedia.org/wiki/Time_Stamp_Counter
+

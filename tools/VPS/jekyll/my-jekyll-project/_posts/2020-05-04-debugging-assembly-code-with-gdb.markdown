@@ -354,6 +354,7 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 | set args | 可指定运行时参数（如：set args 10 20 30 40 50）
 | show args | 命令可以查看设置好的运行参数
 | finish/fin | 跳出当前函数栈
+| set variable i = 10 | 修改变量值
 
 
 # Refer

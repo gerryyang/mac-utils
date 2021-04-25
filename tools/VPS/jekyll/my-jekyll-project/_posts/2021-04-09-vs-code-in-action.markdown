@@ -53,7 +53,7 @@ Host $ip_ssh_config
 
 * 链接成功后，可以执行`Open folder...`打开Remote机器的Project查看和编辑代码，同时，可以打开`Remote-SSH`集成的`Terminal`查看和执行Remote服务器的相关操作。
 
-## 快捷键（macOS）
+## 通用快捷键（macOS）
 
 * `shift + command + E`: 文件浏览（`⇧⌘E`）
 * `shift + command + F`: 全局查找（`⇧⌘F`）
@@ -63,6 +63,7 @@ Host $ip_ssh_config
 * `shift + command + B`:  运行任务（`⇧⌘B`）
 * `shift + command + X`: 在Marketplace搜索扩展（`⇧⌘X`）
 * `control + ~`: 打开terminal
+* `option`: 多行编辑
 
 ## 代码快捷键
 
@@ -155,7 +156,9 @@ Protobuf 3 support for Visual Studio Code
 
 
 
+# Refer
 
+* https://code.visualstudio.com/docs/editor/codebasics
 
 
 

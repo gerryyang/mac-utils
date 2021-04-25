@@ -872,6 +872,19 @@ Symbol "some_string_size" is at 0x6000ec in a file compiled without debugging.
 $2 = 11
 ```
 
+# GCC Inline Assembly
+
+``` asm
+asm ( 汇编程序模板 
+    : 输出操作数                 /* 可选的 */
+    : 输入操作数                 /* 可选的 */
+    : 修饰寄存器列表             /* 可选的 */
+    );
+```
+
+
+* [GCC-Inline-Assembly-HOWTO, Sandeep.S](http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
+* 翻译修正版：https://linux.cn/article-7688-1.html
 
 # Refer
 
@@ -881,6 +894,6 @@ $2 = 11
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
 * [Introduction to x64 Assembly - Published on March 19, 2012](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
-
+* [GCC-Inline-Assembly-HOWTO, Sandeep.S](http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
 
 
