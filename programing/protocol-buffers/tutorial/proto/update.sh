@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROTOCOL_DIR=./
-PROTOCOL_SRC_DIR=../src_protocol
+PROTOCOL_SRC_DIR=../src
 
 PROTOCOL_FILES="addressbook.proto"
 

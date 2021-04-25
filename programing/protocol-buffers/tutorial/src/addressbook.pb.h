@@ -30,6 +30,9 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/map.h>  // IWYU pragma: export
+#include <google/protobuf/map_entry.h>
+#include <google/protobuf/map_field_inl.h>
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
@@ -47,7 +50,7 @@ struct TableStruct_addressbook_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[3]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[5]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -59,16 +62,24 @@ namespace tutorial {
 class AddressBook;
 struct AddressBookDefaultTypeInternal;
 extern AddressBookDefaultTypeInternal _AddressBook_default_instance_;
+class Info;
+struct InfoDefaultTypeInternal;
+extern InfoDefaultTypeInternal _Info_default_instance_;
 class Person;
 struct PersonDefaultTypeInternal;
 extern PersonDefaultTypeInternal _Person_default_instance_;
+class Person_MetaEntry_DoNotUse;
+struct Person_MetaEntry_DoNotUseDefaultTypeInternal;
+extern Person_MetaEntry_DoNotUseDefaultTypeInternal _Person_MetaEntry_DoNotUse_default_instance_;
 class Person_PhoneNumber;
 struct Person_PhoneNumberDefaultTypeInternal;
 extern Person_PhoneNumberDefaultTypeInternal _Person_PhoneNumber_default_instance_;
 }  // namespace tutorial
 PROTOBUF_NAMESPACE_OPEN
 template<> ::tutorial::AddressBook* Arena::CreateMaybeMessage<::tutorial::AddressBook>(Arena*);
+template<> ::tutorial::Info* Arena::CreateMaybeMessage<::tutorial::Info>(Arena*);
 template<> ::tutorial::Person* Arena::CreateMaybeMessage<::tutorial::Person>(Arena*);
+template<> ::tutorial::Person_MetaEntry_DoNotUse* Arena::CreateMaybeMessage<::tutorial::Person_MetaEntry_DoNotUse>(Arena*);
 template<> ::tutorial::Person_PhoneNumber* Arena::CreateMaybeMessage<::tutorial::Person_PhoneNumber>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace tutorial {
@@ -100,6 +111,188 @@ inline bool Person_PhoneType_Parse(
     Person_PhoneType_descriptor(), name, value);
 }
 // ===================================================================
+
+class Info PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:tutorial.Info) */ {
+ public:
+  inline Info() : Info(nullptr) {}
+  virtual ~Info();
+  explicit constexpr Info(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Info(const Info& from);
+  Info(Info&& from) noexcept
+    : Info() {
+    *this = ::std::move(from);
+  }
+
+  inline Info& operator=(const Info& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Info& operator=(Info&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const Info& default_instance() {
+    return *internal_default_instance();
+  }
+  enum ParaCase {
+    kA = 1,
+    kB = 2,
+    PARA_NOT_SET = 0,
+  };
+
+  static inline const Info* internal_default_instance() {
+    return reinterpret_cast<const Info*>(
+               &_Info_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    0;
+
+  friend void swap(Info& a, Info& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Info* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Info* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Info* New() const final {
+    return CreateMaybeMessage<Info>(nullptr);
+  }
+
+  Info* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<Info>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const Info& from);
+  void MergeFrom(const Info& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Info* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "tutorial.Info";
+  }
+  protected:
+  explicit Info(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    return ::descriptor_table_addressbook_2eproto_metadata_getter(kIndexInFileMessages);
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kAFieldNumber = 1,
+    kBFieldNumber = 2,
+  };
+  // int32 a = 1;
+  bool has_a() const;
+  private:
+  bool _internal_has_a() const;
+  public:
+  void clear_a();
+  ::PROTOBUF_NAMESPACE_ID::int32 a() const;
+  void set_a(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_a() const;
+  void _internal_set_a(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // string b = 2;
+  bool has_b() const;
+  private:
+  bool _internal_has_b() const;
+  public:
+  void clear_b();
+  const std::string& b() const;
+  void set_b(const std::string& value);
+  void set_b(std::string&& value);
+  void set_b(const char* value);
+  void set_b(const char* value, size_t size);
+  std::string* mutable_b();
+  std::string* release_b();
+  void set_allocated_b(std::string* b);
+  private:
+  const std::string& _internal_b() const;
+  void _internal_set_b(const std::string& value);
+  std::string* _internal_mutable_b();
+  public:
+
+  void clear_para();
+  ParaCase para_case() const;
+  // @@protoc_insertion_point(class_scope:tutorial.Info)
+ private:
+  class _Internal;
+  void set_has_a();
+  void set_has_b();
+
+  inline bool has_para() const;
+  inline void clear_has_para();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  union ParaUnion {
+    constexpr ParaUnion() : _constinit_{} {}
+      ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+    ::PROTOBUF_NAMESPACE_ID::int32 a_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr b_;
+  } para_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  ::PROTOBUF_NAMESPACE_ID::uint32 _oneof_case_[1];
+
+  friend struct ::TableStruct_addressbook_2eproto;
+};
+// -------------------------------------------------------------------
 
 class Person_PhoneNumber PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:tutorial.Person.PhoneNumber) */ {
@@ -144,7 +337,7 @@ class Person_PhoneNumber PROTOBUF_FINAL :
                &_Person_PhoneNumber_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    0;
+    1;
 
   friend void swap(Person_PhoneNumber& a, Person_PhoneNumber& b) {
     a.Swap(&b);
@@ -256,6 +449,40 @@ class Person_PhoneNumber PROTOBUF_FINAL :
 };
 // -------------------------------------------------------------------
 
+class Person_MetaEntry_DoNotUse : public ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<Person_MetaEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> {
+public:
+  typedef ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<Person_MetaEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> SuperType;
+  Person_MetaEntry_DoNotUse();
+  explicit constexpr Person_MetaEntry_DoNotUse(
+      ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  explicit Person_MetaEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  void MergeFrom(const Person_MetaEntry_DoNotUse& other);
+  static const Person_MetaEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const Person_MetaEntry_DoNotUse*>(&_Person_MetaEntry_DoNotUse_default_instance_); }
+  static bool ValidateKey(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "tutorial.Person.MetaEntry.key");
+ }
+  static bool ValidateValue(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "tutorial.Person.MetaEntry.value");
+ }
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& other) final;
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_addressbook_2eproto);
+    return ::descriptor_table_addressbook_2eproto.file_level_metadata[2];
+  }
+
+  public:
+};
+
+// -------------------------------------------------------------------
+
 class Person PROTOBUF_FINAL :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:tutorial.Person) */ {
  public:
@@ -299,7 +526,7 @@ class Person PROTOBUF_FINAL :
                &_Person_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    3;
 
   friend void swap(Person& a, Person& b) {
     a.Swap(&b);
@@ -404,6 +631,7 @@ class Person PROTOBUF_FINAL :
 
   enum : int {
     kPhonesFieldNumber = 4,
+    kMetaFieldNumber = 5,
     kNameFieldNumber = 1,
     kEmailFieldNumber = 3,
     kIdFieldNumber = 2,
@@ -425,6 +653,23 @@ class Person PROTOBUF_FINAL :
   ::tutorial::Person_PhoneNumber* add_phones();
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::tutorial::Person_PhoneNumber >&
       phones() const;
+
+  // map<string, string> meta = 5;
+  int meta_size() const;
+  private:
+  int _internal_meta_size() const;
+  public:
+  void clear_meta();
+  private:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      _internal_meta() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      _internal_mutable_meta();
+  public:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      meta() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      mutable_meta();
 
   // string name = 1;
   void clear_name();
@@ -475,6 +720,11 @@ class Person PROTOBUF_FINAL :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::tutorial::Person_PhoneNumber > phones_;
+  ::PROTOBUF_NAMESPACE_ID::internal::MapField<
+      Person_MetaEntry_DoNotUse,
+      std::string, std::string,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> meta_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr email_;
   ::PROTOBUF_NAMESPACE_ID::int32 id_;
@@ -526,7 +776,7 @@ class AddressBook PROTOBUF_FINAL :
                &_AddressBook_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    4;
 
   friend void swap(AddressBook& a, AddressBook& b) {
     a.Swap(&b);
@@ -636,6 +886,167 @@ class AddressBook PROTOBUF_FINAL :
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// Info
+
+// int32 a = 1;
+inline bool Info::_internal_has_a() const {
+  return para_case() == kA;
+}
+inline bool Info::has_a() const {
+  return _internal_has_a();
+}
+inline void Info::set_has_a() {
+  _oneof_case_[0] = kA;
+}
+inline void Info::clear_a() {
+  if (_internal_has_a()) {
+    para_.a_ = 0;
+    clear_has_para();
+  }
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Info::_internal_a() const {
+  if (_internal_has_a()) {
+    return para_.a_;
+  }
+  return 0;
+}
+inline void Info::_internal_set_a(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  if (!_internal_has_a()) {
+    clear_para();
+    set_has_a();
+  }
+  para_.a_ = value;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 Info::a() const {
+  // @@protoc_insertion_point(field_get:tutorial.Info.a)
+  return _internal_a();
+}
+inline void Info::set_a(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_a(value);
+  // @@protoc_insertion_point(field_set:tutorial.Info.a)
+}
+
+// string b = 2;
+inline bool Info::_internal_has_b() const {
+  return para_case() == kB;
+}
+inline bool Info::has_b() const {
+  return _internal_has_b();
+}
+inline void Info::set_has_b() {
+  _oneof_case_[0] = kB;
+}
+inline void Info::clear_b() {
+  if (_internal_has_b()) {
+    para_.b_.Destroy(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
+    clear_has_para();
+  }
+}
+inline const std::string& Info::b() const {
+  // @@protoc_insertion_point(field_get:tutorial.Info.b)
+  return _internal_b();
+}
+inline void Info::set_b(const std::string& value) {
+  _internal_set_b(value);
+  // @@protoc_insertion_point(field_set:tutorial.Info.b)
+}
+inline std::string* Info::mutable_b() {
+  // @@protoc_insertion_point(field_mutable:tutorial.Info.b)
+  return _internal_mutable_b();
+}
+inline const std::string& Info::_internal_b() const {
+  if (_internal_has_b()) {
+    return para_.b_.Get();
+  }
+  return ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited();
+}
+inline void Info::_internal_set_b(const std::string& value) {
+  if (!_internal_has_b()) {
+    clear_para();
+    set_has_b();
+    para_.b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  }
+  para_.b_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArena());
+}
+inline void Info::set_b(std::string&& value) {
+  // @@protoc_insertion_point(field_set:tutorial.Info.b)
+  if (!_internal_has_b()) {
+    clear_para();
+    set_has_b();
+    para_.b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  }
+  para_.b_.Set(
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:tutorial.Info.b)
+}
+inline void Info::set_b(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  if (!_internal_has_b()) {
+    clear_para();
+    set_has_b();
+    para_.b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  }
+  para_.b_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{},
+      ::std::string(value), GetArena());
+  // @@protoc_insertion_point(field_set_char:tutorial.Info.b)
+}
+inline void Info::set_b(const char* value,
+                             size_t size) {
+  if (!_internal_has_b()) {
+    clear_para();
+    set_has_b();
+    para_.b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  }
+  para_.b_.Set(
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(
+      reinterpret_cast<const char*>(value), size),
+      GetArena());
+  // @@protoc_insertion_point(field_set_pointer:tutorial.Info.b)
+}
+inline std::string* Info::_internal_mutable_b() {
+  if (!_internal_has_b()) {
+    clear_para();
+    set_has_b();
+    para_.b_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  }
+  return para_.b_.Mutable(
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
+}
+inline std::string* Info::release_b() {
+  // @@protoc_insertion_point(field_release:tutorial.Info.b)
+  if (_internal_has_b()) {
+    clear_has_para();
+    return para_.b_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  } else {
+    return nullptr;
+  }
+}
+inline void Info::set_allocated_b(std::string* b) {
+  if (has_para()) {
+    clear_para();
+  }
+  if (b != nullptr) {
+    set_has_b();
+    para_.b_.UnsafeSetDefault(b);
+    ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena();
+    if (arena != nullptr) {
+      arena->Own(b);
+    }
+  }
+  // @@protoc_insertion_point(field_set_allocated:tutorial.Info.b)
+}
+
+inline bool Info::has_para() const {
+  return para_case() != PARA_NOT_SET;
+}
+inline void Info::clear_has_para() {
+  _oneof_case_[0] = PARA_NOT_SET;
+}
+inline Info::ParaCase Info::para_case() const {
+  return Info::ParaCase(_oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
 // Person_PhoneNumber
 
 // string number = 1;
@@ -718,6 +1129,8 @@ inline void Person_PhoneNumber::set_type(::tutorial::Person_PhoneType value) {
   _internal_set_type(value);
   // @@protoc_insertion_point(field_set:tutorial.Person.PhoneNumber.type)
 }
+
+// -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
 
@@ -904,6 +1317,35 @@ Person::phones() const {
   return phones_;
 }
 
+// map<string, string> meta = 5;
+inline int Person::_internal_meta_size() const {
+  return meta_.size();
+}
+inline int Person::meta_size() const {
+  return _internal_meta_size();
+}
+inline void Person::clear_meta() {
+  meta_.Clear();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+Person::_internal_meta() const {
+  return meta_.GetMap();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+Person::meta() const {
+  // @@protoc_insertion_point(field_map:tutorial.Person.meta)
+  return _internal_meta();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+Person::_internal_mutable_meta() {
+  return meta_.MutableMap();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+Person::mutable_meta() {
+  // @@protoc_insertion_point(field_mutable_map:tutorial.Person.meta)
+  return _internal_mutable_meta();
+}
+
 // -------------------------------------------------------------------
 
 // AddressBook
@@ -950,6 +1392,10 @@ AddressBook::people() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
