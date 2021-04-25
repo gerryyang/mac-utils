@@ -9,6 +9,144 @@ categories: [C/C++, Data Structure/Algorithm]
 {: toc}
 
 
+# 2021 TPC腾讯程序设计竞赛 Beautiful Sequence (正赛)
+
+一个序列 b1,b2, ... ,bn 是美丽序列，当对所有 1 <= i < n 有 b<sub>i</sub> * b<sub>i+1</sub> <= 0，给定一个整数序列 a1,a2, ... ,an 问是否可以通过重新排列其中的元素使其变为美丽序列。
+
+Input:
+
+有多组测试数据，第一行输入一个整数 T 代表测试数据组数。对于每组测试数据：
+第一行输入一个整数 n (2 <= n <= 10^5) 表示序列的长度
+第二行输入 n 个整数 a1,a2, ... , an （-10^9 <= a<sub>i</sub> <= 10^9）表示序列的元素
+保证所以数据 n 之和不超过 10^6
+
+Output:
+
+每组数据输出一行。若可以通过重新排列使得序列变为美丽序列输出 Yes，否则输出 No
+
+Sample Input:
+
+```
+3
+3
+0 1 -1
+5
+2 3 4 -2 -3
+5
+5 5 5 5 5
+```
+
+Sample Output:
+
+```
+Yes
+Yes
+No
+```
+
+解题思路：记`x`为序列中正数的数量，`y`为序列中负数的数量，`z`为序列中零的数量，判断`max(x,y) - min(x,y) <= z + 1`即可。
+
+``` cpp
+#include <iostream>
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+
+    while (T--)
+    {
+        int n;
+        scanf("%d", &n);
+
+        int x, y, z;
+        x = y = z = 0;
+        for (int i = 0; i != n; ++i)
+        {
+            int m;
+            scanf("%d", &m);
+            if (m == 0) ++z;
+            else if (m < 0) ++x;
+            else if (m > 0) ++y;
+        }
+
+        auto diff = 0;
+        if (x < y) diff = y - x;
+        else if (x > y) diff = x - y;
+
+        if (diff <= z + 1) printf("Yes\n");
+        else printf("No\n");
+    }
+
+    return 0;
+}
+```
+
+``` golang
+package main
+
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "strconv"
+    "strings"
+)
+
+func ReadLine(reader *bufio.Reader) string {
+    line, _ := reader.ReadString('\n')
+    return strings.TrimRight(line, "\n")
+}
+
+func ReadInt(reader *bufio.Reader) int {
+    num, _ := strconv.Atoi(ReadLine(reader))
+    return num
+}
+
+func ReadArray(reader *bufio.Reader) []int {
+    line := ReadLine(reader)
+    strs := strings.Split(line, " ")
+    nums := make([]int, len(strs))
+    for i, s := range strs {
+        nums[i], _ = strconv.Atoi(s)
+    }
+    return nums
+}
+
+func main() {
+    reader := bufio.NewReader(os.Stdin)
+    T := ReadInt(reader)
+    for i := 0; i < T; i++ {
+
+        x := 0
+        y := 0
+        z := 0
+        diff := 0
+        ReadInt(reader)
+        m := ReadArray(reader)
+        for _, t := range m {
+            if t == 0 {
+                z++
+            } else if t > 0 {
+                x++
+            } else {
+                y++
+            }
+        }
+        if x > y {
+            diff = x - y
+        } else {
+            diff = y - x
+        }
+        if diff <= z+1 {
+            fmt.Println("Yes")
+        } else {
+            fmt.Println("No")
+        }
+    }
+}
+```
+
 # 2020 TPC腾讯程序设计竞赛 Source of Happiness (正赛)
 
 The famous instant message software QQ has recently released its badge system. Users are awarded with different types of badges when using the software if they meet certain conditions. One of the badge, the Source of Happiness badge, requires the users to send at least m memes in total during 3 continuous days. The user will be awarded with Source of Happiness at the end of the 3rd day.
@@ -120,7 +258,7 @@ int main()
 
 第一行输入一个二进制字符串 s (3 <= num(s) <= 10^5, s(i) ∈ {0, 1})，保证所有数据中 num(s) 之和不超过 10^6。
 
-​​输出格式：
+​输出格式：
 
 对于每组数据，若存在符合要求的重排列，输出一行重排列后的字符串（若有多种合理答案，您可以输出任意一种），否则输出 "Impossible"（不输出引号）。
 
