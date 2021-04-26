@@ -1,12 +1,14 @@
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
+#include <unistd.h>
 #include "addressbook.pb.h"
-#include "chrono"
 using namespace std;
 
 //#define PB_REPEATED
-//#define VECTOR
-#define MAP
+#define VECTOR
+//#define MAP
 //#define UNORDERED_MAP
 
 #define TIME_BEG() \
@@ -19,8 +21,15 @@ std::cout << "elapse(" << diff.count() << "s)\n";
 
 int main()
  {
+ 	std::cout << "pid(" << getpid() << ")\n";
+
+	/*char go_on;
+	printf("press any key to go on...");
+	scanf("%c", &go_on);
+	(void)go_on;*/
 
 	int max = 1000000;
+	int cnt = 0;
 
 #ifdef PB_REPEATED
 	std::cout << "pb repeated\n";
@@ -36,10 +45,10 @@ int main()
 	TIME_BEG();
 	std::string strSearch = std::to_string(max - 1);
 	auto stAddressBookIter = address_book.people();
-	for (auto it = stAddressBookIter.begin(); it != stAddressBookIter.end(); ++it) {
+	for (auto it = stAddressBookIter.begin(); it != stAddressBookIter.end(); ++it, ++cnt) {
 		//std::cout << "id(" << it->id() << ") name(" << it->name() << ")\n";
 		if (it->name() == strSearch) {
-			std::cout << "find it(" << strSearch << ")\n";
+			std::cout << "find it(" << strSearch << ") cnt(" << cnt << ")\n";
 			break;
 		}
 	}
@@ -54,9 +63,9 @@ int main()
 	
 	TIME_BEG();
 	std::string strSearch = std::to_string(max - 1);
-	for (int i = 0; i != max; ++i) {
+	for (int i = 0; i != max; ++i, ++cnt) {
 		if (ab[i] == strSearch) {
-			std::cout << "find it(" << strSearch << ")\n";
+			std::cout << "find it(" << strSearch << ") cnt(" << cnt << ")\n";
 			break;
 		}
 	}
@@ -79,13 +88,21 @@ int main()
 	
 	TIME_BEG();
 	std::string strSearch = std::to_string(max - 1);
-	for (auto& item : ab) {
+	for (auto iter = ab.begin(); iter != ab.end(); ++iter, ++cnt) {
+		//std::cout << "key(" << iter->first << ") value(" << iter->second << ")\n";
+		if (iter->first == strSearch) {
+			std::cout << "find it(" << strSearch << ") cnt(" << cnt << ")\n";
+			break;
+		}
+	}
+
+	/*for (auto& item : ab) {
 		//std::cout << "key(" << item.first << ") value(" << item.second << ")\n";
 		if (item.first == strSearch) {
 			std::cout << "find it(" << strSearch << ")\n";
 			break;
 		}
-	}
+	}*/
 	TIME_END();
 
 #elif defined(MAP)
@@ -97,13 +114,21 @@ int main()
 	
 	TIME_BEG();
 	std::string strSearch = std::to_string(max - 1);
-	for (auto& item : ab) {
+	for (auto iter = ab.begin(); iter != ab.end(); ++iter, ++cnt) {
+		//std::cout << "key(" << iter->first << ") value(" << iter->second << ")\n";
+		if (iter->first == strSearch) {
+			std::cout << "find it(" << strSearch << ") cnt(" << cnt << ")\n";
+			break;
+		}
+	}
+
+	/*for (auto& item : ab) {
 		//std::cout << "key(" << item.first << ") value(" << item.second << ")\n";
 		if (item.first == strSearch) {
 			std::cout << "find it(" << strSearch << ")\n";
 			break;
 		}
-	}
+	}*/
 	TIME_END();
 
 #else
@@ -112,6 +137,7 @@ int main()
 	
 #endif
 	
+	//std::this_thread::sleep_for(std::chrono::seconds(100));
 
 	return 0;
 }

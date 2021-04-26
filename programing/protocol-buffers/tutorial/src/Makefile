@@ -1,7 +1,7 @@
 
 PB_PATH = /home/ubuntu/tools/protobuf-3.15.8-install
 
-CXXFLAGS = -Wall -g -pipe -O2 -std=c++11 
+CXXFLAGS = -Wall -g -pipe -O2 -std=c++11 -Wno-unused-result
 CFLAGS = -Wall -g -pipe -O2
 
 INCLUDE = -I. -I$(PB_PATH)/include
