@@ -755,6 +755,47 @@ Person::phones() const {
   // @@protoc_insertion_point(field_list:demo.Person.phones)
   return phones_;
 }
+
+// oneof para
+enum : int {
+    kAFieldNumber = 1, 
+    kBFieldNumber = 2, 
+  };
+  // int32 a = 1;
+  bool has_a() const;
+  void clear_a();
+  ::PROTOBUF_NAMESPACE_ID::int32 a() const;
+  void set_a(::PROTOBUF_NAMESPACE_ID::int32 value);
+
+  // string b = 2;
+  bool has_b() const;
+  void clear_b();
+  const std::string& b() const;
+  void set_b(const std::string& value);
+  void set_b(std::string&& value);
+  void set_b(const char* value);
+  void set_b(const char* value, size_t size);
+  std::string* mutable_b();
+  std::string* release_b();
+  void set_allocated_b(std::string* b);
+
+// map<string, string> meta = 5;
+inline int Person::meta_size() const {
+  return _internal_meta_size();
+}
+inline void Person::clear_meta() {
+  meta_.Clear();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+Person::meta() const {
+  // @@protoc_insertion_point(field_map:tutorial.Person.meta)
+  return _internal_meta();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+Person::mutable_meta() {
+  // @@protoc_insertion_point(field_mutable_map:tutorial.Person.meta)
+  return _internal_mutable_meta();
+}
 ```
 
 * the `getters` have exactly the name as the field in lowercase
@@ -837,6 +878,65 @@ Protocol buffers have uses that go beyond simple accessors and serialization. Be
 One key feature provided by protocol message classes is `reflection`. You can iterate over the fields of a message and manipulate their values without writing your code against any specific message type. **One very useful way to use reflection is for converting protocol messages to and from other encodings, such as XML or JSON.** A more advanced use of reflection might be to find differences between two messages of the same type, or to develop a sort of "regular expressions for protocol messages" in which you can write expressions that match certain message contents. If you use your imagination, it's possible to apply Protocol Buffers to a much wider range of problems than you might initially expect!
 
 Reflection is provided by the [Message::Reflection](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.Reflection) interface.
+
+## C++ API
+
+https://developers.google.com/protocol-buffers/docs/reference/cpp
+
+## 关键结构
+
+### RepeatedField / RepeatedPtrField 
+
+https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.repeated_field
+
+> **RRepeatedField** is used to represent repeated fields of a primitive type (in other words, everything except strings and nested Messages).
+> **RepeatedPtrField** is like RepeatedField, but used for repeated strings or Messages.
+
+* `RepeatedField`和`RepeatedPtrField`是用来操作管理`repeated`类型字段的`class`。它们的功能和`STL vector`非常相似，不同的是针对`Protocol Buffers`做了很多相关的优化。
+* `RepeatedPtrField`与`STL vector`特别不一样的地方在于，它对指针所有权的管理。
+* 通常来说，客户端不应该直接操作`RepeatedField`对象，而是应该通过`protoc`生成的[accessor functions](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.repeated_field#RepeatedField)来操作。
+
+``` 
+#include <google/protobuf/repeated_field.h>
+namespace google::protobuf
+
+template <typename Element>
+class RepeatedField
+
+RepeatedField()
+explicit RepeatedField(Arena * arena)
+RepeatedField(const RepeatedField & other)
+template RepeatedField(Iter begin, const Iter & end)
+
+
+typedef Element * iterator  // STL-like iterator support.
+typedef Element value_type
+
+typedef value_type & reference
+typedef value_type * pointer
+
+typedef int size_type
+typedef ptrdiff_t difference_type
+
+const typedef Element * const_iterator
+const typedef value_type & const_reference
+const typedef value_type * const_pointer
+
+typedef std::reverse_iterator< const_iterator >  // Reverse iterator support.
+typedef std::reverse_iterator< iterator > reverse_iterator
+```
+
+## 性能测试
+
+* `std::map`查找速度是`pb repeated`的10倍
+* `std::vector`是`std::map`的5倍
+* `std::unordered_map`是`std::vector`的33倍
+
+| `pb repeated` | `std::vector` | `std::map` | `std::unordered_map`
+| -- | -- | -- | --
+| 0.226s | 0.00468892s |  0.0250801s | 0.000139513s
+
+https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/press.cc
 
 
 # Refer
