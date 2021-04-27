@@ -16,7 +16,7 @@
 #ifdef ITER
 static constexpr int max = ITER;
 #else
-static constexpr int max = 50000;
+static constexpr int max = 100000;
 #endif
 
 
@@ -43,8 +43,8 @@ inline tutorial::AddressBook init(int n)
 }
 
 
-static constexpr int samples = 10;
-static constexpr int operations = 20;
+static constexpr int samples = 1;
+static constexpr int operations = 1;
 
 static std::vector<std::string> vec = init<std::vector<std::string> >(max);
 static std::set<std::string> set = init<std::set<std::string> >(max);

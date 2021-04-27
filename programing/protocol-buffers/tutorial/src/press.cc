@@ -7,8 +7,8 @@
 using namespace std;
 
 //#define PB_REPEATED
-#define VECTOR
-//#define MAP
+//#define VECTOR
+#define MAP
 //#define UNORDERED_MAP
 
 #define TIME_BEG() \

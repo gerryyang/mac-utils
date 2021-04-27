@@ -3,7 +3,7 @@ PB_PATH = $(HOME)/tools/protobuf-3.15.8-install
 BOOST_PATH = $(HOME)/tools/boost_1_76_0
 CELERO_PATH = $(HOME)/tools/Celero
 
-CXXFLAGS = -Wall -g -pipe -O2 -std=c++11 -Wno-unused-result
+CXXFLAGS = -Wall -g -pipe -std=c++11 -Wno-unused-result
 CFLAGS = -Wall -g -pipe -O2
 
 INCLUDE = -I. -I$(PB_PATH)/include -I$(BOOST_PATH) -I$(CELERO_PATH)/include

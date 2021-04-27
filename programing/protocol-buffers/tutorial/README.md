@@ -2,6 +2,8 @@
 
 # Performance 
 
+使用`-O2`编译：
+
 * `std::map`查找速度是`pb repeated`的10倍
 * `std::vector`是`std::map`的5倍
 * `std::unordered_map`是`std::vector`的33倍
@@ -51,7 +53,7 @@ elapse(0.0260171s)
        0.500588136 seconds time elapsed
 ```
 
-使用[Celero](https://github.com/DigitalInBlue/Celero)测试结果：
+使用[Celero](https://github.com/DigitalInBlue/Celero)测试结果：(`-O2`编译)
 
 ```
  $ ./celero_benchmark 
