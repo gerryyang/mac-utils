@@ -879,13 +879,13 @@ One key feature provided by protocol message classes is `reflection`. You can it
 
 Reflection is provided by the [Message::Reflection](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.Reflection) interface.
 
-## C++ API
+# C++ API
 
 https://developers.google.com/protocol-buffers/docs/reference/cpp
 
-## 关键结构
+# 关键结构
 
-### RepeatedField / RepeatedPtrField 
+## RepeatedField / RepeatedPtrField 
 
 https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.repeated_field
 
@@ -926,17 +926,119 @@ typedef std::reverse_iterator< const_iterator >  // Reverse iterator support.
 typedef std::reverse_iterator< iterator > reverse_iterator
 ```
 
-## 性能测试
+# 性能测试
 
-* `std::map`查找速度是`pb repeated`的10倍
-* `std::vector`是`std::map`的5倍
-* `std::unordered_map`是`std::vector`的33倍
+## 在线工具 [Quick C++ Benchmark](https://quick-bench.com/)
 
-| `pb repeated` | `std::vector` | `std::map` | `std::unordered_map`
-| -- | -- | -- | --
-| 0.226s | 0.00468892s |  0.0250801s | 0.000139513s
+![quick_cpp_benchmark](/assets/images/202104/quick_cpp_benchmark.png)
 
-https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/press.cc
+``` cpp
+static void VectorFind(benchmark::State& state) {
+
+  int max = 10000;
+  std::string last_v = std::to_string(max - 1);
+
+  std::vector<std::string> vec;
+  for (int i = 0; i != max; ++i) {
+    vec.push_back(std::to_string(i));
+  }
+
+  for (auto _ : state) {
+    
+  for (int i = 0; i != max; ++i) {
+    if (vec[i] == last_v) {
+      break;
+    }
+  }
+
+  //std::find(vec.begin(), vec.end(), last_v);
+
+  }
+}
+BENCHMARK(VectorFind);
+
+static void SetFind(benchmark::State& state) {
+
+  int max = 10000;
+  std::string last_v = std::to_string(max - 1);
+
+  std::set<std::string> set;
+  for (int i = 0; i != max; ++i) {
+    set.insert(std::to_string(i));
+  }
+
+  for (auto _ : state) {
+    set.find(last_v);
+
+  }
+}
+
+BENCHMARK(SetFind);
+```
+## [Celero](https://github.com/DigitalInBlue/Celero)
+
+* [测试代码](https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/celero_benchmark.cc)：
+
+```
+ $ ./celero_benchmark 
+Celero
+Timer resolution: 0.001000 us
+|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |   
+|:--------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
+|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 | 
+|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 | 
+|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
+|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 | 
+|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
+Completed in 00:00:00.028138
+```
+
+## vector/map/unordered_map/pb repeated
+
+* [测试代码](https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/press.cc)：
+ 
+
+```
+$ perf stat -B ./press
+pid(2008)
+pb repeated
+find it(999999) cnt(999999)
+elapse(0.280948s)
+
+ Performance counter stats for './press':
+
+        606.010051      task-clock (msec)         #    0.858 CPUs utilized          
+               730      context-switches          #    0.001 M/sec                  
+                 0      cpu-migrations            #    0.000 K/sec                  
+           123,296      page-faults               #    0.203 M/sec                  
+   <not supported>      cycles                                                      
+   <not supported>      instructions                                                
+   <not supported>      branches                                                    
+   <not supported>      branch-misses                                               
+
+       0.706142993 seconds time elapsed
+
+
+$ perf stat -B ./press
+pid(2277)
+map
+find it(999999) cnt(999999)
+elapse(0.0260171s)
+
+ Performance counter stats for './press':
+
+        457.361877      task-clock (msec)         #    0.914 CPUs utilized          
+               572      context-switches          #    0.001 M/sec                  
+                 0      cpu-migrations            #    0.000 K/sec                  
+            19,711      page-faults               #    0.043 M/sec                  
+   <not supported>      cycles                                                      
+   <not supported>      instructions                                                
+   <not supported>      branches                                                    
+   <not supported>      branch-misses                                               
+
+       0.500588136 seconds time elapsed
+```
+
 
 
 # Refer
