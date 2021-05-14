@@ -8,9 +8,142 @@ categories: [Bash, 编程语言]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Compare
+# 工具
+
+* [Execute Bash Shell Online (GNU Bash v4.4)](https://www.tutorialspoint.com/execute_bash_online.php)
+
+# 1>&2 / 2>&1
 
 ``` bash
+if test $# -ne 1; then
+    echo "Usage: `basename $0 .sh` <process-id>" 1>&2
+    exit 1
+fi
+```
+
+* There are 3 file descriptors, `stdin`, `stdout` and `stderr` (std=standard).
+* `1` represents `stdout` and `2` `stderr`
+
+| Usage | Example
+| -- | --
+| stdout 2 file | ls -l > ls-l.txt
+| stderr 2 file | grep da * 2> grep-errors.txt
+| stdout 2 stderr | grep da * 1>&2 
+| stderr 2 stdout | grep * 2>&1
+| stderr and stdout 2 file | rm -f $(find / -name core) &> /dev/null 
+
+
+* https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-3.html
+* https://stackoverflow.com/questions/818255/in-the-shell-what-does-21-mean
+
+# declare command
+
+```
+$ bash -c "help declare"
+declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
+    Set variable values and attributes.
+    
+    Declare variables and give them attributes.  If no NAMEs are given,
+    display the attributes and values of all variables.
+    
+    Options:
+      -f        restrict action or display to function names and definitions
+      -F        restrict display to function names only (plus line number and
+        source file when debugging)
+      -g        create global variables when used in a shell function; otherwise
+        ignored
+      -p        display the attributes and value of each NAME
+    
+    Options which set attributes:
+      -a        to make NAMEs indexed arrays (if supported)
+      -A        to make NAMEs associative arrays (if supported)
+      -i        to make NAMEs have the `integer' attribute
+      -l        to convert NAMEs to lower case on assignment
+      -r        to make NAMEs readonly
+      -t        to make NAMEs have the `trace' attribute
+      -u        to convert NAMEs to upper case on assignment
+      -x        to make NAMEs export
+    
+    Using `+' instead of `-' turns off the given attribute.
+    
+    Variables with the integer attribute have arithmetic evaluation (see
+    the `let' command) performed when the variable is assigned a value.
+    
+    When used in a function, `declare' makes NAMEs local, as with the `local'
+    command.  The `-g' option suppresses this behavior.
+    
+    Exit Status:
+    Returns success unless an invalid option is supplied or an error occurs.
+```
+
+Refer: https://linuxhint.com/bash_declare_command/
+
+# Substring Removal
+
+* `${string#substring}` Deletes **shortest** match of `$substring` from **front** of `$string`.
+* `${string##substring}` Deletes **longest** match of `$substring` from **front** of `$string`.
+* `${string%substring}` Deletes **shortest** match of `$substring` from **back** of `$string`.
+* `${string%%substring}` Deletes **longest** match of `$substring` from **back** of `$string`.
+
+``` bash
+stringZ=abcABC123ABCabc
+#       |----|          shortest
+#       |----------|    longest
+
+echo ${stringZ#a*C}      # 123ABCabc
+# Strip out shortest match between 'a' and 'C'.
+
+echo ${stringZ##a*C}     # abc
+# Strip out longest match between 'a' and 'C'.
+
+
+
+# You can parameterize the substrings.
+
+X='a*C'
+
+echo ${stringZ#$X}      # 123ABCabc
+echo ${stringZ##$X}     # abc
+                        # As above.
+
+# Rename all filenames in $PWD with "TXT" suffix to a "txt" suffix.
+# For example, "file1.TXT" becomes "file1.txt" . . .
+
+SUFF=TXT
+suff=txt
+
+for i in $(ls *.$SUFF)
+do
+  mv -f $i ${i%.$SUFF}.$suff
+  #  Leave unchanged everything *except* the shortest pattern match
+  #+ starting from the right-hand-side of the variable $i . . .
+done ### This could be condensed into a "one-liner" if desired.
+
+
+stringZ=abcABC123ABCabc
+#                    ||     shortest
+#        |------------|     longest
+
+echo ${stringZ%b*c}      # abcABC123ABCa
+# Strip out shortest match between 'b' and 'c', from back of $stringZ.
+
+echo ${stringZ%%b*c}     # a
+# Strip out longest match between 'b' and 'c', from back of $stringZ.
+```
+
+Refer: https://tldp.org/LDP/abs/html/string-manipulation.html
+
+
+# Compare
+
+* `test` provides no output, but returns an exit status of 0 for "true" (test successful) and 1 for "false" (test failed).
+* The `test` command may also be expressed with **single brackets** `[ ... ]`, as long as they are separated from all other arguments with **whitespace**. 
+
+``` bash
+num=4; if (test $num -gt 5); then echo "yes"; else echo "no"; fi
+
+file="/etc/passwd"; if [ -e $file ]; then echo "whew"; else echo "uh-oh"; fi
+
 if [[ $# -eq 0 ]]; then
   # digital compare
   # -eq / -lt / -le / -gt / -ge / -ne
@@ -23,7 +156,11 @@ if [[ $1 = "start" ]]; then
 fi
 
 if [[ -n $VarName ]]; then
-  # not empty
+  # not empty, it's the opposite of -z
+fi
+
+if [[ -z "$1" ]]; then
+  echo "This succeeds if $1 is null or unset"
 fi
 
 if [[ -f "proc.pid" ]]; then
@@ -37,6 +174,8 @@ if [[ $? -ne 0 ]];then
 fi
 ```
 
+* [Is double square brackets [[ ]] preferable over single square brackets [ ] in Bash?](https://stackoverflow.com/questions/669452/is-double-square-brackets-preferable-over-single-square-brackets-in-ba)
+* [Bash test builtin command](https://www.computerhope.com/unix/bash/test.htm)
 
 # ForceStopAll
 
@@ -543,6 +682,146 @@ fi
 -x FILE - True if the FILE exists and is executable.
 ```
 
+# Parameter Substitution
+
+If parameter not set, use default.
+
+> ${parameter-default}, ${parameter:-default}
+
+``` bash
+GDB=${GDB:-/usr/bin/gdb}
+echo $GDB # /usr/bin/gdb
+```
+
+* https://tldp.org/LDP/abs/html/parameter-substitution.html
+* https://stackoverflow.com/questions/4437573/bash-assign-default-value
+
+# Here document
+
+The `cat <<EOF` syntax is very useful when working with multi-line text in Bash, eg. when assigning multi-line string to a shell variable, file or a pipe.
+
+* Assign multi-line string to a shell variable
+
+``` bash
+sql=$(cat <<EOF
+SELECT foo, bar FROM db
+WHERE foo='baz'
+EOF
+)
+echo $sql
+```
+
+*  Pass multi-line string to a file in Bash
+
+``` bash
+cat <<EOF > print.sh
+> #!/bin/bash
+> echo \$PWD
+> echo $PWD
+> EOF
+```
+
+The `print.sh` file now contains:
+
+``` bash
+#!/bin/bash
+echo $PWD
+echo /home/user
+```
+
+* Pass multi-line string to a pipe in Bash
+
+``` bash
+cat <<EOF | grep 'b' | tee b.txt
+foo
+bar
+baz
+EOF
+```
+
+The b.txt file contains bar and baz lines. The same output is printed to stdout.
+
+* https://en.wikipedia.org/wiki/Here_document#Unix_shells
+* https://stackoverflow.com/questions/2500436/how-does-cat-eof-work-in-bash
+
+
+# Command
+
+## awk
+
+* 列操作
+
+## sed
+
+* 行操作
+
+```
+$ cat tmp
+foo
+123
+foo
+456
+$ cat tmp | sed -e "1,2s/foo/bar/"
+bar
+123
+foo
+456
+$ cat tmp | sed -e "s/foo/bar/"
+bar
+123
+bar
+456
+```
+
+# Example
+
+## pstack
+
+``` bash
+#!/bin/sh
+
+if test $# -ne 1; then
+    echo "Usage: `basename $0 .sh` <process-id>" 1>&2
+    exit 1
+fi
+
+if test ! -r /proc/$1; then
+    echo "Process $1 not found." 1>&2
+    exit 1
+fi
+
+# GDB doesn't allow "thread apply all bt" when the process isn't
+# threaded; need to peek at the process to determine if that or the
+# simpler "bt" should be used.
+
+backtrace="bt"
+if test -d /proc/$1/task ; then
+    # Newer kernel; has a task/ directory.
+    if test `/bin/ls /proc/$1/task | /usr/bin/wc -l` -gt 1 2>/dev/null ; then
+        backtrace="thread apply all bt"
+    fi
+elif test -f /proc/$1/maps ; then
+    # Older kernel; go by it loading libpthread.
+    if /bin/grep -e libpthread /proc/$1/maps > /dev/null 2>&1 ; then
+        backtrace="thread apply all bt"
+    fi
+fi
+
+GDB=${GDB:-/usr/bin/gdb}
+
+# Run GDB, strip out unwanted noise.
+# --readnever is no longer used since .gdb_index is now in use.
+$GDB --quiet -nx $GDBARGS /proc/$1/exe $1 <<EOF 2>&1 | 
+set width 0
+set height 0
+set pagination no
+$backtrace
+EOF
+/bin/sed -n \
+    -e 's/^\((gdb) \)*//' \
+    -e '/^#/p' \
+    -e '/^Thread/p'
+```
 
 
 # Other

@@ -27,10 +27,10 @@ https://code.visualstudio.com/docs/cpp/config-linux
 
 ### Remote-SSH
 
-* 在`~/.ssh/`目录执行`ssh-keygen -t rsa -f vscode_id_rsa`命令生成公私钥。
+* 在本地`~/.ssh/`目录执行`ssh-keygen -t rsa -f vscode_id_rsa`命令生成公私钥。
 * 将`公钥`复制到Remote机器的`~/.ssh/authorized_keys`文件中。
 * VS Code和VS Code Server的通信走SSH通道，需要开启SSH端口转发。打开Remote机器上的`/etc/ssh/sshd_config`文件 ，将`AllowTcpForwarding`选项改成`yes`，然后重启sshd服务`service sshd restart`。
-* 在`~/.ssh/`目录下添加或修改`config`配置。
+* 在本地`~/.ssh/`目录下添加或修改`config`配置。
 ```
 # VS Code Remote Development
 Host $ip_ssh_config
@@ -102,6 +102,10 @@ Host $ip_ssh_config
 
 * 智能的代码自动补全工具
 
+### Kite Autocomplete
+
+* Kite works for all major programming languages: Python, Java, Go, PHP, C/C#/C++, Javascript, HTML/CSS, Typescript, React, Ruby, Scala, Kotlin, Bash, Vue and React.
+
 ### Bracket Pair Colorizer2
 
 * 括号通过不同颜色区分，多层级括号便于区分
@@ -140,6 +144,11 @@ Host $ip_ssh_config
 
 * 提供Markdown文档的一些功能，比如自动生成/更新目录
 * 用法：`>markdown …`
+
+### Markdown Extended
+
+* Extended syntaxes to built-in markdown & What you see is what you get exporter.
+* Export to Self Contained HTML / PDF / PNG / JPEG
 
 ### Edit csv
 
