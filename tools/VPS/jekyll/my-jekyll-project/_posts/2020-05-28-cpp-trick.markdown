@@ -8,6 +8,24 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {: toc}
 
+# Statements and Declarations in Expressions
+
+A compound statement enclosed in parentheses may appear as an expression in GNU C. This allows you to use loops, switches, and local variables within an expression. Recall that a compound statement is a sequence of statements surrounded by braces; in this construct, parentheses go around the braces. For example:
+
+``` c
+({ int y = foo (); int z;
+   if (y > 0) z = y;
+   else z = - y;
+   z; })
+```
+
+is a valid (though slightly more complex than necessary) expression for the absolute value of `foo ()`.
+
+``` c
+int a = ({int b; b = 1; b;}); // a = 1
+```
+
+* https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
 
 # likely/unlikely
 

@@ -182,6 +182,35 @@ static inline int getcpuspeed_mhz(unsigned int wait_us)
 	+ 不处理。如果对精度要求不是特别高，完全可以不处理。这是基于以下的原因：1. Linux内核不会随便将进程调度到另外的CPU，就算调度，也会优先调度到同一个物理CPU上，TSC的值也往往是一致的。2. 就算TSC的值不一致，如果差异比较小，在精度允许的范围内，是可以接受的；如果差异比较大，会被my_gettimeofday()检测出来，并重新调用gettimeofday()。
 * 如果多CPU的时钟频率不一样，完全不处理也不大可行，因为如果getcpuspeed()返回错误的值，my_gettimeofday()就不准确了。可以加上一段逻辑，当TSC的差异大于某个值的时候，重新计算CPU的频率。
 
+# 32位和64位的处理区别
+
+参考[Machine Constraints](https://gcc.gnu.org/onlinedocs/gcc/Machine-Constraints.html#Machine-Constraints)：
+
+`A`
+
+The `a` and `d` registers. This class is used for instructions that return **double word(2 * 32)** results in the `ax:dx` register pair. Single word values will be allocated either in `ax` or `dx`. For example on `i386` the following implements `rdtsc`:
+
+``` c
+unsigned long long rdtsc (void)
+{
+  unsigned long long tick;
+  __asm__ __volatile__("rdtsc":"=A"(tick));
+  return tick;
+}
+```
+
+This is not correct on `x86-64` as it would allocate tick in either `ax` or `dx`. You have to use the following variant instead:
+
+``` c
+unsigned long long rdtsc (void)
+{
+  unsigned int tickl, tickh;
+  __asm__ __volatile__("rdtsc":"=a"(tickl),"=d"(tickh));
+  return ((unsigned long long)tickh << 32)|tickl;
+}
+```
+
+# 测试代码
 
 测试环境：
 
@@ -281,6 +310,30 @@ t = rdtsc();
 t = rdtsc() - t;
 // t now contains the number of cycles elapsed
 ```
+
+# Windows __rdtsc
+
+Generates the rdtsc instruction, which returns the processor time stamp. The processor time stamp records the number of clock cycles since the last reset.
+
+``` c
+// rdtsc.cpp
+// processor: x86, x64
+#include <stdio.h>
+#include <intrin.h>
+
+#pragma intrinsic(__rdtsc)
+
+int main()
+{
+    unsigned __int64 i;
+    i = __rdtsc();
+    printf_s("%I64d ticks\n", i);
+}
+```
+
+https://docs.microsoft.com/en-us/cpp/intrinsics/rdtsc?view=msvc-160
+
+
 
 
 # Refer

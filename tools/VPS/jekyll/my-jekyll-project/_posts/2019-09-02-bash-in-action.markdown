@@ -8,9 +8,13 @@ categories: [Bash, 编程语言]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 工具
+# Bash Tools
 
 * [Execute Bash Shell Online (GNU Bash v4.4)](https://www.tutorialspoint.com/execute_bash_online.php)
+
+# Reference
+
+* [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 
 # 1>&2 / 2>&1
 
@@ -35,48 +39,6 @@ fi
 
 * https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-3.html
 * https://stackoverflow.com/questions/818255/in-the-shell-what-does-21-mean
-
-# declare command
-
-```
-$ bash -c "help declare"
-declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
-    Set variable values and attributes.
-    
-    Declare variables and give them attributes.  If no NAMEs are given,
-    display the attributes and values of all variables.
-    
-    Options:
-      -f        restrict action or display to function names and definitions
-      -F        restrict display to function names only (plus line number and
-        source file when debugging)
-      -g        create global variables when used in a shell function; otherwise
-        ignored
-      -p        display the attributes and value of each NAME
-    
-    Options which set attributes:
-      -a        to make NAMEs indexed arrays (if supported)
-      -A        to make NAMEs associative arrays (if supported)
-      -i        to make NAMEs have the `integer' attribute
-      -l        to convert NAMEs to lower case on assignment
-      -r        to make NAMEs readonly
-      -t        to make NAMEs have the `trace' attribute
-      -u        to convert NAMEs to upper case on assignment
-      -x        to make NAMEs export
-    
-    Using `+' instead of `-' turns off the given attribute.
-    
-    Variables with the integer attribute have arithmetic evaluation (see
-    the `let' command) performed when the variable is assigned a value.
-    
-    When used in a function, `declare' makes NAMEs local, as with the `local'
-    command.  The `-g' option suppresses this behavior.
-    
-    Exit Status:
-    Returns success unless an invalid option is supplied or an error occurs.
-```
-
-Refer: https://linuxhint.com/bash_declare_command/
 
 # Substring Removal
 
@@ -747,13 +709,35 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
+## find
+
+``` bash
+find /media/d/ -type f -size +50M ! \( -name "*deb" -o -name "*vmdk" \)
+```
+
+> ! expression : Negation of a primary; the unary NOT operator.
+> 
+> ( expression ): True if expression is true.
+> 
+> expression -o expression: Alternation of primaries; the OR operator. The second expression shall not be evaluated if the first expression is true.
+> 
+> Note that parenthesis, both opening and closing, are prefixed by a backslash (\) to prevent evaluation by the shell.
+
+* https://unix.stackexchange.com/questions/50612/how-to-combine-2-name-conditions-in-find
+* https://pubs.opengroup.org/onlinepubs/009695399/utilities/find.html
+
 ## awk
 
-* 列操作
+The awk utility shall execute programs written in the awk programming language, which is specialized for textual data manipulation. An awk program is a sequence of patterns and corresponding actions. When input is read that matches a pattern, the action associated with that pattern is carried out.
+
+Input shall be interpreted as a sequence of records. By default, a record is a line, less its terminating <newline>, but this can be changed by using the RS built-in variable. Each record of input shall be matched in turn against each pattern in the program. For each pattern matched, the associated action shall be executed.
+
+The awk utility shall interpret each input record as a sequence of fields where, by default, a field is a string of non- <blank> non- <newline> characters. This default <blank> and <newline> field delimiter can be changed by using the FS built-in variable or the -F sepstring option. The awk utility shall denote the first field in a record $1, the second $2, and so on. The symbol $0 shall refer to the entire record; setting any other field causes the re-evaluation of $0. Assigning to $0 shall reset the values of all other fields and the NF built-in variable.
+
 
 ## sed
 
-* 行操作
+The sed utility is a stream editor that shall read one or more text files, make editing changes according to a script of editing commands, and write the results to standard output. The script shall be obtained from either the script operand string or a combination of the option-arguments from the -e script and -f script_file options.
 
 ```
 $ cat tmp
@@ -772,6 +756,48 @@ bar
 bar
 456
 ```
+
+## declare
+
+```
+$ bash -c "help declare"
+declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
+    Set variable values and attributes.
+    
+    Declare variables and give them attributes.  If no NAMEs are given,
+    display the attributes and values of all variables.
+    
+    Options:
+      -f        restrict action or display to function names and definitions
+      -F        restrict display to function names only (plus line number and
+        source file when debugging)
+      -g        create global variables when used in a shell function; otherwise
+        ignored
+      -p        display the attributes and value of each NAME
+    
+    Options which set attributes:
+      -a        to make NAMEs indexed arrays (if supported)
+      -A        to make NAMEs associative arrays (if supported)
+      -i        to make NAMEs have the `integer' attribute
+      -l        to convert NAMEs to lower case on assignment
+      -r        to make NAMEs readonly
+      -t        to make NAMEs have the `trace' attribute
+      -u        to convert NAMEs to upper case on assignment
+      -x        to make NAMEs export
+    
+    Using `+' instead of `-' turns off the given attribute.
+    
+    Variables with the integer attribute have arithmetic evaluation (see
+    the `let' command) performed when the variable is assigned a value.
+    
+    When used in a function, `declare' makes NAMEs local, as with the `local'
+    command.  The `-g' option suppresses this behavior.
+    
+    Exit Status:
+    Returns success unless an invalid option is supplied or an error occurs.
+```
+
+Refer: https://linuxhint.com/bash_declare_command/
 
 # Example
 

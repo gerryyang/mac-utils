@@ -17,9 +17,111 @@ VS Code [下载地址](https://code.visualstudio.com/)，当前版本：1.55 版
 
 In this tutorial, you will configure Visual Studio Code to use the `GCC C++ compiler (g++)` and `GDB` debugger on Linux. GCC stands for GNU Compiler Collection; GDB is the GNU debugger.
 
-https://code.visualstudio.com/docs
-https://code.visualstudio.com/docs/cpp/config-linux
+* https://code.visualstudio.com/docs
+* https://code.visualstudio.com/docs/cpp/config-linux
+* https://gourav.io/blog/setup-vscode-to-run-debug-c-cpp-code
 
+
+## Debug C++ in Visual Studio Code
+
+To configure debug configuration, 2 files are required `launch.json` and `tasks.json` inside `.vscode` folder. VSCode can create and auto-configure these files if we try to debug for the first time. 
+
+### launch.json
+
+```
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/a.out",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
+```
+
+### tasks.json
+
+```
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++ build active file",
+			"command": "/usr/bin/g++",
+			"args": [
+				"-g",
+				"${file}",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compiler: /usr/bin/g++"
+		}
+	]
+}
+```
+
+
+### follow-fork-mode
+
+``` cpp
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main()
+{
+    printf("pid(%d)\n", getpid());
+    int pid = fork();
+    if (0 != pid) {
+        printf("pid(%d)\n", pid);
+    }
+    wait(NULL);
+}
+```
+
+```
+// launch.json
+"setupCommands": [
+    {"text": "-gdb-set follow-fork-mode child"}
+]
+```
+
+* https://github.com/microsoft/vscode-cpptools/issues/511
+* https://github.com/microsoft/vscode-cpptools/issues/1211
+
+
+
+* https://code.visualstudio.com/docs/cpp/cpp-debug
+* https://code.visualstudio.com/docs/editor/debugging
 
 ## VS Code Remote 配置
 
@@ -77,14 +179,22 @@ Host $ip_ssh_config
 
 ### 标题显示完整的文件路径名
 
-```
+``` json
 "window.title": "${dirty}${activeEditorLong}${separator}${rootName}${separator}${appName}"
 ```
 
 ### 自动删除文件行尾空格
 
-```
+``` json
 "files.trimTrailingWhitespace": true
+```
+
+### 在explorer中不必要的文件
+
+``` json
+"files.exclude": {
+    "*.log": true,
+}
 ```
 
 
@@ -163,7 +273,14 @@ Host $ip_ssh_config
 
 Protobuf 3 support for Visual Studio Code
 
+# Q&A
 
+## Paste Not Working
+
+解决方法：VIM插件问题，可尝试重新安装。
+
+* [In Visual Studio Code Ctrl+V is not working](https://stackoverflow.com/questions/51521004/in-visual-studio-code-ctrlv-is-not-working)
+* [Copy Paste Not Working #55303](https://github.com/microsoft/vscode/issues/55303)
 
 # Refer
 

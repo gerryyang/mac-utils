@@ -57,6 +57,33 @@ categories: [Assembly Language,]
 
 某些接口卡需要对大批量输入、输出数据进行暂时存储，在其上装有 RAM 。最典型的是显示卡上的 RAM ，一般称为显存。显示卡随时将显存中的数据向显示器上输出。换句话说，我们将需要显示的内容写入显存，就会出现在显示器上。
 
+# Memory
+
+The x86 architecture is **little-endian**, meaning that multi-byte values are written least significant byte first. (This refers only to the ordering of the bytes, not to the bits.)
+
+![memory](/assets/images/202106/memory.png)
+
+# Stack
+
+The stack is a **Last In First Out** (`LIFO`) data structure; data is pushed onto it and popped off of it in the reverse order.
+
+``` asm
+mov ax, 006Ah
+mov bx, F79Ah
+mov cx, 1124h
+
+push ax ; push the value in AX onto the top of the stack, which now holds the value 0x006A.
+push bx ; do the same thing to the value in BX; the stack now has 0x006A and 0xF79A.
+push cx ; now the stack has 0x006A, 0xF79A, and 0x1124.
+
+call do_stuff ; do some stuff. The function is not forced to save the registers it uses, hence us saving them.
+
+pop cx ; pop the element on top of the stack, 0x1124, into CX; the stack now has 0x006A and 0xF79A.
+pop bx ; pop the element on top of the stack, 0xF79A, into BX; the stack now has just 0x006A.
+pop ax ; pop the element on top of the stack, 0x006A, into AX; the stack is now empty.
+```
+
+The Stack is usually used to pass arguments to functions or procedures and also to keep track of control flow when the call instruction is used. The other common use of the Stack is temporarily saving registers.
 
 # CPU Registers
 
@@ -65,6 +92,54 @@ categories: [Assembly Language,]
 The most common registers are the **general-purpose registers**. They are called general-purpose because they can be used to store any kind of data. x64 defines `16 `of these registers: **rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14 and r15**
 
 There is another kind of registers called **special-purpose registers**. These registers have a specific pupose. To give an example, `rip` is called the instruction pointer; it always points to the next instruction to be executed by the program. Another example is `rflags`; this register contains various flags that change depending on the result of an operation; the flags tell you things like if the result was zero, there was a carry or an overflow, etc. There are more special purpose registers, but I won’t explore them in this article.
+
+# [x86 Assembly/X86 Architecture](https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture)
+
+The x86 architecture has `8` **General-Purpose Registers (GPR)**, `6` **Segment Registers**, `1` **Flags Register** and an **Instruction Pointer**. 64-bit x86 has additional registers.
+
+## General-Purpose Registers (GPR) - **16-bit naming conventions**
+
+The `8` GPRs are:
+
+1. Accumulator register (`AX`). Used in arithmetic operations
+2. Counter register (`CX`). Used in shift/rotate instructions and loops.
+3. Data register (`DX`). Used in arithmetic operations and I/O operations.
+4. Base register (`BX`). Used as a pointer to data (located in segment register DS, when in segmented mode).
+5. Stack Pointer register (`SP`). Pointer to the top of the stack.
+6. Stack Base Pointer register (`BP`). Used to point to the base of the stack.
+7. ource Index register (`SI`). Used as a pointer to a source in stream operations.
+8. Destination Index register (`DI`). Used as a pointer to a destination in stream operations.
+
+All registers can be accessed in 16-bit and 32-bit modes. In 16-bit mode, the register is identified by its two-letter abbreviation from the list above. In 32-bit mode, this two-letter abbreviation is prefixed with an 'E' (extended). For example, 'EAX' is the accumulator register as a 32-bit value.
+
+Similarly, in the 64-bit version, the 'E' is replaced with an 'R' (register), so the 64-bit version of 'EAX' is called 'RAX'.
+
+It is also possible to address the first four registers (AX, CX, DX and BX) in their size of 16-bit as two 8-bit halves. The least significant byte (`LSB`), or low half, is identified by replacing the 'X' with an 'L'. The most significant byte (`MSB`), or high half, uses an 'H' instead. For example, CL is the LSB of the counter register, whereas CH is its MSB.
+
+In total, this gives us five ways to access the accumulator, counter, data and base registers: 64-bit, 32-bit, 16-bit, 8-bit LSB, and 8-bit MSB. The other four are accessed in only four ways: 64-bit, 32-bit, 16-bit, and 8-bit. The following table summarises this:
+
+![register_gpr](/assets/images/202106/register_gpr.png)
+
+## Segment Registers
+
+The `6` Segment Registers are:
+
+1. Stack Segment (`SS`). Pointer to the stack.
+2. Code Segment (`CS`). Pointer to the code.
+3. Data Segment (`DS`). Pointer to the data.
+4. Extra Segment (`ES`). Pointer to extra data ('E' stands for 'Extra').
+5. F Segment (`FS`). Pointer to more extra data ('F' comes after 'E').
+6. G Segment (`GS`). Pointer to still more extra data ('G' comes after 'F').
+
+Most applications on most modern operating systems (like FreeBSD, Linux or Microsoft Windows) use a memory model that points nearly all segment registers to the same place (and uses paging instead), effectively disabling their use. Typically the use of FS or GS is an exception to this rule, instead being used to point at thread-specific data.
+
+## EFLAGS Register
+
+The `EFLAGS` is a 32-bit register used as a collection of bits representing Boolean values to store the results of operations and the state of the processor.
+
+## Instruction Pointer
+
+The `EIP` register contains the address of the next instruction to be executed if no branching is done. `EIP` can only be read through the stack after a `call` instruction.
 
 
 # Intel vs AT&T
@@ -86,6 +161,25 @@ mov $1, %rax
 **Both instructions set the registry rax to the value 1**. We can see in the AT&T case that the value 1 is prefixed with `$` and the registry name is prefixed with `%`. The order of the parameters is also different.
 
 In the rest of the article I will use only `Intel syntax` because it’s the one supported by `NASM`.
+
+```
++------------------------------+------------------------------------+
+|       Intel Code             |      AT&T Code                     |
++------------------------------+------------------------------------+
+| mov     eax,1                |  movl    $1,%eax                   |   
+| mov     ebx,0ffh             |  movl    $0xff,%ebx                |   
+| int     80h                  |  int     $0x80                     |   
+| mov     ebx, eax             |  movl    %eax, %ebx                |
+| mov     eax,[ecx]            |  movl    (%ecx),%eax               |
+| mov     eax,[ebx+3]          |  movl    3(%ebx),%eax              | 
+| mov     eax,[ebx+20h]        |  movl    0x20(%ebx),%eax           |
+| add     eax,[ebx+ecx*2h]     |  addl    (%ebx,%ecx,0x2),%eax      |
+| lea     eax,[ebx+ecx]        |  leal    (%ebx,%ecx),%eax          |
+| sub     eax,[ebx+ecx*4h-20h] |  subl    -0x20(%ebx,%ecx,0x4),%eax |
++------------------------------+------------------------------------+
+```
+
+refer: http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
 
 
 # Installing an assembler
@@ -535,6 +629,54 @@ xor rax, 11     ; 11 in binary is 1011. rax is now 7 (111 in binary)
 
 These are just some of the instructions available in an `x64` processor. There are many more that I’m not going to cover in this article.
 
+## [x86 Instruction Set](https://en.wikibooks.org/wiki/X86_Assembly/X86_Instructions)
+
+* [Data Transfer Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Data_Transfer)
+* [Control Flow Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Control_Flow)
+* [Arithmetic Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Arithmetic)
+* [Logic Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Logic)
+* [Shift and Rotate Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Shift_and_Rotate)
+* [Other Instructions](https://en.wikibooks.org/wiki/X86_Assembly/Other_Instructions)
+* [x86 Interrupts](https://en.wikibooks.org/wiki/X86_Assembly/X86_Interrupts)
+
+## Conventions
+
+```
+# The following template will be used for instructions that take no operands:
+Instr
+
+# The following template will be used for instructions that take 1 operand:
+Instr arg
+
+# The following template will be used for instructions that take 2 operands. Notice how the format of the instruction is different for different assemblers.
+Instr src, dest	    [GAS Syntax](https://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax)
+Instr dest, src     [Intel Syntax](https://en.wikibooks.org/wiki/X86_Assembly/MASM_Syntax)
+
+# The following template will be used for instructions that take 3 operands. Notice how the format of the instruction is different for different assemblers.
+Instr aux, src, dest    [GAS Syntax](https://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax)
+Instr dest, src, aux    [Intel Syntax](https://en.wikibooks.org/wiki/X86_Assembly/MASM_Syntax)
+```
+
+## Suffixes
+
+Some instructions, especially when built for non-Windows platforms (i.e. Unix, Linux, etc.), require the use of suffixes to specify the size of the data which will be the subject of the operation. Some possible suffixes are:
+
+* b (byte) = 8 bits.
+* w (word) = 16 bits.
+* l (long) = 32 bits.
+* q (quad) = 64 bits.
+
+An example of the usage with the mov instruction on a 32-bit architecture, GAS syntax:
+
+```
+movl $0x000F, %eax  # Store the value F into the eax register
+```
+
+On Intel Syntax you don't have to use the suffix. Based on the register name and the used immediate value the compiler knows which data size to use.
+
+```
+MOV EAX, 0x000F
+```
 
 # Addressing modes
 
@@ -874,17 +1016,78 @@ $2 = 11
 
 # GCC Inline Assembly
 
-``` asm
-asm ( 汇编程序模板 
-    : 输出操作数                 /* 可选的 */
-    : 输入操作数                 /* 可选的 */
-    : 修饰寄存器列表             /* 可选的 */
-    );
+## Basic
+
+With extended `asm` you can read and write C variables from assembler and perform jumps from assembler code to C labels. Extended `asm` syntax uses colons (‘:’) to delimit the operand parameters after the assembler template:
+
+```
+asm asm-qualifiers ( AssemblerTemplate 
+                 : OutputOperands 
+                 [ : InputOperands
+                 [ : Clobbers ] ])
+
+asm asm-qualifiers ( AssemblerTemplate 
+                      : OutputOperands
+                      : InputOperands
+                      : Clobbers
+                      : GotoLabels)
 ```
 
+where in the last form, asm-qualifiers contains `goto` (and in the first form, not).
 
-* [GCC-Inline-Assembly-HOWTO, Sandeep.S](http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
-* 翻译修正版：https://linux.cn/article-7688-1.html
+* [GCC-Inline-Assembly-HOWTO, Sandeep.S](http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)，翻译修正版：https://linux.cn/article-7688-1.html
+* [Extended Asm - Assembler Instructions with C Expression Operands](https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html)
+
+## [What do the E and R prefixes stand for in the names of Intel 32-bit and 64-bit registers?](https://stackoverflow.com/questions/43933379/what-do-the-e-and-r-prefixes-stand-for-in-the-names-of-intel-32-bit-and-64-bit-r)
+
+* `R` [just stands for "register"](https://softwareengineering.stackexchange.com/questions/127668/what-does-the-r-in-x64-register-names-stand-for). The AMD64 ISA extension added 8 additional general-purpose registers, named `R8` through `R15`. The 64-bit extended versions of the original 8 registers had an `R` prefix added to them [for symmetry](http://web.archive.org/web/20140413211300/http://www.x86-64.org/pipermail/discuss/2000-September/000283.html).
+* `E` stands for "extended" or "enhanced". ([Wikipedia says "extended"](https://stackoverflow.com/a/2537380/224132).) They are the "extended" versions of the 16-bit registers, in that they offer 16 additional bits for 32 bits total.
+* `X` is also for "extended"—or perhaps it implies 16 as in hexadecimal. The X-suffixed registers are the 16-bit extended versions of the 8-bit registers. For 8-bit registers, the L suffix means "low", and the H suffix means "high".
+
+Therefore, taking one particular register as an example, you have the 8-bit `AL` and `AH` registers, which are the low and high bytes of the 16-bit `AX` register, which is the low word of the 32-bit `EAX` register, which is the low double-word of the 64-bit `RAX` register.
+
+```
+| 63 - 32 | 31 - 16 | 15 - 8 | 7 - 0 |
+======================================
+.         .         | AH     | AL    |
+.         .         | AX             |
+.         | EAX                      | 
+| RAX                                |
+======================================
+| 63 - 32 | 31 - 16 | 15 - 8 | 7 - 0 |
+
+64-bit register | Lower 32 bits | Lower 16 bits | Lower 8 bits
+==============================================================
+rax             | eax           | ax            | al
+rbx             | ebx           | bx            | bl
+rcx             | ecx           | cx            | cl
+rdx             | edx           | dx            | dl
+rsi             | esi           | si            | sil
+rdi             | edi           | di            | dil
+rbp             | ebp           | bp            | bpl
+rsp             | esp           | sp            | spl
+r8              | r8d           | r8w           | r8b
+r9              | r9d           | r9w           | r9b
+r10             | r10d          | r10w          | r10b
+r11             | r11d          | r11w          | r11b
+r12             | r12d          | r12w          | r12b
+r13             | r13d          | r13w          | r13b
+r14             | r14d          | r14w          | r14b
+r15             | r15d          | r15w          | r15b
+```
+
+* [How do AX, AH, AL map onto EAX?](https://stackoverflow.com/questions/15191178/how-do-ax-ah-al-map-onto-eax)
+* [Assembly registers in 64-bit architecture](https://stackoverflow.com/questions/20637569/assembly-registers-in-64-bit-architecture)
+* [What are the names of the new X86_64 processors registers?](https://stackoverflow.com/questions/1753602/what-are-the-names-of-the-new-x86-64-processors-registers/1753627#1753627)
+* [The MSDN documentation includes information about the x64 registers](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/x64-architecture?redirectedfrom=MSDN)
+
+# More
+
+* [Assembly Language Step By Step, for Linux, by Jeff Duntemann](http://www.duntemann.com/assembly.html)
+* [Linux Assembly Tutorial - Step-by-Step Guide, by Derick Swanepoel](https://montcs.bloomu.edu/Information/LowLevel/Assembly/assembly-tutorial.html)
+* [PC Assembly Language](http://pacman128.github.io/pcasm/)
+* [x86 Assembly](https://en.wikibooks.org/wiki/X86_Assembly)
+* [x86 assembly language](https://en.wikipedia.org/wiki/X86_assembly_language)
 
 # Refer
 
@@ -895,5 +1098,9 @@ asm ( 汇编程序模板
 * [Introduction to x64 Assembly - Published on March 19, 2012](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 * [GCC-Inline-Assembly-HOWTO, Sandeep.S](http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html)
-
-
+* [Extended Asm - Assembler Instructions with C Expression Operands](https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html)
+* [Constraints for asm Operands](https://gcc.gnu.org/onlinedocs/gcc/Constraints.html#Constraints)
+* [Constraints for Particular Machines](https://gcc.gnu.org/onlinedocs/gcc/Machine-Constraints.html#Machine-Constraints)
+* [Intel 64 and IA-32 Software Developer Manuals](https://software.intel.com/en-us/articles/intel-sdm)
+* [AMD64 Architecture Programmer's Manual (Volume 1-5)](http://developer.amd.com/resources/developer-guides-manuals/)
+* [Basic yet thorough assembly tutorial (linux)](https://stackoverflow.com/questions/836946/basic-yet-thorough-assembly-tutorial-linux)

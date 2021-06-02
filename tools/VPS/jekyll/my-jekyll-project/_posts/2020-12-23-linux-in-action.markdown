@@ -8,14 +8,17 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# 反汇编
 
-# Alignment and Bit Fields
+```
+objdump -d /path/to/binary
 
-[测试代码](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/alignment)
+gdb a.out
+info functions
+disassemble /m main
+```
 
-* [pragma pack effect](https://stackoverflow.com/questions/3318410/pragma-pack-effect)
-* [C - Bit Fields](https://www.tutorialspoint.com/cprogramming/c_bit_fields.htm)
-
+* https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
 
 # 网络
 
@@ -45,6 +48,26 @@ gamesvr   14407 14410 gerryyang   55u     IPv4         1098817885        0t0    
 ```
 
 # 进程
+
+## /proc
+
+* /proc/$pid/exe : 可执行文件软链接
+
+## Kill
+
+```
+> pgrep firefox
+6316
+6565
+> pidof firefox
+6565 6316
+
+pkill firefox
+killall <name>
+kill -9 `pidof firefox`
+kill -9 `pgrep firefox`
+ps ax | grep <snippet> | grep -v grep | awk '{print $1}' | xargs kill
+```
 
 ## Process State (ps/top)
 
@@ -124,6 +147,7 @@ Thread 1 (Thread 0x7f13d3cb9780 (LWP 31310)):
 #9  0x00000000004e3342 in g6::G6Framework::Serve (this=0x288a0f0, event_handler=0x7fff5fe21f80) at common/framework/framework.cpp:158
 #10 0x0000000000416cb0 in main (argc=<optimized out>, argv=<optimized out>) at base_server/base_so_loader.cc:216
 ```
+
 
 
 
