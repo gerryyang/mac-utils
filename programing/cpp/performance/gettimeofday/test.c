@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
 	if (argv[1][0] == '1')
 	{
 		int spd = getcpuspeed();
+
 		uint64_t max = 0, diff = 0, nr_diff1 = 0, nr_diff10 = 0;
 		uint64_t tsc = RDTSC();
 		int hastscp = 0;
