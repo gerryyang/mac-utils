@@ -35,7 +35,7 @@ kvm-clock tsc acpi_pm
 echo "acpi_pm" > /sys/devices/system/clocksource/clocksource0/current_clocksource
 ```
 
-Linux支持的时钟设备包括六种：
+**Linux支持的时钟设备包括六种**：
 
 * `RTC(Real-time Clock)`
 * `PIT(Programmable Interval Timer)`
@@ -59,7 +59,7 @@ The `PIT` is a time-measuring device that can be compared to the alarm clock of 
 
 > Time Stamp Counter (TSC)
 
-All 80x86 microprocessors include a CLK input pin, which receives the clock signal of an external oscillator. Starting with the Pentium, 80x86 microprocessors sport a counter that is increased at each clock signal, and is accessible through **the TSC register which can be read by means of the rdtsc assembly instruction**. When using this register the kernel has to take into consideration the frequency of the clock signal: if, for instance, the clock ticks at 1 GHz, the TSC is increased once every nanosecond. Linux may take advantage of this register to get much more accurate time measurements.
+All 80x86 microprocessors include a CLK input pin, which receives the clock signal of an external oscillator. Starting with the Pentium, 80x86 microprocessors sport a counter that is increased at each clock signal, and is accessible through [the TSC register which can be read by means of the rdtsc assembly instruction](https://en.wikipedia.org/wiki/Time_Stamp_Counter). When using this register the kernel has to take into consideration the frequency of the clock signal: if, **for instance, the clock ticks at 1 GHz, the TSC is increased once every nanosecond**. Linux may take advantage of this register to get much more accurate time measurements.
 
 > CPU Local Timer
 
@@ -108,13 +108,13 @@ struct timezone {
 
 在Linux的实现中，获得系统时间的函数主要有`time()`，`ftime()`和`gettimeofday()`三个函数，而前面两个基本上都是对`gettimeofday()`的封装，所以这里主要分析`gettimeofday()`这个函数。另外，从实用的角度出发，这里忽略`gettimeofday()`的第二个参数`timezone`，这个参数对绝大多数的应用意义都不大。
 
-传统的gettimeofday的实现基本上综合了Linux的墙上时间(xtime)和硬件相关的一些时间矫正。gettimeofday的操作可以分解为三步：
+传统的gettimeofday的实现基本上综合了Linux的墙上时间(`xtime`)和硬件相关的一些时间矫正。**gettimeofday的操作可以分解为三步：**
 
-1. 取得墙上时间xtime
+1. 取得墙上时间`xtime`
 2. 访问时间设备，取得上次时间中断到当前的时间偏移
 3. 根据这个时间偏移计算出当前的精确时间
 
-可见，gettimeofday的精度和性能由具体的时间设备所决定。
+**可见，`gettimeofday`的精度和性能由具体的时间设备所决定**。
 
 * `TSC`是由CPU内部实现的，只要访问CPU的寄存器即可以取得TSC计数，所以，其性能无疑是最好的，但是其可靠性却是比较低的。
 * 现在的很多Linux版本默认都是使用`HPET`作为时钟源的，可以满足大部分应用在时间和性能上的需求。
@@ -125,23 +125,39 @@ struct timezone {
 
 **优化思路：**
 
-1. vsyscall机制。
-	* 在2.6的内核里面，实现了一种vsyscall的机制，允许应用程序不需要进入内核就可以获得内核的数据（比如系统时间），但是，这种机制只有在x86_64的Linux下才受到支持。(On some architectures, an implementation of `gettimeofday()` is provided in the `vdso(7)`.)
+1. `vsyscall`机制。
+	* 在2.6的内核里面，实现了一种vsyscall的机制，允许应用程序不需要进入内核就可以获得内核的数据（比如系统时间），但是，这种机制只有在x86_64的Linux下才受到支持(On some architectures, an implementation of `gettimeofday()` is provided in the `vdso(7)`)
 	* vsyscall的实现是通过内核映射一个专门的页面，用于存储一些对用户只读的数据（例如时间、CPU编号等），并定期更新这些数据。通过glibc提供的共享库，系统将这些页面映射到用户进程的地址空间，当用户进程调用glibc提供的接口（例如gettimeofday）时，glibc获得这些共享内存的数据，返回给用户，从而实现了原来需要进入内核才能实现的功能。
 	* vsyscall可以和TSC结合使用，这个时候，gettimeofday将获得最大的性能，几乎可以认为就是简单的读内存操作。
-	* 问题：vsyscall的最大不足在于只支持x86_64的系统，在32位的系统上无法使用，虽然在网上可以找到一些内核和glibc的patch，使得32位的系统也能使用vsyscall功能，但要求重新编译内核，操作十分繁琐。
+	* **问题：vsyscall的最大不足在于只支持x86_64的系统，在32位的系统上无法使用**。虽然在网上可以找到一些内核和glibc的patch，使得32位的系统也能使用vsyscall功能，但要求重新编译内核，操作十分繁琐。
 
-2. 在用户态下对gettimeofday进行优化。
+2. 在用户态下对`gettimeofday`进行优化。
 	* 从最简单的情况说起，如果对精度的要求不是很高，那么，完全可以把上一次的调用结果缓存起来，当再次调用gettimeofday的时候，先判断一下两次调用的时间延时，如果延时小于1毫秒（也可以是10微妙，100毫秒等等），则返回上次调用的结果（或者加上从上次调用到现在的时延，有点像内核的gettimeofday实现，只是现在是在用户态）。
-	* 问题：如果判断两次调用的时延？
+	* **问题：如果判断两次调用的时延？**
 
-访问TSC寄存器可以使用`指令rdtsc`，下面的宏定义用于读取TSC的值：
+访问[TSC寄存器(Time Stamp Counter)](https://en.wikipedia.org/wiki/Time_Stamp_Counter)可以使用`rdtsc(Read Time-Stamp Counter)`指令。
+
+![rdtsc](/assets/images/202106/rdtsc.png)
+
+> Description:
+>
+> Reads the current value of the processor's time-stamp counter (a 64-bit MSR) into the EDX:EAX registers. The EDX register is loaded with the high-order 32 bits of the MSR and the EAX register is loaded with the low-order 32 bits. On processors that support the Intel 64 architecture, the high-order 32 bits of each of RAX and RDX are cleared.
+>
+> The processor monotonically increments the time-stamp counter MSR every clock cycle and resets it to 0 whenever the processor is reset.
+
+refer: https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2b-manual.pdf
+
+下面的宏定义用于读取TSC的值：
 
 ``` c
- #define RDTSC() ({ uint64_t tim; asm volatile( "rdtsc" : "=A" (tim) ); tim; })
+#ifdef __x86_64__
+#define RDTSC() ({ unsigned int tickl, tickh; __asm__ __volatile__("rdtsc":"=a"(tickl),"=d"(tickh)); ((unsigned long long)tickh << 32)|tickl; })
+#else
+#define RDTSC() ({ unsigned long long tick; __asm__ __volatile__( "rdtsc" : "=A"(tick)); tick; })
+#endif
 ```
 
-TSC是一个64位的计算器，但我们所需要的是时间，而不是计数。由于TSC的值是每个CPU时钟周期增加1，所以只要知道了CPU的时间频率，就可以将这个值换算成时间。因为对精度的要求并不是很高（微秒级），我们只需要获得以兆为单位的大约值就可以了。下面的函数获得**CPU的频率**：
+`TSC`是一个**64位的寄存器，相当与一个计数器(It counts the number of CPU cycles since its reset)，但我们所需要的是时间，而不是计数。由于`TSC`的值是每个CPU时钟周期增加1，所以只要知道了CPU的时间频率，就可以将这个值换算成时间**。因为对精度的要求并不是很高（微秒级），我们只需要获得以兆为单位的大约值就可以了。下面的函数获得**CPU的频率**：
 
 ``` c
 static inline int getcpuspeed_mhz(unsigned int wait_us)
@@ -155,8 +171,9 @@ static inline int getcpuspeed_mhz(unsigned int wait_us)
     tsc1 = RDTSC();
 
     // If sleep failed, result is unexpected, the caller should retry
-    if (nanosleep(&t, NULL))
-            return -1;
+    if (nanosleep(&t, NULL)) {
+         return -1;
+    }
 
      tsc2 = RDTSC();
      return (tsc2 - tsc1) / (wait_us);
@@ -174,15 +191,15 @@ static inline int getcpuspeed_mhz(unsigned int wait_us)
 
 # gettimeofday性能优化实现
 
-* 注意`RELOAD_TIME_US`这个宏的定义，它告诉my_gettimeofday()每隔多少微妙就重新读一些系统调用gettimeofday()，如果这个值是1，代码就会变得十分简洁，因为后面不需要对保留的时间做矫正。
-* 经过测试，在频率为2G的CPU上这个函数的执行效率在2000w/s左右，而相同条件下gettimeofday的执行效率在250w左右，精度方面也做了大概的测试，差异在10微妙以内大概占千份之一，而差异大于10微妙的比率在百万份只一以内，这个精度应该足以满足绝大多数的应用了。
-* 另外，值得一提的是，`rdtsc`的指令读取的是当前CPU的TSC值，而现在的多核系统，对TSC的处理是不太一致的，大多数的Intel CPU采用Synchronized TSC的方式，各个不同的CPU核间会同步TSC的值。但是，并不是所有的多CPU系统都会同步CPU间的TSC值，特别是，单不同CPU的主频不一样的时候，TSC是无法同步的。为此，如果要兼顾所有的情况，可以有三种解决方法：
-	+ 使用sched_setaffinity()将当前进程绑定到一个CPU上
-	+ 获得当前CPU的ID，当ID发生变化是重新调用gettimeofday()系统函数。较新的Intel系列CPU支持一个新的指令`rdtscp`，除了读取TSC的值外，还额外读了一个辅助寄存器到ECX，这个寄存器保留当前CPU的处理器ID（基于vsyscall的getcpu()会尝试使用rdtscp指令来读取CPU的ID，当然这个值也是内核写进去的。）有了这个指令，可以在读TSC的时候同时读出CPU ID，并将CPU ID保存在内存中，当下次读TSC的时候，将两个CPU ID进行比较，就可以检测出当前进程被调度到其它CPU的情况了。
+* 注意`RELOAD_TIME_US`这个宏的定义，它告诉`my_gettimeofday()`每隔多少微妙就重新读一些系统调用`gettimeofday()`，如果这个值是1，代码就会变得十分简洁，因为后面不需要对保留的时间做**矫正**。
+* 经过测试，在频率为2G的CPU上这个函数的执行效率在`2000w/s`左右，而相同条件下gettimeofday的执行效率在`250w/s`左右，精度方面也做了大概的测试，差异在10微妙以内大概占千分之一，而差异大于10微妙的比率在百万分之一以内，这个精度应该足以满足绝大多数的应用了。
+* 另外，值得一提的是，`rdtsc`的指令读取的是当前CPU的TSC值，而现在的多核系统，对TSC的处理是不太一致的，大多数的Intel CPU采用Synchronized TSC的方式，各个不同的CPU核间会同步TSC的值。但是，并不是所有的多CPU系统都会同步CPU间的TSC值，特别是，单不同CPU的主频不一样的时候，TSC是无法同步的。为此，如果要兼顾所有的情况，可以有**三种解决方法**：
+	+ 使用`sched_setaffinity()`将当前进程绑定到一个CPU上
+	+ 获得当前CPU的ID，当ID发生变化是重新调用`gettimeofday()`系统函数。较新的Intel系列CPU支持一个新的指令`rdtscp`，除了读取TSC的值外，还额外读了一个辅助寄存器到`ECX`，这个寄存器保留当前CPU的处理器ID（基于vsyscall的getcpu()会尝试使用rdtscp指令来读取CPU的ID，当然这个值也是内核写进去的。）有了这个指令，可以在读TSC的时候同时读出CPU ID，并将CPU ID保存在内存中，当下次读TSC的时候，将两个CPU ID进行比较，就可以检测出当前进程被调度到其它CPU的情况了。
 	+ 不处理。如果对精度要求不是特别高，完全可以不处理。这是基于以下的原因：1. Linux内核不会随便将进程调度到另外的CPU，就算调度，也会优先调度到同一个物理CPU上，TSC的值也往往是一致的。2. 就算TSC的值不一致，如果差异比较小，在精度允许的范围内，是可以接受的；如果差异比较大，会被my_gettimeofday()检测出来，并重新调用gettimeofday()。
 * 如果多CPU的时钟频率不一样，完全不处理也不大可行，因为如果getcpuspeed()返回错误的值，my_gettimeofday()就不准确了。可以加上一段逻辑，当TSC的差异大于某个值的时候，重新计算CPU的频率。
 
-# 32位和64位的处理区别
+# 32位和64位的区别
 
 参考[Machine Constraints](https://gcc.gnu.org/onlinedocs/gcc/Machine-Constraints.html#Machine-Constraints)：
 
@@ -209,6 +226,9 @@ unsigned long long rdtsc (void)
   return ((unsigned long long)tickh << 32)|tickl;
 }
 ```
+
+![rdtsc_disassemble](/assets/images/202106/rdtsc_disassemble.png)
+
 
 # 测试代码
 
@@ -334,12 +354,13 @@ int main()
 https://docs.microsoft.com/en-us/cpp/intrinsics/rdtsc?view=msvc-160
 
 
-
-
 # Refer
 
 * https://stackoverflow.com/questions/9887839/how-to-count-clock-cycles-with-rdtsc-in-gcc-x86
 * https://www.mcs.anl.gov/~kazutomo/rdtsc.html
 * https://www.mcs.anl.gov/~kazutomo/rdtsc.h
 * https://en.wikipedia.org/wiki/Time_Stamp_Counter
+* http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html
+* https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
+* https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2b-manual.pdf
 
