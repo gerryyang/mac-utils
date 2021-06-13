@@ -8,21 +8,295 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 反汇编
+
+# CPU
+
+## CPU个数
 
 ```
-objdump -d /path/to/binary
+# 查看物理CPU个数
+cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
 
-gdb a.out
-info functions
-disassemble /m main
+# 查看每个物理CPU中core的个数(即核数)
+cat /proc/cpuinfo| grep "cpu cores"| uniq
+
+# 查看逻辑CPU的个数
+cat /proc/cpuinfo| grep "processor"| wc -l
 ```
 
-* https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
+## CPU负载
+
+通过`uptime`命令可以查看机器的CPU负载，这三个数据分别是CPU 1分钟、5分钟、15分钟内系统的平均负载。当CPU完全空闲的时候，平均负载为0；当CPU工作量饱和的时候，平均负载为1。
+
+```
+$ uptime
+ 14:32:18 up 58 days, 23:20,  2 users,  load average: 5.55, 3.91, 3.78
+```
+
+> 理解CPU负载
+
+首先，假设最简单的情况，你的电脑只有一个CPU，所有的运算都必须由这个CPU来完成。那么，我们不妨把这个CPU想象成一座大桥，桥上只有一根车道，所有车辆都必须从这根车道上通过。（很显然，这座桥只能单向通行。）
+
+* 系统负载为0，意味着大桥上一辆车也没有。
+* 系统负载为0.5，意味着大桥一半的路段有车。
+* 系统负载为1.0，意味着大桥的所有路段都有车，也就是说大桥已经"满"了。但是必须注意的是，直到此时大桥还是能顺畅通行的。
+* 系统负载为1.7，意味着车辆太多了，大桥已经被占满了（100%），后面等着上桥的车辆为桥面车辆的70%。以此类推，系统负载2.0，意味着等待上桥的车辆与桥面的车辆一样多；系统负载3.0，意味着等待上桥的车辆是桥面车辆的2倍。总之，当系统负载大于1，后面的车辆就必须等待了；系统负载越大，过桥就必须等得越久。
+
+CPU的系统负载，基本上等同于上面的类比。大桥的通行能力，就是CPU的最大工作量；桥梁上的车辆，就是一个个等待CPU处理的进程（process）。为了顺畅运行，系统负载最好不要超过1.0，这样就没有进程需要等待了，所有进程都能第一时间得到处理。很显然，1.0是一个关键值，超过这个值，系统就不在最佳状态了。
+
+> 经验法则
+
+1.0是系统负载的理想值吗？不一定，系统管理员往往会留一点余地，当这个值达到0.7，就应当引起注意了。经验法则是这样的：
+
+* 当系统负载持续大于0.7，你必须开始调查了，问题出在哪里，防止情况恶化。
+* 当系统负载持续大于1.0，你必须动手寻找解决办法，把这个值降下来。
+* 当系统负载达到5.0，就表明你的系统有很严重的问题，长时间没有响应，或者接近死机了。你不应该让系统达到这个值。
+
+> 多处理器
+
+如果你的电脑装了2个CPU，会发生什么情况呢？
+
+* 2个CPU，意味着电脑的处理能力翻了一倍，能够同时处理的进程数量也翻了一倍。还是用大桥来类比，两个CPU就意味着大桥有两根车道了，通车能力翻倍了。
+* 所以，`2`个CPU表明系统负载可以达到`2.0`，此时每个CPU都达到100%的工作量。推广开来，`n`个CPU的电脑，可接受的系统负载最大为`n.0`。
+
+> 多核处理器
+
+芯片厂商往往在一个CPU内部，包含多个CPU核心，这被称为多核CPU。在系统负载方面，多核CPU与多CPU效果类似，所以考虑系统负载的时候，必须考虑这台电脑有几个CPU、每个CPU有几个核心。然后，把系统负载除以总的核心数，只要每个核心的负载不超过1.0，就表明系统正常运行。
+
+怎么知道有多少个CPU核心呢？
+
+```
+$ grep -c 'model name' /proc/cpuinfo
+48
+```
+
+> 观察时长
+
+"load average"一共返回三个平均值：1分钟系统负载、5分钟系统负载，15分钟系统负载。应该参考哪个值？
+
+* 如果只有1分钟的系统负载大于1.0，其他两个时间段都小于1.0，这表明只是暂时现象，问题不大。
+* 如果15分钟内，平均系统负载大于1.0（调整CPU核心数之后），表明问题持续存在，不是暂时现象。所以，你应该主要观察"15分钟系统负载"，将它作为系统正常运行的指标。
+
+## CPU负载采集算法
+
+通过读取`/proc/loadavg`文件来得到CPU的1分钟、5分钟、15分钟平均负载。一般来说CPU负载带了两位的小数。为了保留精度，会把CPU负载值乘以100再上报。
+
+```
+$ cat /proc/loadavg
+5.26 4.80 4.65 4/8728 1837325
+```
+
+## CPU使用率采集算法
+
+CPU使用率衡量的是程序运行占用的CPU百分比。Linux的CPU使用率信息可以通过`/proc/stat`文件计算得到。`/proc/stat`包含了所有CPU活动的信息，该文件中的所有值都是从系统启动开始累计的，单位为`jiffies`。
+
+```
+$ cat /proc/stat | grep 'cpu'
+ 
+cpu  4409701839 5860491 3043372756 11777957443 471600199 13606335 49392558 0
+cpu0 980245201 1554799 596504303 3214215192 126029552 6603537 17697344 0
+cpu1 1209283591 1411942 861982464 2749190858 113506249 255348 7220138 0
+cpu2 971403569 1530154 624934033 3195318936 125767475 6491354 17450205 0
+cpu3 1248769476 1363594 959951956 2619232456 106296922 256096 7024869 0
+```
+
+cpu一行指的是总的CPU信息，cpu0、cpu1、cpu2、cpu3几行指的是CPU各个核的CPU信息。从这里也可以看出这台服务器共有4个核。每列从左到右的意思为：
+
+* `user`：从系统启动开始累计到当前时刻，用户态的CPU时间 ，不包含nice值为负进程。
+* `nice`：从系统启动开始累计到当前时刻，nice值为负的进程所占用的CPU时间
+* `system`：从系统启动开始累计到当前时刻，内核态时间
+* `idle`：从系统启动开始累计到当前时刻，除硬盘IO等待时间以外其它等待时间
+* `iowait`：从系统启动开始累计到当前时刻，硬盘IO等待时间
+* `irq`：从系统启动开始累计到当前时刻，硬中断时间
+* `softirq`：从系统启动开始累计到当前时刻，软中断时间
+* `steal`：在虚拟环境下 CPU 花在处理其他作业系统的时间，Linux 2.6.11 开始才开始支持。
+* `guest`：在 Linux 内核控制下 CPU 为 guest 作业系统运行虚拟 CPU 的时间，Linux 2.6.24 开始才开始支持。（因为内核版本不支持，上面的示例没有这一列）
+
+根据这些信息，就可以计算出CPU使用率。CPU使用率采集算法如下（以CPU0为例）：
+
+``` bash
+# 得到cpu0的信息
+cat /proc/stat | grep 'cpu0'
+ 
+cpu_total1 = user + nice + system + idle + iowait + irq + softirq
+cpu_used1 = user + nice + system + irq + softirq
+ 
+# 等待15s
+sleep 15
+ 
+# 再次检查cpu信息
+cat /proc/stat | grep 'cpu0'
+ 
+cpu_total2 = user + nice + system + idle + iowait + irq + softirq
+cpu_used2 = user + nice + system + irq + softirq
+ 
+# 得到cpu0在15秒内的平均使用率
+(cpu_used2 - cpu_used1) / (cpu_total2 - cpu_total1) * 100%
+```
+
+采集策略：每分钟会采集4次15秒内的CPU平均使用率。为了避免漏采集CPU峰值，取这一分钟内四次采集的最大值上报。
+
+
+# 内存
+
+通过`free`命令，可以看到服务器内存的使用情况。 (数值都默认以字节为单位，`-m` 表示Display the amount of memory in megabytes)
+
+```
+# free
+             total       used       free     shared    buffers     cached
+Mem:       1017796     819720     198076      16784      46240     468880
+-/+ buffers/cache:     304600     713196
+Swap:            0          0          0
+```
+
+Mem含义：
+* `total`: 总内存
+* `used`: 已经使用的内存
+* `free`: 空闲内存
+
+Swap含义：交换分区。
+
+> 在很多Linux服务器上运行free命令，会发现剩余内存（Mem:行的free列）很少，但实际服务器上的进程并没有占用很大的内存。这是因为Linux特殊的内存管理机制。Linux内核会把空闲的内存用作buffer/cached，用于提高文件读取性能。当应用程序需要用到内存时，buffer/cached内存是可以马上回收的。所以，对应用程序来说，buffer/cached是可用的，可用内存应该是free+buffers+cached。因为这个原因，free命令也才有第三行的-/+ buffers/cache。
+
+通过`top`命令查看内存。
+
+```
+KiB Mem :  1009184 total,    98908 free,   399864 used,   510412 buff/cache
+KiB Swap:        0 total,        0 free,        0 used.   453712 avail Mem 
+
+PID USER    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+  COMMAND                                                                                                                        
+1 root      20   0   77908   6184   3808 S  0.0  0.6   2:25.47 systemd 
+```
+
+* VIRT，进程虚拟内存的大小，虚拟内存并不会全部分配物理内存
+* RES，常驻内存的大小，是进程实际使用的物理内存大小，但不包括Swap和共享内存
+* SHR，共享内存大小，比如，与其他进程共同使用的共享内存，加载的动态链接库以及程序的代码段等
+* %MEM，进程使用物理内存占系统总内存的百分比
+
+可以使用`pmap -xp $pid`分析下进程的内存分布，更详细的信息可以通过`cat /proc/$pid/smaps` (since Linux 2.6.14)来查看每个进程的内存消耗情况。
+
+## 整个内存采集算法
+
+采集`free`命令的这几个结果（跟free命令一样，都是通过读取`/proc/meminfo`来得到的），然后每4分钟上报一次：
+
+* MEM使用量：Mem：的`total - free`
+* MEM总大小：Mem：的`total`
+* 应用程序使用内存：-/+ buffers/cache：的`used`
+
+## 某进程内存采集算法
+
+从进程的角度来判断服务器的内存占用。Linux内核2.6.14及以上版本增加了`/proc/(进程ID)/smaps`文件，通过smaps文件可以分析进程具体占用的每一段内存。
+
+```
+cat /proc/`pidof friendsvr`/smaps > smaps.out
+
+00400000-02afb000 r-xp 00000000 fc:20 3934363                            /data/home/gerryyang/speedgame/bin/friendsvr/friendsvr (deleted)
+   2 Size:              39916 kB
+   3 Rss:               10232 kB
+   4 Pss:               10232 kB
+   5 Shared_Clean:          0 kB
+   6 Shared_Dirty:          0 kB
+   7 Private_Clean:     10232 kB
+   8 Private_Dirty:         0 kB
+   9 Referenced:        10232 kB
+  10 Anonymous:             0 kB
+  11 AnonHugePages:         0 kB
+  12 Swap:                  0 kB
+  13 KernelPageSize:        4 kB
+  14 MMUPageSize:           4 kB
+  15 Locked:                0 kB
+  16 VmFlags: rd ex mr mw me dw
+```
+
+通过smaps文件，可以计算出两个指标：
+
+* 进程Virtual内存：通过把smaps文件所有的`Size`的大小加起来得到
+* 进程Private内存：通过把smaps 文件所有的`Private_Clean`、`Private_Dirty`大小加起来得到
+
+通过此方法，也可以计算所有进程的内存使用：
+
+通过smaps文件计算所有进程的Virtual内存总和、Private内存总和，并计算共享内存总和，得到下面3个指标并上报。每4分钟上报一次。
+
+* Virtual内存占用：通过计算所有进程的Virtual内存总和得到。可以用来判断进程是否存在内存泄漏。如果一台机器Virtual内存占用持续上涨，便很有可能发生了内存泄漏。
+* Private内存占用：通过计算所有进程的Private内存总和得到。Private内存都是映射在物理内存中的，因此通过总Private内存，我们可以知道机器至少需要多少物理内存。
+* Private内存+共享内存占用：通过Private内存占用，再加上机器上的共享内存，得到的指标。可以用来粗略衡量机器实际的内存占用。
+
+## refer
+
+* https://techtalk.intersec.com/2013/07/memory-part-1-memory-types/
+* https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/
+* https://techtalk.intersec.com/2013/08/memory-part-3-managing-memory/
+* https://techtalk.intersec.com/2013/10/memory-part-4-intersecs-custom-allocators/
+* https://techtalk.intersec.com/2013/12/memory-part-5-debugging-tools/
 
 # 网络
 
-## Tracing socket (file) descriptor back to bound address
+## 流量和包量统计
+
+通过`/proc/net/dev`文件，可以计算出服务器的**流量(bytes)**及**包量(packets)**。其中，`/proc/net/dev`的数值是从系统启动后一直累加的。
+
+> 注意：在32位系统上，/proc/net/dev中的数值系统使用4个字节的无符号整型保存，当数值达到2^32-1，即4294967295之后，数值会溢出，计算流量包量时需要把这一点考虑进去。而64位系统中/proc/net/dev使用的是8个字节的无符号整型，因此就不需要注意溢出的问题。
+
+```
+$ cat /proc/net/dev
+Inter-|   Receive                                                |  Transmit
+ face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+   br0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
+  eth1: 20762575244 116974442    0    0    0     0          0         0 27863156472 128930710    0    0    0     0       0          0
+    lo: 1857145146 24970433    0    0    0     0          0         0 1857145146 24970433    0    0    0     0       0          0
+docker0:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
+```
+
+如何计算网卡流量，以`eth1`为例：
+
+1. 读取`/proc/net/dev`文件，获取`eth1`的`Recevie bytes`、`Receive packets`、`Transmit bytes`、`Transmit packets`，分别记为`receive_bytes0`、`receive_packets0`、`transmit_bytes0`、`transmit_packets0`
+2. sleep 60秒
+3. 再次读取`/proc/net/dev`文件，获取`eth1`的`Receive bytes`、`Receive packets`、`Transmit bytes`、`Transmit packets`，分别记为`receive_bytes1`、`receive_packets1`、`transmit_bytes1`、`transmit_packets1`
+4. 根据60秒前后的`/proc/net/dev`文件，便可计算出下面的指标：
+
+* 60秒内平均每秒入流量：`(receive_bytes1 - receive_bytes0) * 8 / 60 / 1000 （kbps）` （乘以8是为了把`bytes`转成`bit`，除以1000是为了把单位转成`k`，除以60则是取60秒内的平均值）
+* 60秒内平均每秒出流量：`(transmit_bytes1 - transmit_bytes0) * 8 / 60 / 1000 （kbps）`
+* 60秒内平均每秒入包数：`(receive_packets1 - receive_packets0) / 60 （个）`
+* 60秒内平均每秒出包数：`(transmit_packets1 - transmit_packets0) / 60 （个）`
+
+## TCP链接数
+
+`/proc/net/snmp`记录了一些TCP信息，其中比较有用的是`CurrEstab`字段，即当前已建立的TCP连接数。
+
+```
+$ cat /proc/net/snmp
+Ip: Forwarding DefaultTTL InReceives InHdrErrors InAddrErrors ForwDatagrams InUnknownProtos InDiscards InDelivers OutRequests OutDiscards OutNoRoutes ReasmTimeout ReasmReqds ReasmOKs ReasmFails FragOKs FragFails FragCreates
+Ip: 1 64 134291507 0 2 0 0 0 134291505 146203684 362 218 0 0 0 0 6 0 18
+Icmp: InMsgs InErrors InCsumErrors InDestUnreachs InTimeExcds InParmProbs InSrcQuenchs InRedirects InEchos InEchoReps InTimestamps InTimestampReps InAddrMasks InAddrMaskReps OutMsgs OutErrors OutDestUnreachs OutTimeExcds OutParmProbs OutSrcQuenchs OutRedirects OutEchos OutEchoReps OutTimestamps OutTimestampReps OutAddrMasks OutAddrMaskReps
+Icmp: 106100 2 0 737 0 0 0 0 105328 35 0 0 0 0 106102 0 738 0 0 0 0 36 105328 0 0 0 0
+IcmpMsg: InType0 InType3 InType8 OutType0 OutType3 OutType8
+IcmpMsg: 35 737 105328 105328 738 36
+Tcp: RtoAlgorithm RtoMin RtoMax MaxConn ActiveOpens PassiveOpens AttemptFails EstabResets CurrEstab InSegs OutSegs RetransSegs InErrs OutRsts InCsumErrors
+Tcp: 1 200 120000 -1 105094 27940 218 10479 39 134181152 143798757 1057 0 7716 0
+Udp: InDatagrams NoPorts InErrors OutDatagrams RcvbufErrors SndbufErrors InCsumErrors IgnoredMulti
+Udp: 1435 738 0 10020862 0 0 0 1
+UdpLite: InDatagrams NoPorts InErrors OutDatagrams RcvbufErrors SndbufErrors InCsumErrors IgnoredMulti
+UdpLite: 0 0 0 0 0 0 0 0
+```
+
+## UDP接收和发送数据报
+
+`/proc/net/snmp`还记录了一些UDP信息，其中比较有用的是`InDatagrams`及`OutDatagrams`字段。
+
+UDP接收和发送数据报计算方法与`/proc/net/dev`类似，步骤如下：
+
+1. 读取`/proc/net/snmp`得到`InDatagrams`及`OutDatagrams`，分别记为`in_data0`和`out_data0`
+2. sleep 60秒
+3. 再次读取`/proc/net/snmp`得到`InDatagrams`及`OutDatagrams`，分别记为`in_data1`和`out_data1`
+4. 根据60秒前后的`/proc/net/snmp`文件，便可计算下面两个指标：
+
+* 60秒内平均每秒UDP入数据报：`(in_data1 - in_data0) / 60`
+* 60秒内平均每秒UDP出数据报：`(out_data1 - out_data0) / 60`
+
+
+## 根据socket查找地址信息
+
+Tracing socket (file) descriptor back to bound address
 
 ```
 lsof | grep pid.*sd.*IP
@@ -47,9 +321,114 @@ gamesvr   14407 14410 gerryyang   55u     IPv4         1098817885        0t0    
 ...
 ```
 
-# 进程
+# 磁盘IO
 
-## /proc
+```
+$ iostat -x 10
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           3.74    0.01    3.88    0.01    0.00   92.36
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+vda               0.00     5.90    0.00    2.10     0.00    66.40    63.24     0.00    0.57    0.00    0.57   0.57   0.12
+vdb               0.00     0.60    0.00   14.90     0.00   204.40    27.44     0.05    3.30    0.00    3.30   0.16   0.24
+scd0              0.00     0.00    0.00    0.00     0.00     0.00     0.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdd               0.00     1.10    0.00    0.40     0.00     6.00    30.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdc               0.00     7.70    0.00    6.90     0.00    96.40    27.94     0.00    0.52    0.00    0.52   0.52   0.36
+vdf               0.00     1.20    0.00    2.10     0.00    14.00    13.33     0.00    0.00    0.00    0.00   0.00   0.00
+vdg               0.00     0.70    0.00    0.40     0.00     4.40    22.00     0.00    2.00    0.00    2.00   2.00   0.08
+vdl               0.00     3.80    0.00    1.40     0.00    25.60    36.57     0.00    0.57    0.00    0.57   0.57   0.08
+vdi               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdm               0.00     1.50    0.00    0.60     0.00     9.60    32.00     0.00    0.67    0.00    0.67   0.67   0.04
+vdn               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdo               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdr               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdj               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdt               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vde               0.00     0.70    0.00    0.40     0.00     4.40    22.00     0.00    2.00    0.00    2.00   2.00   0.08
+vdq               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdp               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vds               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+vdh               0.00     5.30    0.00    1.50     0.00   258.80   345.07     0.00    2.40    0.00    2.40   1.07   0.16
+vdk               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0.00    0.00    0.00    0.00   0.00   0.00
+```
+
+每一列的含义如下：
+
+* `rrqm/s`: 每秒进行merge的读操作数目。
+* `wrqm/s`: 每秒进行merge的写操作数目。
+* `r/s`: 每秒完成的读 I/O 设备次数。
+* `w/s`: 每秒完成的写 I/O 设备次数。
+* `rsec/s`: 每秒读扇区数。
+* `wsec/s`: 每秒写扇区数。
+* `rkB/s`: 每秒读K字节数。是 `rsec/s` 的一半，因为扇区大小为512字节
+* `wkB/s`: 每秒写K字节数。是 `wsec/s` 的一半
+* `avgrq-sz`: 平均每次设备I/O操作的数据大小 (扇区)
+* `avgqu-sz`: 平均I/O队列长度。
+* `await`: 平均每次设备I/O操作的等待时间 (毫秒)
+* `svctm`: 平均每次设备I/O操作的服务时间 (毫秒)
+* `%util`: 一秒中有百分之多少的时间用于 I/O 操作，或者说一秒中有多少时间 I/O 队列是非空的。  
+
+怎么理解这里的字段呢？下面以超市结账的例子来说明。
+
+* `r/s+w/s` 类似于交款人的总数
+* `avgqu-sz`（平均队列长度）：类似于单位时间里平均排队的人数
+* `svctm`（平均服务时间）类似于收银员的收款速度
+* `await`（平均等待时间）类似于平均每人的等待时间
+* `avgrq-sz`（平均IO数据）类似于平均每人所买的东西多少
+* `%util`（磁盘IO使用率）类似于收款台前有人排队的时间比例
+
+可以根据这些数据分析出 I/O 请求的模式，以及 I/O 的速度和响应时间：
+
+* 如果`%util`接近100%，说明产生的I/O请求太多，I/O系统已经满负荷，该磁盘可能存在瓶颈
+* `svctm`的大小一般和磁盘性能有关，CPU/内存的负荷也会对其有影响，请求过多也会间接导致 `svctm` 的增加。
+* `await`的大小一般取决于服务时间（`svctm`） 以及 I/O 队列的长度和 I/O 请求的发出模式。一般来说`svctm` < `await`，因为同时等待的请求的等待时间被重复计算了。如果`svctm`比较接近`await`，说明I/O 几乎没有等待时间
+* 如果`await`远大于`svctm`，说明I/O队列太长，应用得到的响应时间变慢
+* 队列长度（`avgqu-sz`）也可作为衡量系统 I/O 负荷的指标，但由于 `avgqu-sz` 是按照单位时间的平均值，所以不能反映瞬间的 I/O 洪水。
+* 如果响应时间超过了用户可以容许的范围，这时可以考虑更换更快的磁盘，调整内核elevator算法，优化应用，或者升级 CPU。
+* 如果`%util`很大，而`rkB/s`和`wkB/s`很小，一般是因为磁盘存在较多的磁盘随机读写，最好把磁盘随机读写优化成顺序读写。
+
+## 磁盘IO采集算法
+
+通过`/proc/diskstats`文件计算得到。
+
+```
+252       0 vda 58964 2845 2864110 163028 56607103 29847638 1634532676 260114388 0 13189912 260253616
+252       1 vda1 58883 2407 2859958 162956 55731294 29847638 1634532668 260028636 0 13104408 260168496
+252      16 vdb 5743072 3056 239591974 19078076 66105709 19855513 4542946783 973079144 0 30841824 992260604
+```
+
+The `/proc/diskstats` file displays the I/O statistics of block devices. Each line contains the following 14 fields:
+
+```
+1 - major number
+2 - minor mumber
+3 - device name
+4 - reads completed
+5 - reads merged                                        （
+6 - sectors read
+7 - time spent reading (ms)
+8 - writes completed
+9 - writes merged
+10 - sectors written
+11 - time spent writing (ms)
+12 - I/Os currently in progress
+13 - time spent doing I/Os (ms)
+14 - weighted time spent doing I/Os (ms)
+```
+
+`/proc/diskstats`中每个字段的数值也是从系统启动后一直累加的。我们用`delta`来表示在时间`t`内某个字段的增量。
+
+```
+delta(reads merged) = reads merged的值 - t秒前reads merged的值
+
+svctm的计算方式：
+delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed))
+```
+
+# Linux操作系统
+
+## proc目录
 
 * /proc/$pid/exe : 可执行文件软链接
 
@@ -148,6 +527,17 @@ Thread 1 (Thread 0x7f13d3cb9780 (LWP 31310)):
 #10 0x0000000000416cb0 in main (argc=<optimized out>, argv=<optimized out>) at base_server/base_so_loader.cc:216
 ```
 
+## 反汇编
+
+```
+objdump -d /path/to/binary
+
+gdb a.out
+info functions
+disassemble /m main
+```
+
+* https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
 
 
 
