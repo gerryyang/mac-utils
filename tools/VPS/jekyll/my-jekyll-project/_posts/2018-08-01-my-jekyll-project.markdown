@@ -197,6 +197,7 @@ More:
 | [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展 
 | [MacVim](https://macvim-dev.github.io/macvim/) | Vim - the text editor - for macOS
 | [VS Code](https://code.visualstudio.com/) | For Windows, macOS and Linux, 扩展丰富
+| [泼辣修图](https://apps.apple.com/cn/app/po-la-xiu-tu-jing-jian-ban/id1077124956?mt=12) | Mac上的美图秀秀
 
 More: https://github.com/hzlzh/Best-App
 

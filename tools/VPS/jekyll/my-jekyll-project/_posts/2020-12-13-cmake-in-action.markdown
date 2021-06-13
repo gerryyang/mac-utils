@@ -11,16 +11,27 @@ categories: [GCC/Clang]
 # Update gcc
 
 ```
+# centos
 # enable gcc7
 sudo yum install centos-release-scl
 sudo yum install devtoolset-7-gcc*
 scl enable devtoolset-7 bash
+
+# ubuntu
+
+sudo apt-get install gcc-4.8 g++-4.8
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8 --slave /usr/bin/gcov gcov /usr/bin/gcov-4.8
+
+sudo apt install gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 80 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
+
+sudo update-alternatives --config gcc
 ```
 
 refer:
 
 * https://stackoverflow.com/questions/36327805/how-to-install-gcc-5-3-with-yum-on-centos-7-2
-
+* https://linuxize.com/post/how-to-install-gcc-on-ubuntu-20-04/
 
 # Install CMake
 
@@ -97,6 +108,19 @@ message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
 
 * 在Release版本会添加`-DNDEBUG`编译选项，用于消除assert断言。refer: https://en.cppreference.com/w/cpp/error/assert
 
+* Do not overwrite `CMAKE_C_COMPILER` or `CMAKE_CXX_COMPILER`, but export `CC` or `CXX` before calling cmake. [How to specify new GCC path for CMake](https://stackoverflow.com/questions/17275348/how-to-specify-new-gcc-path-for-cmake)
+
+```
+# 不建议
+set(CMAKE_C_COMPILER /usr/bin/clang CACHE PATH "" FORCE)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++ CACHE PATH "" FORCE)
+
+# 推荐
+export CC=/usr/local/bin/gcc
+export CXX=/usr/local/bin/g++
+cmake /path/to/your/project
+make
+```
 
 # 编译效率对比
 
@@ -108,20 +132,20 @@ message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
 
 clang12 优于 gcc4.8/7/9，ninja 优于 make，lld 优于 ld。
 
-| Case | Time |
-| -- | -- |
-| gcc7 + make + ld    | 25.7s
-| clang12 + make + ld   | 5.2s
-| gcc7 + ninja + ld   | 22s
-| clang12 + ninja + ld  | 4.7s
-| gcc7 + make + lld    | 17.8s
-| clang12 + make + lld   | 4.82s
-| gcc7 + ninja + lld   | 18.34s
-| clang12 + ninja + lld  | 4.15s
-| gcc9 + make + lld    | 10.03s
-| gcc9 + ninja + lld   | 7.90s
-| gcc4.8 + make + lld    | 8.93s
-| gcc4.8 + ninja + lld   | 8.30s
+| Case                  | Time   |
+| --------------------- | ------ |
+| gcc7 + make + ld      | 25.7s  |
+| clang12 + make + ld   | 5.2s   |
+| gcc7 + ninja + ld     | 22s    |
+| clang12 + ninja + ld  | 4.7s   |
+| gcc7 + make + lld     | 17.8s  |
+| clang12 + make + lld  | 4.82s  |
+| gcc7 + ninja + lld    | 18.34s |
+| clang12 + ninja + lld | 4.15s  |
+| gcc9 + make + lld     | 10.03s |
+| gcc9 + ninja + lld    | 7.90s  |
+| gcc4.8 + make + lld   | 8.93s  |
+| gcc4.8 + ninja + lld  | 8.30s  |
 
 
 # Cross Compiling

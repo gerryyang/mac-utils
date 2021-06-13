@@ -560,6 +560,20 @@ TODO
 * [Dave Cheney的golang博客]
 
 
+# Tools
+
+* golang百科全书: https://awesome-go.com/
+* golang developer roadmap: https://github.com/Alikhll/golang-developer-roadmap
+* sql2go工具: http://stming.cn/tool/sql2go.html
+* toml2go工具: https://xuri.me/toml-to-go/
+* curl2go工具: https://mholt.github.io/curl-to-go/
+* json2go工具: https://mholt.github.io/json-to-go/
+* 泛型工具: https://github.com/cheekybits/genny
+
+# Go Conference
+
+https://github.com/gopherchina/conference
+
 
 # Refer
 
