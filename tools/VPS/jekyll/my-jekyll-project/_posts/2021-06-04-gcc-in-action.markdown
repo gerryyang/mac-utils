@@ -307,8 +307,8 @@ $ ldd demo
         libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f37a0b06000)
         /lib64/ld-linux-x86-64.so.2 (0x00007f37a1a39000)
 ```
-[We can’t mix the objects (or libraries) compiled by g++ and clang++ ? at least on Mac?](https://stackoverflow.com/questions/25266493/we-can-t-mix-the-objects-or-libraries-compiled-by-g-and-clang-at-least-o)
-[Can Clang compile code with GCC compiled .a libs?](https://stackoverflow.com/questions/20875924/can-clang-compile-code-with-gcc-compiled-a-libs)
+* [We can’t mix the objects (or libraries) compiled by g++ and clang++ ? at least on Mac?](https://stackoverflow.com/questions/25266493/we-can-t-mix-the-objects-or-libraries-compiled-by-g-and-clang-at-least-o)
+* [Can Clang compile code with GCC compiled .a libs?](https://stackoverflow.com/questions/20875924/can-clang-compile-code-with-gcc-compiled-a-libs)
 
 ## std::unordered_map在不同gcc版本的ABI兼容性问题
 
@@ -361,4 +361,5 @@ sizeof(std::string) = 8
 sizeof(std::list<uint64_t>) = 16
 ```
 
-https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi
+* https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi
+* https://stackoverflow.com/questions/45417707/glibcxx-use-cxx11-abi-gcc-4-8-and-abi-compatibility

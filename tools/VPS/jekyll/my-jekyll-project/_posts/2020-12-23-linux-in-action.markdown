@@ -294,7 +294,7 @@ UDP接收和发送数据报计算方法与`/proc/net/dev`类似，步骤如下�
 * 60秒内平均每秒UDP出数据报：`(out_data1 - out_data0) / 60`
 
 
-## 根据socket查找地址信息
+## 根据socket查找ip信息
 
 Tracing socket (file) descriptor back to bound address
 
@@ -319,6 +319,71 @@ gamesvr   14407       gerryyang   55u     IPv4         1098817885        0t0    
 gamesvr   14407 14409 gerryyang   55u     IPv4         1098817885        0t0        TCP qsm_cloud_dev-15:51496->9.143.64.189:8856 (ESTABLISHED)
 gamesvr   14407 14410 gerryyang   55u     IPv4         1098817885        0t0        TCP qsm_cloud_dev-15:51496->9.143.64.189:8856 (ESTABLISHED)
 ...
+```
+
+## 根据fd找到ip信息 
+
+```
+ls -lrt /proc/24748/fd | grep 854
+netstat -e | grep 169393703
+
+# or
+lsof -i -a -p 20640
+```
+
+## TIME_WAIT
+
+```
+echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
+echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle
+```
+
+* [tcp_tw_reuse、tcp_tw_recycle 使用场景及注意事项](https://www.cnblogs.com/lulu/p/4149312.html)
+* [Linux tcp_tw_reuse = 2 — how is this set and what is the significance?](https://forum.vyos.io/t/linux-tcp-tw-reuse-2-how-is-this-set-and-what-is-the-significance/5286/4)
+* [net-tcp: extend tcp_tw_reuse sysctl to enable loopback only optimization](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=79e9fed460385a3d8ba0b5782e9e74405cb199b1)
+
+## 本地端口范围设置
+
+注意，如果服务器有较多程序开放端口，请注意程序的端口开放范围，以避免随机端口跟设置的端口范围冲突。
+
+```
+$cat /proc/sys/net/ipv4/ip_local_port_range
+32768   61000
+```
+
+* [linux下设置ip_local_port_range参数](https://cloud.tencent.com/developer/article/1691625)
+
+## 常用命令
+### ss (another utility to investigate sockets)
+
+`ss` is used to dump socket statistics. It allows showing information similar to `netstat`.  It can display more TCP and state information than other tools.
+
+```
+$ ss -s     
+Total: 2144
+TCP:   2000 (estab 1757, closed 200, orphaned 0, timewait 200)
+
+Transport Total     IP        IPv6
+RAW       2         1         1        
+UDP       13        11        2        
+TCP       1800      1795      5        
+INET      1815      1807      8        
+FRAG      0         0         0    
+```
+
+### nslookup 
+
+query Internet name servers interactively
+
+```
+# nslookup 8.8.8.8
+Server:         8.8.8.8
+Address:        8.8.8.8#53
+
+Non-authoritative answer:
+8.8.8.8.in-addr.arpa    name = google-public-dns-a.google.com.
+
+Authoritative answers can be found from:
 ```
 
 # 磁盘IO
@@ -427,6 +492,79 @@ delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed)
 ```
 
 # Linux操作系统
+
+## net_ratelimit: N callbacks suppressed
+
+Linux has a mechanism to avoid a DoS attack – with regard to logging – called rate limit. Every message logged by the kernel (including its modules), with printk(), is checked if it’s allowed to be actually printed through this mechanism.
+
+The limits can be configured by tuning the files `/proc/sys/kernel/printk_ratelimit` and `/proc/sys/kernel/printk_ratelimit_burst`. In my machine, the values for these files are `5` and `10`, respectively, meaning: ****It’s allowed 10 messages every 5 seconds**. Exceeding this will make the kernel discard the message and print something like “ratelimit N: callbacks suppressed”.
+
+```
+[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:31947 - no destination available
+[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:30686 - no destination available
+[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:31262 - no destination available
+[二 6月 15 17:34:48 2021] net_ratelimit: 555 callbacks suppressed
+```
+
+* https://bani.com.br/2015/06/linux-getting-rid-of-net_ratelimit-n-callbacks-suppressed-messages/
+
+## compress/extract files using the tar
+
+* Compress an entire directory or a single file
+
+```
+tar -czvf name-of-archive.tar.gz /path/to/directory-or-file
+
+-c: Create an archive.
+-z: Compress the archive with gzip.
+-v: Display progress in the terminal while creating the archive, also known as “verbose” mode. The v is always optional in these commands, but it’s helpful.
+-f: Allows you to specify the filename of the archive.
+```
+* Compress multiple directories or files at once
+
+```
+tar -czvf archive.tar.gz /home/ubuntu/Downloads /usr/local/stuff /home/ubuntu/Documents/notes.txt
+```
+
+* Exclude directories and files
+
+In some cases, you may wish to compress an entire directory, but not include certain files and directories. You can do so by appending an `--exclude` switch for each directory or file you want to exclude.
+
+```
+tar -czvf archive.tar.gz /home/ubuntu --exclude=/home/ubuntu/Downloads --exclude=/home/ubuntu/.cache
+```
+
+The `--exclude` switch is very powerful. It doesn’t take names of directories and files–it actually accepts patterns. There’s a lot more you can do with it. For example, you could archive an entire directory and exclude all .mp4 files with the following command:
+
+```
+tar -czvf archive.tar.gz /home/ubuntu --exclude=*.mp4
+```
+
+* Use bzip2 compression instead
+
+While `gzip` compression is most frequently used to create `.tar.gz` or `.tgz` files, tar also supports `bzip2` compression. This allows you to create bzip2-compressed files, often named `.tar.bz2`, `.tar.bz`, or `.tbz` files. To do so, just replace the `-z` for gzip in the commands here with a `-j` for `bzip2`.
+
+`Gzip` is faster, but it generally compresses a bit less, so you get a somewhat larger file. `Bzip2` is slower, but it compresses a bit more, so you get a somewhat smaller file
+
+```
+tar -cjvf archive.tar.bz2 stuff
+```
+
+* Extract an archive
+
+Once you have an archive, you can extract it with the tar command. The following command will extract the contents of archive.tar.gz to the current directory. It’s the same as the archive creation command we used above, except the `-x` switch replaces the `-c` switch. This specifies you want to e**x**tract an archive instead of create one.
+
+```
+tar -xzvf archive.tar.gz
+```
+
+You may want to extract the contents of the archive to a specific directory. You can do so by appending the `-C` switch to the end of the command. For example, the following command will extract the contents of the archive.tar.gz file to the /tmp directory.
+
+```
+tar -xzvf archive.tar.gz -C /tmp
+```
+
+https://www.howtogeek.com/248780/how-to-compress-and-extract-files-using-the-tar-command-on-linux/
 
 ## proc目录
 
@@ -540,6 +678,281 @@ disassemble /m main
 * https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
 
 
+## valgrind
+
+Finding Memory Leaks With Valgrind
+
+```
+# Memcheck is the default tool. The --leak-check option turns on the detailed memory leak detector.
+# Your program will run much slower (eg. 20 to 30 times) than normal, and use a lot more memory. Memcheck will issue messages about memory errors and leaks that it detects.
+
+valgrind --leak-check=yes myprog arg1 arg2
+
+--tool=<toolname> [default: memcheck]
+Run the Valgrind tool called toolname, e.g. memcheck, cachegrind, callgrind, helgrind, drd, massif, dhat, lackey, none, exp-bbv, etc.
+```
+
+The Valgrind tool suite provides a number of debugging and profiling tools that help you make your programs faster and more correct. The most popular of these tools is called `Memcheck`. It can detect many memory-related errors that are common in C and C++ programs and that can lead to crashes and unpredictable behaviour.
+
+Compile your program with `-g` to include debugging information so that Memcheck's error messages include exact line numbers. Using `-O0` is also a good idea, if you can tolerate the slowdown. With `-O1` line numbers in error messages can be inaccurate, although generally speaking running Memcheck on code compiled at `-O1` works fairly well, and the speed improvement compared to running `-O0` is quite significant. Use of `-O2` and above is not recommended as Memcheck occasionally reports uninitialised-value errors which don't really exist.
+
+If you're running Linux and you don't have a copy already, you can get Valgrind from the [Valgrind download page](https://www.valgrind.org/downloads/current.html). 
+
+``` cpp
+#include <stdlib.h>
+void f(void)
+{
+        int* x = malloc(10 * sizeof(int));
+        x[10] = 0;        // problem 1: heap block overrun
+}                         // problem 2: memory leak -- x not freed
+int main(void)
+{
+        f();
+        return 0;
+}
+```
+
+```
+gcc -g demo.c
+valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --log-file=valgrind.out ./a.out
+```
+
+输出：
+
+```
+==2726743== Memcheck, a memory error detector
+==2726743== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==2726743== Using Valgrind-3.17.0 and LibVEX; rerun with -h for copyright info
+==2726743== Command: ./a.out
+==2726743== 
+==2726743== Invalid write of size 4
+==2726743==    at 0x40054B: f (demo.c:6)
+==2726743==    by 0x40055B: main (demo.c:11)
+==2726743==  Address 0x5629068 is 0 bytes after a block of size 40 alloc'd
+==2726743==    at 0x4C2B067: malloc (vg_replace_malloc.c:380)
+==2726743==    by 0x40053E: f (demo.c:5)
+==2726743==    by 0x40055B: main (demo.c:11)
+==2726743== 
+==2726743== 
+==2726743== HEAP SUMMARY:
+==2726743==     in use at exit: 40 bytes in 1 blocks
+==2726743==   total heap usage: 1 allocs, 0 frees, 40 bytes allocated
+==2726743== 
+==2726743== 40 bytes in 1 blocks are definitely lost in loss record 1 of 1
+==2726743==    at 0x4C2B067: malloc (vg_replace_malloc.c:380)
+==2726743==    by 0x40053E: f (demo.c:5)
+==2726743==    by 0x40055B: main (demo.c:11)
+==2726743== 
+==2726743== LEAK SUMMARY:
+==2726743==    definitely lost: 40 bytes in 1 blocks
+==2726743==    indirectly lost: 0 bytes in 0 blocks
+==2726743==      possibly lost: 0 bytes in 0 blocks
+==2726743==    still reachable: 0 bytes in 0 blocks
+==2726743==         suppressed: 0 bytes in 0 blocks
+==2726743== 
+==2726743== For lists of detected and suppressed errors, rerun with: -s
+==2726743== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
+```
+
+There are several kinds of leaks; the two most important categories are:
+
+* "definitely lost": your program is leaking memory -- fix it!
+* "probably lost": your program is leaking memory, unless you're doing funny things with pointers (such as moving them to point to the middle of a heap block).
+
+`Memcheck` also reports uses of uninitialised values, most commonly with the message "Conditional jump or move depends on uninitialised value(s)". It can be difficult to determine the root cause of these errors. Try using the `--track-origins=yes` to get extra information. This makes Memcheck run slower, but the extra information you get often saves a lot of time figuring out where the uninitialised values are coming from.
+
+`Memcheck` cannot detect every memory error your program has. For example, it can't detect out-of-range reads or writes to arrays that are allocated statically or on the stack. But it should detect many errors that could crash your program (eg. cause a segmentation fault).
+
+refer:
+
+* [Using Valgrind to Find Memory Leaks and Invalid Memory Use](https://www.cprogramming.com/debugging/valgrind.html)
+* [The Valgrind Quick Start Guide](https://www.valgrind.org/docs/manual/QuickStart.html)
+* [Valgrind Frequently Asked Questions](https://www.valgrind.org/docs/manual/faq.html)
+* [Valgrind Documentation](https://www.valgrind.org/docs/manual/index.html)
+* [Valgrind User Manual](https://www.valgrind.org/docs/manual/manual.html)
+
+## gperftools (originally Google Performance Tools)
+
+```
+The fastest malloc we’ve seen; works particularly well with threads and STL. Also: thread-friendly heap-checker, heap-profiler, and cpu-profiler.
+```
+
+* wiki介绍：https://github.com/gperftools/gperftools/wiki
+* 下载地址：https://github.com/gperftools/gperftools/releases/tag/gperftools-2.9.1
+* 安装说明：https://github.com/gperftools/gperftools/blob/master/INSTALL
+
+* 64-BIT LINUX 死锁问题
+
+```
+NOTE FOR 64-BIT LINUX SYSTEMS
+
+The glibc built-in stack-unwinder on 64-bit systems has some problems
+with the perftools libraries.  (In particular, the cpu/heap profiler
+may be in the middle of malloc, holding some malloc-related locks when
+they invoke the stack unwinder.  The built-in stack unwinder may call
+malloc recursively, which may require the thread to acquire a lock it
+already holds: deadlock.)
+```
+
+可能的解决方法：
+
+```
+If you encounter problems, try compiling perftools with './configure
+--enable-frame-pointers'.  Note you will need to compile your
+application with frame pointers (via 'gcc -fno-omit-frame-pointer
+...') in this case.
+```
+
+* 安装依赖
+  + yum install graphviz
+  + yum install ghostscript
+
+### HEAP PROFILER
+
+See [docs/heapprofile.html](https://gperftools.github.io/gperftools/heapprofile.html) for information about how to use tcmalloc's heap profiler and analyze its output.
+
+1. Link your executable with `-ltcmalloc`
+2. Run your executable with the HEAPPROFILE environment var set: `HEAPPROFILE=/tmp/heapprof <path/to/binary> [binary args]`
+3. Run `pprof` to analyze the heap usage
+
+```
+$ pprof <path/to/binary> /tmp/heapprof.0045.heap  # run 'ls' to see options
+$ pprof --gv <path/to/binary> /tmp/heapprof.0045.heap
+```
+
+You can also use `LD_PRELOAD` to heap-profile an executable that you didn't compile.
+
+测试代码：
+
+``` cpp
+#include <iostream>
+using namespace std;
+
+void f1() {
+        int i;
+        for (i = 0; i < 1024* 1024; ++i) {
+                short* p = new short;
+                //delete p;
+        }
+}
+
+void f2()  { 
+        int i;
+        for (i = 0; i < 1024 * 1024; ++i) {
+                int* p = new int;
+                //delete p;
+        }
+}
+
+int main() { 
+        f1();
+        f2();
+        return 0;
+}
+```
+
+编译及内存使用分析：
+
+```
+$ g++ c.cc -L$HOME/tools/gperftools-2.9.1_install/lib -ltcmalloc -lprofiler
+$ HEAPPROFILE=heapprofile.out ./a.out
+Starting tracking the heap
+Dumping heap profile to heapprofile.out.0001.heap (Exiting, 6 MB in use)
+$ pprof --text a.out heapprofile.out.0001.heap 
+Using local file a.out.
+Using local file heapprofile.out.0001.heap.
+Total: 6.0 MB
+     4.0  66.7%  66.7%      4.0  66.7% f2
+     2.0  33.3% 100.0%      2.0  33.3% f1
+     0.0   0.0% 100.0%      6.0 100.0% __libc_start_main
+     0.0   0.0% 100.0%      6.0 100.0% _start
+     0.0   0.0% 100.0%      6.0 100.0% main
+```
+
+其他输出方式：生成有向无环图。其中，有向边的方向表示，调用者指向被调用者，有向边上的时间表示，被调用者所消耗的CPU时间。性能分析通过抽样方法完成，默认是1秒100个样本，一个样本是10毫秒，即时间单位是10毫秒；可以通过环境变量`CPUPROFILE_FREQUENCY`设置采样频率。
+
+```
+# 输出svg
+pprof --svg a.out heapprofile.out.0001.heap > heapprofile.svg
+```
+
+![gpreftools_heap](/assets/images/202106/gpreftools_heap.png)
+
+
+### CPU PROFILER
+
+See [docs/cpuprofile.html](https://gperftools.github.io/gperftools/cpuprofile.html) for information about how to use the CPU profiler and analyze its output.
+
+1. Link your executable with `-lprofiler`
+2. Run your executable with the CPUPROFILE environment var set: `CPUPROFILE=/tmp/prof.out <path/to/binary> [binary args]`
+3. Run pprof to analyze the CPU usage
+
+```
+$ pprof <path/to/binary> /tmp/prof.out      # -pg-like text output
+$ pprof --gv <path/to/binary> /tmp/prof.out # really cool graphical output
+```
+
+测试代码：
+
+``` cpp
+#include <iostream>
+using namespace std;
+void func1() {
+        int i = 0;
+        while (i < 100000) {
+                ++i;
+        }
+}
+void func2() {
+        int i = 0;
+        while (i < 200000) {
+                ++i;
+        }
+}
+void func3() {
+        for (int i = 0; i < 1000; ++i) {
+                func1();
+                func2();
+        }
+}
+int main() {
+        func3();
+        return 0;
+}
+```
+
+编译及CPU使用分析：
+
+```
+$ g++ a.cc -L$HOME/tools/gperftools-2.9.1_install/lib -ltcmalloc -lprofiler
+$ CPUPROFILE=cpuprofile.out ./a.out 
+PROFILE: interrupts/evictions/bytes = 65/1/344
+$ pprof --text a.out cpuprofile.out 
+Using local file a.out.
+Using local file cpuprofile.out.
+Total: 65 samples
+      43  66.2%  66.2%       43  66.2% func2
+      22  33.8% 100.0%       22  33.8% func1
+       0   0.0% 100.0%       65 100.0% __libc_start_main
+       0   0.0% 100.0%       65 100.0% _start
+       0   0.0% 100.0%       65 100.0% func3
+       0   0.0% 100.0%       65 100.0% main
+```
+
+其他输出方式：
+
+```
+# 输出pdf
+pprof --pdf a.out cpuprofile.out > cpuprofile.pdf
+
+# 输出svg
+pprof --svg a.out cpuprofile.out > cpuprofile.svg
+```
+
+![gpreftools_cpu](/assets/images/202106/gpreftools_cpu.png)
 
 
 
+refer:
+* https://github.com/gperftools/gperftools
+* https://xusenqi.github.io/2020/12/06/C++Profile%E7%9A%84%E5%A4%A7%E6%9D%80%E5%99%A8_gperftools%E7%9A%84%E4%BD%BF%E7%94%A8/

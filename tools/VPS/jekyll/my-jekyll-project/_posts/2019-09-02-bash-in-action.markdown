@@ -799,6 +799,34 @@ declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
 
 Refer: https://linuxhint.com/bash_declare_command/
 
+## wait
+
+```
+wait [n ...]
+    Wait for each specified process and return its termination status. Each n may be a process ID or a job specification; if a job spec is given, all processes in that job's pipeline
+    are waited for. If n is not given, all currently active child processes are waited for, and the return status is zero. If n specifies a non-existent process or job, the return
+    status is 127. Otherwise, the return status is the exit status of the last process or job waited for.
+```
+
+``` bash
+#!/bin/bash
+
+CNT=$1
+if [[ "$CNT" -lt 1 ]]; then
+    CNT=1
+fi
+
+for (( i=0; i<"$CNT"; i++ ))
+do
+    echo "hello $i"
+done
+
+wait
+echo "done"
+```
+
+* https://linuxhint.com/bash-wait-command-linux/
+
 # Example
 
 ## pstack
