@@ -13,6 +13,170 @@ categories: [C/C++]
 * 模版实例化工具：https://cppinsights.io/
 * 编译运行工具：https://wandbox.org/
 
+# 继承组合场景的内存管理
+
+C++指出，当derived class对象经由一个base class指针被删除，而该base class带着一个non-virtual析构函数，其结果未定义 —— 实际执行时通常发生的是，对象的derived成分没被销毁。于是造成一个诡异的“局部销毁”对象，从而导致资源泄露。
+
+> 观点1：任何class只要带有virtual函数，都几乎确定应该也有一个virtual析构函数。
+
+> 观点2：如果class不含virtual函数，通常表示它并不意图被用做一个base class。当class不企图被当做base class，令其析构函数为virtual往往是一个馊主意。因为，欲实现出virtual函数，对象必须携带某些信息，主要用来在运行期决定哪一个virtual函数该被调用。这份信息通常是由一个所谓vptr(virtual table pointer)指出，vptr指向一个由函数指针构成的数组，称为vtbl(virtual table)。每一个带有virtual函数的class都有一个相应的vtbl。当对象调用某一virtual函数，实际被调用的函数取决于该对象的vptr所指的那个vtbl（编译器在其中寻找合适的函数指针）。这样，如果base class内含virtual函数，那么其对象的体积会增加，在32-bits计算机体系结构中将多占用32bits（vptr大小）；而在64-bits计算机体系结构中多占用64bits（指针大小为8字节）。
+
+> 观点3：标准库string不含任何virtual函数，但有时程序员会错误地把它当做base class。那么，当你在程序任意某处无意间将一个pointer-to-specialstring转换为一个pointer-to-string，然后将转换所得的那个string指针delete掉，则立刻被流放到”不明确行为上”。很不幸C++目前没有提供类似Java的final classes禁止派生的机制。
+
+> 请记住
+> 1. 从里向外构造（ctor），从外向里析构（dtor）
+> 2. polymorphic (带多态性质) base classes应该声明一个virtual析构函数。如果class带有任何virtual函数，它就应该拥有一个virtual析构函数。
+> 3. classes的设计目的如果不是作为base classes使用，或不是为了具备多态性使用，此class就不该声明virtual析构函数。
+
+## 继承和组合
+
+``` cpp
+#include <iostream>
+
+class A1
+{
+public:
+    A1() {std::cout << "A1()\n"; m_a1 = new int(1); }
+    ~A1() {std::cout << "~A1()\n"; delete m_a1;}
+    
+private:
+    int* m_a1;
+};
+
+class A2 
+{
+public:
+    A2() {std::cout << "A2()\n"; m_a2 = new int(1); }
+    virtual ~A2() {std::cout << "~A2()\n"; delete m_a2;}  
+    
+private:
+    int* m_a2;
+};
+
+class B : public A2
+{
+public:
+    B() {std::cout << "B()\n"; m_a = new int(1); }
+    ~B() {std::cout << "~B()\n"; delete m_a;}
+    
+private:
+    int* m_a;
+    A1 m_obj;
+};
+
+int main()
+{
+    A2* a = new B();
+    delete a;      // 当A2的析构函数为virtual类型时, 此时delete才会调用B的析构函数
+}
+/*
+A1()
+A2()
+B()
+~B()
+~A2()
+~A1()
+*/
+```
+
+``` cpp
+#include <iostream>
+
+class A1
+{
+public:
+    A1() {std::cout << "A1()\n"; m_a1 = new int(1); }
+    virtual ~A1() {std::cout << "~A1()\n"; delete m_a1; } 
+    
+private:
+    int* m_a1; 
+};
+
+class A2 : A1
+{
+public:
+    A2() {std::cout << "A2()\n"; m_a2 = new int(1); }
+    virtual ~A2() {std::cout << "~A2()\n"; delete m_a2;}
+    
+private:
+    int* m_a2;
+};
+
+class B : public A2
+{
+public:
+    B() {std::cout << "B()\n"; m_a = new int(1); }
+    ~B() {std::cout << "~B()\n"; delete m_a;}
+    
+private:
+    int* m_a; 
+};
+
+int main()
+{
+    A2* a = new B(); // A1或A2有一个析构函数为virtual才会调用B的析构函数
+    delete a;
+}
+/*
+A1()
+A2()
+B()
+~B()
+~A2()
+~A1()
+*/
+```
+
+## 多重继承
+
+``` cpp
+#include <iostream>
+
+class A1
+{
+public:
+    A1() {std::cout << "A1()\n"; m_a1 = new int(1); }
+    ~A1() {std::cout << "~A1()\n"; delete m_a1;}
+    
+private:
+    int* m_a1;
+};
+
+class A2
+{
+public:
+    A2() {std::cout << "A2()\n"; m_a2 = new int(1); }
+    virtual ~A2() {std::cout << "~A2()\n"; delete m_a2;}
+    
+private:
+    int* m_a2;
+};
+
+class B : public A1, public A2
+{
+public:
+    B() {std::cout << "B()\n"; m_a = new int(1); }
+    ~B() {std::cout << "~B()\n"; delete m_a;}
+    
+private:
+    int* m_a;
+};
+
+int main()
+{
+    A2* a = new B();
+    delete a;   // A2的析构函数需为virtual
+}
+/*
+A1()
+A2()
+B()
+~B()
+~A2()
+~A1()
+*/
+```
+
 # I/O
 
 ``` cpp
