@@ -522,23 +522,116 @@ CONFIG_PERF_EVENTS_INTEL_CSTATE=m
 CONFIG_SECURITY_PERF_EVENTS_RESTRICT=y
 ```
 
-常用命令：
-
 ```
 perf --help
 perf record --help
 perf report --help
-
-perf top -p $pid
-
-perf stat -p $pid
-perf stat --repeat 5 -e cache-misses,cache-references,instructions,cycles ./perf_stat_example
-
-perf record ./target
-perf report
 ```
 
-测试代码：[perf demo](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/performance/perf/demo)
+## Counting Events
+
+``` bash
+# CPU counter statistics for the specified PID, until Ctrl-C
+perf stat -p $pid
+
+# CPU counter statistics for the entire system, for 5 seconds
+perf stat -a sleep 5
+
+# Various basic CPU statistics, system wide, for 10 seconds:
+perf stat -e cycles,instructions,cache-references,cache-misses,bus-cycles -a sleep 10
+
+# Count syscalls per-second system-wide:
+perf stat -e raw_syscalls:sys_enter -I 1000 -a
+
+# Count system calls by type for the specified PID, until Ctrl-C:
+perf stat -e 'syscalls:sys_enter_*' -p PID
+
+# Count block device I/O events for the entire system, for 10 seconds:
+perf stat -e 'block:*' -a sleep 10
+```
+
+## Profiling
+
+```
+# Sample on-CPU functions for the specified command, at 99 Hertz:
+perf record -F 99 command
+
+# Sample on-CPU functions for the specified PID, at 99 Hertz, until Ctrl-C:
+perf record -F 99 -p PID
+
+# Sample on-CPU functions for the specified PID, at 99 Hertz, for 10 seconds:
+perf record -F 99 -p PID sleep 10
+
+# Sample CPU stack traces (via frame pointers) for the specified PID, at 99 Hertz, for 10 seconds:
+perf record -F 99 -p PID -g -- sleep 10
+
+# Sample CPU stack traces for the entire system, at 99 Hertz, for 10 seconds (< Linux 4.11):
+perf record -F 99 -ag -- sleep 10
+
+# Sample CPU stack traces for the entire system, at 99 Hertz, for 10 seconds (>= Linux 4.11):
+perf record -F 99 -g -- sleep 10
+
+# If the previous command didn't work, try forcing perf to use the cpu-clock event:
+perf record -F 99 -e cpu-clock -ag -- sleep 10
+
+# Sample CPUs at 49 Hertz, and show top addresses and symbols, live (no perf.data file):
+perf top -F 49
+
+# Sample CPUs at 49 Hertz, and show top process names and segments, live:
+perf top -F 49 -ns comm,dso
+```
+
+## Static Tracing
+
+```
+# Trace new processes, until Ctrl-C:
+perf record -e sched:sched_process_exec -a
+
+# Sample (take a subset of) context-switches, until Ctrl-C:
+perf record -e context-switches -a
+
+# Trace all context-switches, until Ctrl-C:
+perf record -e context-switches -c 1 -a
+
+# Sample context-switches with stack traces, until Ctrl-C:
+perf record -e context-switches -ag
+
+# Sample minor faults (RSS growth) with stack traces, until Ctrl-C:
+perf record -e minor-faults -ag
+
+# Sample page faults with stack traces, until Ctrl-C:
+perf record -e page-faults -ag
+```
+
+## Dynamic Tracing
+
+```
+# Add a tracepoint for the kernel tcp_sendmsg() function entry ("--add" is optional):
+perf probe --add tcp_sendmsg
+
+# Remove the tcp_sendmsg() tracepoint (or use "--del"):
+perf probe -d tcp_sendmsg
+```
+
+## Reporting
+
+```
+# Show perf.data in an ncurses browser (TUI) if possible:
+perf report
+
+# Show perf.data with a column for sample count:
+perf report -n
+
+# Show perf.data as a text report, with data coalesced and percentages:
+perf report --stdio
+
+# Disassemble and annotate instructions with percentages (needs some debuginfo):
+perf annotate --stdio
+```
+
+## 测试代码
+
+[perf demo](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/performance/perf/demo)
 
 ```
 # perf record -c 1000 ./perf_top_example
@@ -572,6 +665,177 @@ pid: 13985
 
 更多用法：[Brendan Gregg's perf examples](http://www.brendangregg.com/perf.html)
 
+
+# Visualizations
+
+perf_events has a builtin visualization: timecharts, as well as text-style visualization via its text user interface (TUI) and tree reports. 
+
+## Flame Graphs
+
+[Flame Graphs](http://www.brendangregg.com/flamegraphs.html) can be produced from perf_events profiling data using the [FlameGraph tools](https://github.com/brendangregg/FlameGraph) software. This visualizes the same data you see in `perf report`, and works with any `perf.data` file that was captured with stack traces (`-g`).
+
+```
+-a, --all-cpus
+  System-wide collection from all CPUs (default if no target is specified).
+-g
+  Enables call-graph (stack chain/backtrace) recording.
+```
+
+Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using open source programs on [github.com/brendangregg/FlameGraph](https://github.com/brendangregg/FlameGraph), which create interactive `SVGs`.  
+
+The following pages (or posts) introduce different types of flame graphs:
+
+* [CPU](http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html)
+* [Memory](http://www.brendangregg.com/FlameGraphs/memoryflamegraphs.html)
+* [Off-CPU](http://www.brendangregg.com/FlameGraphs/offcpuflamegraphs.html)
+* [Hot/Cold](http://www.brendangregg.com/FlameGraphs/hotcoldflamegraphs.html)
+* [Differential](http://www.brendangregg.com/blog/2014-11-09/differential-flame-graphs.html)
+
+CPU火焰图示例：[MySQL CPU flame graph](http://www.brendangregg.com/FlameGraphs/cpu-mysql-updated.svg)
+
+The `x-axis` shows the **stack profile population**, sorted alphabetically (it is not the passage of time), and the `y-axis` shows **stack depth**, counting from zero at the bottom. Each `rectangle` represents **a stack frame**. **The wider a frame is is, the more often it was present in the stacks**. The top edge shows what is on-CPU, and beneath it is its ancestry. The colors are usually not significant, picked randomly to differentiate frames.
+
+Flame Graphs Explained (关于火焰图的更多解释)：
+
+A flame graph visualizes a collection of stack traces (aka `call stacks`), shown as an adjacency diagram with an inverted icicle layout. Flame graphs are commonly used to visualize CPU profiler output, where stack traces are collected using sampling.
+
+A flame graph has the following characteristics:
+
+1. A stack trace is represented as a column of boxes, where each box represents a function (a stack frame). (每个格子可以看做一个function)
+2. The `y-axis` shows the stack depth, ordered from root at the bottom to leaf at the top. The top box shows the function that was on-CPU when the stack trace was collected, and everything beneath that is its ancestry. The function beneath a function is its parent. (垂直方向：下面的function调用上面的function)
+3. The `x-axis` spans the stack trace collection. It does not show the passage of time, so the left-to-right ordering has no special meaning. The left-to-right ordering of stack traces is performed alphabetically on the function names, from the root to the leaf of each stack. This maximizes box merging: when identical function boxes are horizontally adjacent, they are merged. (水平方向：左右顺序没有特别的含义)
+4. **The width of each function box shows the frequency at which that function was present in the stack traces, or part of a stack trace ancestry**. Functions with wide boxes were more present in the stack traces than those with narrow boxes, in proportion to their widths. (格子的宽度，表示function被调用的频率，宽度越宽，调用频率越高)
+5. If the width of the box is sufficient, it displays the full function name. If not, either a truncated function name with an ellipsis is shown, or nothing. (如果格子宽度足够，则会显示完整的function名字，否则只显示部分，或者什么也不显示)
+6. The background color for each box is not significant and is picked at random to be a warm hue. This randomness helps the eye differentiate boxes, especially for adjacent thin "towers." Other color schemes are discussed later. (每个格子的背景颜色是随机分配的没有特殊的含义，主要是为了方便查看)
+
+### Flame Graph Interpretation
+
+Flame graphs can be interpreted as follows:
+
+* The top edge of the flame graph shows the function that was running on the CPU when the stack trace was collected. For CPU profiles, this is the function that is directly consuming CPU cycles. For other profile types, this is the function that directly led to the instrumented event. 
+* Look for large plateaus along the top edge, as these show a single stack trace was frequently present in the profile. For CPU profiles, this means a single function was frequently running on-CPU. (最上面的function是频繁在CPU运行的函数)
+* Reading top down shows ancestry. A function was called by its parent, which is shown directly below it; the parent was called by its parent shown below it, and so on. A quick scan downward from a function identifies why it was called. (从上往下看)
+* Reading bottom up shows code flow and the bigger picture. A function calls any child functions shown above it, which, in turn, call functions shown above them. Reading bottom up also shows the big picture of code flow before various forks split execution into smaller towers. (从下往上看)
+* The width of function boxes can be directly compared: wider boxes mean a greater presence in the profile and are the most important to understand first.
+* **For CPU profiles that employ timed sampling of stack traces, if a function box is wider than another, this may be because it consumes more CPU per function call or that the function was simply called more often**. The function-call count is not shown or known via sampling. (**对于CPU，越宽的function表示消耗CPU越多，或者这个function被调用次数越多**)
+* Major forks in the flame graph, spotted as two or more large towers atop a single function, can be useful to study. They can indicate a logical grouping of code, where a function processes work in stages, each with its own function. It can also be caused by a conditional statement, which chooses which function to call.
+
+### Interpretation Example
+
+As an example of interpreting a flame graph, consider the mock one shown below. Imagine this is visualizing a CPU profile, collected using timed samples of stack traces (as is typical).
+
+![example_flame_graph](/assets/images/202106/example_flame_graph.png)
+
+The top edge shows that function `g()` is on-CPU the most; `d()` is wider, but its exposed top edge is on-CPU the least. Functions including `b()` and `c()` do not appear to have been sampled on-CPU directly; rather, their child functions were running.
+
+Functions beneath `g()` show its ancestry: `g()` was called by `f()`, which was called by `d()`, and so on.
+
+Visually comparing the **widths** of functions `b()` and `h()` shows that the `b()` code path was on-CPU about four times more than `h()`. The actual functions on-CPU in each case were their children.
+
+A major fork(分叉) in the code paths is visible where `a()` calls `b()` and `h()`. Understanding why the code does this may be a major clue to its logical organization. This may be the result of a conditional (if conditional, call `b()`, else call `h()`) or a logical grouping of stages (where `a()` is processed in two parts: `b()` and `h()`).
+
+### Challenges
+
+Challenges with flame graphs mostly involve system profilers and not flame graphs themselves. There are two typical problems with profilers:
+
+* **Stack traces are incomplete**. Some system profilers truncate to a fixed stack depth (e.g., 10 frames), which must be increased to capture the full stack traces, or else frame merging can fail. A worse problem is when the software compiler reuses the frame pointer register as a compiler optimization, breaking the typical method of stack-trace collection. The fix requires either a different compiled binary (e.g., using gcc's -fno-omit-frame-pointer) or a different stack-walking technique.
+
+* **Function names are missing**. In this case, the stack trace is complete, but many function names are missing and may be represented as hexadecimal addresses. This commonly happens with JIT (just-in-time) compiled code, which may not create a standard symbol table for profilers. Depending on the profiler and runtime, there are different fixes. For example, Linux perf_events supports supplemental symbol files, which the application can create.
+### Usage
+
+快速用法：
+
+```
+perf record -F 99 -a -g -- sleep 60
+perf script | stackcollapse-perf.pl | flamegraph.pl > out.svg
+```
+
+具体用法介绍：
+
+Using Linux perf_events (aka "perf") to capture 60 seconds of 99 Hertz stack samples, both user- and kernel-level stacks, all processes:
+
+```
+# perf record -F 99 -a -g -- sleep 60
+# perf script > out.perf
+```
+
+Now only capturing PID 181:
+
+```
+# perf record -F 99 -p 181 -g -- sleep 60
+# perf script > out.perf
+```
+
+Use the stackcollapse programs to fold stack samples into single lines. The programs provided are:
+
+* stackcollapse-perf.pl: for Linux perf_events "perf script" output
+* stackcollapse-go.pl: for Golang pprof stacks
+
+```
+For perf_events:
+$ ./stackcollapse-perf.pl out.perf > out.folded
+```
+
+Use `flamegraph.pl` to render a `SVG`.'
+
+```
+./flamegraph.pl out.kern_folded > kernel.svg
+```
+
+关于`flamegraph.pl`的更多用法：
+
+```
+USAGE: ./flamegraph.pl [options] infile > outfile.svg
+
+--title TEXT     # change title text
+--subtitle TEXT  # second level title (optional)
+--width NUM      # width of image (default 1200)
+--height NUM     # height of each frame (default 16)
+--minwidth NUM   # omit smaller functions (default 0.1 pixels)
+--fonttype FONT  # font type (default "Verdana")
+--fontsize NUM   # font size (default 12)
+--countname TEXT # count type label (default "samples")
+--nametype TEXT  # name type label (default "Function:")
+--colors PALETTE # set color palette. choices are: hot (default), mem,
+                 # io, wakeup, chain, java, js, perl, red, green, blue,
+                 # aqua, yellow, purple, orange
+--bgcolors COLOR # set background colors. gradient choices are yellow
+                 # (default), blue, green, grey; flat colors use "#rrggbb"
+--hash           # colors are keyed by function name hash
+--cp             # use consistent palette (palette.map)
+--reverse        # generate stack-reversed flame graph
+--inverted       # icicle graph
+--flamechart     # produce a flame chart (sort by time, do not merge stacks)
+--negate         # switch differential hues (blue<->red)
+--notes TEXT     # add notes comment in SVG (for debugging)
+--help           # this message
+
+eg,
+./flamegraph.pl --title="Flame Graph: malloc()" trace.txt > graph.svg
+```
+
+可以把生成的`SVG`图片拖拽到浏览器中查看：
+
+![perf_flame_graph](/assets/images/202106/perf_flame_graph.png)
+
+An advantage of having the folded input file (and why this is separate to `flamegraph.pl`) is that you can use grep for functions of interest. Eg:
+
+```
+grep cpuid out.kern_folded | ./flamegraph.pl > cpuid.svg
+```
+
+## Heat Maps
+
+See http://www.brendangregg.com/perf.html 7.2 Heat Maps.
+
+Since perf_events can record high resolution timestamps (microseconds) for events, some latency measurements can be derived from trace data.
+
+![perf_heap_map](/assets/images/202106/perf_heap_map.png)
+
+refer:
+
+* [ACMQ article The Flame Graph](http://queue.acm.org/detail.cfm?id=2927301)
+* [Communications of the ACM, Vol. 59 No. 6](http://cacm.acm.org/magazines/2016/6/202665-the-flame-graph/abstract)
 
 # Refer
 
