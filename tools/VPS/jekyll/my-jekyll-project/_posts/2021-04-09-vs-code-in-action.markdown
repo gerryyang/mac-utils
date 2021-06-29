@@ -219,6 +219,8 @@ Host $ip_ssh_config
 ### Bracket Pair Colorizer2
 
 * 括号通过不同颜色区分，多层级括号便于区分
+  
+> 注意：发现安装此插件后，输入汉字会卡顿，禁用后可恢复
 
 ###  Indenticator
 

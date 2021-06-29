@@ -8,6 +8,12 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Linux System Calls
+
+How Linux programs call functions in the Linux kernel.
+
+* [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
+* [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
 
 # CPU
 
@@ -221,6 +227,39 @@ cat /proc/`pidof friendsvr`/smaps > smaps.out
 * Private内存占用：通过计算所有进程的Private内存总和得到。Private内存都是映射在物理内存中的，因此通过总Private内存，我们可以知道机器至少需要多少物理内存。
 * Private内存+共享内存占用：通过Private内存占用，再加上机器上的共享内存，得到的指标。可以用来粗略衡量机器实际的内存占用。
 
+## 常用命令
+
+### pmap
+
+```
+$pmap -x `pidof gamesvr`
+...
+Address           Kbytes     RSS   Dirty Mode  Mapping
+0000000000400000   51732   30036       0 r-x-- gamesvr
+0000000003885000     520     424      20 r-x-- gamesvr
+0000000003907000     452     252      84 rwx-- gamesvr
+0000000003978000   25832    8044    8044 rwx--   [ anon ]
+0000000005ac2000   12288    4264    4264 rwx--   [ anon ]
+00000000066c2000  505840  344500  344500 rwx--   [ anon ]
+...
+---------------- ------- ------- ------- 
+total kB         1372708  402092  367472
+```
+
+## dump memory (gdb)
+
+根据`pmap`输出的进程地址可以通过`gdb`将内存的内容dump出来。
+
+```
+(gdb) dump memory memory.dump 0x66c2000 0x66d2000
+(gdb) !strings memory.dump | head -n10
+%%%%%%%%%%%%%%%%
+```
+
+或者：
+
+gdb --batch --pid {PID} -ex "dump memory native_memory.dump 0x66c2000 0x66d2000" 
+
 ## refer
 
 * https://techtalk.intersec.com/2013/07/memory-part-1-memory-types/
@@ -372,7 +411,7 @@ FRAG      0         0         0
 ```
 
 ```
-$ ss -ltp
+$ ss -ltupn
 State       Recv-Q Send-Q    Local Address:Port     Peer Address:Port                
 LISTEN      0      128       *:15434                *:*                     users:(("tconnd",pid=3304405,fd=35))
 ```
@@ -644,6 +683,25 @@ $dmesg -T
 [Sun Dec 13 23:41:22 2020] Killed process 15395 (cc1plus) total-vm:168940kB, anon-rss:119492kB, file-rss:0kB
 ```
 
+## strace(relies on ptrace system call)
+
+* [How does strace work?](https://blog.packagecloud.io/eng/2016/02/29/how-does-strace-work/)
+
+## ltrace
+
+* [How does ltrace work?](https://blog.packagecloud.io/eng/2016/03/14/how-does-ltrace-work/)
+
+## gdb
+
+当发现进程异常时，比如CPU过高可以通过`gdb`attach到进程上查看具体情况，如果是多线程程序可以通过`info threads`选择异常的线程查看。
+
+```
+gdb -p `pidof program`
+
+info threads
+thread $id
+```
+
 ## gstack
 
 gstack  attaches  to  the  active  process named by the pid on the command line, and prints out an execution stack trace.  If ELF symbols exist in the binary (usually the case unless you have run strip(1)), then symbolic addresses are printed as well.
@@ -684,5 +742,149 @@ disassemble /m main
 * https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
 
 
+## backtrace
 
+[backtrace()](https://man7.org/linux/man-pages/man3/backtrace.3.html) returns a backtrace for the calling program, in the array pointed to by buffer.
+
+``` cpp
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define BT_BUF_SIZE 100
+
+void 
+myfunc3(void)
+{
+    int nptrs;
+    void *buffer[BT_BUF_SIZE];
+    char **strings;
+
+    nptrs = backtrace(buffer, BT_BUF_SIZE);
+    printf("backtrace() returned %d addresses\n", nptrs);
+
+    /* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
+              would produce similar output to the following: */
+
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL) {
+        perror("backtrace_symbols");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int j = 0; j < nptrs; j++)
+        printf("%s\n", strings[j]);
+
+    free(strings);
+}
+
+static void   /* "static" means don't export the symbol... */
+myfunc2(void)
+{
+    myfunc3();
+}
+
+void
+myfunc(int ncalls)
+{
+    if (ncalls > 1)
+        myfunc(ncalls - 1);
+    else
+        myfunc2();
+}
+
+int main(int argc, char *argv[])
+{
+    /*if (argc != 2) {
+        fprintf(stderr, "%s num-calls\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    myfunc(atoi(argv[1]));*/
+    myfunc(5);
+    exit(EXIT_SUCCESS);
+}
+/*
+cc -rdynamic prog.c -o prog
+
+backtrace() returned 10 addresses
+./prog.exe(_Z7myfunc3v+0x1f) [0x400d1c]
+./prog.exe() [0x400db1]
+./prog.exe(_Z6myfunci+0x25) [0x400dd8]
+./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
+./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
+./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
+./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
+./prog.exe(main+0x19) [0x400df3]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0) [0x7f181187c840]
+./prog.exe(_start+0x29) [0x400c39]
+*/
+```
+
+## assert
+
+The definition of the macro assert depends on another macro, `NDEBUG`, which is not defined by the standard library.
+
+* If `NDEBUG` is defined as a macro name at the point in the source code where `<cassert>` is included, then assert does nothing.
+* If `NDEBUG` is not defined, then assert checks if its argument (which must have scalar type) compares equal to zero. If it does, assert outputs implementation-specific diagnostic information on the standard error output and calls `std::abort`. The diagnostic information is required to include the text of expression, as well as the values of the standard macros `__FILE__`, `__LINE__`, and the standard variable `__func__` (since C++11).
+
+``` cpp
+#include <iostream>
+// uncomment to disable assert()
+// #define NDEBUG
+#include <cassert>
+ 
+// Use (void) to silent unused warnings.
+#define assertm(exp, msg) assert(((void)msg, exp))
+ 
+int main()
+{
+    assert(2+2==4);
+    std::cout << "Execution continues past the first assert\n";
+    assertm(2+2==5, "There are five lights");
+    std::cout << "Execution continues past the second assert\n";
+    assert((2*2==4) && "Yet another way to add assert message");
+}
+/*
+prog.exe: prog.cc:13: int main(): Assertion `((void)"There are five lights", 2+2==5)' failed.
+Execution continues past the first assert
+Aborted
+*/
+```
+
+``` cpp
+#include <stdio.h>
+#include <exception>
+#include <cassert>
+
+int main()
+{
+    try
+    {
+        assert(0);
+    }
+    catch (std::exception &e)
+    {
+        printf("std::exception\n");
+    }
+    catch (...)
+    {
+        printf("...\n");
+    }
+}
+/*
+prog.exe: prog.cc:9: int main(): Assertion `0' failed.
+Aborted
+*/
+```
+
+* https://en.cppreference.com/w/cpp/error/assert
+
+## lsof
+
+```
+# 查看进程打开文件的情况
+lsof -p pid 
+```
 

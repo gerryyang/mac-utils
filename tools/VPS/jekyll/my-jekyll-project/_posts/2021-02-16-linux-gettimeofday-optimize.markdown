@@ -37,12 +37,14 @@ echo "acpi_pm" > /sys/devices/system/clocksource/clocksource0/current_clocksourc
 
 **Linux支持的时钟设备包括六种**：
 
-* `RTC(Real-time Clock)`
-* `PIT(Programmable Interval Timer)`
-* `TSC(Time Stamp Counter)`
-* `APIC Local Timer`
-* `HPET(High Precision Event Timer)`
-* `PMTIMER(Power Management Timer)`
+* [RTC(Real-time Clock)](https://en.wikipedia.org/wiki/Real-time_clock)
+* [PIT(Programmable Interval Timer)](https://en.wikipedia.org/wiki/Programmable_interval_timer)
+* [TSC(Time Stamp Counter)](https://en.wikipedia.org/wiki/Time_Stamp_Counter)
+* [APIC Local Timer](http://wiki.osdev.org/APIC_timer)
+* [HPET(High Precision Event Timer)](https://en.wikipedia.org/wiki/High_Precision_Event_Timer)
+* PMTIMER(Power Management Timer)
+
+> More detailed information on each method is conveniently presented in the kernel source in [Documentation/virtual/kvm/timekeeping.txt](https://github.com/torvalds/linux/blob/v3.13/Documentation/virtual/kvm/timekeeping.txt).
 
 
 An overview on hardware clock and system timer circuits:
@@ -353,6 +355,294 @@ int main()
 
 https://docs.microsoft.com/en-us/cpp/intrinsics/rdtsc?view=msvc-160
 
+# system call/vsyscall/vDSO
+
+## system call
+
+这是 Linux 内核一种特殊的运行机制，使得用户空间的应用程序可以请求，像写入文件和打开套接字等特权级下的任务。在 Linux 内核中发起一个系统调用是特别昂贵的操作，因为处理器需要中断当前正在执行的任务，切换内核模式的上下文，在系统调用处理完毕后跳转至用户空间。`vsyscall`和`vdso`两种机制被设计用来加速系统调用的处理。
+
+* [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
+* [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
+
+## vsyscall
+
+`vsyscall`或`virtual system call`是第一种也是最古老的一种用于加快系统调用的机制。`vsyscall`的工作原则其实十分简单。Linux 内核在用户空间映射一个包含一些变量及一些系统调用的实现的内存页。因此, 这些系统调用将在用户空间下执行，这意味着将不发生上下文切换。
+
+```
+$ cat /proc/1/maps | grep vsyscall
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+```
+
+## vDSO
+
+`vDSO` (**virtual dynamic shared object**) is a kernel mechanism for exporting a carefully selected set of kernel space routines to user space applications so that applications can call these kernel space routines in-process, without incurring the performance penalty of a mode switch from user mode to kernel mode that is inherent when calling these same kernel space routines by means of the system call interface.
+
+`vsyscall` is an obsolete concept and replaced by the `vDSO` or `virtual dynamic shared object`. The main difference between the `vsyscall` and `vDSO` mechanisms is that `vDSO` maps memory pages into each process in a shared object form, but `vsyscall` is static in memory and has the same address every time. For the x86_64 architecture it is called `linux-vdso.so.1`. All userspace applications linked with this shared library via the `glibc`. 
+
+```
+ $ ldd /bin/uname
+        linux-vdso.so.1 =>  (0x00007ffdbabc5000)
+        /$LIB/libonion.so => /lib64/libonion.so (0x00007f846a10c000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f8469c25000)
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007f8469a21000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f8469ff3000)
+
+$ sudo cat /proc/1/maps | grep vdso
+7fff93f0a000-7fff93f0c000 r-xp 00000000 00:00 0                          [vdso]
+```
+
+## vDSO fallback mechanism
+
+通过[Two frequently used system calls are ~77% slower on AWS EC2](https://blog.packagecloud.io/eng/2017/03/08/system-calls-are-much-slower-on-ec2/)：
+
+Let’s take a look at the `vDSO` code implementing `gettimeofday` for more clarity. Remember, this code is packaged with the kernel, but is actually run completely in userland.
+
+If we examine the code in [arch/x86/vdso/vclock_gettime.c](https://github.com/torvalds/linux/blob/v3.13/arch/x86/vdso/vclock_gettime.c#L260-L282) and check the `vDSO` implementations for `gettimeofday` (`__vdso_gettimeofday`) and `clock_gettime` (`__vdso_clock_gettime`), we’ll find that both pieces of code have a similar conditional near the end of the function:
+
+``` cpp
+if (ret == VCLOCK_NONE)
+  return vdso_fallback_gtod(clock, ts);
+```
+
+``` cpp
+notrace int __vdso_gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+	long ret = VCLOCK_NONE;
+
+	if (likely(tv != NULL)) {
+		BUILD_BUG_ON(offsetof(struct timeval, tv_usec) !=
+			     offsetof(struct timespec, tv_nsec) ||
+			     sizeof(*tv) != sizeof(struct timespec));
+		ret = do_realtime((struct timespec *)tv);
+		tv->tv_usec /= 1000;
+	}
+	if (unlikely(tz != NULL)) {
+		/* Avoid memcpy. Some old compilers fail to inline it */
+		tz->tz_minuteswest = gtod->sys_tz.tz_minuteswest;
+		tz->tz_dsttime = gtod->sys_tz.tz_dsttime;
+	}
+
+	if (ret == VCLOCK_NONE)
+		return vdso_fallback_gtod(tv, tz);
+	return 0;
+}
+int gettimeofday(struct timeval *, struct timezone *)
+	__attribute__((weak, alias("__vdso_gettimeofday")));
+```
+
+(The code for `__Vdso_clock_gettime` has the same check, but calls `vdso_fallback_gettime` instead.)
+
+If `ret` is set to `VCLOCK_NONE` this indicates that the system’s current clocksource **does not support the vDSO**. In this case, the [vdso_fallback_gtod](https://github.com/torvalds/linux/blob/v3.13/arch/x86/vdso/vclock_gettime.c#L144-L151) function failsafe function is called which will simply executes a system call normally: by entering the kernel and incurring all the normal overhead.
+
+``` cpp
+notrace static long vdso_fallback_gtod(struct timeval *tv, struct timezone *tz)
+{
+	long ret;
+
+	asm("syscall" : "=a" (ret) :
+	    "0" (__NR_gettimeofday), "D" (tv), "S" (tz) : "memory");
+	return ret;
+}
+```
+
+But, in which cases does ret get set to `VCLOCK_NONE`?
+
+If we follow the code backward from this point, we’ll find that `ret` is set to the `vclock_mode` field of the current clocksource. Clocksources such as:
+
+* the [High Precision Event Timer](https://github.com/torvalds/linux/blob/v3.13/arch/x86/kernel/hpet.c#L755-L757), and
+
+``` cpp
+static struct clocksource clocksource_hpet = {
+	.name		= "hpet",
+	.rating		= 250,
+	.read		= read_hpet,
+	.mask		= HPET_MASK,
+	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
+	.resume		= hpet_resume_counter,
+#ifdef CONFIG_X86_64
+	.archdata	= { .vclock_mode = VCLOCK_HPET },
+#endif
+};
+```
+
+* the [Time Stamp Counter](https://github.com/torvalds/linux/blob/v3.13/arch/x86/kernel/tsc.c#L789-L791),
+
+``` cpp
+static struct clocksource clocksource_tsc = {
+	.name                   = "tsc",
+	.rating                 = 300,
+	.read                   = read_tsc,
+	.resume			= resume_tsc,
+	.mask                   = CLOCKSOURCE_MASK(64),
+	.flags                  = CLOCK_SOURCE_IS_CONTINUOUS |
+				  CLOCK_SOURCE_MUST_VERIFY,
+#ifdef CONFIG_X86_64
+	.archdata               = { .vclock_mode = VCLOCK_TSC },
+#endif
+};
+```
+
+* and in some cases the [KVM PVClock](https://github.com/torvalds/linux/blob/v3.13/arch/x86/kernel/kvmclock.c#L305)
+
+all have their `vclock_mode` fields set to an identifier other than `VCLOCK_NONE`.
+
+On the other hand, clocksources such as:
+
+* the [Xen time](https://github.com/torvalds/linux/blob/v3.13/arch/x86/xen/time.c#L233-L239) implementation, and
+* systems where either `CONFIG_PARAVIRT_CLOCK` is not enabled in the kernel configuration or the CPU does not provide a paravirtualized clock feature
+
+all have their `vclock_mode` fields set to `VCLOCK_NONE (0)`.
+
+AWS EC2 uses Xen. Xen’s default clocksource (`xen`) has its `vclock_mode` field set to `VCLOCK_NONE` which means EC2 instances will always fall back to using the slower system call path – the vDSO will never be used.
+
+But, what effect does this have on performance?
+
+## Profiling the performance difference between regular system calls vs vDSO system calls
+
+The purpose of the following experiment is to measure the difference in wall clock time in a microbenchmark to test the difference in execution speed between the fast vDSO-enabled `gettimeofday` system calls and regular, slow, `gettimeofday` calls.
+
+In order to test this, we’ll run the sample program above with three different loop counts on an EC2 instance with the clocksource set to `xen` and then again with the clocksource set to `tsc`.
+
+> It is not safe to switch the clocksource to tsc on EC2. It is unlikely, but possible that this can lead to unexpected backwards clock drift. Do not do this on your production systems.
+
+We’ll time the execution of the program using the `time` program. Readers may wonder: “how can you use the time program if you are potentially destabilizing the clocksource?”
+
+Luckily, the kernel developer Ingo Molnar wrote a program for detecting time warps: [time-warp-test.c](https://people.redhat.com/mingo/time-warp-test/time-warp-test.c). Note that you will need to modify this program just slightly for 64bit x86 systems.
+
+The results of this microbenchmark show that the regular system call method which is used on ec2 is about **77% slower than** the `vDSO` method:
+
+
+A tight loop of 500 million calls to `gettimeofday`:
+
+vDSO enabled:
+real: 0m12.247s
+user: 0m12.244s
+sys: 0m0.000s
+
+regular system call:
+real: 0m54.606s
+user: 0m13.192s
+sys: 0m41.412s
+
+The proper fix for this issue would be to add `vDSO` support to the `xen` clocksource.
+
+## Conclusion
+
+As expected, the vDSO system call path is measurably faster than the normal system call path. This is because the vDSO system call path prevents a context switch into the kernel. Remember: vDSO system calls will not appear in strace output if they successfully pass through the vDSO. If they are unabled to use the vDSO for some reason, they will fall back to regular system calls and will appear in strace output.
+
+gettimeofday and clock_gettime will perform approximately 77% slower than they normally would.
+
+Using strace on your applications incurs overhead while it is in use, but it provides invaluable insight into what exactly your applications are doing. All programmers deploying software to production environments should regularly strace their applications in development mode and question all output they find.
+
+## 测试代码
+
+* 通过[vDSO man page](https://man7.org/linux/man-pages/man7/vdso.7.html)可知，`gettimeofday`通过`vDSO`运行在用户态，而不需要切换到内核态。
+
+```
+One frequently used system call is gettimeofday(2).  This system
+call is called both directly by user-space applications as well
+as indirectly by the C library.  Think timestamps or timing loops
+or polling—all of these frequently need to know what time it is
+right now.  This information is also not secret—any application
+in any privilege mode (root or any unprivileged user) will get
+the same answer.  Thus the kernel arranges for the information
+required to answer this question to be placed in memory the
+process can access.  Now a call to gettimeofday(2) changes from a
+system call to a normal function call and a few memory accesses.
+```
+
+the `vDSO` is essentially a shared library that is provided by the kernel which is mapped into every process’ address space. When the `gettimeofday`, `clock_gettime`, `getcpu`, or `time` system calls are made, `glibc` will attempt to call the code provided by the `vDSO`. This code will access the needed data without entering the kernel, saving the process the overhead of making a real system call.
+
+Because system calls made via the `vDSO` do not enter the kernel, `strace` is not notified that the `vDSO` system call was made. As a result, a program which calls `gettimeofday` successfully via the `vDSO` will not show `gettimeofday` in the `strace` output. You would need to use `ltrace` instead.
+
+* 有些时钟源，可能不支持vdso。例如，[Two frequently used system calls are ~77% slower on AWS EC2](https://blog.packagecloud.io/eng/2017/03/08/system-calls-are-much-slower-on-ec2/)
+
+```
+The two system calls listed cannot use the vDSO as they normally would on any other system. This is because the virtualized clock source on xen (and some kvm configurations) do not support reading the time in userland via the vDSO.
+```
+
+* 有些系统调用的参数选项，可能不支持vdso，比如`clock_gettime`的第一个参数。当为`CLOCK_REALTIME`, `CLOCK_MONOTONIC`, `CLOCK_REALTIME_COARSE`, `CLOCK_MONOTONIC_COARSE` 时会使用vdso，而其他选项时则不会。具体参数可见 `man 2 clock_gettime`
+
+``` cpp
+#include <time.h>
+#include <sys/time.h>
+
+int main()
+{
+  struct timespec tp;
+  struct timeval tv;
+  int i = 0;
+  int j = 0;
+  for (i = 0; i < 1000000; ++i)
+  {
+      // vdso
+      // glibc wrapped, shouldn't actually syscall
+      gettimeofday(&tv, NULL);
+      j += tv.tv_usec % 2;
+
+      // https://linux.die.net/man/3/clock_gettime
+
+      // vdso
+      //clock_gettime(CLOCK_REALTIME, &tp);
+      //clock_gettime(CLOCK_MONOTONIC, &tp);
+      //clock_gettime(CLOCK_REALTIME_COARSE, &tp);
+      clock_gettime(CLOCK_MONOTONIC_COARSE, &tp);
+
+      // syscall
+      //clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
+      //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp);
+
+      // vdso
+      //auto t = std::time(0);
+      //printf("%u\n", t);
+
+      // syscall
+      //auto t = std::chrono::system_clock::now().time_since_epoch() / std::chrono::seconds(1);
+      //std::chrono::system_clock::now();
+
+      j += tp.tv_sec % 2;
+  }
+}
+```
+
+```
+$ strace -c ./a.out 
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+  0.00    0.000000           0         3           read
+  0.00    0.000000           0         5           open
+  0.00    0.000000           0         5           close
+  0.00    0.000000           0         5           fstat
+  0.00    0.000000           0        14           mmap
+  0.00    0.000000           0         7           mprotect
+  0.00    0.000000           0         2           munmap
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1           access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           readlink
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000000                    46           total
+
+$ ltrace -c ./a.out 
+^C% time     seconds  usecs/call     calls      function
+------ ----------- ----------- --------- --------------------
+ 56.12    8.085410     8085410         1 __libc_start_main
+ 21.97    3.165150          67     46577 gettimeofday
+ 21.91    3.157182          67     46577 clock_gettime
+------ ----------- ----------- --------- --------------------
+100.00   14.407742                 93155 total
+```
+
+
+* [vDSO man page](https://man7.org/linux/man-pages/man7/vdso.7.html)
+* https://en.wikipedia.org/wiki/VDSO
+* https://www.cntofu.com/book/114/SysCall/syscall-3.md
+* [gettimeofday() not using vDSO?](https://stackoverflow.com/questions/42622427/gettimeofday-not-using-vdso)
+* [Two frequently used system calls are ~77% slower on AWS EC2](https://blog.packagecloud.io/eng/2017/03/08/system-calls-are-much-slower-on-ec2/)
+* [Virtual system calls](https://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls/#virtual-system-calls)
+* [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
+* [VMWare(Paper): Timekeeping in VMware Virtual Machines](https://www.vmware.com/pdf/vmware_timekeeping.pdf)
 
 # Refer
 

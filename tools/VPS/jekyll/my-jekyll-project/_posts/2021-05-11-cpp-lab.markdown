@@ -8,12 +8,21 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Tools
 
 * 编译器对标准的支持情况：https://en.cppreference.com/w/cpp/compiler_support
 * 模版实例化工具：https://cppinsights.io/
 * 编译运行工具：https://wandbox.org/
 
-# 继承组合场景的内存管理
+# TODO
+
+[What every C++ programmer should know, The hard part](http://web.archive.org/web/20131210001207/http://thomas-sanchez.net/computer-sciences/2011/08/15/what-every-c-programmer-should-know-the-hard-part/)
+
+# 内存管理
+
+* [malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html) function attempts to release free memory from the heap (by calling `sbrk(2)` or `madvise(2)` with suitable arguments). This function is a GNU extension.
+
+## 继承组合场景的内存管理
 
 C++指出，当derived class对象经由一个base class指针被删除，而该base class带着一个non-virtual析构函数，其结果未定义 —— 实际执行时通常发生的是，对象的derived成分没被销毁。于是造成一个诡异的“局部销毁”对象，从而导致资源泄露。
 
@@ -28,7 +37,9 @@ C++指出，当derived class对象经由一个base class指针被删除，而该
 > 2. polymorphic (带多态性质) base classes应该声明一个virtual析构函数。如果class带有任何virtual函数，它就应该拥有一个virtual析构函数。
 > 3. classes的设计目的如果不是作为base classes使用，或不是为了具备多态性使用，此class就不该声明virtual析构函数。
 
-## 继承和组合
+测试代码：
+
+继承和组合：
 
 ``` cpp
 #include <iostream>
@@ -127,7 +138,7 @@ B()
 */
 ```
 
-## 多重继承
+多重继承：
 
 ``` cpp
 #include <iostream>
@@ -258,6 +269,47 @@ int main()
 
 # C++11
 
+## std::vector<T,Allocator>::shrink_to_fit
+
+Requests the removal of unused capacity. It is a non-binding request to reduce `capacity()` to `size()`. It depends on the implementation whether the request is fulfilled. If reallocation occurs, all iterators, including the past the end iterator, and all references to the elements are invalidated. If no reallocation takes place, no iterators or references are invalidated.
+
+``` cpp
+#include <iostream>
+#include <vector>
+ 
+int main()
+{
+    std::vector<int> v;
+    std::cout << "Default-constructed capacity is " << v.capacity() << '\n';
+    v.resize(100);
+    std::cout << "Capacity of a 100-element vector is " << v.capacity() << '\n';
+    v.resize(50);
+    std::cout << "Capacity after resize(50) is " << v.capacity() << '\n';
+    v.shrink_to_fit();
+    std::cout << "Capacity after shrink_to_fit() is " << v.capacity() << '\n';
+    v.clear(); // Erases all elements from the container. After this call, size() returns zero. But capacity() is not !
+    std::cout << "Capacity after clear() is " << v.capacity() << '\n';
+    v.shrink_to_fit();
+    std::cout << "Capacity after shrink_to_fit() is " << v.capacity() << '\n';
+    for (int i = 1000; i < 1300; ++i)
+        v.push_back(i);
+    std::cout << "Capacity after adding 300 elements is " << v.capacity() << '\n';
+    v.shrink_to_fit();
+    std::cout << "Capacity after shrink_to_fit() is " << v.capacity() << '\n';
+}
+/*
+Default-constructed capacity is 0
+Capacity of a 100-element vector is 100
+Capacity after resize(50) is 100
+Capacity after shrink_to_fit() is 50
+Capacity after clear() is 50
+Capacity after shrink_to_fit() is 0
+Capacity after adding 300 elements is 512
+Capacity after shrink_to_fit() is 300
+*/
+```
+
+* https://en.cppreference.com/w/cpp/container/vector/shrink_to_fit
 ## std::map<Key,T,Compare,Allocator>::emplace
 
 ``` cpp
@@ -413,6 +465,17 @@ use_count == 0: gw is expired
 ```
 
 * https://en.cppreference.com/w/cpp/memory/weak_ptr
+
+## std::unique_ptr
+
+`std::unique_ptr` is a smart pointer that owns and manages another object through a pointer and disposes of that object when the unique_ptr goes out of scope.
+
+The object is disposed of, using the associated deleter when either of the following happens:
+
+* the managing unique_ptr object is destroyed
+* the managing unique_ptr object is assigned another pointer via operator= or reset().
+
+* https://en.cppreference.com/w/cpp/memory/unique_ptr
 
 ## std::enable_shared_from_this
 
@@ -981,7 +1044,9 @@ int main()
 TODO
 
 
-  
+# Clang-Format Style Options
+
+https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
 	
 	

@@ -95,8 +95,36 @@ There are several kinds of leaks; the two most important categories are:
 `Memcheck` cannot detect every memory error your program has. For example, it can't detect out-of-range reads or writes to arrays that are allocated statically or on the stack. But it should detect many errors that could crash your program (eg. cause a segmentation fault).
 
 
+# GCC -fsanitize=address -fno-omit-frame-pointer 
+
+[-fsanitize=address 官方说明](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#Instrumentation-Options)
+
+-fsanitize=address
+
+Enable AddressSanitizer, a fast memory error detector. Memory access instructions are instrumented to detect out-of-bounds and use-after-free bugs. The option enables -fsanitize-address-use-after-scope. See https://github.com/google/sanitizers/wiki/AddressSanitizer for more details. The run-time behavior can be influenced using the ASAN_OPTIONS environment variable. When set to help=1, the available options are shown at startup of the instrumented program. See https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags for a list of supported options. The option cannot be combined with -fsanitize=thread or -fsanitize=hwaddress. Note that the only target -fsanitize=hwaddress is currently supported on is AArch64.
+
+测试代码：
+
+```
+yum install libasan
+
+gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c 
+```
+
+![gcc_sanitize](/assets/images/202106/gcc_sanitize.png)
+
+
+* [No more leaks with sanitize flags in gcc and clang](https://lemire.me/blog/2016/04/20/no-more-leaks-with-sanitize-flags-in-gcc-and-clang/)
+* [How to use gcc with fsanitize=address?](https://stackoverflow.com/questions/58262749/how-to-use-gcc-with-fsanitize-address)
+
+# Memory Benchmark
+
+* [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
+* [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
+
 # Refer
 
+* [The Valgrind Quick Start Guide](https://valgrind.org/docs/manual/quick-start.html)
 * [Using Valgrind to Find Memory Leaks and Invalid Memory Use](https://www.cprogramming.com/debugging/valgrind.html)
 * [The Valgrind Quick Start Guide](https://www.valgrind.org/docs/manual/QuickStart.html)
 * [Valgrind Frequently Asked Questions](https://www.valgrind.org/docs/manual/faq.html)
@@ -104,11 +132,8 @@ There are several kinds of leaks; the two most important categories are:
 * [Valgrind User Manual](https://www.valgrind.org/docs/manual/manual.html)
 * [How to find memory leak in a C++ code/project?](https://stackoverflow.com/questions/6261201/how-to-find-memory-leak-in-a-c-code-project)
 * [AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitizers/wiki/AddressSanitizerComparisonOfMemoryTools/d06210f759fec97066888e5f27c7e722832b0924)
+* [Valgrind's Tool Suite](https://valgrind.org/info/tools.html)
 
-
-
-
-  
 
 	
 	

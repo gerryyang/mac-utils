@@ -1104,3 +1104,7 @@ r15             | r15d          | r15w          | r15b
 * [Intel 64 and IA-32 Software Developer Manuals](https://software.intel.com/en-us/articles/intel-sdm)
 * [AMD64 Architecture Programmer's Manual (Volume 1-5)](http://developer.amd.com/resources/developer-guides-manuals/)
 * [Basic yet thorough assembly tutorial (linux)](https://stackoverflow.com/questions/836946/basic-yet-thorough-assembly-tutorial-linux)
+
+# TODO
+
+* [All programmers MUST learn C and Assembly](https://blog.packagecloud.io/eng/2017/04/21/deconstruct-2017-all-programmers-must-learn-c-and-assembly/)

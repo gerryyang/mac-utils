@@ -83,6 +83,10 @@ Starting your Program: https://sourceware.org/gdb/current/onlinedocs/gdb/Startin
 https://sourceware.org/gdb/current/onlinedocs/gdb/Startup.html#Startup
 
 
+## Continuing and Stepping
+
+https://sourceware.org/gdb/current/onlinedocs/gdb/Continuing-and-Stepping.html
+
 ## Shell Commands
 
 If you need to execute occasional shell commands during your debugging session, there is no need to leave or suspend GDB; you can just use the shell command.
@@ -193,6 +197,22 @@ You can arrange to have values from your program displayed automatically wheneve
 
 A `catchpoint` is another special breakpoint that stops your program **when a certain kind of event occurs**, such as the throwing of a C++ exception or the loading of a library. As with watchpoints, you use a different command to set a catchpoint (see [Setting Catchpoints](https://sourceware.org/gdb/current/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints)), but aside from that, you can manage a catchpoint like any other breakpoint. (To stop when your program receives a signal, use the `handle` command; see [Signals](https://sourceware.org/gdb/current/onlinedocs/gdb/Signals.html#Signals).)
 
+```
+(gdb) catch syscall 1
+warning: Can not parse XML syscalls information; XML support was disabled at compile time.
+Catchpoint 1 (syscall 1)
+(gdb) c
+Continuing.
+[Switching to Thread 0x7f4f727e9700 (LWP 2345035)]
+
+Thread 4 "100_Log" hit Catchpoint 1 (call to syscall 1), 0x00007f4f739d8a1d in write () from /lib64/libc.so.6
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       catchpoint     keep y                      syscall "1" 
+        catchpoint already hit 1 time
+(gdb) d 1
+(gdb) i b
+```
 ## Disassemble
 
 
@@ -330,7 +350,7 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 
 # Common Use
 
-* gdb中简写命令配合tab键使用
+gdb中简写命令配合tab键使用
 
 | 命令 | 作用
 | -- | --
@@ -353,6 +373,10 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 | shell date | 在gdb中调用shell，使用完后exit重新返回到gdb中
 | set args | 可指定运行时参数（如：set args 10 20 30 40 50）
 | show args | 命令可以查看设置好的运行参数
+| next | Continue to the next source line in the current (innermost) stack frame. This is similar to step, but function calls that appear within the line of code are executed without stopping.
+| nexti | Execute one machine instruction, but if it is a function call, proceed until the function returns
+| step | Continue running your program until control reaches a different source line, then stop it and return control to GDB
+| stepi | Execute one machine instruction, then stop and return to the debugger
 | finish/fin | 跳出当前函数栈
 | set variable i = 10 | 修改变量值
 
@@ -364,6 +388,7 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 	+ [A Sample GDB Session](https://sourceware.org/gdb/current/onlinedocs/gdb/Sample-Session.html#Sample-Session)
 * [Debugging Assembly Code with gdb](http://web.cecs.pdx.edu/~apt/cs491/gdb.pdf)
 * [100个gdb小技巧](https://github.com/hellogcc/100-gdb-tips)
+* [100个gdb小技巧 (gitbook)](https://wizardforcel.gitbooks.io/100-gdb-tips/content/index.html)
 * [GDB中应该知道的几个调试方法 - CoolShell](http://coolshell.cn/articles/3643.html)
 * [Introduction to GDB - Posted by adrian.ancona on February 9, 2018](https://ncona.com/2018/02/introduction-to-gdb/)
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)

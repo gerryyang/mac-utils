@@ -71,7 +71,7 @@ The `perf` tool offers a rich set of commands to collect and analyze performance
 
 The list of supported commands:
 
-```
+``` 
 perf
 
  usage: perf [--version] [--help] COMMAND [ARGS]
@@ -552,7 +552,7 @@ perf stat -e 'block:*' -a sleep 10
 
 ## Profiling
 
-```
+``` bash
 # Sample on-CPU functions for the specified command, at 99 Hertz:
 perf record -F 99 command
 
@@ -583,7 +583,7 @@ perf top -F 49 -ns comm,dso
 
 ## Static Tracing
 
-```
+``` bash
 # Trace new processes, until Ctrl-C:
 perf record -e sched:sched_process_exec -a
 
@@ -605,7 +605,7 @@ perf record -e page-faults -ag
 
 ## Dynamic Tracing
 
-```
+``` bash
 # Add a tracepoint for the kernel tcp_sendmsg() function entry ("--add" is optional):
 perf probe --add tcp_sendmsg
 
@@ -615,7 +615,7 @@ perf probe -d tcp_sendmsg
 
 ## Reporting
 
-```
+``` bash
 # Show perf.data in an ncurses browser (TUI) if possible:
 perf report
 
@@ -669,6 +669,11 @@ pid: 13985
 # Visualizations
 
 perf_events has a builtin visualization: timecharts, as well as text-style visualization via its text user interface (TUI) and tree reports. 
+
+refer:
+
+* [ACMQ article The Flame Graph](http://queue.acm.org/detail.cfm?id=2927301)
+* [Communications of the ACM, Vol. 59 No. 6](http://cacm.acm.org/magazines/2016/6/202665-the-flame-graph/abstract)
 
 ## Flame Graphs
 
@@ -831,11 +836,6 @@ See http://www.brendangregg.com/perf.html 7.2 Heat Maps.
 Since perf_events can record high resolution timestamps (microseconds) for events, some latency measurements can be derived from trace data.
 
 ![perf_heap_map](/assets/images/202106/perf_heap_map.png)
-
-refer:
-
-* [ACMQ article The Flame Graph](http://queue.acm.org/detail.cfm?id=2927301)
-* [Communications of the ACM, Vol. 59 No. 6](http://cacm.acm.org/magazines/2016/6/202665-the-flame-graph/abstract)
 
 # Refer
 
