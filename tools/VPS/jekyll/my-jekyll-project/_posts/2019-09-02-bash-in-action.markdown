@@ -16,6 +16,70 @@ categories: [Bash, 编程语言]
 
 * [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 
+# Make sure only one instance to run
+
+A solution that does not require additional tools would be prefered.
+
+1. Use a lock directory. Directory creation is atomic under linux and unix and *BSD and a lot of other OSes.
+
+``` bash
+if mkdir $LOCKDIR
+then
+    # Do important, exclusive stuff
+    if rmdir $LOCKDIR
+    then
+        echo "Victory is mine"
+    else
+        echo "Could not remove lock dir" >&2
+    fi
+else
+    # Handle error condition
+    ...
+fi
+```
+
+2. `pidof -o %PPID -x $0` gets the PID of the existing script if its already running or exits with error code 1 if no other script is running
+
+``` bash
+#!/bin/bash
+
+# Check if another instance of script is running
+pidof -o %PPID -x $0 >/dev/null && echo "ERROR: Script $0 already running" && exit 1
+```
+
+* [How to make sure only one instance of a bash script runs?](https://unix.stackexchange.com/questions/48505/how-to-make-sure-only-one-instance-of-a-bash-script-runs)
+
+# Add User
+
+``` bash
+#!/bin/bash
+
+if [ $# -ne 1 ]
+then
+  echo "Usage: $0 USER_NAME"
+  exit 1
+fi
+USER_NAME=$1
+
+USER_GROUP_NAME="users"
+PWD="123"
+USER_HOME="/data/home/${USER_NAME}"
+useradd ${USER_NAME} -d ${USER_HOME} -g ${USER_GROUP_NAME}
+
+echo ${USER_NAME}:${PWD} | chpasswd
+
+# $ cat /etc/sudoers
+# Sudoers allows particular users to run various commands as
+# the root user, without needing the root password.
+# $ cat /etc/sudoers | grep wheel
+# Allows people in group wheel to run all commands
+# %wheel  ALL=(ALL)       ALL
+# echo "${USER_NAME}   ALL=(ALL)       ALL" >> /etc/sudoers
+usermod -aG wheel ${USER_NAME}
+
+chown -R ${USER_NAME}:${USER_GROUP_NAME}  ${USER_HOME}
+```
+
 # 1>&2 / 2>&1
 
 ``` bash
@@ -553,6 +617,46 @@ refer:
 
 * [HowTo: Iterate Bash For Loop Variable Range Under Unix / Linux](https://www.cyberciti.biz/faq/unix-linux-iterate-over-a-variable-range-of-numbers-in-bash/)
 
+## Array
+
+``` bash
+#!/bin/bash
+
+LIST="a,b,c"
+ARRAY=(${LIST//,/ })
+echo "${ARRAY[@]}"
+echo "${ARRAY[*]}"
+
+for ITEM in "${ARRAY[@]}"
+do
+        echo $ITEM
+done
+
+for ITEM in "${ARRAY[*]}"
+do
+        echo $ITEM
+done
+
+my_array=(foo bar)
+echo "${my_array[@]}"
+my_array[2]=newone
+echo "${my_array[@]}"
+```
+
+输出：
+
+```
+a b c
+a b c
+a
+b
+c
+a b c
+foo bar
+foo bar newone
+```
+
+* https://linuxconfig.org/how-to-use-arrays-in-bash-script
 
 ## [How to Check if a File or Directory Exists in Bash](https://linuxize.com/post/bash-check-if-file-exists/)
 

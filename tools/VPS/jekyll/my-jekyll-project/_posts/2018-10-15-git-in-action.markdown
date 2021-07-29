@@ -202,6 +202,8 @@ $ cd your_project
 
 ## 忽略文件
 
+A [gitignore](https://git-scm.com/docs/gitignore) file specifies intentionally untracked files that Git should ignore. Files already tracked by Git are not affected.
+
 在实际的项目中，比如，临时文件，编译过程文件(例如C/C++编译过程中的`.o`文件)等，是不需要进行代码管理的(即不用提交)。可以在仓库的根目录下创建一个名为`.gitignore`的文件，并配置当前项目需要忽略的文件列表。
 
 ``` bash
@@ -222,7 +224,6 @@ git rm --cached *.log
 
 
 ![gitignore](/assets/images/201810/gitignore.jpg)
-
 
 
 # Git的协作模式
