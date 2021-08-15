@@ -84,7 +84,7 @@ stl的map非线程安全：
 #include <map>
 #include <ctime>
 
-std::map<int, int> g_m = {{0,0}};
+std::map<int, int> g_m = { {0, 0} };
 
 void f1(int x) 
 {

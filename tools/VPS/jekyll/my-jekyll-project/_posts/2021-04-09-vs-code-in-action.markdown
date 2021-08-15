@@ -279,6 +279,12 @@ Protobuf 3 support for Visual Studio Code
 
 Clang-Format is a tool to format C/C++/Java/JavaScript/Objective-C/Objective-C++/Protobuf code. It can be configured with a config file within the working folder or a parent folder. Configuration see: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
+### Switcher
+
+Switch between related files (same name, different extensions) using keybindings, context menu or command palette. 
+
+`option+ o`: 实现`.h`和`.cc`之间的跳转。
+
 # Q&A
 
 ## Paste Not Working

@@ -25,13 +25,377 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 
 # TODO
 
-[What every C++ programmer should know, The hard part](http://web.archive.org/web/20131210001207/http://thomas-sanchez.net/computer-sciences/2011/08/15/what-every-c-programmer-should-know-the-hard-part/)
+* [What every C++ programmer should know, The hard part](http://web.archive.org/web/20131210001207/http://thomas-sanchez.net/computer-sciences/2011/08/15/what-every-c-programmer-should-know-the-hard-part/)
+* [Stacktrace from exception](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2370r0.html)
+
+# va_list
+
+``` cpp
+#include <iostream>
+#include <stdarg.h>
+
+int MyPrintf (const char *fmt, ...)
+{
+  va_list arg;
+  int done;
+
+  va_start (arg, fmt);
+  done = vfprintf (stdout, fmt, arg);
+  va_end (arg);
+
+  return done;
+}
+
+int main()
+{
+    std::cout << sizeof(va_list) << std::endl; // 24
+    int a = 1;
+    MyPrintf("hello %d\n", a); // hello 1
+}
+```
 
 # 内存管理
 
 * [malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html) function attempts to release free memory from the heap (by calling `sbrk(2)` or `madvise(2)` with suitable arguments). This function is a GNU extension.
 
-## 继承组合场景的内存管理
+# 虚函数表(Virtual Tables)
+
+> “A virtual method table (VMT),…, is a mechanism used in a programming language to support dynamic dispatch.” –[Wikipedia](https://en.wikipedia.org/wiki/Virtual_method_table)
+
+* https://pabloariasal.github.io/2017/06/10/understanding-virtual-tables/
+
+# const_cast/dynamic_cast/static_cast/reinterpret_cast/std::dynamic_pointer_cast
+
+* [When should static_cast, dynamic_cast, const_cast and reinterpret_cast be used?](https://stackoverflow.com/questions/332030/when-should-static-cast-dynamic-cast-const-cast-and-reinterpret-cast-be-used)
+
+## [std::dynamic_pointer_cast](http://www.cplusplus.com/reference/memory/dynamic_pointer_cast/)
+
+Dynamic cast of `shared_ptr`. Returns a copy of `sp` of the proper type with its stored pointer casted dynamically from `U*` to `T*`.
+
+``` cpp
+template <class T, class U>
+shared_ptr<T> dynamic_pointer_cast (const shared_ptr<U>& sp) noexcept;
+```
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+struct A {
+  static const char* static_type;
+  const char* dynamic_type;
+  A() { dynamic_type = static_type; }
+};
+
+struct B: public A {
+  static const char* static_type;
+  B() { dynamic_type = static_type; }
+};
+
+const char* A::static_type = "class A";
+const char* B::static_type = "class B";
+
+int main () {
+  std::shared_ptr<A> foo;
+  std::shared_ptr<B> bar;
+
+  bar = std::make_shared<B>();
+
+  foo = std::dynamic_pointer_cast<A>(bar); // 类型转换 B -> A
+
+  std::cout << "foo's static  type: " << foo->static_type << '\n';
+  std::cout << "foo's dynamic type: " << foo->dynamic_type << '\n';
+  std::cout << "bar's static  type: " << bar->static_type << '\n';
+  std::cout << "bar's dynamic type: " << bar->dynamic_type << '\n';
+}
+/*
+foo's static  type: class A
+foo's dynamic type: class B
+bar's static  type: class B
+bar's dynamic type: class B
+*/
+```
+
+## [dynamic_cast conversion](https://en.cppreference.com/w/cpp/language/dynamic_cast)
+
+Safely converts pointers and references to classes up, down, and sideways along the inheritance hierarchy.
+
+```
+A -> V
+B -> V
+D -> A, B
+
+D d;       // the most derived object
+A& a = d;  // upcast, dynamic_cast may be used, but unnecessary  子类 -> 父类
+
+D& new_d = dynamic_cast<D&>(a); // downcast 父类 -> 子类
+
+B& new_b = dynamic_cast<B&>(a); // sidecast  父类 -> 子类（另一个）
+```
+
+Syntax:
+
+`dynamic_cast < new-type > ( expression )`		
+
+Notes:
+
+* A downcast can also be performed with `static_cast`, which avoids the cost of the runtime check, but it's only safe if the program can guarantee (through some other logic) that the object pointed to by expression is definitely Derived.
+* Some forms of `dynamic_cast` rely on [runtime type identification (RTTI)](https://en.wikipedia.org/wiki/Run-time_type_information), that is, information about each polymorphic class in the compiled program. Compilers typically have options to disable the inclusion of this information.
+
+``` cpp
+#include <iostream>
+ 
+struct V {
+    virtual void f() {}  // must be polymorphic to use runtime-checked dynamic_cast
+};
+struct A : virtual V {};
+struct B : virtual V {
+  B(V* v, A* a) {
+    // casts during construction (see the call in the constructor of D below)
+    dynamic_cast<B*>(v); // well-defined: v of type V*, V base of B, results in B*
+    dynamic_cast<B*>(a); // undefined behavior: a has type A*, A not a base of B
+  }
+};
+struct D : A, B {
+    D() : B(static_cast<A*>(this), this) { }
+};
+ 
+struct Base {
+    virtual ~Base() {}
+};
+ 
+struct Derived: Base {
+    virtual void name() {}
+};
+ 
+int main()
+{
+    D d; // the most derived object
+    A& a = d; // upcast, dynamic_cast may be used, but unnecessary
+    [[maybe_unused]]
+    D& new_d = dynamic_cast<D&>(a); // downcast
+    [[maybe_unused]]
+    B& new_b = dynamic_cast<B&>(a); // sidecast
+ 
+ 
+    Base* b1 = new Base;
+    if(Derived* d = dynamic_cast<Derived*>(b1))   // error
+    {
+        std::cout << "downcast from b1 to d successful\n";
+        d->name(); // safe to call
+    }
+ 
+    Base* b2 = new Derived;
+    if(Derived* d = dynamic_cast<Derived*>(b2))    // ok
+    {
+        std::cout << "downcast from b2 to d successful\n";
+        d->name(); // safe to call
+    }
+ 
+    delete b1;
+    delete b2;
+}
+/*
+downcast from b2 to d successful
+*/
+```
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class foo
+{
+public:
+     foo() { std::cout << "foo()\n"; }
+     virtual ~foo() { std::cout << "~foo()\n"; }
+     virtual void f() {
+        std::cout << "foo::f()\n";
+    }
+};
+
+class bar
+{
+public:
+   bar() { std::cout << "bar()\n"; }
+   virtual ~bar() { std::cout << "~bar()\n"; }
+   void f()  {
+        std::cout << "bar::f()\n";
+   }
+    
+   int a;
+};
+
+class xyz : public foo, public bar
+{
+public:
+   xyz() { std::cout << "xyz()\n"; }
+   virtual ~xyz() { std::cout << "~xyz()\n"; }
+   void f()  {
+        std::cout << "xyz::f()\n";
+    }
+    
+   int b;
+};
+
+int main(int argc, char**argv) 
+{
+    bar* obj = new xyz();
+    std::cout << "bar obj:" << obj << std::endl;
+    obj->f();
+    
+    auto p1 = dynamic_cast<xyz*>(obj);   // ok
+    std::cout << "xyz obj:" << p1 << std::endl;
+    p1->f();
+    
+    auto p2 = static_cast<xyz*>(obj);    // ok
+    std::cout << "xyz obj:" << p2 << std::endl;
+    p2->f();
+    
+    auto p3 = reinterpret_cast<xyz*>(obj);        // error
+    std::cout << "xyz obj:" << p3 << std::endl;
+    //p3->f(); // error
+    
+    delete obj;
+
+}
+/*
+foo()
+bar()
+xyz()
+bar obj:0x1757018
+bar::f()
+xyz obj:0x1757010
+xyz::f()
+xyz obj:0x1757010
+xyz::f()
+xyz obj:0x1757018
+~xyz()
+~bar()
+~foo()
+*/
+```
+
+``` cpp
+#include <iostream>     
+#include <map>
+#include <memory>
+
+class A
+{
+public:
+    A() { std::cout << "A::A()\n"; }
+    virtual ~A() { std::cout << "~A::A()\n"; }
+    virtual void f() { std::cout << "A::f()\n"; }
+    int a;
+};
+
+class A2
+{
+public:
+    A2() { std::cout << "A2::A2()\n"; }
+    virtual ~A2() { std::cout << "~A2::A2()\n"; }
+    virtual void f() { std::cout << "A2::f()\n"; }
+    int a2;
+};
+
+class B : public A, public A2
+{
+public:
+    B() { std::cout << "B::B()\n"; }
+    virtual ~B() { std::cout << "~B::B()\n"; }
+    void f() override { std::cout << "B::f()\n"; }
+    int b;
+};
+
+struct NoSensePlaceHolder {};
+constexpr static NoSensePlaceHolder NoSenseHolder{};
+
+class Buffer
+{
+public:
+    explicit Buffer(NoSensePlaceHolder holder) : m_size(0), m_mem_ptr(nullptr) { std::cout << "Buffer(NoSensePlaceHolder holder)\n";  }
+    virtual ~Buffer() { std::cout << "~Buffer()\n"; }
+    
+    int m_size;
+    char* m_mem_ptr;
+};
+using BufferPtr = std::shared_ptr<Buffer>;
+
+
+template <typename ObjType>
+class ObjBuffer : public Buffer
+{
+public:
+    ObjBuffer() : Buffer(NoSenseHolder) { 
+        std::cout << "ObjBuffer()\n";
+        m_mem_ptr = reinterpret_cast<char*>(new ObjType());
+    }
+    
+    explicit ObjBuffer(const std::shared_ptr<ObjType>& ref) : Buffer(NoSenseHolder) {
+        std::cout << "ObjBuffer(const std::shared_ptr<ObjType>& ref)\n";
+        m_obj_ptr_ref = ref;
+        m_mem_ptr = reinterpret_cast<char*>(ref.get());
+    }
+    
+    virtual ~ObjBuffer() { std::cout << "~ObjBuffer()\n"; }
+    
+    ObjType* Cast() { return reinterpret_cast<ObjType*>(m_mem_ptr); }
+
+protected:
+    std::shared_ptr<ObjType> m_obj_ptr_ref;
+    
+};
+
+// B -> A, A2
+// ObjBuffer -> Buffer
+int main()
+{
+    auto bPtr = std::make_shared<B>();
+    std::cout << "bPtr: " << bPtr.get() << std::endl;
+    bPtr->f();
+    
+    // 类型转换 B --> ObjBuffer<B> --> Buffer
+    BufferPtr buff(new ObjBuffer<B>(bPtr));
+    
+    // 类型转换 Buffer --> ObjBuffer<>
+    
+    // dynamic_cast
+    //auto objbuff = dynamic_cast<ObjBuffer<A>*>(buff.get());     // error, type Buffer != ObjBuffer<A>  
+    //auto objbuff = dynamic_cast<ObjBuffer<A2>*>(buff.get());    // error, type Buffer != ObjBuffer<A2>
+    //auto objbuff = dynamic_cast<ObjBuffer<B>*>(buff.get());     // ok, type Buffer = ObjBuffer<B>
+    
+    // static_cast
+    auto objbuff = static_cast<ObjBuffer<A>*>(buff.get());     // ok
+    //auto objbuff = static_cast<ObjBuffer<A2>*>(buff.get());    // ok
+    //auto objbuff = static_cast<ObjBuffer<B>*>(buff.get());     // ok
+    
+    // reinterpret_cast
+    //auto objbuff = reinterpret_cast<ObjBuffer<A>*>(buff.get());   // 不安全
+    //auto objbuff = reinterpret_cast<ObjBuffer<A2>*>(buff.get());  // 不安全
+    //auto objbuff = reinterpret_cast<ObjBuffer<B>*>(buff.get());   // 不安全
+    
+    // c convert
+    //auto objbuff = (ObjBuffer<A>*)(buff.get());    // ok
+    //auto objbuff = (ObjBuffer<A2>*)(buff.get());   // ok
+    //auto objbuff = (ObjBuffer<B>*)(buff.get());    // ok
+    
+  
+    if (!objbuff) {
+        std::cout << "objbuff is nullptr\n";
+        return 1;
+    }
+    
+    // 类型转换 ObjBuffer<> --> B
+    auto origobj = objbuff->Cast();
+    std::cout << "origobj: " << origobj << std::endl;
+    origobj->f();
+    
+}
+```
+
+
+# 虚继承
 
 C++指出，当derived class对象经由一个base class指针被删除，而该base class带着一个non-virtual析构函数，其结果未定义 —— 实际执行时通常发生的是，对象的derived成分没被销毁。于是造成一个诡异的“局部销毁”对象，从而导致资源泄露。
 
@@ -908,7 +1272,7 @@ int main()
 
 The function template `bind` generates a forwarding call wrapper for `f`. Calling this wrapper is equivalent to invoking `f` with some of its arguments bound to args.
 
-* `f`	-	[Callable object(https://en.cppreference.com/w/cpp/named_req/Callable) (`function object`, `pointer to function`, `reference to function`, `pointer to member function`, or `pointer to data member`) that will be bound to some arguments
+* `f`	-	[Callable object](https://en.cppreference.com/w/cpp/named_req/Callable) (`function object`, `pointer to function`, `reference to function`, `pointer to member function`, or `pointer to data member`) that will be bound to some arguments
 * `args`	-	list of arguments to bind, with the unbound arguments replaced by the placeholders `_1`, `_2`, `_3`... of namespace `std::placeholders`
 * As described in `Callable`, when invoking a `pointer to non-static member function` or `pointer to non-static data member`, **the first argument has to be a reference or pointer (including, possibly, smart pointer such as std::shared_ptr and std::unique_ptr) to an object** whose member will be accessed.
 * The arguments to bind are **copied or moved, and are never passed by reference unless wrapped in `std::ref` or `std::cref`**.
@@ -992,7 +1356,7 @@ use smart pointers to call members of the referenced objects:
 
 * https://en.cppreference.com/w/cpp/utility/functional/bind
 
-## override specifier
+## override specifier (覆盖)
 
 Specifies that a virtual function overrides another virtual function.
 
@@ -1351,9 +1715,65 @@ int main()
 
 ```
 
+## maybe_unused
+
+``` cpp
+#include <cassert>
+ 
+[[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                        [[maybe_unused]] bool thing2)
+{
+   [[maybe_unused]] bool b = thing1 && thing2;
+   assert(b); // in release mode, assert is compiled out, and b is unused
+              // no warning because it is declared [[maybe_unused]]
+} // parameters thing1 and thing2 are not used, no warning
+ 
+int main() {;}
+```
+
+* https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 # C++20
 
-TODO
+## std::source_location
+
+The `source_location` class represents certain information about the source code, such as file names, line numbers, and function names. Previously, functions that desire to obtain this information about the call site (for logging, testing, or debugging purposes) must use macros so that predefined macros like `__LINE__` and` __FILE__` are expanded in the context of the caller. The source_location class provides a better alternative.
+
+gcc 11.1.0
+
+``` cpp
+#include <iostream>
+#include <string_view>
+#include <source_location>
+ 
+void log(const std::string_view message,
+         const std::source_location location = 
+               std::source_location::current())
+{
+    std::cout << "file: "
+              << location.file_name() << "("
+              << location.line() << ":"
+              << location.column() << ") `"
+              << location.function_name() << "`: "
+              << message << '\n';
+}
+ 
+template <typename T> void fun(T x)
+{
+    log(x);
+}
+ 
+int main(int, char*[])
+{
+    log("Hello world!");
+    fun("Hello C++20!");
+}
+/*
+file: prog.cc(24:8) `int main(int, char**)`: Hello world!
+file: prog.cc(19:8) `void fun(T) [with T = const char*]`: Hello C++20!
+*/
+```
+
+* https://en.cppreference.com/w/cpp/utility/source_location
 
 
 # Clang-Format Style Options
