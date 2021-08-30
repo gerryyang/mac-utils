@@ -839,7 +839,7 @@ Host github.com
 | fix/fixes/fixed #issue | | 修复issue
 | resolve/resolves/resolved | | 解决issue
 
-# Issue规范
+# Issue 规范
 
 * Duplication Issue
 
@@ -869,6 +869,37 @@ Issue的标题尽量精简易懂。
 
 针对bug的Issue，提供问题可复现的步骤
 
+# Commit 规范
+
+commit消息结构：
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+允许的提交类型type：
+
+```
+feat -> feature
+fix -> bug fix
+docs -> documentation
+style -> formatting, lint stuff
+refactor -> code restructure without changing exterrnal behavior
+test -> adding missing tests
+chore -> maintenance
+init -> initial commit
+rearrange -> files moved, added, deleted etc
+update -> update code (versions, library compatibility)
+```
+
+refer:
+
+* [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+* [Git Commit Style Guide](https://gist.github.com/ericavonb/3c79e5035567c8ef3267)
 
 # Merge Request流程
 

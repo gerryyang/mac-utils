@@ -27,6 +27,14 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 
 * [What every C++ programmer should know, The hard part](http://web.archive.org/web/20131210001207/http://thomas-sanchez.net/computer-sciences/2011/08/15/what-every-c-programmer-should-know-the-hard-part/)
 * [Stacktrace from exception](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2370r0.html)
+* https://stackoverflow.com/questions/2354784/attribute-formatprintf-1-2-for-msvc
+* https://yun.weicheng.men/Book/C%2B%2B%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E6%8C%87%E5%8D%97.pdf
+
+* https://en.cppreference.com/w/cpp/language/initialization
+
+# Argument-dependent lookup
+
+* https://en.cppreference.com/w/cpp/language/adl
 
 # va_list
 
@@ -1598,6 +1606,54 @@ int main()
 ```
 
 * https://stackoverflow.com/questions/25732386/what-is-stddecay-and-when-it-should-be-used
+
+## std::abort
+
+Causes abnormal program termination unless `SIGABRT` is being caught by a signal handler passed to `std::signal` and the handler does not return.
+
+``` cpp
+#include <csignal>
+#include <iostream>
+#include <cstdlib>
+ 
+class Tester {
+public:
+    Tester()  { std::cout << "Tester ctor\n"; }
+    ~Tester() { std::cout << "Tester dtor\n"; }
+};
+ 
+Tester static_tester; // Destructor not called
+ 
+void signal_handler(int signal) 
+{
+    if (signal == SIGABRT) {
+        std::cerr << "SIGABRT received\n";
+    } else {
+        std::cerr << "Unexpected signal " << signal << " received\n";
+    }
+    std::_Exit(EXIT_FAILURE);
+}
+ 
+int main()
+{
+    Tester automatic_tester; // Destructor not called
+ 
+    // Setup handler
+    auto previous_handler = std::signal(SIGABRT, signal_handler);
+    if (previous_handler == SIG_ERR) {
+        std::cerr << "Setup failed\n";
+        return EXIT_FAILURE;
+    }
+ 
+    std::abort();  // Raise SIGABRT
+    std::cout << "This code is unreachable\n";
+}
+/*
+Tester ctor
+Tester ctor
+SIGABRT received
+*/
+```
 
 # C++14
 

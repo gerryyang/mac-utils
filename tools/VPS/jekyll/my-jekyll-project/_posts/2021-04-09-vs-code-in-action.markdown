@@ -9,11 +9,9 @@ categories: [VS Code,]
 {:toc}
 
 
-# VS Code in Action
-
 VS Code [下载地址](https://code.visualstudio.com/)，当前版本：1.55 版本，2021-04
 
-## Using C++ on Linux in VS Code
+# Using C++ on Linux in VS Code
 
 In this tutorial, you will configure Visual Studio Code to use the `GCC C++ compiler (g++)` and `GDB` debugger on Linux. GCC stands for GNU Compiler Collection; GDB is the GNU debugger.
 
@@ -21,10 +19,59 @@ In this tutorial, you will configure Visual Studio Code to use the `GCC C++ comp
 * https://code.visualstudio.com/docs/cpp/config-linux
 * https://gourav.io/blog/setup-vscode-to-run-debug-c-cpp-code
 
+# Debugging
+
+For debugging languages and runtimes (including `PHP`, `Ruby`, `Go`, `C#`, `Python`, `C++`, `PowerShell` and many others), look for **Debuggers extensions** in the VS Code Marketplace.
+
+To bring up the Run view, select the Run icon in the Activity Bar on the side of VS Code. You can also use the keyboard shortcut `⇧⌘D`. The Run view displays all information related to running and debugging and has a top bar with debugging commands and configuration settings.
+
+> 调试包含的主要部分：
+
+* Start debugging (Launch Program, Attach Program)
+* Debug actions
+    + Continue / Pause `F5`
+    + Step Over `F10`
+    + Step Into `F11`
+    + Step Out `⇧F11`
+    + Restart `⇧⌘F5`
+    + Stop `⇧F5`
+
+* Debug side bar
+* Debug console panel
+
+If running and debugging is not yet configured (no `launch.json` has been created), VS Code shows the Run start view.
+
+VS Code keeps debugging configuration information in a `launch.json` file located in a `.vscode` folder in your workspace (project root folder) or in your user settings or workspace settings.
+
+To create a `launch.json` file, click the create a launch.json file link in the Run start view.
+
+If you go back to the File Explorer view (`⇧⌘E`), you'll see that VS Code has created a `.vscode` folder and added the `launch.json` file to your workspace.
+
+> Launch versus Attach:
+
+In VS Code, there are two core debugging modes, `Launch` and `Attach`, which handle two different workflows and segments of developers. 
+
+VS Code debuggers typically support launching a program in debug mode or attaching to an already running program in debug mode. Depending on the request (attach or launch), different attributes are required, and VS Code's `launch.json` validation and suggestions should help with that.
+
+To add a new configuration to an existing `launch.json`, use one of the following techniques:
+
+* Use IntelliSense if your cursor is located inside the configurations array.
+* Press the `Add Configuration` button to invoke snippet IntelliSense at the start of the array.
+* Choose Add Configuration option in the Run menu.
+
+In order to start a debug session, first select the configuration named **Launch Program** using the **Configuration dropdown** in the Run view. Once you have your launch configuration set, start your debug session with F5.
+
+Alternatively you can run your configuration through the **Command Palette** (`⇧⌘P`), by filtering on **Debug: Select and Start Debugging** or typing `debug`, and selecting the configuration you want to debug.
+
+As soon as a debugging session starts, the **DEBUG CONSOLE** panel is displayed and shows debugging output, and the Status Bar changes color (**orange** for default color themes):
+
+> Breakpoints:
+
+Breakpoints can be toggled by clicking on the **editor margin** or using **F9** on the current line. Finer breakpoint control (enable/disable/reapply) can be done in the Run view's BREAKPOINTS section.
 
 ## Debug C++ in Visual Studio Code
 
-To configure debug configuration, 2 files are required `launch.json` and `tasks.json` inside `.vscode` folder. VSCode can create and auto-configure these files if we try to debug for the first time. 
+To configure debug configuration, Two files are required `launch.json` and `tasks.json` inside `.vscode` folder. VSCode can create and auto-configure these files if we try to debug for the first time. 
 
 ### launch.json
 
@@ -58,6 +105,8 @@ To configure debug configuration, 2 files are required `launch.json` and `tasks.
     ]
 }
 ```
+
+More: https://code.visualstudio.com/docs/editor/debugging#_launchjson-attributes
 
 ### tasks.json
 
@@ -123,11 +172,11 @@ int main()
 * https://code.visualstudio.com/docs/cpp/cpp-debug
 * https://code.visualstudio.com/docs/editor/debugging
 
-## VS Code Remote 配置
+# VS Code Remote 配置
 
 在VS Code的应用商店搜索`Remote Development`插件并安装。这是一个插件包，会同时安装`Remote Container`，`Remote SSH`，`Remote-WSL`几个组件。安装后VS Code侧边栏会多出一个`Remote Development`的图标。
 
-### Remote-SSH
+## Remote-SSH
 
 * 在本地`~/.ssh/`目录执行`ssh-keygen -t rsa -f vscode_id_rsa`命令生成公私钥。
 * 将`公钥`复制到Remote机器的`~/.ssh/authorized_keys`文件中。
@@ -155,6 +204,7 @@ Host $ip_ssh_config
 
 * 链接成功后，可以执行`Open folder...`打开Remote机器的Project查看和编辑代码，同时，可以打开`Remote-SSH`集成的`Terminal`查看和执行Remote服务器的相关操作。
 
+# Shortcuts
 ## 通用快捷键（macOS）
 
 * `shift + command + E`: 文件浏览（`⇧⌘E`）
@@ -166,6 +216,8 @@ Host $ip_ssh_config
 * `shift + command + X`: 在Marketplace搜索扩展（`⇧⌘X`）
 * `control + ~`: 打开terminal
 * `option`: 多行编辑
+* `shift + command + D`: 打开Debugging的Run view（`⇧⌘D`）
+  
 
 ## 代码快捷键
 
@@ -175,21 +227,22 @@ Host $ip_ssh_config
 	+ 查找文件，显示最近打开的文件
 	+ 当前文件行数（`:行号`）或函数（`@函数名`）跳转。其中，函数跳转等价于：`shift + command + o`
 
-## 常用配置
 
-### 标题显示完整的文件路径名
+# 常用配置
+
+## 标题显示完整的文件路径名
 
 ``` json
 "window.title": "${dirty}${activeEditorLong}${separator}${rootName}${separator}${appName}"
 ```
 
-### 自动删除文件行尾空格
+## 自动删除文件行尾空格
 
 ``` json
 "files.trimTrailingWhitespace": true
 ```
 
-### 在explorer中不必要的文件
+## 在explorer中不必要的文件
 
 ``` json
 "files.exclude": {
@@ -198,31 +251,31 @@ Host $ip_ssh_config
 ```
 
 
-## 其他插件
+# 常用插件
 
-### Vim
+## Vim
 
 * 提供Vim快捷键操作
 
-### Terminal
+## Terminal
 
 * 在编辑器中提供终端操作
 
-### TabNine
+## TabNine
 
 * 智能的代码自动补全工具
 
-### Kite Autocomplete
+## Kite Autocomplete
 
 * Kite works for all major programming languages: Python, Java, Go, PHP, C/C#/C++, Javascript, HTML/CSS, Typescript, React, Ruby, Scala, Kotlin, Bash, Vue and React.
 
-### Bracket Pair Colorizer2
+## Bracket Pair Colorizer2
 
 * 括号通过不同颜色区分，多层级括号便于区分
   
 > 注意：发现安装此插件后，输入汉字会卡顿，禁用后可恢复
 
-###  Indenticator
+##  Indenticator
 
 * 代码层级对齐
 
@@ -230,56 +283,56 @@ Host $ip_ssh_config
 
 * 分支管理，代码对比
 
-### Git Graph
+## Git Graph
 
 * View a Git Graph of your repository, and perform Git actions from the graph.
 
-### Git (Submodule) Assistant
+## Git (Submodule) Assistant
 
 * VS Code extension that detects common git (and submodule) issues and helps to solve them.
 
-### Git History
+## Git History
 
 * View git log, file history, compare branches or commits.
 
-### One Dark Pro
+## One Dark Pro
 
 * VS Code主题，方便阅读代码
 * 用法：`Code->Preferences->Color Theme`
 
-### Peacock
+## Peacock
 
 * 设置每个VS Code窗口边框的颜色，打开多个VS Code时，便于快速找到想要的哪个窗口
 * 用法：`>peacock …`
 
-### Markdown All in One
+## Markdown All in One
 
 * 提供Markdown文档的一些功能，比如自动生成/更新目录
 * 用法：`>markdown …`
 
-### Markdown Extended
+## Markdown Extended
 
 * Extended syntaxes to built-in markdown & What you see is what you get exporter.
 * Export to Self Contained HTML / PDF / PNG / JPEG
 
-### Edit csv
+## Edit csv
 
 * 阅读/编辑 csv 文件
 * 用法：`>edit as csv`
 
-### shellman
+## shellman
 
 * shell script snippet，提供bash常用模版
 
-### vscode-proto3
+## vscode-proto3
 
 Protobuf 3 support for Visual Studio Code
 
-### Clang-Format
+## Clang-Format
 
 Clang-Format is a tool to format C/C++/Java/JavaScript/Objective-C/Objective-C++/Protobuf code. It can be configured with a config file within the working folder or a parent folder. Configuration see: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
-### Switcher
+## Switcher
 
 Switch between related files (same name, different extensions) using keybindings, context menu or command palette. 
 
