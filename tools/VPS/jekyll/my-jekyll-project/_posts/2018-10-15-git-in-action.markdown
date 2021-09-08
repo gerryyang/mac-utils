@@ -286,6 +286,7 @@ git add *
 git status
 # 取消暂存
 git reset HEAD <fileName>
+git reset HEAD
 ```
 
 * 文件执行了`git add`操作，但想撤销对其的修改(index内回滚)
@@ -534,6 +535,13 @@ $ git push origin :master
 $ git push origin --delete master
 ```
 
+## git add
+
+* `git add -A` stages **all changes**
+* `git add .` stages new files and modifications, **without deletions** (on the current directory and its subdirectories).
+* `git add -u` stages modifications and deletions, **without new files**
+
+refer: https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
 
 ## 查看代码状态和历史提交信息
 
@@ -914,6 +922,8 @@ MR场景：MR提交者对项目`A`进行fork，生成自己的项目`B`。然后
 >    3.3 MR提交者，最后将自己项目`B`的`dev`分支merge到`master`分支，并解决可能产生的conflicts (此流程会保证MR提交者commit的记录在原始项目commit记录的上面)
 >    3.4 MR提交者，提交MR请求等待Owner审核
 > 4. MR审批者，执行Comment和Approve，`Create a merge commit`完成代码合入。
+
+
 ## MR发起者处理流程
 
 * Before you can sync your fork with an upstream repository, you must [configure a remote that points to the upstream repository](https://docs.github.com/en/github/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork) in Git.
@@ -948,23 +958,23 @@ git fetch upstream
 git merge upstream/master
 
 # 上述步骤也可以简化为git pull命令，拉取远程项目A代码并合并到本地master分支，
-git pull https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git master
+git pull upstream master
 
-# 如果有代码冲突，则需要先解决
+# 再切换到dev分支，执行rebase合并master代码，如果有代码冲突，则需要先解决
+git checkout dev
+git rebase master
 
-# 提交代码合并
+# 再切换到master分支，合并dev分支的代码
+git checkout master
+git merge dev
 
-# 最后将Merge的代码push到自己项目的远程分支
-```
-
-* 将本地分支的多次提交记录合并。比如，将最近7条记录合并，通过`-i`交互操作中将不需要的commit记录从`pick`改为`squash`。执行后通过`git log`可以看到最近的提交记录会合并成一条，然后再把本地提交强制push到自己的远程分支。
-
-```
-# 对本地多次commit记录进行合并，比如，前7条提交记录
+# 将本地master分支的多次commit提交记录合并，比如，合并前7条提交记录，通过`-i`交互操作中将不需要的commit记录从`pick`改为`squash`，保留第一条commit为pick
 git rebase -i HEAD~7
 
-# 强制提交到自己fork项目的远程分支  
-git push origin master -f    
+# 提交master修改到远端
+git push origin master
+
+# 最后提交MR请求
 ```
 
 * 创建`Merge Request`

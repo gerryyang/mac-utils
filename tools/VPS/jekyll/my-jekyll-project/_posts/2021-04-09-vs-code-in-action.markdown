@@ -338,6 +338,24 @@ Switch between related files (same name, different extensions) using keybindings
 
 `option+ o`: 实现`.h`和`.cc`之间的跳转。
 
+# 有趣的扩展
+
+## LeetCode 
+
+Solve LeetCode problems in VS Code.
+
+## 韭菜盒子
+
+查看股市。
+
+## 小霸王
+
+小霸王是一款基于vscode的nes游戏插件，能让你在紧张的开发之余在vscode里发松身心。通过劳逸结合，提升开发效率。
+
+## Rainbow Fart
+
+一个在你编程时疯狂语音夸你写得牛逼的扩展。
+
 # Q&A
 
 ## Paste Not Working
@@ -352,8 +370,7 @@ Switch between related files (same name, different extensions) using keybindings
 * https://code.visualstudio.com/docs/editor/codebasics
 
 
-
-  
+ 
 
 	
 	

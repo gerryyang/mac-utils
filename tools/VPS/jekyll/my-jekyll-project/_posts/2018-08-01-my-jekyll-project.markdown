@@ -179,6 +179,7 @@ More:
 
 | 工具 | 功能
 | -- | --
+| [Cleaner One](https://apps.apple.com/cn/app/apple-store/id1133028347) | 磁盘清理(免费) [refer: Mac 存储空间里面的“其他”怎么清理](https://zhuanlan.zhihu.com/p/349862578)
 | [Homebrew](https://brew.sh/) | 软件包管理，第二个AppStore
 | [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起，例如，`open xxx`打开一个目录或文件
 | [ITerm2](https://www.iterm2.com/) | 相比系统默认的`Terminal`提供了更多高级的功能
