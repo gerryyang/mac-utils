@@ -40,6 +40,17 @@ $kill -l
 
 How Linux programs call functions in the Linux kernel.
 
+使用nasm写汇编，手动构造ELF格式文件。不使用c库，系统调用使用syscall指令(x86-64)：
+
++ 入参：
+  * eax = 系统调用号，可以在 /usr/include/asm/unistd_64.h 文件中找到
+  * rdi, rsi, rdx, r10, r8, r9 分别为第 1 至 6 个参数
++ 出参：
+  * rax = 返回值（如果失败，返回 -errno）
+  * rcx, r11 被破坏（它们分别被 syscall 指令用来保存返回地址和 rflags）
+  * 其他寄存器的值保留
+
+
 * [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
 * [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
 

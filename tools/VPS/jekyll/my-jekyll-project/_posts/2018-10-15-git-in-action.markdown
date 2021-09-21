@@ -280,6 +280,12 @@ git checkout <fileName>
 git checkout .
 ```
 
+* 撤销`typechange`状态的文件  refer: [Git reset files with typechange status](https://stackoverflow.com/questions/24533390/git-reset-files-with-typechange-status/53126931)
+
+```
+git status --porcelain | awk '{if ($1=="T") print $2}' | xargs git checkout
+```
+
 * 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件(这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区)
 ``` bash
 git add *
