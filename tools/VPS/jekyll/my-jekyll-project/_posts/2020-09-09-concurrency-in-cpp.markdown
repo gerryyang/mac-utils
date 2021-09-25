@@ -8,6 +8,65 @@ categories: [C/C++, Concurrency]
 * Do not remove this line (it will not be displayed)
 {: toc}
 
+# 相关理论
+
+## 锁的代价
+
+当很多线程争抢同一把锁时，一些线程无法立刻获得锁，而必须睡眠直到某个线程退出临界区。这个争抢过程我们称之为`contention`。在多核机器上，当多个线程需要操作同一个资源却被一把锁挡住时，便无法充分发挥多个核心的并发能力。现代OS通过提供比锁更底层的同步原语，使得无竞争锁完全不需要系统调用，只是一两条`wait-free`，耗时`10-20ns`的原子操作，非常快。而锁一旦发生竞争，一些线程就要陷入睡眠，再次醒来触发了OS的调度代码，代价至少为`3-5us`。所以让锁尽量无竞争，让所有线程“一起飞”是需要高性能的server的永恒话题。
+
+在多线程场景中消除竞争的常见方案：
+
+* 如果临界区非常小，竞争又不是很激烈，优先选择使用mutex, 之后可以结合contention profiler来判断mutex是否成为瓶颈。
+* 需要有序执行，或者无法消除的激烈竞争但是可以通过批量执行来提高吞吐，可以选择使用 Message passing。
+
+多线程编程没有万能的模型，需要根据具体的场景，结合丰富的profliling工具，最终在复杂度和性能之间找到合适的平衡。特别指出一点，Linux中mutex无竞争的lock/unlock只有需要几条原子指令，在绝大多数场景下的开销都可以忽略不计.
+
+## fiber与coroutine的区别
+
+> TL;DR
+> fiber本质上是一个调度实体（实现方式：每个fiber拥有各自独有的运行时栈），在fiber上可以执行普通函数，或协程。
+> 
+> coroutie本质是一个函数（实现方式：C++20基于宏，大多数基于切换运行时栈），可能是stackful（需要切换栈）的，或者stackless（如C++20的Coroutines）。
+
+[fiber](https://en.wikipedia.org/wiki/Fiber_%28computer_science%29)是一种轻量的线程，也常被称为“纤程”、“绿色线程”等。其作为一个调度实体接收运行时的调度。为方便使用，我们也提供了用于fiber的Mutex、ConditionVariable、this_fiber::、fiber局部存储等基础设施以供使用。使用fiber编程时思想与使用pthread编程相同，均是使用传统的普通函数（这与下文中的coroutine形成对比）编写同步代码，并由运行时/操作系统负责在fiber/pthread阻塞时进行调度。
+
+> In computer science, a fiber is a particularly lightweight thread of execution.
+> 
+> Like threads, fibers share address space. However, fibers use cooperative multitasking while threads use preemptive multitasking. Threads often depend on the kernel's thread scheduler to preempt a busy thread and resume another thread; fibers yield themselves to run another fiber while executing.
+
+[coroutine](https://en.wikipedia.org/wiki/Coroutine)是一种可以被挂起、恢复（多进多出）的函数（“subroutine”）。其本身是一种被泛化了的函数。由于协程本质上依然是一个函数，因此其不涉及调度、锁、条件变量、局部存储等问题。
+
+> Coroutines are computer program components that generalize subroutines for non-preemptive multitasking, by allowing execution to be suspended and resumed. Coroutines are well-suited for implementing familiar program components such as cooperative tasks, exceptions, event loops, iterators, infinite lists and pipes.
+
+**coroutine可能存在的问题：**
+
+* 取决于协程库的实现，大多数协程库中单个协程阻塞会导致对应的pthread关联的所有的协程的运行被延迟，造成响应时间毛刺。（此问题可通过Hook得到优化？比如，libco提供的Hook能力）
+* 除asio外常见的支持用户态调度的RPC框架面对用户的最终形态均是单纯的栈切换而没有体现出协程自身独到的能力（多入多出等）
+* 协程的学习成本（区分stackful vs stackless，理解多入多出）对于业务开发的同学更高
+* 基于用户态栈切换实现的协程和C++20的协程作为完全不同的两种实现，易于混淆
+* 基于fiber的锁、条件变量、局部存储等为业务代码优化提供了更多的空间
+* fiber具有灵活的调度模型（N:1、M:N等。“协程”作为一个函数，本身不存在“调度”的概念。）
+* fiber可以和io、rpc等上层逻辑结合并提供更多的优化空间
+
+
+## Message passing (消息队列)
+
+在多核并发编程领域， [Message passing](https://en.wikipedia.org/wiki/Message_passing) 作为一种解决竞争的手段得到了比较广泛的应用，它按照业务依赖的资源将逻辑拆分成若干个独立actor，每个actor负责对应资源的维护工作，当一个流程需要修改某个资源的时候， 就转化为一个消息发送给对应actor，这个actor(通常在另外的上下文中)根据命令内容对这个资源进行相应的修改，之后可以选择唤醒调用者(同步)或者提交到下一个actor(异步)的方式进行后续处理。
+
+## 如何防止worker阻塞
+
+* 动态增加worker数。
+
+但实际未必如意，当大量的worker同时被阻塞时，它们很可能在等待同一个资源(比如同一把锁)，增加worker可能只是增加了更多的等待者。
+
+* 区分io线程和worker线程。
+
+worker线程调用用户逻辑，即使worker线程全部阻塞也不会影响io线程。但增加一层处理环节(io线程)并不能缓解拥塞，如果worker线程全部卡住，程序仍然会卡住，只是卡的地方从socket缓冲转移到了io线程和worker线程之间的消息队列。换句话说, 在worker卡住时，还在运行的io线程做的可能是无用功。另一个问题是每个请求都要从io线程跳转至worker线程，增加了一次上下文切换，在机器繁忙时，切换都有一定概率无法被及时调度，会导致更多的延时长尾。
+
+* 限制最大并发
+
+只要同时被处理的请求数低于worker数，自然可以规避掉"所有worker被阻塞"的情况。
+
 
 
 # C++ Memory Model
@@ -39,7 +98,111 @@ struct S {
 refer: https://en.cppreference.com/w/cpp/language/memory_model
 
 
-## 问题代码
+# ThreadSanitizerCppManual
+
+`ThreadSanitizer` (aka `TSan`) is **a data race detector for C/C++**. Data races are one of the most common and hardest to debug types of bugs in concurrent systems. A data race occurs when two threads access the same variable concurrently and at least one of the accesses is write. [C++11](https://en.wikipedia.org/wiki/C%2B%2B11) standard officially bans data races as **undefined behavior**.
+
+Here is an example of a data race that can lead to crashes and memory corruptions:
+
+``` cpp
+#include <pthread.h>
+#include <stdio.h>
+#include <string>
+#include <map>
+
+typedef std::map<std::string, std::string> map_t;
+
+void *threadfunc(void *p) {
+  map_t& m = *(map_t*)p;
+  m["foo"] = "bar";
+  return 0;
+}
+
+int main() {
+  map_t m;
+  pthread_t t;
+  pthread_create(&t, 0, threadfunc, &m);
+  printf("foo=%s\n", m["foo"].c_str());
+  pthread_join(t, 0);
+}
+```
+
+There are a lot of various ways to trigger a data race in C++, see [ThreadSanitizerPopularDataRaces](https://github.com/google/sanitizers/wiki/ThreadSanitizerPopularDataRaces), TSan detects all of them and more -- [ThreadSanitizerDetectableBugs](https://github.com/google/sanitizers/wiki/ThreadSanitizerDetectableBugs).
+
+ThreadSanitizer is part of `clang 3.2` and `gcc 4.8`. To build the freshest version see [ThreadSanitizerDevelopment](https://github.com/google/sanitizers/wiki/ThreadSanitizerDevelopment) page.
+
+
+## Usage
+
+Simply compile your program with `-fsanitize=thread` and link it with `-fsanitize=thread`. To get a reasonable performance add `-O2`. Use `-g` to get file names and line numbers in the warning messages.
+
+When you run the program, `TSan` will print a report if it finds a data race. Here is an example:
+
+``` cpp
+$ cat simple_race.cc
+#include <pthread.h>
+#include <stdio.h>
+
+int Global;
+
+void *Thread1(void *x) {
+  Global++;
+  return NULL;
+}
+
+void *Thread2(void *x) {
+  Global--;
+  return NULL;
+}
+
+int main() {
+  pthread_t t[2];
+  pthread_create(&t[0], NULL, Thread1, NULL);
+  pthread_create(&t[1], NULL, Thread2, NULL);
+  pthread_join(t[0], NULL);
+  pthread_join(t[1], NULL);
+}
+```
+
+```
+$ clang++ simple_race.cc -fsanitize=thread -fPIE -pie -g
+$ ./a.out 
+==================
+WARNING: ThreadSanitizer: data race (pid=26327)
+  Write of size 4 at 0x7f89554701d0 by thread T1:
+    #0 Thread1(void*) simple_race.cc:8 (exe+0x000000006e66)
+
+  Previous write of size 4 at 0x7f89554701d0 by thread T2:
+    #0 Thread2(void*) simple_race.cc:13 (exe+0x000000006ed6)
+
+  Thread T1 (tid=26328, running) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000001108b)
+    #1 main simple_race.cc:19 (exe+0x000000006f39)
+
+  Thread T2 (tid=26329, running) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000001108b)
+    #1 main simple_race.cc:20 (exe+0x000000006f63)
+==================
+ThreadSanitizer: reported 1 warnings
+```
+
+Refer to [ThreadSanitizerReportFormat](https://github.com/google/sanitizers/wiki/ThreadSanitizerReportFormat) for explanation of reports format.
+
+There is a bunch of runtime and compiler flags to tune behavior of TSan -- see [ThreadSanitizerFlags](https://github.com/google/sanitizers/wiki/ThreadSanitizerFlags).
+
+
+refer: https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual
+
+# Contention Profiler (brpc)
+
+可以分析花在等待锁上的时间及发生等待的函数。
+
+brpc支持contention profiler，可以分析在等待锁上花费了多少时间。等待过程中线程是睡着的不会占用CPU，所以contention profiler中的时间并不是cpu时间，也不会出现在cpu profiler中。cpu profiler可以抓到特别繁忙的操作（花费了很多cpu），但耗时真正巨大的临界区往往不是那么繁忙，而无法被cpu profiler发现。**contention profiler和cpu profiler好似互补关系，前者分析等待时间（被动），后者分析忙碌时间。** 还有一类由用户基于condition或sleep发起的主动等待时间，无需分析。
+
+refer: https://github.com/apache/incubator-brpc/blob/master/docs/cn/contention_profiler.md
+
+
+# 问题代码
 
 非线程安全（race condition）：
 
@@ -123,7 +286,7 @@ int main(int argc, char**argv)
 }
 ```
 
-## Mutex
+# Mutex
 
 A mutex (**mut**ual **ex**lusion) allows us to encapsulate blocks of code that should only be executed in one thread at a time.
 
@@ -178,7 +341,7 @@ $ for i in {1..1000}; do ./a.out; done | sort | uniq -c
 */
 ```
 
-## Atomic
+# Atomic
 
 C++11 提供了一种更好的抽象方式解决这个问题，通过[std::atomic](https://en.cppreference.com/w/cpp/atomic/atomic)模版定义定义操作数为原子类型，从而保证在多线程情况下为原子操作。
 
@@ -208,7 +371,7 @@ int main()
 }
 ``` 
 
-## Async
+# Async
 
 The function template [async](https://en.cppreference.com/w/cpp/thread/async) runs the function `f` asynchronously (potentially in a separate thread which may be part of a thread pool) and returns a `std::future` that will eventually hold the result of that function call.
 
@@ -272,7 +435,7 @@ int main()
 }
 ```
 
-## Condition variables
+# Condition variables
 
 If we return to threads, it would be useful to be able to have one thread wait for another thread to finish processing something, essentially sending a signal between the threads. This can be done with mutexes, but it would be awkward. It can also be done using a global boolean variable called notified that is set to true when we want to send the signal. The other thread would then run a for loop that checks if notified is true and stops looping when that happens. Since setting notified to true is atomic and in this example we're only setting it once, we don't even need a mutex. However, on the receiving thread we are running a for loop at full speed, wasting a lot of CPU time. We could add a short sleep_for inside the for loop, making the CPU idle most of the time.
 
@@ -369,7 +532,7 @@ But wait, if `cond_var` can send a signal that will make the call `cond_var.wait
 
 This is a simplified description since we are also giving wait the object lock, which is associated with a mutex m. What happens is that when wait is called, it not only waits for a notification, but also for the mutex m to be unlocked. When this happens, it will acquire the lock itself. If cond_var has acquired a lock and wait is called again, it will be unlocked as long as it's waiting to acquire it again. This gives us some structure of mutual exclusion between the two threads.
 
-## Producer-consumer problem
+# Producer-consumer problem
 
 错误的例子：
 
@@ -412,7 +575,7 @@ int main() {
 ```
 
 
-## Refer
+# Refer
 
 * [Concurrency examples](https://github.com/uchicago-cs/cmsc12300/tree/master/examples/cpp/concurrency/simple) - Examples of concurrency in C++11 and other languages.
 * [C++ reference](https://en.cppreference.com/w/cpp)

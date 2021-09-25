@@ -340,7 +340,7 @@ int main()
 
 https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
 
-```
+``` cpp
 #ifdef DEBUG_THRU_UART0
 #   define DEBUG(...)  printString (__VA_ARGS__)
 #else
@@ -353,7 +353,7 @@ DEBUG(1,2,3); //calls printString(1,2,3) or dummyFunc() depending on
 
 `##__VA_ARGS__`的作用？
 
-```
+``` cpp
 #define FOO(...)       printf(__VA_ARGS__)
 #define BAR(fmt, ...)  printf(fmt, __VA_ARGS__)
 

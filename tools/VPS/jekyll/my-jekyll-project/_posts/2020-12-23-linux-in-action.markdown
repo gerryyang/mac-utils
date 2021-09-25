@@ -586,6 +586,22 @@ Non-authoritative answer:
 Authoritative answers can be found from:
 ```
 
+### nc
+
+```
+ncat [options] [hostname] [port]
+
+# test UDP port was open or not
+nc -vzu <host> <port>
+
+on server listen UDP port: `nc -ul 6111`
+on client: `nc -u <server> 6111`
+```
+
+https://serverfault.com/questions/416205/testing-udp-port-connectivity
+
+https://en.wikipedia.org/wiki/Netcat#Test_if_UDP_port_is_open:_simple_UDP_server_and_client
+
 # 磁盘IO
 
 ```

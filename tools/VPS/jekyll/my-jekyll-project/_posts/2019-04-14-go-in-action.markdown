@@ -540,6 +540,21 @@ TODO
 
 并发处理，基于CSP思想，采用goroutine和信道实现，共享变量
 
+
+# 模版生成代码（go generate / ast）
+
+通过`go generate`命令解析go的源代码，并生成新的代码文件。
+
+例子：
+
+* https://pkg.go.dev/golang.org/x/tools/cmd/stringer
+* https://github.com/mohuishou/gen-const-msg
+
+refer:
+
+* https://lailin.xyz/post/41140.html?f=tt
+* https://pkg.go.dev/go/ast
+
 # Others
 
 * [DigitalOcean的How to code in go系列](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
