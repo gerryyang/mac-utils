@@ -1,0 +1,74 @@
+---
+Language:        Cpp
+BasedOnStyle:  Google
+
+# 每行字符的限制，0表示没有限制
+ColumnLimit: 150
+
+# 不允许排序#include
+SortIncludes: false
+
+# 是否使用tab
+UseTab: Never
+# tab宽度
+TabWidth: 4
+# 缩进宽度
+IndentWidth: 4
+
+# 指针*在类型旁 int* a
+PointerAlignment: Left
+
+# x{ 1, 2, 3, 4 }; 而不是x{1, 2, 3, 4};
+# 来自src/pvpsvr/MapGrid.cpp:268格式
+Cpp11BracedListStyle: true
+
+# 在template<...>后换行
+AlwaysBreakTemplateDeclarations: true
+# clang-format ver12写法 Yes
+
+# 不将只有一行的函数合并到一行，保留大括号换行，空函数除外
+AllowShortFunctionsOnASingleLine: Empty
+
+# 超过行长度限制的函数参数会一行一个
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
+PenaltyBreakBeforeFirstCallParameter: 100
+
+# 在namespace结尾不注释名称
+FixNamespaceComments: false
+
+# 在大括号前换行: Attach(始终将大括号附加到周围的上下文), Linux(除函数、命名空间和类定义，与Attach类似), 
+# Mozilla(除枚举、函数、记录定义，与Attach类似), Stroustrup(除函数定义、catch、else，与Attach类似), 
+# Allman(总是在大括号前换行), GNU(总是在大括号前换行，并对于控制语句的大括号增加额外的缩进), WebKit(在函数前换行), Custom
+# 注：这里认为语句块也属于函数
+BreakBeforeBraces: Allman
+
+# don't indent public private
+AccessModifierOffset: -4
+
+# 不在注释后增加空格
+CommentPragmas:  '^[^ ]'
+
+SpacesInAngles: false
+
+# 对齐结尾注释
+AlignTrailingComments: false
+
+# 宏定义块
+MacroBlockBegin: "^EXPORT_CLASS_BEGIN|BEGIN_BIND_MSG_AGENT|BEGIN_BIND_MSG"
+MacroBlockEnd: "^EXPORT_CLASS_END|END_BIND_MSG_AGENT|END_BIND_MSG"
+
+# 是否对齐使用反斜杠换行的反斜杠 (保留JLib风格)
+AlignEscapedNewlines: DontAlign
+
+# template之后是否插入空格 (保留JLib风格)
+SpaceAfterTemplateKeyword: false
+
+# 继承列表的风格
+BreakInheritanceList: BeforeComma
+
+# 初始化列表的风格
+BreakConstructorInitializers: BeforeComma
+
