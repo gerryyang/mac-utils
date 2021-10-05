@@ -6,14 +6,13 @@
 
 namespace API_B
 {
+int setb();
+int readb();
 
-	int setb();
-	int readb();
+// namespace used to prevent multiple definition of `samefunc_nonstatic()'
+int samefunc_nonstatic();
 
-	// namespace used to prevent multiple definition of `samefunc_nonstatic()'
-	int samefunc_nonstatic();
-
-	//static int samefunc_static();
+//static int samefunc_static();
 
 }
 

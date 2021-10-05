@@ -209,15 +209,15 @@ void print_plt_entries(const char *filename)
 Supported Platforms
 -------------------
 
-| Platform | source file | status |
-| -------- | ----------- | ------ |
-| Linux i386 and x86_64 | plthook_elf.c | tested on [travis-ci][] |
-| Linux arm, aarch64, powerpc and powerpc64le | plthook_elf.c | tested on [QENU][] on [travis-ci][] |
-| Windows 32-bit and x64 (MSVC, Mingw32 and Cygwin) | plthook_win32.c | tested on [travis-ci][] |
-| macOS | plthook_osx.c | tested on [travis-ci][] |
-| Solaris x86_64 | plthook_elf.c | perhaps(*1) |
-| FreeBSD i386 and x86_64 except i386 program on x86_64 OS | plthook_elf.c | perhaps(*1) |
-| Android(*2) | plthook_elf.c | perhaps(*3) |
+| Platform                                                 | source file     | status                              |
+| -------------------------------------------------------- | --------------- | ----------------------------------- |
+| Linux i386 and x86_64                                    | plthook_elf.c   | tested on [travis-ci][]             |
+| Linux arm, aarch64, powerpc and powerpc64le              | plthook_elf.c   | tested on [QENU][] on [travis-ci][] |
+| Windows 32-bit and x64 (MSVC, Mingw32 and Cygwin)        | plthook_win32.c | tested on [travis-ci][]             |
+| macOS                                                    | plthook_osx.c   | tested on [travis-ci][]             |
+| Solaris x86_64                                           | plthook_elf.c   | perhaps(*1)                         |
+| FreeBSD i386 and x86_64 except i386 program on x86_64 OS | plthook_elf.c   | perhaps(*1)                         |
+| Android(*2)                                              | plthook_elf.c   | perhaps(*3)                         |
 
 *1 Tested on a local VM before.  
 *2 Contributed by [Daniel Deptford][].  

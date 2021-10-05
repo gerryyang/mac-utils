@@ -6,11 +6,10 @@
 
 int main()
 {
-	showlist();
-	showlist(1, "x", int);
+    showlist();
+    showlist(1, "x", int);
 
-	f(gerry);
+    f(gerry);
 
-	return 0;
+    return 0;
 }
-

@@ -3,13 +3,14 @@
 #include <stdlib.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void say_hello_hook();
+    void say_hello_hook();
 
-void* malloc_hook(size_t size);
+    void* malloc_hook(size_t size);
 
 #ifdef __cplusplus
-};/* extern "C" */
+}; /* extern "C" */
 #endif

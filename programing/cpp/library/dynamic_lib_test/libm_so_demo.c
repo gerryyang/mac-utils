@@ -9,23 +9,26 @@ If this program were in a file named "foo.c", you would build the program with t
 #include <stdio.h>
 #include <dlfcn.h>
 
-int main(int argc, char **argv) {
-	void *handle;
-	double (*cosine)(double);
-	char *error;
+int main(int argc, char **argv)
+{
+    void *handle;
+    double (*cosine)(double);
+    char *error;
 
-	handle = dlopen ("/lib/libm.so.6", RTLD_LAZY);
-	if (!handle) {
-		fputs (dlerror(), stderr);
-		exit(1);
-	}
+    handle = dlopen("/lib/libm.so.6", RTLD_LAZY);
+    if (!handle)
+    {
+        fputs(dlerror(), stderr);
+        exit(1);
+    }
 
-	cosine = dlsym(handle, "cos");
-	if ((error = dlerror()) != NULL)  {
-		fputs(error, stderr);
-		exit(1);
-	}
+    cosine = dlsym(handle, "cos");
+    if ((error = dlerror()) != NULL)
+    {
+        fputs(error, stderr);
+        exit(1);
+    }
 
-	printf ("%f\n", (*cosine)(2.0));
-	dlclose(handle);
+    printf("%f\n", (*cosine)(2.0));
+    dlclose(handle);
 }

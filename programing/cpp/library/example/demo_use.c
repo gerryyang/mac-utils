@@ -2,7 +2,8 @@
 
 #include "libhello.h"
 
-int main(void) {
-	hello();
-	return 0;
+int main(void)
+{
+    hello();
+    return 0;
 }

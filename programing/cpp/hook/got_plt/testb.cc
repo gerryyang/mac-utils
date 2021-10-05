@@ -3,11 +3,11 @@
 
 void Foo::say_world()
 {
-	printf("Foo::say_world\n");
+    printf("Foo::say_world\n");
 }
 
 void say_world()
 {
-	Foo foo;
-	foo.say_world();
+    Foo foo;
+    foo.say_world();
 }

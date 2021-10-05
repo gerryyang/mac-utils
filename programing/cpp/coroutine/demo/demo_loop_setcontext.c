@@ -27,76 +27,75 @@ volatile int i_from_iterator;
  * the value and calls swapcontext to swap back into the function. When the end
  * of the loop is reached, the function exits, and execution switches to the
  * context pointed to by main_context1. */
-void loop(
-		ucontext_t *loop_context,
-		ucontext_t *other_context,
-		int *i_from_iterator)
+void loop(ucontext_t *loop_context, ucontext_t *other_context, int *i_from_iterator)
 {
-	printf("---4\n");
-	int i;
+    printf("---4\n");
+    int i;
 
-	for (i=0; i < 10; ++i) {
-		/* Write the loop counter into the iterator return location. */
-		*i_from_iterator = i;
+    for (i = 0; i < 10; ++i)
+    {
+        /* Write the loop counter into the iterator return location. */
+        *i_from_iterator = i;
 
-		/* Save the loop context (this point in the code) into ''loop_context'',
-		 * and switch to other_context. */
-		swapcontext(loop_context, other_context);
-	}
+        /* Save the loop context (this point in the code) into ''loop_context'',
+         * and switch to other_context. */
+        swapcontext(loop_context, other_context);
+    }
 
-	/* The function falls through to the calling context with an implicit
-	 * ''setcontext(&loop_context->uc_link);'' */
-} 
+    /* The function falls through to the calling context with an implicit
+     * ''setcontext(&loop_context->uc_link);'' */
+}
 
 int main(void)
 {
-	/* The stack for the iterator function. */
-	//char iterator_stack[SIGSTKSZ];
-	char iterator_stack[1024];
+    /* The stack for the iterator function. */
+    //char iterator_stack[SIGSTKSZ];
+    char iterator_stack[1024];
 
-	/* Flag indicating that the iterator has completed. */
-	volatile int iterator_finished;
+    /* Flag indicating that the iterator has completed. */
+    volatile int iterator_finished;
 
-	getcontext(&loop_context);
-	/* Initialise the iterator context. uc_link points to main_context1, the
-	 * point to return to when the iterator finishes. */
-	loop_context.uc_link          = &main_context1;
-	loop_context.uc_stack.ss_sp   = iterator_stack;
-	loop_context.uc_stack.ss_size = sizeof(iterator_stack);
+    getcontext(&loop_context);
+    /* Initialise the iterator context. uc_link points to main_context1, the
+     * point to return to when the iterator finishes. */
+    loop_context.uc_link = &main_context1;
+    loop_context.uc_stack.ss_sp = iterator_stack;
+    loop_context.uc_stack.ss_size = sizeof(iterator_stack);
 
-	/* Fill in loop_context so that it makes swapcontext start loop. The
-	 * (void (*)(void)) typecast is to avoid a compiler warning but it is
-	 * not relevant to the behaviour of the function. */
-	makecontext(&loop_context, (void (*)(void)) loop,
-			3, &loop_context, &main_context2, &i_from_iterator);
+    /* Fill in loop_context so that it makes swapcontext start loop. The
+     * (void (*)(void)) typecast is to avoid a compiler warning but it is
+     * not relevant to the behaviour of the function. */
+    makecontext(&loop_context, (void (*)(void))loop, 3, &loop_context, &main_context2, &i_from_iterator);
 
-	/* Clear the finished flag. */      
-	iterator_finished = 0;
+    /* Clear the finished flag. */
+    iterator_finished = 0;
 
-	printf("---1\n");
-	/* Save the current context into main_context1. When loop is finished,
-	 * control flow will return to this point. */
-	getcontext(&main_context1);
-	printf("---2\n");
+    printf("---1\n");
+    /* Save the current context into main_context1. When loop is finished,
+     * control flow will return to this point. */
+    getcontext(&main_context1);
+    printf("---2\n");
 
-	if (!iterator_finished) {
-		/* Set iterator_finished so that when the previous getcontext is
-		 * returned to via uc_link, the above if condition is false and the
-		 * iterator is not restarted. */
-		iterator_finished = 1;
-		printf("---3\n");
+    if (!iterator_finished)
+    {
+        /* Set iterator_finished so that when the previous getcontext is
+         * returned to via uc_link, the above if condition is false and the
+         * iterator is not restarted. */
+        iterator_finished = 1;
+        printf("---3\n");
 
-		while (1) {
-			/* Save this point into main_context2 and switch into the iterator.
-			 * The first call will begin loop.  Subsequent calls will switch to
-			 * the swapcontext in loop. */
-			swapcontext(&main_context2, &loop_context);
-			printf("---5\n");
-			printf("i_from_iterator[%d]\n", i_from_iterator);
-		}
-	}
+        while (1)
+        {
+            /* Save this point into main_context2 and switch into the iterator.
+             * The first call will begin loop.  Subsequent calls will switch to
+             * the swapcontext in loop. */
+            swapcontext(&main_context2, &loop_context);
+            printf("---5\n");
+            printf("i_from_iterator[%d]\n", i_from_iterator);
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -130,5 +129,3 @@ i_from_iterator[8]
 i_from_iterator[9]
 ---2
 */
-
-
