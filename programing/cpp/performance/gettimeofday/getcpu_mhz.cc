@@ -15,20 +15,20 @@ unsigned long long rdtsc2(void)
 }
 
 #ifdef __x86_64__
-#define RDTSC() \
-    ( \
-        { \
-            unsigned int tickl, tickh; \
+#define RDTSC()                                                       \
+    (                                                                 \
+        {                                                             \
+            unsigned int tickl, tickh;                                \
             __asm__ __volatile__("rdtsc" : "=a"(tickl), "=d"(tickh)); \
-            ((unsigned long long)tickh << 32) | tickl; \
+            ((unsigned long long)tickh << 32) | tickl;                \
         })
 #else
-#define RDTSC() \
-    ( \
-        { \
-            unsigned long long tick; \
+#define RDTSC()                                         \
+    (                                                   \
+        {                                               \
+            unsigned long long tick;                    \
             __asm__ __votatile__("rdtsc" : "=A"(tick)); \
-            tick; \
+            tick;                                       \
         })
 #endif
 
