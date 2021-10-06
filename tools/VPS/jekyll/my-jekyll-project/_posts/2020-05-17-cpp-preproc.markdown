@@ -8,26 +8,100 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 原理
+# 最佳实践
 
 * 预处理阶段编程的操作目标是**源码**，用各种指令控制预处理器，把源码改造成另一种形式，就像是捏橡皮泥一样。
 * **包含文件**`#include`，作用是包含文件，注意可以包含**任何文件**。
 * 在书写头文件时，通常使用`Include Guard`机制，即`#ifndef/#define/#endif`，来保证当前的头文件只会被包含一次。
 * **宏定义**`#define/#undef`，用来定义一个源码级别的**文本替换**。使用宏的时候一定要谨慎，时刻记着以简化代码、清晰易懂为目标，不要“滥用”，避免导致源码混乱不堪，降低可读性。
   + 因为宏的展开、替换发生在预处理阶段，不涉及函数调用、参数传递、指针寻址，没有任何运行期的效率损失，所以对于一些调用频繁的小代码片段来说，用宏来封装的效果比 `inline` 关键字要更好。
-  + 宏是没有作用域概念的，永远是全局生效。所以，对于一些用来简化代码、起临时作用的宏，最好是用完后尽快用`#undef`取消定义，避免冲突的风险。
+  + 宏是没有作用域概念的，永远是全局生效。所以，对于一些用来简化代码、起临时作用的宏，最好是用完后尽快用`#undef`取消定义，避免冲突的风险。例如：使用宏定义的类型作用域是“全局的”，而使用`using`声明的类型是有作用域限制的。
   + 可以适当使用宏来定义代码中的常量，消除**魔术数字**（magic number）。
   + 用宏来代替直接定义名字空间。
+
+``` cpp
+// 通过 #define 指令定义一个宏：#define NAME_OF_MACRO value
+#define BUFFER_SIZE 1024
+auto foo = (char *)malloc(BUFFER_SIZE);
+```
+
 * **条件编译**`#if/#else/#endif`。可以在预处理阶段实现分支处理，通过判断宏的数值来产生不同的源码，改变源文件的形态，这就是**条件编译**。
   + 通常编译环境都会有一些预定义宏，比如 CPU 支持的特殊指令集、操作系统 / 编译器 / 程序库的版本、语言特性等，使用它们就可以早于运行阶段，提前在预处理阶段做出各种优化，产生出最适合当前系统的源码。
   + 与优化更密切相关的底层系统信息在 C++ 语言标准里没有定义，但编译器通常都会提供，比如 GCC 可以使用一条简单的命令查看`g++ -E -dM - < /dev/null`。基于它们，你就可以更精细地根据具体的语言、编译器、系统特性来改变源码，有，就用新特性；没有，就采用变通实现。
+
+``` cpp
+// Here, expression is an expression of integer type (can be integers, characters, arithmetic expression, macros and so on).
+#if expression
+   // conditional codes
+#endif
+
+#if expression
+   // conditional codes if expression is non-zero
+#else
+   // conditional if expression is 0
+#endif
+
+#if expression
+    // conditional codes if expression is non-zero
+#elif expression1
+    // conditional codes if expression is non-zero
+#elif expression2
+    // conditional codes if expression is non-zero
+#else
+    // conditional if all expressions are 0
+#endif
+
+// Here, the conditional codes are included in the program only if MACRO is defined.
+#ifdef MACRO     
+   // conditional codes
+#endif
+
+// The special operator #defined is used to test whether a certain macro is defined or not. It's often used with #if directive.
+#if defined BUFFER_SIZE && BUFFER_SIZE >= 2048
+// code
+
+// https://en.cppreference.com/w/cpp/error/assert
+#ifdef NDEBUG
+#  define assert(condition) ((void)0)
+#else
+#  define assert(condition) /*implementation defined*/
+#endif
+```
+
+* Variadic Macros (可变参宏)
+
+https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+
+
+``` cpp
+#ifdef DEBUG_THRU_UART0
+#   define DEBUG(...)  printString (__VA_ARGS__)
+#else
+void dummyFunc(void);
+#   define DEBUG(...)  dummyFunc()   
+#endif
+DEBUG(1,2,3); //calls printString(1,2,3) or dummyFunc() depending on
+              //-DDEBUG_THRU_UART0 compiler define was given or not, when compiling.
+```
+
+`##__VA_ARGS__`的作用？
+
+``` cpp
+#define FOO(...)       printf(__VA_ARGS__)
+#define BAR(fmt, ...)  printf(fmt, __VA_ARGS__)
+
+FOO("this works fine");
+BAR("this breaks!");
+```
+
+refer: https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
 
 * C++17引入了一个新的预处理工具`__has_include`，可以检查文件是否存在，注意不是包含。
 * 有的编译器支持指令`#pragma once`，也可以实现`Include Guard`，但是它是非标准的，不推荐使用。
 * C++20新增了模块`module`特性，可以实现一次性加载，但`Include Guard`在短期内还是无可替代的。
 * 使用`boost.preprocessor`库可以实现复杂的预处理元编程，它提供分支，迭代等基本语言结构，甚至还有数组，链表等容器。
 
-
+# 用法示例
 
 ``` cpp
 #ifndef _XXX_H_INCLUDED_
@@ -93,6 +167,10 @@ END_NAMESPACE(my_own)
 #   error "c++ is too old"               // 太低则预处理报错
 #endif  // __cplusplus >= 201402         // 预处理语句结束
 
+// ## 字符串拼接
+
+#define print(x) print ## x
+print(f)("hello\n"); // printf("hello\n");
 
 ```
 

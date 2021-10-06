@@ -8,14 +8,14 @@
 
 int main(int argc, const char *argv[])
 {
-	ucontext_t context;
+    ucontext_t context;
 
-	getcontext(&context);
-	puts("Hello world");
-	sleep(1);
-	setcontext(&context);
+    getcontext(&context);
+    puts("Hello world");
+    sleep(1);
+    setcontext(&context);
 
-	return 0;
+    return 0;
 }
 /*
    gcc -o demo_loop_simple demo_loop_simple.c -D_XOPEN_SOURCE -Wno-deprecated-declarations

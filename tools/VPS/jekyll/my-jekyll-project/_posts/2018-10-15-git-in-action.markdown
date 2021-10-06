@@ -202,6 +202,8 @@ $ cd your_project
 
 ## 忽略文件
 
+A [gitignore](https://git-scm.com/docs/gitignore) file specifies intentionally untracked files that Git should ignore. Files already tracked by Git are not affected.
+
 在实际的项目中，比如，临时文件，编译过程文件(例如C/C++编译过程中的`.o`文件)等，是不需要进行代码管理的(即不用提交)。可以在仓库的根目录下创建一个名为`.gitignore`的文件，并配置当前项目需要忽略的文件列表。
 
 ``` bash
@@ -222,7 +224,6 @@ git rm --cached *.log
 
 
 ![gitignore](/assets/images/201810/gitignore.jpg)
-
 
 
 # Git的协作模式
@@ -268,10 +269,21 @@ git rm --cached *.log
 
 在未进行`git push`前的所有操作，都是在本地仓库中执行的。将**本地仓库的代码还原操作**叫做**撤销**。
 
+* 生成了新的local untracked files
+```
+git clean -fd
+```
+
 * 文件被修改了，但未执行git add操作(working tree内撤销)
 ``` bash
 git checkout <fileName>
 git checkout .
+```
+
+* 撤销`typechange`状态的文件  refer: [Git reset files with typechange status](https://stackoverflow.com/questions/24533390/git-reset-files-with-typechange-status/53126931)
+
+```
+git status --porcelain | awk '{if ($1=="T") print $2}' | xargs git checkout
 ```
 
 * 同时对多个文件执行了`git add`操作，但本次只想提交其中一部分文件(这种情况是把一个文件修改了add到暂存区了但又想重新放回工作区)
@@ -280,6 +292,7 @@ git add *
 git status
 # 取消暂存
 git reset HEAD <fileName>
+git reset HEAD
 ```
 
 * 文件执行了`git add`操作，但想撤销对其的修改(index内回滚)
@@ -528,6 +541,13 @@ $ git push origin :master
 $ git push origin --delete master
 ```
 
+## git add
+
+* `git add -A` stages **all changes**
+* `git add .` stages new files and modifications, **without deletions** (on the current directory and its subdirectories).
+* `git add -u` stages modifications and deletions, **without new files**
+
+refer: https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
 
 ## 查看代码状态和历史提交信息
 
@@ -807,6 +827,188 @@ Host github.com
 
 [Connecting to GitHub with SSH]: https://help.github.com/articles/connecting-to-github-with-ssh/
 
+# GitHub 常用缩写
+
+| 缩写 | 全称 | 含义
+| -- | -- | -- 
+| PR | Pull Request | 拉取请求，给其他项目提交代码
+| MR | Merge Request | 合并请求
+| LGTM | Looks Good To Me | 可以合并，没有问题
+| SGTM | Sounds Good to Me | 可以合并
+| WIP | Work In Progress | 开发中
+| PTAL | Please Take A Look | 请求维护者review
+| TBR | To Be Reviewed | 请求维护者review
+| TL;DR | Too Long; Didn't Read | 太长懒得看
+| TBD | To Be Done/Defined/Discussed/Decided/Determined | 待定
+| AFAIK | As far as I know | 据我所知
+| IIRC | If I recall correctly | 如果我没记错的话
+| CC | Carbon Copy | 抄送
+| ACK | Acknowledgement | 同意
+| NACK/NAK | Negative Acknowledgement | 不同意
+| TYPO | | 拼写错误
+| WFM | Works For Me | 测试结果对我有效
+| MUST | | 必须修改
+| Duplicate of #123 | | 关闭重复的issue
+| close/closes/closed #issue | | 关闭issue
+| fix/fixes/fixed #issue | | 修复issue
+| resolve/resolves/resolved | | 解决issue
+
+# Issue 规范
+
+* Duplication Issue
+
+关闭重复的Issue，在重复Issue中通过`Duplicate of #123`关联到当前Open的Issue，并把重复Issue中有价值的信息合并到open的Issue中。
+
+* One issue per issue
+
+每个Issue的信息尽量独立，过多的问题可以分在不同的Issue中。
+
+* Titles are important
+
+Issue的标题尽量精简易懂。
+
+* Formatting
+
+良好的Issue格式可以帮助他人快速理解问题，比如，合理地使用Markdown，可参考：[Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+
+* Issue as user story
+
+提供额外的[user stroy](https://en.wikipedia.org/wiki/User_story)可以更好的理解问题
+
+* Objectivity
+
+问题的描述尽量客观真实，比如，可以提供一些测试数据。
+
+* Reproduction steps
+
+针对bug的Issue，提供问题可复现的步骤
+
+# Commit 规范
+
+commit消息结构：
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+允许的提交类型type：
+
+```
+feat -> feature
+fix -> bug fix
+docs -> documentation
+style -> formatting, lint stuff
+refactor -> code restructure without changing exterrnal behavior
+test -> adding missing tests
+chore -> maintenance
+init -> initial commit
+rearrange -> files moved, added, deleted etc
+update -> update code (versions, library compatibility)
+```
+
+refer:
+
+* [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+* [Git Commit Style Guide](https://gist.github.com/ericavonb/3c79e5035567c8ef3267)
+
+# Merge Request流程
+
+MR场景：MR提交者对项目`A`进行fork，生成自己的项目`B`。然后在`B`项目上开发功能，然后创建`MR请求`，向项目`A`的Owner申请将项目`B`修改的代码再合入到项目`A`中。
+
+> TL;DR
+> 1. MR提交者，先fork要开发的原始项目`A`，生成自己的项目`B`
+> 2. MR提交者，在fork的项目`B`上checkout创建新的`dev`开发分支，并在此分支上开发新的功能
+> 3. 当MR提交者需要将项目`B`中改动的代码合入项目`A`时，需要发起`Merge Request`流程
+>    3.1 MR提交者，先将原始项目`A`的代码同步到自己的项目`B`的`master`分支
+>    3.2 MR提交者，再将自己项目`B`开发的`dev`分支提交记录进行`rebase`（将多次commit记录进行精简合并）
+>    3.3 MR提交者，最后将自己项目`B`的`dev`分支merge到`master`分支，并解决可能产生的conflicts (此流程会保证MR提交者commit的记录在原始项目commit记录的上面)
+>    3.4 MR提交者，提交MR请求等待Owner审核
+> 4. MR审批者，执行Comment和Approve，`Create a merge commit`完成代码合入。
+
+
+## MR发起者处理流程
+
+* Before you can sync your fork with an upstream repository, you must [configure a remote that points to the upstream repository](https://docs.github.com/en/github/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-for-a-fork) in Git.
+
+```
+# List the current configured remote repository for your fork
+$ git remote -v
+> origin  https://github.com/YOUR_USERNAME/YOUR_FORK.git (fetch)
+> origin  https://github.com/YOUR_USERNAME/YOUR_FORK.git (push)
+
+# Specify a new remote upstream repository that will be synced with the fork
+$ git remote add upstream https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git
+
+# Verify the new upstream repository you've specified for your fork
+$ git remote -v
+> origin    https://github.com/YOUR_USERNAME/YOUR_FORK.git (fetch)
+> origin    https://github.com/YOUR_USERNAME/YOUR_FORK.git (push)
+> upstream  https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git (fetch)
+> upstream  https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git (push)
+```
+
+* 完成本地项目代码与原始项目代码的同步，更新本地项目master代码为最新的代码。[Merge an upstream repo](https://docs.github.com/en/github/collaborating-with-pull-requests/working-with-forks/merging-an-upstream-repository-into-your-fork)
+
+```
+# 切换到本地项目master分支
+git checkout master
+
+# fetch最新的代码到 upstream/master
+git fetch upstream
+
+# 合并upstream的修改到master分支
+git merge upstream/master
+
+# 上述步骤也可以简化为git pull命令，拉取远程项目A代码并合并到本地master分支，
+git pull upstream master
+
+# 再切换到dev分支，执行rebase合并master代码，如果有代码冲突，则需要先解决
+git checkout dev
+git rebase master
+
+# 再切换到master分支，合并dev分支的代码
+git checkout master
+git merge dev
+
+# 将本地master分支的多次commit提交记录合并，比如，合并前7条提交记录，通过`-i`交互操作中将不需要的commit记录从`pick`改为`squash`，保留第一条commit为pick
+git rebase -i HEAD~7
+
+# 提交master修改到远端
+git push origin master
+
+# 最后提交MR请求
+```
+
+* 创建`Merge Request`
+
+* `Source branch`为自己fork项目的`master`分支，`Target branch`为实际项目`master`分支
+
+* 填写`Title`，`Description`信息，最后提交。
+
+## MR审批者处理流程
+
+* 收到`Merge Request`处理请求。
+* 选择`Create a merge commit`。通常选择，`Squash and merge`或`Rebase and merge`。
+* 进行`Code Review`，若发现问题则通过comment反馈给提交者进行修改，开发者修改后`Close MR`，再`Reopen MR`。
+* 没有问题，确认完成MR。
+* 若MR过程出现代码冲突，则MR审批者选择`Close Merge request`。由MR发起者解决冲突后再重新提交MR。
+
+refer:
+
+* [Writing a proper GitHub issue](https://medium.com/nyc-planning-digital/writing-a-proper-github-issue-97427d62a20f)
+* [About issue and pull request templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates)
+* [Configuring issue templates for your repository](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository)
+* [About issue and pull request templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates)
+* [Setting guidelines for repository contributors](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/setting-guidelines-for-repository-contributors)
+* [Creating a pull request template for your repository](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository)
+
+* [Creating a pull request](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
+* [Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
+* [Autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests)
 
 # Git相关工具
 
@@ -821,6 +1023,10 @@ https://www.sourcetreeapp.com/
 TortoiseGit is a Windows Shell Interface to Git and based on TortoiseSVN. It's open source and can fully be build with freely available software.
 
 https://tortoisegit.org/
+
+# Q&A
+
+* https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
 
 
 # Refer

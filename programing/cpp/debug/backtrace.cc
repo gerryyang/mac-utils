@@ -16,9 +16,10 @@ void myfunc3()
     printf("backtrace() returned %d addresses\n", nptrs);
 
     //--nptrs;
-	//memmove(buffer, buffer + 1, sizeof(void*) * nptrs);
+    //memmove(buffer, buffer + 1, sizeof(void*) * nptrs);
 
-    for (int i = 0; i < nptrs; ++i) {
+    for (int i = 0; i < nptrs; ++i)
+    {
         printf("%s\n", (char *)buffer[i]);
     }
 
@@ -26,13 +27,13 @@ void myfunc3()
               would produce similar output to the following: */
 
     strings = backtrace_symbols(buffer, nptrs);
-    if (strings == NULL) {
+    if (strings == NULL)
+    {
         perror("backtrace_symbols");
         exit(EXIT_FAILURE);
     }
 
-    for (int j = 0; j < nptrs; ++j)
-        printf("%s\n", strings[j]);
+    for (int j = 0; j < nptrs; ++j) printf("%s\n", strings[j]);
 
     free(strings);
 }

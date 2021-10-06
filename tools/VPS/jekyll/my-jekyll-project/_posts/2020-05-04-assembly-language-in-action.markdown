@@ -107,7 +107,7 @@ The `8` GPRs are:
 4. Base register (`BX`). Used as a pointer to data (located in segment register DS, when in segmented mode).
 5. Stack Pointer register (`SP`). Pointer to the top of the stack.
 6. Stack Base Pointer register (`BP`). Used to point to the base of the stack.
-7. ource Index register (`SI`). Used as a pointer to a source in stream operations.
+7. Source Index register (`SI`). Used as a pointer to a source in stream operations.
 8. Destination Index register (`DI`). Used as a pointer to a destination in stream operations.
 
 All registers can be accessed in 16-bit and 32-bit modes. In 16-bit mode, the register is identified by its two-letter abbreviation from the list above. In 32-bit mode, this two-letter abbreviation is prefixed with an 'E' (extended). For example, 'EAX' is the accumulator register as a 32-bit value.
@@ -519,9 +519,9 @@ We may compare this asm program to c program:
 
 ``` c
 #include <stdio.h>
-int main(int argc, char* argv[])
+int main()
 {
-    printf("hello world\n");
+    printf("Hello world");
     return 0;
 }
 ```
@@ -773,6 +773,32 @@ The array looks something like this in memory:
 
 Notice that the address after `0xA0` is not `0xA1` but `0xA8`. This is because each number uses 8 memory addresses (64 bits). This way, every displacement(移位) on the example above, takes us to the next number in the array.
 
+# Objdump Disassemble
+
+objdump除了可以对bin文件反汇编，同时还可以显示每条汇编指令的大小。
+
+```
+$ objdump -d example
+
+example:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000004000b0 <_start>:
+  4000b0:       b8 01 00 00 00          mov    $0x1,%eax
+  4000b5:       bf 01 00 00 00          mov    $0x1,%edi
+  4000ba:       48 be dc 00 60 00 00    movabs $0x6000dc,%rsi
+  4000c1:       00 00 00 
+  4000c4:       48 8b 14 25 ec 00 60    mov    0x6000ec,%rdx
+  4000cb:       00 
+  4000cc:       0f 05                   syscall 
+  4000ce:       b8 3c 00 00 00          mov    $0x3c,%eax
+  4000d3:       bf 00 00 00 00          mov    $0x0,%edi
+  4000d8:       0f 05                   syscall 
+```
+
+* https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
 
 # Debugging assembly with GDB
 
@@ -1092,8 +1118,10 @@ r15             | r15d          | r15w          | r15b
 # Refer
 
 * 汇编语言（第2版），清华大学出版社，王爽
+* [x86 instruction listings](https://en.wikipedia.org/wiki/X86_instruction_listings)
 * [Introduction to assembly - Assembling a program - Posted by adrian.ancona on January 30, 2019](https://ncona.com/2019/01/introduction-to-assembly-assembling-a-program/)
 * [Assembly - Variables, instructions and addressing modes - Posted by adrian.ancona on February 27, 2019](https://ncona.com/2019/02/assembly-variables-instructions-and-addressing-modes/)
+* [Smallest executable program (x86-64)](https://stackoverflow.com/questions/53382589/smallest-executable-program-x86-64)
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
 * [Introduction to x64 Assembly - Published on March 19, 2012](https://software.intel.com/en-us/articles/introduction-to-x64-assembly)
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
@@ -1104,6 +1132,7 @@ r15             | r15d          | r15w          | r15b
 * [Intel 64 and IA-32 Software Developer Manuals](https://software.intel.com/en-us/articles/intel-sdm)
 * [AMD64 Architecture Programmer's Manual (Volume 1-5)](http://developer.amd.com/resources/developer-guides-manuals/)
 * [Basic yet thorough assembly tutorial (linux)](https://stackoverflow.com/questions/836946/basic-yet-thorough-assembly-tutorial-linux)
+
 
 # TODO
 

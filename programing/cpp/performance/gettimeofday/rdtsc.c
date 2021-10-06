@@ -1,12 +1,12 @@
-unsigned long long rdtsc (void)
+unsigned long long rdtsc(void)
 {
-        unsigned long long tick;
-        __asm__ __volatile__("rdtsc":"=A"(tick));
-        return tick;
+    unsigned long long tick;
+    __asm__ __volatile__("rdtsc" : "=A"(tick));
+    return tick;
 }
 
 int main()
 {
-        rdtsc();
+    rdtsc();
 }
 // gcc -m32 rdtsc.c

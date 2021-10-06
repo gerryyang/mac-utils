@@ -3,15 +3,16 @@
 class Foo
 {
 public:
-	void say_world();
+    void say_world();
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void say_world();
+    void say_world();
 
 #ifdef __cplusplus
-};/* extern "C" */
+}; /* extern "C" */
 #endif

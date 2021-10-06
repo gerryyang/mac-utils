@@ -8,12 +8,167 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Linux System Calls
+# Linux操作系统
+
+## Signal
+
+Linux supports both POSIX reliable signals (hereinafter "standard signals") and POSIX real-time signals.
+
+Using these system calls, a process can elect one of the following behaviors to occur on delivery of the signal: perform the default action; ignore the signal; or catch the signal with a signal handler, a programmer-defined function that is automatically invoked when the signal is delivered.
+
+```
+$kill -l
+ 1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL       5) SIGTRAP
+ 2) SIGABRT      7) SIGBUS       8) SIGFPE       9) SIGKILL     10) SIGUSR1
+1)  SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
+2)  SIGSTKFLT   17) SIGCHLD     18) SIGCONT     19) SIGSTOP     20) SIGTSTP
+3)  SIGTTIN     22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+4)  SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO       30) SIGPWR
+5)  SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1  36) SIGRTMIN+2  37) SIGRTMIN+3
+6)  SIGRTMIN+4  39) SIGRTMIN+5  40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8
+7)  SIGRTMIN+9  44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
+8)  SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13 52) SIGRTMAX-12
+9)  SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9  56) SIGRTMAX-8  57) SIGRTMAX-7
+10) SIGRTMAX-6  59) SIGRTMAX-5  60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2
+11) SIGRTMAX-1  64) SIGRTMAX
+```
+
+* https://man7.org/linux/man-pages/man7/signal.7.html
+* [Why there are only two user defined signals?](https://unix.stackexchange.com/questions/48582/why-there-are-only-two-user-defined-signals)
+
+## Linux System Calls
 
 How Linux programs call functions in the Linux kernel.
 
+使用nasm写汇编，手动构造ELF格式文件。不使用c库，系统调用使用syscall指令(x86-64)：
+
++ 入参：
+  * eax = 系统调用号，可以在 /usr/include/asm/unistd_64.h 文件中找到
+  * rdi, rsi, rdx, r10, r8, r9 分别为第 1 至 6 个参数
++ 出参：
+  * rax = 返回值（如果失败，返回 -errno）
+  * rcx, r11 被破坏（它们分别被 syscall 指令用来保存返回地址和 rflags）
+  * 其他寄存器的值保留
+
+
 * [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
 * [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
+
+## tar (compress/extract files)
+
+* Compress an entire directory or a single file
+
+```
+tar -czvf name-of-archive.tar.gz /path/to/directory-or-file
+
+-c: Create an archive.
+-z: Compress the archive with gzip.
+-v: Display progress in the terminal while creating the archive, also known as “verbose” mode. The v is always optional in these commands, but it’s helpful.
+-f: Allows you to specify the filename of the archive.
+```
+* Compress multiple directories or files at once
+
+```
+tar -czvf archive.tar.gz /home/ubuntu/Downloads /usr/local/stuff /home/ubuntu/Documents/notes.txt
+```
+
+* Exclude directories and files
+
+In some cases, you may wish to compress an entire directory, but not include certain files and directories. You can do so by appending an `--exclude` switch for each directory or file you want to exclude.
+
+```
+tar -czvf archive.tar.gz /home/ubuntu --exclude=/home/ubuntu/Downloads --exclude=/home/ubuntu/.cache
+```
+
+The `--exclude` switch is very powerful. It doesn’t take names of directories and files–it actually accepts patterns. There’s a lot more you can do with it. For example, you could archive an entire directory and exclude all .mp4 files with the following command:
+
+```
+tar -czvf archive.tar.gz /home/ubuntu --exclude=*.mp4
+```
+
+* Use bzip2 compression instead
+
+While `gzip` compression is most frequently used to create `.tar.gz` or `.tgz` files, tar also supports `bzip2` compression. This allows you to create bzip2-compressed files, often named `.tar.bz2`, `.tar.bz`, or `.tbz` files. To do so, just replace the `-z` for gzip in the commands here with a `-j` for `bzip2`.
+
+`Gzip` is faster, but it generally compresses a bit less, so you get a somewhat larger file. `Bzip2` is slower, but it compresses a bit more, so you get a somewhat smaller file
+
+```
+tar -cjvf archive.tar.bz2 stuff
+```
+
+* Extract an archive
+
+Once you have an archive, you can extract it with the tar command. The following command will extract the contents of archive.tar.gz to the current directory. It’s the same as the archive creation command we used above, except the `-x` switch replaces the `-c` switch. This specifies you want to e**x**tract an archive instead of create one.
+
+```
+tar -xzvf archive.tar.gz
+```
+
+You may want to extract the contents of the archive to a specific directory. You can do so by appending the `-C` switch to the end of the command. For example, the following command will extract the contents of the archive.tar.gz file to the /tmp directory.
+
+```
+tar -xzvf archive.tar.gz -C /tmp
+```
+
+https://www.howtogeek.com/248780/how-to-compress-and-extract-files-using-the-tar-command-on-linux/
+
+## /proc
+
+`/proc/$pid/exe`: 可执行文件软链接
+
+## kill
+
+``` bash
+> pgrep firefox
+6316
+6565
+> pidof firefox
+6565 6316
+
+pkill firefox
+killall <name>
+kill -9 `pidof firefox`
+kill -9 `pgrep firefox`
+ps ax | grep <snippet> | grep -v grep | awk '{print $1}' | xargs kill
+```
+
+## Process State (ps/top)
+
+
+```
+PROCESS STATE CODES:
+
+Here are the different values that the s, stat and state output specifiers
+(header "STAT" or "S") will display to describe the state of a process.
+
+D Uninterruptible sleep (usually IO)
+
+R Running or runnable (on run queue)
+
+S Interruptible sleep (waiting for an event to complete)
+
+T Stopped, either by a job control signal or because it is being traced.
+
+W paging (not valid since the 2.6.xx kernel)
+
+X dead (should never be seen)
+
+Z Defunct ("zombie") process, terminated but not reaped by its parent.
+
+For BSD formats and when the stat keyword is used, additional characters may be displayed:
+
+< high-priority (not nice to other users)
+
+N low-priority (nice to other users)
+
+L has pages locked into memory (for real-time and custom IO)
+
+s is a session leader
+
+l is multi-threaded (using CLONE_THREAD, like NPTL pthreads do) 
+
++ is in the foreground process group
+```
 
 # CPU
 
@@ -431,6 +586,22 @@ Non-authoritative answer:
 Authoritative answers can be found from:
 ```
 
+### nc
+
+```
+ncat [options] [hostname] [port]
+
+# test UDP port was open or not
+nc -vzu <host> <port>
+
+on server listen UDP port: `nc -ul 6111`
+on client: `nc -u <server> 6111`
+```
+
+https://serverfault.com/questions/416205/testing-udp-port-connectivity
+
+https://en.wikipedia.org/wiki/Netcat#Test_if_UDP_port_is_open:_simple_UDP_server_and_client
+
 # 磁盘IO
 
 ```
@@ -536,140 +707,32 @@ svctm的计算方式：
 delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed))
 ```
 
-# Linux操作系统
+# Linux/UNIX Programming Interface
 
-## net_ratelimit: N callbacks suppressed
+## clock_gettime
 
-Linux has a mechanism to avoid a DoS attack – with regard to logging – called rate limit. Every message logged by the kernel (including its modules), with printk(), is checked if it’s allowed to be actually printed through this mechanism.
+* https://linux.die.net/man/3/clock_gettime
+## pthread_setname_np
 
-The limits can be configured by tuning the files `/proc/sys/kernel/printk_ratelimit` and `/proc/sys/kernel/printk_ratelimit_burst`. In my machine, the values for these files are `5` and `10`, respectively, meaning: ****It’s allowed 10 messages every 5 seconds**. Exceeding this will make the kernel discard the message and print something like “ratelimit N: callbacks suppressed”.
+By default, all the threads created using `pthread_create()` inherit the program name.  The `pthread_setname_np()` function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.
 
-```
-[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:31947 - no destination available
-[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:30686 - no destination available
-[二 6月 15 17:34:44 2021] IPVS: rr: TCP 9.134.179.148:31262 - no destination available
-[二 6月 15 17:34:48 2021] net_ratelimit: 555 callbacks suppressed
-```
+`pthread_setname_np()` internally writes to the thread-specific comm file under the /proc filesystem: `/proc/self/task/[tid]/comm`.
 
-* https://bani.com.br/2015/06/linux-getting-rid-of-net_ratelimit-n-callbacks-suppressed-messages/
-
-## compress/extract files using the tar
-
-* Compress an entire directory or a single file
-
-```
-tar -czvf name-of-archive.tar.gz /path/to/directory-or-file
-
--c: Create an archive.
--z: Compress the archive with gzip.
--v: Display progress in the terminal while creating the archive, also known as “verbose” mode. The v is always optional in these commands, but it’s helpful.
--f: Allows you to specify the filename of the archive.
-```
-* Compress multiple directories or files at once
-
-```
-tar -czvf archive.tar.gz /home/ubuntu/Downloads /usr/local/stuff /home/ubuntu/Documents/notes.txt
-```
-
-* Exclude directories and files
-
-In some cases, you may wish to compress an entire directory, but not include certain files and directories. You can do so by appending an `--exclude` switch for each directory or file you want to exclude.
-
-```
-tar -czvf archive.tar.gz /home/ubuntu --exclude=/home/ubuntu/Downloads --exclude=/home/ubuntu/.cache
-```
-
-The `--exclude` switch is very powerful. It doesn’t take names of directories and files–it actually accepts patterns. There’s a lot more you can do with it. For example, you could archive an entire directory and exclude all .mp4 files with the following command:
-
-```
-tar -czvf archive.tar.gz /home/ubuntu --exclude=*.mp4
-```
-
-* Use bzip2 compression instead
-
-While `gzip` compression is most frequently used to create `.tar.gz` or `.tgz` files, tar also supports `bzip2` compression. This allows you to create bzip2-compressed files, often named `.tar.bz2`, `.tar.bz`, or `.tbz` files. To do so, just replace the `-z` for gzip in the commands here with a `-j` for `bzip2`.
-
-`Gzip` is faster, but it generally compresses a bit less, so you get a somewhat larger file. `Bzip2` is slower, but it compresses a bit more, so you get a somewhat smaller file
-
-```
-tar -cjvf archive.tar.bz2 stuff
-```
-
-* Extract an archive
-
-Once you have an archive, you can extract it with the tar command. The following command will extract the contents of archive.tar.gz to the current directory. It’s the same as the archive creation command we used above, except the `-x` switch replaces the `-c` switch. This specifies you want to e**x**tract an archive instead of create one.
-
-```
-tar -xzvf archive.tar.gz
-```
-
-You may want to extract the contents of the archive to a specific directory. You can do so by appending the `-C` switch to the end of the command. For example, the following command will extract the contents of the archive.tar.gz file to the /tmp directory.
-
-```
-tar -xzvf archive.tar.gz -C /tmp
-```
-
-https://www.howtogeek.com/248780/how-to-compress-and-extract-files-using-the-tar-command-on-linux/
-
-## proc目录
-
-* /proc/$pid/exe : 可执行文件软链接
-
-## Kill
-
-```
-> pgrep firefox
-6316
-6565
-> pidof firefox
-6565 6316
-
-pkill firefox
-killall <name>
-kill -9 `pidof firefox`
-kill -9 `pgrep firefox`
-ps ax | grep <snippet> | grep -v grep | awk '{print $1}' | xargs kill
-```
-
-## Process State (ps/top)
+> Note: These functions are nonstandard GNU extensions; hence the suffix "_np" (nonportable) in the names.
 
 
-```
-PROCESS STATE CODES:
-
-Here are the different values that the s, stat and state output specifiers
-(header "STAT" or "S") will display to describe the state of a process.
-
-D Uninterruptible sleep (usually IO)
-
-R Running or runnable (on run queue)
-
-S Interruptible sleep (waiting for an event to complete)
-
-T Stopped, either by a job control signal or because it is being traced.
-
-W paging (not valid since the 2.6.xx kernel)
-
-X dead (should never be seen)
-
-Z Defunct ("zombie") process, terminated but not reaped by its parent.
-
-For BSD formats and when the stat keyword is used, additional characters may be displayed:
-
-< high-priority (not nice to other users)
-
-N low-priority (nice to other users)
-
-L has pages locked into memory (for real-time and custom IO)
-
-s is a session leader
-
-l is multi-threaded (using CLONE_THREAD, like NPTL pthreads do) 
-
-+ is in the foreground process group
-```
+* https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
 
 # 问题定位
+
+## coredump
+
+```
+ulimit -c unlimited
+
+echo "/data/corefile/core_uid%u_%e_%t" > /proc/sys/kernel/core_pattern
+echo "1" > /proc/sys/kernel/core_uses_pid
+```
 
 ## dmesg
 
@@ -704,28 +767,14 @@ thread $id
 
 ## gstack
 
-gstack  attaches  to  the  active  process named by the pid on the command line, and prints out an execution stack trace.  If ELF symbols exist in the binary (usually the case unless you have run strip(1)), then symbolic addresses are printed as well.
+`gstack` attaches to the active process named by the pid on the command line, and prints out an execution stack trace. If ELF symbols exist in the binary (usually the case unless you have run strip(1)), then symbolic addresses are printed as well.
 
 ```
 $gstack 31310
 Thread 2 (Thread 0x7f131c596700 (LWP 31315)):
 #0  0x00007f13d2a6b1bd in nanosleep () from /lib64/libc.so.6
 #1  0x00007f13d2a9bed4 in usleep () from /lib64/libc.so.6
-#2  0x00000000008da604 in g6::tracing::TraceThread::Run (this=0x2a4f330) at common/tracing/tracing.cc:55
-#3  0x00000000008eea1a in g6::ThreadEntry (arg=<optimized out>) at common/base/thread.cpp:12
-#4  0x00007f13d3597e25 in start_thread () from /lib64/libpthread.so.0
-#5  0x00007f13d2aa435d in clone () from /lib64/libc.so.6
-Thread 1 (Thread 0x7f13d3cb9780 (LWP 31310)):
-#0  0x00007f13d359bcf2 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/libpthread.so.0
-#1  0x000000000066feed in Get (evt=<optimized out>, this=<optimized out>, pqueueid=<optimized out>, msec=<optimized out>) at ./source/baseagent/tmsg/queue_event_and_observer.h:449
-#2  Polling (evt=<optimized out>, pqueueid=<optimized out>, msec=<optimized out>, this=<optimized out>) at ./source/baseagent/tmsg/queue_event_and_observer.h:212
-#3  tmsg::InternalPolling (event_notify_id=<optimized out>, msec_timeout=1, pqueueid=<optimized out>, pevent=<optimized out>, perr_info=<optimized out>) at source/baseagent/tmsg/tmsg_internal_api.cpp:703
-#4  0x000000000067a4dc in tmsg::TmsgPolling (evt_handle=819702518555607043, msec_timeout=<optimized out>, pqueue_handle=<optimized out>, pevent=0x28fdf8c, perr_info=0x28fdfa8) at source/baseagent/tmsg/tmsg_api.cpp:538
-#5  0x000000000053f6fd in baseagent::PollEvent (notify_handle=819702518555607043, msec_timeout=msec_timeout@entry=1, ppdst_instance=ppdst_instance@entry=0x7fff5fe21d18, pevent_mask=pevent_mask@entry=0x28fdf8c, perr_info=0x0, perr_info@entry=0x28fdfa8) at source/baseagent/baseagent_api/base_agent_api.cpp:560
-#6  0x0000000000510029 in g6::TbusppMessage::Poll (this=0x28fdef0, handle=handle@entry=0x7fff5fe21d90, event=event@entry=0x7fff5fe21d88, timeout=timeout@entry=1) at common/framework/tbuspp/tbuspp_message.cpp:770
-#7  0x00000000004ee766 in g6::NameProcessorDispatcher::ProcessOnce (this=0x288e200, wait_ms=1, msg_expired_us=1608693627268946, poll_wait_time=@0x7fff5fe21e28: 0) at common/framework/name_processor.cpp:193
-#8  0x00000000004dcf97 in g6::G6Framework::Process (this=this@entry=0x288a0f0, wait_ms=wait_ms@entry=1) at common/framework/framework.cpp:215
-#9  0x00000000004e3342 in g6::G6Framework::Serve (this=0x288a0f0, event_handler=0x7fff5fe21f80) at common/framework/framework.cpp:158
+...
 #10 0x0000000000416cb0 in main (argc=<optimized out>, argv=<optimized out>) at base_server/base_so_loader.cc:216
 ```
 
@@ -751,11 +800,11 @@ disassemble /m main
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #define BT_BUF_SIZE 100
 
-void 
-myfunc3(void)
+void myfunc3()
 {
     int nptrs;
     void *buffer[BT_BUF_SIZE];
@@ -763,6 +812,13 @@ myfunc3(void)
 
     nptrs = backtrace(buffer, BT_BUF_SIZE);
     printf("backtrace() returned %d addresses\n", nptrs);
+
+    //--nptrs;
+	//memmove(buffer, buffer + 1, sizeof(void*) * nptrs);
+
+    for (int i = 0; i < nptrs; ++i) {
+        printf("%s\n", buffer[i]);
+    }
 
     /* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
               would produce similar output to the following: */
@@ -773,20 +829,19 @@ myfunc3(void)
         exit(EXIT_FAILURE);
     }
 
-    for (int j = 0; j < nptrs; j++)
+    for (int j = 0; j < nptrs; ++j)
         printf("%s\n", strings[j]);
 
     free(strings);
 }
 
-static void   /* "static" means don't export the symbol... */
-myfunc2(void)
+/* "static" means don't export the symbol... */
+static void myfunc2()
 {
     myfunc3();
 }
 
-void
-myfunc(int ncalls)
+void myfunc(int ncalls)
 {
     if (ncalls > 1)
         myfunc(ncalls - 1);
@@ -802,24 +857,47 @@ int main(int argc, char *argv[])
     }
 
     myfunc(atoi(argv[1]));*/
-    myfunc(5);
+
+    myfunc(3);
     exit(EXIT_SUCCESS);
 }
 /*
-cc -rdynamic prog.c -o prog
+g++ backtrace.cc
 
-backtrace() returned 10 addresses
-./prog.exe(_Z7myfunc3v+0x1f) [0x400d1c]
-./prog.exe() [0x400db1]
-./prog.exe(_Z6myfunci+0x25) [0x400dd8]
-./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
-./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
-./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
-./prog.exe(_Z6myfunci+0x1e) [0x400dd1]
-./prog.exe(main+0x19) [0x400df3]
-/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf0) [0x7f181187c840]
-./prog.exe(_start+0x29) [0x400c39]
+$ ./a.out 
+backtrace() returned 8 addresses
+./a.out(_Z7myfunc3v+0x2e) [0x5568d100da93]
+./a.out(+0xb65) [0x5568d100db65]
+./a.out(_Z6myfunci+0x25) [0x5568d100db8d]
+./a.out(_Z6myfunci+0x1e) [0x5568d100db86]
+./a.out(_Z6myfunci+0x1e) [0x5568d100db86]
+./a.out(main+0x19) [0x5568d100dba9]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xe7) [0x7f57275c9bf7]
+./a.out(_start+0x2a) [0x5568d100d9aa]
 */
+```
+
+使用GDB调试：
+
+```
+(gdb) p buffer[0]
+$2 = (void *) 0x555555554873 <myfunc3()+46>
+(gdb) p buffer[1]
+$3 = (void *) 0x55555555497e <myfunc2()+9>
+(gdb) p buffer[2]
+$4 = (void *) 0x5555555549a6 <myfunc(int)+37>
+(gdb) p buffer[3]
+$5 = (void *) 0x55555555499f <myfunc(int)+30>
+(gdb) p buffer[4]
+$6 = (void *) 0x55555555499f <myfunc(int)+30>
+(gdb) p buffer[5]
+$7 = (void *) 0x5555555549c2 <main(int, char**)+25>
+(gdb) p buffer[6]
+$8 = (void *) 0x7ffff7a03bf7 <__libc_start_main+231>
+(gdb) p buffer[7]
+$9 = (void *) 0x55555555478a <_start+42>
+(gdb) p buffer[8]
+$10 = (void *) 0x0
 ```
 
 ## assert

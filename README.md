@@ -29,6 +29,8 @@
 	+ 在Linux上使用 `top 1` 可以查看每个cpu的使用率
 	+ 在Mac上使用活动监视器的图形工具也可以查看
 
+* 使用`nslookup domain [dns-server]`查询DNS的记录，查看域名解析是否正常
+
 ---
 
 *END*

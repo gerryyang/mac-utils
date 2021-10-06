@@ -1,12 +1,12 @@
 #pragma once
 
-
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void say_hello();
+    void say_hello();
 
 #ifdef __cplusplus
-};/* extern "C" */
+}; /* extern "C" */
 #endif
