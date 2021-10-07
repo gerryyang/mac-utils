@@ -595,12 +595,186 @@ int main()
 }
 ```
 
+# STL
+
+## Map
+
+``` cpp
+
+#include <iostream>
+#include <map>
+
+struct S
+{
+    S(int i, int j) : a(i), b(j) {}
+    int a;
+    int b;
+
+    // ok, use operator< to sort
+    bool operator<(const S& rhs) const
+    {
+        if (a < rhs.a)
+        {
+            return true;
+        }
+        else if (a == rhs.a)
+        {
+            if (b < rhs.b)
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
+// ok, use operator< to sort
+bool operator<(const S& lhs, const S& rhs)
+{
+    if (lhs.a < rhs.a)
+    {
+        return true;
+    }
+    else if (lhs.a == rhs.a)
+    {
+        if (lhs.b < rhs.b)
+        {
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+// ok
+struct SCompare
+{
+    bool operator()(const S& lhs, const S& rhs) const
+    {
+        if (lhs.a < rhs.a)
+        {
+            return true;
+        }
+        else if (lhs.a == rhs.a)
+        {
+            if (lhs.b < rhs.b)
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
+// ok
+namespace std
+{
+template<>
+struct less<S>
+{
+    bool operator()(const S& lhs, const S& rhs) const
+    {
+        if (lhs.a < rhs.a)
+        {
+            return true;
+        }
+        else if (lhs.a == rhs.a)
+        {
+            if (lhs.b < rhs.b)
+            {
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+}
+
+//using Map = std::map<S, std::string, SCompare>;
+using Map = std::map<S, std::string>;
+
+int main()
+{
+    Map m;
+
+    auto f1 = [](bool b) { b ? std::cout << "true\n" : std::cout << "false\n"; };
+
+    f1(m.emplace(std::make_pair(S(1, 1), "a")).second);
+    f1(m.emplace(std::make_pair(S(1, 2), "b")).second);
+    f1(m.emplace(std::make_pair(S(2, 1), "c")).second);
+
+    auto f2 = [&m]()
+    {
+        for (auto& n : m)
+        {
+            std::cout << n.second << " ";
+        }
+    };
+    f2();
+
+    return 0;
+}
+/*
+true
+true
+true
+a b c
+*/
+```
+
 
 # Alignment and Bit Fields
 
 * [测试代码](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/alignment)
 * [pragma pack effect](https://stackoverflow.com/questions/3318410/pragma-pack-effect)
 * [C - Bit Fields](https://www.tutorialspoint.com/cprogramming/c_bit_fields.htm)
+
+
+# offsetof
+
+``` cpp
+#include <iostream>
+#include <cstddef>
+
+struct S {
+    char   m0;
+    double m1;
+    short  m2;
+    char   m3;
+//  private: int z; // warning: 'S' is a non-standard-layout type
+};
+int main()
+{
+    std::cout
+        << "offset of char   m0 = " << offsetof(S, m0) << '\n'
+        << "offset of double m1 = " << offsetof(S, m1) << '\n'
+        << "offset of short  m2 = " << offsetof(S, m2) << '\n'
+        << "offset of char   m3 = " << offsetof(S, m3) << '\n';
+}
+/*
+offset of char   m0 = 0
+offset of double m1 = 8
+offset of short  m2 = 16
+offset of char   m3 = 18
+*/
+```
+
+https://en.cppreference.com/w/cpp/types/offsetof
 
 # Template
 
@@ -647,6 +821,32 @@ int main()
 	std::cout << has_member_gc<int>::value;
 }
 ```
+
+## std::conditional (C++11)
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+#include <typeinfo>
+ 
+int main() 
+{
+    typedef std::conditional<true, int, double>::type Type1;
+    typedef std::conditional<false, int, double>::type Type2;
+    typedef std::conditional<sizeof(int) >= sizeof(double), int, double>::type Type3;
+ 
+    std::cout << typeid(Type1).name() << '\n';
+    std::cout << typeid(Type2).name() << '\n';
+    std::cout << typeid(Type3).name() << '\n';
+}
+/*
+i
+d
+d
+*/
+```
+
+https://en.cppreference.com/w/cpp/types/conditional
 
 # C++11
 
