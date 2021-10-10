@@ -72,6 +72,11 @@ TODO
 * Before C++11：`std::stringstream`, `sprintf`
 * After C++11: `std::to_string`(C++11), `std::to_chars`(C++17), `std::format`(C++20), `fmtlib`
 
+其中，`std::format`目前还没有编译器支持，此处使用`fmtlib`代替。
+
+* https://en.cppreference.com/w/cpp/compiler_support 
+* https://stackoverflow.com/questions/65083544/format-no-such-file-or-directory
+
 ``` cpp
 // {fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams.
 // Format string syntax similar to Python's format.
