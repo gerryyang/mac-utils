@@ -132,7 +132,7 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 > 2. Why fast dtoa() functions is needed? They are a very common operations in writing data in text format. The standard way of sprintf(), std::stringstream, often provides poor performance. The author of this benchmark would optimize the sprintf implementation in RapidJSON. https://github.com/fmtlib/dtoa-benchmark/blob/master/src/milo/dtoa_milo.h
 
 
-运行期和编译期计算对比：[https://gcc.godbolt.org/z/G6jfdcxqr](https://gcc.godbolt.org/z/G6jfdcxqr)
+运行期和编译期计算对比：[https://gcc.godbolt.org/z/M5Pb18PMb](https://gcc.godbolt.org/z/M5Pb18PMb)
 
 测试结果：
 
