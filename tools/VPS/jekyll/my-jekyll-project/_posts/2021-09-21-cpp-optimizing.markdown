@@ -18,10 +18,56 @@ categories: C/C++
 6. string_view https://mk.woa.com/q/275510?newest=true
 7. 更高效的机器代码 https://mk.woa.com/q/275382?newest=true
 8. FB/PB https://mk.woa.com/q/275178?newest=true
+9. 内存墙
+10. 日志开销
 
 # 工具
 
 * 在线反汇编工具：https://gcc.godbolt.org/
+
+
+# 问题
+
+## 性能和易用性
+
+例子：TDR(特指1.0版本) vs ProtocolBuffers
+
+TDR 牺牲了易用性获取了高性能，而 ProtocolBuffers 通过部分性能开销换取了更好的易用性。
+
+* 易用性
+  + TDR 使用 LV(Length + Value) 的编码方式，通过版本剪裁方式来解决版本兼容，但只支持单向的高版本兼容低版本数据
+  + ProtocolBuffers 使用 TLV(Tag + Length + Value) 的编码方式，支持前后双向兼容
+  + TDR 对字段顺序有要求，而 ProtocolBuffers 不需要
+
+* 性能
+  + TDR 使用的编解码，不需要考虑 T 类型，故在效率和性能上，比 TLV 模式要高
+  + ProtocolBuffers 使用了整型数据压缩，有符号整型二次压缩 (base 128 varints 及 zigzag编码) 以尽可能节省流量，但是会引入额外的 msb(most significant bit) 计算开销
+  + TDR 的编码逻辑在 XML 协议确定后，一些计算可在编译期完成。而 ProtocolBuffers 需要在运行期根据 Descriptor 来确定
+
+
+| 方案            | 消息的内存数据结构大小 | 序列化生成的网络消息大小 | 消息结构描述                                                    |
+| --------------- | ---------------------- | ------------------------ | --------------------------------------------------------------- |
+| TDR             | 1056 B                 | 984 B                    | `207 u/int32_t, 2 uint64_t, 1 float, 1 double, 1 char[33]`      |
+| ProtocolBuffers | 动态分配               | 1290 B                   | `204 s/fixed32, 2 fixed64, 1 float, 1 double, 1 string(len:32)` |
+
+
+| 目标函数               | TDR(Avg 次/秒) | ProtocolBuffers(Avg 次/秒) | TDR 性能增量 |
+| ---------------------- | -------------- | -------------------------- | ------------ |
+| SerializeToArray(pack) | 574736         | 385613                     | +49%         |
+| ParseFromArray(unpack) | 528372         | 107431                     | +392%        |
+
+
+取长补短，TDR2.0 引入了 metalib/enabletlv, id(`[1, 0xFFFFFFF]`) 新属性决定是否采用 TLV 模式，且由调用者决定整型数据是否使用变长编码，对比 TDR1.0 性能测试，TDR2.0 性能下降 10%-20%
+
+
+
+
+
+ 
+## 编译优化
+
+-O2编译优化
+
 
 
 # 最小的64位ELF
@@ -69,10 +115,10 @@ strip example
 
 对比：
 
-| Program | Size | Size (stripped)
-| -- | -- | --
-| example (asm) | 984 B | 528 B 
-| example (cc, -Os) | 8.2K | 6.0K 
+| Program           | Size  | Size (stripped) |
+| ----------------- | ----- | --------------- |
+| example (asm)     | 984 B | 528 B           |
+| example (cc, -Os) | 8.2K  | 6.0K            |
 
 使用`nasm`写汇编，手动构造ELF格式文件。不使用c库，系统调用使用syscall指令(x86-64)：
 

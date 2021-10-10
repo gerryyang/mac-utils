@@ -89,6 +89,30 @@ int main()
 
 It isn't necessarily a good idea to use a variable argument list at all times; the potential exists for assuming a value is of one type, while it is in fact another, such as a null pointer being assumed to be an integer. Consequently, variable argument lists should be used sparingly.
 
+``` cpp
+#include <iostream>
+#include <stdarg.h>
+
+int MyPrintf (const char *fmt, ...)
+{
+  va_list arg;
+  int done;
+
+  va_start (arg, fmt);
+  done = vfprintf (stdout, fmt, arg);
+  va_end (arg);
+
+  return done;
+}
+
+int main()
+{
+    std::cout << sizeof(va_list) << std::endl; // 24
+    int a = 1;
+    MyPrintf("hello %d\n", a); // hello 1
+}
+```
+
 # Example 2
 
 The following example shows the use of va_start, va_arg, and va_end to implement a function that returns the biggest of its integer arguments.
@@ -132,7 +156,7 @@ void f(void) {
 }
 ```
 
-# Example 
+# Example 3 
 
 The function foo takes a string of format characters and prints out the argument associated with each format character based on the type.
 
@@ -306,7 +330,7 @@ void debug_print(int dbg_lvl, char *fmt, Ts ... ts)
 }
 ```
 
-# 在变参函数中如何传递变参参数
+# 在变参函数中传递变参参数
 
 ``` cpp
 void func2(const char *fmt, ...)
@@ -331,8 +355,6 @@ int main()
         int a = 1;
         char b = '2';
         func1("a=%d&b=%c", a, &b);
-
-        return 0;
 }
 ```
 
