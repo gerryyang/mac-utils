@@ -89,6 +89,7 @@ int main() {
 }
 ```
 
+`fmtlib`的benchmark数据：
 
 | Library           | Method        | Run Time, s                    |
 | ----------------- | ------------- | ------------------------------ |
@@ -131,28 +132,40 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 > 2. Why fast dtoa() functions is needed? They are a very common operations in writing data in text format. The standard way of sprintf(), std::stringstream, often provides poor performance. The author of this benchmark would optimize the sprintf implementation in RapidJSON. https://github.com/fmtlib/dtoa-benchmark/blob/master/src/milo/dtoa_milo.h
 
 
-More:
-
-* [A collection of formatting benchmarks](https://github.com/fmtlib/format-benchmark/tree/d0d5e141df6a8f2e60d4ba3ea718415a00ca3e5b)
-* [Converting a hundred million integers to strings per second](https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html)
-
-
 运行期和编译期计算对比：[https://gcc.godbolt.org/z/G6jfdcxqr](https://gcc.godbolt.org/z/G6jfdcxqr)
 
 测试结果：
 
-| Method          | Time (ns) | Speedup |
-| --------------- | --------- | ------- |
-| ss_string       | 4329853   | 1x      |
-| sprintf_string  | 737092    | 4.87x   |
-| to_string       | 72663     | 58.59x  |
-| tc_string       | 42530     | 100.81x |
-| fmt_string      | 124218    | 33.86x  |
-| std_fmt_string  | N/A       | N/A     |
-| compilea_string | 451       | 9600x   |
-| compileb_string | 441       | 9600x   |
+| Method                | Time (ns) | Speedup |
+| --------------------- | --------- | ------- |
+| std::stringstream     | 4136931   | 1x      |
+| sprintf               | 738063    | 4.6x    |
+| std::to_string(C++11) | 69180     | 58.8x   |
+| std::to_chars(c++17)  | 42589     | 96.1x   |
+| fmt::format           | 128076    | 31.3x   |
+| fmt::format_int       | 24807     | 165.8x  |
+| std::format(C++20)    | N/A       | N/A     |
+| macro_string          | 399       | 10,367x |
+| compile_string        | 425       | 9,733x  |
 
 * `to_chars`(c++17) 操作的是 stack-allocated buffer，而`fmt::format`返回的是`std::string` 使用了堆内存。
+* `to_chars`(c++17) 需要一次额外的内存拷贝，而`fmt::fmt_int`的内存由对象自己管理不需要拷贝。
+* `fmt::fmt_int` > `std::to_chars`(C++17) > `std::to_string`(C++11)
+
+```cpp
+std::array<char, std::numeric_limits<int>::digits10 + 2> buffer;
+auto result = std::to_chars(buffer.data(),
+                            buffer.data() + buffer.size(), number);
+if (result.ec == std::errc()) {
+  std::string result(buffer.data(), result.ptr); // Copy the data into string.
+  // Use result.
+} else {
+  // Handle the error.
+}
+
+auto f = fmt::format_int(42);
+// f.data() is the data, f.size() is the size
+```
 
 ``` cpp
 namespace detail
@@ -197,6 +210,11 @@ int main()
 }
 ```
 
+更详细的测试结果:
+
+* [A collection of formatting benchmarks](https://github.com/fmtlib/format-benchmark/tree/d0d5e141df6a8f2e60d4ba3ea718415a00ca3e5b)
+* [Converting a hundred million integers to strings per second](https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html)
+* [Facebook Tech Talk by Andrei Alexandrescu: Three Optimization Tips For C++](https://archive.org/details/AndreiAlexandrescu-Three-Optimization-Tips)
 
 # 最小的64位ELF
 
