@@ -30,13 +30,13 @@ C++性能优化实践
 
 # 性能和易用性
 
-例子：TDR(特指1.0版本) vs ProtocolBuffers
+例子：TDR (特指1.0版本) vs ProtocolBuffers
 
 TDR 牺牲了易用性获取了高性能，而 ProtocolBuffers 通过部分性能开销换取了更好的易用性。
 
 * 易用性
-  + TDR 使用 LV(Length + Value) 的编码方式，通过版本剪裁方式来解决版本兼容，但只支持单向的高版本兼容低版本数据
-  + ProtocolBuffers 使用 TLV(Tag + Length + Value) 的编码方式，支持前后双向兼容
+  + TDR 使用 `LV` (Length + Value) 的编码方式，通过版本剪裁方式来解决版本兼容，但只支持单向的高版本兼容低版本数据
+  + ProtocolBuffers 使用 `TLV` (Tag + Length + Value) 的编码方式，支持前后双向兼容
   + TDR 对字段顺序有要求，而 ProtocolBuffers 不需要
 
 * 性能
@@ -111,18 +111,18 @@ void dtoa(double value, char* buffer);
 RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. Then convert them to limited precision (1 to 17 decimal digits in significand). Finally convert these numbers into ASCII. Each digit group is run for 100 times. The minimum time duration is measured for 10 trials.
 
 
-| Function | Time (ns) | Speedup |
-| -------- | --------- | ------- | 
-| ostringstream |	1,187.735	| 0.75x |
-| ostrstream |	1,048.512 |	0.85x |
-| sprint |	887.735 |	1.00x |
-| fpconv	| 119.024 |	7.46x |
-| grisu2	| 101.082 |	8.78x |
-| doubleconv (Google) |	84.359 |	10.52x |
-| milo |	64.100	| 13.85x |
-| ryu |	43.541 |	20.39x |
-| fmt |	40.712	| 21.81x |
-| null |	1.200 |	739.78x |
+| Function            | Time (ns) | Speedup |
+| ------------------- | --------- | ------- |
+| ostringstream       | 1,187.735 | 0.75x   |
+| ostrstream          | 1,048.512 | 0.85x   |
+| sprint              | 887.735   | 1.00x   |
+| fpconv              | 119.024   | 7.46x   |
+| grisu2              | 101.082   | 8.78x   |
+| doubleconv (Google) | 84.359    | 10.52x  |
+| milo (Tencent)      | 64.100    | 13.85x  |
+| ryu                 | 43.541    | 20.39x  |
+| fmt                 | 40.712    | 21.81x  |
+| null                | 1.200     | 739.78x |
 
 
 ![randomdigit](/assets/images/202110/randomdigit.png)
@@ -141,7 +141,7 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 | std::stringstream     | 4136931   | 1x      |
 | sprintf               | 738063    | 4.6x    |
 | std::to_string(C++11) | 69180     | 58.8x   |
-| std::to_chars(c++17)  | 42589     | 96.1x   |
+| std::to_chars(C++17)  | 42589     | 96.1x   |
 | fmt::format           | 128076    | 31.3x   |
 | fmt::format_int       | 24807     | 165.8x  |
 | std::format(C++20)    | N/A       | N/A     |
@@ -151,6 +151,8 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 * `to_chars`(c++17) 操作的是 stack-allocated buffer，而`fmt::format`返回的是`std::string` 使用了堆内存。
 * `to_chars`(c++17) 需要一次额外的内存拷贝，而`fmt::fmt_int`的内存由对象自己管理不需要拷贝。
 * `fmt::fmt_int` > `std::to_chars`(C++17) > `std::to_string`(C++11)
+
+代码分析：
 
 ```cpp
 std::array<char, std::numeric_limits<int>::digits10 + 2> buffer;
@@ -166,6 +168,8 @@ if (result.ec == std::errc()) {
 auto f = fmt::format_int(42);
 // f.data() is the data, f.size() is the size
 ```
+
+编译期计算：
 
 ``` cpp
 namespace detail
@@ -308,7 +312,7 @@ strip example
 * 调用函数（call指令）
 
 
-# Branch predictor（Instruction pipelining）
+# Instruction pipelining
 
 GCC内置函数[__builtin_expect](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html)提供了分支预测（[Branch predictor](https://en.wikipedia.org/wiki/Branch_predictor)）的能力，从而有助于CPU执行[Instruction pipelining](https://en.wikipedia.org/wiki/Instruction_pipelining)优化，其中，exp 为 integral expressions，__builtin_expect 为 true 的默认概率为 90%（依赖 -O2，而 -O0 不会优化）。
 
