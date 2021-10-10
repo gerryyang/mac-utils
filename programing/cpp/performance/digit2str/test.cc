@@ -65,11 +65,12 @@ void fmt_string()
 
 void fmt_int_string() 
 {
-	ScopedTimer timer("fmt_string");
+	ScopedTimer timer("fmt_int_string");
 	for (auto i = 0; i < MAXCNT; ++i) {
 		auto fi = fmt::format_int(i);
         // fi.data() is the data, fi.size() is the size
         auto str = fi.data();
+		(void)str;
 	}
 }
 
