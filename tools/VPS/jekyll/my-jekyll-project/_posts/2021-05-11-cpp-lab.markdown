@@ -1577,6 +1577,57 @@ int main()
 
 # C++17
 
+## std::basic_string_view
+
+A typical implementation holds only two members: a pointer to constant CharT and a size. Several typedefs for common character types are provided:
+
+``` cpp
+// std::basic_string_view<char> == std::string_view
+template<
+    class CharT,
+    class Traits = std::char_traits<CharT>
+> class basic_string_view;
+```
+
+It is the programmer's responsibility to ensure that std::string_view does not outlive the pointed-to character array:
+
+``` cpp
+std::string_view good{"a string literal"};
+  // "Good" case: `good` points to a static array (string literals are usually
+  // resided in persistent data segments).
+ 
+std::string_view bad{"a temporary string"s}; 
+  // "Bad" case: `bad` holds a dangling pointer since the std::string temporary,
+  // created by std::operator""s, will be destroyed at the end of the statement.
+```
+
+``` cpp
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <iomanip> // std::quoted
+ 
+int main()
+{ 
+    char array[3] = {'B', 'a', 'r'};
+    
+    // constexpr basic_string_view( const CharT* s, size_type count )
+    std::string_view array_v(array, std::size(array));
+    std::cout << "array_v: " << std::quoted( array_v ) << '\n';
+ 
+    std::string cppstr = "Foo";
+    
+    // constexpr basic_string_view( const CharT* s )
+    std::string_view cppstr_v(cppstr); 
+    std::cout << "cppstr_v: " << std::quoted( cppstr_v ) << '\n';
+}
+/*
+array_v: "Bar"
+cppstr_v: "Foo"
+*/
+```
+
+* https://en.cppreference.com/w/cpp/string/basic_string_view
 
 ## maybe_unused
 
@@ -1595,6 +1646,8 @@ int main() {;}
 ```
 
 * https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
+
+
 # C++20
 
 ## std::source_location
@@ -1637,6 +1690,41 @@ file: prog.cc(19:8) `void fun(T) [with T = const char*]`: Hello C++20!
 ```
 
 * https://en.cppreference.com/w/cpp/utility/source_location
+
+## Text formatting
+
+``` cpp
+#include <format>
+#include <iostream>
+#include <string>
+#include <string_view>
+ 
+template <typename... Args>
+std::string dyna_print(std::string_view rt_fmt_str, Args&&... args) {
+    return std::vformat(rt_fmt_str, std::make_format_args(args...));
+}
+ 
+int main() {
+    std::cout << std::format("Hello {}!\n", "world");
+ 
+    std::string fmt;
+    for (int i{}; i != 3; ++i) {
+        fmt += "{} "; // constructs the formatting string
+        std::cout << fmt << " : ";
+        std::cout << dyna_print(fmt, "alpha", 'Z', 3.14, "unused");
+        std::cout << '\n';
+    }
+}
+/*
+Hello world!
+{}  : alpha 
+{} {}  : alpha Z 
+{} {} {}  : alpha Z 3.14
+*/
+```
+
+* https://en.cppreference.com/w/cpp/utility/format
+* https://github.com/fmtlib/fmt
 
 
 # Clang-Format Style Options

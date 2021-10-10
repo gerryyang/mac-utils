@@ -8,6 +8,8 @@ categories: C/C++
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+C++性能优化实践
+
 # TODO
 
 1. 一个老生常谈的问题：为什么我们要用C++？ https://mk.woa.com/q/266081?newest=true
@@ -26,9 +28,7 @@ categories: C/C++
 * 在线反汇编工具：https://gcc.godbolt.org/
 
 
-# 问题
-
-## 性能和易用性
+# 性能和易用性
 
 例子：TDR(特指1.0版本) vs ProtocolBuffers
 
@@ -61,13 +61,141 @@ TDR 牺牲了易用性获取了高性能，而 ProtocolBuffers 通过部分性�
 
 
 
-
-
- 
-## 编译优化
+# 编译优化
 
 -O2编译优化
 
+TODO
+
+# 数字转换为字符串
+
+* Before C++11：`std::stringstream`, `sprintf`
+* After C++11: `std::to_string`(C++11), `std::to_chars`(C++17), `std::format`(C++20), `fmtlib`
+
+``` cpp
+// {fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams.
+// Format string syntax similar to Python's format.
+// https://github.com/fmtlib/fmt
+// https://gcc.godbolt.org/z/rz6fncKn7
+#include <vector>
+#include <fmt/ranges.h>
+
+int main() {
+  std::string s1 = fmt::format("The answer is {}.", 42); // s1 == "The answer is 42."
+  std::string s2 = fmt::format("I'd rather be {1} than {0}.", "right", "happy"); // s2 == "I'd rather be happy than right."
+
+  std::vector<int> v = {1, 2, 3};
+  fmt::print("{}\n", v); // {1, 2, 3}
+}
+```
+
+
+| Library           | Method        | Run Time, s                    |
+| ----------------- | ------------- | ------------------------------ |
+| libc              | printf        | 1.04                           |
+| libc++            | std::ostream  | 3.05                           |
+| fmt 6.1.1         | fmt::print    | 0.75  (35% faster than printf) |
+| Boost Format 1.67 | boost::format | 7.24                           |
+| Folly Format      | folly::format | 2.23                           |
+
+
+[dtoa Benchmark](https://github.com/fmtlib/dtoa-benchmark)
+
+This benchmark evaluates the performance of conversion from double precision IEEE-754 floating point (double) to ASCII string. The function prototype is:
+
+``` cpp
+void dtoa(double value, char* buffer);
+```
+
+RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. Then convert them to limited precision (1 to 17 decimal digits in significand). Finally convert these numbers into ASCII. Each digit group is run for 100 times. The minimum time duration is measured for 10 trials.
+
+
+| Function | Time (ns) | Speedup |
+| -------- | --------- | ------- | 
+| ostringstream |	1,187.735	| 0.75x |
+| ostrstream |	1,048.512 |	0.85x |
+| sprint |	887.735 |	1.00x |
+| fpconv	| 119.024 |	7.46x |
+| grisu2	| 101.082 |	8.78x |
+| doubleconv (Google) |	84.359 |	10.52x |
+| milo |	64.100	| 13.85x |
+| ryu |	43.541 |	20.39x |
+| fmt |	40.712	| 21.81x |
+| null |	1.200 |	739.78x |
+
+
+![randomdigit](/assets/images/202110/randomdigit.png)
+
+> 1. Note that the null implementation does nothing. It measures the overheads of looping and function call.
+> 
+> 2. Why fast dtoa() functions is needed? They are a very common operations in writing data in text format. The standard way of sprintf(), std::stringstream, often provides poor performance. The author of this benchmark would optimize the sprintf implementation in RapidJSON. https://github.com/fmtlib/dtoa-benchmark/blob/master/src/milo/dtoa_milo.h
+
+
+More:
+
+* [A collection of formatting benchmarks](https://github.com/fmtlib/format-benchmark/tree/d0d5e141df6a8f2e60d4ba3ea718415a00ca3e5b)
+* [Converting a hundred million integers to strings per second](https://www.zverovich.net/2020/06/13/fast-int-to-string-revisited.html)
+
+
+运行期和编译期计算对比：[https://gcc.godbolt.org/z/G6jfdcxqr](https://gcc.godbolt.org/z/G6jfdcxqr)
+
+测试结果：
+
+| Method          | Time (ns) | Speedup |
+| --------------- | --------- | ------- |
+| ss_string       | 4329853   | 1x      |
+| sprintf_string  | 737092    | 4.87x   |
+| to_string       | 72663     | 58.59x  |
+| tc_string       | 42530     | 100.81x |
+| fmt_string      | 124218    | 33.86x  |
+| std_fmt_string  | N/A       | N/A     |
+| compilea_string | 451       | 9600x   |
+| compileb_string | 441       | 9600x   |
+
+* `to_chars`(c++17) 操作的是 stack-allocated buffer，而`fmt::format`返回的是`std::string` 使用了堆内存。
+
+``` cpp
+namespace detail
+{
+	template<uint8_t... digits> struct positive_to_chars {
+		static const char value[];
+		static constexpr size_t size = sizeof...(digits);
+	};
+	template<uint8_t... digits> const char positive_to_chars<digits...>::value[] = {('0' + digits)..., 0};
+
+	template<uint8_t... digits> struct negative_to_chars {
+		static const char value[];
+	};
+	template<uint8_t... digits> const char negative_to_chars<digits...>::value[] = {'-', ('0' + digits)..., 0};
+
+	template<bool neg, uint8_t... digits>
+		struct to_chars : positive_to_chars<digits...> {};
+
+	template<uint8_t... digits>
+		struct to_chars<true, digits...> : negative_to_chars<digits...> {};
+
+	// 对 num 每位进行展开，例如，num = 123 则展开为 explode<neg, 0, 1, 2, 3>
+	template<bool neg, uintmax_t rem, uint8_t... digits>
+		struct explode : explode<neg, rem / 10, rem % 10, digits...> {};
+	
+	// 展开终止
+	template<bool neg, uint8_t... digits>
+		struct explode<neg, 0, digits...> : to_chars<neg, digits...> {};
+
+	template<typename T>
+		constexpr uintmax_t cabs(T num) {
+			return (num < 0) ? -num : num;
+		}
+}
+
+template<typename T, T num>
+struct string_from : ::detail::explode<num < 0, ::detail::cabs(num)> {};
+
+int main() 
+{
+    auto str = string_from<unsigned, 1>::value;
+}
+```
 
 
 # 最小的64位ELF

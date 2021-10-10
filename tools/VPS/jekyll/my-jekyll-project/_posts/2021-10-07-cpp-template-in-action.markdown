@@ -75,6 +75,51 @@ int main()
 * https://en.wikipedia.org/wiki/Variadic_template
 * https://www.ibm.com/docs/en/zos/2.4.0?topic=only-variadic-templates-c11
 
+## 数字转换为字符串
+
+``` cpp
+namespace detail
+{
+	template<uint8_t... digits> struct positive_to_chars {
+		static const char value[];
+		static constexpr size_t size = sizeof...(digits);
+	};
+	template<uint8_t... digits> const char positive_to_chars<digits...>::value[] = {('0' + digits)..., 0};
+
+	template<uint8_t... digits> struct negative_to_chars {
+		static const char value[];
+	};
+	template<uint8_t... digits> const char negative_to_chars<digits...>::value[] = {'-', ('0' + digits)..., 0};
+
+	template<bool neg, uint8_t... digits>
+		struct to_chars : positive_to_chars<digits...> {};
+
+	template<uint8_t... digits>
+		struct to_chars<true, digits...> : negative_to_chars<digits...> {};
+
+	// 对 num 每位进行展开，例如，num = 123 则展开为 explode<neg, 0, 1, 2, 3>
+	template<bool neg, uintmax_t rem, uint8_t... digits>
+		struct explode : explode<neg, rem / 10, rem % 10, digits...> {};
+	
+	// 展开终止
+	template<bool neg, uint8_t... digits>
+		struct explode<neg, 0, digits...> : to_chars<neg, digits...> {};
+
+	template<typename T>
+		constexpr uintmax_t cabs(T num) {
+			return (num < 0) ? -num : num;
+		}
+}
+
+template<typename T, T num>
+struct string_from : ::detail::explode<num < 0, ::detail::cabs(num)> {};
+
+int main() 
+{
+    auto str = string_from<unsigned, 1>::value;
+}
+```
+
 
 # SFINAE
 

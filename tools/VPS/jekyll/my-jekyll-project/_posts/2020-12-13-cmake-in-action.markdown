@@ -8,30 +8,6 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Update gcc
-
-```
-# centos
-# enable gcc7
-sudo yum install centos-release-scl
-sudo yum install devtoolset-7-gcc*
-scl enable devtoolset-7 bash
-
-# ubuntu
-
-sudo apt-get install gcc-4.8 g++-4.8
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8 --slave /usr/bin/gcov gcov /usr/bin/gcov-4.8
-
-sudo apt install gcc-8 g++-8 gcc-9 g++-9 gcc-10 g++-10
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 80 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
-
-sudo update-alternatives --config gcc
-```
-
-refer:
-
-* https://stackoverflow.com/questions/36327805/how-to-install-gcc-5-3-with-yum-on-centos-7-2
-* https://linuxize.com/post/how-to-install-gcc-on-ubuntu-20-04/
 
 # Install CMake
 

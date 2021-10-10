@@ -8,6 +8,51 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Update gcc
+
+```
+# centos
+# enable gcc7
+sudo yum install centos-release-scl
+sudo yum install devtoolset-7-gcc*
+scl enable devtoolset-7 bash
+
+# ubuntu
+
+update-alternatives --query gcc
+
+sudo update-alternatives --config gcc
+
+sudo apt-get install gcc-4.8 g++-4.8
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8 --slave /usr/bin/gcov gcov /usr/bin/gcov-4.8
+
+sudo apt install gcc-8 g++-8
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 80 --slave /usr/bin/g++ g++ /usr/bin/g++-8 --slave /usr/bin/gcov gcov /usr/bin/gcov-8
+```
+
+切换不同的版本：
+
+```
+# sudo update-alternatives --config gcc
+There are 6 choices for the alternative gcc (providing /usr/bin/gcc).
+
+  Selection    Path              Priority   Status
+------------------------------------------------------------
+  0            /usr/bin/gcc-10    90        auto mode
+  1            /usr/bin/gcc-10    90        manual mode
+* 2            /usr/bin/gcc-11    89        manual mode
+  3            /usr/bin/gcc-4.8   50        manual mode
+  4            /usr/bin/gcc-5     50        manual mode
+  5            /usr/bin/gcc-8     80        manual mode
+  6            /usr/bin/gcc-9     60        manual mode
+```
+
+refer:
+
+* https://stackoverflow.com/questions/36327805/how-to-install-gcc-5-3-with-yum-on-centos-7-2
+* https://linuxize.com/post/how-to-install-gcc-on-ubuntu-20-04/
+
+
 # Basic
 
 ## gcc的基本用法

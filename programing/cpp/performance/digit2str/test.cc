@@ -63,6 +63,16 @@ void fmt_string()
 	}
 }
 
+void fmt_int_string() 
+{
+	ScopedTimer timer("fmt_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto fi = fmt::format_int(i);
+        // fi.data() is the data, fi.size() is the size
+        auto str = fi.data();
+	}
+}
+
 #if 0
 void std_fmt_string() 
 {
@@ -115,9 +125,11 @@ namespace detail
 	template<uint8_t... digits>
 		struct to_chars<true, digits...> : negative_to_chars<digits...> {};
 
+    // 对 num 每位进行展开，例如，num = 123 则展开为 explode<neg, 0, 1, 2, 3>
 	template<bool neg, uintmax_t rem, uint8_t... digits>
 		struct explode : explode<neg, rem / 10, rem % 10, digits...> {};
 
+    // 展开终止
 	template<bool neg, uint8_t... digits>
 		struct explode<neg, 0, digits...> : to_chars<neg, digits...> {};
 
@@ -145,6 +157,7 @@ int main()
 	ss_string();
 	to_string();
 	fmt_string();
+	fmt_int_string();
 	//std_fmt_string();
 	tc_string();
 

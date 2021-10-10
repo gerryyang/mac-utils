@@ -51,5 +51,5 @@
     "editor.lineNumbers": "on",
     "editor.wordSeparators": "/\\()\"':,.;<>~!@#$%^&*|+=[]{}`?-",
     "editor.wordWrap": "off",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": false
 }
