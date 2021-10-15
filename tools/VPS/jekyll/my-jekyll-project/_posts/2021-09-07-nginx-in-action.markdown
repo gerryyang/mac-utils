@@ -1,8 +1,8 @@
 ---
 layout: post
 title:  "Nginx in Action"
-date:   2019-02-12 20:30:00 +0800
-categories: nginx
+date:   2021-09-07 20:00:00 +0800
+categories: Nginx
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -10,6 +10,50 @@ categories: nginx
 
 Keywords: nginx, web server, reverse proxy
 
+
+# 安装
+
+* nginx-1.19.9 (30-Mar-2021) 版本
+
+```
+wget https://nginx.org/download/nginx-1.19.9.tar.gz
+tar -xzvf nginx-1.19.9.tar.gz
+cd nginx-1.19.9 
+```
+
+* 指定配置选项
+  
+```
+./configure  --prefix=/usr/local/nginx  --with-http_ssl_module --with-http_v2_module --with-http_realip_module --with-http_addition_module --with-http_sub_module --with-http_dav_module --with-http_flv_module --with-http_mp4_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_auth_request_module --with-http_random_index_module --with-http_secure_link_module --with-http_degradation_module --with-http_slice_module --with-http_stub_status_module --with-mail --with-mail_ssl_module --with-stream --with-stream_ssl_module --with-stream_realip_module --with-stream_ssl_preread_module --with-threads --user=www --group=www
+
+Configuration summary
+  + using threads
+  + using system PCRE library
+  + using system OpenSSL library
+  + using system zlib library
+
+  nginx path prefix: "/usr/local/nginx"
+  nginx binary file: "/usr/local/nginx/sbin/nginx"
+  nginx modules path: "/usr/local/nginx/modules"
+  nginx configuration prefix: "/usr/local/nginx/conf"
+  nginx configuration file: "/usr/local/nginx/conf/nginx.conf"
+  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+```
+
+通过 `grep "YES" auto/options` 可查看配置的所有选项。
+
+* 编译并安装
+
+```
+make && make install
+```
 
 # 证书申请
 

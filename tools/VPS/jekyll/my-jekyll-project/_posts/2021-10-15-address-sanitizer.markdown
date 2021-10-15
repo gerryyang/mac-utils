@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "AddressSanitizer (ASan) - A Fast Memory Error Detecotr"
+title:  "AddressSanitizer (ASan) - A Fast Memory Error Detector"
 date:   2021-10-15 08:30:00 +0800
-categories: Linux Performance
+categories: [Linux Performance]
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -280,8 +280,6 @@ gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c
 ```
 
 ![gcc_sanitize](/assets/images/202106/gcc_sanitize.png)
-
-注意：`-fsanitize=normal`比`-fsanitize=leak`更严格。
 
 ## Clang
 
