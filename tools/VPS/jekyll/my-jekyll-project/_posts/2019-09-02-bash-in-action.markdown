@@ -16,6 +16,133 @@ categories: [Bash, 编程语言]
 
 * [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 
+
+# The ‘ls’ command – how to show seconds
+
+``` bash
+# show also the seconds (and not only seconds but also microseconds)
+$ ls --full-time
+$ ls -l --time-style=full-iso
+```
+
+```
+$ ls -l core_worldsvr_1632113278.5873
+-rw------- 1 user00 users 794185728 Sep 20 12:47 core_worldsvr_1632113278.5873
+$ ls -l core_worldsvr_1632113278.5873 --full-time
+-rw------- 1 user00 users 794185728 2021-09-20 12:47:59.224668459 +0800 core_worldsvr_1632113278.5873
+$ ls -l core_worldsvr_1632113278.5873 --time-style=full-iso
+-rw------- 1 user00 users 794185728 2021-09-20 12:47:59.224668459 +0800 core_worldsvr_1632113278.5873
+```
+
+# CPU Monitor
+
+``` bash
+#!/bin/bash
+
+dir_head_prefix="./datacpu"
+
+G_FORMATE_TIME=`date +"%Y%m%d%H%M%S"`
+dir_head=${dir_head_prefix}"_"${G_FORMATE_TIME}
+G_SLEEP_INTERVAL=10
+
+echo $#
+echo $*
+[ $# -lt 2 ]  && {  echo "Usage: sh monitor_cpu_single_core.sh ps的name 监控时间(单位:mins)";  exit 1; }
+
+if [ ! -d ${dir_head} ];then
+	mkdir -p ${dir_head}
+else
+	rm -rf ${dir_head}/*
+fi
+
+core_num=$(cat /proc/cpuinfo  | grep processor | wc -l )
+
+function get_sum()
+{
+	local input=$1
+	input=($input)
+	num=${#input[@]}
+	sum=0
+	for((i=0;i<$num;i++))
+	do
+		let sum=$sum+${input[i]}
+	
+	done
+	echo $sum
+}
+
+run_time_second=$2
+
+let run_time_second=$run_time_second*60
+
+#manager_name="ETC: manager 0 ger "
+manager_name=$1
+start_time=`date +%s`
+let end_time=$run_time_second+$start_time
+now=`date +%s`
+
+echo $manager_name
+echo $run_time_second
+
+while [[ $now -lt $end_time ]]
+do
+	child_ids=$(ps -ef | grep -e "$manager_name" | grep -v celery  | grep -v memmonitor_ros | grep -v ".sh" | grep -v grep |  awk -F ' ' '{ print $2}')
+        child_ids=($child_ids)
+	child_names=$(ps -ef | grep -e "$manager_name" | grep -v celery  | grep -v memmonitor_ros | grep -v ".sh" | grep -v grep |  awk -F ' ' '{ print $8"-"$9}')
+	child_names=($child_names)
+	
+	echo "manager_pid: $manager_pid"
+	
+	totalCpuTime=$(cat /proc/stat | grep -w cpu | sed "s/cpu/0/g")
+	total1=$(get_sum "${totalCpuTime[*]}")
+	#i=1 tr -d "   PID TTY          TIME CMD"
+	for((i=0;i < ${#child_ids[@]};i++))
+	do
+		each=${child_ids[i]}
+		process=""
+		process=$(cat /proc/$each/stat | awk -F  " " '{print $14,$15,$16,$17}')
+		pro1[i]=$(get_sum "${process[*]}")
+	done
+	
+	for((i=0;i < ${#child_names[@]};i++))
+	do
+		each=${child_names[i]}
+		each_name=`echo $each | tr -d " " | sed "s/\//_/g"`
+		logfile[i]=${dir_head}"/"${child_ids[i]}"-"${each_name}.log
+	done
+	
+
+	sleep ${G_SLEEP_INTERVAL}
+	
+	totalCpuTime=$(cat /proc/stat | grep -w cpu | sed "s/cpu/0/g")
+	total2=$(get_sum "${totalCpuTime[*]}")
+	
+	for((i=1;i < ${#child_ids[@]};i++))
+	do
+		each=${child_ids[i]}
+		process=""
+		process=$(cat /proc/$each/stat | awk -F  " " '{print $14,$15,$16,$17}')
+		pro2[i]=$(get_sum "${process[*]}")
+	done
+
+	let diff_cpu=$total2-$total1
+	for((i=1;i < ${#child_ids[@]};i++))
+	do
+		diff_pro=0
+		rate=0
+		let diff_pro=${pro2[i]}-${pro1[i]}
+		rate=`awk 'BEGIN{ rate='$core_num'*100*'$diff_pro'/'$diff_cpu'; print rate}'`
+		
+		rate=`echo $rate| awk '{if($1>100) $1=100;print $1}'` # 100校验
+		
+		echo -e "`date +"%Y-%m-%d %H:%M:%S"`\t$rate" >> ${logfile[i]}
+	done
+	
+
+	now=`date +%s`
+done
+```
+
 # Make sure only one instance to run
 
 A solution that does not require additional tools would be prefered.

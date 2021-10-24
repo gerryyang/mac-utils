@@ -342,6 +342,10 @@ Switch between related files (same name, different extensions) using keybindings
 
 `option+ o`: 实现`.h`和`.cc`之间的跳转。
 
+## Mermaid Preview
+
+The plugin enables live editing and visualization of [mermaid](https://mermaidjs.github.io/) supported diagrams.
+
 # 有趣的扩展
 
 ## LeetCode 
