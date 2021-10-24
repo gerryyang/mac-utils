@@ -10,6 +10,16 @@ categories: C/C++
 
 C++性能优化实践
 
+
+
+refer:
+
+* [无锁编程介绍](https://km.woa.com/group/TimiJ1group/articles/show/445557)
+  + Obstruction-Free(无干扰) 
+  + Lock-Free(无锁)
+  + Wait-Free(无等待)
+
+
 # TODO
 
 1. 一个老生常谈的问题：为什么我们要用C++？ https://mk.woa.com/q/266081?newest=true
@@ -65,7 +75,7 @@ int main()
 }
 ```
 
-## 数据对齐
+# 数据对齐
 
 配合现代编译器和CPU架构，可以让程序获得更好的性能。例如，CPU访问32位宽度的数据总线，就会期待数据是按照32位对齐，即4字节。这样CPU读取4字节的数据只需要对总线访问一次，但是如果要访问的数据并没有按照4字节对齐，那么CPU需要访问数据总线两次，运算速度自然就慢了。除了CPU之外，还有其他硬件也需要数据对齐，比如通过DMA访问硬盘，就要求内存必须是4K对齐的。
 
