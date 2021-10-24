@@ -40,6 +40,44 @@ GCC 5.1.0 输出：
 0x7ffe01afc010
 ```
 
+内存分配：
+
+``` cpp
+#include <iostream>
+#include <cstdlib>
+#include <string>
+
+// rewrite operator new to print log
+void* operator new(std::size_t n)
+{
+    //std::cout << "allocate " << n << " bytes" << std::endl;
+    return malloc(n);
+}
+
+void operator delete(void *p) throw()
+{
+    //std::cout << "delete " << p << std::endl;
+    free(p);
+}
+
+void print(const std::string& scene, const std::string& s)
+{
+    std::cout << "[" << scene << "] sizeof: " << sizeof(s) << " size: " << s.size() << " capacity: " << s.capacity() << std::endl;
+}
+
+int main()
+{
+    std::string s("hello");
+    print("init", s);
+    
+    for (size_t i = 0; i != 24; ++i) {
+        s.push_back('+');
+        //std::cout << i << ":" << s << std::endl;
+    }
+    print("after push_back", s);
+}
+```
+
 # 实现
 
 * 实现标准：ISO C++ 14882: 21 Strings library
@@ -127,7 +165,7 @@ class basic_string
 # Refer
 
 * [GCC5 std::string新变化](http://www.pandademo.com/2017/04/new-changes-of-gcc5-std-string/)
-
+* [C++的string-两手抓的内存分配](https://zhuanlan.zhihu.com/p/187499607)
 
   
 
