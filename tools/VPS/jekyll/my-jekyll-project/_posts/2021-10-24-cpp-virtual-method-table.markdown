@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Vagrant in Action"
-date:   2018-11-15 12:30:00 +0800
-categories: https
+title:  "CPP Virtual Method Table"
+date:   2021-10-24 12:00:00 +0800
+categories: [C/C++]
 ---
 
 * Do not remove this line (it will not be displayed)

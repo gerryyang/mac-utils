@@ -217,7 +217,6 @@ int main()
 | 1字节对齐 (rep movsb) | 2.45423 | 40.7
 | 32字节对齐 (rep movsb) | 1.27497 | 78.4
 
-
 > REP MOVSD/MOVSQ is the universal solution that works relatively well on all Intel processors for large memory blocks of at least 4KB (no ERMSB required) if the destination is aligned by at least 64 bytes. REP MOVSD/MOVSQ works even better on newer processors, starting from Skylake. And, for Ice Lake or newer microarchitectures, it works perfectly for even very small strings of at least 64 bytes. refer: https://stackoverflow.com/questions/43343231/enhanced-rep-movsb-for-memcpy
 
 * https://stackoverflow.com/questions/43343231/enhanced-rep-movsb-for-memcpy
