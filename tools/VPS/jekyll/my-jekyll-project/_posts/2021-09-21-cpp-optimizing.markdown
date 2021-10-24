@@ -28,6 +28,336 @@ C++性能优化实践
 * 在线反汇编工具：https://gcc.godbolt.org/
 
 
+# 编译期计算
+
+使用`enum hack`
+
+``` cpp
+#include <iostream>
+
+template<int a, int b>
+struct Add {
+    enum {
+        result = a + b
+    };
+};
+
+int main()
+{
+    std::cout << Add<1, 2>::result << std::endl;
+}
+```
+
+使用C++11的`constexpr`
+
+``` cpp
+#include <iostream>
+
+template<typename T1, typename T2>
+constexpr int add(T1 a, T2 b)
+{
+    return a + b;
+}
+
+int main()
+{
+    std::cout << add(1, 2) << std::endl;
+}
+```
+
+## 数据对齐
+
+配合现代编译器和CPU架构，可以让程序获得更好的性能。例如，CPU访问32位宽度的数据总线，就会期待数据是按照32位对齐，即4字节。这样CPU读取4字节的数据只需要对总线访问一次，但是如果要访问的数据并没有按照4字节对齐，那么CPU需要访问数据总线两次，运算速度自然就慢了。除了CPU之外，还有其他硬件也需要数据对齐，比如通过DMA访问硬盘，就要求内存必须是4K对齐的。
+
+C++11之前的方法：使用`offsetof`宏获取member的偏移量，从而获取指定类型的对齐字节长度。
+
+``` cpp
+#include <iostream>
+
+#define ALIGNOF(type, result) do {\
+    struct alignof_trick{ char c; type member; }; \
+    result = offsetof(alignof_trick, member); \
+    } while (0);
+
+typedef void (*f)(); 
+
+int main()
+{
+    int len = 0;
+
+    ALIGNOF(char, len);
+    std::cout << len << std::endl; // 1
+    
+    ALIGNOF(int, len);
+    std::cout << len << std::endl; // 4
+    
+    ALIGNOF(short, len);
+    std::cout << len << std::endl; // 2
+    
+    ALIGNOF(float, len);
+    std::cout << len << std::endl; // 4
+    
+    ALIGNOF(double, len);
+    std::cout << len << std::endl; // 8
+    
+    ALIGNOF(long long, len);
+    std::cout << len << std::endl; // 8
+
+    ALIGNOF(f, len);
+    std::cout << len << std::endl; // 8
+}
+```
+
+更好的方法：
+
+``` cpp
+#include <iostream>
+
+template<typename T>
+struct alignof_trick
+{
+    char c;
+    T member;
+};
+
+#define ALIGNOF(type) offsetof(alignof_trick<type>, member)
+
+typedef void (*f)();
+
+int main()
+{
+    std::cout << ALIGNOF(char) << std::endl; // 1
+    std::cout << ALIGNOF(int) << std::endl; // 4
+    std::cout << ALIGNOF(short) << std::endl; // 2
+    std::cout << ALIGNOF(float) << std::endl; // 4
+    std::cout << ALIGNOF(double) << std::endl; // 8
+    std::cout << ALIGNOF(long long) << std::endl; // 8
+    std::cout << ALIGNOF(f) << std::endl; // 8
+}
+```
+
+使用编译器的扩展功能：
+
+``` cpp
+#include <iostream>
+
+// GCC
+#define ALIGNOF(type) __alignof__(type)
+
+typedef void (*f)();
+
+int main()
+{
+    std::cout << ALIGNOF(char) << std::endl; // 1
+    std::cout << ALIGNOF(int) << std::endl; // 4
+    std::cout << ALIGNOF(short) << std::endl; // 2
+    std::cout << ALIGNOF(float) << std::endl; // 4
+    std::cout << ALIGNOF(double) << std::endl; // 8
+    std::cout << ALIGNOF(long long) << std::endl; // 8
+    std::cout << ALIGNOF(f) << std::endl; // 8
+}
+```
+
+设置数据对齐。
+
+``` cpp
+#include <iostream>
+
+// GCC
+#define ALIGNOF(type) __alignof__(type)
+#define ALIGNAS(len) __attribute__((aligned(len))) 
+
+int main()
+{
+    short x1;
+    ALIGNAS(8) short x2; 
+    std::cout << ALIGNOF(x1) << std::endl; // 2
+    std::cout << ALIGNOF(x2) << std::endl; // 8
+}
+```
+
+由于不同的编译器需要采用不同的扩展功能来控制类型的对齐字节长度，对可移植性不太友好，因此，C++11标准中新增了`alignof`和`alignas`两个关键字。
+
+``` cpp
+#include <iostream>
+
+// GCC
+#define ALIGNOF(type) alignof(type)
+#define ALIGNAS(len) alignas(len)
+
+int main()
+{
+    short x1;
+    std::cout << ALIGNOF(short) << std::endl; // 2
+    std::cout << ALIGNOF(decltype(x1)) << std::endl; // 2
+    
+    ALIGNAS(8) short x2; 
+    std::cout << ALIGNOF(decltype(x2)) << std::endl; // 2 TODO
+}
+```
+
+也提供了一些模板方法：例如，`std::alignment_of`
+
+``` cpp
+#include <iostream>
+
+int main()
+{
+    std::cout << std::alignment_of<int>::value << std::endl; // 4
+    std::cout << std::alignment_of<int>() << std::endl; // 4
+}
+```
+
+性能测试对比：(10000000 * 10000 B = 100 GB)
+
+| Case | Time (s) | Memory bandwidth (GB)
+| -- | -- | --
+| 1字节对齐 (memcpy) | 9.32968 | 10.7
+| 32字节对齐 (memcpy) | 8.15827 | 12.3
+| 1字节对齐 (rep movsb) | 2.45423 | 40.7
+| 32字节对齐 (rep movsb) | 1.27497 | 78.4
+
+
+> REP MOVSD/MOVSQ is the universal solution that works relatively well on all Intel processors for large memory blocks of at least 4KB (no ERMSB required) if the destination is aligned by at least 64 bytes. REP MOVSD/MOVSQ works even better on newer processors, starting from Skylake. And, for Ice Lake or newer microarchitectures, it works perfectly for even very small strings of at least 64 bytes. refer: https://stackoverflow.com/questions/43343231/enhanced-rep-movsb-for-memcpy
+
+* https://stackoverflow.com/questions/43343231/enhanced-rep-movsb-for-memcpy
+* https://groups.google.com/g/gnu.gcc.help/c/-Bmlm_EG_fE
+* https://www-ssl.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-optimization-manual.html
+* https://en.cppreference.com/w/cpp/memory/align
+
+使用[tinymembench](https://github.com/ssvb/tinymembench)测试内存的性能：
+
+
+```
+$ lscpu
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              1
+On-line CPU(s) list: 0
+Thread(s) per core:  1
+Core(s) per socket:  1
+Socket(s):           1
+NUMA node(s):        1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               63
+Model name:          Intel(R) Xeon(R) CPU E5-26xx v3
+Stepping:            2
+CPU MHz:             2394.446
+BogoMIPS:            4788.89
+Hypervisor vendor:   KVM
+Virtualization type: full
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            4096K
+NUMA node0 CPU(s):   0
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx lm constant_tsc rep_good nopl cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm pti bmi1 avx2 bmi2 xsaveopt
+```
+
+``` 
+$ ./tinymembench 
+tinymembench v0.4.9 (simple benchmark for memory throughput and latency)
+
+==========================================================================
+== Memory bandwidth tests                                               ==
+==                                                                      ==
+== Note 1: 1MB = 1000000 bytes                                          ==
+== Note 2: Results for 'copy' tests show how many bytes can be          ==
+==         copied per second (adding together read and writen           ==
+==         bytes would have provided twice higher numbers)              ==
+== Note 3: 2-pass copy means that we are using a small temporary buffer ==
+==         to first fetch data into it, and only then write it to the   ==
+==         destination (source -> L1 cache, L1 cache -> destination)    ==
+== Note 4: If sample standard deviation exceeds 0.1%, it is shown in    ==
+==         brackets                                                     ==
+==========================================================================
+
+ C copy backwards                                     :   4867.4 MB/s (2.8%)
+ C copy backwards (32 byte blocks)                    :   4834.6 MB/s (1.9%)
+ C copy backwards (64 byte blocks)                    :   4876.6 MB/s (1.2%)
+ C copy                                               :   4832.9 MB/s (1.7%)
+ C copy prefetched (32 bytes step)                    :   4581.1 MB/s (1.8%)
+ C copy prefetched (64 bytes step)                    :   4522.8 MB/s (2.9%)
+ C 2-pass copy                                        :   4372.2 MB/s (1.5%)
+ C 2-pass copy prefetched (32 bytes step)             :   4465.1 MB/s (2.2%)
+ C 2-pass copy prefetched (64 bytes step)             :   4431.3 MB/s (2.1%)
+ C fill                                               :   8415.8 MB/s (3.1%)
+ C fill (shuffle within 16 byte blocks)               :   8432.8 MB/s (3.2%)
+ C fill (shuffle within 32 byte blocks)               :   8460.3 MB/s (3.4%)
+ C fill (shuffle within 64 byte blocks)               :   8452.6 MB/s (2.9%)
+ ---
+ standard memcpy                                      :   9922.0 MB/s (3.0%)
+ standard memset                                      :   8481.7 MB/s (5.3%)
+ ---
+ MOVSB copy                                           :   4314.7 MB/s (1.2%)
+ MOVSD copy                                           :   4443.8 MB/s (1.0%)
+ SSE2 copy                                            :   4783.6 MB/s (2.0%)
+ SSE2 nontemporal copy                                :  10040.4 MB/s (4.7%)
+ SSE2 copy prefetched (32 bytes step)                 :   4631.6 MB/s (1.7%)
+ SSE2 copy prefetched (64 bytes step)                 :   4610.8 MB/s (3.3%)
+ SSE2 nontemporal copy prefetched (32 bytes step)     :   9247.9 MB/s (2.4%)
+ SSE2 nontemporal copy prefetched (64 bytes step)     :   9515.9 MB/s (3.4%)
+ SSE2 2-pass copy                                     :   4538.2 MB/s (1.6%)
+ SSE2 2-pass copy prefetched (32 bytes step)          :   4361.0 MB/s (2.0%)
+ SSE2 2-pass copy prefetched (64 bytes step)          :   4341.9 MB/s (2.3%)
+ SSE2 2-pass nontemporal copy                         :   3177.7 MB/s (1.9%)
+ SSE2 fill                                            :   8482.4 MB/s (3.2%)
+ SSE2 nontemporal fill                                :  16543.7 MB/s (0.8%)
+
+```
+
+``` cpp
+#include <iostream>
+#include <memory>
+#include <chrono>
+
+static inline void *__movsb(void *d, const void *s, size_t n)
+{
+    asm volatile ("rep movsb"
+                  : "=D" (d),
+                    "=S" (s),
+                    "=c" (n)
+                  : "0" (d),
+                    "1" (s),
+                    "2" (n)
+                  : "memory");
+    return d;
+}
+
+int main(int argc, char *argv[])
+{
+    constexpr int align_size = 32;
+    constexpr int alloc_size = 10001;
+    constexpr int buff_size = align_size + alloc_size;
+    
+    char dst[buff_size] = {0};
+    char src[buff_size] = {0};
+    
+    void *dst_ori_ptr = dst;
+    void *src_ori_ptr = src;
+    
+    size_t dst_size = sizeof(dst);
+    size_t src_size = sizeof(src);
+    
+    char *dst_ptr = static_cast<char *>(std::align(align_size, alloc_size, dst_ori_ptr, dst_size));
+    char *src_ptr = static_cast<char *>(std::align(align_size, alloc_size, src_ori_ptr, src_size));
+    
+    if (argc == 2 && argv[1][0] == '1') {
+        ++dst_ptr;
+        ++src_ptr;
+    }
+    
+    auto beg = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 10000000; ++i) {
+        __movsb(dst_ptr, src_ptr, alloc_size - 1);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - beg;
+    std::cout << "elapsed time: " << diff.count() << std::endl;
+}
+```
+
 # 性能和易用性
 
 例子：TDR (特指1.0版本) vs ProtocolBuffers
@@ -60,12 +390,6 @@ TDR 牺牲了易用性获取了高性能，而 ProtocolBuffers 通过部分性�
 取长补短，TDR2.0 引入了 metalib/enabletlv, id(`[1, 0xFFFFFFF]`) 新属性决定是否采用 TLV 模式，且由调用者决定整型数据是否使用变长编码，对比 TDR1.0 性能测试，TDR2.0 性能下降 10%-20%
 
 
-
-# 编译优化
-
--O2编译优化
-
-TODO
 
 # 数字转换为字符串
 
@@ -138,6 +462,176 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 
 
 运行期和编译期计算对比：[https://gcc.godbolt.org/z/M5Pb18PMb](https://gcc.godbolt.org/z/M5Pb18PMb)
+
+``` cpp
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <charconv>
+#include <chrono>
+
+// https://en.cppreference.com/w/cpp/compiler_support
+// there are currently no compilers that support: Text formatting (P0645R10, std::format)
+// #include <format>
+
+// https://github.com/fmtlib/fmt
+#define FMT_HEADER_ONLY
+#include <fmt/core.h>
+
+const int MAXCNT = 10000;
+const int LEN = 8;
+
+class ScopedTimer {
+public:
+	ScopedTimer(const char* name): m_name(name), m_beg(std::chrono::high_resolution_clock::now()) { }
+	~ScopedTimer() {
+		auto end = std::chrono::high_resolution_clock::now();
+		auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(end - m_beg);
+		std::cout << m_name << " : " << dur.count() << " ns\n";
+	}
+private:
+	const char* m_name;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_beg;
+};
+
+void sprintf_string() 
+{
+	ScopedTimer timer("sprintf_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		char str[LEN] = {0};
+		sprintf(str, "%d", i);
+	}
+}
+
+void ss_string() 
+{
+	ScopedTimer timer("ss_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		std::stringstream ss;
+		ss << i;
+	}
+}
+
+void to_string()
+{
+	ScopedTimer timer("to_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto str = std::to_string(i);
+	}
+}
+
+void fmt_string() 
+{
+	ScopedTimer timer("fmt_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto str = fmt::format("{}", i);
+	}
+}
+
+void fmt_int_string() 
+{
+	ScopedTimer timer("fmt_int_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto fi = fmt::format_int(i);
+        // fi.data() is the data, fi.size() is the size
+        auto str = fi.data();
+		(void)str;
+	}
+}
+
+#if 0
+void std_fmt_string() 
+{
+	ScopedTimer timer("std_fmt_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto str = std::format("{}", i);
+	}
+}
+#endif
+
+void tc_string() 
+{
+	ScopedTimer timer("tc_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		char str[LEN] = {0};
+		std::to_chars(str, str + LEN, i);
+	}
+}
+
+void compilea_string()
+{
+#define STR(x) #x
+#define TOSTRING(x) STR(x)
+
+	ScopedTimer timer("compilea_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto str = TOSTRING(10000);
+		(void)str;
+	}
+#undef TOSTRING
+#undef STR
+}
+
+namespace detail
+{
+	template<uint8_t... digits> struct positive_to_chars {
+		static const char value[];
+		static constexpr size_t size = sizeof...(digits);
+	};
+	template<uint8_t... digits> const char positive_to_chars<digits...>::value[] = {('0' + digits)..., 0};
+
+	template<uint8_t... digits> struct negative_to_chars {
+		static const char value[];
+	};
+	template<uint8_t... digits> const char negative_to_chars<digits...>::value[] = {'-', ('0' + digits)..., 0};
+
+	template<bool neg, uint8_t... digits>
+		struct to_chars : positive_to_chars<digits...> {};
+
+	template<uint8_t... digits>
+		struct to_chars<true, digits...> : negative_to_chars<digits...> {};
+
+    // 对 num 每位进行展开，例如，num = 123 则展开为 explode<neg, 0, 1, 2, 3>
+	template<bool neg, uintmax_t rem, uint8_t... digits>
+		struct explode : explode<neg, rem / 10, rem % 10, digits...> {};
+
+    // 展开终止
+	template<bool neg, uint8_t... digits>
+		struct explode<neg, 0, digits...> : to_chars<neg, digits...> {};
+
+	template<typename T>
+		constexpr uintmax_t cabs(T num) {
+			return (num < 0) ? -num : num;
+		}
+}
+
+template<typename T, T num>
+struct string_from : ::detail::explode<num < 0, ::detail::cabs(num)> {};
+
+void compileb_string() 
+{
+	ScopedTimer timer("compileb_string");
+	for (auto i = 0; i < MAXCNT; ++i) {
+		auto str = string_from<unsigned, 10000>::value;
+		(void)str;
+	}
+}
+
+int main() 
+{
+	sprintf_string();
+	ss_string();
+	to_string();
+	fmt_string();
+	fmt_int_string();
+	//std_fmt_string();
+	tc_string();
+
+	compilea_string();
+	compileb_string();
+}
+```
 
 测试结果：
 
