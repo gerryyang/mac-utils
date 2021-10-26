@@ -161,7 +161,7 @@ refer: https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-i
 
 `TSC`是一个**64位的寄存器，相当与一个计数器(It counts the number of CPU cycles since its reset)，但我们所需要的是时间，而不是计数。由于`TSC`的值是每个CPU时钟周期增加1，所以只要知道了CPU的时间频率，就可以将这个值换算成时间**。因为对精度的要求并不是很高（微秒级），我们只需要获得以兆为单位的大约值就可以了。下面的函数获得**CPU的频率**：
 
-``` c
+``` cpp
 static inline int getcpuspeed_mhz(unsigned int wait_us)
 {
    uint64_t tsc1, tsc2;
