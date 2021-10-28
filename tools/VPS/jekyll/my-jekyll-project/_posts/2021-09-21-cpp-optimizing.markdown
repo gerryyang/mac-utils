@@ -1265,8 +1265,11 @@ g++ -O2 -fprofile-use a.cc -o a.opt
 
 More:
 
+* [How much do __builtin_expect(), likely(), and unlikely() improve performance?](http://blog.man7.org/2012/10/how-much-do-builtinexpect-likely-and.html)
+* [What is the advantage of GCC's __builtin_expect in if else statements?](https://stackoverflow.com/questions/7346929/what-is-the-advantage-of-gccs-builtin-expect-in-if-else-statements)
 * https://gcc.gnu.org/onlinedocs/gcc-10.1.0/gcc/Instrumentation-Options.html
 * https://gcc.gnu.org/onlinedocs/gcc-10.1.0/gcc/Optimize-Options.html#Optimize-Options
+
 
 ## 系统调用优化
 
@@ -1594,15 +1597,29 @@ strip example
 
 # 性能优化最佳实践
 
-* 宏观上，合理的架构
-* 微观上，合理的数据结构和算法 
+* 宏观上，合理的架构。例如，Google的GFS的实现中，为了保持系统简单，在一致性（C）和可用性中（A），GFS选择了可用性，而放宽了对一致性的要求。追加写入是GFS中主要的写操作，追加写只保证至少写入一次的语义，每一次写入都需要等待所有副本节点写入成功，如果在任意一个节点上失败，客户端都会得到写失败的通知，然后发起重试，GFS并不会对之前在部分节点上写入的脏数据做处理，而是直接暴漏给了应用程序，让应用程序完成去重和排序的工作。
+
+* 微观上，合理的数据结构和算法。
+  
 * 基础组件的优化 (比如, gettimeofday, string_veiw, Log)
+  
 * 全静态编译 (相比动态编译会有几个点的提高)
+  
 * 减少系统调用（vDSO可以提升77%）
+  
 * 内存池优化 (tcmalloc)
+  
 * Zero Copy (sendfile)
+  
 * Pipeline [无锁编程介绍](https://km.woa.com/group/TimiJ1group/articles/show/445557)
 	
+* 利用新的硬件红利（NUMA架构的优化）
 
 
-  
+# Refer
+
+* [Linux Load Averages: Solving the Mystery](https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html)，其中，译文可参考[此文](https://zhuanlan.zhihu.com/p/75975041)
+* [Computer performance](https://en.wikipedia.org/wiki/Computer_performance)
+* [Make a program run slowly](https://stackoverflow.com/questions/14371257/make-a-program-run-slowly/14371416)
+* [Other Built-in Functions Provided by GCC](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html)
+

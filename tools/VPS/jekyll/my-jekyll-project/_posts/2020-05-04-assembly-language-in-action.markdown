@@ -9,6 +9,12 @@ categories: [Assembly Language,]
 {:toc}
 
 
+# Codes to Assembly
+
+![func_call_asm](/assets/images/202110/func_call_asm.png)
+
+* https://gcc.godbolt.org/
+
 # Common Knowledge
 
 * 汇编指令是机器指令的助记符，同**机器指令**一一对应。
