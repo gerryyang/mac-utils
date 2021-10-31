@@ -279,6 +279,14 @@ More: https://llvm.org/
 
 [CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM. 
 
+编译时问题：
+
+* Host GCC version must be at least 5.1 (使用 `scl enable devtoolset-7 bash` 切换高版本的gcc)
+* `-DLLVM_ENABLE_PROJECTS`已经废弃，改为`-DLLVM_ENABLE_RUNTIMES`
+* `Could NOT find Python3`，需要安装`Python3`
+* 执行 `sudo yum groupinstall 'Development Tools'` 安装需要的依赖  refer: [Can't Install build-essential on CentOS](https://unix.stackexchange.com/questions/16422/cant-install-build-essential-on-centos)
+* 编译错误可以查看日志：`build/CMakeFiles/CMakeError.log`
+
 make.sh
 
 
