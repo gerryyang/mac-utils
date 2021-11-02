@@ -47,7 +47,7 @@ Symbols are only exported by default from shared libraries. `-rdynamic` tells li
 
 From The Linux Programming Interface:
 
-![rdynamic](/assets/images/202010/rdynamic.png)
+![rdynamic](/assets/images/202111/rdynamic.png)
 
 
 #### 示例1: 导出可执行文件中的符号
