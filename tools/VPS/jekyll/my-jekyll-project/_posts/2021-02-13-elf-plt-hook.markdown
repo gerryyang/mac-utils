@@ -8,7 +8,6 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-
 # Tips
 
 ## 安装和使用动态库
@@ -35,6 +34,310 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH  ./my_program
 
 In Linux, DL libraries aren't actually special from the point-of-view of their format; they are built as standard object files or standard shared libraries as discussed above. The main difference is that the libraries aren't automatically loaded at program link time or start-up; instead, there is an API for opening a library, looking up symbols, handling errors, and closing the library. C users will need to include the header file `<dlfcn.h>` to use this API.
 
+[ld(1) - Linux man page](https://linux.die.net/man/1/ld)
+
+### 关于`-rdynamic`的用途
+
+* [What exactly does `-rdynamic` do and when exactly is it needed?](https://stackoverflow.com/questions/36692315/what-exactly-does-rdynamic-do-and-when-exactly-is-it-needed) 
+* [Why do we need -rdynamic option in gcc? ](https://stackoverflow.com/questions/50418941/why-do-we-need-rdynamic-option-in-gcc)
+
+`-rdynamic` exports the symbols of an executable, this mainly addresses scenarios as described in Mike Kinghan's answer, but also it helps e.g. Glibc's `backtrace_symbols()` symbolizing the backtrace.
+
+Symbols are only exported by default from shared libraries. `-rdynamic` tells linker to do the same for `executables`. Normally that's a bad idea but sometimes you want to provide APIs for dynamically loaded plugins and then this comes handy (even though one much better off using [explicit visibility annotations](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html), [version script](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html) or [dynamic export file](https://www.cs.kent.ac.uk/people/staff/srk21/blog/2011/12/01/) ).
+
+From The Linux Programming Interface:
+
+![rdynamic](/assets/images/202010/rdynamic.png)
+
+
+#### 示例1: 导出可执行文件中的符号
+
+bar.c
+
+``` cpp
+extern void foo();
+
+void bar()
+{
+    foo();
+}
+```
+
+main.c
+
+``` cpp
+#include <dlfcn.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void foo()
+{
+        puts("Hello world");
+}
+
+int main()
+{
+        void* dlh = dlopen("./libbar.so", RTLD_NOW);
+        if (!dlh) {
+                fprintf(stderr, "%s\n", dlerror());
+                exit(EXIT_FAILURE);
+        }
+
+        void (*bar)(void) = dlsym(dlh, "bar");
+        if (!bar) {
+                fprintf(stderr, "%s\n", dlerror());
+                exit(EXIT_FAILURE);
+        }
+
+        bar();
+}
+```
+
+Makefile
+
+```
+.PHONY: all clean test
+
+LDEXTRAFLAGS ?=
+
+all: prog
+
+bar.o: bar.c
+        gcc -c -Wall -fpic -o $@ $<
+
+libbar.so: bar.o
+        gcc -shared -o $@ $<
+
+main.o: main.c
+        gcc -c -Wall -o $@ $<
+
+prog: main.o | libbar.so
+        #gcc $(LDEXTRAFLAGS) -o $@ $< -L. -lbar -ldl
+        gcc $(LDEXTRAFLAGS) -o $@ $< -ldl
+
+clean:
+        rm -f *.o *.so prog
+
+test: prog
+        ./$<
+```
+
+Here, `bar.c` becomes a shared library `libbar.so` and `main.c` becomes a program that dlopens `libbar` and calls `bar()` from that library. `bar()` calls `foo()`, which is external in `bar.c` and defined in `main.c`.
+
+So, without `-rdynamic`:
+
+```
+$ make test
+gcc -c -Wall -o main.o main.c
+gcc -c -Wall -fpic -o bar.o bar.c
+gcc -shared -o libbar.so bar.o
+gcc  -o prog main.o -L. -lbar -ldl
+./prog
+./libbar.so: undefined symbol: foo
+Makefile:23: recipe for target 'test' failed
+make: *** [test] Error 1
+```
+
+And with `-rdynamic`:
+
+```
+$ make clean
+rm -f *.o *.so prog
+$ make test LDEXTRAFLAGS=-rdynamic
+gcc -c -Wall -o main.o main.c
+gcc -c -Wall -fpic -o bar.o bar.c
+gcc -shared -o libbar.so bar.o
+gcc -rdynamic -o prog main.o -L. -lbar -ldl
+./prog
+Hello world
+```
+
+#### 示例2: backtrace系统调用
+
+refer: https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
+
+``` cpp
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Obtain a backtrace and print it to stdout. */
+void
+print_trace (void)
+{
+  void *array[10];
+  char **strings;
+  int size, i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+  if (strings != NULL)
+  {
+
+    printf ("Obtained %d stack frames.\n", size);
+    for (i = 0; i < size; i++)
+      printf ("%s\n", strings[i]);
+  }
+
+  free (strings);
+}
+
+/* A dummy function to make the backtrace more interesting. */
+void
+dummy_function (void)
+{
+  print_trace ();
+}
+
+int
+main (void)
+{
+  dummy_function ();
+  return 0;
+}
+```
+
+编译输出，没有使用`-rdynamic`：
+
+```
+$ gcc backtrace.c 
+$ ./a.out 
+Obtained 5 stack frames.
+./a.out(+0x7dd) [0x557ae8da77dd]
+./a.out(+0x879) [0x557ae8da7879]
+./a.out(+0x885) [0x557ae8da7885]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xe7) [0x7fd6a8405bf7]
+./a.out(+0x6fa) [0x557ae8da76fa]
+```
+
+without -rdynamic:
+
+```
+$ readelf --dyn-syms a.out 
+
+Symbol table '.dynsym' contains 12 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND free@GLIBC_2.2.5 (2)
+     2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab
+     3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.2.5 (2)
+     4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND backtrace_symbols@GLIBC_2.2.5 (2)
+     5: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND backtrace@GLIBC_2.2.5 (2)
+     6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __stack_chk_fail@GLIBC_2.4 (3)
+     7: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (2)
+     8: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main@GLIBC_2.2.5 (2)
+     9: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+    10: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable
+    11: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (2)
+```
+
+对比使用`-rdynamic`以后，可以看到符号了。
+
+```
+$ gcc -rdynamic backtrace.c 
+$ ./a.out 
+Obtained 5 stack frames.
+./a.out(print_trace+0x28) [0x556f3eb0f9fd]
+./a.out(dummy_function+0x9) [0x556f3eb0fa99]
+./a.out(main+0x9) [0x556f3eb0faa5]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xe7) [0x7f70cd629bf7]
+./a.out(_start+0x2a) [0x556f3eb0f91a]
+```
+
+with `-rdynamic`, we have more symbols, including the executable's:
+
+```
+$ readelf --dyn-syms a.out 
+
+Symbol table '.dynsym' contains 26 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND free@GLIBC_2.2.5 (2)
+     2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab
+     3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.2.5 (2)
+     4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND backtrace_symbols@GLIBC_2.2.5 (2)
+     5: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND backtrace@GLIBC_2.2.5 (2)
+     6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __stack_chk_fail@GLIBC_2.4 (3)
+     7: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (2)
+     8: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main@GLIBC_2.2.5 (2)
+     9: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+    10: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable
+    11: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (2)
+    12: 0000000000201010     0 NOTYPE  GLOBAL DEFAULT   23 _edata
+    13: 0000000000201000     0 NOTYPE  GLOBAL DEFAULT   23 __data_start
+    14: 0000000000201018     0 NOTYPE  GLOBAL DEFAULT   24 _end
+    15: 0000000000000a90    12 FUNC    GLOBAL DEFAULT   14 dummy_function
+    16: 0000000000201000     0 NOTYPE  WEAK   DEFAULT   23 data_start
+    17: 0000000000000b30     4 OBJECT  GLOBAL DEFAULT   16 _IO_stdin_used
+    18: 0000000000000ab0   101 FUNC    GLOBAL DEFAULT   14 __libc_csu_init
+    19: 00000000000008f0    43 FUNC    GLOBAL DEFAULT   14 _start
+    20: 0000000000201010     0 NOTYPE  GLOBAL DEFAULT   24 __bss_start
+    21: 0000000000000a9c    16 FUNC    GLOBAL DEFAULT   14 main
+    22: 0000000000000858     0 FUNC    GLOBAL DEFAULT   11 _init
+    23: 0000000000000b20     2 FUNC    GLOBAL DEFAULT   14 __libc_csu_fini
+    24: 0000000000000b24     0 FUNC    GLOBAL DEFAULT   15 _fini
+    25: 00000000000009d5   187 FUNC    GLOBAL DEFAULT   14 print_trace
+```
+
+### Using `ld' linker version script (控制符号导出)
+
+This version file tells the linker, that all symbols `(*)` should be considered as `local symbols` (that is: `hidden`), and all symbols that match the wildcard `foo*` should be considered as `global` (so, `visible`).
+
+**The problem with this approach is that it can't handle some more complicated scenarios, like filtering only some symbols that are using C++ templates.** Some of the template-based symbols in C++ can easily grow up to few hundred characters, but you probably know what I mean. Once you start using functions from `std::`, you'll know.
+
+Please do some reading about the linker's version scripts, because it allows you to perform some really cool things, like symbol versioning!
+
+symbol.version
+
+```
+{
+    global: foo*;
+    local: *;
+};
+```
+
+或者`C++`的导出函数：例如，只导出`lua`开头的函数。
+
+```
+{
+global:
+    extern "C++" {
+        lua*;
+    };
+local:
+    *;
+};
+```
+
+Makefile
+
+```
+.PHONY: all clean test
+
+LDEXTRAFLAGS ?= -rdynamic -Wl,--version-script=symbol.txt
+
+all: prog
+
+bar.o: bar.c
+        gcc -c -Wall -fpic -o $@ $<
+
+libbar.so: bar.o
+        gcc -shared -o $@ $<
+
+main.o: main.c
+        gcc -c -Wall -o $@ $<
+
+prog: main.o | libbar.so
+        gcc $(LDEXTRAFLAGS) -o $@ $< -ldl
+
+clean:
+        rm -f *.o *.so prog
+
+test: prog
+        ./$<
+```
+
+refer: https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/
 
 ## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
 
@@ -838,7 +1141,7 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 * l_ld: Dynamic section of the shared object
 
 
-``` c
+``` cpp
 /* Rendezvous structure used by the run-time dynamic linker to communicate
    details of shared object loading to the debugger.  If the executable's
    dynamic section has a DT_DEBUG element, the run-time linker sets that
@@ -888,7 +1191,7 @@ struct link_map
 
 ## PLT Replace
 
-``` c
+``` cpp
 int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, void **oldfunc)
 {
     size_t funcnamelen = strlen(funcname);
@@ -938,8 +1241,11 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
 
 * [Linux下ELF共享库使用摘记](http://blog.csdn.net/delphiwcdj/article/details/43647435)
 * [Controlling Symbol Visibility 在C/C++中控制符号的可见性](http://blog.csdn.net/delphiwcdj/article/details/45225889)
-* [How to Write Shared Libraries, 2011](http://www.akkadia.org/drepper/dsohowto.pdf)
+* [How to Write Shared Libraries by Ulrich Drepper, 2011](http://www.akkadia.org/drepper/dsohowto.pdf)
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 
 
-
+* [Controlling Symbol Visibility](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html) (推荐)
+* [Dynamic Library Programming Topics](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html#//apple_ref/doc/uid/TP40001869)
+* [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/)
+* [Weak dynamic symbols](https://www.humprog.org/~stephen//blog/2011/12/01/)

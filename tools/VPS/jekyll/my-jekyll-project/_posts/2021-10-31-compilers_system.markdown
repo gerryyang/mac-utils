@@ -574,9 +574,17 @@ refer:
 * [LLVM Download Page](https://releases.llvm.org/)
 
 
-## LLD (The LLVM Linker)
+## ld (The GNU linker)
 
-Replace ld to lld:
+> ld [options] objfile ...
+
+`ld` combines a number of object and archive files, relocates their data and ties up symbol references. Usually the last step in compiling a program is to run `ld`.
+
+refer: [ld(1) - Linux man page](https://linux.die.net/man/1/ld)
+
+## lld (The LLVM Linker)
+
+Replace `ld` to `lld`:
 
 ```
 # orig: /opt/rh/devtoolset-7/root/etc/alternatives/ld -> /opt/rh/devtoolset-7/root/usr/bin/ld.bfd
