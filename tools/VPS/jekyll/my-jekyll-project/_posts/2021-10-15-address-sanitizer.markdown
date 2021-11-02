@@ -281,7 +281,7 @@ gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c
 
 ![gcc_sanitize](/assets/images/202106/gcc_sanitize.png)
 
-## Clang
+# Clang
 
 ```
 # 设置编译选项

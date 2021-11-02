@@ -1058,6 +1058,20 @@ echo "done"
 
 * https://linuxhint.com/bash-wait-command-linux/
 
+## bc (计算)
+
+* 如果进行16进制计算，仅支持大写十六进制数字
+* 需要先设置`obase`，再设置`ibase` 
+
+``` bash
+$echo "ibase=16;91A2A80-91A29B0" | bc
+208
+$echo "obase=16;ibase=16;91A2A80-91A29B0" | bc
+D0
+```
+
+* https://www.geeksforgeeks.org/bc-command-linux-examples/
+
 # Example
 
 ## pstack

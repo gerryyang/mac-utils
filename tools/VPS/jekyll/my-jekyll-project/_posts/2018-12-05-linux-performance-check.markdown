@@ -656,7 +656,7 @@ A: 几种常见的降低方法：
 
 1. 禁止SWAP。现在服务器的内存足够大，所以除非有必要，禁用SWAP就可以了。随着云计算的普及，大部分云平台中的虚拟机都默认禁止SWAP。
 2. 如果实在需要用到SWAP，可以尝试降低swappiness的值，减少内存回收时SWAP的使用倾向。
-3. 响应延迟敏感的应用，如果它们可能在开启SWAP的服务器中运行，可以用库函数mlock()或者mlockall()锁定内存，组织它们的内存换出。
+3. 响应延迟敏感的应用，如果它们可能在开启SWAP的服务器中运行，可以用库函数mlock()或者mlockall()锁定内存，阻止它们的内存换出。
 
 **测试：当开启SWAP时，通过dd命令和sar命令查看SWAP指标的变化情况**
 
@@ -1448,7 +1448,7 @@ Q: 有没有可能在单机中，同时处理1000万的请求？
 	- 一个Linux系统压力测试工具。
 	- apt install stress 
 	- 模拟一个CPU使用率100%的场景。stress --cpu 1 --timeout 600 
-	- 模拟I/O压力，不停地执行sync。stress-ng -i 1 --hdd 1 --timeout 600 (-i表示调用sync, --hdd表示读写临时文件)
+	- 模拟I/O压力，不停地执行sync。stress -i 1 --hdd 1 --timeout 600 (-i表示调用sync, --hdd表示读写临时文件)
 	- 模拟大量进程场景。stress -c 8 --timeout 600
 	- 动态且高亮显示变化的区域 watch -d uptime
 

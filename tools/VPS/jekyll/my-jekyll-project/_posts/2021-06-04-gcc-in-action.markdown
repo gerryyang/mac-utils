@@ -8,17 +8,134 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Update gcc
+# Update GCC
+
+
+查看当前环境C++版本：
 
 ```
-# centos
+$ ls -l /lib64/libstdc++.so.6
+lrwxrwxrwx 1 root root 19 Aug 18  2020 /lib64/libstdc++.so.6 -> libstdc++.so.6.0.25
+$ rpm -qf /lib64/libstdc++.so.6
+libstdc++-8.3.1-5.el8.0.2.x86_64
+```
+
+## CentOS
+
+Often people want the most recent version of gcc, and [devtoolset](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-6/) is being kept up-to-date, so maybe you want devtoolset-N where `N={4,5,6,7...}`, check yum for the latest available on your system. Updated the cmds below for N=7.
+
+> Developer Toolset 6
+>  
+> devtoolset-6 - Developer Toolset is designed for developers working on CentOS or Red Hat Enterprise Linux platform. It provides current versions of the GNU Compiler Collection, GNU Debugger, and other development, debugging, and performance monitoring tools.
+
+* [List of Software Collections available in SCLo SIG](https://wiki.centos.org/SpecialInterestGroup/SCLo/CollectionsList)
+* [Red Hat Software Collections Product Life Cycle](https://access.redhat.com/support/policy/updates/rhscl/)
+
+``` bash
+# 1. Install a package with repository for your system:
+# On CentOS, install package centos-release-scl available in CentOS repository:
+$ sudo yum install centos-release-scl
+
+# 2. Install the collection:
+$ sudo yum install devtoolset-6
+
+# 3. Start using software collections:
+$ scl enable devtoolset-6 bash
+```
+
+At this point you should be able to use `gcc` and other tools just as a normal application. See examples bellow:
+
+```
+$ gcc hello.c
+$ sudo yum install devtoolset-6-valgrind
+$ valgrind ./a.out
+$ gdb ./a.out
+```
+
+In order to view the individual components included in this collection, including additional development tools, you can run:
+
+```
+$ sudo yum list devtoolset-6\*
+```
+
+Developer Toolset Software Collections as Docker Formatted Containers
+
+On CentOS 7 and RHEL 7 you can pull the images with the following commands:
+
+```
+$ docker pull registry.access.redhat.com/rhscl/devtoolset-6-perftools-rhel7
+$ docker pull registry.access.redhat.com/rhscl/devtoolset-6-toolchain-rhel7
+$ docker pull centos/devtoolset-6-perftools-centos7
+$ docker pull centos/devtoolset-6-toolchain-centos7
+```
+
+For more on the docker images follow the link to public source repository: https://github.com/sclorg/devtoolset-container
+
+设置使用`gcc7`的步骤：
+
+> 注意： When I open a new terminal, it is still v4.8.5. You need to `scl enable devtoolset-7 bash` every time you open a new shell, or add it to your `*rc`.
+
+```
 # enable gcc7
+
 sudo yum install centos-release-scl
 sudo yum install devtoolset-7-gcc*
-scl enable devtoolset-7 bash
 
-# ubuntu
+# sudo yum list devtoolset-7\*
+已加载插件：fastestmirror, ovl
+Loading mirror speeds from cached hostfile
+已安装的软件包
+devtoolset-7-binutils.x86_64                                                                                                2.28-11.el7                                                                                       @centos-sclo-rh
+devtoolset-7-gcc.x86_64                                                                                                     7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-gcc-c++.x86_64                                                                                                 7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-gcc-gdb-plugin.x86_64                                                                                          7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-gcc-gfortran.x86_64                                                                                            7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-gcc-plugin-devel.x86_64                                                                                        7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-libquadmath-devel.x86_64                                                                                       7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-libstdc++-devel.x86_64                                                                                         7.3.1-5.16.el7                                                                                    @centos-sclo-rh
+devtoolset-7-runtime.x86_64                                                                                                 7.1-4.el7                                                                                         @centos-sclo-rh
 
+// 切换不同版本
+$ scl enable devtoolset-7 bash
+
+$ which gcc
+$ gcc --version
+```
+
+详细的输出：
+
+```
+~$gcc -v
+使用内建 specs。
+COLLECT_GCC=/bin/gcc
+COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/4.8.5/lto-wrapper
+目标：x86_64-redhat-linux
+配置为：../configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-bootstrap --enable-shared --enable-threads=posix --enable-checking=release --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-languages=c,c++,objc,obj-c++,java,fortran,ada,go,lto --enable-plugin --enable-initfini-array --disable-libgcj --with-isl=/builddir/build/BUILD/gcc-4.8.5-20150702/obj-x86_64-redhat-linux/isl-install --with-cloog=/builddir/build/BUILD/gcc-4.8.5-20150702/obj-x86_64-redhat-linux/cloog-install --enable-gnu-indirect-function --with-tune=generic --with-arch_32=x86-64 --build=x86_64-redhat-linux
+线程模型：posix
+gcc 版本 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC) 
+$which gcc
+/usr/lib64/ccache/gcc
+$ll -lh `which gcc`
+lrwxrwxrwx 1 root root 16 3月   5 2021 /usr/lib64/ccache/gcc -> ../../bin/ccache
+$ll -lh /usr/bin/ccache 
+-rwxr-xr-x 1 root root 135K 2月  19 2020 /usr/bin/ccache
+
+~$scl enable devtoolset-7 bash
+~$which gcc
+/opt/rh/devtoolset-7/root/usr/bin/gcc
+~$gcc -v
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/opt/rh/devtoolset-7/root/usr/libexec/gcc/x86_64-redhat-linux/7/lto-wrapper
+Target: x86_64-redhat-linux
+Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/opt/rh/devtoolset-7/root/usr --mandir=/opt/rh/devtoolset-7/root/usr/share/man --infodir=/opt/rh/devtoolset-7/root/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-plugin --with-linker-hash-style=gnu --enable-initfini-array --with-default-libstdcxx-abi=gcc4-compatible --with-isl=/builddir/build/BUILD/gcc-7.3.1-20180303/obj-x86_64-redhat-linux/isl-install --enable-libmpx --enable-gnu-indirect-function --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux
+Thread model: posix
+gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC) 
+```
+
+## ubuntu
+
+```
 update-alternatives --query gcc
 
 sudo update-alternatives --config gcc
