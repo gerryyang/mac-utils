@@ -1,5 +1,5 @@
-CXXFLAGS = -Wall -g -pipe -std=c++2a
-CFLAGS = -Wall -g -pipe 
+CXXFLAGS = -Wall -O2 -g -pipe -std=c++2a
+CFLAGS = -Wall -O2 -g -pipe 
 
 CXX=g++
 CC=gcc
