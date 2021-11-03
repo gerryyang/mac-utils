@@ -370,6 +370,13 @@ int main()
 
 因此，从某种程度上说，lambda 表达式是C++11提供的一种语法糖，让代码编写更加轻松。
 
+### 性能影响
+
+> In addition, C++ compilers optimize lambdas better than they do ordinary functions. (Page 213)
+
+* [Are lambdas inlined like functions in C++?](https://stackoverflow.com/questions/15930755/are-lambdas-inlined-like-functions-in-c)
+* [Why can lambdas be better optimized by the compiler than plain functions?](https://stackoverflow.com/questions/13722426/why-can-lambdas-be-better-optimized-by-the-compiler-than-plain-functions)
+
 ### 在STL中使用 lambda 表达式
 
 有了 lambda 表达式后，可以直接在STL算法函数的参数列表内实现辅助函数。

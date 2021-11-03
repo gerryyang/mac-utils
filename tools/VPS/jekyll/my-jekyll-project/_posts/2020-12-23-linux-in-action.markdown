@@ -966,3 +966,15 @@ Aborted
 lsof -p pid 
 ```
 
+## c++filt (Demangle C++ and Java symbols)
+
+使用`c++filt`对符号进行 demangle 得到可读的符号名：
+
+```
+dlopen(./liballocatesvr_plugin.so) failed(./liballocatesvr_plugin.so: undefined symbol: _ZTIN6google8protobuf7MessageE)
+```
+
+```
+$c++filt _ZTIN6google8protobuf7MessageE
+typeinfo for google::protobuf::Message
+```

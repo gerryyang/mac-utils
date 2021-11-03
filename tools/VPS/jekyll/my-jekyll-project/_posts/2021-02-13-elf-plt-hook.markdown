@@ -281,6 +281,31 @@ Symbol table '.dynsym' contains 26 entries:
 
 ### Using `ld' linker version script (控制符号导出)
 
+The lib-symbol-versions module can be used to add shared library versioning support. Currently, **only GNU LD and the Solaris linker supports this**.
+
+For more information and other uses of version scripts, see Ulrich Drepper’s paper https://www.akkadia.org/drepper/dsohowto.pdf (可参考`2.2.5 Use Export Maps`章节)
+
+
+用法说明：
+
+```
+if HAVE_LD_VERSION_SCRIPT
+libfoo_la_LDFLAGS += -Wl,--version-script=$(srcdir)/libfoo.map
+endif
+```
+
+The version script file format is documented in the GNU LD manual, but a small example would be:
+
+```
+LIBFOO_1.0 {
+  global:
+    libfoo_init; libfoo_doit; libfoo_done;
+
+  local:
+    *;
+};
+```
+
 This version file tells the linker, that all symbols `(*)` should be considered as `local symbols` (that is: `hidden`), and all symbols that match the wildcard `foo*` should be considered as `global` (so, `visible`).
 
 **The problem with this approach is that it can't handle some more complicated scenarios, like filtering only some symbols that are using C++ templates.** Some of the template-based symbols in C++ can easily grow up to few hundred characters, but you probably know what I mean. Once you start using functions from `std::`, you'll know.
@@ -337,7 +362,62 @@ test: prog
         ./$<
 ```
 
-refer: https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/
+可能遇到的问题：
+
+问题1: 使用 version script 配置后，找不到 typeinfo symbols，例如下面的错误：
+
+```
+dlopen(./liballocatesvr_plugin.so) failed(./liballocatesvr_plugin.so: undefined symbol: _ZTIN6google8protobuf7MessageE)
+```
+
+使用`c++filt`对符号进行 demangle 得到可读的符号名：
+
+```
+c++filt - Demangle C++ and Java symbols.
+
+$c++filt _ZTIN6google8protobuf7MessageE
+typeinfo for google::protobuf::Message
+```
+
+解决方法，可参考 [In GCC, how can I export all typeinfo symbols for a shared library without exporting all symbols?](https://stackoverflow.com/questions/8792587/in-gcc-how-can-i-export-all-typeinfo-symbols-for-a-shared-library-without-expor)
+
+需要添加链接选项 `-Wl,--dynamic-list-cpp-typeinfo` ([ld Options](https://sourceware.org/binutils/docs/ld/Options.html))，同时在 version script 配置中指定 `_ZTI*; _ZTN*; _ZTVN*;`
+
+> --dynamic-list-cpp-typeinfo
+> 
+> Provide the builtin dynamic list for C++ runtime type identification.
+
+
+```
+{
+global:
+    extern "C++" {
+        google::*;
+    };
+    _ZTI*;
+    _ZTN*;
+    _ZTVN*;
+local:
+    *;
+};
+```
+
+refer: 
+
+* https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/
+* [Linker Version Scripts](https://man7.org/conf/lca2006/shared_libraries/slide18c.html)
+* [17.3 LD Version Scripts](https://www.gnu.org/software/gnulib/manual/html_node/LD-Version-Scripts.html)
+* [17.2 Controlling the Exported Symbols of Shared Libraries](https://www.gnu.org/software/gnulib/manual/html_node/Exported-Symbols-of-Shared-Libraries.html)
+
+### the GNU linker's --dynamic-list
+
+```
+gcc -Wl,--dynamic-list -Wl,<your-dynamic-list> -o my-program my-program.c
+```
+
+refer:
+
+* https://www.humprog.org/~stephen//blog/2011/12/01/
 
 ## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
 
@@ -445,7 +525,7 @@ hostname
 FAKE_HOSTNAME=gerryyang.com LD_PRELOAD=./gethostname.so hostname
 ```
 
-### 用`LD_PRELOAD`来lap既存的函数
+### 用`LD_PRELOAD`来 Lap 既存的函数
 
 使用handle `RTLD_NEXT`，用dlsym调出原始的调用函数。handle是`RTLD_NEXT`扩展的特殊代名，在共享对象的下一个共享对象以后取得寻找符号值。`RTLD_NEXT`是GNU的扩展，在包含`dlfcn.h`之前有必要先定义`GNU_SOURCE`。
 
