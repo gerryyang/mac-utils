@@ -98,6 +98,166 @@ cmake /path/to/your/project
 make
 ```
 
+# Command
+
+## cmake_minimum_required
+
+Require a minimum version of cmake.
+
+```
+cmake_minimum_required(VERSION <min>[...<policy_max>] [FATAL_ERROR])
+```
+
+https://cmake.org/cmake/help/latest/command/cmake_minimum_required.html
+## project
+
+Set the name of the project.
+
+```
+project(<PROJECT-NAME> [<language-name>...])
+project(<PROJECT-NAME>
+        [VERSION <major>[.<minor>[.<patch>[.<tweak>]]]]
+        [DESCRIPTION <project-description-string>]
+        [HOMEPAGE_URL <url-string>]
+        [LANGUAGES <language-name>...])
+```
+
+https://cmake.org/cmake/help/latest/command/project.html
+
+## set
+
+Set a normal, cache, or environment variable to a given value. 
+
+```
+set(<variable> <value>... [PARENT_SCOPE])
+```
+
+https://cmake.org/cmake/help/latest/command/set.html
+
+## message
+
+Log a message.
+
+```
+# General messages
+message([<mode>] "message text" ...)
+
+# Reporting checks
+message(<checkState> "message text" ...)
+```
+
+https://cmake.org/cmake/help/latest/command/message.html
+
+## if
+
+Conditionally execute a group of commands.
+
+```
+if(<condition>)
+  <commands>
+elseif(<condition>) # optional block, can be repeated
+  <commands>
+else()              # optional block
+  <commands>
+endif()
+```
+
+https://cmake.org/cmake/help/latest/command/if.html
+
+## add_subdirectory
+
+Add a subdirectory to the build.
+
+```
+add_subdirectory(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
+```
+
+https://cmake.org/cmake/help/latest/command/add_subdirectory.html
+
+
+# Variable
+
+常用的变量：
+
+refer: 
+
+* https://cmake.org/Wiki/CMake_Useful_Variables
+* cmake-variables(7)
+
+```
+MESSAGE(STATUS "CMAKE_CURRENT_LIST_FILE = ${CMAKE_CURRENT_LIST_FILE}")
+
+MESSAGE(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
+MESSAGE(STATUS "CMAKE_SYSTEM = ${CMAKE_SYSTEM}")
+MESSAGE(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
+
+MESSAGE(STATUS "CMAKE_SYSTEM_VERSION = ${CMAKE_SYSTEM_VERSION}")
+MESSAGE(STATUS "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}")
+MESSAGE(STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
+MESSAGE(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+MESSAGE(STATUS "PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
+MESSAGE(STATUS "PROJECT_BINARY_DIR = ${PROJECT_BINARY_DIR}")
+
+MESSAGE(STATUS "CMAKE_CONFIGURATION_TYPES = ${CMAKE_CONFIGURATION_TYPES}")
+MESSAGE(STATUS "CMAKE_BUIlD_TYPE = ${CMAKE_BUIlD_TYPE}")
+
+MESSAGE(STATUS "CMAKE_C_FLAGS_DEBUG = ${CMAKE_C_FLAGS_DEBUG}")
+MESSAGE(STATUS "CMAKE_C_FLAGS_RELEASE = ${CMAKE_C_FLAGS_RELEASE}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG = ${CMAKE_CXX_FLAGS_DEBUG}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}")
+
+MESSAGE(STATUS "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+MESSAGE(STATUS "CMAKE_C_COMPILER_ID = ${CMAKE_C_COMPILER_ID}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
+MESSAGE(STATUS "CMAKE_C_COMPILER_ABI = ${CMAKE_C_COMPILER_ABI}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER_ABI = ${CMAKE_CXX_COMPILER_ABI}")
+
+MESSAGE(STATUS "CMAKE_AR = ${CMAKE_AR}")
+MESSAGE(STATUS "CMAKE_LINKER = ${CMAKE_LINKER}")
+MESSAGE(STATUS "CMAKE_NM = ${CMAKE_NM}")
+MESSAGE(STATUS "CMAKE_OBJDUMP = ${CMAKE_OBJDUMP}")
+MESSAGE(STATUS "CMAKE_RANLIB = ${CMAKE_RANLIB}")
+
+# Clang Version
+IF(CMAKE_C_COMPILER_ID STREQUAL Clang AND CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    MESSAGE(STATUS "CLANG_VERSION_MAJOR = ${CLANG_VERSION_MAJOR}")
+    MESSAGE(STATUS "CLANG_VERSION_MINOR = ${CLANG_VERSION_MINOR}")
+    MESSAGE(STATUS "CLANG_VERSION_PATCHLEVEL = ${CLANG_VERSION_PATCHLEVEL}")
+    MESSAGE(STATUS "CLANG_VERSION_STRING = ${CLANG_VERSION_STRING}")
+
+    # Under cmake v3.1.3 I had to check CMAKE_CXX_COMPILER_VERSION as there was no CLANG_VERSION_STRING so looks like a version is now defined for each compiler type giving more control.
+    MESSAGE(STATUS "CMAKE_CXX_COMPILER_VERSION = ${CMAKE_CXX_COMPILER_VERSION}")
+ENDIF()
+```
+
+
+## CMAKE_CURRENT_LIST_FILE
+
+Full path to the listfile currently being processed.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_FILE.html
+
+## CMAKE_INSTALL_PREFIX
+
+Install directory used by `install()`.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
+
+## CMAKE_INSTALL_MESSAGE
+
+```
+SET(CMAKE_INSTALL_MESSAGE LAZY)
+```
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_MESSAGE.html
+
+## CMAKE_SKIP_INSTALL_ALL_DEPENDENCY
+
+Don't make the install target depend on the all target.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_ALL_DEPENDENCY.html
+
 # 编译效率对比
 
 在8核CPU，16G内存机器，对比`gcc`, `clang`, `make`, `ninja`, `ld`, `lld`不同组合情况下的编译效率。

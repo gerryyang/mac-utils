@@ -34,7 +34,8 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH  ./my_program
 
 In Linux, DL libraries aren't actually special from the point-of-view of their format; they are built as standard object files or standard shared libraries as discussed above. The main difference is that the libraries aren't automatically loaded at program link time or start-up; instead, there is an API for opening a library, looking up symbols, handling errors, and closing the library. C users will need to include the header file `<dlfcn.h>` to use this API.
 
-[ld(1) - Linux man page](https://linux.die.net/man/1/ld)
+* [ld(1) - Linux man page](https://linux.die.net/man/1/ld)
+* [dlopen(3)](https://man7.org/linux/man-pages/man3/dlopen.3.html)
 
 ### 关于`-rdynamic`的用途
 
@@ -283,7 +284,7 @@ Symbol table '.dynsym' contains 26 entries:
 
 The lib-symbol-versions module can be used to add shared library versioning support. Currently, **only GNU LD and the Solaris linker supports this**.
 
-For more information and other uses of version scripts, see Ulrich Drepper’s paper https://www.akkadia.org/drepper/dsohowto.pdf (可参考`2.2.5 Use Export Maps`章节)
+For more information and other uses of version scripts, see [Ulrich Drepper’s paper](https://www.akkadia.org/drepper/dsohowto.pdf) (可参考`2.2.5 Use Export Maps`章节)
 
 
 用法说明：
@@ -321,13 +322,13 @@ symbol.version
 };
 ```
 
-或者`C++`的导出函数：例如，只导出`lua`开头的函数。
+`C++`的导出函数：通过`extern "C++" { };`声明：
 
 ```
 {
 global:
     extern "C++" {
-        lua*;
+        google::*;
     };
 local:
     *;
@@ -364,7 +365,7 @@ test: prog
 
 可能遇到的问题：
 
-问题1: 使用 version script 配置后，找不到 typeinfo symbols，例如下面的错误：
+问题1: 使用 version script 配置后，找不到`typeinfo symbols`，例如下面的错误：
 
 ```
 dlopen(./liballocatesvr_plugin.so) failed(./liballocatesvr_plugin.so: undefined symbol: _ZTIN6google8protobuf7MessageE)
@@ -402,12 +403,18 @@ local:
 };
 ```
 
+问题2:
+
+[Static linking with generated protobufs causes abort](https://stackoverflow.com/questions/33017985/static-linking-with-generated-protobufs-causes-abort)
+
 refer: 
 
 * https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/
 * [Linker Version Scripts](https://man7.org/conf/lca2006/shared_libraries/slide18c.html)
 * [17.3 LD Version Scripts](https://www.gnu.org/software/gnulib/manual/html_node/LD-Version-Scripts.html)
 * [17.2 Controlling the Exported Symbols of Shared Libraries](https://www.gnu.org/software/gnulib/manual/html_node/Exported-Symbols-of-Shared-Libraries.html)
+* [Linux 动态库 undefined symbol 原因定位与解决方法](https://dongyadoit.com/linux/2020/05/24/how-to-solve-undefined-symbol-when-link-dynamic-lib-on-linux/)
+
 
 ### the GNU linker's --dynamic-list
 
@@ -418,6 +425,21 @@ gcc -Wl,--dynamic-list -Wl,<your-dynamic-list> -o my-program my-program.c
 refer:
 
 * https://www.humprog.org/~stephen//blog/2011/12/01/
+
+### RTLD_DEEPBIND (dlopen)
+
+除了通过`version-script`显式控制可执行文件的符号导出，也可以通过`dlopen`的`RTLD_DEEPBIND`选项，设置动态库so优先使用自己的符号。
+
+```
+   RTLD_DEEPBIND (since glibc 2.3.4)
+              Place the lookup scope of the symbols in this shared
+              object ahead of the global scope.  This means that a self-
+              contained object will use its own symbols in preference to
+              global symbols with the same name contained in objects
+              that have already been loaded.
+```
+
+https://man7.org/linux/man-pages/man3/dlopen.3.html
 
 ## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
 
@@ -1325,7 +1347,7 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 
 
-* [Controlling Symbol Visibility](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html) (推荐)
+* [Controlling Symbol Visibility](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html) 
 * [Dynamic Library Programming Topics](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html#//apple_ref/doc/uid/TP40001869)
-* [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/)
+* [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/) (推荐)
 * [Weak dynamic symbols](https://www.humprog.org/~stephen//blog/2011/12/01/)

@@ -8,12 +8,149 @@ categories: [Assembly Language,]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# 进程虚拟地址空间
 
-# Codes to Assembly
+由**低地址**到**高地址**分别为：(图中，从下往上)
+
+* **只读段/代码段**：只能读，不可写；可执行代码、字符串字面值、只读变量
+* **数据段**：已初始化且初值非0全局变量、静态变量的空间
+* **BSS段**：未初始化或初值为0的全局变量和静态局部变量
+* **堆** ：就是平时所说的动态内存，`malloc`或`new`大部分都来源于此
+* **文件映射区域** ：如动态库、共享内存等映射物理空间的内存，一般是`mmap`函数所分配的虚拟地址空间
+* **栈**：用于维护函数调用的上下文空间；局部变量、函数参数、返回地址等
+* **内核虚拟空间**：用户代码不可见的内存区域，由内核管理(页表就存放在内核虚拟空间)
+
+![virtual_process_space](/assets/images/202111/virtual_process_space.png)
+
+
+# 函数调用栈
 
 ![func_call_asm](/assets/images/202110/func_call_asm.png)
 
-* https://gcc.godbolt.org/
+汇编代码生成：https://gcc.godbolt.org/
+
+
+* **栈帧**，是指为一个函数调用单独分配的那部分栈空间。比如，当运行中的程序调用另一个函数时，就要进入一个**新的栈帧**，原来函数的栈帧称为**调用者函数的帧**，新的栈帧称为**被调用函数的帧（当前帧）**。被调用的函数运行结束后当前帧全部回收，回到调用者的帧。
+* 当进行函数调用的时候，除了将**函数参数**挨个入栈，将**返回地址**入栈以外，接下来就是移动`esp`和`ebp`指针。
+* 将调用者函数的`ebp`入栈(`pushl`指令)，然后将调用者函数的栈顶指针`esp`赋值给被调函数的`ebp`(作为被调函数的栈底)，之后便可以将局部变量以`pushl`的方式入栈了。此时，`ebp`存储了一个重要的地址，向上(栈底方向，`+n`)能获取**返回地址**、**参数值**，向下(栈顶方向，`-n`)能获取**函数的局部变量值**，而该`ebp`地址处又存放着上一层函数调用时的`ebp`值(即，上一个栈帧的`ebp`)。
+* 一般规律：`SS:[ebp + 4]`处为**被调函数的返回地址**，`SS:[ebp + 8]`处为**传递给被调函数的第一个参数**(最后一个入栈的参数此处假设其占用4字节内存)的值，`SS:[ebp-4]`处为**被调函数中的第一个局部变量**，`SS:[ebp]`处为**上一层ebp值**。由于`ebp`中的地址处总是"**上一层函数调用时的ebp值**"，而在每一层函数调用中，都能通过当时的`ebp`值，向上(栈底方向)能获取返回地址、参数值，向下(栈顶方向)能获取被调函数的局部变量值，如此递归，就形成了**函数调用栈**。
+* 不管是较早的帧，还是调用者的帧，还是当前帧，它们的结构是完全一样的，因为每个帧都是基于一个函数，帧随着函数的生命周期产生、发展和消亡。**这里用到了两个寄存器，`ebp`是帧指针，它总是指向当前帧的底部；`esp`是栈指针，它总是指向当前帧的顶部。这两个寄存器用来定位当前帧中的所有空间**。编译器需要根据IA32指令集的规则小心翼翼地调整这两个寄存器的值，一旦出错，参数传递、函数返回都可能出现问题。
+
+栈帧结构如下：
+
+![stack_space](/assets/images/202111/stack_space.png)
+
+![stack_space2](/assets/images/202111/stack_space2.png)
+
+# 函数调用栈示例
+
+![test1](/assets/images/202111/test1.png)
+
+``` cpp
+#include <cstdio>
+
+int swap_add(int *xp, int *yp)
+{
+    int x = *xp;
+    int y = *yp;
+    *xp = y;
+    *yp = x;
+    return x + y;
+} 
+
+int caller()
+{
+    int arg1 = 534;
+    int arg2 = 1057;
+    int sum = swap_add(&arg1, &arg2);
+    int diff = arg1 - arg2;
+    return sum * diff;
+}
+
+int main()
+{
+    caller();
+}
+```
+
+汇编解释：
+
+```
+swap_add(int*, int*):
+        push    rbp                           // 保存上一层函数的 ebp
+        mov     rbp, rsp                      // 将当前 ebp 设置为 esp，即，栈桢底部
+
+        mov     QWORD PTR [rbp-24], rdi       // 获取 xp
+        mov     QWORD PTR [rbp-32], rsi       // 获取 yp
+
+        mov     rax, QWORD PTR [rbp-24]       
+        mov     eax, DWORD PTR [rax]
+        mov     DWORD PTR [rbp-4], eax        // 分配局部变量 x
+
+        mov     rax, QWORD PTR [rbp-32]
+        mov     eax, DWORD PTR [rax]
+        mov     DWORD PTR [rbp-8], eax        // 分配局部变量 y 
+
+        mov     rax, QWORD PTR [rbp-24]
+        mov     edx, DWORD PTR [rbp-8]
+        mov     DWORD PTR [rax], edx          // y 赋值给 xp
+
+        mov     rax, QWORD PTR [rbp-32]
+        mov     edx, DWORD PTR [rbp-4]
+        mov     DWORD PTR [rax], edx          // x 赋值给 yp
+
+        mov     eax, DWORD PTR [rbp-8]
+        mov     edx, DWORD PTR [rbp-4]
+        add     eax, edx                      // 计算 x + y
+
+        pop     rbp                           // restore ebp
+        ret                                   // return
+
+caller():
+        push    rbp                            // 保存上一层函数的 ebp
+        mov     rbp, rsp                       // 将当前 ebp 设置为 esp，即，栈桢底部
+        sub     rsp, 16                        // 分配 16B 空间
+        mov     DWORD PTR [rbp-12], 534        // 分配局部变量 arg1 为 534
+        mov     DWORD PTR [rbp-16], 1057       // 分配局部变量 arg2 为 1057
+        lea     rdx, [rbp-16]                  // 计算 &arg2 并放入 rdx
+        lea     rax, [rbp-12]                  // 计算 &arg1 并放入 rax
+        mov     rsi, rdx
+        mov     rdi, rax
+
+        call    swap_add(int*, int*)           // 调用 swap_add 函数
+
+        mov     DWORD PTR [rbp-4], eax         // 分配局部变量 sum 为 swap_add 函数的返回值 eax 
+
+        mov     edx, DWORD PTR [rbp-12]
+        mov     eax, DWORD PTR [rbp-16]
+
+        sub     edx, eax                       // 计算 arg1 - arg2
+
+        mov     eax, edx
+        mov     DWORD PTR [rbp-8], eax         // 分配局部变量 diff
+
+        mov     eax, DWORD PTR [rbp-4]
+        imul    eax, DWORD PTR [rbp-8]         // 计算 sum * diff
+
+        leave                                  // 恢复栈顶指针位置
+
+        ret                                    // return
+
+main:
+        push    rbp
+        mov     rbp, rsp
+        call    caller()
+        mov     eax, 0      // 返回值 0
+        pop     rbp
+        ret
+```
+
+解释：
+
+* `sub rsp, 16` 为什么申请了16字节的空间？在现代处理器中，栈帧必须16字节对齐，就是说栈底和栈顶的地址必须是16的整数倍。refer: [联合、数据对齐和缓冲区溢出攻击](https://www.jianshu.com/p/b20c8838b929)
+
+![stack_space3](/assets/images/202111/stack_space3.png)
+
 
 # Common Knowledge
 
