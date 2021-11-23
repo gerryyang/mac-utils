@@ -4,13 +4,13 @@
 
 void foo()
 {
-	puts("Hello world");
+	puts("main.c foo()\n");
 }
 
 int main()
 {
-	//void* dlh = dlopen("./libbar.so", RTLD_NOW | RTLD_LOCAL);
-	void* dlh = dlopen("./libbar.so", RTLD_NOW);
+	void* dlh = dlopen("./libbar.so", RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+	//void* dlh = dlopen("./libbar.so", RTLD_NOW);
 	if (!dlh) {
 		fprintf(stderr, "%s\n", dlerror());
 		exit(EXIT_FAILURE);

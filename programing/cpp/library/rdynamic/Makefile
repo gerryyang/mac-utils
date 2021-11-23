@@ -1,6 +1,7 @@
 .PHONY: all clean test
 
 LDEXTRAFLAGS ?= -rdynamic -Wl,--version-script=symbol.txt
+#LDEXTRAFLAGS ?= -rdynamic 
 
 all: prog
 
