@@ -226,6 +226,7 @@ Host $ip_ssh_config
 * `command + P`:  
 	+ 查找文件，显示最近打开的文件
 	+ 当前文件行数（`:行号`）或函数（`@函数名`）跳转。其中，函数跳转等价于：`shift + command + o`
+* `shift + u / l`: 大小写转化
 
 
 # 常用配置
@@ -242,7 +243,7 @@ Host $ip_ssh_config
 "files.trimTrailingWhitespace": true
 ```
 
-## 在explorer中不必要的文件
+## 在explorer中设置不关心的文件
 
 ``` json
 "files.exclude": {
@@ -250,6 +251,10 @@ Host $ip_ssh_config
 }
 ```
 
+## 显示空格和tab符号
+
+* 打开 setting，在搜索框中输入 renderControlCharacters，选中勾选框，即可显示tab
+* 在搜索框中输入 renderWhitespace，选择 all，即可显示空格
 
 # 常用插件
 
@@ -346,6 +351,19 @@ Switch between related files (same name, different extensions) using keybindings
 
 The plugin enables live editing and visualization of [mermaid](https://mermaidjs.github.io/) supported diagrams.
 
+## XML Tools
+
+XML Formatting, XQuery, and XPath Tools for Visual Studio Code.
+
+## Bash Beautify
+
+Format / Beautify bash and shell scripts.
+
+
+## CMake
+
+CMake langage support for Visual Studio Code
+
 # 有趣的扩展
 
 ## LeetCode 
@@ -372,6 +390,10 @@ Solve LeetCode problems in VS Code.
 
 * [In Visual Studio Code Ctrl+V is not working](https://stackoverflow.com/questions/51521004/in-visual-studio-code-ctrlv-is-not-working)
 * [Copy Paste Not Working #55303](https://github.com/microsoft/vscode/issues/55303)
+
+## Tab to blank
+
+* [How can I customize the tab-to-space conversion factor?](https://stackoverflow.com/questions/29972396/how-can-i-customize-the-tab-to-space-conversion-factor)
 
 # Refer
 

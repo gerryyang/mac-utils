@@ -17,6 +17,54 @@ categories: [Bash, 编程语言]
 * [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 
 
+# shopt 
+
+* 在非交互式模式下 alias 扩展功能默认是关闭的
+* shopt 是 shell 的内置命令，可以控制 shell 功能选项的开启和关闭，从而控制 shell 的行为 
+
+``` bash
+shopt -s opt_name        # Enable (set) opt_name.
+shopt -u opt_name        # Disable (unset) opt_name.
+shopt opt_name           # Show current status of opt_name.
+```
+
+测试：
+
+``` bash
+#!/bin/bash --login
+
+alias echo_hello="echo Hello"  # 命令别名
+
+shopt expand_aliases      # alias 默认关闭 
+echo_hello                # 执行失败
+
+shopt -s expand_aliases   # 用 shopt 开启 expand_aliases
+shopt expand_aliases      
+echo_hello                # 执行成功
+```
+
+执行结果：
+
+```
+$./shopt.sh 
+expand_aliases  off
+./shopt.sh:行5: echo_hello: 未找到命令
+expand_aliases  on
+Hello
+```
+
+# `#!/bin/bash --login vs #!/bin/bash`
+
+The main difference is that a login shell executes your profile when it starts. From the man page:
+
+```
+When bash is invoked as an interactive login shell, or as a non-interactive shell with the --login option, it first reads and executes commands from the file /etc/profile, if that file exists. After reading that file, it looks for ~/.bash_profile, ~/.bash_login, and ~/.profile, in that order, and reads and executes commands from the first one that exists and is readable. The --noprofile option may be used when the shell is started to inhibit this behavior.
+
+When a login shell exits, bash reads and executes commands from the file ~/.bash_logout, if it exists.
+```
+
+https://stackoverflow.com/questions/25677790/bin-bash-login-vs-bin-bash
+
 # The ‘ls’ command – how to show seconds
 
 ``` bash
@@ -348,7 +396,30 @@ PrintColor "Oops!"
 # CurrentPath
 
 ``` bash
-CurPath=$(dirname $(readlink -f $0))
+#!/bin/bash
+
+echo $0                            # 脚本名
+echo $(dirname $0)                 # 获取当前脚本的相对路径
+echo $(readlink -f $0)             # readlink 是显示符号链接所指向的位置，如果 $0 不是符号链接，就显示文件本身的绝对路径
+echo $(dirname $(readlink -f $0))  # 获取当前脚本的绝对路径
+
+```
+
+执行：
+
+```
+$sh dirname.sh 
+dirname.sh
+.
+/data/home/gerryyang/test/bash/dirname.sh
+/data/home/gerryyang/test/bash
+
+$cd ..
+$sh bash/dirname.sh 
+bash/dirname.sh
+bash
+/data/home/gerryyang/test/bash/dirname.sh
+/data/home/gerryyang/test/bash
 ```
 
 # Function

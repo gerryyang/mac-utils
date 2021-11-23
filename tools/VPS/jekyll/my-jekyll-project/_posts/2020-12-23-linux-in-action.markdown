@@ -725,6 +725,29 @@ By default, all the threads created using `pthread_create()` inherit the program
 
 # 问题定位
 
+## top (display Linux processes)
+
+| 常用命令 | 含义 | 备注
+| -- | -- | 
+| Z,B,E,e |  Global: 'Z' colors; 'B' bold; 'E'/'e' summary/task memory scale | 显示相关的设置
+| l,t,m  |    Toggle Summary: 'l' load avg; 't' task/cpu stats; 'm' memory info | 最顶部的三部分信息切换(Toggle)：负载，cpu，memory
+| 0,1,2,3,I  | Toggle: '0' zeros; '1/2/3' cpus or numa node views; 'I' Irix mode | 查看cpu，numa node
+| f,F,X   |  Fields: 'f'/'F' add/remove/order/sort; 'X' increase fixed-width | 设置显示哪些 fields
+| L,&,<,> | Locate: 'L'/'&' find/again; Move sort column: '<'/'>' left/right | 字符串查找，通过左右健移动查看
+| R,H,V,J | Toggle: 'R' Sort; 'H' Threads; 'V' Forest view; 'J' Num justify | 查看线程
+| c,i,S,j | Toggle: 'c' Cmd name/line; 'i' Idle; 'S' Time; 'j' Str justify | 查看程序命令行参数
+| x,y     | Toggle highlights: 'x' sort field; 'y' running tasks | 
+| z,b     | Toggle: 'z' color/mono; 'b' bold/reverse (only if 'x' or 'y') | 切换颜色
+| u,U,o,O | Filter by: 'u'/'U' effective/any user; 'o'/'O' other criteria | 按用户过滤
+| n,#,^O  | Set: 'n'/'#' max tasks displayed; Show: Ctrl+'O' other filter(s) | 设置显示 task 的数量
+| C,...   | Toggle scroll coordinates msg for: up,down,left,right,home,end | 
+| k,r     |  Manipulate tasks: 'k' kill; 'r' renice | 向进程发送信号，调整进程优先级
+| d or s  |  Set update interval | 设置更新频率
+| W,Y     |  Write configuration file 'W'; Inspect other output 'Y' | 保存配置文件 $HOME/.toprc
+| q       |  Quit | 退出
+
+More: man top
+
 ## coredump
 
 ```

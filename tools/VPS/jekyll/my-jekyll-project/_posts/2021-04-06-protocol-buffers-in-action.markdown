@@ -1039,7 +1039,11 @@ elapse(0.0260171s)
        0.500588136 seconds time elapsed
 ```
 
+# 对比 FlatBuffers
 
+[国内有什么大公司使用flatbuffers吗？它和protobuffer之间如何取舍？](https://www.zhihu.com/question/39585795)
+
+* https://github.com/google/flatbuffers
 
 # Refer
 

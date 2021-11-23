@@ -11,7 +11,6 @@ categories: [GCC/Clang]
 
 # Install CMake
 
-
 ```
 #!/bin/bash
 
@@ -28,11 +27,148 @@ rm cmake-linux.sh
 cmake --version
 ```
 
+# CMake Introduction
+
+The cmake executable is the command-line interface of the cross-platform buildsystem generator CMake.
+
+官方 manual：
+
+* [cmake(1)](https://cmake.org/cmake/help/latest/manual/cmake.1.html)
+* [cmake-language(7)](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#manual:cmake-language(7))
+* [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#manual:cmake-buildsystem(7))
+* [cmake-generators(7)](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#manual:cmake-generators(7))
+
+```
+Generate a Project Buildsystem
+ cmake [<options>] <path-to-source>
+ cmake [<options>] <path-to-existing-build>
+ cmake [<options>] -S <path-to-source> -B <path-to-build>
+
+Build a Project
+ cmake --build <dir> [<options>] [-- <build-tool-options>]
+
+Install a Project
+ cmake --install <dir> [<options>]
+
+Open a Project
+ cmake --open <dir>
+
+Run a Script
+ cmake [{-D <var>=<value>}...] -P <cmake-script-file>
+
+Run a Command-Line Tool
+ cmake -E <command> [<options>]
+
+Run the Find-Package Tool
+ cmake --find-package [<options>]
+
+View Help
+ cmake --help[-<topic>]
+```
+
+## CMake Buildsystems
+
+A buildsystem describes how to build a project's executables and libraries from its source code using a build tool to automate the process. For example, a buildsystem may be a `Makefile` for use with a command-line `make` tool or a project file for an Integrated Development Environment (IDE). In order to avoid maintaining multiple such buildsystems, a project may specify its buildsystem abstractly using files written in the `CMake language`. From these files CMake generates a preferred buildsystem locally for each user through a backend called a `generator`.
+
+To generate a buildsystem with CMake, the following must be selected:
+
+* Source Tree(源代码目录)
+  + The top-level directory(最顶层的目录) containing source files provided by the project. The project specifies its buildsystem using files as described in the [cmake-language(7)](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#manual:cmake-language(7)) manual, starting with a top-level file named `CMakeLists.txt`. These files specify build targets and their dependencies as described in the [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#manual:cmake-buildsystem(7)) manual. 
+
+* Build Tree(构建目录)
+  + The top-level directory in which buildsystem files and build output artifacts (e.g. executables and libraries) are to be stored. CMake will write a `CMakeCache.txt` file to identify the directory as a build tree and store persistent information such as buildsystem configuration options. 
+  + To maintain a pristine(全新的) source tree, perform an **out-of-source build(外部构建，建议此方式)** by using a separate dedicated build tree. An **in-source build(内部构建，不建议此方式)** in which the build tree is placed in the same directory as the source tree is also supported, but discouraged.  
+
+* Generator(生成器，例如：Unix Makefiles, Ninja)
+  + This chooses the kind of buildsystem to generate. See the [cmake-generators(7)](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#manual:cmake-generators(7)) manual for documentation of all generators. Run `cmake --help` to see a list of generators available locally. Optionally use the `-G` option below to specify a generator, or simply accept the default CMake chooses for the current platform.
+  + When using one of [the Command-Line Build Tool Generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#command-line-build-tool-generators) CMake expects that the environment needed by the compiler toolchain is already configured in the shell. When using one of the IDE Build Tool Generators, no particular environment is needed.
+
+```
+$cmake --help
+
+The following generators are available on this platform (* marks default):
+* Unix Makefiles               = Generates standard UNIX makefiles.
+  Green Hills MULTI            = Generates Green Hills MULTI files
+                                 (experimental, work-in-progress).
+  Ninja                        = Generates build.ninja files.
+  Ninja Multi-Config           = Generates build-<Config>.ninja files.
+  Watcom WMake                 = Generates Watcom WMake makefiles.
+  CodeBlocks - Ninja           = Generates CodeBlocks project files.
+  CodeBlocks - Unix Makefiles  = Generates CodeBlocks project files.
+  CodeLite - Ninja             = Generates CodeLite project files.
+  CodeLite - Unix Makefiles    = Generates CodeLite project files.
+  Sublime Text 2 - Ninja       = Generates Sublime Text 2 project files.
+  Sublime Text 2 - Unix Makefiles
+                               = Generates Sublime Text 2 project files.
+  Kate - Ninja                 = Generates Kate project files.
+  Kate - Unix Makefiles        = Generates Kate project files.
+  Eclipse CDT4 - Ninja         = Generates Eclipse CDT 4.0 project files.
+  Eclipse CDT4 - Unix Makefiles= Generates Eclipse CDT 4.0 project files.
+```
+
+## Generate a Project Buildsystem
+
+Run CMake with one of the following command signatures to specify the source and build trees and generate a buildsystem:
+
+* `cmake [<options>] <path-to-source>`
+
+Uses the current working directory as the **build tree**, and `<path-to-source>` as the **source tree**. The specified path may be absolute or relative to the current working directory. The source tree must contain a `CMakeLists.txt` file and must not contain a `CMakeCache.txt` file because the latter identifies an existing build tree. For example:
+
+```
+$ mkdir build ; cd build
+$ cmake ../src
+```
+
+* `cmake [<options>] <path-to-existing-build>`
+
+Uses `<path-to-existing-build>` as the **build tree**, and loads the path to the source tree from its `CMakeCache.txt` file, which must have already been generated by a previous run of CMake. The specified path may be absolute or relative to the current working directory. For example:
+
+```
+$ cd build
+$ cmake .
+```
+
+* `cmake [<options>] -S <path-to-source> -B <path-to-build>`
+
+Uses `<path-to-build>` as the **build tree** and `<path-to-source>` as the **source tree**. The specified paths may be absolute or relative to the current working directory. The source tree must contain a `CMakeLists.txt` file. The build tree will be created automatically if it does not already exist. For example:
+
+```
+# -S <path-to-source> : Path to root directory of the CMake project to build.
+# -B <path-to-build> : Path to directory which CMake will use as the root of build directory. If the directory doesn't already exist CMake will make it.
+
+$ cmake -S src -B build
+```
+
+In all cases the `<options>` may be zero or more, refer [Options](https://cmake.org/cmake/help/latest/manual/cmake.1.html#options).
+
+After generating a buildsystem one may use the corresponding native build tool to build the project. For example, after using the **Unix Makefiles** generator one may run **make** directly:
+
+```
+$ make
+$ make install
+```
+
+Alternatively, one may use cmake to [Build a Project](https://cmake.org/cmake/help/latest/manual/cmake.1.html#build-a-project) by automatically choosing and invoking the appropriate native build tool.
+
+## Run a Command-Line Tool
+
+CMake provides builtin command-line tools through the signature. Run `cmake -E` or `cmake -E help` for a summary of commands.
+
+```
+cmake -E <command> [<options>]
+```
+
+https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+
+
+
+
 # CMake Helloworld
 
 * `cmake_minimum_required`：cmake 的最低版本要求
 * `project`：指定项目的名称
 * `set`：设置普通变量，缓存变量或环境变量
+* `add_subdirectory`：添加 build 的子目录，第一个参数 source_dir 指定的子目录包含了 CMakeLists.txt 和代码，通常为相对路径
 * `add_executable`：使用列出的源文件构建可执行文件
 * `include_directories`：添加多个头文件搜索路径，路径之间用空格分隔；在 include 的时候就不需要使用相对路径了
 * `aux_source_directory`：在目录中查找所有源文件，并将这些源文件存储在变量 SOURCE_DIR 中；需要注意这个指令不会递归包含子目录
@@ -44,8 +180,8 @@ cmake --version
 Note:
 
 * cmake默认使用彩色精简的输出方式，若需要输出详细的编译过程有两种方法
-  + 1. 通过参数`make VERBOSE = 1` 
-  + 2. 在CMakeLists.txt中设置`set(CMAKE_VERBOSE_MAKEFILE on)`
+  + 通过参数`make VERBOSE = 1` 
+  + 在CMakeLists.txt中设置`set(CMAKE_VERBOSE_MAKEFILE on)`
 * cmake的指令是不区分大小写的，写作`CMAKE_MINIMUM_REQUIRED`或`cmake_minimum_required`，甚至是`cmAkE_mInImUm_rEquIrEd`（不建议）都是可以的
 * 设置编译选项，例如，`SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall")`
 * 设置链接选项，例如，`SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")`
@@ -73,7 +209,7 @@ message(STATUS "CMAKE_CXX_FLAGS: " "${CMAKE_CXX_FLAGS}")
 * `message`可以在构建的过程中向 stdout 输出一些信息
 * 类似于 bash 脚本，在 CMakeLists.txt 中输出变量时要使用`${CMAKE_CXX_FLAGS}`的形式，而不能直接使用`CMAKE_CXX_FLAGS`
 * 编辑好 CMakeLists.txt 之后，可以新建一个 build 目录，并在 build 目录下使用 cmake 来进行构建，构建成功的话再使用 make 来进行编译和链接，最终得到可执行文件
-* 除了直接引用外部的静态库，cmake 还可以先将源文件编译成静态库之后在进行构建
+* 除了直接引用外部的静态库，cmake 还可以先将源文件编译成静态库之后再进行构建
 	+ `target_link_libraries(Exp2 libcalculator.a)`
 	+ `target_link_libraries(Exp2 calculator)`
 * 使用`#[[ ... ]]`或`#`注释
@@ -124,6 +260,17 @@ project(<PROJECT-NAME>
 
 https://cmake.org/cmake/help/latest/command/project.html
 
+## include
+
+Load and run CMake code from a file or module. If `OPTIONAL` is present, then no error is raised if the file does not exist.
+
+```
+include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>]
+                      [NO_POLICY_SCOPE])
+```
+
+https://cmake.org/cmake/help/latest/command/include.html
+
 ## set
 
 Set a normal, cache, or environment variable to a given value. 
@@ -133,6 +280,16 @@ set(<variable> <value>... [PARENT_SCOPE])
 ```
 
 https://cmake.org/cmake/help/latest/command/set.html
+
+## unset
+
+Unset a variable, cache variable, or environment variable. Removes the specified variable causing it to become undefined. 
+
+```
+unset(<variable> [CACHE | PARENT_SCOPE])
+```
+
+https://cmake.org/cmake/help/v3.0/command/unset.html
 
 ## message
 
@@ -164,6 +321,48 @@ endif()
 
 https://cmake.org/cmake/help/latest/command/if.html
 
+## file
+
+File manipulation command. This command is dedicated to file and path manipulation requiring access to the filesystem.
+
+```
+# Filesystem
+
+file({GLOB | GLOB_RECURSE} <out-var> [...] [<globbing-expr>...])
+
+file(GLOB <variable>
+     [LIST_DIRECTORIES true|false] [RELATIVE <path>] [CONFIGURE_DEPENDS]
+     [<globbing-expressions>...])
+
+file(GLOB_RECURSE <variable> [FOLLOW_SYMLINKS]
+     [LIST_DIRECTORIES true|false] [RELATIVE <path>] [CONFIGURE_DEPENDS]
+     [<globbing-expressions>...])
+```
+
+https://cmake.org/cmake/help/latest/command/file.html
+
+## foreach
+
+Evaluate a group of commands for each value in a list.
+
+```
+foreach(<loop_var> <items>)
+  <commands>
+endforeach()
+```
+
+https://cmake.org/cmake/help/latest/command/foreach.html
+
+## aux_source_directory
+
+Find all source files in a directory.
+
+```
+aux_source_directory(<dir> <variable>)
+```
+
+https://cmake.org/cmake/help/latest/command/aux_source_directory.html
+
 ## add_subdirectory
 
 Add a subdirectory to the build.
@@ -173,6 +372,322 @@ add_subdirectory(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
 ```
 
 https://cmake.org/cmake/help/latest/command/add_subdirectory.html
+
+## include_directories
+
+Add include directories to the build. Add the given directories to those the compiler uses to search for include files. Relative paths are interpreted as relative to the current source directory.
+
+```
+include_directories([AFTER|BEFORE] [SYSTEM] dir1 [dir2 ...])
+```
+
+https://cmake.org/cmake/help/latest/command/include_directories.html
+
+## link_directories
+
+Add directories in which the linker will look for libraries.
+
+```
+link_directories([AFTER|BEFORE] directory1 [directory2 ...])
+```
+
+https://cmake.org/cmake/help/latest/command/link_directories.html
+
+
+## add_definitions
+
+Add -D define flags to the compilation of source files.
+
+```
+add_definitions(-DFOO -DBAR ...)
+```
+
+https://cmake.org/cmake/help/latest/command/add_definitions.html
+
+##  add_custom_command
+
+主要作用：
+
+* 生成文件。添加定制命令来生成文件。
+* 构建事件。为某个目标(如库或可执行程序)添加一个定制命令。
+  + 这种定制命令可以设置在，构建这个目标过程中的某些时机。即，这种场景可以在目标构建的过程中，添加一些额外执行的命令。这些命令本身将会成为该目标的一部分。注意，仅在目标本身被构建过程才会执行。如果该目标已经构建，命令将不会执行。
+* 如果使用 OUTPUT 参数，需要在目标的构建中指定依赖于该 OUTPUT
+* 如果使用 TARGET 参数，直接指定目标就可以了
+
+| 参数	| 含义
+| -- | --
+| PRE_BUILD	| 在目标中执行任何其他规则之前运行
+| PRE_LINK	| 在编译源代码之后，链接二进制文件或库文件之前运行
+| POST_BUILD	| 在目标内所有其他规则均已执行后运行
+
+Add a custom build rule to the generated build system.
+
+The first signature is for adding a custom command to produce an output:
+
+```
+add_custom_command(OUTPUT output1 [output2 ...]
+                   COMMAND command1 [ARGS] [args1...]
+                   [COMMAND command2 [ARGS] [args2...] ...]
+                   [MAIN_DEPENDENCY depend]
+                   [DEPENDS [depends...]]
+                   [BYPRODUCTS [files...]]
+                   [IMPLICIT_DEPENDS <lang1> depend1
+                                    [<lang2> depend2] ...]
+                   [WORKING_DIRECTORY dir]
+                   [COMMENT comment]
+                   [DEPFILE depfile]
+                   [JOB_POOL job_pool]
+                   [VERBATIM] [APPEND] [USES_TERMINAL]
+                   [COMMAND_EXPAND_LISTS])
+
+```
+
+* OUTPUT：指定命令预期产生的输出文件。如果输出文件的名称是相对路径，即相对于当前的构建的源目录路径；
+* COMMAND：指定要在构建时执行的命令行；
+* DEPENDS：指定命令所依赖的文件；
+* COMMENT：在构建时执行命令之前显示给定消息；
+* WORKING_DIRECTORY：使用给定的当前工作目录执行命令。如果它是相对路径，它将相对于对应于当前源目录的构建树目录；
+* DEPFILE：为生成器指定一个.d depfile .d文件保存通常由自定义命令本身发出的依赖关系；
+* MAIN_DEPENDENCY：指定命令的主要输入源文件；
+* BYPRODUCTS：指定命令预期产生的文件；
+
+例子：
+
+```
+cmake_minimum_required(VERSION 3.10)
+
+project(test)
+
+# Usage: cmake -E <command> [arguments...]
+# refer: https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+add_custom_command(OUTPUT SOME_RESULT
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do something"
+)
+
+add_custom_target(TaskA ALL
+                 DEPENDS SOME_RESULT
+)
+```
+
+The second signature adds a custom command to a target such as a library or executable. This is useful for performing an operation before or after building the target. The command becomes part of the target and will only execute when the target itself is built. If the target is already built, the command will not execute.
+
+```
+add_custom_command(TARGET <target>
+                   PRE_BUILD | PRE_LINK | POST_BUILD
+                   COMMAND command1 [ARGS] [args1...]
+                   [COMMAND command2 [ARGS] [args2...] ...]
+                   [BYPRODUCTS [files...]]
+                   [WORKING_DIRECTORY dir]
+                   [COMMENT comment]
+                   [VERBATIM] [USES_TERMINAL]
+                   [COMMAND_EXPAND_LISTS])
+```
+
+例子：
+
+```
+cmake_minimum_required(VERSION 3.10)
+
+project(test)
+
+# Note, should be before add_custom_command
+add_custom_target(TaskA)
+
+# Usage: cmake -E <command> [arguments...]
+# refer: https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+add_custom_command(TARGET TaskA 
+                  PRE_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do something"
+)
+```
+
+https://cmake.org/cmake/help/latest/command/add_custom_command.html
+
+## add_custom_target
+
+增加一个没有输出的目标，使得它总是被构建。
+
+Add a target with no output so it will always be built. Adds a target with the given name that executes the given commands. **The target has no output file and is always considered out of date even if the commands try to create a file with the name of the target.** Use the add_custom_command() command to generate a file with dependencies.
+
+```
+add_custom_target(Name [ALL] [command1 [args1...]]
+                  [COMMAND command2 [args2...] ...]
+                  [DEPENDS depend depend depend ... ]
+                  [BYPRODUCTS [files...]]
+                  [WORKING_DIRECTORY dir]
+                  [COMMENT comment]
+                  [JOB_POOL job_pool]
+                  [VERBATIM] [USES_TERMINAL]
+                  [COMMAND_EXPAND_LISTS]
+                  [SOURCES src1 [src2...]])
+```
+
+* ALL：表明该目标会被添加到默认的构建目标，使得它每次都被运行；
+* COMMAND：指定要在构建时执行的命令行；
+* DEPENDS：指定命令所依赖的文件；
+* COMMENT：在构建时执行命令之前显示给定消息；
+* WORKING_DIRECTORY：使用给定的当前工作目录执行命令。如果它是相对路径，它将相对于对应于当前源目录的构建树目录；
+* BYPRODUCTS：指定命令预期产生的文件；
+
+例子：
+
+```
+cmake_minimum_required(VERSION 3.10)
+
+project(test)
+
+# Usage: cmake -E <command> [arguments...]
+# refer: https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+add_custom_target(TaskA
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA"
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA over"
+                  
+)
+```
+
+https://cmake.org/cmake/help/latest/command/add_custom_target.html
+
+## add_dependencies
+
+Add a dependency between top-level targets.
+
+Makes a top-level <target> depend on other top-level targets to ensure that they build before <target> does. A top-level target is one created by one of the add_executable(), add_library(), or add_custom_target() commands (but not targets generated by CMake like install).
+
+```
+add_dependencies(<target> [<target-dependency>]...)
+```
+
+https://cmake.org/cmake/help/latest/command/add_dependencies.html
+
+## add_executable
+
+Add an executable to the project using the specified source files.
+
+```
+add_executable(<name> [WIN32] [MACOSX_BUNDLE]
+               [EXCLUDE_FROM_ALL]
+               [source1] [source2 ...])
+```
+
+https://cmake.org/cmake/help/latest/command/add_executable.html
+
+## add_library
+
+Add a library to the project using the specified source files.
+
+```
+add_library(<name> [STATIC | SHARED | MODULE]
+            [EXCLUDE_FROM_ALL]
+            [<source>...])
+```
+
+https://cmake.org/cmake/help/latest/command/add_library.html
+
+## target_link_libraries
+
+Specify libraries or flags to use when linking a given target and/or its dependents. 
+
+```
+target_link_libraries(<target> ... <item>... ...)
+```
+
+https://cmake.org/cmake/help/latest/command/target_link_libraries.html
+
+## enable_language
+
+Enable a language (CXX/C/OBJC/OBJCXX/Fortran/etc)
+
+https://cmake.org/cmake/help/latest/command/enable_language.html
+
+
+## macro
+
+Start recording a macro for later invocation as a command
+
+``` 
+macro(<name> [<arg1> ...])
+  <commands>
+endmacro()
+```
+
+例子：
+
+```
+macro(CONFIG Key Value)
+    IF(NOT DEFINED ${Key})
+        SET(${Key} ${Value})
+    ENDIF()
+endmacro()
+
+CONFIG(PROJ_BUILD_TYPE "debug")
+```
+
+https://cmake.org/cmake/help/latest/command/macro.html
+
+## function
+
+Start recording a function for later invocation as a command.
+
+Defines a function named `<name>` that takes arguments named `<arg1>, ...` The `<commands>` in the function definition are recorded; they are not executed until the function is invoked.
+
+```
+function(<name> [<arg1> ...])
+  <commands>
+endfunction()
+```
+
+https://cmake.org/cmake/help/latest/command/function.html
+
+## string
+
+String operations.
+
+```
+# Search and Replace
+
+string(REPLACE <match-string> <replace-string> <out-var> <input>...)
+```
+
+https://cmake.org/cmake/help/latest/command/string.html
+
+## set_property
+
+Set a named property in a given scope.
+
+```
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+```
+
+https://cmake.org/cmake/help/latest/command/set_property.html
+
+
+## install
+
+Specify rules to run at install time. This command generates installation rules for a project. Install rules specified by calls to the install() command within a source directory are executed in order during installation.
+
+```
+install(TARGETS <target>... [...])
+install(IMPORTED_RUNTIME_ARTIFACTS <target>... [...])
+install({FILES | PROGRAMS} <file>... [...])
+install(DIRECTORY <dir>... [...])
+install(SCRIPT <file> [...])
+install(CODE <code> [...])
+install(EXPORT <export-name> [...])
+install(RUNTIME_DEPENDENCY_SET <set-name> [...])
+```
+
+https://cmake.org/cmake/help/latest/command/install.html
+
+## get_filename_component
+
+Get a specific component of a full filename.
+
+```
+get_filename_component(<var> <FileName> <mode> [CACHE])
+```
+
+
+https://cmake.org/cmake/help/latest/command/get_filename_component.html
 
 
 # Variable
@@ -231,10 +746,82 @@ IF(CMAKE_C_COMPILER_ID STREQUAL Clang AND CMAKE_CXX_COMPILER_ID STREQUAL Clang)
 ENDIF()
 ```
 
+## CMAKE_COMMAND
+
+The full path to the cmake(1) executable. This is the full path to the CMake executable cmake(1) which is useful from custom commands that want to use the cmake -E option for portable system commands. (e.g. /usr/local/bin/cmake)
+
+```
+cmake_minimum_required(VERSION 3.10)
+
+project(test)
+
+# Usage: cmake -E <command> [arguments...]
+# refer: https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+add_custom_target(TaskA
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA"
+                  COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA over"
+                  
+)
+```
+
+* https://cmake.org/cmake/help/v3.4/variable/CMAKE_COMMAND.html
+* https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
+
+
+## EXECUTABLE_OUTPUT_PATH
+
+Old executable location variable. The target property RUNTIME_OUTPUT_DIRECTORY supersedes this variable for a target if it is set. Executable targets are otherwise placed in this directory.
+
+
+https://cmake.org/cmake/help/latest/variable/EXECUTABLE_OUTPUT_PATH.html
+
+## LIBRARY_OUTPUT_PATH
+
+Old library location variable. The target properties ARCHIVE_OUTPUT_DIRECTORY, LIBRARY_OUTPUT_DIRECTORY, and RUNTIME_OUTPUT_DIRECTORY supersede this variable for a target if they are set. Library targets are otherwise placed in this directory.
+
+https://cmake.org/cmake/help/latest/variable/LIBRARY_OUTPUT_PATH.html
+
+## BUILD_SHARED_LIBS
+
+Global flag to cause add_library() to create shared libraries if on. 
+
+If present and true, this will cause all libraries to be built shared unless the library was explicitly added as a static library. This variable is often added to projects as an option() so that each user of a project can decide if they want to build the project using shared or static libraries.
+
+https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
+
+## CMAKE_BUILD_TYPE
+
+Specifies the build type on single-configuration generators (e.g. **Makefile Generators** or **Ninja**). Typical values include `Debug`, `Release`, `RelWithDebInfo` and `MinSizeRel`, but custom build types can also be defined.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
+
+## CMAKE_CXX_FLAGS_DEBUG, CMAKE_CXX_FLAGS_RELEASE / CMAKE_C_FLAGS_DEBUG, CMAKE_C_FLAGS_RELEASE
+
+[how to use CMAKE_CXX_FLAGS_DEBUG and CMAKE_CXX_FLAGS_RELEASE ?](https://cmake.org/pipermail/cmake/2006-February/008371.html)
+
+
+
+## CMAKE_BINARY_DIR
+
+The path to the top level of the build tree. This is the full path to the top level of the current CMake build tree. For an in-source build, this would be the same as CMAKE_SOURCE_DIR.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_BINARY_DIR.html
+
+## CMAKE_SOURCE_DIR
+
+The path to the top level of the source tree. This is the full path to the top level of the current CMake source tree. For an in-source build, this would be the same as CMAKE_BINARY_DIR.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_SOURCE_DIR.html
+
+## CMAKE_CURRENT_SOURCE_DIR
+
+The path to the source directory currently being processed.
+
+https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html
 
 ## CMAKE_CURRENT_LIST_FILE
 
-Full path to the listfile currently being processed.
+Full path to the listfile currently being processed. 
 
 https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_FILE.html
 
@@ -257,6 +844,9 @@ https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_MESSAGE.html
 Don't make the install target depend on the all target.
 
 https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_ALL_DEPENDENCY.html
+
+
+
 
 # 编译效率对比
 

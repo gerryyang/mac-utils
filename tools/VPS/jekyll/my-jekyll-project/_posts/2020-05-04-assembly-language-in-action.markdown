@@ -77,70 +77,70 @@ int main()
 
 ```
 swap_add(int*, int*):
-        push    rbp                           // 保存上一层函数的 ebp
-        mov     rbp, rsp                      // 将当前 ebp 设置为 esp，即，栈桢底部
+        push    rbp                           ; 保存上一层函数的 ebp
+        mov     rbp, rsp                      ; 将当前 ebp 设置为 esp，即，栈桢底部
 
-        mov     QWORD PTR [rbp-24], rdi       // 获取 xp
-        mov     QWORD PTR [rbp-32], rsi       // 获取 yp
+        mov     QWORD PTR [rbp-24], rdi       ; 获取 xp
+        mov     QWORD PTR [rbp-32], rsi       ; 获取 yp
 
         mov     rax, QWORD PTR [rbp-24]       
         mov     eax, DWORD PTR [rax]
-        mov     DWORD PTR [rbp-4], eax        // 分配局部变量 x
+        mov     DWORD PTR [rbp-4], eax        ; 分配局部变量 x
 
         mov     rax, QWORD PTR [rbp-32]
         mov     eax, DWORD PTR [rax]
-        mov     DWORD PTR [rbp-8], eax        // 分配局部变量 y 
+        mov     DWORD PTR [rbp-8], eax        ; 分配局部变量 y 
 
         mov     rax, QWORD PTR [rbp-24]
         mov     edx, DWORD PTR [rbp-8]
-        mov     DWORD PTR [rax], edx          // y 赋值给 xp
+        mov     DWORD PTR [rax], edx          ; y 赋值给 xp
 
         mov     rax, QWORD PTR [rbp-32]
         mov     edx, DWORD PTR [rbp-4]
-        mov     DWORD PTR [rax], edx          // x 赋值给 yp
+        mov     DWORD PTR [rax], edx          ; x 赋值给 yp
 
         mov     eax, DWORD PTR [rbp-8]
         mov     edx, DWORD PTR [rbp-4]
-        add     eax, edx                      // 计算 x + y
+        add     eax, edx                      ; 计算 x + y
 
-        pop     rbp                           // restore ebp
-        ret                                   // return
+        pop     rbp                           ; restore ebp
+        ret                                   ; return
 
 caller():
-        push    rbp                            // 保存上一层函数的 ebp
-        mov     rbp, rsp                       // 将当前 ebp 设置为 esp，即，栈桢底部
-        sub     rsp, 16                        // 分配 16B 空间
-        mov     DWORD PTR [rbp-12], 534        // 分配局部变量 arg1 为 534
-        mov     DWORD PTR [rbp-16], 1057       // 分配局部变量 arg2 为 1057
-        lea     rdx, [rbp-16]                  // 计算 &arg2 并放入 rdx
-        lea     rax, [rbp-12]                  // 计算 &arg1 并放入 rax
+        push    rbp                            ; 保存上一层函数的 ebp
+        mov     rbp, rsp                       ; 将当前 ebp 设置为 esp，即，栈桢底部
+        sub     rsp, 16                        ; 分配 16B 空间
+        mov     DWORD PTR [rbp-12], 534        ; 分配局部变量 arg1 为 534
+        mov     DWORD PTR [rbp-16], 1057       ; 分配局部变量 arg2 为 1057
+        lea     rdx, [rbp-16]                  ; 计算 &arg2 并放入 rdx
+        lea     rax, [rbp-12]                  ; 计算 &arg1 并放入 rax
         mov     rsi, rdx
         mov     rdi, rax
 
-        call    swap_add(int*, int*)           // 调用 swap_add 函数
+        call    swap_add(int*, int*)           ; 调用 swap_add 函数
 
-        mov     DWORD PTR [rbp-4], eax         // 分配局部变量 sum 为 swap_add 函数的返回值 eax 
+        mov     DWORD PTR [rbp-4], eax         ; 分配局部变量 sum 为 swap_add 函数的返回值 eax 
 
         mov     edx, DWORD PTR [rbp-12]
         mov     eax, DWORD PTR [rbp-16]
 
-        sub     edx, eax                       // 计算 arg1 - arg2
+        sub     edx, eax                       ; 计算 arg1 - arg2
 
         mov     eax, edx
-        mov     DWORD PTR [rbp-8], eax         // 分配局部变量 diff
+        mov     DWORD PTR [rbp-8], eax         ; 分配局部变量 diff
 
         mov     eax, DWORD PTR [rbp-4]
-        imul    eax, DWORD PTR [rbp-8]         // 计算 sum * diff
+        imul    eax, DWORD PTR [rbp-8]         ; 计算 sum * diff
 
-        leave                                  // 恢复栈顶指针位置
+        leave                                  ; 恢复栈顶指针位置
 
-        ret                                    // return
+        ret                                    ; return
 
 main:
         push    rbp
         mov     rbp, rsp
         call    caller()
-        mov     eax, 0      // 返回值 0
+        mov     eax, 0                         ; 返回值 0
         pop     rbp
         ret
 ```
@@ -148,6 +148,7 @@ main:
 解释：
 
 * `sub rsp, 16` 为什么申请了16字节的空间？在现代处理器中，栈帧必须16字节对齐，就是说栈底和栈顶的地址必须是16的整数倍。refer: [联合、数据对齐和缓冲区溢出攻击](https://www.jianshu.com/p/b20c8838b929)
+* `lea`(load effective address) 将有效地址传送到指定的的寄存器，类似C语言中的`&`
 
 ![stack_space3](/assets/images/202111/stack_space3.png)
 

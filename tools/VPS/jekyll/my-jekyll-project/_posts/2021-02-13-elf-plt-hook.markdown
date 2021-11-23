@@ -428,7 +428,7 @@ refer:
 
 ### RTLD_DEEPBIND (dlopen)
 
-除了通过`version-script`显式控制可执行文件的符号导出，也可以通过`dlopen`的`RTLD_DEEPBIND`选项，设置动态库so优先使用自己的符号。
+除了通过`version-script`显式控制可执行文件的符号导出，也可以通过`dlopen`的`RTLD_DEEPBIND`选项，设置动态库so优先使用自己的符号。可参考 https://man7.org/linux/man-pages/man3/dlopen.3.html
 
 ```
    RTLD_DEEPBIND (since glibc 2.3.4)
@@ -439,7 +439,11 @@ refer:
               that have already been loaded.
 ```
 
-https://man7.org/linux/man-pages/man3/dlopen.3.html
+问题：
+
+[Bug 42679 - RTLD_DEEPBIND dlopen option for shared library that uses libstdc++ std::ostream crashes](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=42679)
+
+[linux c解决多个第三方so动态库包含不同版本openssl造成的符号冲突](https://zhuanlan.zhihu.com/p/392251740)
 
 ## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
 
