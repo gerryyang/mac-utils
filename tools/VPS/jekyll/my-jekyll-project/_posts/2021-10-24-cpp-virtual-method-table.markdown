@@ -512,3 +512,8 @@ B()
 ~A1()
 */
 ```
+
+# Refer
+
+* [What is a non-virtual thunk?](https://reverseengineering.stackexchange.com/questions/4543/what-is-a-non-virtual-thunk)
+

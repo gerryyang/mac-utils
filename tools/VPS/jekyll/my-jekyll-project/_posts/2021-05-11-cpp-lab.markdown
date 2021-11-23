@@ -181,6 +181,54 @@ a b c
 
 # C++11
 
+## auto
+
+`auto`没有指定`&`时，会推导为值拷贝。例如，`auto s : vec`
+
+``` cpp
+#include <cstdio>
+#include <string>
+#include <vector>
+
+int main()
+{
+    std::vector<std::string> vec = {"1", "2"};
+    for (auto s : vec) {
+      printf("%s\n", s.c_str());
+    }
+}
+```
+
+使用[https://cppinsights.io/](https://cppinsights.io/)翻译可以得到：
+
+``` cpp
+#include <cstdio>
+#include <string>
+#include <vector>
+
+int main()
+{
+  std::vector<std::string> vec = std::vector<std::basic_string<char>, std::allocator<std::basic_string<char> > >{std::initializer_list<std::basic_string<char> >{std::basic_string<char>("1", std::allocator<char>()), std::basic_string<char>("2", std::allocator<char>())}, std::allocator<std::basic_string<char> >()};
+  {
+    std::vector<std::basic_string<char>, std::allocator<std::basic_string<char> > > & __range1 = vec;
+    __gnu_cxx::__normal_iterator<std::basic_string<char> *, std::vector<std::basic_string<char>, std::allocator<std::basic_string<char> > > > __begin1 = __range1.begin();
+    __gnu_cxx::__normal_iterator<std::basic_string<char> *, std::vector<std::basic_string<char>, std::allocator<std::basic_string<char> > > > __end1 = __range1.end();
+    for(; __gnu_cxx::operator!=(__begin1, __end1); __begin1.operator++()) {
+      std::basic_string<char> s = std::basic_string<char>(__begin1.operator*());  // 存在值拷贝
+      printf("%s\n", s.c_str());
+    }
+    
+  }
+}
+```
+
+若将`auto s : vec`改为`auto& s : vec`，则会变为引用：
+
+``` cpp
+std::basic_string<char> & s = __begin1.operator*();
+```
+
+
 ## Fixed width integer types
 
 * int8_t/int16_t/int32_t/int64_t
@@ -321,6 +369,13 @@ int main()
 ```
 
 因此，从某种程度上说，lambda 表达式是C++11提供的一种语法糖，让代码编写更加轻松。
+
+### 性能影响
+
+> In addition, C++ compilers optimize lambdas better than they do ordinary functions. (Page 213)
+
+* [Are lambdas inlined like functions in C++?](https://stackoverflow.com/questions/15930755/are-lambdas-inlined-like-functions-in-c)
+* [Why can lambdas be better optimized by the compiler than plain functions?](https://stackoverflow.com/questions/13722426/why-can-lambdas-be-better-optimized-by-the-compiler-than-plain-functions)
 
 ### 在STL中使用 lambda 表达式
 
@@ -1427,3 +1482,4 @@ int main()
     std::cout << vec << std::endl;
 }
 ```
+

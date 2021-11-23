@@ -49,13 +49,13 @@ Note: [Clang 3.1 release uses another flag syntax](http://llvm.org/releases/3.1/
 
 1. 安装依赖 sudo yum install libasan
 2. 配置编译选项，建议选项
-	+ -O1 禁止优化
-	+ -fno-omit-frame-pointer 不忽略堆栈信息
-	+ -fsanitize=address 包括 LeakSanitizer MemorySanitizer 功能
-	+ -fsanitize-recover=address 检查出错不退出继续执行
-3. export LD_PRELOAD=/lib64/libasan.so.0 启用lib库的预加载
-4. export ASAN_OPTIONS=halt_on_error=0 通过环境变量配置 Sanitizers，遇到错误不停止运行
-5. 启动程序，观察stdout的输出
+	+ `-O1` 禁止优化
+	+ `-fno-omit-frame-pointer` 不忽略堆栈信息
+	+ `-fsanitize=address` 包括 LeakSanitizer MemorySanitizer 功能
+	+ `-fsanitize-recover=address` 检查出错不退出继续执行，refer: [Address Sanitizer option "-fsanitize-recover=address" is not supported](https://stackoverflow.com/questions/53391286/address-sanitizer-option-fsanitize-recover-address-is-not-supported)
+3. `export LD_PRELOAD=/lib64/libasan.so.0` 启用lib库的预加载
+4. `export ASAN_OPTIONS=halt_on_error=0` 通过环境变量配置 Sanitizers，遇到错误不停止运行
+5. 启动程序，观察`stdout`的输出。因为 AddressSanitizer put errors in the stderr, but not in stdout, 所以，如果要输出到文件，可以 `a.out &>asan.log`，或者使用 `ASAN_OPTIONS="log_path=asan.log" ./a.out`
 
 注意：LeakSanitizer 的检测结果，默认是在程序退出前打印出来的。
 
@@ -285,7 +285,7 @@ gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c
 
 ```
 # 设置编译选项
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak"")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer")
 # 设置链接选项
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
 ```

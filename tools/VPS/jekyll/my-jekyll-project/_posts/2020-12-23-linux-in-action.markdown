@@ -966,3 +966,21 @@ Aborted
 lsof -p pid 
 ```
 
+## c++filt (Demangle C++ and Java symbols)
+
+使用`c++filt`对符号进行 demangle 得到可读的符号名：
+
+```
+dlopen(./liballocatesvr_plugin.so) failed(./liballocatesvr_plugin.so: undefined symbol: _ZTIN6google8protobuf7MessageE)
+```
+
+```
+$c++filt _ZTIN6google8protobuf7MessageE
+typeinfo for google::protobuf::Message
+```
+
+## addr2line (convert addresses into file names and line numbers)
+
+addr2line translates addresses into file names and line numbers. Given an address in an executable or an offset in a section of a relocatable object, it uses the debugging information to figure out which file name and line number are associated with it.
+
+https://linux.die.net/man/1/addr2line

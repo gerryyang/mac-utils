@@ -123,6 +123,36 @@ If a particular version of a file is in the git directory, it's considered commi
 
 [Git下载地址]: http://git-scm.com/downloads
 
+## 升级版本
+
+使用源码编译安装：
+
+安装依赖：
+
+```
+sudo yum -y install epel-release
+sudo yum -y groupinstall "Development Tools"
+sudo yum -y install wget perl-CPAN gettext-devel perl-devel  openssl-devel  zlib-devel curl-devel expat-devel  getopt asciidoc xmlto docbook2X
+sudo ln -s /usr/bin/db2x_docbook2texi /usr/bin/docbook2x-texi
+```
+
+下载git源码，并编译：
+
+```
+sudo yum -y install wget
+export VER="2.32.0"
+wget https://github.com/git/git/archive/v${VER}.tar.gz
+tar -xvf v${VER}.tar.gz
+rm -f v${VER}.tar.gz
+cd git-*
+make configure
+sudo ./configure --prefix=/usr
+sudo make
+sudo make install
+```
+
+[Install Latest Git ( Git 2.x ) on CentOS 7](https://computingforgeeks.com/how-to-install-latest-version-of-git-git-2-x-on-centos-7/)
+
 ## 基础配置
 
 安装后，对Git进行配置，通过命令行的方式。首先需要配置用户名和邮箱，如果没有配置在执行Git命令时会提示如下错误：

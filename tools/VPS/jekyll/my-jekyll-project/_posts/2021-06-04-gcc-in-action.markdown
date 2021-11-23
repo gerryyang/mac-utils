@@ -133,7 +133,7 @@ Thread model: posix
 gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC) 
 ```
 
-## ubuntu
+## Ubuntu
 
 ```
 update-alternatives --query gcc
