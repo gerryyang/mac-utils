@@ -501,7 +501,8 @@ add_custom_command(TARGET TaskA
 )
 ```
 
-https://cmake.org/cmake/help/latest/command/add_custom_command.html
+* https://cmake.org/cmake/help/latest/command/add_custom_command.html
+* [cmake：添加自定义操作](https://zhuanlan.zhihu.com/p/95771200)
 
 ## add_custom_target
 

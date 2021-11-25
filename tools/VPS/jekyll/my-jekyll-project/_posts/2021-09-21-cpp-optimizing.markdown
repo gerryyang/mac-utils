@@ -1622,4 +1622,5 @@ strip example
 * [Computer performance](https://en.wikipedia.org/wiki/Computer_performance)
 * [Make a program run slowly](https://stackoverflow.com/questions/14371257/make-a-program-run-slowly/14371416)
 * [Other Built-in Functions Provided by GCC](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html)
-
+* [Technical Report on C++ Performance](http://www.open-std.org/jtc1/sc22/wg21/docs/TR18015.pdf)
+* [Why does clang produce inefficient asm with -O0 (for this simple floating point sum)?](https://stackoverflow.com/questions/53366394/why-does-clang-produce-inefficient-asm-with-o0-for-this-simple-floating-point)
