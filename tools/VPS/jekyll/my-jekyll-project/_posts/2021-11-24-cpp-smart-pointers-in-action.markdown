@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Smart Pointers in Action"
+title:  "CPP Smart Pointers in Action"
 date:   2021-11-24 08:30:00 +0800
 categories: [C/C++]
 ---
@@ -66,7 +66,7 @@ To satisfy thread safety requirements, the reference counters are typically incr
 > All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of shared_ptr without additional synchronization even if these instances are copies and share ownership of the same object. 
 
 
-# 性能开销 (std::shared_ptr)
+## 性能开销 (std::shared_ptr)
 
 使用[Quick C++ Benchmark](https://quick-bench.com/q/xDjerjaF4ORhGTPtB5P37NZ78Go) GCC8.1 -O2 编译测试对比：
 
@@ -138,7 +138,7 @@ BENCHMARK(Test2);
 
 
 
-# 性能开销原因分析 (std::shared_ptr)
+## 性能开销原因分析 (std::shared_ptr)
 
 通过[How much is the overhead of smart pointers compared to normal pointers in C++?](https://stackoverflow.com/questions/22295665/how-much-is-the-overhead-of-smart-pointers-compared-to-normal-pointers-in-c) 文章：
 
@@ -293,7 +293,7 @@ pInv1 = pInv2;
 
 https://en.cppreference.com/w/cpp/memory/auto_ptr
 
-# Usage
+# 用法示例
 
 ## std::shared_ptr
 

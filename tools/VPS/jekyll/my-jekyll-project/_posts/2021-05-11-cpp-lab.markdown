@@ -167,6 +167,15 @@ int main()
     };
     f2();
 
+    // find 操作会对每个元素比较两次，两次比较结果都是false则认为相等
+    S k(1, 2);
+    auto iter = m.find(k);
+    if (iter != m.end()) {
+        printf("find\n");
+    } else {
+        printf("no find\n");
+    }
+
     return 0;
 }
 /*
@@ -174,6 +183,7 @@ true
 true
 true
 a b c
+find
 */
 ```
 

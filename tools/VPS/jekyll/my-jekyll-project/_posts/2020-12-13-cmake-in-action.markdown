@@ -1179,7 +1179,7 @@ popd
 
 # Refer
 
-* https://stackoverflow.com/questions/7031126/switching-between-gcc-and-clang-llvm-using-cmake
-
+* [Switching between GCC and Clang/LLVM using CMake](https://stackoverflow.com/questions/7031126/switching-between-gcc-and-clang-llvm-using-cmake)
+* [How to print messages after make done with cmake?](https://stackoverflow.com/questions/25240105/how-to-print-messages-after-make-done-with-cmake/34953585)
 
 
