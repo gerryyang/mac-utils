@@ -6,16 +6,16 @@ LDEXTRAFLAGS ?= -rdynamic
 all: prog
 
 bar.o: bar.cc
-	$(CXX) -O0 -g -c -Wall -fpic -o $@ $<
+	gcc -O0 -g -c -Wall -fpic -o $@ $<
 
 libbar.so: bar.o
-	$(CXX) -shared -o $@ $<
+	gcc -shared -o $@ $<
 
 main.o: main.cc
-	$(CXX) -O0 -g -c -Wall -o $@ $<
+	gcc -O0 -g -c -Wall -o $@ $<
 
 prog: main.o | libbar.so
-	$(CXX) $(LDEXTRAFLAGS) -o $@ $< -ldl
+	gcc $(LDEXTRAFLAGS) -o $@ $< -ldl -lstdc++
 
 clean:
 	rm -f *.o *.so prog
