@@ -11,7 +11,9 @@ void foo()
 
 int main()
 {
+
 	void* handle = dlopen("./libbar.so", RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+	//void* handle = dlopen("./libbar.so", RTLD_LAZY | RTLD_LOCAL | RTLD_DEEPBIND);
 	//void* handle = dlopen("./libbar.so", RTLD_NOW);
 
 	if (!handle) {
