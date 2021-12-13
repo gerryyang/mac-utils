@@ -1006,4 +1006,189 @@ typeinfo for google::protobuf::Message
 
 addr2line translates addresses into file names and line numbers. Given an address in an executable or an offset in a section of a relocatable object, it uses the debugging information to figure out which file name and line number are associated with it.
 
+安装方法：https://command-not-found.com/addr2line
+
+```
+# ubuntu
+apt-get install binutils
+```
+
 https://linux.die.net/man/1/addr2line
+
+
+测试代码：
+
+
+``` cpp
+// backtrace.c
+#include <execinfo.h>               
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Obtain a backtrace and print it to stdout. */
+void
+print_trace (void)
+{
+        void *array[10];
+        size_t size;
+        char **strings;
+        size_t i;
+
+        size = backtrace (array, 10);
+        strings = backtrace_symbols (array, size);
+
+        printf ("Obtained %zd stack frames.\n", size);
+
+        for (i = 0; i < size; i++)
+                printf ("%s\n", strings[i]);
+
+        free (strings);
+}
+
+/* A dummy function to make the backtrace more interesting. */
+void
+dummy_function (void)
+{
+        print_trace (); 
+}
+
+int
+main (void)
+{
+        dummy_function (); 
+        return 0;
+}
+```
+
+默认，符号全部导出，编译构建：
+
+gcc -rdynamic backtrace.c
+
+执行结果，可以显示堆栈的符号名称：
+
+```
+$./a.out 
+Obtained 5 stack frames.
+./a.out(print_trace+0x19) [0x400896]
+./a.out(dummy_function+0x9) [0x400918]
+./a.out(main+0x9) [0x400923]
+/lib64/libc.so.6(__libc_start_main+0xf5) [0x7f0e5326e555]
+./a.out() [0x4007b9]
+```
+
+
+使用`version-script`控制不导出符号，`symbol.txt`配置为（即，只导出 foo* 开头的符号）：
+
+```
+{
+    global: foo*;
+    local: *;
+};
+```
+
+编译构建：
+
+gcc -rdynamic backtrace.c -Wl,--version-script=symbol.txt
+
+执行结果，只显示了地址信息，而没有符号信息：
+
+```
+$./a.out 
+Obtained 5 stack frames.
+./a.out() [0x400676]
+./a.out() [0x4006f8]
+./a.out() [0x400703]
+/lib64/libc.so.6(__libc_start_main+0xf5) [0x7fbec9745555]
+./a.out() [0x400599]
+```
+
+使用 addr2line 对地址进行翻译：
+
+```
+$addr2line 0x400676 -f -e a.out 
+print_trace
+:?
+```
+
+查看 elf 头部信息：
+
+```
+$readelf -h a.out 
+ELF 头：
+  Magic：  7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  类别:                              ELF64
+  数据:                              2 补码，小端序 (little endian)
+  版本:                              1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI 版本:                          0
+  类型:                              EXEC (可执行文件)
+  系统架构:                          Advanced Micro Devices X86-64
+  版本:                              0x1
+  入口点地址：              0x400570
+  程序头起点：              64 (bytes into file)
+  Start of section headers:          6776 (bytes into file)
+  标志：             0x0
+  本头的大小：       64 (字节)
+  程序头大小：       56 (字节)
+  Number of program headers:         9
+  节头大小：         64 (字节)
+  节头数量：         30
+  字符串表索引节头： 29
+```
+
+注意，在 ubuntu 18.04 上测试上述程序，使用 addr2line 无法翻译地址信息。具体原因可参考：[addr2line not woking on Ubuntu 16.10?](https://stackoverflow.com/questions/41890103/addr2line-not-woking-on-ubuntu-16-10)
+
+```
+$ addr2line 0x55c43fa639fd -f -e a.out 
+??
+??:0
+```
+
+elf 的头部信息显示：The entry point doesn't start at `0x400000`
+
+```
+$ readelf -h a.out
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+  Version:                           0x1
+  Entry point address:               0x8f0
+  Start of program headers:          64 (bytes into file)
+  Start of section headers:          6760 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         9
+  Size of section headers:           64 (bytes)
+  Number of section headers:         29
+  Section header string table index: 28
+```
+
+## LD_DEBUG ./a.out
+
+通过`LD_DEBUG`显示符号链接过程。
+
+```
+$ LD_DEBUG=all ./prog 2>&1 | grep cout
+       919:     symbol=_ZSt5wcout;  lookup in file=./prog [0]
+       919:     symbol=_ZSt5wcout;  lookup in file=/lib/x86_64-linux-gnu/libdl.so.2 [0]
+       919:     symbol=_ZSt5wcout;  lookup in file=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]
+       919:     binding file /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0] to /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]: normal symbol `_ZSt5wcout' [GLIBCXX_3.4]
+       919:     symbol=_ZSt4cout;  lookup in file=./prog [0]
+       919:     binding file /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0] to ./prog [0]: normal symbol `_ZSt4cout' [GLIBCXX_3.4]
+       919:     symbol=_ZSt4cout;  lookup in file=/lib/x86_64-linux-gnu/libdl.so.2 [0]
+       919:     symbol=_ZSt4cout;  lookup in file=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]
+       919:     binding file ./prog [0] to /usr/lib/x86_64-linux-gnu/libstdc++.so.6 [0]: normal symbol `_ZSt4cout' [GLIBCXX_3.4]
+       919:     symbol=_ZSt4cout;  lookup in file=./libbar.so [0]
+       919:     symbol=_ZSt4cout;  lookup in file=/lib/x86_64-linux-gnu/libc.so.6 [0]
+       919:     symbol=_ZSt4cout;  lookup in file=/lib64/ld-linux-x86-64.so.2 [0]
+       919:     symbol=_ZSt4cout;  lookup in file=./prog [0]
+       919:     binding file ./libbar.so [0] to ./prog [0]: normal symbol `_ZSt4cout'
+```
+

@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "std::string Implentation (COW/SSO)"
+title:  "CPP std::string Implentation (COW/SSO)"
 date:   2021-10-15 12:30:00 +0800
 categories: [C/C++]
 ---
@@ -160,6 +160,17 @@ class basic_string
   };
 };
 ```
+
+# libstdc++ vs libc++ 
+
+> libc++ is not binary compatible with gcc's libstdc++ (except for some low level stuff such as operator new). For example the std::string in gcc's libstdc++ is refcounted, whereas in libc++ it uses the "short string optimization". If you were to accidentally mix these two strings in the same program (and mistake them for the same data structure), you would inevitably get a run time crash.
+
+refer: 
+
+* [Why can't clang with libc++ in c++0x mode link this boost::program_options example?](https://stackoverflow.com/questions/8454329/why-cant-clang-with-libc-in-c0x-mode-link-this-boostprogram-options-examp/8457799#8457799)
+* [Is it safe to link 2 different standard c++ library in one project](https://stackoverflow.com/questions/27894380/is-it-safe-to-link-2-different-standard-c-library-in-one-project)
+* [How do you find what version of libstdc++ library is installed on your linux machine?](https://stackoverflow.com/questions/10354636/how-do-you-find-what-version-of-libstdc-library-is-installed-on-your-linux-mac)
+* [ABI Policy and Guidelines - Versioning](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html#abi.versioning)
 
 
 # Refer

@@ -10,11 +10,11 @@ categories: GoLang
 
 # Package Management
 
-* Golang刚诞生时并不支持版本管理，`GOPATH`方式只能算是包管理的基本雏形
-* 经过一系列演变，社区先后支持了`dodep`，`glide`等工具
+* Golang 刚诞生时并不支持版本管理，`GOPATH`方式只能算是包管理的基本雏形
+* 经过一系列演变，社区先后支持了`godep`，`glide`等工具
 * 直到2016年，官方才提出采用外部依赖包的方式，引入了`vendor`机制
 * 2017年推出的`dep`工具，基本可以作为准官方的解决方案
-* 2019年`go modules`的推出，golang的包管理争论才最终尘埃落定，一统江湖
+* 2019年`go modules`的推出，Golang 的包管理争论才最终尘埃落定，一统江湖
 
 ![go_deps_manage](/assets/images/202106/go_deps_manage.png)
 
@@ -26,17 +26,17 @@ categories: GoLang
 
 A module is a collection of packages that are released, versioned, and distributed together. Modules may be downloaded directly from version control repositories or from module proxy servers.
 
-For a series of tutorials on modules, see https://golang.org/doc/tutorial/create-module.
+For a series of tutorials on modules, see [https://golang.org/doc/tutorial/create-module](https://golang.org/doc/tutorial/create-module).
 
-For a detailed reference on modules, see https://golang.org/ref/mod.
+For a detailed reference on modules, see [https://golang.org/ref/mod](https://golang.org/ref/mod).
 
-By default, the go command may download modules from https://proxy.golang.org. It may authenticate modules using the checksum database at https://sum.golang.org. Both services are operated by the Go team at Google. The privacy policies for these services are available at https://proxy.golang.org/privacy and https://sum.golang.org/privacy, respectively.
+By default, the go command may download modules from [https://proxy.golang.org](https://proxy.golang.org). It may authenticate modules using the checksum database at [https://sum.golang.org](https://sum.golang.org). Both services are operated by the Go team at Google. The privacy policies for these services are available at [https://proxy.golang.org/privacy](https://proxy.golang.org/privacy) and [https://sum.golang.org/privacy](https://sum.golang.org/privacy), respectively.
 
-The go command's download behavior may be configured using `GOPROXY`, `GOSUMDB`, `GOPRIVATE`, and other environment variables. See 'go help environment' and https://golang.org/ref/mod#private-module-privacy for more information.
+The go command's download behavior may be configured using `GOPROXY`, `GOSUMDB`, `GOPRIVATE`, and other environment variables. See `go help environment` and [https://golang.org/ref/mod#private-module-privacy](https://golang.org/ref/mod#private-module-privacy) for more information.
 
 A module is a collection of `Go packages` stored in a file tree with a `go.mod` file at its root. The `go.mod` file defines the module’s module path, which is also the import path used for the root directory, and its dependency requirements, which are the other modules needed for a successful build. Each dependency requirement is written as a module path and a specific semantic version.
 
-As of `Go 1.11`, the go command enables the use of modules when the current directory or any parent directory has a `go.mod`, provided the directory is outside `$GOPATH/src`. (Inside `$GOPATH/src`, for compatibility, the go command still runs in the old `GOPATH` mode, even if a `go.mod` is found. See the [go command documentation](https://golang.org/cmd/go/#hdr-Preliminary_module_support) for details.) **Starting in `Go 1.13`, module mode will be the default for all development**.
+**As of `Go 1.11`, the go command enables the use of modules when the current directory or any parent directory has a `go.mod`, provided the directory is outside `$GOPATH/src`. (Inside `$GOPATH/src`, for compatibility, the go command still runs in the old `GOPATH` mode, even if a `go.mod` is found. See the [go command documentation](https://golang.org/cmd/go/#hdr-Preliminary_module_support) for details.) Starting in `Go 1.13`, module mode will be the default for all development**.
 
 
 ## Creating a new module
