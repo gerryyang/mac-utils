@@ -1,3 +1,6 @@
 [submodule "programing/cpp/unitest/doctest"]
 	path = programing/cpp/unitest/doctest
 	url = https://github.com/doctest/doctest
+[submodule "programing/cpp/unitest/gtest-demo"]
+	path = programing/cpp/unitest/gtest-demo
+	url = https://github.com/bast/gtest-demo
