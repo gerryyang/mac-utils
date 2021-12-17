@@ -878,6 +878,77 @@ SIGABRT received
 */
 ```
 
+## std::is_class
+
+Checks whether T is a non-union class type. Provides the member constant value which is equal to true, if T is a class type (but not union). Otherwise, value is equal to false.
+
+[How does this implementation of std::is_class work?](https://stackoverflow.com/questions/35213658/how-does-this-implementation-of-stdis-class-work)
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+ 
+struct A {};
+ 
+class B {};
+ 
+enum class C {};
+ 
+union D { class E {}; };
+static_assert(not std::is_class_v<D>);
+ 
+int main() 
+{
+    std::cout << std::boolalpha;
+    std::cout << std::is_class<A>::value << '\n';
+    std::cout << std::is_class_v<B> << '\n';         // C++17 helper
+    std::cout << std::is_class<C>::value << '\n';
+    std::cout << std::is_class_v<int> << '\n';
+}
+/*
+true
+true
+false
+false
+*/
+```
+
+## std::is_union
+
+Checks whether T is a union type. Provides the member constant value, which is equal to true if T is a union type. Otherwise, value is equal to false.
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+ 
+struct A {};
+ 
+typedef union {
+    int a;
+    float b;
+} B;
+ 
+struct C {
+    B d;
+};
+ 
+int main() 
+{
+    std::cout << std::boolalpha;
+    std::cout << std::is_union<A>::value << '\n';
+    std::cout << std::is_union<B>::value << '\n';
+    std::cout << std::is_union<C>::value << '\n';
+    std::cout << std::is_union<int>::value << '\n';
+}
+/*
+false
+true
+false
+false
+*/
+```
+
+
 # C++14
 
 ## std::for_each

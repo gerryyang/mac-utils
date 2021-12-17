@@ -24,6 +24,430 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
+# Basic
+
+* 模板机制为 C++ 提供了泛型编程的方式，在减少代码冗余的同时仍然可以提供类型安全。 
+* 特化必须在同一命名空间下进行，可以特化**类模板**也可以特化**函数模板**，但**类模板可以偏特化和全特化**，而**函数模板只能全特化**。 
+* 模板实例化时会优先匹配"模板参数"最相符的那个特化版本。
+* C++ 的模板机制被证明是图灵完备的，即可以通过模板元编程（`Template Metaprogramming，TMP`）的方式在编译期做任何计算。
+
+## 模版的定义
+
+在类模版/函数模板定义之前，声明模板参数列表。
+
+``` cpp
+// 类模板
+template <class T1, class T2>
+class A
+{
+    T1 data1;
+    T2 data2;
+};
+
+// 函数模板
+template <class T>
+T max(const T lhs, const T rhs)
+{
+    return lhs > rhs ? lhs : rhs;
+}
+```
+
+## Explicit (full) template specialization
+
+**Explicit specialization** may be declared in any scope where its **primary template** may be defined (which may be different from the scope where the primary template is defined; such as with out-of-class specialization of a member template) . **Explicit specialization has to appear after the non-specialized template declaration.** (特化版本可以声明在主模版作用域之外，特化版本的声明必须出现在非实例化模版声明之后)
+
+``` cpp
+namespace N {
+    template<class T> class X { /*...*/ }; // primary template
+    template<> class X<int> { /*...*/ }; // specialization in same namespace
+ 
+    template<class T> class Y { /*...*/ }; // primary template
+    template<> class Y<double>; // forward declare specialization for double
+}
+
+template<>
+class N::Y<double> { /*...*/ }; // OK: specialization in same namespace
+```
+
+Specialization must be declared before the first use that would cause implicit instantiation, in every translation unit where such use occurs: (在每一个翻译单元若要使用特化版本，则需要在第一次使用时先对其声明，否则会导致隐式的实例化)
+
+``` cpp
+class String {};
+template<class T> class Array { /*...*/ };
+template<class T> void sort(Array<T>& v) { /*...*/ } // primary template
+ 
+void f(Array<String>& v) {
+    sort(v); // implicitly instantiates sort(Array<String>&), 
+}            // using the primary template for sort()
+ 
+template<>  // ERROR: explicit specialization of sort(Array<String>)
+void sort<String>(Array<String>& v); // after implicit instantiation
+```
+
+A template specialization that was declared but not defined can be used just like any other [incomplete type](https://en.cppreference.com/w/cpp/language/incomplete_type) (e.g. pointers and references to it may be used)
+
+``` cpp
+template<class T> class X; // primary template
+template<> class X<int>; // specialization (declared, not defined)
+
+X<int>* p; // OK: pointer to incomplete type
+X<int> x; // error: object of incomplete type
+```
+
+
+## Explicit specializations of function templates
+
+When specializing a function template, its template arguments can be omitted if [template argument deduction](https://en.cppreference.com/w/cpp/language/template_argument_deduction) can provide them from the function arguments: (函数模版实例化时，通过对函数参数的推导，函数模版参数可以省略)
+
+``` cpp
+template<class T> class Array { /*...*/ };
+template<class T> void sort(Array<T>& v); // primary template
+template<> void sort(Array<int>&); // specialization for T = int
+
+// no need to write
+// template<> void sort<int>(Array<int>&);
+```
+
+## Members of specializations
+
+When defining a member of an explicitly specialized class template outside the body of the class, the syntax `template <>` is not used, except if it's a member of an explicitly specialized member class template, which is specialized as a class template, because otherwise, the syntax would require such definition to begin with `template<parameters>` required by the nested template.
+
+``` cpp
+template< typename T>
+struct A {
+    struct B {};  // member class 
+    template<class U> struct C { }; // member class template
+};
+ 
+template<> // specialization
+struct A<int> {
+    void f(int); // member function of a specialization
+};
+// template<> not used for a member of a specialization
+void A<int>::f(int) { /* ... */ }
+ 
+template<> // specialization of a member class
+struct A<char>::B {
+    void f();
+};
+// template<> not used for a member of a specialized member class either
+void A<char>::B::f() { /* ... */ }
+ 
+template<> // specialization of a member class template
+template<class U> struct A<char>::C {
+    void f();
+};
+ 
+// template<> is used when defining a member of an explicitly
+// specialized member class template specialized as a class template
+template<>
+template<class U> void A<char>::C<U>::f() { /* ... */ }
+```
+
+A member or a member template of a class template may be explicitly specialized for a given implicit instantiation of the class template, even if the member or member template is defined in the class template definition.
+
+``` cpp
+template<typename T>
+struct A {
+    void f(T); // member, declared in the primary template
+    void h(T) {} // member, defined in the primary template
+    template<class X1> void g1(T, X1); // member template
+    template<class X2> void g2(T, X2); // member template
+};
+ 
+// specialization of a member
+template<> void A<int>::f(int);
+// member specialization OK even if defined in-class
+template<> void A<int>::h(int) {}
+ 
+// out of class member template definition
+template<class T>
+template<class X1> void A<T>::g1(T, X1) { }
+ 
+// member template specialization
+template<>
+template<class X1> void A<int>::g1(int, X1);
+ 
+// member template specialization
+template<>
+template<> void A<int>::g2<char>(int, char); // for X2 = char
+// same, using template argument deduction (X1 = char)
+template<> 
+template<> void A<int>::g1(int, char);
+```
+
+Member or a member template may be nested within many enclosing class templates. In an explicit specialization for such a member, there's a `template<>` for every enclosing class template that is explicitly specialized.
+
+``` cpp
+template<class T1> struct A {
+    template<class T2> struct B {
+      template<class T3>
+        void mf();
+    };
+};
+template<> struct A<int>;
+template<> template<> struct A<char>::B<double>;
+template<> template<> template<> void A<char>::B<char>::mf<double>();
+```
+
+
+
+## 全特化
+
+通过[全特化一个模板](https://en.cppreference.com/w/cpp/language/template_specialization)，可以对一个**特定参数集合**自定义当前模板(Allows customizing the template code for a given set of template arguments)，**类模板和函数模板都可以全特化**。 全特化的模板参数列表应当是空的，并且应当给出"模板实参"列表：
+
+``` cpp
+template <> declaration
+```
+
+``` cpp
+// 全特化 类模板
+template <>
+class A<int, double>{
+    int data1;
+    double data2;
+};
+
+// 全特化 函数模板
+
+// 注意，类模板的全特化时，在类名后给出了"模板实参"，但函数模板的全特化，函数名后没有给出"模板实参"。这是因为编译器根据 int max(const int, const int) 的函数签名可以推导出来它是 T max(const T, const T) 的特化
+template <>
+int max(const int lhs, const int rhs){   
+    return lhs > rhs ? lhs : rhs;
+}
+```
+
+例外情况：函数模板不需指定"模板实参"是因为编译器可以通过函数签名来推导，但有时这一过程是有歧义的：
+
+``` cpp
+#include <iostream>
+
+template <class T>
+void f()
+{ 
+    T d;
+    std::cout << "template <class T> void f()\n";
+}
+
+// 此时编译器不知道 f() 是从 f<T>() 特化来的，编译时会有错误，此时需要显式指定"模板实参"
+#if 0
+template <>
+void f()
+{ 
+    int d;
+    std::cout << "template <> void f()\n";
+}
+#endif
+
+template <>
+void f<int>()
+{ 
+    int d;
+    std::cout << "template <> void f()\n";
+}
+
+int main()
+{
+    f<int>(); // template <> void f()
+}
+```
+
+Any of the following can be fully specialized:
+
+* [function template](https://en.cppreference.com/w/cpp/language/function_template)
+* [class template](https://en.cppreference.com/w/cpp/language/class_template)
+* (since C++14) [variable template](https://en.cppreference.com/w/cpp/language/variable_template)
+* [member function](https://en.cppreference.com/w/cpp/language/member_functions) of a class template
+* [static data member](https://en.cppreference.com/w/cpp/language/static) of a class template
+* [member class](https://en.cppreference.com/w/cpp/language/nested_types) of a class template
+* member [enumeration](https://en.cppreference.com/w/cpp/language/enum) of a class template
+* [member class template](https://en.cppreference.com/w/cpp/language/member_template) of a class or class template
+* [member function template](https://en.cppreference.com/w/cpp/language/member_template#Member_function_templates) of a class or class template
+
+``` cpp
+#include <iostream>
+template<typename T>   // primary template
+struct is_void : std::false_type
+{
+};
+
+template<>  // explicit specialization for T = void
+struct is_void<void> : std::true_type
+{
+};
+
+int main()
+{
+    // for any type T other than void, the class is derived from false_type
+    std::cout << is_void<char>::value << '\n';  // 0
+
+    // but when T is void, the class is derived from true_type
+    std::cout << is_void<void>::value << '\n'; // 1
+}
+```
+
+## 偏特化
+
+* 函数模板不允许偏特化
+* 类似于全特化，偏特化也是为了给自定义一个参数集合的模板，但偏特化后的模板需要进一步的实例化才能形成确定的签名
+* 偏特化也是以`template`来声明的，需要给出剩余的"模板形参"和必要的"模板实参"
+
+``` cpp
+template <class T2>
+class A<int, T2>{
+    // ...
+};
+```
+
+## 例子
+
+## 类模版的特化版本
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+template<typename T>
+class A
+{
+public:
+    static void f(T a);
+};
+
+// 类模版的特化版本
+template<>
+class A<int>
+{
+public:
+    static void f(int a);
+};
+
+// 注意，不需要 template<> 语法
+void A<int>::f(int a)
+{
+    std::cout << "A<int>::f(int a)\n";
+}
+
+int main()
+{
+    A<int>::f(1); // A<int>::f(int a)
+}
+```
+
+## 类模版的成员函数特化版本
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+template<typename T>
+class A
+{
+public:
+    static void f(T a);
+};
+
+// 默认版本
+template<typename T>
+void A<T>::f(T a)
+{
+    std::cout << "A<T>::f(T a)\n";
+}
+
+// 类模版的成员函数特化版本，需要 template<> 语法
+template<>
+void A<int>::f(int a)
+{
+    std::cout << "A<int>::f(int a)\n";
+}
+
+int main()
+{
+    A<int>::f(1); // A<int>::f(int a)
+}
+```
+
+## 使用静态断言显式控制必须定义特化版本
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+class PlaceHolder
+{
+};
+
+template<typename T>
+class A
+{
+public:
+    static void f(T a);
+};
+
+template<typename T>
+void A<T>::f(T a)
+{
+    std::cout << "A<T>::f(T a)\n";
+
+    // 若对 primary template 展开，则执行静态断言错误
+    static_assert(!std::is_class<T>::value, "should not use base specialization");
+}
+
+#if 1
+template<>
+class A<PlaceHolder>
+{
+public:
+    static void f(PlaceHolder a);
+};
+
+void A<PlaceHolder>::f(PlaceHolder a)
+{
+    std::cout << "A<PlaceHolder>::f(PlaceHolder a)\n";
+    
+}
+#endif
+
+int main()
+{
+    PlaceHolder a;
+    A<PlaceHolder>::f(a); // A<PlaceHolder>::f(PlaceHolder a)
+}
+```
+
+``` cpp
+#include <type_traits>
+
+class PlaceHolder{};
+
+template<typename T>
+class A
+{
+public:
+    A()
+    {
+        static_assert(!std::is_class<T>::value, "should not use base construct");
+    }
+};
+
+#if 1
+template<>
+class A<PlaceHolder>
+{
+public:
+    A()
+    {
+    }
+};
+#endif
+
+int main()
+{
+    A<PlaceHolder> a;
+    return 0;
+}
+```
+
 # Variadic templates 
 
 
@@ -446,9 +870,15 @@ int main()
 }
 ```
 
+# Q&A
 
+## 模版特化间接引用在debug和release版本行为不一致问题
 
-  
+[My template specialization differs debug version from release version, is this gcc bug?](https://stackoverflow.com/questions/39976307/my-template-specialization-differs-debug-version-from-release-version-is-this-g)
 
-	
-	
+[测试代码](https://github.com/gerryyang/mac-utils/tree/master/programing/cpp/template/template_specialization_odr)
+
+这个问题和强弱符号覆盖有关，按照C++标准建议是在使用特化版本的时候显式包含，否则存在未定义行为。
+
+More: [template_specialization, In detail](https://en.cppreference.com/w/cpp/language/template_specialization)
+

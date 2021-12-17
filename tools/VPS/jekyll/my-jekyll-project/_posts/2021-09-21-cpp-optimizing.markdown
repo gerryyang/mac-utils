@@ -8,10 +8,11 @@ categories: C/C++
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 性能调优的必要性
+# 性能调优的必要性（思考启示）
 
 * "这儿一纳秒，那儿一纳秒"。指令的处理速度惊人，浪费的指令积累也越快。
 * 性能问题的本质，是系统资源（CPU，内存，I/O）已经达到瓶颈。
+* 海恩法则：每一起严重事故的背后，必然有29次轻微事故和300起未遂先兆，以及1000起事故隐患。因此，规避问题与寻找根因并重。
 
 ![share7](/assets/images/202110/share7.png)
 
@@ -56,6 +57,11 @@ categories: C/C++
 ![share10](/assets/images/202110/share10.png)
 
 refer: [Operation Costs in CPU Clock Cycles](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/)
+
+存储延迟级别：
+
+![share16](/assets/images/202110/share16.png)
+
 
 # 性能可比较
 

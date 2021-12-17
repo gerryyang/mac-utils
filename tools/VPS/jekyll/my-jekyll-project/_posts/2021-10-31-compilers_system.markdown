@@ -23,9 +23,12 @@ Normally you should call your makefile either **makefile** or **Makefile**.  (We
 
 `make` updates a target if it depends on **prerequisite files that have been modified since the target was last modified**, or **if the target does not exist**.
 
+
 refer:
 
 * https://man7.org/linux/man-pages/man1/make.1.html
+* [GNU make](https://www.gnu.org/software/make/manual/make.html)
+* [Automatic-Variables](https://www.gnu.org/software/make/manual/make.html#Automatic-Variables)
 
 
 # Ninja (a small build system with a focus on speed)
@@ -369,6 +372,15 @@ Clang Static Analyzer:            http://clang-analyzer.llvm.org/
 Information on the LLVM project:  http://llvm.org/
 
 `Clang` is released as part of regular LLVM releases. You can download the release versions from https://llvm.org/releases/. `Clang` is also provided in all major BSD or GNU/Linux distributions as part of their respective packaging systems. From Xcode 4.2, Clang is the default compiler for Mac OS X.
+
+## Install
+
+[Ubuntu安装Clang版本和切换](https://blog.csdn.net/DumpDoctorWang/article/details/84567757)
+
+```
+apt-get install clang
+apt-get install clang-3.9
+```
 
 ### Building Clang and Working with the Code
 

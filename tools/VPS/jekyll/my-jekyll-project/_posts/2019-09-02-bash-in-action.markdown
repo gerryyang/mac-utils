@@ -17,42 +17,6 @@ categories: [Bash, 编程语言]
 * [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 
 
-# shopt 
-
-* 在非交互式模式下 alias 扩展功能默认是关闭的
-* shopt 是 shell 的内置命令，可以控制 shell 功能选项的开启和关闭，从而控制 shell 的行为 
-
-``` bash
-shopt -s opt_name        # Enable (set) opt_name.
-shopt -u opt_name        # Disable (unset) opt_name.
-shopt opt_name           # Show current status of opt_name.
-```
-
-测试：
-
-``` bash
-#!/bin/bash --login
-
-alias echo_hello="echo Hello"  # 命令别名
-
-shopt expand_aliases      # alias 默认关闭 
-echo_hello                # 执行失败
-
-shopt -s expand_aliases   # 用 shopt 开启 expand_aliases
-shopt expand_aliases      
-echo_hello                # 执行成功
-```
-
-执行结果：
-
-```
-$./shopt.sh 
-expand_aliases  off
-./shopt.sh:行5: echo_hello: 未找到命令
-expand_aliases  on
-Hello
-```
-
 # `#!/bin/bash --login vs #!/bin/bash`
 
 The main difference is that a login shell executes your profile when it starts. From the man page:
@@ -1192,6 +1156,82 @@ EOF
     -e '/^#/p' \
     -e '/^Thread/p'
 ```
+
+## shopt (功能选项的开启和关闭)
+
+* 在非交互式模式下 alias 扩展功能默认是关闭的
+* shopt 是 shell 的内置命令，可以控制 shell 功能选项的开启和关闭，从而控制 shell 的行为 
+
+``` bash
+shopt -s opt_name        # Enable (set) opt_name.
+shopt -u opt_name        # Disable (unset) opt_name.
+shopt opt_name           # Show current status of opt_name.
+```
+
+测试：
+
+``` bash
+#!/bin/bash --login
+
+alias echo_hello="echo Hello"  # 命令别名
+
+shopt expand_aliases      # alias 默认关闭 
+echo_hello                # 执行失败
+
+shopt -s expand_aliases   # 用 shopt 开启 expand_aliases
+shopt expand_aliases      
+echo_hello                # 执行成功
+```
+
+执行结果：
+
+```
+$./shopt.sh 
+expand_aliases  off
+./shopt.sh:行5: echo_hello: 未找到命令
+expand_aliases  on
+Hello
+```
+
+## date
+
+``` bash
+# 1. 获取上一个月时间，例如，201211
+
+date -d last-month +%Y%m
+
+# 2. 显示 20121217
+
+date +"%Y%m%d" 
+
+# 3. Unix时间与系统时间之间的转换
+
+# 2012-03-16 14:32:22 +0800
+date -d '1970-01-01 UTC 13379554 seconds' +"%Y-%m-%d %T %z"
+
+date -d @1356969600
+
+# 4. 得到从1970年1月1日00：00：00到目前经历的秒数 
+
+date +%s
+
+# 5. 显示指定时间的时间戳
+
+date -d "2010-07-20 10:25:30" +%s
+```
+
+## ps
+
+``` bash
+# -e 此参数的效果和 -A 参数相同，-A 显示所有进程
+# -o 用户自定义格式
+# lstart 启动时间
+# etime 运行时长
+
+$ ps -eo pid,lstart,etime | grep `pidof friendsvr`
+17697 Tue Dec  7 12:17:52 2021    08:07:21
+```
+
 
 
 # Other

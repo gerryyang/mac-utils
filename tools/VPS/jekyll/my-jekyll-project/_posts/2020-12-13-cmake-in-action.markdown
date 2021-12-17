@@ -158,10 +158,6 @@ CMake provides builtin command-line tools through the signature. Run `cmake -E` 
 cmake -E <command> [<options>]
 ```
 
-https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
-
-
-
 
 # CMake Helloworld
 
@@ -690,6 +686,11 @@ get_filename_component(<var> <FileName> <mode> [CACHE])
 
 https://cmake.org/cmake/help/latest/command/get_filename_component.html
 
+## enable_testing
+
+Enable testing for current directory and below. This command should be in the source directory root because [ctest](https://cmake.org/cmake/help/latest/module/CTest.html#module:CTest) expects to find a test file in the build directory root.
+
+https://cmake.org/cmake/help/latest/command/enable_testing.html
 
 # Variable
 
@@ -745,6 +746,46 @@ IF(CMAKE_C_COMPILER_ID STREQUAL Clang AND CMAKE_CXX_COMPILER_ID STREQUAL Clang)
     # Under cmake v3.1.3 I had to check CMAKE_CXX_COMPILER_VERSION as there was no CLANG_VERSION_STRING so looks like a version is now defined for each compiler type giving more control.
     MESSAGE(STATUS "CMAKE_CXX_COMPILER_VERSION = ${CMAKE_CXX_COMPILER_VERSION}")
 ENDIF()
+```
+
+## CMAKE_CXX_STANDARD
+
+New in version 3.1. Default value for [CXX_STANDARD](https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html#prop_tgt:CXX_STANDARD) target property if set when a target is created.
+
+The C++ standard whose features are requested to build this target.
+
+This property specifies the C++ standard whose features are requested to build this target. For some compilers, this results in adding a flag such as `-std=gnu++11` to the compile line. For compilers that have no notion of a standard level, such as Microsoft Visual C++ before 2015 Update 3, this has no effect.
+
+```
+# set the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+```
+
+## CMAKE_CXX_STANDARD_REQUIRED
+
+New in version 3.1. Default value for [CXX_STANDARD_REQUIRED](https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD_REQUIRED.html#prop_tgt:CXX_STANDARD_REQUIRED) target property if set when a target is created. Boolean describing whether the value of `CXX_STANDARD` is a requirement.
+
+## CMAKE_CXX_EXTENSION
+
+New in version 3.1. Default value for [CXX_EXTENSIONS](https://cmake.org/cmake/help/latest/prop_tgt/CXX_EXTENSIONS.html#prop_tgt:CXX_EXTENSIONS) target property if set when a target is created. This property specifies whether compiler specific extensions should be used. For some compilers, this results in adding a flag such as `-std=gnu++11` instead of `-std=c++11` to the compile line. This property is ON by default. 
+
+
+## CMAKE_CXX_COMPILER_VERSION
+
+Compiler version string.
+
+Compiler version in `major[.minor[.patch[.tweak]]]` format. This variable is not guaranteed to be defined for all compilers or languages.
+
+For example `CMAKE_C_COMPILER_VERSION` and `CMAKE_CXX_COMPILER_VERSION` might indicate the respective C and C++ compiler version.
+
+```
+# Clang Version
+SET(CLANG_EXPECTED_VERSION 3.5.2)
+IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS CLANG_EXPECTED_VERSION)
+    MESSAGE(FATAL_ERROR "[Clang Warning]: The project requires Clang version ${CLANG_EXPECTED_VERSION} to build but found ${CMAKE_CXX_COMPILER_VERSION}")
+endif()
 ```
 
 ## CMAKE_COMMAND

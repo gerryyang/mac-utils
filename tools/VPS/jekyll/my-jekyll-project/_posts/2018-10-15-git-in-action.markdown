@@ -377,6 +377,29 @@ git reset --hard `版本号`     # 强制将指针回退到指定版本
 git push -f                  # 强制push到远端master
 ```
 
+## 重写历史
+
+[refer](https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E9%87%8D%E5%86%99%E5%8E%86%E5%8F%B2)
+
+全局修改邮箱地址
+
+另一个常见的情形是在你开始工作时忘记运行 `git config` 来设置你的名字与邮箱地址， 或者你想要开源一个项目并且修改所有你的工作邮箱地址为你的个人邮箱地址。 任何情形下，你也可以通过 `filter-branch` 来一次性修改多个提交中的邮箱地址。 需要小心的是只修改你自己的邮箱地址，所以你使用 `--commit-filter`：
+
+```
+$ git filter-branch --commit-filter '
+        if [ "$GIT_AUTHOR_EMAIL" = "schacon@localhost" ];
+        then
+                GIT_AUTHOR_NAME="Scott Chacon";
+                GIT_AUTHOR_EMAIL="schacon@example.com";
+                git commit-tree "$@";
+        else
+                git commit-tree "$@";
+        fi' HEAD
+```
+
+这会遍历并重写每一个提交来包含你的新邮箱地址。 因为提交包含了它们父提交的 SHA-1 校验和，这个命令会修改你的历史中的每一个提交的 SHA-1 校验和， 而不仅仅只是那些匹配邮箱地址的提交。
+
+
 
 # Git的常用命令
 
@@ -578,6 +601,23 @@ $ git push origin --delete master
 * `git add -u` stages modifications and deletions, **without new files**
 
 refer: https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
+
+## git blame
+
+[From GitHub](https://docs.github.com/en/repositories/working-with-files/using-files/tracking-changes-in-a-file):
+
+> The blame command is a Git feature, designed to help you determine who made changes to a file.
+>
+> Despite its negative-sounding name, git blame is actually pretty innocuous; its primary function is to point out who changed which lines in a file, and why. It can be a useful tool to identify changes in your code.
+
+Basically, git-blame is used to show what revision and author last modified each line of a file. It's like checking the history of the development of a file.
+
+`git blame -L 1,3 README.md` 显示 1-3 行最后一次修改信息
+
+refer: 
+
+* http://git-scm.com/docs/git-blame
+* [What does 'git blame' do?](https://stackoverflow.com/questions/31203001/what-does-git-blame-do)
 
 ## 查看代码状态和历史提交信息
 
