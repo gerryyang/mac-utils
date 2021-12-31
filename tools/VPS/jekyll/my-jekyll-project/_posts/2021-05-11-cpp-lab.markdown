@@ -479,6 +479,30 @@ foo and bar completed.
 
 * https://www.cplusplus.com/reference/thread/thread/
 
+# thread_local
+
+The `thread_local` keyword is only allowed for objects declared at namespace scope, objects declared at block scope, and static data members. It indicates that the object has thread storage duration. It can be combined with `static` or `extern` to specify internal or external linkage (except for static data members which always have external linkage), respectively, but that additional static doesn't affect the storage duration.
+
+``` cpp
+#include <iostream>
+
+class foo
+{
+public:
+  static thread_local int a;
+};
+
+thread_local int foo::a = 1;
+
+int main()
+{
+  std::cout << foo::a; // 1
+}
+```
+
+* https://en.cppreference.com/w/cpp/language/storage_duration
+* https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure
+
 ## std::vector<T,Allocator>::shrink_to_fit
 
 Requests the removal of unused capacity. It is a non-binding request to reduce `capacity()` to `size()`. It depends on the implementation whether the request is fulfilled. If reallocation occurs, all iterators, including the past the end iterator, and all references to the elements are invalidated. If no reallocation takes place, no iterators or references are invalidated.

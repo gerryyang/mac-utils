@@ -227,6 +227,8 @@ Host $ip_ssh_config
 	+ 查找文件，显示最近打开的文件
 	+ 当前文件行数（`:行号`）或函数（`@函数名`）跳转。其中，函数跳转等价于：`shift + command + o`
 * `shift + u / l`: 大小写转化
+* mac下，`command + k + 0`  折叠所有代码块；`command + k + j` 展开所有代码块。Windows下，`ctrl + k + 0` 折叠所有代码块；`ctrl + k + j` 展开所有代码块。0是代码折叠级别，同理可以换用1，2，3等
+* `command + option + [` 折叠光标所在代码块；`command + option + ]` 展开光标所在代码块
 
 
 # 常用配置

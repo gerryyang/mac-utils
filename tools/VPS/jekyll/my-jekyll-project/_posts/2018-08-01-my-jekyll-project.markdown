@@ -237,7 +237,16 @@ More: https://github.com/hzlzh/Best-App
 | -- | --
 | [Sourcetree](https://www.sourcetreeapp.com/) | Mac Git客户端
 | [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端
-| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code
+| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code 
+
+
+* `cloc --show-lang` 显示支持的语言
+* `cloc ./ --exclude-dir=node_modules` 排除某个目录分析
+* `cloc --quiet -by-file ./ --exclude-dir=node_modules --include-lang=Go | grep ".go" | sort -rn -k 4 | head -n 10` 统计代码行数(排除注释)排名前10的go文件
+
+> 首先 --quiet 是把输出结果精简化了，一些总计的结果给过滤了。然后使用 -by-file 代表统计的时候按照文件统计，而不是按照默认的语言统计， --exclude-dir 表示省略  node_modules 文件夹。 --include-lang 这里直接标记将 Golang 的文件统计出来。上面这些 cloc  的命令就把 ./ 下有哪些 go 文件，每个文件的空格多少行，注释多少行，真正代码多少行都列出来了。然后使用 grep ".go" 把一些噪音输出过滤掉，只留下“文件名\t空格行数\t注释行数\t代码行数”，后面的 sort -rn -k 4 按照第四列（代码行数）倒序排列，并且 head -n 10 显示前10个文件。
+
+
 
 
 ### Vim

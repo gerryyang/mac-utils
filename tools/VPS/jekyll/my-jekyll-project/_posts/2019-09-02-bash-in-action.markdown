@@ -29,6 +29,45 @@ When a login shell exits, bash reads and executes commands from the file ~/.bash
 
 https://stackoverflow.com/questions/25677790/bin-bash-login-vs-bin-bash
 
+# PreCheck
+
+``` bash
+CURTIME="date +'%Y-%m-%d %H:%M:%S'"
+NOW="echo [\`$CURTIME\`][PID:$$]"
+
+function print_usages()
+{
+    echo "Usage: $0 a b c"
+}
+
+function job_start()
+{
+    echo "`eval $NOW` job_start"
+}
+
+function job_success()
+{
+    MSG="$*"
+    echo "`eval $NOW` job_success:[$MSG]"
+    exit 0
+}
+
+function job_fail()
+{
+    MSG="$*"
+    echo "`eval $NOW` job_fail:[$MSG]"
+    exit 1
+}
+
+if [[ $# -lt 3 ]]; then
+    print_usages
+    job_fail "params invalid"
+fi
+
+set -x
+a=$1
+```
+
 # The ‘ls’ command – how to show seconds
 
 ``` bash

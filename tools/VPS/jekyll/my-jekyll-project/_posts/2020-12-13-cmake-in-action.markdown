@@ -692,6 +692,19 @@ Enable testing for current directory and below. This command should be in the so
 
 https://cmake.org/cmake/help/latest/command/enable_testing.html
 
+## add_test
+
+Add a test to the project to be run by [ctest(1)](https://cmake.org/cmake/help/latest/manual/ctest.1.html#manual:ctest(1)).
+
+```
+add_test(NAME <name> COMMAND <command> [<arg>...]
+         [CONFIGURATIONS <config>...]
+         [WORKING_DIRECTORY <dir>]
+         [COMMAND_EXPAND_LISTS])
+```
+
+https://cmake.org/cmake/help/latest/command/add_test.html
+
 # Variable
 
 常用的变量：
@@ -1217,6 +1230,11 @@ make install
 popd
 
 ```
+
+# Q&A
+
+* [Most simple but complete CMake example](https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example)
+* [list(REMOVE_ITEM) not working in cmake](https://stackoverflow.com/questions/36134129/listremove-item-not-working-in-cmake)
 
 # Refer
 

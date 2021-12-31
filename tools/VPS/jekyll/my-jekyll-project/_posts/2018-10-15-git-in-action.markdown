@@ -594,15 +594,23 @@ $ git push origin :master
 $ git push origin --delete master
 ```
 
-## git add
+## 添加变更文件 - git add
 
 * `git add -A` stages **all changes**
 * `git add .` stages new files and modifications, **without deletions** (on the current directory and its subdirectories).
 * `git add -u` stages modifications and deletions, **without new files**
 
-refer: https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
+refer: 
 
-## git blame
+* [git-add - Add file contents to the index](https://git-scm.com/docs/git-add)
+* https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
+
+## 提交变更信息 - git commit
+
+* [git-commit - Record changes to the repository](https://git-scm.com/docs/git-commit)
+* [Git 合并多个 commit，保持历史简洁](https://cloud.tencent.com/developer/article/1690638)
+
+## 查看文件最后一次修改信息 - git blame
 
 [From GitHub](https://docs.github.com/en/repositories/working-with-files/using-files/tracking-changes-in-a-file):
 
@@ -619,7 +627,7 @@ refer:
 * http://git-scm.com/docs/git-blame
 * [What does 'git blame' do?](https://stackoverflow.com/questions/31203001/what-does-git-blame-do)
 
-## 查看代码状态和历史提交信息
+## 查看历史提交信息 - git log
 
 ``` bash
 
@@ -645,7 +653,7 @@ git log --oneline -n3
 
 [Git-基础-查看提交历史]: https://git-scm.com/book/zh/v1/Git-基础-查看提交历史
 
-## 分支操作
+## 分支操作 - git branch
 
 Git最核心的特性就是，创建新分支操作几乎能在瞬间完成，并且在不同分支之间的切换操作也是一样高效。在切换分支时，会发现当前工作目录里的文件会改变成切换后的分支代码。
 
@@ -748,15 +756,35 @@ git push <remote> -u <new_name>
 
 
 
-## 变基(rebase)操作
+## 变基操作 - git rebase
 
-在Git中整合来自不同分支的修改主要有两种方法：
-* merge
-* rebase
+在Git中整合来自不同分支的修改主要有两种方法：merge 和 rebase
 
-这两种整合方法的最终结果没有任何区别，但是变基(rebase)使得提交历史更加整洁。在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的，但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。但不合理的使用变基，会丢失别人的提交记录，这时候人民群众会仇恨你，你的朋友和家人也会嘲笑你，唾弃你。
+这两种整合方法的最终结果没有任何区别，但是变基使得提交历史更加整洁。 你在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的，但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。
 
-## 暂存操作
+一般我们这样做的目的是为了确保在向远程分支推送时能保持提交历史的整洁——例如向某个其他人维护的项目贡献代码时。 在这种情况下，你首先在自己的分支里进行开发，当开发完成时你需要先将你的代码变基到 origin/master 上，然后再向主项目提交修改。 这样的话，该项目的维护者就不再需要进行整合工作，只需要快进合并便可。
+
+请注意，无论是通过变基，还是通过三方合并，整合的最终结果所指向的快照始终是一样的，只不过提交历史不同罢了。 变基是将一系列提交按照原有次序依次应用到另一分支上，而合并是把最终结果合在一起。
+
+例子：你可以检出 experiment 分支，然后将它变基到 master 分支上：
+
+```
+$ git checkout experiment
+$ git rebase master
+First, rewinding head to replay your work on top of it...
+Applying: added staged command
+```
+
+现在回到 master 分支，进行一次快进合并。
+
+```
+$ git checkout master
+$ git merge experiment
+```
+
+更多：[Git 分支 - 变基](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA)
+
+## 暂存操作 - git stash
 
 当前你在开发feature1分支，开发了一半，还要2天才能开发完成，这时候又不想提交。这时突然来了个bug，你必须今天就得修复bug，修复完了后才继续开发需求，怎么办？这里就使用到了暂存的功能。
 
@@ -773,17 +801,7 @@ git stash pop
 # 继续开发需求...
 ```
 
-## 压缩提交
-
-在开发中的时候尽量保持一个较高频率的代码提交，这样可以避免不小心代码丢失。但是真正合并代码的时候，我们并不希望有太多冗余的提交记录。那么，如何压缩commit记录呢？
-
-``` bash
-# 使用 git log 找到起始 commit-id
-git reset commit-id  # 切记不要用 --hard 参数
-# 重新 git add && git commit
-```
-
-## 子模块submodule
+## 子模块 - git submodule
 
 
 克隆一个含有子模块的项目。当你在克隆这样的项目时，默认会包含该子模块目录，但其中还没有任何文件。你必须运行两个命令：`git submodule init` 用来初始化本地配置文件，而 `git submodule update` 则从该项目中抓取所有数据并检出父项目中列出的合适的提交。现在子目录是处在和之前提交时相同的状态了。不过还有更简单一点的方式。 如果给 `git clone` 命令传递 `--recurse-submodules` 选项，它就会自动初始化并更新仓库中的每一个子模块， 包括可能存在的嵌套子模块。如果你已经克隆了项目但忘记了 `--recurse-submodules`，那么可以运行 `git submodule update --init` 将 `git submodule init` 和 `git submodule update` 合并成一步。如果还要初始化、抓取并检出任何嵌套的子模块， 请使用简明的 `git submodule update --init --recursive`。
@@ -804,6 +822,15 @@ git submodule deinit --all
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 
+# Git LFS的原理
+
+存储和管理大型文件的版本，是一个由来已久的难题。 由于需要记录全部历史版本，在托管比较大的文件时，以往的代码仓库往往不太给力。
+
+* SVN。SVN 会把每次提交的文件差异存储下来，当用户新拉取一个文件时，需要取得所有的差异集，并把他们拼装相加，再返回一个完整的文件给用户。如果仅是满足代码文件（文本）的需要，这种机制是十分顺畅的。但当图片、音视频、数据集、程序包、二进制文件时，状况就会开始恶化。如果版本数量较少，计算机凭借优异的性能，可以做到用户无感知。但当版本较多，文件很大时，CPU的计算资源会逐渐成为瓶颈，其体现就是 SVN CO 速度越来越慢。慢并非是网络传输造成的，而是版本数、碎片、文件大小共同作用，使CPU和IO到达瓶颈带来的。
+
+* Git。Git 虽然没有 SVN 合并差异计算的问题，相比 SVN 利用空间替换了 CPU 的计算时间。但由于分布式要求，客户端往往会克隆整个仓库来本地，也包含了文件历史。如果历史版本较多，用户就要等每个版本从网络传输到本地。因此，用户克隆的时间包含了下载所有历史版本到本地的时间。如果文件比较大，会变成所有人的梦魇。
+
+向服务器提交时，Git LFS把文件上传到一个专用的存储区域，同时保存一份指针（文本文件）在原有的版本库中。 当另外一个人拉取，他将首先拉取到指针，此时Git LFS解析这个指针，并把实际文件内容取回到本地。 文件每有一个新版本时，就会创建一个新指针，并向服务器上传，这样服务器上就有了多个历史版本，从而实现了基本的版本管理。
 
 # Git与GitHub 
 
