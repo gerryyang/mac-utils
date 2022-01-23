@@ -541,9 +541,8 @@ We encourage you to start using modules in your local development and to add `go
 
 * https://blog.golang.org/using-go-modules
 * https://golang.org/doc/go1.11#modules
-* https://golang.org/ref/mod
-
-
+* https://go.dev/ref/mod
+* [How to Use Go Modules](https://www.digitalocean.com/community/tutorials/how-to-use-go-modules)
 
 
 

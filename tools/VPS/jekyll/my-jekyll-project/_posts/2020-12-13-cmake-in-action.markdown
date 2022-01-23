@@ -686,24 +686,6 @@ get_filename_component(<var> <FileName> <mode> [CACHE])
 
 https://cmake.org/cmake/help/latest/command/get_filename_component.html
 
-## enable_testing
-
-Enable testing for current directory and below. This command should be in the source directory root because [ctest](https://cmake.org/cmake/help/latest/module/CTest.html#module:CTest) expects to find a test file in the build directory root.
-
-https://cmake.org/cmake/help/latest/command/enable_testing.html
-
-## add_test
-
-Add a test to the project to be run by [ctest(1)](https://cmake.org/cmake/help/latest/manual/ctest.1.html#manual:ctest(1)).
-
-```
-add_test(NAME <name> COMMAND <command> [<arg>...]
-         [CONFIGURATIONS <config>...]
-         [WORKING_DIRECTORY <dir>]
-         [COMMAND_EXPAND_LISTS])
-```
-
-https://cmake.org/cmake/help/latest/command/add_test.html
 
 # Variable
 
@@ -901,6 +883,195 @@ Don't make the install target depend on the all target.
 https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_ALL_DEPENDENCY.html
 
 
+# Module
+
+## FetchContent
+
+This module enables populating content at configure time via any method supported by the `ExternalProject` module. Whereas `ExternalProject_Add()` downloads at build time, the `FetchContent` module makes content available immediately, allowing the configure step to use the content in commands like `add_subdirectory()`, `include()` or `file()` operations.
+
+https://cmake.org/cmake/help/latest/module/FetchContent.html
+
+## GoogleTest
+
+This module defines functions to help use the Google Test infrastructure. Two mechanisms for adding tests are provided. `gtest_add_tests()` has been around for some time, originally via `find_package(GTest)`. `gtest_discover_tests()` was introduced in CMake 3.10.
+
+
+https://cmake.org/cmake/help/git-stage/module/GoogleTest.html
+
+# CTest
+
+The [ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html#ctest-1) executable is the **CMake test driver program**. CMake-generated build trees created for projects that use the `enable_testing()` and `add_test()` commands have testing support. This program will run the tests and report results.
+
+使用正则表达式过滤执行测试用例：
+
+```
+$ ctest -R .*Test
+Test project /data/home/gerryyang/JLib_Build
+    Start 1: MsgHelperTest,
+1/2 Test #1: MsgHelperTest, ...................   Passed    0.01 sec
+    Start 2: SampleCtrlTest,
+2/2 Test #2: SampleCtrlTest, ..................   Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.03 sec**
+```
+
+[Testing With CMake and CTest](https://cmake.org/cmake/help/book/mastering-cmake/chapter/Testing%20With%20CMake%20and%20CTest.html):
+
+1. **Smoke tests（冒烟测试*）**, such as one that simply verifies that the software compiles.
+2. **Regression testing（回归测试）** verifies that the results of a test do not change over time or platform.
+3. **White- and black-box testing（白盒和黑盒测试）** refer to tests written to exercise units of code (at various levels of integration), with and without knowledge of how those units are implemented respectively.
+4. **Compliance testing** tries to determine if the code adheres to the coding standards of the software project. This could be a check to verify that all classes have implemented some key method, or that all functions have a common prefix.
+
+## How Does CMake Facilitate Testing?
+
+CMake facilitates testing your software through special testing commands and the `CTest` executable. First, we will discuss the key testing commands in CMake. To add testing to a CMake-based project, simply `include(CTest)` and use the `add_test` command. The `add_test` command has a simple syntax as follows:
+
+```
+add_test(NAME TestName COMMAND ExecutableToRun arg1 arg2 ...)
+```
+
+The first argument is simply a string name for the test. This is the name that will be displayed by testing programs. The second argument is the executable to run. The executable can be built as part of the project or it can be a standalone executable such as python, perl, etc. The remaining arguments will be passed to the running executable. A typical example of testing using the `add_test` command would look like this:
+
+```
+add_executable(TestInstantiator TestInstantiator.cxx)
+target_link_libraries(TestInstantiator vtkCommon)
+add_test(NAME TestInstantiator
+         COMMAND TestInstantiator)
+```
+
+The `add_test` command is typically placed in the CMakeLists file for the directory that has the test in it. For large projects, there may be multiple CMakeLists files with `add_test` commands in them. Once the `add_test` commands are present in the project, the user can run the tests by invoking the “test” target of Makefile, or the RUN_TESTS target of Visual Studio or Xcode. An example of running tests on the CMake tests using the Makefile generator on Linux would be:
+
+```
+$ make test
+Running tests...
+Test project
+     Start 2: kwsys.testEncode
+ 1/20 Test  #2: kwsys.testEncode ..........   Passed    0.02 sec
+     Start 3: kwsys.testTerminal
+ 2/20 Test  #3: kwsys.testTerminal ........   Passed    0.02 sec
+     Start 4: kwsys.testAutoPtr
+ 3/20 Test  #4: kwsys.testAutoPtr .........   Passed    0.02 sec
+```
+
+## Additional Test Properties
+
+[refer](https://cmake.org/cmake/help/book/mastering-cmake/chapter/Testing%20With%20CMake%20and%20CTest.html#additional-test-properties)
+
+By default a test passes if all of the following conditions are true:
+
+* The test executable was found
+* The test ran without exception
+* The test exited with return code 0
+
+That said, these behaviors can be modified using the `set_property` command:
+
+```
+set_property(TEST test_name
+             PROPERTY prop1 value1 value2 ...)
+```
+
+## Testing Using CTest
+
+When you run the tests from your build environment, what really happens is that the build environment runs `CTest`. `CTest` is an executable that comes with `CMake`; it handles running the tests for the project. While `CTest` works well with `CMake`, you do not have to use `CMake` in order to use `CTest`. **The main input file for `CTest` is called CTestTestfile.cmake.** This file will be created in each directory that was processed by CMake (typically every directory with a CMakeLists file). The syntax of **CTestTestfile.cmake** is like the regular `CMake` syntax, with a subset of the commands available. If `CMake` is used to generate testing files, they will list any subdirectories that need to be processed as well as any `add_test` calls. The subdirectories are those that were added by the `add_subdirectory` commands. `CTest` can then parse these files to determine what tests to run. An example of such a file is shown below:
+
+```
+# CMake generated Testfile for
+# Source directory: C:/CMake
+# Build directory: C:/CMakeBin
+#
+# This file includes the relevent testing commands required
+# for testing this directory and lists subdirectories to
+# be tested as well.
+
+add_test (SystemInformationNew ...)
+
+add_subdirectory (Source/kwsys)
+add_subdirectory (Utilities/cmzlib)
+...
+```
+
+通过`strace -s0124 -tt -e trace=open ctest`可以跟踪`ctest`的执行过程：
+
+```
+...
+20:19:39.346867 open("/data/home/gerryyang/JLib_Build/Testing/Temporary/LastTest.log.tmp", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+20:19:39.348271 open("CTestTestfile.cmake", O_RDONLY) = 4
+20:19:39.353922 open("/data/home/gerryyang/JLib_Build/unittest/CTestTestfile.cmake", O_RDONLY) = 4
+20:19:39.354770 open("/data/home/gerryyang/JLib_Build/unittest/libs/common/CTestTestfile.cmake", O_RDONLY) = 4
+20:19:39.355874 open("/data/home/gerryyang/JLib_Build/unittest/src/samplesvr/CTestTestfile.cmake", O_RDONLY) = 4
+20:19:39.357008 open("/etc/localtime", O_RDONLY|O_CLOEXEC) = 4
+20:19:39.357999 open("/data/home/gerryyang/JLib_Build/Testing/Temporary/CTestCostData.txt", O_RDONLY) = 4
+20:19:39.368874 open("/data/home/gerryyang/JLib_Build/Testing/Temporary/CTestCheckpoint.txt", O_WRONLY|O_CREAT|O_APPEND, 0666) = 4
+...
+```
+
+When `CTest` parses the **CTestTestfile.cmake** files, it will extract the list of tests from them. These tests will be run, and for each test `CTest` will display the name of the test and its status. Consider the following sample output:
+
+```
+$ ctest
+Test project C:/CMake-build26
+        Start 1: SystemInformationNew
+ 1/21 Test  #1: SystemInformationNew ......   Passed    5.78 sec
+        Start 2: kwsys.testEncode
+ 2/21 Test  #2: kwsys.testEncode ..........   Passed    0.02 sec
+        Start 3: kwsys.testTerminal
+ 3/21 Test  #3: kwsys.testTerminal ........   Passed    0.00 sec
+        Start 4: kwsys.testAutoPtr
+ 4/21 Test  #4: kwsys.testAutoPtr .........   Passed    0.02 sec
+        Start 5: kwsys.testHashSTL
+ 5/21 Test  #5: kwsys.testHashSTL .........   Passed    0.02 sec
+...
+100% tests passed, 0 tests failed out of 21
+Total Test time (real) =  59.22 sec
+```
+
+`CTest` is run from within your build tree. It will run all the tests found in the current directory as well as any subdirectories listed in the **CTestTestfile.cmake.** For each test that is run `CTest` will report if the test passed and how long it took to run the test.
+
+The `CTest` executable includes some handy command line options to make testing a little easier. We will start by looking at the options you would typically use from the command line.
+
+```
+-R <regex>            Run tests matching regular expression
+-E <regex>            Exclude tests matching regular expression
+-L <regex>            Run tests with labels matching the regex
+-LE <regex>           Run tests with labels not matching regexp
+-C <config>           Choose the configuration to test
+-V,--verbose          Enable verbose output from tests.
+-N,--show-only        Disable actual execution of tests.
+-I [Start,End,Stride,test#,test#|Test file]
+                      Run specific tests by range and number.
+-H                                        Display a help message
+```
+
+* The `-R` option is probably the most commonly used. It allows you to specify a regular expression; only the tests with names matching the regular expression will be run. Using the `-R` option with the name (or part of the name) of a test is a quick way to run a single test. 
+
+* The `-E` option is similar except that it excludes all tests matching the regular expression. The `-L` and `-LE` options are similar to `-R` and `-E`, except that they apply to test labels that were set using the `set_property` command described previously.
+
+* The `-I` option allows you to flexibly specify a subset of the tests to run. For example, the following invocation of CTest will run every seventh test.
+
+## Other
+
+* [CMake how to install test files with unit tests](https://stackoverflow.com/questions/12313258/cmake-how-to-install-test-files-with-unit-tests)
+
+## enable_testing
+
+Enable testing for current directory and below. This command should be in the source directory root because [ctest](https://cmake.org/cmake/help/latest/module/CTest.html#module:CTest) expects to find a test file in the build directory root.
+
+https://cmake.org/cmake/help/latest/command/enable_testing.html
+
+## add_test
+
+Add a test to the project to be run by [ctest(1)](https://cmake.org/cmake/help/latest/manual/ctest.1.html#manual:ctest(1)).
+
+```
+add_test(NAME <name> COMMAND <command> [<arg>...]
+         [CONFIGURATIONS <config>...]
+         [WORKING_DIRECTORY <dir>]
+         [COMMAND_EXPAND_LISTS])
+```
+
+https://cmake.org/cmake/help/latest/command/add_test.html
 
 
 # 编译效率对比

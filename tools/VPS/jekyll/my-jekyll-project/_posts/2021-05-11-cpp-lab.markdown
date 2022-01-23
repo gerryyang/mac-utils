@@ -437,6 +437,79 @@ int main()
 }
 ```
 
+### 示例
+
+``` cpp
+#include <iostream>
+#include <ctime>
+
+int main()
+{
+        while (false) {
+                thread_local time_t tLastTime = 0;
+                time_t tNow = time(nullptr);
+                if (tLastTime + 1 <= tNow) {
+                        tLastTime = tNow;
+                        std::cout << "tick\n";
+                }
+        }
+
+        auto freq = [](int t) -> bool {
+                thread_local time_t tLastTime = 0;
+                time_t tNow = time(nullptr);
+                if (tLastTime + t <= tNow) {
+                    tLastTime = tNow;
+                        return true;
+                }
+                return false;
+        };
+
+        while (true) {
+                if (freq(1)) {
+                        std::cout << "tick\n";
+                }
+        }
+
+}
+```
+
+## std::hash
+
+``` cpp
+// functional header
+// for hash<class template> class
+#include <functional> 
+#include <iostream>
+#include <string>
+
+int main()
+{
+    // Get the string to get its hash value
+    std::string hashing = "Geeks";
+ 
+    // Instantiation of Object
+    std::hash<std::string> mystdhash;
+ 
+    // Using operator() to get hash value
+    std::cout << "String hash values: "
+         << mystdhash(hashing)
+         << std::endl;
+    
+    int hashing2 = 12345;
+    std::hash<int> mystdhash2;
+    std::cout << "Int hash values: "
+        << mystdhash2(hashing2)
+        << std::endl;    
+}
+/*
+String hash values: 4457761756728957899
+Int hash values: 12345
+*/
+```
+
+
+https://en.cppreference.com/w/cpp/utility/hash
+
 
 ## std::thread
 
@@ -502,6 +575,7 @@ int main()
 
 * https://en.cppreference.com/w/cpp/language/storage_duration
 * https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure
+* [Are C++11 thread_local variables automatically static?](https://stackoverflow.com/questions/22794382/are-c11-thread-local-variables-automatically-static)
 
 ## std::vector<T,Allocator>::shrink_to_fit
 

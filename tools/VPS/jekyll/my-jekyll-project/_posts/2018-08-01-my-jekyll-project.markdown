@@ -357,7 +357,7 @@ More: https://github.com/hzlzh/Best-App
 
 * [Typora](https://www.typora.io)用于Markdown编辑和可视化。
 * [如何用markdown写复杂公式？](https://www.zhihu.com/question/283899554/answer/450837583)
-
+* [Changing image size in Markdown](https://stackoverflow.com/questions/14675913/changing-image-size-in-markdown)
 
 ### 代码对比
 

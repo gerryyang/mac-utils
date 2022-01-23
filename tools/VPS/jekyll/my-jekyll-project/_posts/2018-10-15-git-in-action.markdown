@@ -607,6 +607,10 @@ refer:
 
 ## 提交变更信息 - git commit
 
+* `git commit --amend` 追加或修改当前提交的记录信息
+
+refer:
+
 * [git-commit - Record changes to the repository](https://git-scm.com/docs/git-commit)
 * [Git 合并多个 commit，保持历史简洁](https://cloud.tencent.com/developer/article/1690638)
 
@@ -809,7 +813,11 @@ git stash pop
 
 ``` bash
 # 含有子模块项目的clone
-git clone git@github.com:gerryyang/mac-utils.git mac-utils --recurse-submodule --remote-submodules
+git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-utils.git mac-utils 
+
+# 如果忘记了 --recurse-submodules
+git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
+
 
 # 添加子模块
 git submodule add https://github.com/chaconinc/DbConnector

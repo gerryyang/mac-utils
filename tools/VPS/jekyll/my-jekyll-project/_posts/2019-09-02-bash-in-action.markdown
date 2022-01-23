@@ -35,6 +35,16 @@ https://stackoverflow.com/questions/25677790/bin-bash-login-vs-bin-bash
 CURTIME="date +'%Y-%m-%d %H:%M:%S'"
 NOW="echo [\`$CURTIME\`][PID:$$]"
 
+function CHECK()
+{
+    if [ $? -ne 0 ]; then
+        echo -e "\033[031;1m[ERROR]\033[0m $1"
+        exit 1
+    else
+        echo -e "\033[032;1m[OK]\033[0m $1"
+    fi
+}
+
 function print_usages()
 {
     echo "Usage: $0 a b c"

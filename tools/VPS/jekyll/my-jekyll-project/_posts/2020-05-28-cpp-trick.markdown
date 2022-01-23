@@ -561,5 +561,48 @@ Content-Length: 43
 */
 ```
 
+# Generate random variable names
+
+[How to generate random variable names in C++ using macros?](https://stackoverflow.com/questions/1082192/how-to-generate-random-variable-names-in-c-using-macros)
+
+
+``` cpp
+#include <iostream>
+#include <ctime>
+
+#define SYMBOL_CAT_LINE_1(a, b) SYMBOL_CAT_LINE_2(a, b)
+#define SYMBOL_CAT_LINE_2(a, b) SYMBOL_CAT_LINE_3(~, a##b)
+#define SYMBOL_CAT_LINE_3(a, b) b
+#define SYMBOL_CAT_LINE(Symbol) SYMBOL_CAT_LINE_1(Symbol, __LINE__)
+
+#define TRIGGER_COOLDOWN(COOLDOWNSEC) \
+        thread_local time_t SYMBOL_CAT_LINE(tLastTime) = 0; \
+        time_t SYMBOL_CAT_LINE(tNow) = time(nullptr); \
+        if (SYMBOL_CAT_LINE(tLastTime) + COOLDOWNSEC <= SYMBOL_CAT_LINE(tNow) && (SYMBOL_CAT_LINE(tLastTime) = SYMBOL_CAT_LINE(tNow)))
+
+int main()
+{
+        while (false) {
+                thread_local time_t tLastTime = 0;
+                time_t tNow = time(nullptr);
+                if (tLastTime + 1 <= tNow) {
+                        tLastTime = tNow;
+                        std::cout << "tick\n";
+                }
+        }
+
+        while (true) {
+                TRIGGER_COOLDOWN(1) {
+                        std::cout << "tick\n";
+                }
+
+                TRIGGER_COOLDOWN(2) {
+                        std::cout << "tick2\n";
+                }
+        }
+
+}
+```
+
 
 

@@ -590,6 +590,39 @@ refer:
 https://github.com/gopherchina/conference
 
 
+# 惯例用法
+
+## Three Dots
+
+[3 dots in 4 places](https://yourbasic.org/golang/three-dots-ellipsis/)
+
+### Variadic function parameters
+
+You can pass a slice `s` directly to **a variadic function** if you unpack it with the `s...` notation. In this case no new slice is created. In this example, we pass a slice to the Sum function.
+
+``` go
+primes := []int{2, 3, 5, 7}
+fmt.Println(Sum(primes...)) // 17
+```
+
+### Array literals
+
+In an array literal, the `...` notation specifies a length equal to the number of elements in the literal.
+
+``` go
+stooges := [...]string{"Moe", "Larry", "Curly"} // len(stooges) == 3
+```
+
+### The go command
+
+Three dots are used by the go command as a **wildcard** when describing package lists. This command tests all packages in the current directory and its subdirectories.
+
+``` bash
+$ go test ./...
+```
+
+
+
 # Refer
 
 * [Go官网]
@@ -605,6 +638,8 @@ https://github.com/gopherchina/conference
 * [Jaeger]
 * [go-chassis]
 * [learn-go-with-tests]
+* [How To Install and Set Up a Local Programming Environment for Go](https://www.digitalocean.com/community/tutorial_series/how-to-install-and-set-up-a-local-programming-environment-for-go)
+* [How To Write Packages in Go](https://www.digitalocean.com/community/tutorials/how-to-write-packages-in-go)
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org
