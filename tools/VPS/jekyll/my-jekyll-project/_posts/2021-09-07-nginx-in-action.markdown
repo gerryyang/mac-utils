@@ -255,13 +255,13 @@ Connection: keep-alive
 
 ## 用法
 
-* 语法：`rewrite regex replacement [flag];`
-* 作用域：server、location、if
-* 功能：如果一个URI匹配指定的正则表达式 regex，URI就按照 replacement 重写。
+> 语法：`rewrite regex replacement [flag];`
+> 
+> 作用域：server、location、if
+> 
+> 功能：如果一个URI匹配指定的正则表达式 regex，URI就按照 replacement 重写。
 
-`rewrite` 按配置文件中出现的顺序执行。可以使用 `flag` 标志来终止指令的进一步处理。
-
-如果 replacement 以 http://、 https:// 或 $scheme 开始，将不再继续处理，这个重定向将返回给客户端。
+`rewrite` 按配置文件中出现的顺序执行。可以使用 `flag` 标志来终止指令的进一步处理。如果 replacement 以 http://、https:// 或 $scheme 开始，将不再继续处理，这个重定向将返回给客户端。
 
 nginx 通过 `ngx_http_rewrite_module` 模块支持 `URI` 重写、支持 `if` 条件判断，但不支持 `else`。
 
@@ -269,16 +269,15 @@ nginx 通过 `ngx_http_rewrite_module` 模块支持 `URI` 重写、支持 `if` �
 
 表面看 `rewrite` 和 `location` 功能有点像，都能实现跳转，主要区别在于 `rewrite` 是在同一域名内更改获取资源的路径，而 `location` 是对一类路径做控制访问或反向代理，可以 `proxy_pass` 到其他机器。很多情况下 `rewrite` 也会写在 `location` 里，它们的执行顺序是：
 
-
 1. 执行 `server` 块的 `rewrite` 指令（这里的块指的是 server 关键字后{}包围的区域，其它 xxx 块类似）
 2. 执行 `location` 匹配
 3. 执行选定的 `location` 中的 `rewrite` 指令
 
-* 如果其中某步 `URI` 被重写，则重新循环执行 `1-3`，直到找到真实存在的文件；
-* 如果循环超过 `10` 次，则返回 `500 Internal Server Error` 错误。
- 
+如果其中某步 `URI` 被重写，则重新循环执行 `1-3`，直到找到真实存在的文件；
 
-`flag` 有四种参数可以选择：
+如果循环超过 `10` 次，则返回 `500 Internal Server Error` 错误。
+
+## flag 四种参数
 
 * `last` 停止处理后续 rewrite 指令集，然后对当前重写的新 URI 在 rewrite 指令集上重新查找。
 * `break` 停止处理后续 rewrite 指令集，并不再重新查找，但是当前 location 内剩余非 rewrite 语句和 location 外的 非 rewrite 语句可以执行。
@@ -539,13 +538,9 @@ server {
 # Refer
 
 * [Status Code Definitions](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html)
-* [证书安装指引]: https://cloud.tencent.com/document/product/400/4143
-* [nginx配置二级域名]: https://cloud.tencent.com/developer/article/1198752
-
-
+* [证书安装指引](https://cloud.tencent.com/document/product/400/4143)
+* [nginx配置二级域名](https://cloud.tencent.com/developer/article/1198752)
 * [一文理清 nginx 中的 location 配置（系列一）](https://segmentfault.com/a/1190000022315733)
 * [一文理清 nginx 中的 rewrite 配置（系列二）](https://segmentfault.com/a/1190000022407797)
 * [Creating NGINX Rewrite Rules](https://www.nginx.com/blog/creating-nginx-rewrite-rules/)
-
-* https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04-quickstart
-* https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04
+* [How To Install Nginx on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04)
