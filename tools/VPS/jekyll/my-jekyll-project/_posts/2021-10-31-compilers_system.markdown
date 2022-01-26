@@ -674,6 +674,10 @@ $ll -lh /usr/bin/ccache
 -rwxr-xr-x 1 root root 135K 2月  19 2020 /usr/bin/ccache
 ```
 
+* [https://ccache.dev/](https://ccache.dev/)
+* [ccache 4.5.1](https://ccache.dev/manual/4.5.1.html)
+* [ccache and clang, part 3](http://peter.eisentraut.org/blog/2014/12/01/ccache-and-clang-part-3/)
+
 
 # Bazel (Build and test software of any size, quickly and reliably)
 

@@ -83,8 +83,13 @@ export GOROOT=/root/LAMP/golang/go_1_9_2
 export PATH=$PATH:$GOROOT/bin
 # go的工作目录
 export GOPATH=/root/workspace/go
+# go的安装目录
+export GOBIN=/path/to/your/bin
 ```
-* `GOPATH`允许多个目录(Linux下用冒号分割)，当GOPATH指定了**多个目录时**，默认将`go get`的内容放在**第一个目录**。
+
+refer: [Compile and install the application](https://go.dev/doc/tutorial/compile-install)
+
+* `GOPATH`允许多个目录(Linux下用冒号分割)，当`GOPATH`指定了**多个目录时**，默认将`go get`的内容放在**第一个目录**。
 * `GOPATH`目录约定有3个子目录：
 	- `src` (源代码，例如，.go, .c, .h, .s等)
 	- `pkg` (编译后生成的文件，例如，.a)
@@ -588,6 +593,7 @@ refer:
 # Go Conference
 
 https://github.com/gopherchina/conference
+
 
 
 # 惯例用法

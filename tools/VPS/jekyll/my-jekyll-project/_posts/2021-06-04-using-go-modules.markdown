@@ -173,6 +173,61 @@ rsc.io/sampler v1.3.0/go.mod h1:T1hPZKmBbMNahiBKFy5HrXp6adAjACjK9JXDnKaTXpA=
 ```
 The go command uses the `go.sum` file to ensure that future downloads of these modules retrieve the same bits as the first download, to ensure the modules your project depends on do not change unexpectedly, whether for malicious, accidental, or other reasons. **Both `go.mod` and `go.sum` should be checked into version control.**
 
+## Call local module
+
+对于本地新增的 module，如何使用本地的 module 测试 [refer: call-module-code](https://go.dev/doc/tutorial/call-module-code)
+
+Edit the example.com/hello module to use your **local** example.com/greetings module.
+
+For production use, you’d publish the example.com/greetings module from its repository (with a module path that reflected its published location), where Go tools could find it to download it. For now, because you haven't published the module yet, you need to adapt the example.com/hello module so it can find the example.com/greetings code on your local file system.
+
+1. From the command prompt in the hello directory, run the following command:
+
+```
+go mod edit -replace example.com/greetings=../greetings
+```
+
+The command specifies that example.com/greetings should be replaced with ../greetings for the purpose of locating the dependency. After you run the command, the go.mod file in the hello directory should include a replace directive:
+
+```
+module example.com/hello
+
+go 1.16
+
+replace example.com/greetings => ../greetings
+```
+
+2. From the command prompt in the hello directory, run the `go mod tidy` command to synchronize the example.com/hello module's dependencies, adding those required by the code, but not yet tracked in the module.
+
+```
+$ go mod tidy
+go: found example.com/greetings in example.com/greetings v0.0.0-00010101000000-000000000000
+```
+
+After the command completes, the example.com/hello module's go.mod file should look like this:
+
+```
+module example.com/hello
+
+go 1.16
+
+replace example.com/greetings => ../greetings
+
+require example.com/greetings v0.0.0-00010101000000-000000000000
+```
+
+The command found the local code in the greetings directory, then added a require directive to specify that example.com/hello requires example.com/greetings. You created this dependency when you imported the greetings package in hello.go.
+
+The number following the module path is a pseudo-version number -- a generated number used in place of a semantic version number (which the module doesn't have yet).
+
+To reference a published module, a go.mod file would typically omit the replace directive and use a require directive with a tagged version number at the end.
+
+```
+require example.com/greetings v1.1.0
+```
+
+For more on version numbers, see [Module version numbering](https://go.dev/doc/modules/version-numbers).
+
 
 
 ## Upgrading dependencies

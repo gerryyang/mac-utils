@@ -513,6 +513,11 @@ Hello gerryyang
 ## Debug
 
 ``` bash
+set -e  # exit immediately on error
+set -x  # display all commands
+```
+
+``` bash
 #!/bin/bash
 
 echo "Hello $USER,"
