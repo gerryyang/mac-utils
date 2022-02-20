@@ -71,27 +71,26 @@ categories: [GoLang, 编程语言]
 * 第三方工具安装。例如，Ubuntu的`apt-get`，Mac的`homebrew`。
 
 ```
-root@gerryyang:~/workspace/go# go version
-go version go1.9.2 linux/amd64
+$go version
+go version go1.17.6 linux/amd64
 ```
 
 ## 环境变量
 
 ``` bash
 # go的安装路径
-export GOROOT=/root/LAMP/golang/go_1_9_2
-export PATH=$PATH:$GOROOT/bin
-# go的工作目录
-export GOPATH=/root/workspace/go
-# go的安装目录
-export GOBIN=/path/to/your/bin
+export GOROOT=/usr/local/go
+export PATH=$GOROOT/bin:$PATH
+
+# go的目标文件安装目录
+export GOBIN=$HOME/go
 ```
 
 refer: [Compile and install the application](https://go.dev/doc/tutorial/compile-install)
 
 * `GOPATH`允许多个目录(Linux下用冒号分割)，当`GOPATH`指定了**多个目录时**，默认将`go get`的内容放在**第一个目录**。
 * `GOPATH`目录约定有3个子目录：
-	- `src` (源代码，例如，.go, .c, .h, .s等)
+	- `src` (源代码，例如，`.go`, `.c`, `.h`, `.s`等)
 	- `pkg` (编译后生成的文件，例如，.a)
 	- `bin` (编译后生成的可执行文件)
 
@@ -100,18 +99,10 @@ refer: [Compile and install the application](https://go.dev/doc/tutorial/compile
 通过`go get`命令获取源码，构建和安装。
 
 ```
-root@gerryyang:~/workspace/go#go get gopl.io/ch1/helloworld      
-root@gerryyang:~/workspace/go# ls
-bin  src
-root@gerryyang:~/workspace/go# ls bin
-helloworld
-root@gerryyang:~/workspace/go# ./bin/helloworld 
-Hello, 世界
-root@gerryyang:~/workspace/go# ls src/gopl.io/
-ch1  ch10  ch11  ch12  ch13  ch2  ch3  ch4  ch5  ch6  ch7  ch8  ch9  README.md
+$go get gopl.io/ch1/helloworld
 ```
 
-源码在`$(GOPATH)/src/gopl.io/ch1/helloworld/main.go`。
+源码在`$(GOBIN)/src/gopl.io/ch1/helloworld/main.go`。
 
 
 ``` go
@@ -133,6 +124,15 @@ func main() {
 //!-
 ```
 
+编译执行：
+
+```
+$go build .
+$ls
+helloworld main.go
+$./helloworld
+Hello, 世界
+```
 
 # Go入门示例
 
@@ -172,7 +172,7 @@ func main() {
 * `var`关键字声明了两个`string`类型的变量。变量可以在声明的时候初始化，如果变量没有明确地初始化，它将隐式地初始化为这个类型的空值。例如，对于数字初始化结果是0，对于字符串是空字符串。
 * 对于数字，Go提供常规的算术和逻辑操作符；对于字符串，`+`操作符表示追加操作。
 * `:=`符号用于`短变量声明`，这种语句声明一个或多个变量，并且根据初始化的值给予合适的类型。
-* 递增语句`i++`对i进行加1，它等价于`i += 1`，又等价于`i = i + 1`。**注意，这些是语句，而不像其他C族语言一样是表达式，所以`j = i ++`是不合法的。并且，仅支持后缀，`++i`也不合法。**
+* 递增语句`i++`对`i`进行加1，它等价于`i += 1`，又等价于`i = i + 1`。**注意，这些是语句，而不像其他C族语言一样是表达式，所以`j = i ++`是不合法的。并且，仅支持后缀，`++i`也不合法。**
 * `for`是Go里面的`唯一循环语句`，它有几种形式。
 	- for循环的三个组成部分两边不用`小括号`，但`大括号`是必需的，左大括号必须和`post`语句在同一行。
 	- 可选的`initialization`语句在循环开始之前执行。如果存在，它必须是一个简单的语句。
@@ -192,12 +192,12 @@ for condition {
 // 无限循环
 for {
 	// ...
-	// break;
-	// return;
+	// break
+	// return
 }
 ```
 
-* 另一种形式的for循环在字符串或slice数据上迭代。
+* 另一种形式的**for循环**在`字符串`或`slice数据`上迭代。
 
 ``` go
 // Echo2 prints its command-line arguments.
@@ -219,7 +219,7 @@ func main() {
 ```
 
 * 每一次迭代，`range`产生一对值：`索引`和`这个索引处元素的值`。
-* 在这个例子中，不需要索引，但是语法上range循环需要处理，因此也必须处理索引。一个主意是将索引赋予一个`临时变量`然后忽略它。但是，Go不允许存在无用的临时变量，不然会出现编译错误。解决方案是使用空标识符`_`，空标识符可以用在任何语法需要变量名但是程序逻辑不需要的地方。例如，丢弃每次迭代产生的无用的索引。
+* 在这个例子中，不需要索引，但是语法上range循环需要处理，因此也必须处理索引。一个主意是将索引赋予一个`临时变量`然后忽略它。但是，**Go不允许存在无用的临时变量，不然会出现编译错误**。解决方案是使用空标识符`_`，**空标识符可以用在任何语法需要变量名但是程序逻辑不需要的地方**。例如，丢弃每次迭代产生的无用的索引。
 * 这个版本使用`短的变量声明`来声明和初始化。原则：使用`显式的初始化`来说明初始化变量的重要性，使用`隐式的初始化`来表明初始化变量不重要。
 
 ``` go
@@ -230,9 +230,9 @@ var s = ""           // 很少用
 var s string = ""    // 显式的变量类型，在类型一致的情况下是冗余的信息，在类型不一致时是必需的
 ```
 
-* 上面程序的问题：每次循环，字符串`s`有了新的内容，`+=`语句通过追加旧的字符串，空格字符，和下一个参数，生成一个新的字符串，然后把新字符串赋给`s`。旧的内容不再需要使用，会被`例行垃圾回收`。如果有大量的数据需要处理，这样的代价会比较大。
+* 上面程序的问题：每次循环，字符串`s`有了新的内容，`+=`语句通过追加旧的字符串，空格字符，和下一个参数，生成一个新的字符串，然后把新字符串赋给`s`。旧的内容不再需要使用，会被`例行垃圾回收`。如果有大量的数据需要处理，这样的代价会比较大。(**TODO: 测试确认**)
 
-* 一个高效的方式是使用strings包中的`Join`函数。
+* 一个高效的方式是使用`strings`包中的`Join`函数。
 
 ``` go
 // Echo3 prints its command-line arguments.
@@ -284,7 +284,7 @@ func main() {
 	}
 }
 ```
-* 像for一样，`if`语句中的条件部分也不放在圆括号里，但是程序体中需要用到大括号。
+* 像`for`一样，`if`语句中的条件部分也不放在圆括号里，但是程序体中需要用到大括号。
 * `map`存储一个`键/值对集合`，并且提供常量时间的操作来存储，获取，或测试集合中某个元素。内置的函数`make`可以用来新建map。
 	- `键`可以是其值能够进行相等比较的任意类型。比如，字符串。
 	- `值`可以是任意类型。
@@ -295,7 +295,7 @@ counts[input.Text()]++
 line := input.Text()
 counts[line] = counts[line] + 1
 ```
-* `键`在map中不存在时也是没有问题的。当一个新的行第一次出现时，右边的表达式counts[line]根据值类型被推演为`零值`，int的零值是0。
+* `键`在map中不存在时也是没有问题的。当一个新的行第一次出现时，右边的表达式`counts[line]`根据值类型被推演为`零值`，int的零值是0。
 * 为了输出结果，使用基于`range`的for循环，这次在map类型的counts变量上遍历。每次迭代输出两个结果，map里面一个元素对应的键和值。
 * map里面的键的迭代顺序不是固定的，通常是随机地。每次运行都不一致，这是有意设计的，以防止程序依赖某种特定的序列，此处不对排序做任何保证。
 * `bufio`包，可以简便和高效地处理输入和输出。其中一个最有用的特性是称为扫描器(Scanner)的类型，它可以读取输入，以`行`或者`单词`为单位断开，这是处理以行为单位的输入内容的最简单方式。扫描器从程序的标准输入进行读取。每一次调用`input.Scan()`读取下一行，并且将结尾的`换行符`去掉。通过`input.Text()`来获取读到的内容。`Scan()`函数在读到新行时候返回`true`，在没有更多内容的时候返回`false`。
@@ -364,7 +364,7 @@ func countLines(f *os.File, counts map[string]int) {
 	- 如果`error`等于特殊的内置`nil`值，表示文件成功打开。文件在被读到结尾的时候，`Close`函数关闭文件，然后释放相应的资源。
 	- 如果`error`不是`nil`，表示出错了。这时`error`的值描述错误原因。简单的错误处理是使用`Fprintf`和`%v`在标准错误流上输出一条消息，`%v`可以使用默认格式显示任意类型的值。错误处理后，开始处理下一个文件。`continue`语句让循环进入下一个迭代。
 
-* `map`是一个使用`make`创建的数据结构的`引用`。当一个map传递个一个函数时，函数接收到这个引用的副本，所以，被调用函数中对于map数据结构中的改变，对函数调用者使用的map引用也是`可见的`。
+* `map`是一个使用`make`创建的数据结构的`引用`。当一个map传递给一个函数时，函数接收到这个引用的副本，所以，被调用函数中对于map数据结构中的改变，对函数调用者使用的map引用也是`可见的`。
 * 第三种方式，是一次读取整个输入到大块内存中，一次性地分割所有行，然后处理这些行。使用`ReadFile`函数读取整个命名文件的内容，返回一个可以转化成字符串的字节`slice`，再用`string.Split`函数将一个字符串分割为一个由子串组成的`slice`。
 
 ``` go
@@ -406,6 +406,7 @@ func main() {
 * 在导入由多段路径，如`image/color`组成的包之后，使用路径最后的一段来引用这个包。所以，`color.White`属于`image/color`包。
 * `const`声明用来给常量命名。const声明可以出现在包级别，或在一个函数内。常量必须是数字，字符串或布尔值。
 * 表达式`[]color.Color{...}`是`复合字面量`，即用一系列元素的值初始化Go的复合类型的紧凑表达方式。这里，第一个是`slice`，第二个是`结构体`。
+* `gif.GIF`是一个结构体类型。结构体由一组称为`字段`的值组成，字段通常有不同的数据类型，它们一起组成单个对象，作为一个单位被对待。`anim`变量是`gif.GIF`结构体类型，这个结构体字面量创建一个结构体`LoopCount`，其值设置为`nframes`，其他字段的值是对应类型的**零值**。结构体的每个字段可以通过**点记法**来访问。
 
 ``` go
 // Lissajous generates GIF animations of random Lissajous figures.
@@ -491,7 +492,7 @@ func lissajous(out io.Writer) {
 
 * 从互联网获取信息。它获取每个指定URL的内容，然后不加解析的输出。类似`curl`这个工具。
 * 使用两个包：`net/http`和`io/ioutil`。
-* 'http.Get'产生一个HTTP请求。如果没有错，返回结果存在响应结构`resp`里面。其中，`resp.Body`包含服务器端响应的一个可读取数据流，随后通过`ioutil.ReadAll`读取整个响应结果并存入`b`。
+* `http.Get`产生一个`HTTP`请求。如果没有错，返回结果存在响应结构`resp`里面。其中，`resp.Body`包含服务器端响应的一个可读取数据流，随后通过`ioutil.ReadAll`读取整个响应结果并存入`b`。
 
 ``` go
 // Fetch prints the content found at each specified URL.
@@ -522,11 +523,239 @@ func main() {
 }
 ```
 
+测试输出：
+
+```
+$./fetch http://gerryyang.com
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Gerry’s blog | 他山之石，可以攻玉</title>
+
+...
+```
+
 ## 获取多个URL
 
-TODO
+* Go最大的特点是支持并发编程，本例并发获取多个URL内容，于是这个进程使用的时间不超过耗时最长时间的获取任务，而不是所有获取任务总的时间。这个版本的实现丢弃响应的内容，但是报告每一个响应的大小和花费的时间。
+* `goroutine`是一个并发执行的函数。
+* **通道是一种允许某一例程向另一个例程传递指定类型的值的通信机制**。
+* `main`函数在一个`goroutine`中执行，然后`go`语句创建额外的`goroutine`。
+* `main`函数使用`make`创建一个字符串通道，对于每一个命令行参数，go语句在第一轮循环中启动一个新的`goroutine`，它异步调用`fetch`来使用`http.Get`获取URL内容。
+* `io.Copy`函数读取响应的内容，然后通过写入`ioutil.Discard`输出流进行丢弃。`Copy`返回字节数以及出现的任何错误。每一个结果返回时，`fetch`发送一行汇总信息到通道`ch`。
+* `main`中的第二轮循环接收并输出那些汇总行。
+
+> 注意：当一个`goroutine`试图在一个通道上进行发送或接收操作时，它会阻塞，直到另一个`goroutine`试图进行接收或发送操作，才传递值，并开始处理两个`goroutine`。在示例中，每一个`fetch`在通道`ch`上发送一个值（`ch <- expression`），main函数接收它们（`<-ch`），由main来处理所有的输出确保来每个`goroutine`作为一个整体单元处理，这样就避免了两个`goroutine`同时完成造成输出交织带来的风险。
+
+``` go
+// Fetchall fetches URLs in parallel and reports their times and sizes.
+package main
+
+import (
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"time"
+)
+
+func main() {
+	start := time.Now()
+	ch := make(chan string)
+	for _, url := range os.Args[1:] {
+		go fetch(url, ch) // start a goroutine
+	}
+	for range os.Args[1:] {
+		fmt.Println(<-ch) // receive from channel ch
+	}
+	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
+}
+
+func fetch(url string, ch chan<- string) {
+	start := time.Now()
+	resp, err := http.Get(url)
+	if err != nil {
+		ch <- fmt.Sprint(err) // send to channel ch
+		return
+	}
+
+	nbytes, err := io.Copy(ioutil.Discard, resp.Body)
+	resp.Body.Close() // don't leak resources
+	if err != nil {
+		ch <- fmt.Sprintf("while reading %s: %v", url, err)
+		return
+	}
+	secs := time.Since(start).Seconds()
+	ch <- fmt.Sprintf("%.2fs  %7d  %s", secs, nbytes, url)
+}
+```
+
+测试输出：
+
+```
+$./fetchall http://gerryyang.com https://godoc.org http://baidu.com
+1.13s       81  http://baidu.com
+1.29s    33353  http://gerryyang.com
+2.40s    17406  https://godoc.org
+2.40s elapsed
+```
+
+## 一个Web服务器
+
+* 使用Go的库非常容易实现一个Web服务器，本例实现一个简单的Web服务，返回访问服务器的URL的路径部分。例如，如果请求的URL是`http://localhost:8000/hello`，则响应是`URL.Path = "/hello"`。
+* `main`函数将一个处理函数和以`/`开头的URL链接在一起，代表所有的URL使用这个函数处理，然后启动服务器监听进入8000端口处的请求。
+* 一个请求由一个`http.Request`类型的结构体表示，它包含很多关联的域，其中一个是所请求的URL。
+* 当一个请求到达时，它被转交给处理函数，并从请求的URL中提取路径部分（`/hello`），使用`fmt.Printf`格式化，然后作为响应发送回去。
 
 
+``` go
+// Server1 is a minimal "echo" server.
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func main() {
+	http.HandleFunc("/", handler) // each request calls handler
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
+
+// handler echoes the Path component of the requested URL.
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+}
+```
+
+对上述功能进行扩展：
+
+* 这个服务器有两个处理函数，通过请求的URL来决定哪一个被调用。请求`/count`调用`counter`，其他的调用`handler`。以`\`结尾的处理模式匹配所有含有这个前缀的URL。
+* 对于传入的请求，服务器在不同的`goroutine`中运行该处理函数，这样它可以同时处理多个请求。然而，如果两个并发的请求试图同时更新计数值`count`，它可能会不一致地增加，程序会产生一个**严重的竞态bug**。为避免该问题，必现确保最多只有一个`goroutine`在同一时间访问变量，这正是`mu.Lock()`和`mu.Unlock()`语句的作用。
+
+
+``` go
+// Server2 is a minimal "echo" and counter server.
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+)
+
+var mu sync.Mutex
+var count int
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/count", counter)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
+
+// handler echoes the Path component of the requested URL.
+func handler(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	count++
+	mu.Unlock()
+	fmt.Fprintf(w, "URL.Path = %q\n", r.URL.Path)
+}
+
+// counter echoes the number of calls so far.
+func counter(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	fmt.Fprintf(w, "Count %d\n", count)
+	mu.Unlock()
+}
+```
+
+作为更完整的例子，处理函数可以报告它接收到的消息头和表单数据，这样可以方便服务器审查和调试请求：
+
+* 注意，Go允许一个简单的语句（如一个局部变量声明）跟在`if`条件的前面，这在错误处理的时候特别有用，合并的语句更短而且可以缩小`err`变量的作用域，这是一个好实践。
+
+
+``` go
+// Server3 is an "echo" server that displays request parameters.
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func main() {
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+}
+
+//!+handler
+// handler echoes the HTTP request.
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
+	for k, v := range r.Header {
+		fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
+	}
+	fmt.Fprintf(w, "Host = %q\n", r.Host)
+	fmt.Fprintf(w, "RemoteAddr = %q\n", r.RemoteAddr)
+	if err := r.ParseForm(); err != nil {
+		log.Print(err)
+	}
+	for k, v := range r.Form {
+		fmt.Fprintf(w, "Form[%q] = %q\n", k, v)
+	}
+}
+```
+
+## 其他内容
+
+
+* 控制流。除了两个基础的控制语句`if`和`for`，还有一个支持多路分支的`switch`语句。
+* 命名类型。`type`声明给已有类型命名。因为结构体类型通常很长，所以她们基本上都独立命名。
+
+``` go
+type Point struct {
+	X, Y int
+}
+var p Point
+```
+
+* 指针。Go提供了指针，它的值是变量的地址。
+  
+> 区别：在C语言中，指针基本上是没有约束的。Go做了一个折中，指针显式可见。使用`&`操作符可以获取一个变量的地址，使用`*`操作符可以获取指针引用的变量值。但是指针不支持算术运算。
+
+* 方法和接口。
+	+ 一个关联了命名类型的函数称为**方法**。Go里面的方法可以关联到几乎所有的命名类型。
+	+ **接口**可以用相同的方式处理不同的具体类型的抽象类型，它基于这些类型所包含的方法，而不是类型的描述或实现。
+
+* 包。Go自带一个可扩展并且实用的标准库，Go社区创建和共享了更多的库。编程时，更多使用现有的包，而不是自己写所有的源码。
+	+ 标准库包的索引：https://golang.org/pkg
+	+ 社区贡献的包：https://godoc.org
+	+ 使用`go doc`工具可以方便地通过命令行访问这些文档
+
+``` go
+$go doc http.ListenAndServe
+go: finding golang.org/x/sys v0.0.0-20210423082822-04245dca01da
+go: finding golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+go: finding golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e
+package http // import "net/http"
+
+func ListenAndServe(addr string, handler Handler) error
+    ListenAndServe listens on the TCP network address addr and then calls Serve
+    with handler to handle requests on incoming connections. Accepted
+    connections are configured to enable TCP keep-alives.
+
+    The handler is typically nil, in which case the DefaultServeMux is used.
+
+    ListenAndServe always returns a non-nil error.
+```
+
+* 注释。在声明任何函数前，写一段注释来说明它的行为是一个好的风格，这个约定很重要，因为它们可以被`go doc`和`godoc`工具定位和作为文档显示。对于跨越多行的注视，可以使用类似其他语言中的`/* .... */`注释。这样可以避免在文件的开始有一大块说明文本时每一行都有`//`。在注释内部，`//`和`/*`没有特殊的含义，所以注释不能嵌套。
 
 
 # Go程序组成
@@ -545,6 +774,498 @@ TODO
 
 并发处理，基于CSP思想，采用goroutine和信道实现，共享变量
 
+# 复合数据类型
+
+## JSON
+
+* 把 Go 的数据结构（比如 movies）转换为 JSON 称为`marshal`（通过`json.Marshal`来实现的），Marshal 生成了一个字节 slice，其中包含一个不带有任何多余空白字符的很长的字符串。为了方便阅读，可以使用`json.MarshalIndent`输出整齐格式化的结果，这个函数有两个参数，一个是定义每行输出的前缀字符串，另外一个是定义缩进的字符串。
+* `marshal`使用 Go 结构体成员的名称作为 JSON 对象里面字段的名称（通过反射的方式），只有可导出的成员（首字母大写）可以转换为 JSON 字段。
+* 结构体成员 `Year` 对应地转换为 `released`，`Color`转换为`color`，这个是通过成员标签定义（`field tag`）实现的。成员标签定义是结构体成员在编译期间关联的一些元信息。标签值的第一部分指定了 Go 结构体成员对应 JSON 中字段的名字，`Color`标签还有一个额外的选项`omitempty`，它表示如果这个成员的值是零值或者为空，则不输出这个成员到 JSON 中。
+* 将 JSON 字符串解码为 Go 数据结构，这个过程叫做`unmarshal`，这个是由`json.Unmarshal`实现的。通过合理地定义 Go 的数据结构，可以选择将哪部分 JSON 数据解码到结构对象中，哪些数据可以丢弃。例如，当函数`Unmarshal`调用完成后，它将填充结构体`slice`中`Title`的值，JSON 中其他的字段就丢弃了。
+
+``` go
+// Movie prints Movies as JSON.
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+)
+
+//!+
+type Movie struct {
+	Title  string
+	Year   int  `json:"released"`
+	Color  bool `json:"color,omitempty"`
+	Actors []string
+}
+
+var movies = []Movie{
+	{Title: "Casablanca", Year: 1942, Color: false,
+		Actors: []string{"Humphrey Bogart", "Ingrid Bergman"}},
+	{Title: "Cool Hand Luke", Year: 1967, Color: true,
+		Actors: []string{"Paul Newman"}},
+	{Title: "Bullitt", Year: 1968, Color: true,
+		Actors: []string{"Steve McQueen", "Jacqueline Bisset"}},
+	// ...
+}
+
+//!-
+
+func main() {
+	{
+		//!+Marshal
+		data, err := json.Marshal(movies)
+		if err != nil {
+			log.Fatalf("JSON marshaling failed: %s", err)
+		}
+		fmt.Printf("%s\n", data)
+		//!-Marshal
+	}
+
+	{
+		//!+MarshalIndent
+		data, err := json.MarshalIndent(movies, "", "    ")
+		if err != nil {
+			log.Fatalf("JSON marshaling failed: %s", err)
+		}
+		fmt.Printf("%s\n", data)
+		//!-MarshalIndent
+
+		//!+Unmarshal
+		var titles []struct{ Title string }
+		if err := json.Unmarshal(data, &titles); err != nil {
+			log.Fatalf("JSON unmarshaling failed: %s", err)
+		}
+		fmt.Println(titles) // "[{Casablanca} {Cool Hand Luke} {Bullitt}]"
+		//!-Unmarshal
+	}
+}
+```
+
+输出：
+
+```
+$./movie
+[{"Title":"Casablanca","released":1942,"Actors":["Humphrey Bogart","Ingrid Bergman"]},{"Title":"Cool Hand Luke","released":1967,"color":true,"Actors":["Paul Newman"]},{"Title":"Bullitt","released":1968,"color":true,"Actors":["Steve McQueen","Jacqueline Bisset"]}]
+[
+    {
+        "Title": "Casablanca",
+        "released": 1942,
+        "Actors": [
+            "Humphrey Bogart",
+            "Ingrid Bergman"
+        ]
+    },
+    {
+        "Title": "Cool Hand Luke",
+        "released": 1967,
+        "color": true,
+        "Actors": [
+            "Paul Newman"
+        ]
+    },
+    {
+        "Title": "Bullitt",
+        "released": 1968,
+        "color": true,
+        "Actors": [
+            "Steve McQueen",
+            "Jacqueline Bisset"
+        ]
+    }
+]
+[{Casablanca} {Cool Hand Luke} {Bullitt}]
+```
+
+## Github
+
+* 由于用户的查询请求参数中可能存在一些字符，这些字符在 URL 中是特殊字符，比如`?`或者`&`，因此使用`url.QueryEscape`函数来确保它们拥有正确的含义。
+* 这里使用流式解码器`json.Decoder`来依次从字节流里面解码出多个JSON实体。对应有一个`json.Encoder`的流式编码器。
+
+```go
+// github.go
+
+// Package github provides a Go API for the GitHub issue tracker.
+// See https://developer.github.com/v3/search/#search-issues.
+package github
+
+import "time"
+
+const IssuesURL = "https://api.github.com/search/issues"
+
+type IssuesSearchResult struct {
+	TotalCount int `json:"total_count"`
+	Items      []*Issue
+}
+
+type Issue struct {
+	Number    int
+	HTMLURL   string `json:"html_url"`
+	Title     string
+	State     string
+	User      *User
+	CreatedAt time.Time `json:"created_at"`
+	Body      string    // in Markdown format
+}
+
+type User struct {
+	Login   string
+	HTMLURL string `json:"html_url"`
+}
+```
+
+
+``` go
+// search.go
+
+package github
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+)
+
+// SearchIssues queries the GitHub issue tracker.
+func SearchIssues(terms []string) (*IssuesSearchResult, error) {
+	q := url.QueryEscape(strings.Join(terms, " "))
+	resp, err := http.Get(IssuesURL + "?q=" + q)
+	if err != nil {
+		return nil, err
+	}
+	//!-
+	// For long-term stability, instead of http.Get, use the
+	// variant below which adds an HTTP request header indicating
+	// that only version 3 of the GitHub API is acceptable.
+	//
+	//   req, err := http.NewRequest("GET", IssuesURL+"?q="+q, nil)
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   req.Header.Set(
+	//       "Accept", "application/vnd.github.v3.text-match+json")
+	//   resp, err := http.DefaultClient.Do(req)
+	//!+
+
+	// We must close resp.Body on all execution paths.
+	// (Chapter 5 presents 'defer', which makes this simpler.)
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("search query failed: %s", resp.Status)
+	}
+
+	var result IssuesSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+	resp.Body.Close()
+	return &result, nil
+}
+```
+
+主程序：
+
+``` go
+// main.go
+
+// Issues prints a table of GitHub issues matching the search terms.
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"gopl.io/ch4/github"
+)
+
+//!+
+func main() {
+	result, err := github.SearchIssues(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%d issues:\n", result.TotalCount)
+	for _, item := range result.Items {
+		fmt.Printf("#%-5d %9.9s %.55s\n",
+			item.Number, item.User.Login, item.Title)
+	}
+}
+
+/*
+$ go build gopl.io/ch4/issues
+$ ./issues repo:golang/go is:open json decoder
+13 issues:
+#5680    eaigner encoding/json: set key converter on en/decoder
+#6050  gopherbot encoding/json: provide tokenizer
+#8658  gopherbot encoding/json: use bufio
+#8462  kortschak encoding/json: UnmarshalText confuses json.Unmarshal
+#5901        rsc encoding/json: allow override type marshaling
+#9812  klauspost encoding/json: string tag not symmetric
+#7872  extempora encoding/json: Encoder internally buffers full output
+#9650    cespare encoding/json: Decoding gives errPhase when unmarshalin
+#6716  gopherbot encoding/json: include field name in unmarshal error me
+#6901  lukescott encoding/json, encoding/xml: option to treat unknown fi
+#6384    joeshaw encoding/json: encode precise floating point integers u
+#6647    btracey x/tools/cmd/godoc: display type kind of each named type
+#4237  gjemiller encoding/base64: URLEncoding padding is optional
+*/
+```
+
+## HTML模版
+
+* 当要求格式和代码彻底分离，这个额可以通过`text/template`和`html/template`里面的方法实现。这两个包提供了一种机制，可以将程序变量的值代入到文本或者HTML模版中。
+* 模版，是一个字符串或文件，它包含一个或者多个，两边用双大括号包围的单元{% raw %}`{{...}}`{% endraw %}，这个称为**操作**。每个操作在模版语言里都对应一个表达式，提供的功能包括：输出值，选择结构体成员，调用函数和方法，描述控制逻辑，实例化其他的模版等。
+* 通过模版输出结果需要两个步骤
+	+ 需要解析模版并转换为内部的表示方法（解析模版只需要执行一次）
+	+ 然后在指定的输入上面执行
+* 创建并解析定义的文本模版`templ`，注意方法的链式调用：`template.New`创建并返回一个新的模版，`Funcs`添加`daysAgo`到模版内部可以访问的函数列表中，然后返回这个模版对象；最后调用`Parse`方法。
+* 更多：`go doc text/template` `go doc html/template`
+
+
+{% raw %}
+``` go
+// Issuesreport prints a report of issues matching the search terms.
+package main
+
+import (
+	"log"
+	"os"
+	"text/template"
+	"time"
+
+	"gopl.io/ch4/github"
+)
+
+//!+template
+const templ = `{{.TotalCount}} issues:
+{{range .Items}}----------------------------------------
+Number: {{.Number}}
+User:   {{.User.Login}}
+Title:  {{.Title | printf "%.64s"}}
+Age:    {{.CreatedAt | daysAgo}} days
+{{end}}`
+
+//!-template
+
+//!+daysAgo
+func daysAgo(t time.Time) int {
+	return int(time.Since(t).Hours() / 24)
+}
+
+//!-daysAgo
+
+//!+exec
+var report = template.Must(template.New("issuelist").
+	Funcs(template.FuncMap{"daysAgo": daysAgo}).
+	Parse(templ))
+
+func main() {
+	result, err := github.SearchIssues(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := report.Execute(os.Stdout, result); err != nil {
+		log.Fatal(err)
+	}
+}
+
+//!-exec
+
+func noMust() {
+	//!+parse
+	report, err := template.New("report").
+		Funcs(template.FuncMap{"daysAgo": daysAgo}).
+		Parse(templ)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//!-parse
+	result, err := github.SearchIssues(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := report.Execute(os.Stdout, result); err != nil {
+		log.Fatal(err)
+	}
+}
+/*
+//!+output
+$ go build gopl.io/ch4/issuesreport
+$ ./issuesreport repo:golang/go is:open json decoder
+13 issues:
+----------------------------------------
+Number: 5680
+User:   eaigner
+Title:  encoding/json: set key converter on en/decoder
+Age:    750 days
+----------------------------------------
+Number: 6050
+User:   gopherbot
+Title:  encoding/json: provide tokenizer
+Age:    695 days
+----------------------------------------
+...
+//!-output
+*/
+```
+{% endraw %}
+
+
+`html/template`包和`text/template`包里面使用一样的API和表达式语句。
+
+{% raw %}
+``` go
+// Issueshtml prints an HTML table of issues matching the search terms.
+package main
+
+import (
+	"log"
+	"os"
+
+	"gopl.io/ch4/github"
+)
+
+//!+template
+import "html/template"
+
+var issueList = template.Must(template.New("issuelist").Parse(`
+<h1>{{.TotalCount}} issues</h1>
+<table>
+<tr style='text-align: left'>
+  <th>#</th>
+  <th>State</th>
+  <th>User</th>
+  <th>Title</th>
+</tr>
+{{range .Items}}
+<tr>
+  <td><a href='{{.HTMLURL}}'>{{.Number}}</a></td>
+  <td>{{.State}}</td>
+  <td><a href='{{.User.HTMLURL}}'>{{.User.Login}}</a></td>
+  <td><a href='{{.HTMLURL}}'>{{.Title}}</a></td>
+</tr>
+{{end}}
+</table>
+`))
+
+//!-template
+
+//!+
+func main() {
+	result, err := github.SearchIssues(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := issueList.Execute(os.Stdout, result); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+{% endraw %}
+
+./issueshtml repo:golang/go commenter:gopherbot json encoder > issues.html
+
+``` html
+<h1>65 issues</h1>
+<table>
+<tr style='text-align: left'>
+  <th>#</th>
+  <th>State</th>
+  <th>User</th>
+  <th>Title</th>
+</tr>
+
+<tr>
+  <td><a href='https://github.com/golang/go/issues/7872'>7872</a></td>
+  <td>open</td>
+  <td><a href='https://github.com/extemporalgenome'>extemporalgenome</a></td>
+  <td><a href='https://github.com/golang/go/issues/7872'>encoding/json: Encoder internally buffers full output</a></td>
+</tr>
+
+<tr>
+  <td><a href='https://github.com/golang/go/issues/5901'>5901</a></td>
+  <td>open</td>
+  <td><a href='https://github.com/rsc'>rsc</a></td>
+  <td><a href='https://github.com/golang/go/issues/5901'>encoding/json: allow per-Encoder/per-Decoder registration of marshal/unmarshal functions</a></td>
+</tr>
+```
+
+![issueshtml](/assets/images/202202/issueshtml.png)
+
+注意：`html/template`包自动将 HTML 元字符转义，这样显示才能正常。
+
+{% raw %}
+``` go
+// Autoescape demonstrates automatic HTML escaping in html/template.
+package main
+
+import (
+	"html/template"
+	"log"
+	"os"
+)
+
+//!+
+func main() {
+	const templ = `<p>A: {{.A}}</p><p>B: {{.B}}</p>`
+	t := template.Must(template.New("escape").Parse(templ))
+	var data struct {
+		A string        // untrusted plain text
+		B template.HTML // trusted HTML
+	}
+	data.A = "<b>Hello!</b>"
+	data.B = "<b>Hello!</b>"
+	if err := t.Execute(os.Stdout, data); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+{% endraw %}
+
+输出：
+
+```
+$./autoescape
+<p>A: &lt;b&gt;Hello!&lt;/b&gt;</p><p>B: <b>Hello!</b></p>
+```
+
+
+# 惯例用法
+
+## Three Dots
+
+[3 dots in 4 places](https://yourbasic.org/golang/three-dots-ellipsis/)
+
+### Variadic function parameters
+
+You can pass a slice `s` directly to **a variadic function** if you unpack it with the `s...` notation. In this case no new slice is created. In this example, we pass a slice to the Sum function.
+
+``` go
+primes := []int{2, 3, 5, 7}
+fmt.Println(Sum(primes...)) // 17
+```
+
+### Array literals
+
+In an array literal, the `...` notation specifies a length equal to the number of elements in the literal.
+
+``` go
+stooges := [...]string{"Moe", "Larry", "Curly"} // len(stooges) == 3
+```
+
+### The go command
+
+Three dots are used by the go command as a **wildcard** when describing package lists. This command tests all packages in the current directory and its subdirectories.
+
+``` bash
+$ go test ./...
+```
 
 # 模版生成代码（go generate / ast）
 
@@ -559,6 +1280,13 @@ refer:
 
 * https://lailin.xyz/post/41140.html?f=tt
 * https://pkg.go.dev/go/ast
+
+# Q&A 
+
+## go_package
+
+* https://developers.google.com/protocol-buffers/docs/reference/go-generated#package
+* [Correct format of protoc go_package?](https://stackoverflow.com/questions/61666805/correct-format-of-protoc-go-package)
 
 # Others
 
@@ -594,38 +1322,6 @@ refer:
 
 https://github.com/gopherchina/conference
 
-
-
-# 惯例用法
-
-## Three Dots
-
-[3 dots in 4 places](https://yourbasic.org/golang/three-dots-ellipsis/)
-
-### Variadic function parameters
-
-You can pass a slice `s` directly to **a variadic function** if you unpack it with the `s...` notation. In this case no new slice is created. In this example, we pass a slice to the Sum function.
-
-``` go
-primes := []int{2, 3, 5, 7}
-fmt.Println(Sum(primes...)) // 17
-```
-
-### Array literals
-
-In an array literal, the `...` notation specifies a length equal to the number of elements in the literal.
-
-``` go
-stooges := [...]string{"Moe", "Larry", "Curly"} // len(stooges) == 3
-```
-
-### The go command
-
-Three dots are used by the go command as a **wildcard** when describing package lists. This command tests all packages in the current directory and its subdirectories.
-
-``` bash
-$ go test ./...
-```
 
 
 

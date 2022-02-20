@@ -1025,6 +1025,7 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 * https://en.wikipedia.org/wiki/Here_document#Unix_shells
 * https://stackoverflow.com/questions/2500436/how-does-cat-eof-work-in-bash
+* https://linuxhint.com/bash-heredoc-tutorial/
 
 
 # Command

@@ -181,7 +181,7 @@ Edit the example.com/hello module to use your **local** example.com/greetings mo
 
 For production use, you’d publish the example.com/greetings module from its repository (with a module path that reflected its published location), where Go tools could find it to download it. For now, because you haven't published the module yet, you need to adapt the example.com/hello module so it can find the example.com/greetings code on your local file system.
 
-1. From the command prompt in the hello directory, run the following command:
+* From the command prompt in the hello directory, run the following command:
 
 ```
 go mod edit -replace example.com/greetings=../greetings
@@ -197,7 +197,7 @@ go 1.16
 replace example.com/greetings => ../greetings
 ```
 
-2. From the command prompt in the hello directory, run the `go mod tidy` command to synchronize the example.com/hello module's dependencies, adding those required by the code, but not yet tracked in the module.
+* From the command prompt in the hello directory, run the `go mod tidy` command to synchronize the example.com/hello module's dependencies, adding those required by the code, but not yet tracked in the module.
 
 ```
 $ go mod tidy
@@ -234,7 +234,7 @@ For more on version numbers, see [Module version numbering](https://go.dev/doc/m
 
 With Go modules, versions are referenced with semantic version tags. A semantic version has three parts: `major`, `minor`, and `patch`. For example, for `v0.1.2`, the major version is 0, the minor version is 1, and the patch version is 2. Let's walk through a couple minor version upgrades. In the next section, we’ll consider a major version upgrade.
 
-From the output of go list -m all, we can see we're using an untagged version of golang.org/x/text. Let's upgrade to the latest tagged version and test that everything still works:
+From the output of `go list -m all`, we can see we're using an untagged version of golang.org/x/text. Let's upgrade to the latest tagged version and test that everything still works:
 
 ```
 $ go list -m all

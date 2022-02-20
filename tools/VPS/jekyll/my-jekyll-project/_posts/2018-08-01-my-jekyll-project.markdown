@@ -142,10 +142,11 @@ http://104.131.173.242/phpmyadmin/
 * [FileZilla](https://filezilla-project.org/)
 
 
-# Jekyll 配置
+# Jekyll
 
-如何通过jekyll发表blog，基本的用法可参考官方文档[Posts章节](https://jekyllrb.com/docs/posts/)。
+如何通过`jekyll`发表blog，基本的用法可参考官方文档[Posts章节](https://jekyllrb.com/docs/posts/)。
 
+## Usage
 
 * 目录索引(TOC)
 
@@ -169,6 +170,18 @@ More:
 
 * [https://ianding.io/](https://ianding.io/)
 * [https://arthurchiao.github.io/about/](https://arthurchiao.github.io/about/)
+
+## Q&A
+
+* [How to Ignore Liquid Syntax Errors](https://github.com/Shopify/liquid/issues/927)
+
+To prevent an error, you'll need to wrap the JSON in Liquid raw tags, like this:
+
+```
+{% raw %}
+{ {3478, udp}, ejabberd_stun, [] },
+{% endraw %}
+```
 
 
 # 工具

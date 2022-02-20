@@ -35,9 +35,17 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 * Argument-dependent lookup   https://en.cppreference.com/w/cpp/language/adl
 
 
-# STL
+# Data Struct
 
-## Map
+## std::forward_list
+
+
+std::forward_list is a container that supports fast insertion and removal of elements from anywhere in the container. Fast random access is not supported. It is implemented as a singly-linked list (单向链表). Compared to std::list this container provides more space efficient storage when bidirectional iteration is not needed.
+
+
+* https://en.cppreference.com/w/cpp/container/forward_list
+
+## std::map
 
 ``` cpp
 
@@ -238,6 +246,92 @@ int main()
 std::basic_string<char> & s = __begin1.operator*();
 ```
 
+## move
+
+注意：
+
+* 使用`gcc 4.9.4`编译，被移动的右值并没有被清空，而高版本的编译器符合预期。可见[测试代码](https://wandbox.org/permlink/SNxaUGxc4o1lk1oe)
+
+
+
+``` cpp
+#include <string>
+#include <iostream>
+#include <utility>
+ 
+struct A
+{
+    std::string s;
+    A() : s("test") { }
+    A(const A& o) : s(o.s) { std::cout << "move failed!\n"; }
+    A(A&& o) : s(std::move(o.s)) { }
+    A& operator=(const A& other)
+    {
+         s = other.s;
+         std::cout << "copy assigned\n";
+         return *this;
+    }
+    A& operator=(A&& other)
+    {
+         s = std::move(other.s);
+         std::cout << "move assigned\n";
+         return *this;
+    }
+};
+ 
+A f(A a) { return a; }
+ 
+struct B : A
+{
+     std::string s2; 
+     int n;
+     // implicit move assignment operator B& B::operator=(B&&)
+     // calls A's move assignment operator
+     // calls s2's move assignment operator
+     // and makes a bitwise copy of n
+};
+ 
+struct C : B
+{
+    ~C() { } // destructor prevents implicit move assignment
+};
+ 
+struct D : B
+{
+    D() { }
+    ~D() { } // destructor would prevent implicit move assignment
+    D& operator=(D&&) = default; // force a move assignment anyway 
+};
+ 
+int main()
+{
+    A a1, a2;
+    std::cout << "Trying to move-assign A from rvalue temporary\n";
+    a1 = f(A()); // move-assignment from rvalue temporary
+    std::cout << "Trying to move-assign A from xvalue\n";
+    a2 = std::move(a1); // move-assignment from xvalue
+ 
+    std::cout << "Trying to move-assign B\n";
+    B b1, b2;
+    std::cout << "Before move, b1.s = \"" << b1.s << "\"\n";
+    b2 = std::move(b1); // calls implicit move assignment
+    std::cout << "After move, b1.s = \"" << b1.s << "\"\n";
+ 
+    std::cout << "Trying to move-assign C\n";
+    C c1, c2;
+    c2 = std::move(c1); // calls the copy assignment operator
+ 
+    std::cout << "Trying to move-assign D\n";
+    D d1, d2;
+    d2 = std::move(d1);
+}
+```
+
+refer: 
+
+* [Move constructors](https://en.cppreference.com/w/cpp/language/move_constructor)
+* [Move assignment operator](https://en.cppreference.com/w/cpp/language/move_assignment)
+* [std::move](https://en.cppreference.com/w/cpp/utility/move)
 
 ## Fixed width integer types
 
@@ -552,7 +646,7 @@ foo and bar completed.
 
 * https://www.cplusplus.com/reference/thread/thread/
 
-# thread_local
+## thread_local
 
 The `thread_local` keyword is only allowed for objects declared at namespace scope, objects declared at block scope, and static data members. It indicates that the object has thread storage duration. It can be combined with `static` or `extern` to specify internal or external linkage (except for static data members which always have external linkage), respectively, but that additional static doesn't affect the storage duration.
 
@@ -1046,6 +1140,65 @@ false
 */
 ```
 
+## std::next
+
+Return the `n`th successor of iterator it.
+
+``` cpp
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main() 
+{
+    std::vector<int> v{ 4, 5, 6 };
+ 
+    auto it = v.begin();
+    auto nx = std::next(it, 2);
+    std::cout << *it << ' ' << *nx << '\n';
+ 
+    it = v.end();
+    nx = std::next(it, -2);
+    std::cout << ' ' << *nx << '\n';
+}
+/*
+4 6
+ 5
+*/
+```
+
+* https://en.cppreference.com/w/cpp/iterator/next
+
+## std::distance
+
+Returns the number of hops from first to last.
+
+``` cpp
+#include <iostream>
+#include <iterator>
+#include <vector>
+ 
+int main() 
+{
+    std::vector<int> v{ 3, 1, 4 };
+    std::cout << "distance(first, last) = "
+              << std::distance(v.begin(), v.end()) << '\n'
+              << "distance(last, first) = "
+              << std::distance(v.end(), v.begin()) << '\n';
+               //the behavior is undefined (until C++11)
+ 
+    static constexpr auto il = { 3, 1, 4 };
+    // Since C++17 `distance` can be used in constexpr context.
+    static_assert(std::distance(il.begin(), il.end()) == 3);
+    static_assert(std::distance(il.end(), il.begin()) == -3);
+}
+/*
+distance(first, last) = 3
+distance(last, first) = -3
+*/
+```
+
+* https://en.cppreference.com/w/cpp/iterator/distance
 
 # C++14
 
@@ -1235,6 +1388,191 @@ Hello world!
 * https://en.cppreference.com/w/cpp/utility/format
 * https://github.com/fmtlib/fmt
 
+
+# Algorithm
+
+## std::lower_bound (下界)
+
+``` cpp
+template< class ForwardIt, class T >
+ForwardIt lower_bound( ForwardIt first, ForwardIt last, const T& value );
+
+template< class ForwardIt, class T, class Compare >
+ForwardIt lower_bound( ForwardIt first, ForwardIt last, const T& value, Compare comp );
+```
+
+Returns an iterator pointing to the first element in the range [first, last) that is not less than (i.e. greater or equal to) value, or last if no such element is found.
+
+* `[frist, last]` 顺序为非严格递增
+* 顺序：`value <= [frist, last]`
+
+``` cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+struct PriceInfo { double price; };
+ 
+int main()
+{
+    const std::vector<int> data = { 1, 2, 4, 5, 5, 6 };
+    for (int i = 0; i < 8; ++i) {
+        // Search for first element x such that i ≤ x
+        auto lower = std::lower_bound(data.begin(), data.end(), i);
+ 
+        std::cout << i << " ≤ ";
+        lower != data.end()
+            ? std::cout << *lower << " at index " << std::distance(data.begin(), lower)
+            : std::cout << "[not found]";
+        std::cout << '\n';
+    }
+ 
+    std::vector<PriceInfo> prices = { {100.0}, {101.5}, {102.5}, {102.5}, {107.3} };
+    for(double to_find: {102.5, 110.2}) {
+      auto prc_info = std::lower_bound(prices.begin(), prices.end(), to_find,
+          [](const PriceInfo& info, double value){
+              return info.price < value;
+          });
+ 
+      prc_info != prices.end()
+          ? std::cout << prc_info->price << " at index " << prc_info - prices.begin()
+          : std::cout << to_find << " not found";
+      std::cout << '\n';
+    }
+}
+/*
+0 ≤ 1 at index 0
+1 ≤ 1 at index 0
+2 ≤ 2 at index 1
+3 ≤ 4 at index 2
+4 ≤ 4 at index 2
+5 ≤ 5 at index 3
+6 ≤ 6 at index 5
+7 ≤ [not found]
+102.5 at index 2
+110.2 not found
+*/
+```
+
+
+* https://www.cplusplus.com/reference/algorithm/lower_bound/
+
+## std::upper_bound (上界)
+
+Returns an iterator pointing to the first element in the range [first, last) that is greater than value, or last if no such element is found.
+
+* `[frist, last]` 顺序为非严格递增
+* 顺序：`[frist, last] <= value`
+
+``` cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+struct PriceInfo { double price; };
+ 
+int main()
+{
+    const std::vector<int> data = { 1, 2, 4, 5, 5, 6 };
+    for (int i = 0; i < 7; ++i) {
+        // Search first element that is greater than i
+        auto upper = std::upper_bound(data.begin(), data.end(), i);
+ 
+        std::cout << i << " < ";
+        upper != data.end()
+            ? std::cout << *upper << " at index " << std::distance(data.begin(), upper)
+            : std::cout << "not found";
+        std::cout << '\n';
+    }
+ 
+    std::vector<PriceInfo> prices = { {100.0}, {101.5}, {102.5}, {102.5}, {107.3} };
+    for(double to_find: {102.5, 110.2}) {
+      auto prc_info = std::upper_bound(prices.begin(), prices.end(), to_find,
+          [](double value, const PriceInfo& info){
+              return value < info.price;
+          });
+ 
+      prc_info != prices.end()
+          ? std::cout << prc_info->price << " at index " << prc_info - prices.begin()
+          : std::cout << to_find << " not found";
+      std::cout << '\n';
+    }
+}
+/*
+0 < 1 at index 0
+1 < 2 at index 1
+2 < 4 at index 2
+3 < 4 at index 2
+4 < 5 at index 3
+5 < 6 at index 5
+6 < not found 
+107.3 at index 4
+110.2 not found
+*/
+```
+
+* https://en.cppreference.com/w/cpp/algorithm/upper_bound
+
+## std::partition
+
+Reorders the elements in the range [first, last) in such a way that all elements for which the predicate p returns true precede the elements for which predicate p returns false. Relative order of the elements is not preserved.
+
+``` cpp
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+#include <forward_list>
+ 
+template <class ForwardIt>
+ void quicksort(ForwardIt first, ForwardIt last)
+ {
+    if(first == last) return;
+    auto pivot = *std::next(first, std::distance(first,last)/2);
+    ForwardIt middle1 = std::partition(first, last, 
+                         [pivot](const auto& em){ return em < pivot; });
+    ForwardIt middle2 = std::partition(middle1, last, 
+                         [pivot](const auto& em){ return !(pivot < em); });
+    quicksort(first, middle1);
+    quicksort(middle2, last);
+ }
+ 
+int main()
+{
+    std::vector<int> v = {0,1,2,3,4,5,6,7,8,9};
+    std::cout << "Original vector:\n    ";
+    for(int elem : v) std::cout << elem << ' ';
+ 
+    auto it = std::partition(v.begin(), v.end(), [](int i){return i % 2 == 0;});
+ 
+    std::cout << "\nPartitioned vector:\n    ";
+    std::copy(std::begin(v), it, std::ostream_iterator<int>(std::cout, " "));
+    std::cout << " * " " ";
+    std::copy(it, std::end(v), std::ostream_iterator<int>(std::cout, " "));
+ 
+    std::forward_list<int> fl = {1, 30, -4, 3, 5, -4, 1, 6, -8, 2, -5, 64, 1, 92};
+    std::cout << "\nUnsorted list:\n    ";
+    for(int n : fl) std::cout << n << ' ';
+    std::cout << '\n';  
+ 
+    quicksort(std::begin(fl), std::end(fl));
+    std::cout << "Sorted using quicksort:\n    ";
+    for(int fi : fl) std::cout << fi << ' ';
+    std::cout << '\n';
+}
+/*
+Original vector:
+    0 1 2 3 4 5 6 7 8 9 
+Partitioned vector:
+    0 8 2 6 4  *  5 3 7 1 9 
+Unsorted list:
+    1 30 -4 3 5 -4 1 6 -8 2 -5 64 1 92 
+Sorted using quicksort:
+    -8 -5 -4 -4 1 1 1 2 3 5 6 30 64 92
+*/
+```
+
+* https://en.cppreference.com/w/cpp/algorithm/partition
 
 # Clang-Format Style Options
 

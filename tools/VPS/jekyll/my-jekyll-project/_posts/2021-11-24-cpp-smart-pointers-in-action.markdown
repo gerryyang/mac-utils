@@ -69,15 +69,15 @@ To satisfy thread safety requirements, the reference counters are typically incr
 
 参考[std::shared_ptr thread safety explained](https://stackoverflow.com/questions/9127816/stdshared-ptr-thread-safety-explained)：
 
-1. Standard guarantees that reference counting is handled thread safe and it's platform independent, right?
+* Standard guarantees that reference counting is handled thread safe and it's platform independent, right?
 
 Correct, shared_ptrs use atomic increments/decrements of a reference count value.
 
-2. Similar issue - standard guarantees that only one thread (holding last reference) will call delete on shared object, right?
+* Similar issue - standard guarantees that only one thread (holding last reference) will call delete on shared object, right?
 
 The standard guarantees only one thread will call the delete operator on a shared object. I am not sure if it specifically specifies the last thread that deletes its copy of the shared pointer will be the one that calls delete (likely in practice this would be the case).
 
-3. shared_ptr does not guarantee any thread safety for object stored in it?
+* shared_ptr does not guarantee any thread safety for object stored in it?
 
 No they do not, the object stored in it can be simultaneously edited by multiple threads.
 
