@@ -199,6 +199,40 @@ find
 
 # C++11
 
+## In-class initialization
+
+If you use a constructor that doesn't specify any other value, then the 1234 would be used to initialize a, but if you use a constructor that specifies some other value, then the 1234 is basically ignored.
+
+``` cpp
+#include <iostream>
+
+class X { 
+    int a = 1234;
+public:
+    X() = default;
+    X(int z) : a(z) {}
+
+    friend std::ostream &operator<<(std::ostream &os, X const &x) { 
+        return os << x.a;
+    }
+};
+
+int main() { 
+    X x;
+    X y{5678};
+
+    std::cout << x << "\n" << y;
+    return 0;
+}
+/*
+1234
+5678
+*/
+```
+
+* [C++11 allows in-class initialization of non-static and non-const members. What changed?](https://stackoverflow.com/questions/13662441/c11-allows-in-class-initialization-of-non-static-and-non-const-members-what-c)
+* [How do I define an in-class constant?](https://www.stroustrup.com/bs_faq2.html#in-class)
+
 ## auto
 
 `auto`没有指定`&`时，会推导为值拷贝。例如，`auto s : vec`

@@ -10,9 +10,9 @@ categories: https
 
 
 
-https://github.com/inconshreveable/ngrok
-
-https://imququ.com/post/self-hosted-ngrokd.html
+* https://github.com/inconshreveable/ngrok
+* https://imququ.com/post/self-hosted-ngrokd.html
+* https://tonybai.com/2015/03/14/selfhost-ngrok-service/
 
 
 

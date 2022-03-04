@@ -9,6 +9,38 @@ categories: [C/C++]
 {:toc}
 
 
+# Example
+
+``` cpp
+#include <iostream>
+
+class A
+{
+public:
+    virtual void f() { std::cout << "A::f\n"; }
+};
+
+class B : public A
+{
+public:
+    void f() override { std::cout << "B::f\n"; }
+};
+
+void f2(A& a)
+{
+    a.f();
+}
+
+int main()
+{
+    A* a = new B();
+    a->f();  // B::f
+    
+    B b;
+    f2(b);  // B::f
+}
+```
+
 # Virtual Tables
 
 > A virtual method table (VMT) is a mechanism used in a programming language to support dynamic dispatch. – [Wikipedia](https://en.wikipedia.org/wiki/Virtual_method_table)
