@@ -35,6 +35,7 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 * Argument-dependent lookup   https://en.cppreference.com/w/cpp/language/adl
 
 
+
 # Data Struct
 
 ## std::forward_list
@@ -1687,4 +1688,52 @@ int main()
     std::cout << vec << std::endl;
 }
 ```
+
+## Unsigned overflow
+
+问题示例，unsigned 类型的 overflow 属于合法的 wraparound。
+
+``` cpp
+#include<iostream>
+	int main()
+	{
+        uint32_t j = 257;
+        for (uint8_t i = 0; i != j; ++i) {
+            std::cout << "a\n";
+        }
+	}
+```
+
+[How to obtain warning for forgotten cast in arithmetic?](https://stackoverflow.com/questions/54261433/how-to-obtain-warning-for-forgotten-cast-in-arithmetic)
+
+Unfortunately GCC only supports `-fsanitize=signed-integer-overflow`. There's no unsigned version. refer: [GCC Instrumentation-Options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html)
+
+[How to get a warning in GCC for unsigned integer overflow instead of wrap-around?](https://stackoverflow.com/questions/54837695/how-to-get-a-warning-in-gcc-for-unsigned-integer-overflow-instead-of-wrap-around)
+
+## gethostbyname
+
+``` cpp
+#include <stdio.h>
+#include <netdb.h>
+
+int main()
+{
+    struct hostent *lh = gethostbyname("localhost");
+    if (lh) {
+        puts(lh->h_name);
+        printf("%u.%u.%u.%u\n", lh->h_addr_list[0][0],
+                        lh->h_addr_list[0][1],
+                        lh->h_addr_list[0][2],
+                        lh->h_addr_list[0][3]);
+    } else {
+        herror("gethostbyname");
+    }
+}
+/*
+localhost
+127.0.0.1
+*/
+```
+
+https://man7.org/linux/man-pages/man3/gethostbyname.3.html
 

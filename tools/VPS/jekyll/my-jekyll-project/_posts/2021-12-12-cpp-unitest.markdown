@@ -400,9 +400,28 @@ But maybe you think that writing all those `main` functions is too much work? We
 
 # gcov - a Test Coverage Program
 
-[gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html) is a tool you can use in conjunction with `GCC` to test code coverage in your programs.
+## Gcov Intro
 
-`gcov` is a test coverage program. Use it in concert with GCC to analyze your programs to help create more efficient, faster running code and to discover untested parts of your program. You can use gcov as a profiling tool to help discover where your optimization efforts will best affect your code. You can also use gcov along with the other profiling tool, gprof, to assess which parts of your code use the greatest amount of computing time.
+> gcov是什么
+
+
+* `gcov`是一个测试代码覆盖率的工具。与`GCC`一起使用来分析程序，以帮助创建更高效、更快的运行代码，并发现程序的未测试部分。
+* 是一个命令行方式的控制台程序。需要结合`lcov`，`gcovr`等前端图形工具能实现统计数据图形化。
+* 伴随`GCC`发布，不需要单独下载`gcov`工具。配合`GCC`共同实现对`C/C++`文件的语句覆盖和分支覆盖测试。
+* 与程序概要分析工具（Profiling tool，例如`gprof`）一起工作，可以估计程序中哪段代码最耗时。
+
+> gcov能做什么
+
+* 每一行代码执行的频率是多少。
+* 实际执行了哪些行代码，配合测试用例达到满意的覆盖率和预期工作。
+* `gcov`创建一个`sourcefile.gcov`的日志文件，此文件标识源文件`sourcefile.c`每一行执行的次数。
+* `gcov`只在使用`GCC`编译的代码上工作。
+
+
+
+[gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html) is a tool you can use in conjunction(结合) with `GCC` to test code coverage in your programs.
+
+`gcov` is a test coverage program. Use it in concert with GCC to analyze your programs to help create more efficient, faster running code and to discover untested parts of your program. You can use `gcov` as a profiling tool to help discover where your optimization efforts will best affect your code. You can also use `gcov` along with the other profiling tool, `gprof`, to assess which parts of your code use the greatest amount of computing time.
 
 Profiling tools help you analyze your code’s performance. Using a profiler such as `gcov` or `gprof`, you can find out some basic performance statistics, such as:
 
@@ -410,20 +429,260 @@ Profiling tools help you analyze your code’s performance. Using a profiler suc
 * what lines of code are actually executed
 * how much computing time each section of code uses
 
-Once you know these things about how your code works when compiled, you can look at each module to see which modules should be optimized. `gcov` helps you determine where to work on optimization.
+Once you know these things about how your code works when compiled, you can look at each module to see which modules should be optimized. **`gcov` helps you determine where to work on optimization.**
 
-Software developers also use coverage testing in concert with testsuites, to make sure software is actually good enough for a release. Testsuites can verify that a program works as expected; a coverage program tests to see how much of the program is exercised by the testsuite. Developers can then determine what kinds of test cases need to be added to the testsuites to create both better testing and a better final product.
+Software developers also use coverage testing in concert with `testsuites`, to make sure software is actually good enough for a release. Testsuites can verify that a program works as expected; a coverage program tests to see how much of the program is exercised by the testsuite. Developers can then determine what kinds of test cases need to be added to the testsuites to create both better testing and a better final product.
 
-**You should compile your code without optimization if you plan to use gcov because the optimization, by combining some lines of code into one function, may not give you as much information as you need to look for ‘hot spots’ where the code is using a great deal of computer time.** Likewise, because gcov accumulates statistics by line (at the lowest resolution), it works best with a programming style that places only one statement on each line. If you use complicated macros that expand to loops or to other control structures, the statistics are less helpful—they only report on the line where the macro call appears. If your complex macros behave like functions, you can replace them with inline functions to solve this problem.
+**You should compile your code without optimization if you plan to use `gcov` because the optimization, by combining some lines of code into one function, may not give you as much information as you need to look for ‘hot spots’ where the code is using a great deal of computer time.** Likewise, because `gcov` accumulates statistics by line (at the lowest resolution), **it works best with a programming style that places only one statement on each line. If you use complicated macros that expand to loops or to other control structures, the statistics are less helpful—they only report on the line where the macro call appears.** If your complex macros behave like functions, you can replace them with inline functions to solve this problem.
 
 `gcov` creates a logfile called `sourcefile.gcov` which indicates how many times each line of a source file `sourcefile.c` has executed. You can use these logfiles along with `gprof` to aid in fine-tuning the performance of your programs. `gprof` gives timing information you can use along with the information you get from `gcov`.
 
-`gcov` works only on code compiled with `GCC`. It is not compatible with any other profiling or test coverage mechanism.
+**`gcov` works only on code compiled with `GCC`. It is not compatible with any other profiling or test coverage mechanism.**
 
   
 ```
 # ubuntu
 sudo apt-get install -y gcovr
 ```
-	
-	
+
+## Procedure
+
+![gcov_procedure](/assets/images/202203/gcov_procedure.png)
+
+1. 编译前，在编译器中加入`-fprofile-arcs`和`-ftest-coverage`编译参数
+2. 源码文件(`.c/.cc`)经过编译预处理，再编译生成汇编文件(`.s`)，在生成汇编文件的同时完成插桩
+3. 执行可执行文件，在运行过程中之前插入桩点负责收集程序的执行信息。所谓桩点，其实就是一个变量，内存中的一个格子，对应的代码执行一次，则其值增加一次
+4. 生成`.gcda`文件，其中有执行统计次数等，由此经过加工可得到覆盖率
+
+PS:
+* `-ftest-coverage`在编译的时候产生`.gcno`文件，它包含了重建基本块图和相应的块的源码的行号的信息
+* `-fprofile-arcs`在运行编译过的程序的时候，会产生`.gcda`文件，它包含了弧跳变的次数等信息。它需要先执行可执行文件才能生成
+* `.gcno` 包含了代码计数器和源码的映射关系 (**编译时生成**)
+* `.gcda` 记录了每段代码具体的执行次数（**执行时生成**）
+
+
+
+## Invoking gcov
+
+> gcov [options] files
+
+refer: https://gcc.gnu.org/onlinedocs/gcc/Invoking-Gcov.html#Invoking-Gcov
+
+`gcov` should be run with the current directory the same as that when you invoked the compiler. Otherwise it will not be able to locate the source files. `gcov` produces files called `mangledname.gcov` in the current directory. These contain the coverage information of the source file they correspond to. One `.gcov` file is produced for each source (or header) file containing code, which was compiled to produce the data files. The **mangledname** part of the output file name is usually simply the source file name, but can be something more complicated if the ‘-l’ or ‘-p’ options are given. Refer to those options for details.
+
+If you invoke gcov with multiple input files, the contributions from each input file are summed. Typically you would invoke it with the same list of files as the final link of your executable.
+
+The `.gcov` files contain the ‘:’ separated fields along with program source code. The format is
+
+> execution_count:line_number:source line text
+
+Additional block information may succeed each line, when requested by command line option. The execution_count is ‘-’ for lines containing no code. Unexecuted lines are marked ‘#####’ or ‘=====’, depending on whether they are reachable by non-exceptional paths or only exceptional paths such as C++ exception handlers, respectively. Given the ‘-a’ option, unexecuted blocks are marked ‘$$$$$’ or ‘%%%%%’, depending on whether a basic block is reachable via non-exceptional or exceptional paths. Executed basic blocks having a statement with zero execution_count end with ‘*’ character and are colored with magenta color with the -k option. This functionality is not supported in Ada.
+
+**Note that GCC can completely remove the bodies of functions that are not needed – for instance if they are inlined everywhere.** Such functions are marked with ‘-’, which can be confusing. Use the `-fkeep-inline-functions` and `-fkeep-static-functions` options to retain these functions and allow gcov to properly show their execution_count.
+
+Some lines of information at the start have line_number of zero. These preamble lines are of the form
+
+> -:0:tag:value
+
+The ordering and number of these preamble lines will be augmented as gcov development progresses — do not rely on them remaining unchanged. Use tag to locate a particular preamble line.
+
+The additional block information is of the form
+
+> tag information
+
+The information is human readable, but designed to be simple enough for machine parsing too.
+
+When printing percentages, 0% and 100% are only printed when the values are exactly 0% and 100% respectively. Other values which would conventionally be rounded to 0% or 100% are instead printed as the nearest non-boundary value.
+
+**When using `gcov`, you must first compile your program with a special GCC option ‘--coverage’. This tells the compiler to generate additional information needed by `gcov` (basically a flow graph of the program) and also includes additional code in the object files for generating the extra profiling information needed by `gcov`. These additional files are placed in the directory where the object file is located.**
+
+Running the program will cause profile output to be generated. For each source file compiled with `-fprofile-arcs`, an accompanying `.gcda` file will be placed in the object file directory.
+
+Running `gcov` with your program’s source file names as arguments will now produce a listing of the code along with frequency of execution for each line. For example, if your program is called `tmp.cpp`, this is what you see when you use the basic `gcov` facility:
+
+```
+$ g++ --coverage tmp.cpp -c
+$ g++ --coverage tmp.o
+$ a.out
+$ gcov tmp.cpp -m
+File 'tmp.cpp'
+Lines executed:92.86% of 14
+Creating 'tmp.cpp.gcov'
+```
+
+The file `tmp.cpp.gcov` contains output from `gcov`. Here is a sample:
+
+```
+        -:    0:Source:tmp.cpp
+        -:    0:Working directory:/home/gcc/testcase
+        -:    0:Graph:tmp.gcno
+        -:    0:Data:tmp.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include <stdio.h>
+        -:    2:
+        -:    3:template<class T>
+        -:    4:class Foo
+        -:    5:{
+        -:    6:  public:
+       1*:    7:  Foo(): b (1000) {}
+------------------
+Foo<char>::Foo():
+    #####:    7:  Foo(): b (1000) {}
+------------------
+Foo<int>::Foo():
+        1:    7:  Foo(): b (1000) {}
+------------------
+       2*:    8:  void inc () { b++; }
+------------------
+Foo<char>::inc():
+    #####:    8:  void inc () { b++; }
+------------------
+Foo<int>::inc():
+        2:    8:  void inc () { b++; }
+------------------
+        -:    9:
+        -:   10:  private:
+        -:   11:  int b;
+        -:   12:};
+        -:   13:
+        -:   14:template class Foo<int>;
+        -:   15:template class Foo<char>;
+        -:   16:
+        -:   17:int
+        1:   18:main (void)
+        -:   19:{
+        -:   20:  int i, total;
+        1:   21:  Foo<int> counter;
+        -:   22:
+        1:   23:  counter.inc();
+        1:   24:  counter.inc();
+        1:   25:  total = 0;
+        -:   26:
+       11:   27:  for (i = 0; i < 10; i++)
+       10:   28:    total += i;
+        -:   29:
+       1*:   30:  int v = total > 100 ? 1 : 2;
+        -:   31:
+        1:   32:  if (total != 45)
+    #####:   33:    printf ("Failure\n");
+        -:   34:  else
+        1:   35:    printf ("Success\n");
+        1:   36:  return 0;
+        -:   37:}
+```
+
+Note that line 7 is shown in the report multiple times. First occurrence presents total number of execution of the line and the next two belong to instances of class Foo constructors. As you can also see, line 30 contains some unexecuted basic blocks and thus execution count has asterisk symbol.
+
+When you use the -b option, your output looks like this:
+
+```
+        -:    0:Source:tmp.cpp
+        -:    0:Working directory:/home/gcc/testcase
+        -:    0:Graph:tmp.gcno
+        -:    0:Data:tmp.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:#include <stdio.h>
+        -:    2:
+        -:    3:template<class T>
+        -:    4:class Foo
+        -:    5:{
+        -:    6:  public:
+       1*:    7:  Foo(): b (1000) {}
+------------------
+Foo<char>::Foo():
+function Foo<char>::Foo() called 0 returned 0% blocks executed 0%
+    #####:    7:  Foo(): b (1000) {}
+------------------
+Foo<int>::Foo():
+function Foo<int>::Foo() called 1 returned 100% blocks executed 100%
+        1:    7:  Foo(): b (1000) {}
+------------------
+       2*:    8:  void inc () { b++; }
+------------------
+Foo<char>::inc():
+function Foo<char>::inc() called 0 returned 0% blocks executed 0%
+    #####:    8:  void inc () { b++; }
+------------------
+Foo<int>::inc():
+function Foo<int>::inc() called 2 returned 100% blocks executed 100%
+        2:    8:  void inc () { b++; }
+------------------
+        -:    9:
+        -:   10:  private:
+        -:   11:  int b;
+        -:   12:};
+        -:   13:
+        -:   14:template class Foo<int>;
+        -:   15:template class Foo<char>;
+        -:   16:
+        -:   17:int
+function main called 1 returned 100% blocks executed 81%
+        1:   18:main (void)
+        -:   19:{
+        -:   20:  int i, total;
+        1:   21:  Foo<int> counter;
+call    0 returned 100%
+branch  1 taken 100% (fallthrough)
+branch  2 taken 0% (throw)
+        -:   22:
+        1:   23:  counter.inc();
+call    0 returned 100%
+branch  1 taken 100% (fallthrough)
+branch  2 taken 0% (throw)
+        1:   24:  counter.inc();
+call    0 returned 100%
+branch  1 taken 100% (fallthrough)
+branch  2 taken 0% (throw)
+        1:   25:  total = 0;
+        -:   26:
+       11:   27:  for (i = 0; i < 10; i++)
+branch  0 taken 91% (fallthrough)
+branch  1 taken 9%
+       10:   28:    total += i;
+        -:   29:
+       1*:   30:  int v = total > 100 ? 1 : 2;
+branch  0 taken 0% (fallthrough)
+branch  1 taken 100%
+        -:   31:
+        1:   32:  if (total != 45)
+branch  0 taken 0% (fallthrough)
+branch  1 taken 100%
+    #####:   33:    printf ("Failure\n");
+call    0 never executed
+branch  1 never executed
+branch  2 never executed
+        -:   34:  else
+        1:   35:    printf ("Success\n");
+call    0 returned 100%
+branch  1 taken 100% (fallthrough)
+branch  2 taken 0% (throw)
+        1:   36:  return 0;
+        -:   37:}
+```
+
+For each function, a line is printed showing how many times the function is called, how many times it returns and what percentage of the function’s blocks were executed.
+
+**The execution counts are cumulative**. If the example program were executed again without removing the `.gcda` file, the count for the number of times each line in the source was executed would be added to the results of the previous run(s). This is potentially useful in several ways. For example, it could be used to accumulate data over a number of program runs as part of a test verification suite, or to provide more accurate long-term information over a large number of program runs.
+
+The data in the `.gcda` files is saved immediately before the program exits. For each source file compiled with `-fprofile-arcs`, the profiling code first attempts to read in an existing `.gcda` file; if the file doesn’t match the executable (differing number of basic block counts) it will ignore the contents of the file. It then adds in the new execution counts and finally writes the data to the file.
+
+## Data File Relocation to Support Cross-Profiling
+
+To support cross-profiling, a program compiled with -fprofile-arcs can relocate the data files based on two environment variables:
+
+* `GCOV_PREFIX` contains the prefix to add to the absolute paths in the object file. Prefix can be absolute, or relative. The default is no prefix.
+* `GCOV_PREFIX_STRIP` indicates the how many initial directory names to strip off the hardwired absolute paths. Default value is 0.
+
+Note: If `GCOV_PREFIX_STRIP` is set without `GCOV_PREFIX` is undefined, then a relative path is made out of the hardwired absolute paths.
+
+For example, if the object file `/user/build/foo.o` was built with `-fprofile-arcs`, the final executable will try to create the data file `/user/build/foo.gcda` when running on the target system. This will fail if the corresponding directory does not exist and it is unable to create it. This can be overcome by, for example, setting the environment as `GCOV_PREFIX=/target/run` and `GCOV_PREFIX_STRIP=1`. Such a setting will name the data file `/target/run/build/foo.gcda`.
+
+You must move the data files to the expected directory tree in order to use them for profile directed optimizations (`-fprofile-use`), or to use the `gcov` tool.
+
+refer: 
+
+* [Can GCOV create .gcda file in the different directory structure?](https://stackoverflow.com/questions/51414640/can-gcov-create-gcda-file-in-the-different-directory-structure)
+* https://gcc.gnu.org/onlinedocs/gcc/Cross-profiling.html
+

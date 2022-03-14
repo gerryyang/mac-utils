@@ -12,12 +12,37 @@ categories: [Bash, 编程语言]
 
 * [Execute Bash Shell Online (GNU Bash v4.4)](https://www.tutorialspoint.com/execute_bash_online.php)
 
-# Reference
 
-* [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
+# Shell Parameter Expansion (Default value)
+
+``` bash
+if [ -z "${VARIABLE}" ]; then 
+    FOO='default'
+else 
+    FOO=${VARIABLE}
+fi
+```
+
+To get the assigned value, or default if it's missing:
+
+``` bash
+FOO="${VARIABLE:-default}"  # If variable not set or null, use default.
+# If VARIABLE was unset or null, it still is after this (no assignment done).
+```
+
+Or to assign default to VARIABLE at the same time:
+
+``` bash
+FOO="${VARIABLE:=default}"  # If variable not set or null, set it to default.
+```
+
+refer: 
+
+* [Assigning default values to shell variables with a single command in bash](https://stackoverflow.com/questions/2013547/assigning-default-values-to-shell-variables-with-a-single-command-in-bash)
+* [3.5 Shell Expansions](https://tiswww.case.edu/php/chet/bash/bashref.html#Shell-Expansions)
 
 
-# `#!/bin/bash --login vs #!/bin/bash`
+# Compare `#!/bin/bash --login` with `#!/bin/bash`
 
 The main difference is that a login shell executes your profile when it starts. From the man page:
 
@@ -1289,8 +1314,10 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 
 
 
-# Other
 
+# Reference
+
+* [The Open Group Base Specifications Issue 7, 2018 edition](https://pubs.opengroup.org/onlinepubs/9699919799/)
 * [Bash Programming Tutorial](https://ianding.io/2019/08/30/bash-programming-tutorial/)
 * [Don't Overuse hjkl in Vim](https://ianding.io/2019/08/16/dont-overuse-hjkl-in-vim/)
 * [Multi-file Search and Replace in Vim](https://ianding.io/2019/08/22/multi-file-search-and-replace-in-vim/)
