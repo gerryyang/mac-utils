@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "C++11 的内存模型"
+title:  "CPP Memory Order"
 date:   2022-03-14 15:00:00 +0800
 categories: [C/C++]
 ---

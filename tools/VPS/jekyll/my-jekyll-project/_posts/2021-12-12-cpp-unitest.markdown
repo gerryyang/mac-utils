@@ -455,8 +455,8 @@ sudo apt-get install -y gcovr
 4. 生成`.gcda`文件，其中有执行统计次数等，由此经过加工可得到覆盖率
 
 PS:
-* `-ftest-coverage`在编译的时候产生`.gcno`文件，它包含了重建基本块图和相应的块的源码的行号的信息
-* `-fprofile-arcs`在运行编译过的程序的时候，会产生`.gcda`文件，它包含了弧跳变的次数等信息。它需要先执行可执行文件才能生成
+* `-ftest-coverage` tells gcc to dump the notes file for each source file as SOURCE.gcno
+* `-fprofile-arcs` the flag to instrument the code, basically adding a 64-bit counter in each basic-block
 * `.gcno` 包含了代码计数器和源码的映射关系 (**编译时生成**)
 * `.gcda` 记录了每段代码具体的执行次数（**执行时生成**）
 
@@ -685,4 +685,7 @@ refer:
 
 * [Can GCOV create .gcda file in the different directory structure?](https://stackoverflow.com/questions/51414640/can-gcov-create-gcda-file-in-the-different-directory-structure)
 * https://gcc.gnu.org/onlinedocs/gcc/Cross-profiling.html
+* [HOWTO: Dumping gcov data at runtime - simple example](https://www.osadl.org/Dumping-gcov-data-at-runtime-simple-ex.online-coverage-analysis.0.html)
+
+
 

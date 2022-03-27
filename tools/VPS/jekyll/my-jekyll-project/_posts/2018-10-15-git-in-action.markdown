@@ -829,6 +829,7 @@ git submodule deinit --all
 
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
+* [How do git submodules work?](https://matthew-brett.github.io/curious-git/git_submodules.html#how-do-git-submodules-work)
 
 # Git LFS的原理
 

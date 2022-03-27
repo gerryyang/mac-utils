@@ -1055,6 +1055,17 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
+## cp
+
+``` bash
+# copy file preserving directory path
+mkdir test
+cp --parents `find . -name "*.gcno"` test
+```
+
+[How to copy file preserving directory path in Linux?](https://serverfault.com/questions/180853/how-to-copy-file-preserving-directory-path-in-linux)
+
+
 ## find
 
 ``` bash

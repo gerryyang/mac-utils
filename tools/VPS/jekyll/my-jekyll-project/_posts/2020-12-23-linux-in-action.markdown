@@ -753,8 +753,12 @@ More: man top
 ```
 ulimit -c unlimited
 
+# 自定义路径格式
 echo "/data/corefile/core_uid%u_%e_%t" > /proc/sys/kernel/core_pattern
 echo "1" > /proc/sys/kernel/core_uses_pid
+
+# 默认当前执行目录
+echo "core" > /proc/sys/kernel/core_pattern
 ```
 
 ## dmesg

@@ -160,7 +160,8 @@ http://104.131.173.242/phpmyadmin/
 
 第三方主题：
 
-[long-haul](https://github.com/brianmaierjr/long-haul) - A minimal, type-focused Jekyll theme. http://brianmaierjr.com/long-haul
+* [long-haul](https://github.com/brianmaierjr/long-haul) - A minimal, type-focused Jekyll theme. http://brianmaierjr.com/long-haul
+* [jekyll-theme-chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) - A minimal, responsive, and powerful Jekyll theme for presenting professional writing
 
 More: 
 
