@@ -1,13 +1,12 @@
 ---
 layout: post
-title:  "HTTP in Action"
-date:   2022-03-24 14:00:00 +0800
-categories: Http
+title:  "HTTP Libcurl in Action"
+date:   2020-09-08 14:30:00 +0800
+categories: [TCP/IP]
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
-
 
 
 # libcurl (the multiprotocol file transfer library)
@@ -241,6 +240,41 @@ libcurl first introduced the so called easy interface. All operations in the eas
 
 libcurl also offers another interface that allows multiple simultaneous transfers in a single thread, the so called multi interface. More about that interface is detailed in a separate chapter further down. You still need to understand the easy interface first, so please continue reading for better understanding.
 
+## Multi-threading issues
+
+libcurl is thread safe but there are a few exceptions. Refer to [libcurl-thread](https://curl.se/libcurl/c/libcurl-thread.html) for more information.
+
+## When it does not work (问题定位)
+
+There will always be times when the transfer fails for some reason. You might have set the wrong libcurl option or misunderstood what the libcurl option actually does, or the remote server might return non-standard replies that confuse the library which then confuses your program.
+
+There's one golden rule when these things occur: set the [CURLOPT_VERBOSE](https://curl.se/libcurl/c/CURLOPT_VERBOSE.html) option to 1. it will cause the library to spew out the entire protocol details it sends, some internal info and some received protocol data as well (especially when using FTP). If you are using HTTP, adding the headers in the received output to study is also a clever way to get a better understanding why the server behaves the way it does. Include headers in the normal body output with [CURLOPT_HEADER](https://curl.se/libcurl/c/CURLOPT_HEADER.html) set 1.
+
+If [CURLOPT_VERBOSE](https://curl.se/libcurl/c/CURLOPT_VERBOSE.html) is not enough, you increase the level of debug data your application receive by using the [CURLOPT_DEBUGFUNCTION](https://curl.se/libcurl/c/CURLOPT_DEBUGFUNCTION.html).
+
+Getting some in-depth knowledge about the protocols involved is never wrong, and if you are trying to do funny things, you might understand libcurl and how to use it better if you study the appropriate RFC documents at least briefly.
+
+
+## Libcurl with c++
+
+There's basically only one thing to keep in mind when using C++ instead of C when interfacing libcurl:
+
+The callbacks CANNOT be non-static class member functions
+
+Example C++ code:
+
+``` cpp
+class AClass {
+    static size_t write_data(void *ptr, size_t size, size_t nmemb,
+                             void *ourpointer)
+    {
+      /* do what you want with the data */
+    }
+}
+```
+
+
+
 
 
 
@@ -248,15 +282,10 @@ libcurl also offers another interface that allows multiple simultaneous transfer
 
 * https://curl.se/libcurl/
 * [libcurl programming tutorial](https://curl.se/libcurl/c/libcurl-tutorial.html)
+* [libcurl - small example snippets](https://curl.se/libcurl/c/example.html)
+* https://github.com/nodejs/http-parser
+* https://github.com/nodejs/llhttp
+* [Understand HTTP3 in 5 minutes](https://www.jesuisundev.com/en/understand-http3-in-5-minutes/?from=timeline&isappinstalled=0)
 
 
 
-
-
-
-
-
-  
-
-	
-	

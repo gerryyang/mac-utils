@@ -709,9 +709,11 @@ delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed)
 
 # Linux/UNIX Programming Interface
 
+
 ## clock_gettime
 
-* https://linux.die.net/man/3/clock_gettime
+https://linux.die.net/man/3/clock_gettime
+
 ## pthread_setname_np
 
 By default, all the threads created using `pthread_create()` inherit the program name.  The `pthread_setname_np()` function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.

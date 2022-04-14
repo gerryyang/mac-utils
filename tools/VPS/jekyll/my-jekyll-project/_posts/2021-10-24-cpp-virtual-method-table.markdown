@@ -41,6 +41,50 @@ int main()
 }
 ```
 
+``` cpp
+#include <iostream>
+#include <stdint.h>
+
+class A
+{
+public:
+    virtual void f() { printf("A::f()\n"); }
+};
+
+class B : public A
+{
+protected:
+    void f() override { printf("B::f()\n"); }
+};
+
+class C : public A
+{
+protected:
+    void f() override { printf("C::f()\n"); }
+};
+
+int main()
+{
+    A* pa = new B;
+    pa->f();
+    printf("pa(%p)\n", pa);
+
+    A* pa2 = new C;
+    pa2->f();
+    printf("pa2(%p)\n", pa2);
+
+    const uint8_t* ptr = (const uint8_t*)(const void*)pa;
+    printf("ptr(%p)\n", ptr);
+}
+/*
+B::f()
+pa(0x21f5f40)
+C::f()
+pa2(0x21f6f70)
+ptr(0x21f5f40)
+*/
+```
+
 # Virtual Tables
 
 > A virtual method table (VMT) is a mechanism used in a programming language to support dynamic dispatch. – [Wikipedia](https://en.wikipedia.org/wiki/Virtual_method_table)

@@ -1609,10 +1609,6 @@ Sorted using quicksort:
 
 * https://en.cppreference.com/w/cpp/algorithm/partition
 
-# Clang-Format Style Options
-
-https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-
 	
 # Others
 
@@ -1737,3 +1733,24 @@ localhost
 
 https://man7.org/linux/man-pages/man3/gethostbyname.3.html
 
+## What is time_t ultimately a typedef to?
+
+The `time_t` datatype is a data type in the ISO C library defined for storing system time values. Such values are returned from the standard time() library function. This type is a typedef defined in the standard header. **ISO C defines time_t as an arithmetic type, but does not specify any particular type**, range, resolution, or encoding for it. Also unspecified are the meanings of arithmetic operations applied to time values.
+
+**Unix and POSIX-compliant systems implement the `time_t` type as a `signed integer` (typically 32 or 64 bits wide) which represents the number of seconds since the start of the Unix epoch**: midnight UTC of January 1, 1970 (not counting leap seconds). Some systems correctly handle negative time values, while others do not. Systems using a 32-bit time_t type are susceptible to the [Year 2038 problem](http://en.wikipedia.org/wiki/Year_2038_problem).
+
+``` cpp
+#include <time.h>
+
+int main(int argc, char** argv)
+{
+    time_t test;
+    return 0;
+}
+/*
+gcc -E time.c | grep __time_t
+typedef long int __time_t;
+*/
+```
+
+* https://stackoverflow.com/questions/471248/what-is-time-t-ultimately-a-typedef-to

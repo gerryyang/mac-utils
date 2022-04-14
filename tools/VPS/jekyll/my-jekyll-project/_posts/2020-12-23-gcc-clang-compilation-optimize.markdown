@@ -446,3 +446,9 @@ chmod -x "${debugdir}/${debugfile}"
 
 refer: [How to generate gcc debug symbol outside the build target?](https://stackoverflow.com/questions/866721/how-to-generate-gcc-debug-symbol-outside-the-build-target)
 
+# -fno-rtti / -frtti
+
+
+* https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
+* https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
+* https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class

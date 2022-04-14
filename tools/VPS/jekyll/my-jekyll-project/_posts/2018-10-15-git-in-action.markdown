@@ -600,6 +600,12 @@ $ git push origin --delete master
 * `git add .` stages new files and modifications, **without deletions** (on the current directory and its subdirectories).
 * `git add -u` stages modifications and deletions, **without new files**
 
+```
+# 设置 git add 别名，以忽略部分目录的变更
+git config alias.adds 'add -- ":!protocol" ":!resources"'
+git add .
+```
+
 refer: 
 
 * [git-add - Add file contents to the index](https://git-scm.com/docs/git-add)
@@ -656,6 +662,18 @@ git log --oneline -n3
 更多: [Git-基础-查看提交历史]
 
 [Git-基础-查看提交历史]: https://git-scm.com/book/zh/v1/Git-基础-查看提交历史
+
+## 对比差异 - git diff
+
+```
+# 只显示当前一行的差异，而不是三行
+git diff -U0 HEAD^
+
+-U<n>, --unified=<n>
+           Generate diffs with <n> lines of context instead of the usual three. Implies --patch. Implies -p.
+```
+
+
 
 ## 分支操作 - git branch
 
@@ -797,13 +815,25 @@ $ git merge experiment
 git stash 
 # 新建bugfix分支去修复bug
 git checkout -b bugfix/分支名  
-# 修复bug...
+# 修复bug
 # 回到原来的开发分支
 git checkout feature1 
 # 恢复暂存的内容
 git stash pop 
-# 继续开发需求...
+# 继续开发需求
+
+git stash list
+git stash show 0
+git stash pop 0
+git stash drop 0
 ```
+
+```
+# git stash a specific file
+git stash push -m welcome_cart app/views/cart/welcome.thtml
+```
+
+* https://stackoverflow.com/questions/5506339/how-can-i-git-stash-a-specific-file
 
 ## 子模块 - git submodule
 
@@ -830,6 +860,141 @@ git submodule deinit --all
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 * [How do git submodules work?](https://matthew-brett.github.io/curious-git/git_submodules.html#how-do-git-submodules-work)
+
+# Git hooks
+
+```
+$ .git/hooks$ls
+applypatch-msg.sample  fsmonitor-watchman.sample  pre-applypatch.sample  pre-merge-commit.sample    pre-push.sample    pre-receive.sample       update.sample
+commit-msg.sample      post-update.sample         pre-commit.sample      prepare-commit-msg.sample  pre-rebase.sample  push-to-checkout.sample
+```
+
+## pre-commit
+
+通过`.git/hooks/pre-commit`可以在commit前执行自定义操作。通过`ln -s pre-commit ${PROJECT_ROOT}/.git/hooks/pre-commit`指定自定义 pre-commit 的脚本，之后 commit 时自动触发 pre-commit 脚本执行，如存在错误则会报错终止 commit，修复完毕后重新发起 commit 即可。以下是`pre-commit.sample`示例：
+
+``` bash
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+        against=HEAD
+else
+        # Initial commit: diff against an empty tree object
+        against=$(git hash-object -t tree /dev/null)
+fi
+
+# If you want to allow non-ASCII filenames set this variable to true.
+allownonascii=$(git config --type=bool hooks.allownonascii)
+
+# Redirect output to stderr.
+exec 1>&2
+
+# Cross platform projects tend to avoid non-ASCII filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+        # Note that the use of brackets around a tr range is ok here, (it's
+        # even required, for portability to Solaris 10's /usr/bin/tr), since
+        # the square bracket bytes happen to fall in the designated range.
+        test $(git diff --cached --name-only --diff-filter=A -z $against |
+          LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+        cat <<\EOF
+Error: Attempt to add a non-ASCII file name.
+
+This can cause problems if you want to work with people on other platforms.
+
+To be portable it is advisable to rename the file.
+
+If you know what you are doing you can disable this check using:
+
+  git config hooks.allownonascii true
+EOF
+        exit 1
+fi
+
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
+```
+
+实际使用的例子：
+
+``` bash
+#!/bin/bash
+
+<< COMMENT
+the scropt for git pre-commit
+Usage: $0 $FILE
+COMMENT
+
+CUR_DIR=$(dirname $(readlink -f $0))
+echo $CUR_DIR
+
+RESULT=0
+NEEDCHECK=0
+
+CPPLINT="$CUR_DIR/cpplint.sh"
+
+function CHECK_LOG()
+{
+    if [ $? -ne 0 ]; then
+        echo -e "\033[031;1m[FAILED]\033[0m $1"
+    else
+        echo -e "\033[032;1m[PASS]\033[0m $1"
+    fi
+}
+
+echo "pre-commit begin"
+
+if [ ${CODE_CHECK_IGNORE:-0} -eq 1 ]; then
+    echo "Ignore code check"
+    exit 0
+fi
+
+GIT_DIFF=$(git diff --cached --name-status)
+while read STATUS FILE; do 
+
+    if [ "$STATUS" == "D" ]; then
+        continue;
+    fi
+
+    if [ -z $(expr "$f" : ".*\.\(h\|hpp\|cc\|cpp\)$") ]; then
+        continue
+    fi
+
+    NEEDCHECK=1
+
+    echo "Check cpp style: $FILE"
+    $CPPLINT $FILE
+    if [ $? -ne 0 ]; then
+        CHECK_LOG "$CPPLINT $FILE failed"
+        RESULT=1
+    else
+        CHECK_LOG "$CPPLINT $FILE"
+    fi
+
+done <<< "$GIT_DIFF"
+
+if [ $NEEDCHECK -eq 0 ]; then
+    CHECK_LOG "No file needs to check"
+
+elif [ $RESULT -gt 0 ]; then
+    CHECK_LOG "pre-commit failed, need to check before next commit"
+    exit 1
+fi
+
+echo "pre-commit end"
+```
+
+
 
 # Git LFS的原理
 

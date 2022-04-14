@@ -854,9 +854,19 @@ HP
 Oracle
 ```
 
+How can I read from variable with while read line? See [§3.6.7 "Here Strings" in the Bash Reference Manual](http://www.gnu.org/software/bash/manual/bashref.html#Here-Strings).
+
+``` bash
+GIT_DIFF=$(git diff --cached --name-status)
+while read ST FILE; do 
+echo $ST "," $FILE
+done <<< $GIT_DIFF
+```
+
 refer:
 
 * [HowTo: Iterate Bash For Loop Variable Range Under Unix / Linux](https://www.cyberciti.biz/faq/unix-linux-iterate-over-a-variable-range-of-numbers-in-bash/)
+* [How do I "read" a variable on a while loop](https://stackoverflow.com/questions/13122441/how-do-i-read-a-variable-on-a-while-loop)
 
 ## Array
 

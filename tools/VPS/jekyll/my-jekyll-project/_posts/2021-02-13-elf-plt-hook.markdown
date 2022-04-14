@@ -14,6 +14,8 @@ categories: [GCC/Clang]
 
 TODO
 
+https://www.akkadia.org/drepper/dsohowto.pdf
+
 # GCC Code Gen Options
 
 https://gcc.gnu.org/onlinedocs/gcc-9.1.0/gcc/Code-Gen-Options.html
@@ -87,6 +89,14 @@ In Linux, DL libraries aren't actually special from the point-of-view of their f
 `-rdynamic` exports the symbols of an executable, this mainly addresses scenarios as described in Mike Kinghan's answer, but also it helps e.g. Glibc's `backtrace_symbols()` symbolizing the backtrace.
 
 Symbols are only exported by default from shared libraries. `-rdynamic` tells linker to do the same for `executables`. Normally that's a bad idea but sometimes you want to provide APIs for dynamically loaded plugins and then this comes handy (even though one much better off using [explicit visibility annotations](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html), [version script](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html) or [dynamic export file](https://www.cs.kent.ac.uk/people/staff/srk21/blog/2011/12/01/) ).
+
+
+[CMake: How do I remove rdynamic from link options?](https://answers.ros.org/question/231381/how-do-i-remove-rdynamic-from-link-options/)
+
+```
+# 显示关闭 --rdynamic 链接选项
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-export-dynamic")
+```
 
 From The Linux Programming Interface:
 
@@ -903,6 +913,92 @@ If you know the name of a function, but you truly can't remember what library it
 nm -o /lib/* /usr/lib/* /usr/lib/*/* \
       /usr/local/lib/* 2> /dev/null | grep 'cos$' 
 ```
+
+问题：I want to display local (non-external) symbols in a C-program using `nm`. However, for the main.c program below, I'd expect nm -a to also output foo, since it's defined as a local symbol (internal linkage) by using the static keyword. But, foo is not listed among the symbols. How can I make nm list all symbols (including local ones)?
+
+``` c
+// main.c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    printf("main");
+}
+
+static void foo() {
+    printf("foo");
+}
+
+extern void bar() {
+    printf("baz");
+}
+```
+
+回答：
+
+You're not finding it because it isn't there -- look at the disassembly (objdump -d).
+
+Compilers routinely eliminate unused static functions even at `-O0`. To keep the foo function you can try making it both used and nontrivial (so it doesn't get inlined).
+
+``` c
+// main.c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    printf("main");
+}
+
+static void foo() {
+    printf("foo");
+}
+
+extern void bar() {
+    printf("baz");
+    foo();
+}
+```
+
+查看符号：可以看到`a.out:0000000000400582 t foo()`
+
+```
+$nm -C -o a.out 
+a.out:0000000000601034 B __bss_start
+a.out:0000000000601034 b completed.6355
+a.out:0000000000601030 D __data_start
+a.out:0000000000601030 W data_start
+a.out:00000000004004a0 t deregister_tm_clones
+a.out:0000000000400510 t __do_global_dtors_aux
+a.out:0000000000600de8 t __do_global_dtors_aux_fini_array_entry
+a.out:0000000000400658 R __dso_handle
+a.out:0000000000600df8 d _DYNAMIC
+a.out:0000000000601034 D _edata
+a.out:0000000000601038 B _end
+a.out:0000000000400644 T _fini
+a.out:0000000000400530 t frame_dummy
+a.out:0000000000600de0 t __frame_dummy_init_array_entry
+a.out:00000000004007e8 r __FRAME_END__
+a.out:0000000000601000 d _GLOBAL_OFFSET_TABLE_
+a.out:                 w __gmon_start__
+a.out:0000000000400670 r __GNU_EH_FRAME_HDR
+a.out:0000000000400408 T _init
+a.out:0000000000600de8 t __init_array_end
+a.out:0000000000600de0 t __init_array_start
+a.out:0000000000400650 R _IO_stdin_used
+a.out:0000000000600df0 d __JCR_END__
+a.out:0000000000600df0 d __JCR_LIST__
+a.out:0000000000400640 T __libc_csu_fini
+a.out:00000000004005d0 T __libc_csu_init
+a.out:                 U __libc_start_main@@GLIBC_2.2.5
+a.out:000000000040055d T main
+a.out:                 U printf@@GLIBC_2.2.5
+a.out:00000000004004d0 t register_tm_clones
+a.out:0000000000400470 T _start
+a.out:0000000000601038 D __TMC_END__
+a.out:00000000004005ae T bar()
+a.out:0000000000400582 t foo()
+```
+
+refer: [How to display local (non-external) symbols in a C-program using nm](https://stackoverflow.com/questions/57943206/how-to-display-local-non-external-symbols-in-a-c-program-using-nm-on-macos)
+
 
 ## 生成大的共享库
 
