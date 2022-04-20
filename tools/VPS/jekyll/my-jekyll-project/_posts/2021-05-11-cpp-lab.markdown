@@ -283,6 +283,58 @@ std::basic_string<char> & s = __begin1.operator*();
 
 ## move
 
+例子：
+
+``` cpp
+#include <functional>
+#include <iostream>
+
+class A
+{
+public:
+    A() { printf("A::A()\n"); }
+    ~A() { printf("A::~A()\n"); }
+
+    A(A&&) { printf("A::A(&&)\n"); } // move ctor
+    A& operator=(A&& a)  // move assgin
+    { 
+        printf("A::operator=A(&&)\n"); 
+        if (this != &a)
+        {
+            x = a.x;
+        }
+        return *this; 
+    } 
+
+    void print() { printf("A::print x(%d)\n", x); }
+
+    int x = 0;
+};
+
+A a2;
+
+void f(A&& a)
+{
+    a2 = std::move(a);
+}
+
+int main() 
+{
+    A a;
+    a.x = 1;
+    f(std::move(a));
+    a2.print();
+}
+/*
+A::A()
+A::A()
+A::operator=A(&&)
+A::print x(1)
+A::~A()
+A::~A()
+*/
+```
+
 注意：
 
 * 使用`gcc 4.9.4`编译，被移动的右值并没有被清空，而高版本的编译器符合预期。可见[测试代码](https://wandbox.org/permlink/SNxaUGxc4o1lk1oe)
@@ -367,6 +419,7 @@ refer:
 * [Move constructors](https://en.cppreference.com/w/cpp/language/move_constructor)
 * [Move assignment operator](https://en.cppreference.com/w/cpp/language/move_assignment)
 * [std::move](https://en.cppreference.com/w/cpp/utility/move)
+* [Move semantic with std::function](https://stackoverflow.com/questions/13680587/move-semantic-with-stdfunction)
 
 ## Fixed width integer types
 
@@ -508,6 +561,110 @@ int main()
 ```
 
 因此，从某种程度上说，lambda 表达式是C++11提供的一种语法糖，让代码编写更加轻松。
+
+### 关于生命周期的错误用法
+
+``` cpp
+#include <iostream>
+#include <functional>
+
+class A
+{
+public:
+    A() { printf("A::A()\n"); }
+    ~A() { printf("A::~A()\n"); }
+
+    A(A&&) { printf("A::A(&&)\n"); } // move ctor
+
+    int x = 0;
+};
+
+using Func = std::function<void()>;
+
+int main()
+{
+    Func f2;
+    {
+        A a1;
+        a1.x = 2;
+        Func f = [&a1](){ printf("a1.x: %d\n", a1.x); };
+        f2 = std::move(f);
+    }
+    f2();  // Oops! a1.x: 2, but this is error
+}
+```
+
+对象a1通过引用的方式捕获，在调用f2()时，a1的生命周期已经结束。
+
+验证程序：f2() 之所以输出正确，是因为编译器对堆栈没有复用，可以通过变量地址验证。
+
+``` cpp
+#include <iostream>
+#include <functional>
+
+class A
+{
+public:
+    A() { printf("A::A()\n"); }
+    ~A() { printf("A::~A()\n"); }
+
+    A(A&&) { printf("A::A(&&)\n"); } // move ctor
+
+    void print() { printf("A::print x(%d)\n", x); }
+
+    int x = 0;
+
+};
+
+using Func = std::function<void()>;
+
+int main()
+{
+    Func f, f2;
+    {
+        A a1;
+        a1.x = 2;
+        f = [&a1](){ printf("&a1.x(%p) a1.x(%d)\n", &a1.x, a1.x); };
+        f2 = std::move(f);
+        a1.x = 3;
+        printf("&a1.x(%p)\n", &a1.x);
+    }
+    int b[1] = {0};
+    printf("&b(%p) b(%d)\n", b, b[0]);
+
+    f2();
+}
+/*
+A::A()
+&a1.x(0x7ffe0e1c3430)
+A::~A()
+&b(0x7ffe0e1c3440) b(0)
+&a1.x(0x7ffe0e1c3430) a1.x(3)
+*/
+```
+
+[Move semantic with std::function](https://stackoverflow.com/questions/13680587/move-semantic-with-stdfunction)
+
+
+``` cpp
+#include <functional>
+#include <iostream>
+
+//void f() {}
+using Func = std::function<void()>;
+Func f = [](){ printf("hello\n"); };
+
+int main() 
+{
+    std::function<void()> h;
+    {
+        std::function<void()> g{f};
+        h = std::move(g);
+        std::cout << (g ? "not empty\n" : "empty\n"); // empty
+    }
+    h(); // hello
+}
+```
 
 ### 性能影响
 
@@ -1754,3 +1911,11 @@ typedef long int __time_t;
 ```
 
 * https://stackoverflow.com/questions/471248/what-is-time-t-ultimately-a-typedef-to
+
+## Copy elision
+
+Omits copy and move (since C++11) constructors, resulting in zero-copy pass-by-value semantics.
+
+TODO
+
+* https://en.cppreference.com/w/cpp/language/copy_elision

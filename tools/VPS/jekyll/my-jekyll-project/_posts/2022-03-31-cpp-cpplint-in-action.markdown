@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "CPPlint in Action"
+title:  "CPP Cpplint in Action"
 date:   2022-03-31 12:22:00 +0800
 categories: [C/C++]
 ---

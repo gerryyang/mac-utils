@@ -658,6 +658,7 @@ git log --since=2.weeks
 # 将每个提交版本信息缩减为一行
 git log --pretty=oneline 
 git log --oneline -n3 
+git log --oneline -n3 --graph
 ```
 更多: [Git-基础-查看提交历史]
 
@@ -780,6 +781,9 @@ git push <remote> -u <new_name>
 
 ## 变基操作 - git rebase
 
+> Do not rebase commits that you have pushed to a public repository. See [The Perils of Rebasing](https://git-scm.com/book/en/v2/Git-Branching-Rebasing#_rebase_peril)
+
+
 在Git中整合来自不同分支的修改主要有两种方法：merge 和 rebase
 
 这两种整合方法的最终结果没有任何区别，但是变基使得提交历史更加整洁。 你在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的，但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。
@@ -804,7 +808,14 @@ $ git checkout master
 $ git merge experiment
 ```
 
-更多：[Git 分支 - 变基](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA)
+更多：
+
+* [Git 分支 - 变基](https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA)
+* [Git合并那些事——Rebase的烦恼](https://morningspace.github.io/tech/git-merge-stories-8/)
+* [Git commits are duplicated in the same branch after doing a rebase](https://stackoverflow.com/questions/9264314/git-commits-are-duplicated-in-the-same-branch-after-doing-a-rebase)
+* [The Perils of Rebasing](https://git-scm.com/book/en/v2/Git-Branching-Rebasing#_rebase_peril)
+
+
 
 ## 暂存操作 - git stash
 
@@ -1188,17 +1199,16 @@ refer:
 
 # Merge Request流程
 
-MR场景：MR提交者对项目`A`进行fork，生成自己的项目`B`。然后在`B`项目上开发功能，然后创建`MR请求`，向项目`A`的Owner申请将项目`B`修改的代码再合入到项目`A`中。
+MR场景：MR发起者，对原始项目`A`进行fork，生成自己的项目`B`。随后在`B`项目上完成开发，然后创建MR请求，即，向项目`A`的Owner申请将项目`B`修改的代码合入项目`A`中。
 
-> TL;DR
-> 1. MR提交者，先fork要开发的原始项目`A`，生成自己的项目`B`
-> 2. MR提交者，在fork的项目`B`上checkout创建新的`dev`开发分支，并在此分支上开发新的功能
-> 3. 当MR提交者需要将项目`B`中改动的代码合入项目`A`时，需要发起`Merge Request`流程
->    3.1 MR提交者，先将原始项目`A`的代码同步到自己的项目`B`的`master`分支
->    3.2 MR提交者，再将自己项目`B`开发的`dev`分支提交记录进行`rebase`（将多次commit记录进行精简合并）
->    3.3 MR提交者，最后将自己项目`B`的`dev`分支merge到`master`分支，并解决可能产生的conflicts (此流程会保证MR提交者commit的记录在原始项目commit记录的上面)
->    3.4 MR提交者，提交MR请求等待Owner审核
-> 4. MR审批者，执行Comment和Approve，`Create a merge commit`完成代码合入。
+> 过程描述：
+> 1. MR发起者，先fork要开发的原始项目`A`，生成自己的项目`B`
+> 2. MR发起者，在fork的项目`B`上创建自己的分支进行开发，比如`dev`分支
+> 3. 当需要将项目`B`中改动的代码合入项目`A`时，需要发起Merge Request流程
+>    3.1 MR发起者，更新原始项目`A`的代码到本地环境，例如，`git fetch upstream master`
+>    3.2 MR发起者，将项目`B`的`dev`分支rebase到`upstream/master`分支，并解决可能的代码冲突，例如，`git rebase upstream/master`。其中，3.1和3.2可以合并成一步，`git pull --rebase upstream dev` (此步操作会保证MR发起者commit的记录在原始项目commit记录的上面)
+>    3.3 MR发起者，提交MR请求等待Owner审核
+> 4. MR审批者，执行Comment和Approve，完成代码合入。
 
 
 ## MR发起者处理流程
@@ -1225,25 +1235,23 @@ $ git remote -v
 * 完成本地项目代码与原始项目代码的同步，更新本地项目master代码为最新的代码。[Merge an upstream repo](https://docs.github.com/en/github/collaborating-with-pull-requests/working-with-forks/merging-an-upstream-repository-into-your-fork)
 
 ```
-# 切换到本地项目master分支
-git checkout master
+# 切换到本地项目 YOUR_BRANCH 分支
+git checkout YOUR_BRANCH
 
-# fetch最新的代码到 upstream/master
-git fetch upstream
+# 同步 upstream/master 最新代码
+git fetch upstream master
 
 # 合并upstream的修改到master分支
-git merge upstream/master
+git rebase upstream/master
 
-# 上述步骤也可以简化为git pull命令，拉取远程项目A代码并合并到本地master分支，
-git pull upstream master
+# 上述两步也可以简化为git pull命令
+git pull --rebase upstream master
 
-# 再切换到dev分支，执行rebase合并master代码，如果有代码冲突，则需要先解决
-git checkout dev
-git rebase master
+# 如果有代码冲突，则需要先解决，使用vscode会自动提示冲突解决
+git add <解决冲突的文件>
 
-# 再切换到master分支，合并dev分支的代码
-git checkout master
-git merge dev
+# 完成rebase
+git rebase --continue
 
 # 将本地master分支的多次commit提交记录合并，比如，合并前7条提交记录，通过`-i`交互操作中将不需要的commit记录从`pick`改为`squash`，保留第一条commit为pick
 git rebase -i HEAD~7
@@ -1264,7 +1272,7 @@ git push origin master
 
 * 收到`Merge Request`处理请求。
 * 选择`Create a merge commit`。通常选择，`Squash and merge`或`Rebase and merge`。
-* 进行`Code Review`，若发现问题则通过comment反馈给提交者进行修改，开发者修改后`Close MR`，再`Reopen MR`。
+* 进行`Code Review`，若发现问题则通过comment反馈给发起者进行修改，开发者修改后`Close MR`，再`Reopen MR`。
 * 没有问题，确认完成MR。
 * 若MR过程出现代码冲突，则MR审批者选择`Close Merge request`。由MR发起者解决冲突后再重新提交MR。
 
