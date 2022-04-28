@@ -68,7 +68,7 @@ DSL, No syntax checking, JS engine (V8) handles it!
 * llparse, Can generate different outputs: C and LLVM bitcode
 * llparse, Not hand-written! Not hand-optimized! is **2x faster**!
 
-# Numbers (性能数据)
+## Numbers (性能数据)
 
 | llhttp | http_parser
 | -- | -- 
@@ -76,17 +76,17 @@ DSL, No syntax checking, JS engine (V8) handles it!
 
 This llhttp parser is a default in Node version 12. 
 
-# Tests
+## Tests
 
 * All original tests ported to markdown. Easy to read, easy to contribute. In-test textual description
 
-# More optimizations
+## More optimizations
 
 * vector insttructions (CPU)
 * Unified docs (Quite ashamedly, the project is not well documented)
 * Different parsers? e.g., SMTP, POP3
 
-# HTTP Parser
+# HTTP Parser (用法)
 
 http-parser [is not actively maintained](https://github.com/nodejs/http-parser/issues/522). New projects and projects looking to migrate should consider [llhttp](https://github.com/nodejs/llhttp).
 
@@ -292,7 +292,7 @@ See examples of reading in headers:
 * [from http-parser tests](http://github.com/joyent/http-parser/blob/37a0ff8/test.c#L403) in C
 * [from Node library](http://github.com/joyent/node/blob/842eaf4/src/http.js#L284) in Javascript
 
-# llhttp
+# llhttp (用法)
 
 Port of [http_parser](https://github.com/nodejs/http-parser) to [llparse](https://github.com/nodejs/llparse).
 
@@ -393,17 +393,98 @@ FetchContent_MakeAvailable(llhttp)
 target_link_libraries(${EXAMPLE_PROJECT_NAME} ${PROJECT_LIBRARIES} llhttp ${PROJECT_NAME})
 ```
 
-
-# llparse
+## llparse
 
 Generating parsers in LLVM IR. [llparse.org](https://llparse.org/)
 
 An API for compiling an incremental parser into a C output.
 
+# PicoHTTPParser
+
+* https://github.com/h2o/picohttpparser
+* https://github.com/h2o/picohttpparser#benchmark
 
 
+Parsing an HTTP request header 100000 times. [测试数据](https://github.com/fukamachi/fast-http/tree/6b9110347c7a3407310c08979aefd65078518478)
+
+In this benchmark, fast-http is **6.4 times** faster than `http-parser`, a C equivalent.
+
+| http-parser (C) |	fast-http
+| -- | --
+| 0.289s | 0.045s
 
 
+The library exposes four functions: `phr_parse_request`, `phr_parse_response`, `phr_parse_headers`, `phr_decode_chunked`.
+
+`phr_parse_request` 使用示例：
+
+
+The example below reads an HTTP request from socket sock using read(2), parses it using phr_parse_request, and prints the details.
+
+``` cpp
+char buf[4096], *method, *path;
+int pret, minor_version;
+struct phr_header headers[100];
+size_t buflen = 0, prevbuflen = 0, method_len, path_len, num_headers;
+ssize_t rret;
+
+while (1) {
+    /* read the request */
+    while ((rret = read(sock, buf + buflen, sizeof(buf) - buflen)) == -1 && errno == EINTR)
+        ;
+    if (rret <= 0)
+        return IOError;
+    prevbuflen = buflen;
+    buflen += rret;
+    /* parse the request */
+    num_headers = sizeof(headers) / sizeof(headers[0]);
+    pret = phr_parse_request(buf, buflen, &method, &method_len, &path, &path_len,
+                             &minor_version, headers, &num_headers, prevbuflen);
+    if (pret > 0)
+        break; /* successfully parsed the request */
+    else if (pret == -1)
+        return ParseError;
+    /* request is incomplete, continue the loop */
+    assert(pret == -2);
+    if (buflen == sizeof(buf))
+        return RequestIsTooLongError;
+}
+
+printf("request is %d bytes long\n", pret);
+printf("method is %.*s\n", (int)method_len, method);
+printf("path is %.*s\n", (int)path_len, path);
+printf("HTTP version is 1.%d\n", minor_version);
+printf("headers:\n");
+for (i = 0; i != num_headers; ++i) {
+    printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
+           (int)headers[i].value_len, headers[i].value);
+}
+```
+
+# Nginx http
+
+https://github.com/nginx/nginx/tree/master/src/http
+
+# brpc http
+
+* https://github.com/apache/incubator-brpc
+* https://github.com/apache/incubator-brpc/blob/master/src/brpc/details/http_parser.h
+
+# srpc http
+
+* https://github.com/sogou/srpc
+* https://github.com/sogou/workflow/blob/a5798eef9197ffd1ffb02dae4d24763a81c2efb8/src/protocol/http_parser.h
+
+# trpc http
+
+* https://git.woa.com/trpc-cpp/trpc-cpp/tree/master/trpc/util/http
+* https://git.woa.com/trpc-cpp/trpc-cpp/blob/master/third_party/picohttpparser/picohttpparser.BUILD
+
+# openssl
+
+* https://github.com/openssl/openssl
+* https://github.com/openssl/openssl/blob/master/include/openssl/http.h
+* https://github.com/openssl/openssl/blob/master/apps/lib/http_server.c#L293
 
 
 # Refer
