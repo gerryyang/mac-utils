@@ -39,7 +39,7 @@ Git的操作流程：
 
 关于Git的一些基本概念：
 
-## Snapshots, Not Differences 
+## Snapshots, Not Differences
 
 Git通过快照的方式来记录每次变更，如果文件没有变更，新的分支不会重复复制此文件，而是通过索引的方式访问历史的快照文件。
 
@@ -90,11 +90,11 @@ This makes using Git a joy because we know we can experiment without the danger 
 ![git_local_operation](/assets/images/201810/git_local_operation.jpg)
 
 
-Now, pay attention. This is the main thing to remember about Git if you want the rest of your learning process to go smoothly. Git has three main states that your files can reside in: committed, modified, and staged. 
+Now, pay attention. This is the main thing to remember about Git if you want the rest of your learning process to go smoothly. Git has three main states that your files can reside in: committed, modified, and staged.
 
-`Committed` means that the data is safely stored in your `local database`. 
+`Committed` means that the data is safely stored in your `local database`.
 
-`Modified` means that you have changed the file but have not committed it to your database yet. 
+`Modified` means that you have changed the file but have not committed it to your database yet.
 
 `Staged` means that you have marked a modified file in its current version to go into your next commit snapshot.
 
@@ -219,7 +219,7 @@ git config --list [--local | --global | --system]
 
 ``` bash
 $ cd your_project
-$ git init 
+$ git init
 ```
 
 * 新建的项目直接使用Git管理
@@ -272,7 +272,7 @@ git rm --cached *.log
 
 ![gitflow](/assets/images/201810/gitflow.jpg)
 
-## 功能分支模式  
+## 功能分支模式
 
 主要适合日常不太复杂的项目开发，此模式下有三种类型的分支：
 
@@ -335,7 +335,7 @@ git checkout <fileName>
 
 * 修改的文件已被`git commit`，但想再次修改不再产生新的commit
 ``` bash
-# 修改最后一次提交 
+# 修改最后一次提交
 git add sample.txt
 git commit --amend -m"说明"
 ```
@@ -414,13 +414,13 @@ $ git filter-branch --commit-filter '
 |添加|	git add|	svn add
 |移动|	git mv|	svn mv
 |删除|	git rm|	svn rm
-|取消修改|	git checkout / git reset|	svn revert 
-|创建分支|	git branch|	svn copy 
+|取消修改|	git checkout / git reset|	svn revert
+|创建分支|	git branch|	svn copy
 |切换分支|	git checkout|	svn switch
 |合并|	git merge|	svn merge
-|创建标签|	git tag|	svn copy 
+|创建标签|	git tag|	svn copy
 |更新|	git pull / git fetch|	svn update
-|反映到远端|	git push|	svn commit 
+|反映到远端|	git push|	svn commit
 |忽略档案目录|	.gitignore|	.svnignore
 
 ## 查看和设置Git配置
@@ -444,7 +444,7 @@ git init
 # 添加指定的文件到暂存区
 git add README.md
 # 把所有修改过文件都加入暂存区
-git add .  
+git add .
 
 # 先提交到本地
 git commit -m "first commit"
@@ -482,7 +482,7 @@ git clone http[s]://example.com/path/to/repo.git/
 git clone ssh://example.com/path/to/repo.git/    # ssh协议
 git clone [user@]example.com:path/to/repo.git/   # ssh协议另一种表示方法
 git clone git://example.com/path/to/repo.git/
-git clone /opt/git/project.git 
+git clone /opt/git/project.git
 git clone file:///opt/git/project.git
 git clone ftp[s]://example.com/path/to/repo.git/
 git clone rsync://example.com/path/to/repo.git/
@@ -606,7 +606,7 @@ git config alias.adds 'add -- ":!protocol" ":!resources"'
 git add .
 ```
 
-refer: 
+refer:
 
 * [git-add - Add file contents to the index](https://git-scm.com/docs/git-add)
 * https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
@@ -632,7 +632,7 @@ Basically, git-blame is used to show what revision and author last modified each
 
 `git blame -L 1,3 README.md` 显示 1-3 行最后一次修改信息
 
-refer: 
+refer:
 
 * http://git-scm.com/docs/git-blame
 * [What does 'git blame' do?](https://stackoverflow.com/questions/31203001/what-does-git-blame-do)
@@ -656,8 +656,8 @@ git log --pretty=format:"%h %s" --graph
 git log --since=2.weeks
 
 # 将每个提交版本信息缩减为一行
-git log --pretty=oneline 
-git log --oneline -n3 
+git log --pretty=oneline
+git log --oneline -n3
 git log --oneline -n3 --graph
 ```
 更多: [Git-基础-查看提交历史]
@@ -689,25 +689,25 @@ Git最核心的特性就是，创建新分支操作几乎能在瞬间完成，�
 git branch -av
 
 # 删除本地分支
-git branch -d  
+git branch -d
 
-# 强制删除本地分支                   
-git branch -D  
+# 强制删除本地分支
+git branch -D
 
-# 删除远端分支                   
-git push origin -d <branch-name> 
+# 删除远端分支
+git push origin -d <branch-name>
 
 # 通过查看远程分支信息，也可以看出每个分支的进度
 git remote show origin
 
 # 切换到某个分支
-git checkout <branch-name> 
+git checkout <branch-name>
 
 # 切换到上一个分支
 git checkout -
 
 # 新建并切换到该分支
-git checkout -b <branch-name> 
+git checkout -b <branch-name>
 # 等价于
 git branch <branch-name>
 git checkout <branch-name>
@@ -823,14 +823,14 @@ $ git merge experiment
 
 ``` bash
 # 先把所有的修改暂存起来，这时候你的所有改动都好像消失了一样，但其实是被暂存起来了
-git stash 
+git stash
 # 新建bugfix分支去修复bug
-git checkout -b bugfix/分支名  
+git checkout -b bugfix/分支名
 # 修复bug
 # 回到原来的开发分支
-git checkout feature1 
+git checkout feature1
 # 恢复暂存的内容
-git stash pop 
+git stash pop
 # 继续开发需求
 
 git stash list
@@ -854,7 +854,7 @@ git stash push -m welcome_cart app/views/cart/welcome.thtml
 
 ``` bash
 # 含有子模块项目的clone
-git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-utils.git mac-utils 
+git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-utils.git mac-utils
 
 # 如果忘记了 --recurse-submodules
 git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
@@ -871,6 +871,29 @@ git submodule deinit --all
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 * [How do git submodules work?](https://matthew-brett.github.io/curious-git/git_submodules.html#how-do-git-submodules-work)
+
+## 取消某次提交 git revert
+
+``` bash
+git revert [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <commit>…​
+git revert (--continue | --skip | --abort | --quit)
+```
+
+* https://git-scm.com/docs/git-revert
+
+## 将指定的提交应用于其他分支 git cherry-pick
+
+``` bash
+git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff] [-S[<keyid>]] <commit>…​
+git cherry-pick (--continue | --skip | --abort | --quit)
+
+git cherry-pick <commitHash>
+git cherry-pick <HashA> <HashB>
+git cherry-pick --continue
+```
+
+* https://git-scm.com/docs/git-cherry-pick
+* https://www.ruanyifeng.com/blog/2020/04/git-cherry-pick.html
 
 # Git hooks
 
@@ -971,7 +994,7 @@ if [ ${CODE_CHECK_IGNORE:-0} -eq 1 ]; then
 fi
 
 GIT_DIFF=$(git diff --cached --name-status)
-while read STATUS FILE; do 
+while read STATUS FILE; do
 
     if [ "$STATUS" == "D" ]; then
         continue;
@@ -1017,7 +1040,7 @@ echo "pre-commit end"
 
 向服务器提交时，Git LFS把文件上传到一个专用的存储区域，同时保存一份指针（文本文件）在原有的版本库中。 当另外一个人拉取，他将首先拉取到指针，此时Git LFS解析这个指针，并把实际文件内容取回到本地。 文件每有一个新版本时，就会创建一个新指针，并向服务器上传，这样服务器上就有了多个历史版本，从而实现了基本的版本管理。
 
-# Git与GitHub 
+# Git与GitHub
 
 `GitHub`主要为开发者提供`Git`仓库的托管服务，拥有一只`octocat`的吉祥物。截止2013年12月，GitHub托管的仓库数已超过1000万。GitHub这一服务为开源世界带来了社会化编程的概念。在GitHub上进行交流时用到的Issue, Wiki等都可以用`FGM(Git Flavored Markdown)`语法表述。
 
@@ -1112,7 +1135,7 @@ Host github.com
 # GitHub 常用缩写
 
 | 缩写 | 全称 | 含义
-| -- | -- | -- 
+| -- | -- | --
 | PR | Pull Request | 拉取请求，给其他项目提交代码
 | MR | Merge Request | 合并请求
 | LGTM | Looks Good To Me | 可以合并，没有问题

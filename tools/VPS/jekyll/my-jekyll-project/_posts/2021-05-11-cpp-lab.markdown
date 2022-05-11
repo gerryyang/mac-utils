@@ -207,18 +207,18 @@ If you use a constructor that doesn't specify any other value, then the 1234 wou
 ``` cpp
 #include <iostream>
 
-class X { 
+class X {
     int a = 1234;
 public:
     X() = default;
     X(int z) : a(z) {}
 
-    friend std::ostream &operator<<(std::ostream &os, X const &x) { 
+    friend std::ostream &operator<<(std::ostream &os, X const &x) {
         return os << x.a;
     }
 };
 
-int main() { 
+int main() {
     X x;
     X y{5678};
 
@@ -270,7 +270,7 @@ int main()
       std::basic_string<char> s = std::basic_string<char>(__begin1.operator*());  // 存在值拷贝
       printf("%s\n", s.c_str());
     }
-    
+
   }
 }
 ```
@@ -297,14 +297,14 @@ public:
 
     A(A&&) { printf("A::A(&&)\n"); } // move ctor
     A& operator=(A&& a)  // move assgin
-    { 
-        printf("A::operator=A(&&)\n"); 
+    {
+        printf("A::operator=A(&&)\n");
         if (this != &a)
         {
             x = a.x;
         }
-        return *this; 
-    } 
+        return *this;
+    }
 
     void print() { printf("A::print x(%d)\n", x); }
 
@@ -318,7 +318,7 @@ void f(A&& a)
     a2 = std::move(a);
 }
 
-int main() 
+int main()
 {
     A a;
     a.x = 1;
@@ -345,7 +345,7 @@ A::~A()
 #include <string>
 #include <iostream>
 #include <utility>
- 
+
 struct A
 {
     std::string s;
@@ -365,31 +365,31 @@ struct A
          return *this;
     }
 };
- 
+
 A f(A a) { return a; }
- 
+
 struct B : A
 {
-     std::string s2; 
+     std::string s2;
      int n;
      // implicit move assignment operator B& B::operator=(B&&)
      // calls A's move assignment operator
      // calls s2's move assignment operator
      // and makes a bitwise copy of n
 };
- 
+
 struct C : B
 {
     ~C() { } // destructor prevents implicit move assignment
 };
- 
+
 struct D : B
 {
     D() { }
     ~D() { } // destructor would prevent implicit move assignment
-    D& operator=(D&&) = default; // force a move assignment anyway 
+    D& operator=(D&&) = default; // force a move assignment anyway
 };
- 
+
 int main()
 {
     A a1, a2;
@@ -397,24 +397,24 @@ int main()
     a1 = f(A()); // move-assignment from rvalue temporary
     std::cout << "Trying to move-assign A from xvalue\n";
     a2 = std::move(a1); // move-assignment from xvalue
- 
+
     std::cout << "Trying to move-assign B\n";
     B b1, b2;
     std::cout << "Before move, b1.s = \"" << b1.s << "\"\n";
     b2 = std::move(b1); // calls implicit move assignment
     std::cout << "After move, b1.s = \"" << b1.s << "\"\n";
- 
+
     std::cout << "Trying to move-assign C\n";
     C c1, c2;
     c2 = std::move(c1); // calls the copy assignment operator
- 
+
     std::cout << "Trying to move-assign D\n";
     D d1, d2;
     d2 = std::move(d1);
 }
 ```
 
-refer: 
+refer:
 
 * [Move constructors](https://en.cppreference.com/w/cpp/language/move_constructor)
 * [Move assignment operator](https://en.cppreference.com/w/cpp/language/move_assignment)
@@ -436,7 +436,7 @@ unsigned integer type with width of exactly 8, 16, 32 and 64 bits respectively
 signed integer type capable of holding a pointer
 
 * uintptr_t
-  
+
 unsigned integer type capable of holding a pointer
 
 https://en.cppreference.com/w/cpp/types/integer
@@ -499,9 +499,9 @@ int main()
     auto foo3 = [x](int y) mutable ->int { ++x; return x * y; };
     std::cout << foo3(8) << std::endl;  // 56
 
-    // 捕获 this 
+    // 捕获 this
     A a;
-    a.test(); 
+    a.test();
 }
 ```
 
@@ -509,7 +509,7 @@ int main()
 
 * 使用 lambda 表达式，不需要去显式定义一个类，在快速实现功能上比较有优势 -> 让代码短小精悍且具有良好的可读性
 * 使用函数对象，可以在初始化时有更丰富的操作，即，可以使用全局或静态局部变量，而非必须为局部自动变量 -> 灵活不受限制
-  
+
 ### lambda 表达式原理
 
 lambda 表达式在编译期会有编译器自动生成一个闭包类，在运行时由这个闭包类产生一个对象，称它为`闭包`。在C++中，所谓的`闭包`可以简单地理解为一个匿名且可以包含定义时作用域上下文的函数对象。
@@ -520,7 +520,7 @@ lambda 表达式在编译期会有编译器自动生成一个闭包类，在运�
 int main()
 {
   int x = 5, y = 8;
-  auto foo = [=]  { return x * y; };     
+  auto foo = [=]  { return x * y; };
   int z = foo();
 }
 ```
@@ -534,27 +534,27 @@ int main()
 {
   int x = 5;
   int y = 8;
-    
+
   class __lambda_6_14
   {
-    public: 
+    public:
         inline /*constexpr */ int operator()() const
         {
         return x * y;
         }
-    
-    private: 
+
+    private:
         int x;
         int y;
-    
+
     public:
         __lambda_6_14(int & _x, int & _y)
             : x{_x}
             , y{_y}
         {}
-    
+
   };
-  
+
   __lambda_6_14 foo = __lambda_6_14{x, y};
   int z = foo.operator()();
 }
@@ -654,7 +654,7 @@ A::~A()
 using Func = std::function<void()>;
 Func f = [](){ printf("hello\n"); };
 
-int main() 
+int main()
 {
     std::function<void()> h;
     {
@@ -715,10 +715,10 @@ C++14标准让 lambda 表达式具备了模板函数的能力，称为`泛型 la
 int main()
 {
     auto foo = [](auto a) { return a; };
-    
+
     int b = foo(3);
     const char* c = foo("hello");
-    
+
     std::cout << b << " " << c << std::endl;// 3 hello
 }
 ```
@@ -764,7 +764,7 @@ int main()
 ``` cpp
 // functional header
 // for hash<class template> class
-#include <functional> 
+#include <functional>
 #include <iostream>
 #include <string>
 
@@ -772,20 +772,20 @@ int main()
 {
     // Get the string to get its hash value
     std::string hashing = "Geeks";
- 
+
     // Instantiation of Object
     std::hash<std::string> mystdhash;
- 
+
     // Using operator() to get hash value
     std::cout << "String hash values: "
          << mystdhash(hashing)
          << std::endl;
-    
+
     int hashing2 = 12345;
     std::hash<int> mystdhash2;
     std::cout << "Int hash values: "
         << mystdhash2(hashing2)
-        << std::endl;    
+        << std::endl;
 }
 /*
 String hash values: 4457761756728957899
@@ -803,7 +803,7 @@ https://en.cppreference.com/w/cpp/utility/hash
 #include <iostream>       // std::cout
 #include <thread>         // std::thread
 
-void foo() 
+void foo()
 {
   std::cout << "foo()\n";
 }
@@ -813,7 +813,7 @@ void bar(int x)
   std::cout << "bar(" << x << ")\n";
 }
 
-int main() 
+int main()
 {
   std::thread first (foo);      // spawn new thread that calls foo()
   std::thread second (bar, 0);  // spawn new thread that calls bar(0)
@@ -870,7 +870,7 @@ Requests the removal of unused capacity. It is a non-binding request to reduce `
 ``` cpp
 #include <iostream>
 #include <vector>
- 
+
 int main()
 {
     std::vector<int> v;
@@ -918,26 +918,26 @@ Inserts a new element into the container constructed in-place with the given arg
 #include <utility>
 #include <string>
 #include <map>
- 
+
 int main()
 {
     std::map<std::string, std::string> m;
- 
+
     // uses pair's move constructor
     m.emplace(std::make_pair(std::string("a"), std::string("a")));
- 
+
     // uses pair's converting move constructor
     m.emplace(std::make_pair("b", "abcd"));
- 
+
     // uses pair's template constructor
     m.emplace("d", "ddd");
- 
+
     // uses pair's piecewise constructor
     m.emplace(std::piecewise_construct,
               std::forward_as_tuple("c"),
               std::forward_as_tuple(10, 'c'));
     // as of C++17, m.try_emplace("c", 10, 'c'); can be used
- 
+
     for (const auto &p : m) {
         std::cout << p.first << " => " << p.second << '\n';
     }
@@ -958,14 +958,14 @@ d => ddd
 ``` cpp
 #include <memory>
 #include <iostream>
- 
+
 struct Good: public std::enable_shared_from_this<Good> // note: public inheritance
 {
     std::shared_ptr<Good> getptr() {
         return shared_from_this();
     }
 };
- 
+
 struct Bad
 {
     std::shared_ptr<Bad> getptr() {
@@ -973,28 +973,28 @@ struct Bad
     }
     ~Bad() { std::cout << "Bad::~Bad() called\n"; }
 };
- 
+
 int main()
 {
     // Good: the two shared_ptr's share the same object
     std::shared_ptr<Good> gp1 = std::make_shared<Good>();
     std::shared_ptr<Good> gp2 = gp1->getptr();
     std::cout << "gp2.use_count() = " << gp2.use_count() << '\n';
- 
-    // Bad: shared_from_this is called without having std::shared_ptr owning the caller 
+
+    // Bad: shared_from_this is called without having std::shared_ptr owning the caller
     try {
         Good not_so_good;
         std::shared_ptr<Good> gp1 = not_so_good.getptr();
     } catch(std::bad_weak_ptr& e) {
         // undefined behavior (until C++17) and std::bad_weak_ptr thrown (since C++17)
-        std::cout << e.what() << '\n';    
+        std::cout << e.what() << '\n';
     }
- 
+
     // Bad, each shared_ptr thinks it's the only owner of the object
     std::shared_ptr<Bad> bp1 = std::make_shared<Bad>();
     std::shared_ptr<Bad> bp2 = bp1->getptr();
     std::cout << "bp2.use_count() = " << bp2.use_count() << '\n';
-    
+
 } // UB: double-delete of Bad
 /*
 gp2.use_count() = 2
@@ -1014,7 +1014,7 @@ https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
 #include <iostream>
 #include <chrono>
 #include <thread>
- 
+
 int main()
 {
     std::cout << "Hello waiter\n" << std::flush;
@@ -1041,7 +1041,7 @@ int main()
 ``` cpp
 #include <functional>
 #include <iostream>
- 
+
 struct Foo {
     void display_greeting() {
         std::cout << "Hello, world.\n";
@@ -1051,16 +1051,16 @@ struct Foo {
     }
     int data = 7;
 };
- 
+
 int main() {
     Foo f;
- 
+
     auto greet = std::mem_fn(&Foo::display_greeting);
     greet(f);
- 
+
     auto print_num = std::mem_fn(&Foo::display_number);
     print_num(f, 42);
- 
+
     auto access_data = std::mem_fn(&Foo::data);
     std::cout << "data: " << access_data(f) << '\n';
 }
@@ -1070,25 +1070,25 @@ int main() {
 
 ## std::uniform_int_distribution
 
-* Produces random integer values `i`, uniformly distributed on the closed interval `[a, b]`, that is, distributed according to the discrete probability function `P(i|a,b) = 1/(b - a + 1)` 
+* Produces random integer values `i`, uniformly distributed on the closed interval `[a, b]`, that is, distributed according to the discrete probability function `P(i|a,b) = 1/(b - a + 1)`
 
 ``` cpp
 #include <random>
 #include <iostream>
- 
+
 int main()
 {
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<> distrib(1, 6);
- 
+
     for (int n=0; n<10; ++n)
         //Use `distrib` to transform the random unsigned int generated by gen into an int in [1, 6]
         std::cout << distrib(gen) << ' ';
     std::cout << '\n';
 }
 /*
-3 6 5 6 1 2 2 4 3 3 
+3 6 5 6 1 2 2 4 3 3
 */
 ```
 * https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
@@ -1108,7 +1108,7 @@ The function template `bind` generates a forwarding call wrapper for `f`. Callin
 #include <iostream>
 #include <memory>
 #include <functional>
- 
+
 void f(int n1, int n2, int n3, const int& n4, int n5)
 {
     std::cout << n1 << ' ' << n2 << ' ' << n3 << ' ' << n4 << ' ' << n5 << '\n';
@@ -1118,7 +1118,7 @@ int g(int n1)
 {
     return n1;
 }
- 
+
 struct Foo {
     void print_sum(int n1, int n2)
     {
@@ -1130,7 +1130,7 @@ struct Foo {
 int main()
 {
     using namespace std::placeholders;  // for _1, _2, _3...
- 
+
     std::cout << "demonstrates argument reordering and pass-by-reference:\n";
     int n = 7;
     // (_1 and _2 are from std::placeholders, and represent future
@@ -1139,26 +1139,26 @@ int main()
     n = 10;
     f1(1, 2, 1001); // 1 is bound by _1, 2 is bound by _2, 1001 is unused
                     // makes a call to f(2, 42, 1, n, 7)
-    
+
     std::cout << "achieving the same effect using a lambda:\n";
     auto lambda = [ncref=std::cref(n), n=n](auto a, auto b, auto /*unused*/) {
         f(b, 42, a, ncref, n);
     };
     lambda(1, 2, 1001); // same as a call to f1(1, 2, 1001)
-    
+
     std::cout << "nested bind subexpressions share the placeholders:\n";
     auto f2 = std::bind(f, _3, std::bind(g, _3), _3, 4, 5);
     f2(10, 11, 12); // makes a call to f(12, g(12), 12, 4, 5);
-    
+
     std::cout << "bind to a pointer to member function:\n";
     Foo foo;
     auto f3 = std::bind(&Foo::print_sum, &foo, 95, _1);
     f3(5);
-    
+
     std::cout << "bind to a pointer to data member:\n";
     auto f4 = std::bind(&Foo::data, _1);
     std::cout << f4(foo) << '\n';
-    
+
     std::cout << "use smart pointers to call members of the referenced objects:\n";
     std::cout << f4(std::make_shared<Foo>(foo)) << ' '
               << f4(std::make_unique<Foo>(foo)) << '\n';
@@ -1194,7 +1194,7 @@ The override keyword serves two purposes:
 class base
 {
   public:
-    virtual int foo(float x) = 0; 
+    virtual int foo(float x) = 0;
 };
 class derived: public base
 {
@@ -1222,16 +1222,16 @@ Causes abnormal program termination unless `SIGABRT` is being caught by a signal
 #include <csignal>
 #include <iostream>
 #include <cstdlib>
- 
+
 class Tester {
 public:
     Tester()  { std::cout << "Tester ctor\n"; }
     ~Tester() { std::cout << "Tester dtor\n"; }
 };
- 
+
 Tester static_tester; // Destructor not called
- 
-void signal_handler(int signal) 
+
+void signal_handler(int signal)
 {
     if (signal == SIGABRT) {
         std::cerr << "SIGABRT received\n";
@@ -1240,18 +1240,18 @@ void signal_handler(int signal)
     }
     std::_Exit(EXIT_FAILURE);
 }
- 
+
 int main()
 {
     Tester automatic_tester; // Destructor not called
- 
+
     // Setup handler
     auto previous_handler = std::signal(SIGABRT, signal_handler);
     if (previous_handler == SIG_ERR) {
         std::cerr << "Setup failed\n";
         return EXIT_FAILURE;
     }
- 
+
     std::abort();  // Raise SIGABRT
     std::cout << "This code is unreachable\n";
 }
@@ -1271,17 +1271,17 @@ Checks whether T is a non-union class type. Provides the member constant value w
 ``` cpp
 #include <iostream>
 #include <type_traits>
- 
+
 struct A {};
- 
+
 class B {};
- 
+
 enum class C {};
- 
+
 union D { class E {}; };
 static_assert(not std::is_class_v<D>);
- 
-int main() 
+
+int main()
 {
     std::cout << std::boolalpha;
     std::cout << std::is_class<A>::value << '\n';
@@ -1304,19 +1304,19 @@ Checks whether T is a union type. Provides the member constant value, which is e
 ``` cpp
 #include <iostream>
 #include <type_traits>
- 
+
 struct A {};
- 
+
 typedef union {
     int a;
     float b;
 } B;
- 
+
 struct C {
     B d;
 };
- 
-int main() 
+
+int main()
 {
     std::cout << std::boolalpha;
     std::cout << std::is_union<A>::value << '\n';
@@ -1340,15 +1340,15 @@ Return the `n`th successor of iterator it.
 #include <iostream>
 #include <iterator>
 #include <vector>
- 
-int main() 
+
+int main()
 {
     std::vector<int> v{ 4, 5, 6 };
- 
+
     auto it = v.begin();
     auto nx = std::next(it, 2);
     std::cout << *it << ' ' << *nx << '\n';
- 
+
     it = v.end();
     nx = std::next(it, -2);
     std::cout << ' ' << *nx << '\n';
@@ -1369,8 +1369,8 @@ Returns the number of hops from first to last.
 #include <iostream>
 #include <iterator>
 #include <vector>
- 
-int main() 
+
+int main()
 {
     std::vector<int> v{ 3, 1, 4 };
     std::cout << "distance(first, last) = "
@@ -1378,7 +1378,7 @@ int main()
               << "distance(last, first) = "
               << std::distance(v.end(), v.begin()) << '\n';
                //the behavior is undefined (until C++11)
- 
+
     static constexpr auto il = { 3, 1, 4 };
     // Since C++17 `distance` can be used in constexpr context.
     static_assert(std::distance(il.begin(), il.end()) == 3);
@@ -1404,9 +1404,9 @@ int main()
 {
     std::map<int, int> m { {1,1}, {2,2}, {3,3} };
     std::cout << m.size() << std::endl; // 3
-    
+
     for (auto cur = m.begin(); cur != m.end();) {
-        
+
         if (cur->first == 1 || cur->first == 3) {
             cur = m.erase(cur);
         } else {
@@ -1449,8 +1449,8 @@ It is the programmer's responsibility to ensure that std::string_view does not o
 std::string_view good{"a string literal"};
   // "Good" case: `good` points to a static array (string literals are usually
   // resided in persistent data segments).
- 
-std::string_view bad{"a temporary string"s}; 
+
+std::string_view bad{"a temporary string"s};
   // "Bad" case: `bad` holds a dangling pointer since the std::string temporary,
   // created by std::operator""s, will be destroyed at the end of the statement.
 ```
@@ -1460,19 +1460,19 @@ std::string_view bad{"a temporary string"s};
 #include <string>
 #include <string_view>
 #include <iomanip> // std::quoted
- 
+
 int main()
-{ 
+{
     char array[3] = {'B', 'a', 'r'};
-    
+
     // constexpr basic_string_view( const CharT* s, size_type count )
     std::string_view array_v(array, std::size(array));
     std::cout << "array_v: " << std::quoted( array_v ) << '\n';
- 
+
     std::string cppstr = "Foo";
-    
+
     // constexpr basic_string_view( const CharT* s )
-    std::string_view cppstr_v(cppstr); 
+    std::string_view cppstr_v(cppstr);
     std::cout << "cppstr_v: " << std::quoted( cppstr_v ) << '\n';
 }
 /*
@@ -1487,7 +1487,7 @@ cppstr_v: "Foo"
 
 ``` cpp
 #include <cassert>
- 
+
 [[maybe_unused]] void f([[maybe_unused]] bool thing1,
                         [[maybe_unused]] bool thing2)
 {
@@ -1495,7 +1495,7 @@ cppstr_v: "Foo"
    assert(b); // in release mode, assert is compiled out, and b is unused
               // no warning because it is declared [[maybe_unused]]
 } // parameters thing1 and thing2 are not used, no warning
- 
+
 int main() {;}
 ```
 
@@ -1514,9 +1514,9 @@ gcc 11.1.0
 #include <iostream>
 #include <string_view>
 #include <source_location>
- 
+
 void log(const std::string_view message,
-         const std::source_location location = 
+         const std::source_location location =
                std::source_location::current())
 {
     std::cout << "file: "
@@ -1526,12 +1526,12 @@ void log(const std::string_view message,
               << location.function_name() << "`: "
               << message << '\n';
 }
- 
+
 template <typename T> void fun(T x)
 {
     log(x);
 }
- 
+
 int main(int, char*[])
 {
     log("Hello world!");
@@ -1552,15 +1552,15 @@ file: prog.cc(19:8) `void fun(T) [with T = const char*]`: Hello C++20!
 #include <iostream>
 #include <string>
 #include <string_view>
- 
+
 template <typename... Args>
 std::string dyna_print(std::string_view rt_fmt_str, Args&&... args) {
     return std::vformat(rt_fmt_str, std::make_format_args(args...));
 }
- 
+
 int main() {
     std::cout << std::format("Hello {}!\n", "world");
- 
+
     std::string fmt;
     for (int i{}; i != 3; ++i) {
         fmt += "{} "; // constructs the formatting string
@@ -1571,8 +1571,8 @@ int main() {
 }
 /*
 Hello world!
-{}  : alpha 
-{} {}  : alpha Z 
+{}  : alpha
+{} {}  : alpha Z
 {} {} {}  : alpha Z 3.14
 */
 ```
@@ -1602,30 +1602,30 @@ Returns an iterator pointing to the first element in the range [first, last) tha
 #include <algorithm>
 #include <iostream>
 #include <vector>
- 
+
 struct PriceInfo { double price; };
- 
+
 int main()
 {
     const std::vector<int> data = { 1, 2, 4, 5, 5, 6 };
     for (int i = 0; i < 8; ++i) {
         // Search for first element x such that i ≤ x
         auto lower = std::lower_bound(data.begin(), data.end(), i);
- 
+
         std::cout << i << " ≤ ";
         lower != data.end()
             ? std::cout << *lower << " at index " << std::distance(data.begin(), lower)
             : std::cout << "[not found]";
         std::cout << '\n';
     }
- 
+
     std::vector<PriceInfo> prices = { {100.0}, {101.5}, {102.5}, {102.5}, {107.3} };
     for(double to_find: {102.5, 110.2}) {
       auto prc_info = std::lower_bound(prices.begin(), prices.end(), to_find,
           [](const PriceInfo& info, double value){
               return info.price < value;
           });
- 
+
       prc_info != prices.end()
           ? std::cout << prc_info->price << " at index " << prc_info - prices.begin()
           : std::cout << to_find << " not found";
@@ -1660,30 +1660,30 @@ Returns an iterator pointing to the first element in the range [first, last) tha
 #include <algorithm>
 #include <iostream>
 #include <vector>
- 
+
 struct PriceInfo { double price; };
- 
+
 int main()
 {
     const std::vector<int> data = { 1, 2, 4, 5, 5, 6 };
     for (int i = 0; i < 7; ++i) {
         // Search first element that is greater than i
         auto upper = std::upper_bound(data.begin(), data.end(), i);
- 
+
         std::cout << i << " < ";
         upper != data.end()
             ? std::cout << *upper << " at index " << std::distance(data.begin(), upper)
             : std::cout << "not found";
         std::cout << '\n';
     }
- 
+
     std::vector<PriceInfo> prices = { {100.0}, {101.5}, {102.5}, {102.5}, {107.3} };
     for(double to_find: {102.5, 110.2}) {
       auto prc_info = std::upper_bound(prices.begin(), prices.end(), to_find,
           [](double value, const PriceInfo& info){
               return value < info.price;
           });
- 
+
       prc_info != prices.end()
           ? std::cout << prc_info->price << " at index " << prc_info - prices.begin()
           : std::cout << to_find << " not found";
@@ -1697,7 +1697,7 @@ int main()
 3 < 4 at index 2
 4 < 5 at index 3
 5 < 6 at index 5
-6 < not found 
+6 < not found
 107.3 at index 4
 110.2 not found
 */
@@ -1715,38 +1715,38 @@ Reorders the elements in the range [first, last) in such a way that all elements
 #include <iterator>
 #include <vector>
 #include <forward_list>
- 
+
 template <class ForwardIt>
  void quicksort(ForwardIt first, ForwardIt last)
  {
     if(first == last) return;
     auto pivot = *std::next(first, std::distance(first,last)/2);
-    ForwardIt middle1 = std::partition(first, last, 
+    ForwardIt middle1 = std::partition(first, last,
                          [pivot](const auto& em){ return em < pivot; });
-    ForwardIt middle2 = std::partition(middle1, last, 
+    ForwardIt middle2 = std::partition(middle1, last,
                          [pivot](const auto& em){ return !(pivot < em); });
     quicksort(first, middle1);
     quicksort(middle2, last);
  }
- 
+
 int main()
 {
     std::vector<int> v = {0,1,2,3,4,5,6,7,8,9};
     std::cout << "Original vector:\n    ";
     for(int elem : v) std::cout << elem << ' ';
- 
+
     auto it = std::partition(v.begin(), v.end(), [](int i){return i % 2 == 0;});
- 
+
     std::cout << "\nPartitioned vector:\n    ";
     std::copy(std::begin(v), it, std::ostream_iterator<int>(std::cout, " "));
     std::cout << " * " " ";
     std::copy(it, std::end(v), std::ostream_iterator<int>(std::cout, " "));
- 
+
     std::forward_list<int> fl = {1, 30, -4, 3, 5, -4, 1, 6, -8, 2, -5, 64, 1, 92};
     std::cout << "\nUnsorted list:\n    ";
     for(int n : fl) std::cout << n << ' ';
-    std::cout << '\n';  
- 
+    std::cout << '\n';
+
     quicksort(std::begin(fl), std::end(fl));
     std::cout << "Sorted using quicksort:\n    ";
     for(int fi : fl) std::cout << fi << ' ';
@@ -1754,11 +1754,11 @@ int main()
 }
 /*
 Original vector:
-    0 1 2 3 4 5 6 7 8 9 
+    0 1 2 3 4 5 6 7 8 9
 Partitioned vector:
-    0 8 2 6 4  *  5 3 7 1 9 
+    0 8 2 6 4  *  5 3 7 1 9
 Unsorted list:
-    1 30 -4 3 5 -4 1 6 -8 2 -5 64 1 92 
+    1 30 -4 3 5 -4 1 6 -8 2 -5 64 1 92
 Sorted using quicksort:
     -8 -5 -4 -4 1 1 1 2 3 5 6 30 64 92
 */
@@ -1766,7 +1766,7 @@ Sorted using quicksort:
 
 * https://en.cppreference.com/w/cpp/algorithm/partition
 
-	
+
 # Others
 
 
@@ -1836,7 +1836,7 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
 int main()
 {
     std::vector<std::string> vec = {
-        "Hello", "from", "GCC", __VERSION__, "!" 
+        "Hello", "from", "GCC", __VERSION__, "!"
     };
     std::cout << vec << std::endl;
 }
@@ -1919,3 +1919,35 @@ Omits copy and move (since C++11) constructors, resulting in zero-copy pass-by-v
 TODO
 
 * https://en.cppreference.com/w/cpp/language/copy_elision
+
+## Zero initialization
+
+**TL;DR: Use the initializer - it's never worse than memset().**
+
+It depends on your compiler. It shouldn't be any slower than calling `memset()` (because calling `memset()` is one option available to the compiler).
+
+The initializer is easier to read than imperatively overwriting the array; it also adapts well if the element type is changed to something where all-bit-zero isn't what you want.
+
+``` cpp
+#include <string.h>
+
+int f1()
+{
+    int a[32] = {0};
+    return a[31];
+}
+
+int f2()
+{
+    int a[32];
+    memset(a, 0, sizeof a);
+    return a[31];
+}
+```
+
+* https://en.cppreference.com/w/cpp/language/zero_initialization
+* https://en.cppreference.com/w/c/language/struct_initialization
+* https://en.cppreference.com/w/cpp/language/default_initialization
+* [Are zero initializers faster than memset?](https://stackoverflow.com/questions/40786375/are-zero-initializers-faster-than-memset)
+
+

@@ -163,7 +163,7 @@ http://104.131.173.242/phpmyadmin/
 * [long-haul](https://github.com/brianmaierjr/long-haul) - A minimal, type-focused Jekyll theme. http://brianmaierjr.com/long-haul
 * [jekyll-theme-chirpy](https://github.com/cotes2020/jekyll-theme-chirpy) - A minimal, responsive, and powerful Jekyll theme for presenting professional writing
 
-More: 
+More:
 
 [https://jekyllrb.com/](https://jekyllrb.com/)
 
@@ -187,7 +187,23 @@ To prevent an error, you'll need to wrap the JSON in Liquid raw tags, like this:
 
 # 工具
 
-## MAC环境
+## MacOS 环境
+
+### 常用设置
+
+* Mac触控板三指拖移功能
+
+系统偏好设置 -> 辅助功能 -> 指针控制 -> 触控板选项 -> 启用拖移 -> 三指拖移
+
+* 触发角
+
+桌面与屏幕保护程序 -> 触发角，可设置屏幕四个角触发事件。例如，左上角启动屏幕保护程序
+
+* 系统截屏或录像
+
+Shift+Command+5
+
+
 
 ### 系统
 
@@ -209,7 +225,7 @@ To prevent an error, you'll need to wrap the JSON in Liquid raw tags, like this:
 | [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
 | [Dozer](https://github.com/Mortennn/Dozer) | Hide status bar icons on macOS，用于隐藏状态栏上不必要的图标，通过`command + drag`将范围内的图标隐藏
 | [LICEcap](https://github.com/justinfrankel/licecap) | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF
-| [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展 
+| [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展
 | [MacVim](https://macvim-dev.github.io/macvim/) | Vim - the text editor - for macOS
 | [VS Code](https://code.visualstudio.com/) | For Windows, macOS and Linux, 扩展丰富
 | [泼辣修图](https://apps.apple.com/cn/app/po-la-xiu-tu-jing-jian-ban/id1077124956?mt=12) | Mac上的美图秀秀
@@ -251,7 +267,7 @@ More: https://github.com/hzlzh/Best-App
 | -- | --
 | [Sourcetree](https://www.sourcetreeapp.com/) | Mac Git客户端
 | [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端
-| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code 
+| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code
 
 
 * `cloc --show-lang` 显示支持的语言
@@ -285,6 +301,7 @@ More: https://github.com/hzlzh/Best-App
 * [Configure coc.nvim for C/C++ Development](https://ianding.io/2019/07/29/configure-coc-nvim-for-c-c++-development/)
 * [my vim configuration, based on amix's project](https://github.com/ArthurChiao/vim_awesome)
 * [Turning off auto indent when pasting text into vim](https://stackoverflow.com/questions/2514445/turning-off-auto-indent-when-pasting-text-into-vim)
+* [How to reset Visual Studio Code key bindings](https://stackoverflow.com/questions/49313485/how-to-reset-visual-studio-code-key-bindings)
 
 ### Sublime
 
@@ -403,11 +420,11 @@ More: https://github.com/hzlzh/Best-App
 * [websequencediagrams](https://www.websequencediagrams.com/)
 	- 通过脚本语言生成**时序图**。
 
-* [flowchart.js](https://github.com/adrai/flowchart.js) 
+* [flowchart.js](https://github.com/adrai/flowchart.js)
 	- 通过脚本语言生成**流程图**。
 	- 使用[diagrams](https://github.com/francoislaberge/diagrams/#flowchart)工具可以生成各种图形，包括flowchart。
 
-* [Viz.js](https://github.com/mdaines/viz.js) 
+* [Viz.js](https://github.com/mdaines/viz.js)
 	- 借助[Viz](http://viz-js.com/)Web平台使用`Graphviz`的`DOT`语言在浏览器中生成**广义的图形**。
 
 * [Evolus Pencil](http://pencil.evolus.vn/)
