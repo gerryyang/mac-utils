@@ -8,11 +8,56 @@ categories: [TCP/IP]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 关键 API
 
-## socket
+# DataStruct
 
-### Options
+
+## sockaddr_in
+
+``` cpp
+struct sockaddr_in {
+    sa_family_t    sin_family; /* address family: AF_INET */
+    in_port_t      sin_port;   /* port in network byte order */
+    struct in_addr sin_addr;   /* internet address */
+};
+
+/* Internet address */
+struct in_addr {
+    uint32_t       s_addr;     /* address in network byte order */
+};
+```
+
+* https://man7.org/linux/man-pages/man7/ip.7.html
+
+## struct hostent 
+
+The `hostent` structure is defined in `<netdb.h>` as follows:
+
+``` cpp
+struct hostent {
+    char  *h_name;            /* official name of host */
+    char **h_aliases;         /* alias list */
+    int    h_addrtype;        /* host address type */
+    int    h_length;          /* length of address */
+    char **h_addr_list;       /* list of addresses */
+}
+#define h_addr h_addr_list[0] /* for backward compatibility */
+```
+
+The members of the hostent structure are:
+
+* `h_name` The official name of the host.
+* `h_aliases` An array of alternative names for the host, terminated by a null pointer.
+* `h_addrtype` The type of address; always `AF_INET` or `AF_INET6` at present.
+* `h_length` The length of the address in bytes.
+* `h_addr_list` An array of pointers to network addresses for the host (in network byte order), terminated by a null pointer.
+* `h_addr` The first address in h_addr_list for backward compatibility.
+
+
+* https://man7.org/linux/man-pages/man3/gethostbyname.3.html
+
+
+# Options (socket)
 
 SO_SNDBUF
 
@@ -27,6 +72,8 @@ Sets or gets the maximum socket receive buffer in bytes. **The kernel doubles th
 
 * https://man7.org/linux/man-pages/man7/socket.7.html
 * [Understanding set/getsockopt SO_SNDBUF size doubles](https://stackoverflow.com/questions/2031109/understanding-set-getsockopt-so-sndbuf-size-doubles)
+
+# Interface
 
 ## connect
 
@@ -138,6 +185,31 @@ POSIX allows an implementation to define an upper limit, advertised via the cons
 ```
 
 * https://man7.org/linux/man-pages/man2/select.2.html
+
+## poll
+
+``` cpp
+#include <poll.h>
+
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+```
+
+`poll()` performs a similar task to `select(2)`: it waits for one of a set of file descriptors to become ready to perform I/O.  The Linux-specific `epoll(7)` API performs a similar task, but offers features beyond those found in `poll()`.
+
+The set of file descriptors to be monitored is specified in the `fds` argument, which is **an array of structures** of the following form:
+
+``` cpp
+struct pollfd {
+    int   fd;         /* file descriptor */
+    short events;     /* requested events */
+    short revents;    /* returned events */
+};
+```
+
+The caller should specify the number of items in the `fds` array in `nfds`.
+
+
+* https://man7.org/linux/man-pages/man2/poll.2.html
 
 ## getsockopt
 
@@ -286,10 +358,29 @@ refer:
 * https://man7.org/linux/man-pages/man2/epoll_ctl.2.html
 
 
+# Q&A
+
+# [How to convert string to IP address and vice versa](https://stackoverflow.com/questions/5328070/how-to-convert-string-to-ip-address-and-vice-versa)
+
+Use `inet_ntop()` and `inet_pton()` if you need it other way around. Do not use `inet_ntoa()`, `inet_aton()` and similar as they are deprecated and don't support ipv6.
+
+``` cpp
+// IPv4 demo of inet_ntop() and inet_pton()
+
+struct sockaddr_in sa;
+char str[INET_ADDRSTRLEN];
+
+// store this IP address in sa:
+inet_pton(AF_INET, "192.0.2.33", &(sa.sin_addr));
+
+// now get it back and print it
+inet_ntop(AF_INET, &(sa.sin_addr), str, INET_ADDRSTRLEN);
+
+printf("%s\n", str); // prints "192.0.2.33"
+```
 
 # Refer
 
-[epoll LT/ET 深入剖析](https://segmentfault.com/a/1190000004597522)
-
+* [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
 
 
