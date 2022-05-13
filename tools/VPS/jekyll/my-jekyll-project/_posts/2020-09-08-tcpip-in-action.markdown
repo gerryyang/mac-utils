@@ -259,6 +259,7 @@ int main(void)
   }
   struct sockaddr_in* internet_addr = (struct sockaddr_in*) addr->ai_addr;
   printf("google.com is at: %s\n", inet_ntoa(internet_addr->sin_addr));
+  freeaddrinfo(addr);
   return 0;
 }
 ```

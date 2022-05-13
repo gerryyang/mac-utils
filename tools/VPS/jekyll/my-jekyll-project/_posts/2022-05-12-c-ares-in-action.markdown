@@ -8,9 +8,124 @@ categories: [TCP/IP]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Question
+# getaddrinfo
+
+In C programming, the functions `getaddrinfo()` and `getnameinfo()` convert **domain names**, **hostnames**, and **IP addresses** between human-readable text representations and structured binary formats for the operating system's networking API. Both functions are contained in the POSIX standard application programming interface (API).
+
+`getaddrinfo` and `getnameinfo` are inverse functions of each other. They are network protocol agnostic, and support both **IPv4** and **IPv6**. It is the recommended interface for name resolution in building protocol independent applications and for transitioning legacy **IPv4** code to the **IPv6** Internet.
+
+Internally, the functions perform resolutions using the [Domain Name System](https://en.wikipedia.org/wiki/Domain_Name_System) (**DNS**) by calling other, lower level functions, such as `gethostbyname()`.
+
+``` cpp
+int getaddrinfo(const char *node, const char *service,
+                const struct addrinfo *hints,
+                struct addrinfo **res);
+
+void freeaddrinfo(struct addrinfo *res);
+
+const char *gai_strerror(int errcode);
+```
+
+The addrinfo structure used by `getaddrinfo()` contains the following fields:
+
+``` cpp
+struct addrinfo {
+    int              ai_flags;
+    int              ai_family;
+    int              ai_socktype;
+    int              ai_protocol;
+    socklen_t        ai_addrlen;
+    struct sockaddr *ai_addr;
+    char            *ai_canonname;
+    struct addrinfo *ai_next;
+};
+```
+
+The `getaddrinfo()` function allocates and initializes a linked list of addrinfo structures, one for each network address that matches node and service, subject to any restrictions imposed by `hints`, and returns a pointer to the start of the list in `res`. The items in the linked list are linked by the `ai_next` field.
+
+**There are several reasons why the linked list may have more than one addrinfo structure**, including: the network host is multihomed, accessible over multiple protocols (e.g., both **AF_INET** and **AF_INET6**); or the same service is available from multiple socket types (one **SOCK_STREAM** address and another **SOCK_DGRAM** address, for example). Normally, the application should try using the addresses in the order in which they are returned. The sorting function used within `getaddrinfo()` is defined in RFC 3484; the order can be tweaked for a particular system by editing `/etc/gai.conf` (available since glibc 2.5).
+
+
+
+* [getaddrinfo wiki](https://en.wikipedia.org/wiki/Getaddrinfo)
+
+## getaddrinfo overhead
 
 The `getaddrinfo` function call alone causes over 100 system calls! But getaddrinfo does a lot before these system calls, and it does quite a bit after them, too. See more: [What does getaddrinfo do?](https://jameshfisher.com/2018/02/03/what-does-getaddrinfo-do/)
+
+`getaddrinfo` doesn’t know anything about files, DNS, or any other way to find the address for a host. Instead, `getaddrinfo` gets a list of these “sources” at runtime from another file, `/etc/nsswitch.conf`, the “Name Service Switch”. 
+
+```
+$cat /etc/nsswitch.conf
+#
+# /etc/nsswitch.conf
+#
+# An example Name Service Switch config file. This file should be
+# sorted with the most-used services at the beginning.
+#
+# The entry '[NOTFOUND=return]' means that the search for an
+# entry should stop if the search in the previous entry turned
+# up nothing. Note that if the search failed due to some other reason
+# (like no NIS server responding) then the search continues with the
+# next entry.
+#
+# Valid entries include:
+#
+#       nisplus                 Use NIS+ (NIS version 3)
+#       nis                     Use NIS (NIS version 2), also called YP
+#       dns                     Use DNS (Domain Name Service)
+#       files                   Use the local files
+#       db                      Use the local database (.db) files
+#       compat                  Use NIS on compat mode
+#       hesiod                  Use Hesiod for user lookups
+#       [NOTFOUND=return]       Stop searching if not found so far
+#
+
+# To use db, put the "db" in front of "files" for entries you want to be
+# looked up first in the databases
+#
+# Example:
+#passwd:    db files nisplus nis
+#shadow:    db files nisplus nis
+#group:     db files nisplus nis
+
+#initgroups: files sss
+
+#hosts:     db files nisplus nis dns
+hosts:      files dns
+
+...
+```
+
+Notice the line `hosts`: files dns. This says, “to find a host, first ask the library `libnss_files.so`. If that fails, ask the library `libnss_dns.so`.” The C standard library interpolates files, dns and so on into the pattern **libnss_%s.so** to find the libraries. As such, you could write a new library `libnss_imfeelinglucky`, and change your `nsswitch.conf` to hosts: `imfeelinglucky`. Enjoy the chaos.
+
+You might think we’re done. Not yet! Before getaddrinfo does any of this, we have these system calls:
+
+
+```
+socket(PF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+connect(3, {sa_family=AF_LOCAL, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+```
+
+What is `/var/run/nscd/socket` ..? Linux tells us, with `ENOENT`, that I don’t have that file! What is this supposed to be? As Google will tell you, this is a socket to talk to the **Northern School of Contemporary Dance**. But before your process can go to class, you have to install the daemon:
+
+```
+$ sudo apt-get install nscd
+...
+Setting up nscd (2.19-0ubuntu6.14) ...
+ * Starting Name Service Cache Daemon
+```
+
+Sorry, `nscd` is actually the “**name service cache daemon**”, “a daemon that provides a cache for the most common name service requests”. After installing it, the daemon starts, and your process can dance:
+
+As everyone on the internet will tell you, `nscd` is “shit”, “unstable”, and “badly designed”. But no worries: as part of the C standard library, `nscd` is not this program but a standard protocol, part of the standard UNIX specification, with many alternative implementations!
+
+
+One last thing. You might think that `getaddrinfo` caches answers, so subsequent calls aren’t so expensive. It does not! It does this entire procedure every time!
+
+## Example
+
 
 ``` cpp
 #include <stdio.h>
@@ -29,6 +144,8 @@ int main(void)
   }
   struct sockaddr_in* internet_addr = (struct sockaddr_in*) addr->ai_addr;
   printf("google.com is at: %s\n", inet_ntoa(internet_addr->sin_addr));
+
+  freeaddrinfo(addr); 
   return 0;
 }
 ```
@@ -36,6 +153,51 @@ int main(void)
 ```
 $./a.out 
 google.com is at: 172.217.163.46
+```
+
+``` cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#ifndef   NI_MAXHOST
+#define   NI_MAXHOST 1025
+#endif
+
+int main(void)
+{
+    struct addrinfo* result;
+    struct addrinfo* res;
+    int error;
+
+    /* resolve the domain name into a list of addresses */
+    error = getaddrinfo("www.example.com", NULL, NULL, &result);
+    if (error != 0) {   
+        if (error == EAI_SYSTEM) {
+            perror("getaddrinfo");
+        } else {
+            fprintf(stderr, "error in getaddrinfo: %s\n", gai_strerror(error));
+        }   
+        exit(EXIT_FAILURE);
+    }   
+
+    /* loop over all returned results and do inverse lookup */
+    for (res = result; res != NULL; res = res->ai_next) {   
+        char hostname[NI_MAXHOST];
+        error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname, NI_MAXHOST, NULL, 0, 0); 
+        if (error != 0) {
+            fprintf(stderr, "error in getnameinfo: %s\n", gai_strerror(error));
+            continue;
+        }
+        if (*hostname != '\0')
+            printf("hostname: %s\n", hostname);
+    }   
+
+    freeaddrinfo(result);
+    return 0;
+}
 ```
 
 # C-ares
@@ -216,7 +378,6 @@ gerryyang.com
 #include <pthread.h>
 #include <deque>
 #include <netdb.h>
-#include "ares.h"
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -241,7 +402,7 @@ public:
         }
     }
 
-    int resolve(int af, const std::string& domain, int& timeout, void* addr, size_t addr_len)
+    int resolve(int af, const std::string& domain, int& timeout/*ms*/, void* addr, size_t addr_len)
     {
         dns_res_t res = {NULL, addr, addr_len};
         ares_gethostbyname(channel_, domain.c_str(), af, dns_callback, &res);
@@ -252,10 +413,15 @@ public:
         while (nfds)
         {
             struct timeval *tvp, tv, store = {timeout / 1000, (timeout % 1000) * 1000};
+
+            // return maximum time to wait
             tvp = ares_timeout(channel_, &store, &tv);
             int timeout_ms = tvp->tv_sec * 1000 + tvp->tv_usec / 1000;
 
+            printf("timeout_ms(%d)\n", timeout_ms);
             nfds = dns_wait_resolve(channel_, timeout_ms);
+            printf("dns_wait_resolve nfds(%d)\n", nfds);
+
             gettimeofday(&now, NULL);
             timeout -= (now.tv_sec - last.tv_sec) * 1000 + (now.tv_usec - last.tv_usec) / 1000;
             last = now;
@@ -264,6 +430,7 @@ public:
         if (res.error_info)
         {
             err_info_ = res.error_info;
+            printf("resolve err(%s)\n", res.error_info);
             return -1;
         }
         return 0;
@@ -292,10 +459,13 @@ private:
 
     static void dns_callback(void* arg, int status, int timeouts, struct hostent* hptr)
     {
+        // TODO(fix): get first address
+
         dns_res_t& res = *(dns_res_t*)arg;
         if (status != ARES_SUCCESS)
         {
             res.error_info = ares_strerror(status);
+            printf("dns_callback err(%s)\n", res.error_info);
             return;
         }
         char** pptr = hptr->h_addr_list;
@@ -306,6 +476,7 @@ private:
         }
 
         res.error_info = "no invalid address get";
+        printf("dns_callback err(%s)\n", res.error_info);
     }
 
     static int dns_wait_resolve(ares_channel channel_, int timeout_ms)
@@ -313,6 +484,9 @@ private:
         if (timeout_ms < 0)
         {
             ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+
+            // TODO: 这里若不执行 ares_cancel，channel_ 析构会出现 coredump
+            ares_cancel(channel_);
             return 0;
         }
         int nfds;
@@ -350,7 +524,7 @@ private:
 
         if (num)
         {
-            nfds = poll(pfd, num, timeout_ms);
+            nfds = poll(pfd, num, timeout_ms/*milliseconds */);
         }
         else
         {
@@ -360,6 +534,9 @@ private:
         if (!nfds)
         {
             ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+
+            // TODO: 这里若不执行 ares_cancel，在超时错误时，channel_ 析构会出现 coredump
+            ares_cancel(channel_);
         }
         else
         {
@@ -385,7 +562,12 @@ int main()
     dns_resolver_t dr;
     if (dr)
     {
-        dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));
+        int ret = dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));
+        if (0 != ret)
+        {
+            printf("dr.resolve ret(%d) err(%s)\n", ret, dr.error_info().c_str());
+            return;
+        }
         char strIP[INET_ADDRSTRLEN] = {0};
         inet_ntop(AF_INET, &(sa.sin_addr), strIP, INET_ADDRSTRLEN);
         printf("%s\n", strIP);
@@ -393,6 +575,7 @@ int main()
     else
     {
         printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());
+        return;
     }
 }
 ```
@@ -538,7 +721,9 @@ If no queries have timeouts pending sooner than the given maximum timeout, `ares
 * https://linux.die.net/man/3/ares_timeout
 
 
-## Performance compare
+# Performance compare
+
+## Result
 
 编译：g++ performance_compare.cc -o performance_compare -I deps/c-ares-1.18.1/include deps/c-ares-1.18.1/lib/libcares.a -std=c++11
 
@@ -573,6 +758,120 @@ Loop: 100000
 | c-ares | 93014894039 | 1.138x
 
 
+## c-ares 和文件相关的系统调用
+
+```
+$strace -s1024 -tt -e trace=file ./performance_compare
+11:28:34.980050 execve("./performance_compare", ["./performance_compare"], [/* 788 vars */]) = 0
+11:28:34.981232 access("/etc/ld.so.preload", R_OK) = 0
+11:28:34.981347 open("/etc/ld.so.preload", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.981678 readlink("/proc/self/exe", "/data/home/gerryyang/github/mac-utils/programing/cpp/http/c-ares/performance_compare", 4096) = 84
+11:28:34.981808 open("/lib64/libonion.so", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.982477 open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.982810 open("/lib64/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.983499 open("/lib64/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.984061 open("/lib64/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.984603 open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.985269 open("/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+11:28:34.987771 open("/etc/resolv.conf", O_RDONLY) = 3
+11:28:34.988396 open("/etc/nsswitch.conf", O_RDONLY) = 3
+11:28:34.988933 open("/dev/urandom", O_RDONLY) = 3
+11:28:34.989195 open("/etc/hosts", O_RDONLY) = 3
+resolve1 : 4248534 ns
+11:28:34.992087 +++ exited with 0 +++
+```
+
+## c-ares 和网络相关的调用情况
+
+```
+$strace -s1024 -tt -e trace=network  ./performance_compare 
+11:24:19.110979 socket(PF_INET, SOCK_DGRAM, IPPROTO_IP) = 3
+11:24:19.111332 connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, 16) = 0
+11:24:19.111470 sendto(3, "s\224\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\7default\3svc\7cluster\5local\0\0\1\0\1", 57, MSG_NOSIGNAL, NULL, 0) = 57
+11:24:19.111864 recvfrom(3, "s\224\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\7default\3svc\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\21\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\3177\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 4097, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 150
+11:24:19.111962 sendto(3, "0h\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\3svc\7cluster\5local\0\0\1\0\1", 49, MSG_NOSIGNAL, NULL, 0) = 49
+11:24:19.112057 recvfrom(3, 0x7ffe20c14bb0, 4097, 0, 0x7ffe20c14b90, 0x7ffe20c14b8c) = -1 EAGAIN (Resource temporarily unavailable)
+11:24:19.112196 recvfrom(3, "0h\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\3svc\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\21\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\3177\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 4097, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 142
+11:24:19.112274 sendto(3, ">\277\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\7cluster\5local\0\0\1\0\1", 45, MSG_NOSIGNAL, NULL, 0) = 45
+11:24:19.112356 recvfrom(3, 0x7ffe20c14bb0, 4097, 0, 0x7ffe20c14b90, 0x7ffe20c14b8c) = -1 EAGAIN (Resource temporarily unavailable)
+11:24:19.112498 recvfrom(3, ">\277\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\21\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\3177\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 4097, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 138
+11:24:19.112577 sendto(3, "9\213\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\0\0\1\0\1", 31, MSG_NOSIGNAL, NULL, 0) = 31
+11:24:19.112668 recvfrom(3, 0x7ffe20c14bb0, 4097, 0, 0x7ffe20c14b90, 0x7ffe20c14b8c) = -1 EAGAIN (Resource temporarily unavailable)
+11:24:19.112811 recvfrom(3, "9\213\205\200\0\1\0\1\0\0\0\0\tgerryyang\3com\0\0\1\0\1\tgerryyang\3com\0\0\1\0\1\0\0\0\22\0\4w\34)f", 4097, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 60
+11:24:19.112894 socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP) = 4
+11:24:19.112966 connect(4, {sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("119.28.41.102")}, 16) = 0
+11:24:19.113039 getsockname(4, {sa_family=AF_INET, sin_port=htons(59710), sin_addr=inet_addr("9.135.18.186")}, [16]) = 0
+resolve1 : 3858319 ns
+11:24:19.113629 +++ exited with 0 +++
+```
+
+## getaddrinfo 和文件相关的系统调用
+
+```
+$strace -s1024 -tt -e trace=file ./performance_compare
+11:30:30.549208 execve("./performance_compare", ["./performance_compare"], [/* 788 vars */]) = 0
+11:30:30.550343 access("/etc/ld.so.preload", R_OK) = 0
+11:30:30.550469 open("/etc/ld.so.preload", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.550707 readlink("/proc/self/exe", "/data/home/gerryyang/github/mac-utils/programing/cpp/http/c-ares/performance_compare", 4096) = 84
+11:30:30.550800 open("/lib64/libonion.so", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.551300 open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.551562 open("/lib64/libstdc++.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.552006 open("/lib64/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.552352 open("/lib64/libgcc_s.so.1", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.552682 open("/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.553106 open("/lib64/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.555178 stat("/etc/resolv.conf", {st_mode=S_IFREG|0644, st_size=105, ...}) = 0
+11:30:30.555292 open("/etc/host.conf", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.555623 open("/etc/resolv.conf", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.556216 open("/etc/nsswitch.conf", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.556563 open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.556770 open("/lib64/libnss_files.so.2", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.557258 open("/etc/hosts", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.557588 open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.557798 open("/lib64/libnss_dns.so.2", O_RDONLY|O_CLOEXEC) = 3
+11:30:30.558124 open("/lib64/libresolv.so.2", O_RDONLY|O_CLOEXEC) = 3
+resolve2 : 13396723 ns
+11:30:30.568509 +++ exited with 0 +++
+```
+
+## getaddrinfo 和网络相关的调用情况
+
+```
+$strace -s1024 -tt -e trace=network  ./performance_compare 
+11:32:46.239270 socket(PF_NETLINK, SOCK_RAW, 0) = 3
+11:32:46.239459 bind(3, {sa_family=AF_NETLINK, pid=0, groups=00000000}, 12) = 0
+11:32:46.239733 getsockname(3, {sa_family=AF_NETLINK, pid=3627407, groups=00000000}, [12]) = 0
+11:32:46.239809 sendto(3, "\24\0\0\0\26\0\1\3^\321}b\0\0\0\0\0\0\0\0", 20, 0, {sa_family=AF_NETLINK, pid=0, groups=00000000}, 12) = 20
+11:32:46.239899 recvmsg(3, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"D\0\0\0\24\0\2\0^\321}b\217Y7\0\2\10\200\376\1\0\0\0\10\0\1\0\177\0\0\1\10\0\2\0\177\0\0\1\7\0\3\0lo\0\0\24\0\6\0\377\377\377\377\377\377\377\377\34\335\371@\34\335\371@P\0\0\0\24\0\2\0^\321}b\217Y7\0\2 \200\0\3\0\0\0\10\0\1\0\t\207\22\272\10\0\2\0\t\207\22\272\10\0\4\0\t\207\22\272\t\0\3\0eth0\0\0\0\0\24\0\6\0\377\377\377\377\377\377\377\377<\335\371@<\335\371@", 4096}], msg_controllen=0, msg_flags=0}, 0) = 148
+11:32:46.239986 recvmsg(3, {msg_name(12)={sa_family=AF_NETLINK, pid=0, groups=00000000}, msg_iov(1)=[{"\24\0\0\0\3\0\2\0^\321}b\217Y7\0\0\0\0\0", 4096}], msg_controllen=0, msg_flags=0}, 0) = 20
+11:32:46.241100 socket(PF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+11:32:46.241204 connect(3, {sa_family=AF_LOCAL, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+11:32:46.241355 socket(PF_LOCAL, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+11:32:46.241426 connect(3, {sa_family=AF_LOCAL, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+11:32:46.244024 socket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3
+11:32:46.244110 setsockopt(3, SOL_IP, IP_RECVERR, [1], 4) = 0
+11:32:46.244187 connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, 16) = 0
+11:32:46.244315 sendto(3, "\356\361\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\7default\3svc\7cluster\5local\0\0\1\0\1", 57, MSG_NOSIGNAL, NULL, 0) = 57
+11:32:46.244792 recvfrom(3, "\356\361\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\7default\3svc\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\32\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\321>\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 1024, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 150
+11:32:46.244974 socket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3
+11:32:46.245053 setsockopt(3, SOL_IP, IP_RECVERR, [1], 4) = 0
+11:32:46.245130 connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, 16) = 0
+11:32:46.245262 sendto(3, "\242P\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\3svc\7cluster\5local\0\0\1\0\1", 49, MSG_NOSIGNAL, NULL, 0) = 49
+11:32:46.245717 recvfrom(3, "\242P\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\3svc\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\32\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\321>\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 1024, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 142
+11:32:46.245921 socket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3
+11:32:46.246015 setsockopt(3, SOL_IP, IP_RECVERR, [1], 4) = 0
+11:32:46.246111 connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, 16) = 0
+11:32:46.246284 sendto(3, "\262$\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\7cluster\5local\0\0\1\0\1", 45, MSG_NOSIGNAL, NULL, 0) = 45
+11:32:46.246819 recvfrom(3, "\262$\205\3\0\1\0\0\0\1\0\0\tgerryyang\3com\7cluster\5local\0\0\1\0\1\7cluster\5local\0\0\6\0\1\0\0\0\32\0D\2ns\3dns\7cluster\5local\0\nhostmaster\7cluster\5local\0b}\321>\0\0\34 \0\0\7\10\0\1Q\200\0\0\0\36", 1024, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 138
+11:32:46.247011 socket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3
+11:32:46.247120 setsockopt(3, SOL_IP, IP_RECVERR, [1], 4) = 0
+11:32:46.247255 connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, 16) = 0
+11:32:46.247386 sendto(3, "n\225\1\0\0\1\0\0\0\0\0\0\tgerryyang\3com\0\0\1\0\1", 31, MSG_NOSIGNAL, NULL, 0) = 31
+11:32:46.247832 recvfrom(3, "n\225\205\200\0\1\0\1\0\0\0\0\tgerryyang\3com\0\0\1\0\1\tgerryyang\3com\0\0\1\0\1\0\0\0\32\0\4w\34)f", 1024, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("9.166.31.254")}, [16]) = 60
+resolve2 : 8803496 ns
+11:32:46.248537 +++ exited with 0 +++
+```
+
 
 测试代码：
 
@@ -585,7 +884,6 @@ Loop: 100000
 #include <pthread.h>
 #include <deque>
 #include <netdb.h>
-#include "ares.h"
 #include <string>
 #include <cstring>
 #include <cstdio>
@@ -700,6 +998,7 @@ private:
         if (timeout_ms < 0)
         {
             ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+            ares_cancel(channel_);
             return 0;
         }
         int nfds;
@@ -747,6 +1046,7 @@ private:
         if (!nfds)
         {
             ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+            ares_cancel(channel_);
         }
         else
         {
@@ -776,13 +1076,19 @@ void resolve1()
 		dns_resolver_t dr;
 		if (dr)
 		{
-			dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));	
+			dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));
+            if (0 != ret)
+            {
+                printf("resolve ret(%d) err(%s)\n", ret, dr.error_info().c_str());
+                return;
+            }
 			inet_ntop(AF_INET, &(sa.sin_addr), strIP, INET_ADDRSTRLEN);
 			//printf("%s\n", strIP);
 		}
 		else
 		{
-			printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());		
+			printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());
+            return;		
 		}
 	}
 
