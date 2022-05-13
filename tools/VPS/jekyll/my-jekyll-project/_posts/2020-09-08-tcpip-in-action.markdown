@@ -252,7 +252,7 @@ https://wandbox.org/permlink/lLxsF1NqXamWodoF
 int main(void)
 {
   struct addrinfo* addr;
-  int result = getaddrinfo("localhost", NULL, NULL, &addr);
+  int result = getaddrinfo("google.com", NULL, NULL, &addr);
   if (result != 0) {
     printf("Error from getaddrinfo: %s\n", gai_strerror(result));
     return 1;
@@ -261,7 +261,11 @@ int main(void)
   printf("google.com is at: %s\n", inet_ntoa(internet_addr->sin_addr));
   return 0;
 }
-// google.com is at: 0.0.0.0
+```
+
+```
+$./a.out 
+google.com is at: 172.217.163.46
 ```
 
 
