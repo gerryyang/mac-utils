@@ -12,8 +12,9 @@
 #include <cstdio>
 #include <iostream>
 #include <chrono>
+#include <unistd.h>
 
-const int MAXCNT = 100000;
+const int MAXCNT = 1;
 
 class ScopedTimer 
 {
@@ -45,6 +46,7 @@ public:
     {
         if (channel_)
         {
+			printf("~dns_resolver_t\n");
             ares_destroy(channel_);
         }
     }
@@ -63,7 +65,10 @@ public:
             tvp = ares_timeout(channel_, &store, &tv);
             int timeout_ms = tvp->tv_sec * 1000 + tvp->tv_usec / 1000;
 
+			printf("timeout_ms(%d)\n", timeout_ms);
             nfds = dns_wait_resolve(channel_, timeout_ms);
+			printf("dns_wait_resolve nfds(%d)\n", nfds);
+
             gettimeofday(&now, NULL);
             timeout -= (now.tv_sec - last.tv_sec) * 1000 + (now.tv_usec - last.tv_usec) / 1000;
             last = now;
@@ -71,9 +76,12 @@ public:
 
         if (res.error_info)
         {
+			printf("resolve err(%s)\n", res.error_info);
             err_info_ = res.error_info;
             return -1;
         }
+		printf("resolve ok\n");
+
         return 0;
     }
 
@@ -104,6 +112,7 @@ private:
         if (status != ARES_SUCCESS)
         {
             res.error_info = ares_strerror(status);
+			printf("dns_callback err(%s)\n", res.error_info);
             return;
         }
         char** pptr = hptr->h_addr_list;
@@ -114,6 +123,7 @@ private:
         }
 
         res.error_info = "no invalid address get";
+		printf("dns_callback err(%s)\n", res.error_info);
     }
 
     static int dns_wait_resolve(ares_channel channel_, int timeout_ms)
@@ -121,6 +131,7 @@ private:
         if (timeout_ms < 0)
         {
             ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+			ares_cancel(channel_);
             return 0;
         }
         int nfds;
@@ -167,8 +178,10 @@ private:
 
         if (!nfds)
         {
-            ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
-        }
+			printf("nfds == 0\n");
+			ares_process_fd(channel_, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+			ares_cancel(channel_);
+		}
         else
         {
             for (i = 0; i < num; i++)
@@ -193,17 +206,23 @@ void resolve1()
 	for (auto i = 0; i < MAXCNT; ++i) {
 		struct sockaddr_in sa = {};
 		std::string domain = "gerryyang.com";
-		int timeout_ms = 1000;
+		int timeout_ms = 100;
 		dns_resolver_t dr;
 		if (dr)
 		{
-			dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));	
+			int ret = dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));	
+			if (0 != ret)
+			{
+				printf("dr.resolve err(%s)\n", dr.error_info().c_str());
+				return;
+			}
 			inet_ntop(AF_INET, &(sa.sin_addr), strIP, INET_ADDRSTRLEN);
-			//printf("%s\n", strIP);
+			printf("%s\n", strIP);
 		}
 		else
 		{
 			printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());		
+			return;
 		}
 	}
 
@@ -224,11 +243,13 @@ void resolve2()
 		struct sockaddr_in* psa = (struct sockaddr_in*) addr->ai_addr;
 		inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
 		//printf("%s\n", strIP);
+
+        freeaddrinfo(addr);
 	}
 }
 
 int main()
 {
 	resolve1();
-	resolve2();
+	//resolve2();
 }
