@@ -1109,6 +1109,8 @@ void resolve2()
 		struct sockaddr_in* psa = (struct sockaddr_in*) addr->ai_addr;
 		inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
 		//printf("%s\n", strIP);
+
+        freeaddrinfo(addr);
 	}
 }
 
