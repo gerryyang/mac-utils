@@ -503,7 +503,7 @@ private:
         // TODO: get the first address
 
         printf("dns_callback status(%d) timeouts(%d)\n", status, timeouts);
-        
+
         dns_res_t& res = *(dns_res_t*)arg;
         if (status != ARES_SUCCESS)
         {
@@ -925,7 +925,7 @@ resolve2 : 8803496 ns
 ```
 
 
-测试代码：
+## 测试代码
 
 ``` cpp
 #include <sys/time.h>
@@ -1029,20 +1029,33 @@ private:
 
     static void dns_callback(void* arg, int status, int timeouts, struct hostent* hptr)
     {
+        //printf("dns_callback status(%d) timeouts(%d)\n", status, timeouts);
+
         dns_res_t& res = *(dns_res_t*)arg;
         if (status != ARES_SUCCESS)
         {
             res.error_info = ares_strerror(status);
-            return;
-        }
-        char** pptr = hptr->h_addr_list;
-        if (*pptr)
-        {
-            memcpy(res.address, *pptr, res.len);
+            printf("dns_callback err(%s)\n", res.error_info);
             return;
         }
 
-        res.error_info = "no invalid address get";
+        if (AF_INET == hptr->h_addrtype)
+        {
+            char** pptr = hptr->h_addr_list;
+            if (*pptr)
+            {
+                memcpy(res.address, *pptr, res.len);
+                return;
+            }
+
+            res.error_info = "no invalid address get";
+            printf("dns_callback err(%s)\n", res.error_info);
+        }
+        else
+        {
+            res.error_info = "addrtype not supported";
+            printf("addrtype(%d) not supported\n", hptr->h_addrtype);
+        }
     }
 
     static int dns_wait_resolve(ares_channel channel_, int timeout_ms)
@@ -1118,58 +1131,60 @@ private:
 
 void resolve1()
 {
-	ScopedTimer timer("resolve1");
+    ScopedTimer timer("resolve1");
 
-	char strIP[INET_ADDRSTRLEN] = {0};
-	for (auto i = 0; i < MAXCNT; ++i) {
-		struct sockaddr_in sa = {};
-		std::string domain = "gerryyang.com";
-		int timeout_ms = 1000;
-		dns_resolver_t dr;
-		if (dr)
-		{
-			dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));
+    char strIP[INET_ADDRSTRLEN] = {0};
+    for (auto i = 0; i < MAXCNT; ++i)
+    {
+        struct sockaddr_in sa = {};
+        std::string domain = "gerryyang.com";
+        int timeout_ms = 1000;
+        dns_resolver_t dr;
+        if (dr)
+        {
+            dr.resolve(AF_INET, domain, timeout_ms, &sa.sin_addr.s_addr, sizeof(sa.sin_addr.s_addr));
             if (0 != ret)
             {
                 printf("resolve ret(%d) err(%s)\n", ret, dr.error_info().c_str());
                 return;
             }
-			inet_ntop(AF_INET, &(sa.sin_addr), strIP, INET_ADDRSTRLEN);
-			//printf("%s\n", strIP);
-		}
-		else
-		{
-			printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());
-            return;		
-		}
-	}
-
+            inet_ntop(AF_INET, &(sa.sin_addr), strIP, INET_ADDRSTRLEN);
+            //printf("%s\n", strIP);
+        }
+        else
+        {
+            printf("dns_resolver_t init err(%s)\n", dr.error_info().c_str());
+            return;
+        }
+    }
 }
 
 void resolve2()
 {
-	ScopedTimer timer("resolve2");
+    ScopedTimer timer("resolve2");
 
-	char strIP[INET_ADDRSTRLEN] = {0};
-	for (auto i = 0; i < MAXCNT; ++i) {
-		struct addrinfo* addr;
-		int result = getaddrinfo("gerryyang.com", NULL, NULL, &addr);
-		if (result != 0) {
-			printf("Error from getaddrinfo: %s\n", gai_strerror(result));
-			return;
-		}
-		struct sockaddr_in* psa = (struct sockaddr_in*) addr->ai_addr;
-		inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
-		//printf("%s\n", strIP);
-        
+    char strIP[INET_ADDRSTRLEN] = {0};
+    for (auto i = 0; i < MAXCNT; ++i)
+    {
+        struct addrinfo* addr;
+        int result = getaddrinfo("gerryyang.com", NULL, NULL, &addr);
+        if (result != 0)
+        {
+            printf("Error from getaddrinfo: %s\n", gai_strerror(result));
+            return;
+        }
+        struct sockaddr_in* psa = (struct sockaddr_in*)addr->ai_addr;
+        inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
+        //printf("%s\n", strIP);
+
         freeaddrinfo(addr);
-	}
+    }
 }
 
 int main()
 {
-	resolve1();
-	resolve2();
+    resolve1();
+    resolve2();
 }
 ```
 
