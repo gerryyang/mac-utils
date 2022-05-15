@@ -9,6 +9,18 @@ categories: [TCP/IP]
 {:toc}
 
 
+# Network address
+
+![network_address](/assets/images/202205/network_address.png)
+
+A [network address](https://en.wikipedia.org/wiki/Network_address) is an identifier for a [node](https://en.wikipedia.org/wiki/Node_(networking)) or [host](https://en.wikipedia.org/wiki/Host_(networking)) on a [telecommunications network](https://en.wikipedia.org/wiki/Telecommunications_network). Network addresses are designed to be [unique identifiers](https://en.wikipedia.org/wiki/Unique_identifier) across the network, although some networks allow for [local](https://en.wikipedia.org/wiki/Link-local_address), [private addresses](https://en.wikipedia.org/wiki/Private_network), or [locally administered addresses](https://en.wikipedia.org/wiki/Locally_administered_address) that may not be unique.[1] Special network addresses are allocated as [broadcast](https://en.wikipedia.org/wiki/Broadcast_address) or [multicast addresses](https://en.wikipedia.org/wiki/Multicast_address). These too are not unique.
+
+In some cases, network hosts may have more than one network address. For example, each [network interface controller](https://en.wikipedia.org/wiki/Network_interface_controller) may be uniquely identified. Further, because protocols are frequently [layered](https://en.wikipedia.org/wiki/Abstraction_layer), more than one protocol's network address can occur in any particular network interface or node and more than one type of network address may be used in any one network.
+
+Network addresses can be flat addresses which contain no information about the node's location in the network (such as a [MAC address](https://en.wikipedia.org/wiki/MAC_address)), or may contain structure or hierarchical information for the [routing](https://en.wikipedia.org/wiki/Routing) (such as an [IP address](https://en.wikipedia.org/wiki/IP_address)).
+
+* https://en.wikipedia.org/wiki/Network_address
+
 # DataStruct
 
 
@@ -29,7 +41,7 @@ struct in_addr {
 
 * https://man7.org/linux/man-pages/man7/ip.7.html
 
-## struct hostent 
+## hostent 
 
 The `hostent` structure is defined in `<netdb.h>` as follows:
 
@@ -56,6 +68,24 @@ The members of the hostent structure are:
 
 * https://man7.org/linux/man-pages/man3/gethostbyname.3.html
 
+## addrinfo 
+
+The `addrinfo` structure used by `getaddrinfo()` contains the following fields:
+
+``` cpp
+struct addrinfo {
+    int              ai_flags;
+    int              ai_family;
+    int              ai_socktype;
+    int              ai_protocol;
+    socklen_t        ai_addrlen;
+    struct sockaddr *ai_addr;
+    char            *ai_canonname;
+    struct addrinfo *ai_next;
+};
+```
+
+* https://man7.org/linux/man-pages/man3/getaddrinfo.3.html
 
 # Options (socket)
 

@@ -136,14 +136,25 @@ One last thing. You might think that `getaddrinfo` caches answers, so subsequent
 
 int main(void)
 {
+  char strIP[INET_ADDRSTRLEN] = {0};
+
   struct addrinfo* addr;
+  struct addrinfo* res;
+
   int result = getaddrinfo("google.com", NULL, NULL, &addr);
   if (result != 0) {
     printf("Error from getaddrinfo: %s\n", gai_strerror(result));
     return 1;
   }
-  struct sockaddr_in* internet_addr = (struct sockaddr_in*) addr->ai_addr;
-  printf("google.com is at: %s\n", inet_ntoa(internet_addr->sin_addr));
+
+  //struct sockaddr_in* internet_addr = (struct sockaddr_in*) addr->ai_addr;
+  //printf("google.com is at: %s\n", inet_ntoa(internet_addr->sin_addr));
+
+  for (res = addr; res != NULL; res = res->ai_next) { 
+    struct sockaddr_in* psa = (struct sockaddr_in*) res->ai_addr;
+    inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
+    printf("%s\n", strIP);
+  }
 
   freeaddrinfo(addr); 
   return 0;
@@ -152,7 +163,37 @@ int main(void)
 
 ```
 $./a.out 
-google.com is at: 172.217.163.46
+142.251.42.238
+142.251.42.238
+142.251.42.238
+```
+
+``` cpp
+int SelectIP(const std::string& strHostName, std::string& strIP)
+{
+    char szIP[INET_ADDRSTRLEN] = {0};
+
+    // block operation
+    struct addrinfo* addr;
+    struct addrinfo* res;
+    int result = getaddrinfo(strHostName.c_str(), nullptr, nullptr, &addr);
+    if (0 != result)
+    {
+        LOG_ERROR("getaddrinfo host(%s) err(%s)\n", strHostName.c_str(), gai_strerror(result));
+        return 1;
+    }
+    
+    for (res = addr; res != NULL; res = res->ai_next)
+    {
+        struct sockaddr_in* psa = (struct sockaddr_in*)res->ai_addr;
+        inet_ntop(AF_INET, &(psa->sin_addr), szIP, INET_ADDRSTRLEN);
+        strIP = szIP;
+        break; // get first IP address
+    }
+
+    freeaddrinfo(addr);
+    return 0;
+}
 ```
 
 ``` cpp
@@ -459,8 +500,10 @@ private:
 
     static void dns_callback(void* arg, int status, int timeouts, struct hostent* hptr)
     {
-        // TODO(fix): get first address
+        // TODO: get the first address
 
+        printf("dns_callback status(%d) timeouts(%d)\n", status, timeouts);
+        
         dns_res_t& res = *(dns_res_t*)arg;
         if (status != ARES_SUCCESS)
         {
@@ -468,15 +511,24 @@ private:
             printf("dns_callback err(%s)\n", res.error_info);
             return;
         }
-        char** pptr = hptr->h_addr_list;
-        if (*pptr)
-        {
-            memcpy(res.address, *pptr, res.len);
-            return;
-        }
 
-        res.error_info = "no invalid address get";
-        printf("dns_callback err(%s)\n", res.error_info);
+        if (AF_INET == hptr->h_addrtype)
+        {
+            char** pptr = hptr->h_addr_list;
+            if (*pptr)
+            {
+                memcpy(res.address, *pptr, res.len);
+                return;
+            }
+
+            res.error_info = "no invalid address get";
+            printf("dns_callback err(%s)\n", res.error_info);
+        }
+        else
+        {
+            res.error_info = "addrtype not supported";
+            printf("addrtype(%d) not supported\n", hptr->h_addrtype);
+        }
     }
 
     static int dns_wait_resolve(ares_channel channel_, int timeout_ms)
@@ -1109,7 +1161,7 @@ void resolve2()
 		struct sockaddr_in* psa = (struct sockaddr_in*) addr->ai_addr;
 		inet_ntop(AF_INET, &(psa->sin_addr), strIP, INET_ADDRSTRLEN);
 		//printf("%s\n", strIP);
-
+        
         freeaddrinfo(addr);
 	}
 }

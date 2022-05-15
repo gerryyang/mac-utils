@@ -10,6 +10,32 @@ categories: 杂记
 
 > 骑行带来的刺激与其他任何运动都有所不同。骑行是一种能够将我们与车手和爱好者紧密相连的激情。我们可以畅谈几个小时，分享彼此的故事和经历。这些故事需要一个分享的媒介地方，而它就在这里。走出去寻找快乐、追寻梦想！
 
+rapha 发的关于骑行的一段描述 [#NeverJustARide](https://www.instagram.com/p/CcP1gapFbfx/):
+
+```
+It's never just a ride.
+It's much more than that.
+
+It's a personal thing, a social thing.
+Proof that we can do anything.
+
+It's a lifelong pursuit of a fleeting moment.
+Of silence and balance. Of momentum and progression.
+
+Some days you feel it, some days you don't.
+But whenever you get there, it's always worth it.
+
+It's seeing the early sunrise, cresting the first climb.
+It's the sweat on your skin, and the wind on your face.
+
+It's a remedy, it's clarity, the best version of you.
+It's friendships, discovery, and community, too.
+
+It's a place, it's a race, and it's somewhere to hide.
+It's your team, your routine, and it's never just a ride.
+```
+
+
 ![shimano0](/assets/images/202204/shimano0.jpeg)
 
 
@@ -165,7 +191,8 @@ categories: 杂记
 
 已获得配件：
 
-* gopro 及支架
+* GoPro
+* Garmin Venu 2 Plus 运动手表
 * 运动水壶架 (9.9)
 * FASTFLOW 650ML Black 快速出水竞赛骑行水壶 (34.9)
 * 900 系黑色头盔 L (349.9)
@@ -174,17 +201,17 @@ categories: 杂记
 * 骑行手套 900 XL 黑 (129.9)
 * 自行车运动袜 黑 (14.9)
 * 车锁（49.9）
-
+* GoPro 车把支架 (46)
+* Repair set 300 BLACK 修复套装：螺丝刀，去胎棒，0.5L鞍座包 (79.9)
+* 新内胎2条 (2*19.9)
+* 双侧架包 (69.9)
+* 手持打气筒带气压表 (119.9)
+* 落地高压打气筒，10 BAR 145 PSI (199.9)
 
 目前缺少配件：根据优先级从高到底
 
-* LED前灯 (19.9)
-* 坐包500 M号 0.6升 黑色 (49.9)
-* 维修套件和0.5L鞍座包 黑色 (79.9)
-* 手机支架 (79.9)
-* 脚撑 (49.9)
-* 手动打气筒 (19.9)
-* 护目镜 (399.9)
+* LED前灯尾灯
+* 护目镜
 
 ### 补给
 
@@ -197,8 +224,8 @@ categories: 杂记
 
 购买时间：2022-04-23，六个月后安全检查
 整车：1699
-配件：9.9 + 34.9 + 349.9 + 249.9 + 169.9 + 129.9 + 14.9 + 49.9
-当前总开销：2708
+配件：9.9 + 34.9 + 349.9 + 249.9 + 169.9 + 129.9 + 14.9 + 49.9 + 46 + 79.9 + 19.9 + 19.9 + 69.9 + 119.9 + 199.9
+当前总开销：3263
 
 ![dkn-rc100-20220423](/assets/images/202204/dkn-rc100-20220423.png)
 
