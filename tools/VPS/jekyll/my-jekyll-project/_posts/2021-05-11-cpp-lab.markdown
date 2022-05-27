@@ -1392,6 +1392,32 @@ distance(last, first) = -3
 
 * https://en.cppreference.com/w/cpp/iterator/distance
 
+## std::has_virtual_destructor
+
+If `T` is a type with a virtual destructor, provides the member constant value equal to **true**. For any other type, value is **false**.
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+#include <string>
+#include <stdexcept>
+
+int main()
+{
+    std::cout << std::boolalpha
+              << "std::string has a virtual destructor? "
+              << std::has_virtual_destructor<std::string>::value << '\n'
+              << "std::runtime_error has a virtual destructor? "
+              << std::has_virtual_destructor<std::runtime_error>::value << '\n';
+}
+/*
+std::string has a virtual destructor? false
+std::runtime_error has a virtual destructor? true
+*/
+```
+
+* https://en.cppreference.com/w/cpp/types/has_virtual_destructor
+
 # C++14
 
 ## std::for_each

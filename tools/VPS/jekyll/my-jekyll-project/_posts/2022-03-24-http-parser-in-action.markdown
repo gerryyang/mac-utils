@@ -31,7 +31,7 @@ Port of [http_parser](https://github.com/nodejs/http-parser) to [llparse](https:
 
 * "for" loop over input
 
-Scanning means no buffering, so, it doesn't allocate memory itself. And it creates especially for request bodies because it could just need the slices of original buffers that came from that work instead of allocating the copying data. So, in the core principle of the HTTP parser, it's not copying. 
+Scanning means no buffering, so, it doesn't allocate memory itself. And it creates especially for request bodies because it could just need the slices of original buffers that came from that work instead of allocating the copying data. So, in the core principle of the HTTP parser, it's not copying.
 
 * **huge** "switch" for states
 
@@ -64,17 +64,17 @@ DSL, No syntax checking, JS engine (V8) handles it!
 * llparse, Builds a graph of states
 * llparse, Can do static analysis
   + Infinite loop check
-  + "peephole" optimizations 
+  + "peephole" optimizations
 * llparse, Can generate different outputs: C and LLVM bitcode
 * llparse, Not hand-written! Not hand-optimized! is **2x faster**!
 
 ## Numbers (性能数据)
 
 | llhttp | http_parser
-| -- | -- 
+| -- | --
 | 3,020,459 RPS | 1,406,180 RPS
 
-This llhttp parser is a default in Node version 12. 
+This llhttp parser is a default in Node version 12.
 
 ## Tests
 
@@ -282,6 +282,31 @@ Reading headers may be a tricky task if you read/parse headers partially. Basica
  ------------------------ ------------ --------------------------------------------
 ```
 
+http_parser.h
+
+``` cpp
+/* Callbacks should return non-zero to indicate an error. The parser will
+ * then halt execution.
+ *
+ * The one exception is on_headers_complete. In a HTTP_RESPONSE parser
+ * returning '1' from on_headers_complete will tell the parser that it
+ * should not expect a body. This is used when receiving a response to a
+ * HEAD request which may contain 'Content-Length' or 'Transfer-Encoding:
+ * chunked' headers that indicate the presence of a body.
+ *
+ * Returning `2` from on_headers_complete will tell parser that it should not
+ * expect neither a body nor any futher responses on this connection. This is
+ * useful for handling responses to a CONNECT request which may not contain
+ * `Upgrade` or `Connection: upgrade` headers.
+ *
+ * http_data_cb does not return data chunks. It will be called arbitrarily
+ * many times for each string. E.G. you might get 10 callbacks for "on_url"
+ * each providing just a few characters more data.
+ */
+typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
+typedef int (*http_cb) (http_parser*);
+```
+
 ## Parsing URLs
 
 A simplistic zero-copy URL parser is provided as `http_parser_parse_url()`. Users of this library may wish to use it to parse URLs constructed from consecutive `on_url` callbacks.
@@ -486,10 +511,154 @@ https://github.com/nginx/nginx/tree/master/src/http
 * https://github.com/openssl/openssl/blob/master/include/openssl/http.h
 * https://github.com/openssl/openssl/blob/master/apps/lib/http_server.c#L293
 
+# ehttp
+
+This library make http (with json) microservice easy
+
+* https://github.com/hongliuliao/ehttp
+* https://coder.social/hongliuliao/ehttp
+
+
+# httpxx
+
+* [C++ wrapper for C-based HTTP parser](https://github.com/AndreLouisCaron/httpxx)
+
+
+# Q&A
+
+## [What's the "Content-Length" field in HTTP header?](https://stackoverflow.com/questions/2773396/whats-the-content-length-field-in-http-header)
+
+It's the number of bytes of data in the body of the request or response. The body is the part that comes after the blank line below the headers.
+
+[4.3 Message Body](https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.3)
+
+The message-body (if any) of an HTTP message is used to carry the entity-body associated with the request or response. The message-body differs from the entity-body only when a transfer-coding has been applied, as indicated by the Transfer-Encoding header field (section [14.41](https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.41)).
+
+[4.4 Message Length](https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4)
+
+The transfer-length of a message is the length of the message-body as it appears in the message; that is, after any transfer-codings have been applied. When a message-body is included with a message, the transfer-length of that body is determined by one of the following (in order of precedence).
+
+For compatibility with HTTP/1.0 applications, **HTTP/1.1 requests containing a message-body MUST include a valid Content-Length header field** unless the server is known to be HTTP/1.1 compliant. If a request contains a message-body and a Content-Length is not given, the server SHOULD respond with 400 (bad request) if it cannot determine the length of the message, or with 411 (length required) if it wishes to insist on receiving a valid Content-Length.
+
+All HTTP/1.1 applications that receive entities MUST accept the "chunked" transfer-coding (section [3.6](https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.6)), thus allowing this mechanism to be used for messages when the message length cannot be determined in advance.
+
+Messages MUST NOT include both a Content-Length header field and a non-identity transfer-coding. If the message does include a non- identity transfer-coding, the Content-Length MUST be ignored.
+
+When a Content-Length is given in a message where a message-body is allowed, its field value MUST exactly match the number of OCTETs in the message-body. HTTP/1.1 user agents MUST notify the user when an invalid length is received and detected.
+
+[14.13 Content-Length](https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.13)
+
+The Content-Length entity-header field indicates the size of the entity-body, in decimal number of OCTETs, sent to the recipient or, in the case of the HEAD method, the size of the entity-body that would have been sent had the request been a GET.
+
+Applications SHOULD use this field to indicate the transfer-length of the message-body, unless this is prohibited by the rules in section [4.4](https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4).
+
+**Any Content-Length greater than or equal to zero is a valid value**. Section 4.4 describes how to determine the length of a message-body if a Content-Length is not given.
+
+* [HEAD, 1xx, 204, 304 have content-length but do not have body](https://github.com/nodejs/http-parser/issues/251)
+
+
+## [Is the Content-Length header required for a HTTP/1.0 response?](https://stackoverflow.com/questions/15991173/is-the-content-length-header-required-for-a-http-1-0-response)
+
+A valid Content-Length field value is required on all HTTP/1.0 request messages containing an entity body.
+
+If it is not required for the response, how does the client read the response when it's larger than 1MB?
+
+解释：
+
+When no Content-Length is received, the client keeps reading until the server closes the connection.
+
+http://www.w3.org/Protocols/HTTP/1.0/draft-ietf-http-spec.html#Content-Length
+
+
+## [What is HTTP "Host" header?](https://stackoverflow.com/questions/43156023/what-is-http-host-header)
+
+Given that the TCP connection is already established when the HTTP request is sent, the IP address and port are implicitly known -- a TCP connection is an IP + Port. So, why do we need the Host header? Is this only needed for the case where there are multiple hosts mapped to the IP address implied in the TCP connection?
+
+解释：
+
+The [Host Header](https://www.rfc-editor.org/rfc/rfc7230#section-5.4) tells the webserver **which virtual host to use (if set up)**. You can even have the same virtual host using several aliases (= domains and wildcard-domains). In this case, you still have the possibility to read that header manually in your web app if you want to provide different behavior based on different domains addressed. This is possible because in your webserver you can (and if I'm not mistaken you must) set up one vhost to be the default host. This default vhost is used whenever the host header does not match any of the configured virtual hosts.
+
+In the **MDN Documentation on the "Host" header** they actually phrase it like this:
+
+> A Host header field must be sent in all HTTP/1.1 request messages. A 400 (Bad Request) status code will be sent to any HTTP/1.1 request message that lacks a Host header field or contains more than one.
+
+I would always recommend going to the authoritative source when trying to understand the meaning and purpose of HTTP headers. [RFC7230](https://www.rfc-editor.org/rfc/rfc7230#section-5.4)
+
+> The "Host" header field in a request provides the host and port information from the target URI, enabling the origin server to distinguish among resources while servicing requests for multiple host names on a single IP address.
+
+## Connection: Keep-Alive
+
+在HTTP 1.0中，没有官方的keepalive操作。通常是在现有协议上添加一个指数。如果浏览器支持keep-alive，它会在请求的包头中添加：Connection: Keep-Alive，然后当服务器收到请求，作出回应的时候，Connection: Keep-Alive 也添加一个头在响应中。这样做，连接就不会中断，而是保持连接。当客户端发送另一个请求时，它会使用同一个连接。这一直继续到客户端或服务器端认为会话已经结束，其中一方中断连接。
+
+
+Connection 头（header） 决定当前的事务完成后，是否会关闭网络连接。如果该值是“keep-alive”，网络连接就是持久的，不会关闭，使得对同一个服务器的请求可以继续在该连接上完成。
+
+```
+Connection: keep-alive
+Connection: close
+```
+
+* close 表明客户端或服务器想要关闭该网络连接，这是HTTP/1.0请求的默认值
+* keep-alive 表明客户端想要保持该网络连接打开，HTTP/1.1的请求默认使用一个持久连接。这个请求头列表由头部名组成，这些头将被第一个非透明的代理或者代理间的缓存所移除：这些头定义了发出者和第一个实体之间的连接，而不是和目的地节点间的连接。
+
+Keep-Alive 是一个通用消息头，允许消息发送者暗示连接的状态，还可以用来设置超时时长和最大请求数。
+
+```
+Connection: Keep-Alive
+Keep-Alive: timeout=5, max=1000
+```
+
+> 需要将 The Connection 首部的值设置为  "keep-alive" 这个首部才有意义。同时需要注意的是，在HTTP/2 协议中， Connection 和 Keep-Alive  是被忽略的；在其中采用其他机制来进行连接管理。
+
+* https://datatracker.ietf.org/doc/html/rfc2616#section-8
+* https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Connection
+* https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Keep-Alive
+* https://zh.m.wikipedia.org/zh-hans/HTTP%E6%8C%81%E4%B9%85%E8%BF%9E%E6%8E%A5
+
+## [How to send a header using a HTTP request through a cURL call?](https://stackoverflow.com/questions/356705/how-to-send-a-header-using-a-http-request-through-a-curl-call)
+
+``` bash
+# http1.0 curl 默认使用 http1.1 通信协议，若使用 http1.0 协议需要显示指定
+curl --http1.0 http://hostname/resource
+
+# set http header
+curl --header "X-MyHeader: 123" www.google.com
+
+# Get json
+curl -i -H "Accept: application/json" -H "Content-Type: application/json" http://hostname/resource
+
+# Get xml
+curl -H "Accept: application/xml" -H "Content-Type: application/xml" -X GET http://hostname/resource
+
+# Post
+curl --data "param1=value1&param2=value2" http://hostname/resource
+```
+
+## [Http / 1.1 protocol expect: 100 continue](https://developpaper.com/http-http-1-1-protocol-expect-100-continue/)
+
+Basic knowledge background:
+
+The context of “expect: 100 continue”:
+
+The purpose of designing 100 (continue) HTTP status code in http / 1.1 protocol is that before the client sends request message, http / 1.1 protocol allows the client to determine whether the server is willing to accept the message body sent by the client (based on request headers).
+That is, the client and server allow the two sides to “shake hands” before the post (large) data. If the match is made, the client starts to send (large) data.
+The reason for this is that if the client sends the request data directly, but the server rejects the request, this behavior will bring a lot of resource overhead.
+
+The protocol requires http / 1.1 clients to:
+If the client expects to wait for the response of “100 continue”, the request it sends must contain a header field of “expect: 100 continue”!
+
+
+# http_parser Q&A
+
+* [on_message_complete callback doesn't invoke after an answer](https://github.com/nodejs/http-parser/issues/327)
+* [Cannot parse message without specifying Transfer-Encoding: chunked #434](https://github.com/nodejs/http-parser/issues/434)
+* [100 continue support? #406](https://github.com/nodejs/http-parser/issues/406)
+
 
 # Refer
 
 
 * https://github.com/nodejs/llhttp
 * https://github.com/nodejs/llhttp/blob/master/test/request/connection.md
+
 

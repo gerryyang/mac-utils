@@ -18,11 +18,11 @@ Keywords: nginx, web server, reverse proxy
 ```
 wget https://nginx.org/download/nginx-1.19.9.tar.gz
 tar -xzvf nginx-1.19.9.tar.gz
-cd nginx-1.19.9 
+cd nginx-1.19.9
 ```
 
 * 指定配置选项
-  
+
 ```
 ./configure  --prefix=/usr/local/nginx  --with-http_ssl_module --with-http_v2_module --with-http_realip_module --with-http_addition_module --with-http_sub_module --with-http_dav_module --with-http_flv_module --with-http_mp4_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_auth_request_module --with-http_random_index_module --with-http_secure_link_module --with-http_degradation_module --with-http_slice_module --with-http_stub_status_module --with-mail --with-mail_ssl_module --with-stream --with-stream_ssl_module --with-stream_realip_module --with-stream_ssl_preread_module --with-threads --user=www --group=www
 
@@ -66,7 +66,7 @@ nginx: /usr/local/nginx
 启动 nginx：
 
 ```
-$ ./nginx 
+$ ./nginx
 nginx: [emerg] getpwnam("www") failed
 ```
 
@@ -80,7 +80,7 @@ nginx: [emerg] getpwnam("www") failed
 修改后重新启动：
 
 ```
-[root@/usr/local/nginx/sbin]$ ./nginx 
+[root@/usr/local/nginx/sbin]$ ./nginx
 [root@/usr/local/nginx/sbin]$ ps ux|grep nginx
 root       58982  0.0  0.0  47460  1276 ?        Ss   11:04   0:00 nginx: master process ./nginx
 ```
@@ -136,7 +136,7 @@ systemctl status nginx   # 查看 Nginx 运行状态
 3. `=` 和 `^~` 均未匹配成功前提下，查找正则匹配 `~` 和 `~*` 。当同时有多个正则匹配时，按其在配置文件中出现的先后顺序优先匹配，命中则立即停止其他类型匹配；
 4. 所有正则匹配均未成功时，返回步骤 2 中暂存的普通前缀匹配（不带参数 `^~` ）结果
 
-## location URI 结尾带不带 / 
+## location URI 结尾带不带 /
 
 关于 URI 尾部的 `/` 有三点也需要说明一下。第一点与 location 配置有关，其他两点无关。
 
@@ -171,7 +171,7 @@ location ~* ^/gerry {
 
 ```
 $curl -I localhost/gerry
-HTTP/1.1 702 
+HTTP/1.1 702
 Server: nginx/1.19.9
 Date: Wed, 26 Jan 2022 06:49:41 GMT
 Content-Length: 0
@@ -212,14 +212,14 @@ location ^~ /ge {
 
 ```
 $curl -I localhost/ge
-HTTP/1.1 703 
+HTTP/1.1 703
 Server: nginx/1.19.9
 Date: Wed, 26 Jan 2022 06:50:37 GMT
 Content-Length: 0
 Connection: keep-alive
 ```
 
-例子3: 
+例子3:
 
 ```
 server {
@@ -243,7 +243,7 @@ location ~ ^/ger[a-z]+ {
 
 ```
 $curl -I localhost/gerry
-HTTP/1.1 701 
+HTTP/1.1 701
 Server: nginx/1.19.9
 Date: Wed, 26 Jan 2022 06:55:03 GMT
 Content-Length: 0
@@ -256,9 +256,9 @@ Connection: keep-alive
 ## 用法
 
 > 语法：`rewrite regex replacement [flag];`
-> 
+>
 > 作用域：server、location、if
-> 
+>
 > 功能：如果一个URI匹配指定的正则表达式 regex，URI就按照 replacement 重写。
 
 `rewrite` 按配置文件中出现的顺序执行。可以使用 `flag` 标志来终止指令的进一步处理。如果 replacement 以 http://、https:// 或 $scheme 开始，将不再继续处理，这个重定向将返回给客户端。
@@ -317,7 +317,7 @@ $curl -v localhost/redirect/baidu
 > User-Agent: curl/7.29.0
 > Host: localhost
 > Accept: */*
-> 
+>
 < HTTP/1.1 302 Moved Temporarily
 < Server: nginx/1.19.9
 < Date: Wed, 26 Jan 2022 08:09:55 GMT
@@ -325,7 +325,7 @@ $curl -v localhost/redirect/baidu
 < Content-Length: 145
 < Connection: keep-alive
 < Location: http://www.baidu.com
-< 
+<
 <html>
 <head><title>302 Found</title></head>
 <body>
@@ -357,14 +357,14 @@ $curl -v localhost/redirect/baidu
 > User-Agent: curl/7.29.0
 > Host: localhost
 > Accept: */*
-> 
+>
 < HTTP/1.1 200 OK
 < Server: nginx/1.19.9
 < Date: Wed, 26 Jan 2022 08:16:09 GMT
 < Content-Type: application/octet-stream
 < Content-Length: 2
 < Connection: keep-alive
-< 
+<
 * Connection #0 to host localhost left intact
 ok
 ```
@@ -373,17 +373,17 @@ ok
 例子2:
 
 ```
-# rewrite 后面没有任何 flag 时就顺序执行 
+# rewrite 后面没有任何 flag 时就顺序执行
 # 当 location 中没有 rewrite 模块指令可被执行时 就重写发起新一轮 location 匹配
 location / {
-    # 顺序执行如下两条 rewrite 指令 
+    # 顺序执行如下两条 rewrite 指令
     rewrite ^/test1 /test2;
     rewrite ^/test2 /test3;  # 此处发起新一轮 location 匹配 URI为 /test3
 }
 
 location = /test2 {
     return 200 “/test2”;
-}  
+}
 
 location = /test3 {
     return 200 “/test3”;
@@ -401,14 +401,14 @@ $curl -v localhost/test1
 > User-Agent: curl/7.29.0
 > Host: localhost
 > Accept: */*
-> 
+>
 < HTTP/1.1 200 OK
 < Server: nginx/1.19.9
 < Date: Wed, 26 Jan 2022 08:33:36 GMT
 < Content-Type: application/octet-stream
 < Content-Length: 12
 < Connection: keep-alive
-< 
+<
 * Connection #0 to host localhost left intact
 “/test3”
 ```
@@ -425,7 +425,7 @@ location / {
 
 location = /test2 {
     return 200 "/test2";
-}  
+}
 
 location = /test3 {
     return 200 "/test3";
@@ -446,14 +446,14 @@ $curl -v localhost/test1
 > User-Agent: curl/7.29.0
 > Host: localhost
 > Accept: */*
-> 
+>
 < HTTP/1.1 200 OK
 < Server: nginx/1.19.9
 < Date: Wed, 26 Jan 2022 08:37:37 GMT
 < Content-Type: application/octet-stream
 < Content-Length: 6
 < Connection: keep-alive
-< 
+<
 * Connection #0 to host localhost left intact
 /test3
 ```
@@ -464,7 +464,7 @@ $curl -v localhost/test1
 location / {
     rewrite ^/test1 /test2;
     # 此处不会发起新一轮 location 匹配；当是会终止执行后续 rewrite 模块指令重写后的 URI 为 /more/index.html
-    rewrite ^/test2 /more/index.html break;  
+    rewrite ^/test2 /more/index.html break;
     rewrite /more/index\.html /test4; # 这条指令会被忽略
 
     # 因为 proxy_pass 不是 rewrite 模块的指令 所以它不会被 break 终止
@@ -493,6 +493,18 @@ location /nginx/ {
 }
 ```
 
+# Directive
+
+## proxy_pass
+
+```
+Syntax:	proxy_pass URL;
+Default:	—
+Context:	location, if in location, limit_except
+```
+
+http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass
+
 # 证书申请
 
 可以在腾讯云申请证书，每年承担一定的费用。
@@ -511,7 +523,7 @@ location /nginx/ {
 vim /etc/nginx/sites-available/default
 
 ```
-server {  
+server {
     listen 80;
     server_name blog.gerryyang.com;
 
@@ -521,7 +533,7 @@ server {
         proxy_pass         http://127.0.0.1:8080;
     }
 }
-server {  
+server {
     listen 80;
     server_name forum.gerryyang.com;
 
@@ -544,3 +556,4 @@ server {
 * [一文理清 nginx 中的 rewrite 配置（系列二）](https://segmentfault.com/a/1190000022407797)
 * [Creating NGINX Rewrite Rules](https://www.nginx.com/blog/creating-nginx-rewrite-rules/)
 * [How To Install Nginx on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04)
+* [TCP and UDP Load Balancing](https://docs.nginx.com/nginx/admin-guide/load-balancer/tcp-udp-load-balancer/)

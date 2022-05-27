@@ -26,8 +26,8 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 
 # Basic
 
-* 模板机制为 C++ 提供了泛型编程的方式，在减少代码冗余的同时仍然可以提供类型安全。 
-* 特化必须在同一命名空间下进行，可以特化**类模板**也可以特化**函数模板**，但**类模板可以偏特化和全特化**，而**函数模板只能全特化**。 
+* 模板机制为 C++ 提供了泛型编程的方式，在减少代码冗余的同时仍然可以提供类型安全。
+* 特化必须在同一命名空间下进行，可以特化**类模板**也可以特化**函数模板**，但**类模板可以偏特化和全特化**，而**函数模板只能全特化**。
 * 模板实例化时会优先匹配"模板参数"最相符的那个特化版本。
 * C++ 的模板机制被证明是图灵完备的，即可以通过模板元编程（`Template Metaprogramming，TMP`）的方式在编译期做任何计算。
 
@@ -60,7 +60,7 @@ T max(const T lhs, const T rhs)
 namespace N {
     template<class T> class X { /*...*/ }; // primary template
     template<> class X<int> { /*...*/ }; // specialization in same namespace
- 
+
     template<class T> class Y { /*...*/ }; // primary template
     template<> class Y<double>; // forward declare specialization for double
 }
@@ -75,11 +75,11 @@ Specialization must be declared before the first use that would cause implicit i
 class String {};
 template<class T> class Array { /*...*/ };
 template<class T> void sort(Array<T>& v) { /*...*/ } // primary template
- 
+
 void f(Array<String>& v) {
-    sort(v); // implicitly instantiates sort(Array<String>&), 
+    sort(v); // implicitly instantiates sort(Array<String>&),
 }            // using the primary template for sort()
- 
+
 template<>  // ERROR: explicit specialization of sort(Array<String>)
 void sort<String>(Array<String>& v); // after implicit instantiation
 ```
@@ -115,29 +115,29 @@ When defining a member of an explicitly specialized class template outside the b
 ``` cpp
 template< typename T>
 struct A {
-    struct B {};  // member class 
+    struct B {};  // member class
     template<class U> struct C { }; // member class template
 };
- 
+
 template<> // specialization
 struct A<int> {
     void f(int); // member function of a specialization
 };
 // template<> not used for a member of a specialization
 void A<int>::f(int) { /* ... */ }
- 
+
 template<> // specialization of a member class
 struct A<char>::B {
     void f();
 };
 // template<> not used for a member of a specialized member class either
 void A<char>::B::f() { /* ... */ }
- 
+
 template<> // specialization of a member class template
 template<class U> struct A<char>::C {
     void f();
 };
- 
+
 // template<> is used when defining a member of an explicitly
 // specialized member class template specialized as a class template
 template<>
@@ -154,25 +154,25 @@ struct A {
     template<class X1> void g1(T, X1); // member template
     template<class X2> void g2(T, X2); // member template
 };
- 
+
 // specialization of a member
 template<> void A<int>::f(int);
 // member specialization OK even if defined in-class
 template<> void A<int>::h(int) {}
- 
+
 // out of class member template definition
 template<class T>
 template<class X1> void A<T>::g1(T, X1) { }
- 
+
 // member template specialization
 template<>
 template<class X1> void A<int>::g1(int, X1);
- 
+
 // member template specialization
 template<>
 template<> void A<int>::g2<char>(int, char); // for X2 = char
 // same, using template argument deduction (X1 = char)
-template<> 
+template<>
 template<> void A<int>::g1(int, char);
 ```
 
@@ -212,7 +212,7 @@ class A<int, double>{
 
 // 注意，类模板的全特化时，在类名后给出了"模板实参"，但函数模板的全特化，函数名后没有给出"模板实参"。这是因为编译器根据 int max(const int, const int) 的函数签名可以推导出来它是 T max(const T, const T) 的特化
 template <>
-int max(const int lhs, const int rhs){   
+int max(const int lhs, const int rhs){
     return lhs > rhs ? lhs : rhs;
 }
 ```
@@ -224,7 +224,7 @@ int max(const int lhs, const int rhs){
 
 template <class T>
 void f()
-{ 
+{
     T d;
     std::cout << "template <class T> void f()\n";
 }
@@ -233,7 +233,7 @@ void f()
 #if 0
 template <>
 void f()
-{ 
+{
     int d;
     std::cout << "template <> void f()\n";
 }
@@ -241,7 +241,7 @@ void f()
 
 template <>
 void f<int>()
-{ 
+{
     int d;
     std::cout << "template <> void f()\n";
 }
@@ -301,7 +301,7 @@ class A<int, T2>{
 
 ## 例子
 
-## 类模版的特化版本
+### 类模版的特化版本
 
 ``` cpp
 #include <iostream>
@@ -334,7 +334,7 @@ int main()
 }
 ```
 
-## 类模版的成员函数特化版本
+### 类模版的成员函数特化版本
 
 ``` cpp
 #include <iostream>
@@ -367,7 +367,7 @@ int main()
 }
 ```
 
-## 使用静态断言显式控制必须定义特化版本
+### 使用静态断言显式控制必须定义特化版本
 
 ``` cpp
 #include <iostream>
@@ -404,7 +404,7 @@ public:
 void A<PlaceHolder>::f(PlaceHolder a)
 {
     std::cout << "A<PlaceHolder>::f(PlaceHolder a)\n";
-    
+
 }
 #endif
 
@@ -448,12 +448,12 @@ int main()
 }
 ```
 
-# Variadic templates 
+# Variadic templates
 
 
-* The **ellipsis** (`...`) operator has **two roles**. 
-    + When it occurs to the **left** of the name of a parameter, it declares a **parameter pack**. Using the parameter pack, the user can bind **zero or more arguments** to the variadic template parameters. Parameter packs can also be used for non-type parameters. 
-    + By contrast, when the ellipsis operator occurs to the **right** of a template or function call argument, **it unpacks the parameter packs into separate arguments**, like the `args...` in the body of `printf` below. 
+* The **ellipsis** (`...`) operator has **two roles**.
+    + When it occurs to the **left** of the name of a parameter, it declares a **parameter pack**. Using the parameter pack, the user can bind **zero or more arguments** to the variadic template parameters. Parameter packs can also be used for non-type parameters.
+    + By contrast, when the ellipsis operator occurs to the **right** of a template or function call argument, **it unpacks the parameter packs into separate arguments**, like the `args...` in the body of `printf` below.
 * In practice, the use of an **ellipsis** operator in the code causes the whole expression that precedes the ellipsis to be repeated for every subsequent argument unpacked from the argument pack, with the expressions separated by commas.
 * The use of **variadic templates** is often **recursive**. The variadic parameters themselves are not readily available to the implementation of a function or class. Therefore, the typical mechanism for defining something like a C++11 variadic `printf` replacement would be as follows:
 
@@ -524,7 +524,7 @@ namespace detail
 	// 对 num 每位进行展开，例如，num = 123 则展开为 explode<neg, 0, 1, 2, 3>
 	template<bool neg, uintmax_t rem, uint8_t... digits>
 		struct explode : explode<neg, rem / 10, rem % 10, digits...> {};
-	
+
 	// 展开终止
 	template<bool neg, uint8_t... digits>
 		struct explode<neg, 0, digits...> : to_chars<neg, digits...> {};
@@ -538,7 +538,7 @@ namespace detail
 template<typename T, T num>
 struct string_from : ::detail::explode<num < 0, ::detail::cabs(num)> {};
 
-int main() 
+int main()
 {
     auto str = string_from<unsigned, 1>::value;
 }
@@ -595,13 +595,13 @@ int main()
 #include <iostream>
 #include <type_traits>
 #include <typeinfo>
- 
-int main() 
+
+int main()
 {
     typedef std::conditional<true, int, double>::type Type1;
     typedef std::conditional<false, int, double>::type Type2;
     typedef std::conditional<sizeof(int) >= sizeof(double), int, double>::type Type3;
- 
+
     std::cout << typeid(Type1).name() << '\n';
     std::cout << typeid(Type2).name() << '\n';
     std::cout << typeid(Type3).name() << '\n';
@@ -662,7 +662,7 @@ struct is_same<T, T> {
 
 int main()
 {
-  
+
   // 定义一个类型别名，将is_same<int, int>绑定到Result1
   // 从模板元编程的角度来看，这里可以看作是调用了元函数is_same，输入类型int和类型int，输出类型is_same<int, int>，赋值给Result1
   using Result1 = is_same<int, int>;
@@ -680,17 +680,17 @@ int main()
 }
 ```
 
-# [std::is_pointer](https://en.cppreference.com/w/cpp/types/is_pointer) 
+# [std::is_pointer](https://en.cppreference.com/w/cpp/types/is_pointer)
 
 * Checks whether `T` is a **pointer to object** or **a pointer to function** (**but not a pointer to member/member function**). Provides the member constant value which is equal to `true`, if T is a object/function pointer type. Otherwise, value is equal to `false`.
 
 ``` cpp
 #include <iostream>
 #include <type_traits>
- 
+
 class A {};
- 
-int main() 
+
+int main()
 {
     std::cout << std::boolalpha;
     std::cout << std::is_pointer<A>::value << '\n';
@@ -715,21 +715,21 @@ false
 ```
 
 
-# [std::remove_cv/std::remove_const/std::remove_volatile](https://en.cppreference.com/w/cpp/types/remove_cv) 
+# [std::remove_cv/std::remove_const/std::remove_volatile](https://en.cppreference.com/w/cpp/types/remove_cv)
 
 * removes the topmost `const`, or the topmost `volatile`, or both, if present.
 
 ``` cpp
 #include <iostream>
 #include <type_traits>
- 
+
 int main() {
     typedef std::remove_cv<const int>::type type1;
     typedef std::remove_cv<volatile int>::type type2;
     typedef std::remove_cv<const volatile int>::type type3;
     typedef std::remove_cv<const volatile int*>::type type4;
     typedef std::remove_cv<int * const volatile>::type type5;
- 
+
     std::cout << "test1 " << (std::is_same<int, type1>::value
         ? "passed" : "failed") << '\n';
     std::cout << "test2 " << (std::is_same<int, type2>::value
@@ -757,12 +757,12 @@ Applies lvalue-to-rvalue, array-to-pointer, and function-to-pointer implicit con
 ``` cpp
 #include <iostream>
 #include <type_traits>
- 
+
 template <typename T, typename U>
-struct decay_equiv : 
-    std::is_same<typename std::decay<T>::type, U>::type 
+struct decay_equiv :
+    std::is_same<typename std::decay<T>::type, U>::type
 {};
- 
+
 int main()
 {
     std::cout << std::boolalpha
@@ -844,8 +844,8 @@ int get_value<int>(int t)
   } else /* constexpr */ {
     std::operator<<(std::cout, "other\n");
     return t;
-  } 
-  
+  }
+
 }
 #endif
 
@@ -856,8 +856,8 @@ int get_value<int *>(int * t)
   if constexpr(true) {
     std::operator<<(std::cout, "if constexpr\n");
     return *t;
-  } 
-  
+  }
+
 }
 #endif
 

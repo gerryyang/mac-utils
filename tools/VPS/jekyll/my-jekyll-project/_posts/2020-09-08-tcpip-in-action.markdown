@@ -41,7 +41,7 @@ struct in_addr {
 
 * https://man7.org/linux/man-pages/man7/ip.7.html
 
-## hostent 
+## hostent
 
 The `hostent` structure is defined in `<netdb.h>` as follows:
 
@@ -68,7 +68,7 @@ The members of the hostent structure are:
 
 * https://man7.org/linux/man-pages/man3/gethostbyname.3.html
 
-## addrinfo 
+## addrinfo
 
 The `addrinfo` structure used by `getaddrinfo()` contains the following fields:
 
@@ -295,7 +295,7 @@ int main(void)
 ```
 
 ```
-$./a.out 
+$./a.out
 google.com is at: 172.217.163.46
 ```
 
@@ -330,6 +330,21 @@ localhost
 ```
 
 * https://man7.org/linux/man-pages/man3/gethostbyname.3.html
+
+## getpeername
+
+``` cpp
+#include <sys/socket.h>
+
+int getpeername(int sockfd, struct sockaddr *restrict addr,
+                socklen_t *restrict addrlen);
+```
+
+`getpeername()` returns the address of the peer connected to the socket `sockfd`, in the buffer pointed to by `addr`.  The `addrlen` argument should be initialized to indicate the amount of space pointed to by `addr`.  On return it contains the actual size of the name returned (in bytes).  The name is truncated if the buffer provided is too small.
+
+ The returned address is truncated if the buffer provided is too small; in this case, `addrlen` will return a value greater than was supplied to the call.
+
+* https://man7.org/linux/man-pages/man2/getpeername.2.html
 
 ## epoll
 
@@ -382,7 +397,7 @@ The `events` member of the epoll_event structure is a bit mask composed by ORing
 * `EPOLLERR`: Error condition happened on the associated file descriptor.  This event is also reported for the write end of a pipe when the read end has been closed. `epoll_wait(2)` will always report for this event; it is not necessary to set it in events when calling `epoll_ctl()`.
 * `EPOLLHUP`: Hang up happened on the associated file descriptor. `epoll_wait(2)` will always wait for this event; it is not necessary to set it in events when calling `epoll_ctl()`. Note that when reading from a channel such as a pipe or a stream socket, this event merely indicates that the peer closed its end of the channel.  Subsequent reads from the channel will return 0 (end of file) only after all outstanding data in the channel has been consumed.
 * `EPOLLET`: Requests **edge-triggered** notification for the associated file descriptor.  **The default behavior for epoll is level-triggered**.  See `epoll(7)` for more detailed information about edge-triggered and level-triggered notification. This flag is an **input flag** for the `event.events` field when calling `epoll_ctl()`; it is never returned by `epoll_wait(2)`.
-* `EPOLLONESHOT (since Linux 2.6.2)`: Requests one-shot notification for the associated file descriptor.  This means that after an event notified for the file descriptor by `epoll_wait(2)`, the file descriptor is disabled in the interest list and no other events will be reported by the epoll interface.  The user must call `epoll_ctl()` with `EPOLL_CTL_MOD` to rearm the file descriptor with a new event mask. This flag is an **input flag** for the `event.events` field when calling `epoll_ctl()`; it is never returned by `epoll_wait(2)`.
+* `EPOLLONESHOT (since Linux 2.6.2)`: Requests one-shot notification for the associated file descriptor.  This means that after an event notified for the file descriptor by `epoll_wait(2)`, the file descriptor is disabled in the interest list and no other events will be reported by the epoll interface.  The user must call `epoll_ctl()` with `EPOLL_CTL_MOD` to rearm(重新装备) the file descriptor with a new event mask. This flag is an **input flag** for the `event.events` field when calling `epoll_ctl()`; it is never returned by `epoll_wait(2)`.
 * EPOLLWAKEUP (since Linux 3.5)
 * EPOLLEXCLUSIVE (since Linux 4.5)
 
@@ -391,6 +406,7 @@ The `events` member of the epoll_event structure is a bit mask composed by ORing
 refer:
 
 * https://man7.org/linux/man-pages/man2/epoll_ctl.2.html
+* https://cloud.tencent.com/developer/article/1481046
 
 
 # Q&A

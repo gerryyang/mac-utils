@@ -203,6 +203,13 @@ To prevent an error, you'll need to wrap the JSON in Liquid raw tags, like this:
 
 Shift+Command+5
 
+* 切换中英文输入法的快捷键
+
+如果使用的是 Mac 自带的输入法，有两个方法：
+
+1. 使用大写锁定键 Caps 来切换中英文，想输入大写英文字母时，可以长按 Caps 切换大小写，或者使用 Shift 组合键
+2. 使用 control + space 切换中英文
+
 
 
 ### 系统
