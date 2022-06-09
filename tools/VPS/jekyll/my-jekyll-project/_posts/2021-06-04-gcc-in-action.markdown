@@ -10,7 +10,6 @@ categories: [GCC/Clang]
 
 # Update GCC
 
-
 查看当前环境C++版本：
 
 ```
@@ -20,12 +19,27 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
+[ABI Policy and Guidelines](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html)
+
+当部署目标机器不能升级GCC版本，这种情况下需要使用目标机器上面的`GLIBCXX`版本对应的GCC版本重新编译代码。
+
+```
+GCC 4.8.3: libstdc++.so.6.0.19
+GCC 4.8.3: GLIBCXX_3.4.19, CXXABI_1.3.7
+
+GCC 8.1.0: libstdc++.so.6.0.25
+GCC 8.1.0: GLIBCXX_3.4.25, CXXABI_1.3.11
+```
+
+[Is it safe to link C++17, C++14, and C++11 objects](https://stackoverflow.com/questions/46746878/is-it-safe-to-link-c17-c14-and-c11-objects)
+
+
 ## CentOS
 
 Often people want the most recent version of gcc, and [devtoolset](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-6/) is being kept up-to-date, so maybe you want devtoolset-N where `N={4,5,6,7...}`, check yum for the latest available on your system. Updated the cmds below for N=7.
 
 > Developer Toolset 6
->  
+>
 > devtoolset-6 - Developer Toolset is designed for developers working on CentOS or Red Hat Enterprise Linux platform. It provides current versions of the GNU Compiler Collection, GNU Debugger, and other development, debugging, and performance monitoring tools.
 
 * [List of Software Collections available in SCLo SIG](https://wiki.centos.org/SpecialInterestGroup/SCLo/CollectionsList)
@@ -112,12 +126,12 @@ COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-redhat-linux/4.8.5/lto-wrapper
 目标：x86_64-redhat-linux
 配置为：../configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-bootstrap --enable-shared --enable-threads=posix --enable-checking=release --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-languages=c,c++,objc,obj-c++,java,fortran,ada,go,lto --enable-plugin --enable-initfini-array --disable-libgcj --with-isl=/builddir/build/BUILD/gcc-4.8.5-20150702/obj-x86_64-redhat-linux/isl-install --with-cloog=/builddir/build/BUILD/gcc-4.8.5-20150702/obj-x86_64-redhat-linux/cloog-install --enable-gnu-indirect-function --with-tune=generic --with-arch_32=x86-64 --build=x86_64-redhat-linux
 线程模型：posix
-gcc 版本 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC) 
+gcc 版本 4.8.5 20150623 (Red Hat 4.8.5-39) (GCC)
 $which gcc
 /usr/lib64/ccache/gcc
 $ll -lh `which gcc`
 lrwxrwxrwx 1 root root 16 3月   5 2021 /usr/lib64/ccache/gcc -> ../../bin/ccache
-$ll -lh /usr/bin/ccache 
+$ll -lh /usr/bin/ccache
 -rwxr-xr-x 1 root root 135K 2月  19 2020 /usr/bin/ccache
 
 ~$scl enable devtoolset-7 bash
@@ -130,7 +144,7 @@ COLLECT_LTO_WRAPPER=/opt/rh/devtoolset-7/root/usr/libexec/gcc/x86_64-redhat-linu
 Target: x86_64-redhat-linux
 Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/opt/rh/devtoolset-7/root/usr --mandir=/opt/rh/devtoolset-7/root/usr/share/man --infodir=/opt/rh/devtoolset-7/root/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-plugin --with-linker-hash-style=gnu --enable-initfini-array --with-default-libstdcxx-abi=gcc4-compatible --with-isl=/builddir/build/BUILD/gcc-7.3.1-20180303/obj-x86_64-redhat-linux/isl-install --enable-libmpx --enable-gnu-indirect-function --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux
 Thread model: posix
-gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC) 
+gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC)
 ```
 
 ## Ubuntu
@@ -298,11 +312,11 @@ gcc包含完整的出错检查和警告提示功能，它们可以帮助Linux程
 当gcc在编译不符合`ANSI/ISO C` 语言标准的源代码时，将产生相应的警告信息。
 
 ``` c
-#include <stdio.h> 
-void main(void) 
-{ 
-    long long int var = 1; 
-    printf("It is not standard C code!/n"); 
+#include <stdio.h>
+void main(void)
+{
+    long long int var = 1;
+    printf("It is not standard C code!/n");
 }
 ```
 
@@ -331,7 +345,7 @@ gcc 给出的警告信息虽然从严格意义上说不能算作错误，但却�
     + `-v`                  输出 gcc 工作的详细过程
     + `--target-help`       显示目前所用的gcc支持CPU类型
     + `-Q`                  显示编译过程的统计数据和每一个函数名
-  
+
 
 ## 库操作选项
 
@@ -350,7 +364,7 @@ gcc 给出的警告信息虽然从严格意义上说不能算作错误，但却�
 Linux下的库文件在命名时有一个约定，就是应该以 `lib` 这3个字母开头，由于所有的库文件都遵循了同样的规范，因此在用 `-l` 选项指定链接的库文件名时可以省去 lib 这3个字母。例如，gcc 在对 `-lfoo` 进行处理时，会自动去链接名为 `libfoo.so` 的文件。
 
 * `-static`
- 
+
 Linux下的库文件分为两大类，分别是：动态链接库（通常以 `.so` 结尾）和静态链接库（通常以 `.a` 结尾）。两者的差别仅在程序执行时所需的代码是在运行时动态加载的，还是在编译时静态加载的。默认情况下，gcc 在链接时优先使用动态链接库，只有当动态链接库不存在时才考虑使用静态链接库。如果需要的话，可以在编译时加上 `-static` 选项，强制使用静态链接库。
 
 * `-shared`
@@ -378,7 +392,7 @@ gcc 在产生调试符号时，同样采用了分级的思路，开发人员可�
 会将剖析（Profiling）信息加入到最终生成的二进制代码中。剖析信息对于找出程序的性能瓶颈很有帮助，是协助Linux程序员开发出高性能程序的有力工具。
 
 * `-save-temps`
-  
+
 保存编译过程中生成的一些列中间文件。
 
 ```
@@ -452,7 +466,7 @@ refer: http://stackoverflow.com/questions/386220/how-can-i-hide-defined-but-not-
 * On GNU/Linux you are probably using `clang + libstdc++`, so it is compatible with `GCC + libstdc++`, because it uses the same definition of `std::string` from `libstdc++`.
 * On Mac OS X you are using `clang + libc++`, which is not compatible with `GCC + libstdc++`, they define `std::string` differently so you get different mangled names.
 * One option is to use `-stdlib=libstdc++` when compiling with Clang on Mac OS X, to tell it to use `libstdc++`, however the version of `libstdc++` included with Mac OS X is ancient and doesn't support any of C++11. Doing that might also mean you can't link to other native Mac OS X libraries that use the C++ standard library, because they would probably not have been built with `-stdlib=libstdc++`
-  
+
 ```
 # MacOS
 $otool -L demo
@@ -488,7 +502,7 @@ https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html
 #include <string>
 #include <map>
 #include <unordered_map>
- 
+
 int main()
 {
     printf("__GNUC__(%d)\n", __GNUC__);

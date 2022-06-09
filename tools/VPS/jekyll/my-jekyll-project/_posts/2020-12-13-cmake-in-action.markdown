@@ -73,11 +73,11 @@ A buildsystem describes how to build a project's executables and libraries from 
 To generate a buildsystem with CMake, the following must be selected:
 
 * Source Tree(源代码目录)
-  + The top-level directory(最顶层的目录) containing source files provided by the project. The project specifies its buildsystem using files as described in the [cmake-language(7)](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#manual:cmake-language(7)) manual, starting with a top-level file named `CMakeLists.txt`. These files specify build targets and their dependencies as described in the [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#manual:cmake-buildsystem(7)) manual. 
+  + The top-level directory(最顶层的目录) containing source files provided by the project. The project specifies its buildsystem using files as described in the [cmake-language(7)](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#manual:cmake-language(7)) manual, starting with a top-level file named `CMakeLists.txt`. These files specify build targets and their dependencies as described in the [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#manual:cmake-buildsystem(7)) manual.
 
 * Build Tree(构建目录)
-  + The top-level directory in which buildsystem files and build output artifacts (e.g. executables and libraries) are to be stored. CMake will write a `CMakeCache.txt` file to identify the directory as a build tree and store persistent information such as buildsystem configuration options. 
-  + To maintain a pristine(全新的) source tree, perform an **out-of-source build(外部构建，建议此方式)** by using a separate dedicated build tree. An **in-source build(内部构建，不建议此方式)** in which the build tree is placed in the same directory as the source tree is also supported, but discouraged.  
+  + The top-level directory in which buildsystem files and build output artifacts (e.g. executables and libraries) are to be stored. CMake will write a `CMakeCache.txt` file to identify the directory as a build tree and store persistent information such as buildsystem configuration options.
+  + To maintain a pristine(全新的) source tree, perform an **out-of-source build(外部构建，建议此方式)** by using a separate dedicated build tree. An **in-source build(内部构建，不建议此方式)** in which the build tree is placed in the same directory as the source tree is also supported, but discouraged.
 
 * Generator(生成器，例如：Unix Makefiles, Ninja)
   + This chooses the kind of buildsystem to generate. See the [cmake-generators(7)](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#manual:cmake-generators(7)) manual for documentation of all generators. Run `cmake --help` to see a list of generators available locally. Optionally use the `-G` option below to specify a generator, or simply accept the default CMake chooses for the current platform.
@@ -161,7 +161,7 @@ cmake -E <command> [<options>]
 
 # CMake Helloworld
 
-* `cmake_minimum_required`：cmake 的最低版本要求
+* `cmake_minimum_required`：cmake 的最低版本要求，会根据指定的版本隐式调用 `cmake_policy(VERSION)`
 * `project`：指定项目的名称
 * `set`：设置普通变量，缓存变量或环境变量
 * `add_subdirectory`：添加 build 的子目录，第一个参数 source_dir 指定的子目录包含了 CMakeLists.txt 和代码，通常为相对路径
@@ -176,7 +176,7 @@ cmake -E <command> [<options>]
 Note:
 
 * cmake默认使用彩色精简的输出方式，若需要输出详细的编译过程有两种方法
-  + 通过参数`make VERBOSE = 1` 
+  + 通过参数`make VERBOSE = 1`
   + 在CMakeLists.txt中设置`set(CMAKE_VERBOSE_MAKEFILE on)`
 * cmake的指令是不区分大小写的，写作`CMAKE_MINIMUM_REQUIRED`或`cmake_minimum_required`，甚至是`cmAkE_mInImUm_rEquIrEd`（不建议）都是可以的
 * 设置编译选项，例如，`SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall")`
@@ -240,7 +240,11 @@ Require a minimum version of cmake.
 cmake_minimum_required(VERSION <min>[...<policy_max>] [FATAL_ERROR])
 ```
 
+The `cmake_minimum_required(VERSION)` command implicitly invokes the `cmake_policy(VERSION)` command to specify that the current project code is written for the given range of CMake versions.
+
 https://cmake.org/cmake/help/latest/command/cmake_minimum_required.html
+
+
 ## project
 
 Set the name of the project.
@@ -269,7 +273,7 @@ https://cmake.org/cmake/help/latest/command/include.html
 
 ## set
 
-Set a normal, cache, or environment variable to a given value. 
+Set a normal, cache, or environment variable to a given value.
 
 ```
 set(<variable> <value>... [PARENT_SCOPE])
@@ -279,7 +283,7 @@ https://cmake.org/cmake/help/latest/command/set.html
 
 ## unset
 
-Unset a variable, cache variable, or environment variable. Removes the specified variable causing it to become undefined. 
+Unset a variable, cache variable, or environment variable. Removes the specified variable causing it to become undefined.
 
 ```
 unset(<variable> [CACHE | PARENT_SCOPE])
@@ -491,7 +495,7 @@ add_custom_target(TaskA)
 
 # Usage: cmake -E <command> [arguments...]
 # refer: https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool
-add_custom_command(TARGET TaskA 
+add_custom_command(TARGET TaskA
                   PRE_BUILD
                   COMMAND ${CMAKE_COMMAND} -E echo "Do something"
 )
@@ -538,7 +542,7 @@ project(test)
 add_custom_target(TaskA
                   COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA"
                   COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA over"
-                  
+
 )
 ```
 
@@ -582,7 +586,7 @@ https://cmake.org/cmake/help/latest/command/add_library.html
 
 ## target_link_libraries
 
-Specify libraries or flags to use when linking a given target and/or its dependents. 
+Specify libraries or flags to use when linking a given target and/or its dependents.
 
 ```
 target_link_libraries(<target> ... <item>... ...)
@@ -601,7 +605,7 @@ https://cmake.org/cmake/help/latest/command/enable_language.html
 
 Start recording a macro for later invocation as a command
 
-``` 
+```
 macro(<name> [<arg1> ...])
   <commands>
 endmacro()
@@ -691,7 +695,7 @@ https://cmake.org/cmake/help/latest/command/get_filename_component.html
 
 常用的变量：
 
-refer: 
+refer:
 
 * https://cmake.org/Wiki/CMake_Useful_Variables
 * cmake-variables(7)
@@ -764,7 +768,7 @@ New in version 3.1. Default value for [CXX_STANDARD_REQUIRED](https://cmake.org/
 
 ## CMAKE_CXX_EXTENSION
 
-New in version 3.1. Default value for [CXX_EXTENSIONS](https://cmake.org/cmake/help/latest/prop_tgt/CXX_EXTENSIONS.html#prop_tgt:CXX_EXTENSIONS) target property if set when a target is created. This property specifies whether compiler specific extensions should be used. For some compilers, this results in adding a flag such as `-std=gnu++11` instead of `-std=c++11` to the compile line. This property is ON by default. 
+New in version 3.1. Default value for [CXX_EXTENSIONS](https://cmake.org/cmake/help/latest/prop_tgt/CXX_EXTENSIONS.html#prop_tgt:CXX_EXTENSIONS) target property if set when a target is created. This property specifies whether compiler specific extensions should be used. For some compilers, this results in adding a flag such as `-std=gnu++11` instead of `-std=c++11` to the compile line. This property is ON by default.
 
 
 ## CMAKE_CXX_COMPILER_VERSION
@@ -797,7 +801,7 @@ project(test)
 add_custom_target(TaskA
                   COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA"
                   COMMAND ${CMAKE_COMMAND} -E echo "Do TaskA over"
-                  
+
 )
 ```
 
@@ -820,7 +824,7 @@ https://cmake.org/cmake/help/latest/variable/LIBRARY_OUTPUT_PATH.html
 
 ## BUILD_SHARED_LIBS
 
-Global flag to cause add_library() to create shared libraries if on. 
+Global flag to cause add_library() to create shared libraries if on.
 
 If present and true, this will cause all libraries to be built shared unless the library was explicitly added as a static library. This variable is often added to projects as an option() so that each user of a project can decide if they want to build the project using shared or static libraries.
 
@@ -858,7 +862,7 @@ https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_SOURCE_DIR.html
 
 ## CMAKE_CURRENT_LIST_FILE
 
-Full path to the listfile currently being processed. 
+Full path to the listfile currently being processed.
 
 https://cmake.org/cmake/help/latest/variable/CMAKE_CURRENT_LIST_FILE.html
 
@@ -1044,7 +1048,7 @@ The `CTest` executable includes some handy command line options to make testing 
 -H                                        Display a help message
 ```
 
-* The `-R` option is probably the most commonly used. It allows you to specify a regular expression; only the tests with names matching the regular expression will be run. Using the `-R` option with the name (or part of the name) of a test is a quick way to run a single test. 
+* The `-R` option is probably the most commonly used. It allows you to specify a regular expression; only the tests with names matching the regular expression will be run. Using the `-R` option with the name (or part of the name) of a test is a quick way to run a single test.
 
 * The `-E` option is similar except that it excludes all tests matching the regular expression. The `-L` and `-LE` options are similar to `-R` and `-E`, except that they apply to test labels that were set using the `set_property` command described previously.
 
@@ -1113,7 +1117,7 @@ If `cmake` is invoked with the command line parameter `-DCMAKE_TOOLCHAIN_FILE=pa
 
 # [Building LLVM with CMake](http://llvm.org/docs/CMake.html#building-llvm-with-cmake)
 
-[CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM. 
+[CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM.
 
 make.sh
 
@@ -1192,7 +1196,7 @@ Replace ld to lld:
 rm /opt/rh/devtoolset-7/root/etc/alternatives/ld
 ln -s /root/compile/llvm_install/bin/ld.lld /opt/rh/devtoolset-7/root/etc/alternatives/ld
 
-ls -l /opt/rh/devtoolset-7/root/etc/alternatives/ld 
+ls -l /opt/rh/devtoolset-7/root/etc/alternatives/ld
 lrwxrwxrwx 1 root root 37 Dec 13 16:47 /opt/rh/devtoolset-7/root/etc/alternatives/ld -> /root/compile/llvm_install/bin/ld.lld
 ```
 
@@ -1276,7 +1280,7 @@ fi
 echo "have done"
 ```
 
-## ninja + gcc 
+## ninja + gcc
 
 ```
 top - 21:08:49 up 181 days, 16 min,  4 users,  load average: 8.18, 8.43, 16.17
@@ -1290,17 +1294,17 @@ Tasks: 193 total,  10 running, 183 sleeping,   0 stopped,   0 zombie
 %Cpu6  : 96.3 us,  3.7 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
 %Cpu7  : 92.7 us,  7.3 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
 KiB Mem : 16165976 total,  7329180 free,  4121088 used,  4715708 buff/cache
-KiB Swap:        0 total,        0 free,        0 used. 11429800 avail Mem 
+KiB Swap:        0 total,        0 free,        0 used. 11429800 avail Mem
 
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                                    
-19664 root      20   0  700252 652588   8600 R  99.7  4.0   0:07.02 cc1plus                                                                                                                    
-19684 root      20   0  446644 397780   6464 R  99.7  2.5   0:03.94 cc1plus                                                                                                                    
-19687 root      20   0  450332 402040   6400 R  99.7  2.5   0:03.84 cc1plus                                                                                                                    
-19677 root      20   0  665556 615736   6476 R  99.3  3.8   0:05.49 cc1plus                                                                                                                    
-19681 root      20   0  505488 457364   6452 R  98.7  2.8   0:04.45 cc1plus                                                                                                                    
-19691 root      20   0  444044 394996   6404 R  97.0  2.4   0:03.17 cc1plus                                                                                                                    
-19695 root      20   0  304324 254396   6028 R  47.2  1.6   0:01.42 cc1plus                                                                                                                    
-19699 root      20   0  149372 102168   5920 R  20.3  0.6   0:00.61 cc1plus     
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+19664 root      20   0  700252 652588   8600 R  99.7  4.0   0:07.02 cc1plus
+19684 root      20   0  446644 397780   6464 R  99.7  2.5   0:03.94 cc1plus
+19687 root      20   0  450332 402040   6400 R  99.7  2.5   0:03.84 cc1plus
+19677 root      20   0  665556 615736   6476 R  99.3  3.8   0:05.49 cc1plus
+19681 root      20   0  505488 457364   6452 R  98.7  2.8   0:04.45 cc1plus
+19691 root      20   0  444044 394996   6404 R  97.0  2.4   0:03.17 cc1plus
+19695 root      20   0  304324 254396   6028 R  47.2  1.6   0:01.42 cc1plus
+19699 root      20   0  149372 102168   5920 R  20.3  0.6   0:00.61 cc1plus
 ```
 
 results:
@@ -1318,7 +1322,7 @@ sys     14m17.540s
 
 ```
 [71/6710] Building CXX object lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o
-FAILED: lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o 
+FAILED: lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o
 /opt/rh/devtoolset-7/root/usr/bin/c++  -DGTEST_HAS_RTTI=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -Ilib/Support -I/root/compile/test/llvm-project-11.0.0/llvm/lib/Support -Iinclude -I/root/compile/test/llvm-project-11.0.0/llvm/include -fPIC -fvisibility-inlines-hidden -Werror=date-time -Wall -Wextra -Wno-unused-parameter -Wwrite-strings -Wcast-qual -Wno-missing-field-initializers -pedantic -Wno-long-long -Wimplicit-fallthrough -Wno-maybe-uninitialized -Wno-noexcept-type -Wdelete-non-virtual-dtor -Wno-comment -fdiagnostics-color -ffunction-sections -fdata-sections -O3 -DNDEBUG   -std=c++14  -fno-exceptions -fno-rtti -MD -MT lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -MF lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o.d -o lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -c /root/compile/test/llvm-project-11.0.0/llvm/lib/Support/Debug.cpp
 c++: internal compiler error: Killed (program cc1plus)
 Please submit a full bug report,
@@ -1331,19 +1335,19 @@ top - 23:38:58 up 181 days,  2:46,  4 users,  load average: 101.87, 24.81, 8.97
 Tasks: 693 total, 105 running, 587 sleeping,   0 stopped,   1 zombie
 %Cpu(s): 18.0 us, 17.8 sy,  0.0 ni,  0.2 id, 63.9 wa,  0.0 hi,  0.0 si,  0.0 st
 KiB Mem : 16165976 total,   157708 free, 15388396 used,   619872 buff/cache
-KiB Swap:        0 total,        0 free,        0 used.   183040 avail Mem 
+KiB Swap:        0 total,        0 free,        0 used.   183040 avail Mem
 
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                                    
-   64 root      20   0       0      0      0 R  27.8  0.0   3:15.14 kswapd0                                                                                                                    
-    7 root      rt   0       0      0      0 S  15.2  0.0   1:25.26 migration/0                                                                                                                
-   22 root      rt   0       0      0      0 S  14.8  0.0   1:20.00 migration/3                                                                                                                
-12958 root      20   0       0      0      0 Z   5.1  0.0   4:09.43 base_agent_net                                                                                                             
-15647 root      20   0   84008  35320    896 D   3.3  0.2   0:00.31 cc1plus                                                                                                                    
-26692 root      20   0  286276   4072      0 D   3.0  0.0  72:34.73 sap1012                                                                                                                    
-15430 root      20   0  109000  60828   2428 D   2.9  0.4   0:00.48 cc1plus                                                                                                                    
-15158 root      20   0  166464 116372   1908 R   2.7  0.7   0:00.86 cc1plus                                                                                                                    
-15470 root      20   0   99312  49680    356 R   2.6  0.3   0:00.41 cc1plus                                                                                                                    
-15532 root      20   0   99356  49384    360 R   2.6  0.3   0:00.37 cc1plus  
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+   64 root      20   0       0      0      0 R  27.8  0.0   3:15.14 kswapd0
+    7 root      rt   0       0      0      0 S  15.2  0.0   1:25.26 migration/0
+   22 root      rt   0       0      0      0 S  14.8  0.0   1:20.00 migration/3
+12958 root      20   0       0      0      0 Z   5.1  0.0   4:09.43 base_agent_net
+15647 root      20   0   84008  35320    896 D   3.3  0.2   0:00.31 cc1plus
+26692 root      20   0  286276   4072      0 D   3.0  0.0  72:34.73 sap1012
+15430 root      20   0  109000  60828   2428 D   2.9  0.4   0:00.48 cc1plus
+15158 root      20   0  166464 116372   1908 R   2.7  0.7   0:00.86 cc1plus
+15470 root      20   0   99312  49680    356 R   2.6  0.3   0:00.41 cc1plus
+15532 root      20   0   99356  49384    360 R   2.6  0.3   0:00.37 cc1plus
 ```
 
 

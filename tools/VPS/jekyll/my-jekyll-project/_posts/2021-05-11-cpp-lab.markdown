@@ -440,6 +440,27 @@ signed integer type capable of holding a pointer
 unsigned integer type capable of holding a pointer
 
 https://en.cppreference.com/w/cpp/types/integer
+
+
+## enum class
+
+枚举（包括作用域枚举和非作用域枚举）的命名应当和常量保持一致而不是宏。即使用`kEnumName`形式命名而不是`ENUM_NAME`形式。对于非作用域枚举，还应当将枚举类型作为枚举名的前缀，以减少潜在的命名冲突。如果使用 C++ 11 之后的编译器开发，优先考虑使用 enum class，它可以提供更强的类型检测，并减少潜在的命名冲突。
+
+``` cpp
+enum class UrlTableErrors {
+  kOk = 0,
+  kOutOfMemory,
+  kMalformedInput,
+};
+
+enum UrlParseError{
+  kUrlParseErrorOk = 0,
+  kUrlParseErrorInvalidCharacter,
+  kUrlParseErrorOutOfMemory,
+};
+```
+
+
 ## lambda
 
 ``` cpp
@@ -721,6 +742,108 @@ int main()
 
     std::cout << b << " " << c << std::endl;// 3 hello
 }
+```
+
+### lambda 展开实现
+
+``` cpp
+#include <iostream>
+#include <functional>
+
+using Func = std::function<void(void)>;
+
+void h(Func* pf)
+{
+    (*pf)();
+}
+
+void g(Func&& f)
+{
+    h(&f);
+}
+
+int main()
+{
+    g( [](){ std::cout << "hello\n";} );
+}
+```
+
+展开后：
+
+``` cpp
+#include <iostream>
+#include <functional>
+
+using Func = std::function<void(void)>;
+
+void h(std::function<void()>* pf)
+{
+    (*pf).operator()();
+    std::cout << "h()\n";
+}
+
+void g(std::function<void()>&& f)
+{
+    h(&f);
+    std::cout << "g()\n";
+}
+
+class CLambda
+{
+public:
+    inline void operator()() const
+    {
+        std::operator<<(std::cout, "hello\n");
+    }
+
+    // ctor
+    CLambda()
+    {
+        std::cout << "CLambda()\n";
+    }
+    CLambda(const CLambda&)
+    {
+        std::cout << "CLambda(CLambda)\n";
+    }
+    CLambda& operator=(const CLambda&)
+    {
+        std::cout << "CLambda& operator=(const CLambda&) \n";
+        return *this;
+    }
+
+    CLambda(CLambda&&)
+    {
+        std::cout << "CLambda(CLambda&&)\n";
+    }
+    CLambda& operator=(CLambda&&)
+    {
+        std::cout << "CLambda& operator=(CLambda&&)\n";
+        return *this;
+    }
+
+    // dtor
+    ~CLambda()
+    {
+        std::cout << "~CLambda()\n";
+    }
+};
+
+int main()
+{
+    g(std::function<void()>(CLambda()));
+}
+```
+
+输出：
+
+```
+CLambda()
+CLambda(CLambda&&)
+hello
+h()
+g()
+~CLambda()
+~CLambda()
 ```
 
 ### 示例
@@ -1297,6 +1420,39 @@ false
 */
 ```
 
+## std::declval
+
+Converts any type T to a reference type, making it possible to use member functions in decltype expressions without the need to go through constructors.
+
+``` cpp
+#include <utility>
+#include <iostream>
+
+struct Default { int foo() const { return 1; } };
+
+struct NonDefault
+{
+    NonDefault() = delete;
+    int foo() const { return 1; }
+};
+
+int main()
+{
+    decltype(Default().foo()) n1 = 1;                   // type of n1 is int
+//  decltype(NonDefault().foo()) n2 = n1;               // error: no default constructor
+    decltype(std::declval<NonDefault>().foo()) n2 = n1; // type of n2 is int
+    std::cout << "n1 = " << n1 << '\n'
+              << "n2 = " << n2 << '\n';
+}
+```
+
+https://en.cppreference.com/w/cpp/utility/declval
+
+## std::is_convertible
+
+
+https://en.cppreference.com/w/cpp/types/is_convertible
+
 ## std::is_union
 
 Checks whether T is a union type. Provides the member constant value, which is equal to true if T is a union type. Otherwise, value is equal to false.
@@ -1417,6 +1573,89 @@ std::runtime_error has a virtual destructor? true
 ```
 
 * https://en.cppreference.com/w/cpp/types/has_virtual_destructor
+
+## std::align
+
+``` cpp
+void* align( std::size_t alignment,
+             std::size_t size,
+             void*& ptr,
+             std::size_t& space );
+```
+
+```
+alignment: the desired alignment
+size: the size of the storage to be aligned
+ptr: pointer to contiguous storage (a buffer) of at least space bytes
+space: the size of the buffer in which to operate
+```
+
+Given a pointer `ptr` to a buffer of `size` space, returns a pointer aligned by the specified `alignment` for size number of bytes and decreases `space` argument by the number of bytes used for alignment. The first aligned address is returned.
+
+The function modifies the pointer only if it would be possible to fit the wanted number of bytes aligned by the given alignment into the buffer. If the buffer is too small, the function does nothing and returns nullptr.
+
+**The behavior is undefined if alignment is not a power of two**.
+
+Example: demonstrates the use of std::align to place objects of different type in memory
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+template <std::size_t N>
+struct MyAllocator
+{
+    char data[N];
+    void* p;
+    std::size_t sz;
+    MyAllocator() : p(data), sz(N) {}
+    template <typename T>
+    T* aligned_alloc(std::size_t a = alignof(T))
+    {
+        if (std::align(a, sizeof(T), p, sz))
+        {
+            T* result = reinterpret_cast<T*>(p);
+            p = (char*)p + sizeof(T);
+            sz -= sizeof(T);
+            return result;
+        }
+        return nullptr;
+    }
+};
+
+int main()
+{
+    MyAllocator<64> a;
+    std::cout << "allocated a.data at " << (void*)a.data
+              << " (" << sizeof a.data << " bytes)\n";
+
+    // allocate a char
+    if (char* p = a.aligned_alloc<char>()) {
+        *p = 'a';
+        std::cout << "allocated a char at " << (void*)p << '\n';
+    }
+
+    // allocate an int
+    if (int* p = a.aligned_alloc<int>()) {
+        *p = 1;
+        std::cout << "allocated an int at " << (void*)p << '\n';
+    }
+
+    // allocate an int, aligned at 32-byte boundary
+    if (int* p = a.aligned_alloc<int>(32)) {
+        *p = 2;
+        std::cout << "allocated an int at " << (void*)p << " (32 byte alignment)\n";
+    }
+}
+/*
+allocated a.data at 0x7ffd8d5dd980 (64 bytes)
+allocated a char at 0x7ffd8d5dd980
+allocated an int at 0x7ffd8d5dd984
+allocated an int at 0x7ffd8d5dd9a0 (32 byte alignment)
+*/
+```
+
+* https://en.cppreference.com/w/cpp/memory/align
 
 # C++14
 
@@ -1975,5 +2214,251 @@ int f2()
 * https://en.cppreference.com/w/c/language/struct_initialization
 * https://en.cppreference.com/w/cpp/language/default_initialization
 * [Are zero initializers faster than memset?](https://stackoverflow.com/questions/40786375/are-zero-initializers-faster-than-memset)
+
+## Argument-dependent lookup (ADL)
+
+Argument-dependent lookup, also known as ADL, or Koenig lookup, is the set of rules for looking up the **unqualified** function names in [function-call expressions](https://en.cppreference.com/w/cpp/language/operator_other), including implicit function calls to [overloaded operators](https://en.cppreference.com/w/cpp/language/operators). These function names are looked up in the namespaces of their arguments in addition to the scopes and namespaces considered by the usual [unqualified name lookup](https://en.cppreference.com/w/cpp/language/lookup).
+
+Argument-dependent lookup makes it possible to use operators defined in a different namespace. Example:
+
+``` cpp
+#include <iostream>
+
+int main()
+{
+    std::cout << "Test\n"; // There is no operator<< in global namespace, but ADL
+                           // examines std namespace because the left argument is in
+                           // std and finds std::operator<<(std::ostream&, const char*)
+    operator<<(std::cout, "Test\n"); // same, using function call notation
+
+    // however,
+    std::cout << endl; // Error: 'endl' is not declared in this namespace.
+                       // This is not a function call to endl(), so ADL does not apply
+
+    endl(std::cout); // OK: this is a function call: ADL examines std namespace
+                     // because the argument of endl is in std, and finds std::endl
+
+    (endl)(std::cout); // Error: 'endl' is not declared in this namespace.
+                       // The sub-expression (endl) is not a function call expression
+}
+```
+
+* https://en.cppreference.com/w/cpp/language/adl
+
+### Name lookup
+
+**Name lookup** is the procedure by which a name, when encountered in a program, is associated with the declaration that introduced it.
+
+For example, to compile `std::cout << std::endl;`, the compiler performs:
+
+1. **unqualified name lookup** for the name `std`, which finds the declaration of namespace `std` in the header `<iostream>`
+2. **qualified name lookup** for the name `cout`, which finds a variable declaration in the namespace `std`
+3. **qualified name lookup** for the name `endl`, which finds a function template declaration in the namespace `std`
+4. both [argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl) for the name `operator<<` which finds multiple function template declarations in the namespace `std` and **qualified name lookup** for the name `std::ostream::operator<<` which finds multiple member function declarations in class `std::ostream`.
+
+
+* https://en.cppreference.com/w/cpp/language/lookup
+
+### Types of lookup
+
+If the name appears immediately to the right of the scope resolution operator :: or possibly after :: followed by the disambiguating keyword template, see [Qualified name lookup](https://en.cppreference.com/w/cpp/language/qualified_lookup). Otherwise, see [Unqualified name lookup](https://en.cppreference.com/w/cpp/language/unqualified_lookup) (which, for function names, includes Argument-dependent lookup)
+
+#### Qualified name lookup (限定名查找)
+
+A qualified name is a name that appears on the right hand side of the scope resolution operator :: (see also [qualified identifiers](https://en.cppreference.com/w/cpp/language/identifiers#Qualified_identifiers)). A qualified name may refer to a
+
+* class member (including static and non-static functions, types, templates, etc)
+* namespace member (including another namespace)
+* enumerator
+
+If there is nothing on the left hand side of the `::`, the lookup considers only declarations made in the global namespace scope (or introduced into the global namespace by a [using declaration](https://en.cppreference.com/w/cpp/language/namespace)). This makes it possible to refer to such names even if they were hidden by a local declaration:
+
+``` cpp
+#include <iostream>
+
+int main()
+{
+    struct std {};
+
+    std::cout << "fail\n"; // Error: unqualified lookup for 'std' finds the struct
+    ::std::cout << "ok\n"; // OK: ::std finds the namespace std
+}
+```
+
+
+#### Unqualified name lookup (无限定名查找)
+
+For an unqualified name, that is a name that does not appear to the right of a scope resolution operator `::`, **name lookup examines the scopes as described below, until it finds at least one declaration of any kind, at which time the lookup stops and no further scopes are examined**. (Note: lookup from some contexts skips some declarations, for example, lookup of the name used to the left of `::` ignores function, variable, and enumerator declarations, lookup of a name used as a base class specifier ignores all non-type declarations)
+
+
+
+* https://en.cppreference.com/w/cpp/language/lookup
+
+
+### Dependent names
+
+问题：
+
+``` cpp
+#include <iostream>
+
+void g(double) { std::cout << "g(double)\n"; }
+
+template<class T>
+struct S
+{
+    void f(T t) const
+    {
+        g(t);   // bound now ?
+    }
+};
+
+void g(int) { std::cout << "g(int)\n"; }
+
+int main()
+{
+    g(2);   // g(int)
+
+    S<int> s;
+    s.f(2);  // g(double).   why?
+}
+```
+
+使用ADL:
+
+``` cpp
+#include <iostream>
+
+class A // 没有命名空间
+{
+};
+
+void g(double) { std::cout << "g(double)\n"; }
+
+template<class T>
+struct S
+{
+    void f(T t) const
+    {
+        g(t);
+    }
+};
+
+void g(int) { std::cout << "g(int)\n"; }
+void g(A&) { std::cout << "g(A&)\n"; }
+
+int main()
+{
+    g(2);   // g(int)
+
+    S<int> s1;
+    s1.f(2);  // g(double). no use ADL
+
+    S<A> s2;
+    A a;
+    s2.f(a);  // g(A&).   use ADL
+}
+```
+
+当使用命名空间后，ADL好像没办法生效
+
+``` cpp
+#include <iostream>
+
+namespace t // 使用命名空间
+{
+class A
+{
+};
+}
+
+void g(double) { std::cout << "g(double)\n"; }
+void g(t::A&) { std::cout << "g(A&)\n"; }.  // 添加了命名空间后，必现在模版定义前声明
+
+template<class T>
+struct S
+{
+    void f(T t) const
+    {
+        g(t);
+    }
+};
+
+void g(int) { std::cout << "g(int)\n"; }
+
+int main()
+{
+    g(2);   // g(int)
+
+    S<int> s1;
+    s1.f(2);  // g(double). no use ADL
+
+    S<t::A> s2;
+    t::A a;
+    s2.f(a);  // g(A&).  添加了命名空间后，必现在模版定义前声明
+}
+```
+
+
+Inside the definition of a [template](https://en.cppreference.com/w/cpp/language/templates) (both [class template](https://en.cppreference.com/w/cpp/language/class_template) and [function template](https://en.cppreference.com/w/cpp/language/function_template)), the meaning of some constructs may differ from one instantiation to another. In particular, types and expressions may depend on types of type template parameters and values of non-type template parameters.
+
+``` cpp
+template<typename T>
+struct X : B<T> // "B<T>" is dependent on T
+{
+    typename T::A* pa; // "T::A" is dependent on T
+                       // (see below for the meaning of this use of "typename")
+    void f(B<T>* pb)
+    {
+        static int i = B<T>::i; // "B<T>::i" is dependent on T
+        pb->j++; // "pb->j" is dependent on T
+    }
+};
+```
+
+Name lookup and binding are different for **dependent names** and **non-dependent names**
+
+Binding rules
+
+**Non-dependent names** are looked up and bound at the point of template definition. This binding holds even if at the point of template instantiation there is a better match:
+
+``` cpp
+#include <iostream>
+
+void g(double) { std::cout << "g(double)\n"; }
+
+template<class T>
+struct S
+{
+    void f() const
+    {
+        g(1); // "g" is a non-dependent name, bound now
+    }
+};
+
+void g(int) { std::cout << "g(int)\n"; }
+
+int main()
+{
+    g(1);  // calls g(int)
+
+    S<int> s;
+    s.f(); // calls g(double)
+}
+```
+
+Binding of **dependent names** is postponed until lookup takes place.
+
+As discussed in [lookup](https://en.cppreference.com/w/cpp/language/lookup), the lookup of a **dependent name** used in a template is postponed until the template arguments are known, at which time
+
+1. non-ADL lookup examines function declarations with external linkage that are visible from the **template definition context**
+2. [ADL](https://en.cppreference.com/w/cpp/language/adl) examines function declarations with external linkage that are visible from either the **template definition context** or the **template instantiation context**
+
+> in other words, adding a new function declaration after template definition does not make it visible, except via ADL. The purpose of this rule is to help guard against violations of the [ODR](https://en.cppreference.com/w/cpp/language/definition#One_Definition_Rule) for template instantiations
+
+To make ADL examine a user-defined namespace, either std::vector should be replaced by a user-defined class or its element type should be a user-defined class.
+
+* https://en.cppreference.com/w/cpp/language/dependent_name
+* https://stackoverflow.com/questions/64823299/why-doesnt-adl-work-with-functions-defined-outside-of-a-namespace
 
 

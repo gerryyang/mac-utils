@@ -22,7 +22,7 @@ https://gcc.gnu.org/onlinedocs/gcc-9.1.0/gcc/Code-Gen-Options.html
 
 ## -fpic
 
-**Generate position-independent code (PIC) suitable for use in a shared library**, if supported for the target machine. 
+**Generate position-independent code (PIC) suitable for use in a shared library**, if supported for the target machine.
 
 Such code accesses all constant addresses through a **global offset table (GOT)**. The dynamic loader resolves the GOT entries when the program starts (the dynamic loader is not part of GCC; it is part of the operating system). If the GOT size for the linked executable exceeds a machine-specific maximum size, you get an error message from the linker indicating that `-fpic` does not work; in that case, recompile with `-fPIC` instead. (These maximums are 8k on the SPARC, 28k on AArch64 and 32k on the m68k and RS/6000. The x86 has no such limit.)
 
@@ -48,7 +48,7 @@ These options are similar to `-fpic` and `-fPIC`, but the generated position-ind
 
 ## -fno-gnu-unique
 
-On systems with recent GNU assembler and C library, the C++ compiler uses the `STB_GNU_UNIQUE` binding to make sure that definitions of template static data members and static local variables in inline functions are unique even in the presence of `RTLD_LOCAL`; this is necessary to avoid problems with a library used by two different `RTLD_LOCAL` plugins depending on a definition in one of them and therefore disagreeing with the other one about the binding of the symbol. 
+On systems with recent GNU assembler and C library, the C++ compiler uses the `STB_GNU_UNIQUE` binding to make sure that definitions of template static data members and static local variables in inline functions are unique even in the presence of `RTLD_LOCAL`; this is necessary to avoid problems with a library used by two different `RTLD_LOCAL` plugins depending on a definition in one of them and therefore disagreeing with the other one about the binding of the symbol.
 
 But this causes dlclose to be ignored for affected DSOs; if your program relies on reinitialization of a DSO via dlclose and dlopen, you can use -fno-gnu-unique.
 
@@ -83,12 +83,17 @@ In Linux, DL libraries aren't actually special from the point-of-view of their f
 
 ### 关于`-rdynamic`的用途
 
-* [What exactly does `-rdynamic` do and when exactly is it needed?](https://stackoverflow.com/questions/36692315/what-exactly-does-rdynamic-do-and-when-exactly-is-it-needed) 
+* [What exactly does `-rdynamic` do and when exactly is it needed?](https://stackoverflow.com/questions/36692315/what-exactly-does-rdynamic-do-and-when-exactly-is-it-needed)
 * [Why do we need -rdynamic option in gcc? ](https://stackoverflow.com/questions/50418941/why-do-we-need-rdynamic-option-in-gcc)
 
 `-rdynamic` exports the symbols of an executable, this mainly addresses scenarios as described in Mike Kinghan's answer, but also it helps e.g. Glibc's `backtrace_symbols()` symbolizing the backtrace.
 
 Symbols are only exported by default from shared libraries. `-rdynamic` tells linker to do the same for `executables`. Normally that's a bad idea but sometimes you want to provide APIs for dynamically loaded plugins and then this comes handy (even though one much better off using [explicit visibility annotations](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html), [version script](http://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html) or [dynamic export file](https://www.cs.kent.ac.uk/people/staff/srk21/blog/2011/12/01/) ).
+
+
+Do not add flags to export symbols from executables without the `ENABLE_EXPORTS` target property.
+
+**CMake 3.3 and below**, for historical reasons, **always** linked executables on some platforms with flags like `-rdynamic` to export symbols from the executables for use by any plugins they may load via `dlopen`. **CMake 3.4 and above** prefer to do this only for executables that are **explicitly** marked with the `ENABLE_EXPORTS` target property. [See more](https://cmake.org/cmake/help/latest/policy/CMP0065.html)
 
 
 [CMake: How do I remove rdynamic from link options?](https://answers.ros.org/question/231381/how-do-i-remove-rdynamic-from-link-options/)
@@ -253,8 +258,8 @@ main (void)
 编译输出，没有使用`-rdynamic`：
 
 ```
-$ gcc backtrace.c 
-$ ./a.out 
+$ gcc backtrace.c
+$ ./a.out
 Obtained 5 stack frames.
 ./a.out(+0x7dd) [0x557ae8da77dd]
 ./a.out(+0x879) [0x557ae8da7879]
@@ -266,11 +271,11 @@ Obtained 5 stack frames.
 without -rdynamic:
 
 ```
-$ readelf --dyn-syms a.out 
+$ readelf --dyn-syms a.out
 
 Symbol table '.dynsym' contains 12 entries:
    Num:    Value          Size Type    Bind   Vis      Ndx Name
-     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND free@GLIBC_2.2.5 (2)
      2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab
      3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.2.5 (2)
@@ -287,8 +292,8 @@ Symbol table '.dynsym' contains 12 entries:
 对比使用`-rdynamic`以后，可以看到符号了。
 
 ```
-$ gcc -rdynamic backtrace.c 
-$ ./a.out 
+$ gcc -rdynamic backtrace.c
+$ ./a.out
 Obtained 5 stack frames.
 ./a.out(print_trace+0x28) [0x556f3eb0f9fd]
 ./a.out(dummy_function+0x9) [0x556f3eb0fa99]
@@ -300,11 +305,11 @@ Obtained 5 stack frames.
 with `-rdynamic`, we have more symbols, including the executable's:
 
 ```
-$ readelf --dyn-syms a.out 
+$ readelf --dyn-syms a.out
 
 Symbol table '.dynsym' contains 26 entries:
    Num:    Value          Size Type    Bind   Vis      Ndx Name
-     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND free@GLIBC_2.2.5 (2)
      2: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTab
      3: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.2.5 (2)
@@ -437,7 +442,7 @@ typeinfo for google::protobuf::Message
 需要添加链接选项 `-Wl,--dynamic-list-cpp-typeinfo` ([ld Options](https://sourceware.org/binutils/docs/ld/Options.html))，同时在 version script 配置中指定 `_ZTI*; _ZTN*; _ZTVN*;`
 
 > --dynamic-list-cpp-typeinfo
-> 
+>
 > Provide the builtin dynamic list for C++ runtime type identification.
 
 
@@ -459,7 +464,7 @@ local:
 
 [Static linking with generated protobufs causes abort](https://stackoverflow.com/questions/33017985/static-linking-with-generated-protobufs-causes-abort)
 
-refer: 
+refer:
 
 * https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/
 * [Linker Version Scripts](https://man7.org/conf/lca2006/shared_libraries/slide18c.html)
@@ -515,7 +520,7 @@ g++ -rdynamic  -o prog main.o -ldl
 ```
 
 ```
-$ ldd libbar.so 
+$ ldd libbar.so
         linux-vdso.so.1 (0x00007ffe6f5ba000)
         libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007faaeb59f000)
         libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007faaeb1ae000)
@@ -527,7 +532,7 @@ $ ldd libbar.so
 执行：
 
 ```
-$ ./prog 
+$ ./prog
 printf bar.c foo()
 Segmentation fault (core dumped)
 ```
@@ -565,7 +570,7 @@ crash原因分析：
 参考上文中`Jakub Jelinek `的解释：
 
 
-If `libstdc++` relies on `ODR`, then `RTLD_DEEPBIND` can break its assumptions, as then the same symbol which is defined in multiple shared libraries can resolve to different addresses (`RTLD_DEEPBIND` means first the dlopened library and its dependencies, and only after it the global search scope, will be searched). 
+If `libstdc++` relies on `ODR`, then `RTLD_DEEPBIND` can break its assumptions, as then the same symbol which is defined in multiple shared libraries can resolve to different addresses (`RTLD_DEEPBIND` means first the dlopened library and its dependencies, and only after it the global search scope, will be searched).
 
 `STB_GNU_UNIQUE` object ought to cure it, though it is only in 4.5 (and 4.4-RH) gcc and sufficiently new binutils and glibc are needed for it too.
 
@@ -630,13 +635,13 @@ What can help is compile the program with `-fpic`/`-fPIC`, then it won't have co
 关于`ODR`的定义：
 
 > The [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule) is an important rule of the C++ programming language that prescribes that objects and non-inline functions cannot have more than one definition in the entire program and template and types cannot have more than one definition by translation unit. It is defined in the ISO C++ Standard (ISO/IEC 14882) 2003, at section 3.2.
-> 
+>
 > In short, the ODR states that:
-> 
+>
 > 1. In any translation unit, a template, type, function, or object can have no more than one definition. Some of these can have any number of declarations. A definition provides an instance.
-> 
+>
 > 2. In the entire program, an object or non-inline function cannot have more than one definition; if an object or function is used, it must have exactly one definition. You can declare an object or function that is never used, in which case you don't have to provide a definition. In no event can there be more than one definition.
-> 
+>
 > 3. Some things, like types, templates, and extern inline functions, can be defined in more than one translation unit. For a given entity, each definition must have the same sequence of tokens. Non-extern objects and functions in different translation units are different entities, even if their names and types are the same.
 
 
@@ -649,7 +654,7 @@ What can help is compile the program with `-fpic`/`-fPIC`, then it won't have co
 C++编译器，使用`STB_GNU_UNIQUE`的绑定方式，保证`template static data members`和`static local variables`在`inline functions`的定义是唯一的，即使在使用`RTLD_LOCAL`时。
 
 > RTLD_LOCAL
-> 
+>
 > This is the converse of RTLD_GLOBAL, and the default if neither flag is specified. Symbols defined in this library are not made available to resolve references in subsequently loaded libraries.
 
 
@@ -682,7 +687,7 @@ $ LD_DEBUG=all ./prog 2>&1 | grep _ZSt4cout
 另外，通过`std::cout`也不是`u`符号，即，不是`STB_GNU_UNIQUE`，所以会crash：
 
 > man nm
-> 
+>
 > "u" The symbol is a unique global symbol.  This is a GNU extension to the standard set of ELF symbol bindings.  For such a symbol the dynamic linker will make sure that in the entire process there is just one symbol with this name and type in use.
 
 ```
@@ -758,7 +763,7 @@ puts("VM-0-16-ubuntu"VM-0-16-ubuntu
 $ nm -D /bin/hostname |grep gethostname
                  U gethostname
 
-$ ldd /bin/hostname 
+$ ldd /bin/hostname
         linux-vdso.so.1 (0x00007fff071f5000)
         libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fc62282b000)
         /lib64/ld-linux-x86-64.so.2 (0x00007fc622e21000)
@@ -834,7 +839,7 @@ $ LD_PRELOAD=./bindwrap.so BIND_ADDR=127.0.0.1 daemon-program
 # This is the `ldd' command, which lists what shared libraries are
 # used by given dynamically-linked executables.  It works by invoking the
 # run-time dynamic linker as a command and setting the environment
-# variable LD_TRACE_LOADED_OBJECTS to a non-empty value.  
+# variable LD_TRACE_LOADED_OBJECTS to a non-empty value.
 ```
 
 ```
@@ -901,7 +906,7 @@ For C++ (and other languages supporting compiled-in templates and/or compiled di
 Given this lengthy list, developers of C++ libraries in particular must plan for more than occasional updates that break binary compatibility. Fortunately, on Unix-like systems (including Linux) you can have multiple versions of a library loaded at the same time, so while there is some disk space loss, users can still run old programs needing old libraries.
 
 
-## 使用`nm`查找符号 
+## 使用`nm`查找符号
 
 The `nm` command can report the list of symbols in a given library. It works on both static and shared libraries. For a given library nm can list the symbol names defined, each symbol's value, and the symbol's type. It can also identify where the symbol was defined in the source code (by filename and line number), if that information is available in the library (see the -l option).
 
@@ -911,7 +916,13 @@ If you know the name of a function, but you truly can't remember what library it
 
 ```
 nm -o /lib/* /usr/lib/* /usr/lib/*/* \
-      /usr/local/lib/* 2> /dev/null | grep 'cos$' 
+      /usr/local/lib/* 2> /dev/null | grep 'cos$'
+```
+
+查看导出的符号：
+
+```
+nm --dynamic  objfile | grep xxx
 ```
 
 问题：I want to display local (non-external) symbols in a C-program using `nm`. However, for the main.c program below, I'd expect nm -a to also output foo, since it's defined as a local symbol (internal linkage) by using the static keyword. But, foo is not listed among the symbols. How can I make nm list all symbols (including local ones)?
@@ -960,7 +971,7 @@ extern void bar() {
 查看符号：可以看到`a.out:0000000000400582 t foo()`
 
 ```
-$nm -C -o a.out 
+$nm -C -o a.out
 a.out:0000000000601034 B __bss_start
 a.out:0000000000601034 b completed.6355
 a.out:0000000000601030 D __data_start
@@ -1011,12 +1022,12 @@ gcc -shared -Wl,-soname,libmylib.$(VER) -o libmylib.so $(OBJECTS) \
             -Wl,--whole-archive $(LIBS_TO_LINK) -Wl,--no-whole-archive $(REGULAR_LIBS)
 ```
 
-As the `ld` documentation notes, be sure to use `--no-whole-archive` option at the end, or gcc will try to merge in the standard libraries as well. 
+As the `ld` documentation notes, be sure to use `--no-whole-archive` option at the end, or gcc will try to merge in the standard libraries as well.
 
 
 ## 共享库为什么要用PIC编译
 
-``` 
+```
 # 不使用PIC
 gcc -o fpic-no-pic.s -S fpic.c
 
@@ -1033,7 +1044,7 @@ gcc -shared -fPIC -o fpic-pic.so fpic.c
 ```
 
 * 用PIC编译必须把`-fpic`或`-fPIC`传递给gcc。`-fpic`可以生成小而高效的代码，但是不同的处理器中`-fpic`生成的GOT（Global Offset Table，全局偏移表）的大小有限制。
-* 通过生成的汇编代码，可知道PIC版通过`PLT（Procedure Linkage Table）`调用`printf`。 
+* 通过生成的汇编代码，可知道PIC版通过`PLT（Procedure Linkage Table）`调用`printf`。
 
 * `-fPIC`参数作用于**编译阶段**，是告诉编译器生成与位置无关（Position Independent Code）的代码。
 * 对于共享库来说，如果不加`-fPIC`，则`.so`文件的代码段在被加载时，代码段引用的数据对象需要重新定位，重新定位会修改代码段的内容，这就造成每个使用这个`.so`文件代码段的进程在内核中都需要生成这个`.so`文件代码段的副本，每个副本都不一样，具体取决于这个`.so`文件代码和数据段内存映射的位置。
@@ -1049,7 +1060,7 @@ gcc -shared -fPIC -o fpic-pic.so fpic.c
 
 ```
 # 没有使用
-$nm -s foo.o |grep "_GLOBAL" 
+$nm -s foo.o |grep "_GLOBAL"
                  U _GLOBAL_OFFSET_TABLE_
 
 $readelf -s foo.o | grep "_GLOBAL"
@@ -1063,7 +1074,7 @@ $ readelf -s libhello.so | grep GLOBAL_
     46: 0000000000201000     0 OBJECT  LOCAL  DEFAULT   21 _GLOBAL_OFFSET_TABLE_
 ```
 
- 
+
 
 # 静态链接
 
@@ -1086,7 +1097,7 @@ cc -c -o bar.o bar.c
 ar ruv libfoo.a foo.o bar.o
 
 # 查看静态库
-$ ar tv libfoo.a 
+$ ar tv libfoo.a
 rw-r--r-- 0/0  12504 Jan  1 08:00 1970 foo.o
 ```
 
@@ -1135,7 +1146,7 @@ ln -sf libhello.so.0 libhello.so
 
 ![ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini](/assets/images/202102/ELF_Executable_and_Linkable_Format_diagram_by_Ange_Albertini.png)
 
-> An executable file using the ELF file format consists of `an ELF header`, followed by `a program header table` or `a section header table`, or both. 
+> An executable file using the ELF file format consists of `an ELF header`, followed by `a program header table` or `a section header table`, or both.
 >
 > `The ELF header` is always at offset zero of the file. `The program header table` and `the section header table`'s offset in the file are defined in the ELF header. The two tables describe the rest of the particularities of the file.
 
@@ -1198,7 +1209,7 @@ ELF文件参与程序的**链接**和程序的**执行**，因此通常可以分
   + This section holds initialized data that contribute to the program's memory image.
 
 * `.debug`
-  + This section holds information for symbolic debugging. The contents are unspecified. 
+  + This section holds information for symbolic debugging. The contents are unspecified.
 
 * `.dynamic`
   + This section holds dynamic linking information.
@@ -1207,7 +1218,7 @@ ELF文件参与程序的**链接**和程序的**执行**，因此通常可以分
   + This section holds strings needed for dynamic linking, most commonly the strings that represent the names associated with symbol table entries.  This section is of type `SHT_STRTAB`.
 
 * `.dynsym`
-  + This section holds the dynamic linking symbol table. This section is of type `SHT_DYNSYM`. 
+  + This section holds the dynamic linking symbol table. This section is of type `SHT_DYNSYM`.
 
 * `.got `
   + This section holds the global offset table. This section is of type `SHT_PROGBITS`. The attributes are processor-specific.
@@ -1260,7 +1271,7 @@ order is significant, though their relation to entries of other types is not.
 
 DT_JMPREL
 
-If present, this entries’s d_ptr member holds the address of relocation entries associated solely with the procedure linkage table. 
+If present, this entries’s d_ptr member holds the address of relocation entries associated solely with the procedure linkage table.
 Separating these relocation entries lets the
 dynamic linker ignore them during process initialization, if lazy binding is enabled. If
 this entry is present, the related entries of types DT_PLTRELSZ and DT_PLTREL must
@@ -1318,7 +1329,7 @@ Dynamic section at offset 0x1d58 contains 30 entries:
  0x0000000000000000 (NULL)               0x0
 ```
 
-Refer: 
+Refer:
 
 * [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)
 * [linux/include/uapi/linux/elf.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h)
@@ -1427,7 +1438,7 @@ Disassembly of section .init:
  606:   74 02                   je     60a <_init+0x12>
  608:   ff d0                   call   rax
  60a:   48 83 c4 08             add    rsp,0x8
- 60e:   c3                      ret    
+ 60e:   c3                      ret
 
 Disassembly of section .plt:
 
@@ -1466,7 +1477,7 @@ Disassembly of section .text:
  666:   48 8d 0d 23 01 00 00    lea    rcx,[rip+0x123]        # 790 <__libc_csu_init>
  66d:   48 8d 3d f9 00 00 00    lea    rdi,[rip+0xf9]        # 76d <main>
  674:   ff 15 66 09 20 00       call   QWORD PTR [rip+0x200966]        # 200fe0 <__libc_start_main@GLIBC_2.2.5>
- 67a:   f4                      hlt    
+ 67a:   f4                      hlt
  67b:   0f 1f 44 00 00          nop    DWORD PTR [rax+rax*1+0x0]
 
 ...
@@ -1478,7 +1489,7 @@ Disassembly of section .text:
  765:   e8 b6 fe ff ff          call   620 <puts@plt>
  76a:   90                      nop
  76b:   5d                      pop    rbp
- 76c:   c3                      ret    
+ 76c:   c3                      ret
 
 000000000000076d <main>:
  76d:   55                      push   rbp
@@ -1487,9 +1498,9 @@ Disassembly of section .text:
  776:   e8 b5 fe ff ff          call   630 <_Z9say_hellov@plt>
  77b:   b8 00 00 00 00          mov    eax,0x0
  780:   5d                      pop    rbp
- 781:   c3                      ret    
+ 781:   c3                      ret
  782:   66 2e 0f 1f 84 00 00    nop    WORD PTR cs:[rax+rax*1+0x0]
- 789:   00 00 00 
+ 789:   00 00 00
  78c:   0f 1f 40 00             nop    DWORD PTR [rax+0x0]
 
 ...
@@ -1628,7 +1639,7 @@ struct link_map
     char *l_name;        /* Absolute file name object was found in.  */
     ElfW(Dyn) *l_ld;     /* Dynamic section of the shared object.  */
     struct link_map *l_next, *l_prev; /* Chain of loaded objects.  */
-  };  
+  };
 ```
 
 ## PLT Replace
@@ -1687,7 +1698,7 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
 * [A Whirlwind Tutorial on Creating Really Teensy ELF Executables for Linux](http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
 
 
-* [Controlling Symbol Visibility](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html) 
+* [Controlling Symbol Visibility](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/CppRuntimeEnv/Articles/SymbolVisibility.html)
 * [Dynamic Library Programming Topics](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html#//apple_ref/doc/uid/TP40001869)
 * [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/) (推荐)
 * [Weak dynamic symbols](https://www.humprog.org/~stephen//blog/2011/12/01/)

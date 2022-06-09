@@ -11,7 +11,7 @@ categories: [Protocol Buffers,]
 # 最佳实践
 
 > 参考官方 [Style Guide](https://developers.google.com/protocol-buffers/docs/style)
-> 
+>
 > Note that protocol buffer style has evolved over time, so it is likely that you will see `.proto` files written in different conventions or styles. **Please respect the existing style when you modify these files. Consistency is key.** However, it is best to adopt the current best style when you are creating a new `.proto` file.
 
 
@@ -211,7 +211,7 @@ message SearchResponse {
 
 
 ## Assigning Field Numbers
-	
+
 * Note that field numbers in the range `1` through `15` **take one byte to encode**, including **the field number and the field's type**. So reserve the numbers `1` through `15` for very frequently occurring message elements. **Remember to leave some room for frequently occurring elements that might be added in the future**.
 * **The smallest field number you can specify is `1`, and the largest is `2^29 - 1`, or `536,870,911`**. You also cannot use the numbers `19000` through `19999`, as they are reserved for the Protocol Buffers implementation - the protocol buffer compiler will complain if you use one of these reserved numbers in your `.proto`. Similarly, you cannot use any previously reserved field numbers.
 
@@ -345,7 +345,7 @@ It's very simple to update message types without breaking any of your existing c
 * Embedded messages are compatible with `bytes` if the bytes contain an encoded version of the message.
 * `fixed32` is compatible with `sfixed32`, and `fixed64` with `sfixed64`.
 * For `string`, `bytes`, and `message fields`, `optional` is compatible with `repeated`.
-* `enum` is compatible with `int32`, `uint32`, `int64`, and `uint64` in terms of wire format (note that values will be truncated if they don't fit). 
+* `enum` is compatible with `int32`, `uint32`, `int64`, and `uint64` in terms of wire format (note that values will be truncated if they don't fit).
 * Changing a single value into a member of a new `oneof` is safe and binary compatible. Moving multiple fields into a new `oneof` may be safe if you are sure that no code sets more than one at a time. Moving any fields into an existing `oneof` is not safe.
 
 
@@ -386,7 +386,7 @@ message SampleMessage {
 
 You then add your oneof fields to the oneof definition. You can add fields of any type, except `map` fields and `repeated` fields.
 
-In your generated code, oneof fields have the same getters and setters as regular fields. You also get a special method for checking which value (if any) in the oneof is set. 
+In your generated code, oneof fields have the same getters and setters as regular fields. You also get a special method for checking which value (if any) in the oneof is set.
 
 ## Maps
 
@@ -396,7 +396,7 @@ If you want to create an associative map as part of your data definition, protoc
 map<key_type, value_type> map_field = N;
 ```
 
-* The `key_type` can be any integral or string type (so, any scalar type except for floating point types and bytes). Note that `enum` is not a valid `key_type`. 
+* The `key_type` can be any integral or string type (so, any scalar type except for floating point types and bytes). Note that `enum` is not a valid `key_type`.
 * The `value_type` can be any type except another `map`.
 
 So, for example, if you wanted to create a map of projects where each Project message is associated with a string key, you could define it like this:
@@ -520,7 +520,7 @@ int main() {
 
 There are also a number of ongoing third-party projects to develop RPC implementations for Protocol Buffers. For a list of links to projects we know about, see the [third-party add-ons wiki page](https://github.com/protocolbuffers/protobuf/blob/master/docs/third_party.md).
 
-## JSON 
+## JSON
 
 Proto3 supports a canonical encoding in JSON, making it easier to share data between systems.
 
@@ -546,7 +546,7 @@ https://developers.google.com/protocol-buffers/docs/proto3#options
 
 ## Generating Your Classes
 
-To generate the Java, Python, C++, Go, Ruby, Objective-C, or C# code you need to work with the message types defined in a `.proto` file, you need to run the protocol buffer compiler `protoc` on the `.proto`. 
+To generate the Java, Python, C++, Go, Ruby, Objective-C, or C# code you need to work with the message types defined in a `.proto` file, you need to run the protocol buffer compiler `protoc` on the `.proto`.
 
 The Protocol Compiler is invoked as follows:
 
@@ -586,7 +586,7 @@ So far, so small and numeric – but what does it mean? Read on...
 
 To understand your simple protocol buffer encoding, you first need to understand `varints`. **Varints are a method of serializing integers using one or more bytes. Smaller numbers take a smaller number of bytes**.
 
-When a message is encoded, the keys and values are concatenated into a byte stream. When the message is being decoded, the parser needs to be able to skip fields that it doesn't recognize. This way, new fields can be added to a message without breaking old programs that do not know about them. 
+When a message is encoded, the keys and values are concatenated into a byte stream. When the message is being decoded, the parser needs to be able to skip fields that it doesn't recognize. This way, new fields can be added to a message without breaking old programs that do not know about them.
 
 https://developers.google.com/protocol-buffers/docs/encoding#varints
 
@@ -758,8 +758,8 @@ Person::phones() const {
 
 // oneof para
 enum : int {
-    kAFieldNumber = 1, 
-    kBFieldNumber = 2, 
+    kAFieldNumber = 1,
+    kBFieldNumber = 2,
   };
   // int32 a = 1;
   bool has_a() const;
@@ -802,7 +802,7 @@ Person::mutable_meta() {
 * the `setter` methods begin with **set_**
 * There are also **has_** methods for each singular (required or optional) field which return true if that field has been set
 * Finally, each field has a **clear_** method that un-sets the field back to its empty state.
-* The `name` and `email` fields have a couple of extra methods because they're strings – a **mutable_** getter that lets you get a direct pointer to the string, and an extra setter. 
+* The `name` and `email` fields have a couple of extra methods because they're strings – a **mutable_** getter that lets you get a direct pointer to the string, and an extra setter.
 * Repeated fields also have some special methods
   + check the repeated field's **_size** (in other words, how many phone numbers are associated with this Person).
   + get a specified phone number using its index.
@@ -885,7 +885,7 @@ https://developers.google.com/protocol-buffers/docs/reference/cpp
 
 # 关键结构
 
-## RepeatedField / RepeatedPtrField 
+## RepeatedField / RepeatedPtrField
 
 https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.repeated_field
 
@@ -896,7 +896,7 @@ https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobu
 * `RepeatedPtrField`与`STL vector`特别不一样的地方在于，它对指针所有权的管理。
 * 通常来说，客户端不应该直接操作`RepeatedField`对象，而是应该通过`protoc`生成的[accessor functions](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.repeated_field#RepeatedField)来操作。
 
-``` 
+```
 #include <google/protobuf/repeated_field.h>
 namespace google::protobuf
 
@@ -944,7 +944,7 @@ static void VectorFind(benchmark::State& state) {
   }
 
   for (auto _ : state) {
-    
+
   for (int i = 0; i != max; ++i) {
     if (vec[i] == last_v) {
       break;
@@ -980,23 +980,23 @@ BENCHMARK(SetFind);
 * [测试代码](https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/celero_benchmark.cc)：
 
 ```
- $ ./celero_benchmark 
+ $ ./celero_benchmark
 Celero
 Timer resolution: 0.001000 us
-|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |   
+|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |
 |:--------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 | 
-|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 | 
-|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
-|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 | 
-|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
+|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 |
+|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 |
+|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
+|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 |
+|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
 Completed in 00:00:00.028138
 ```
 
 ## vector/map/unordered_map/pb repeated
 
 * [测试代码](https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/press.cc)：
- 
+
 
 ```
 $ perf stat -B ./press
@@ -1007,14 +1007,14 @@ elapse(0.280948s)
 
  Performance counter stats for './press':
 
-        606.010051      task-clock (msec)         #    0.858 CPUs utilized          
-               730      context-switches          #    0.001 M/sec                  
-                 0      cpu-migrations            #    0.000 K/sec                  
-           123,296      page-faults               #    0.203 M/sec                  
-   <not supported>      cycles                                                      
-   <not supported>      instructions                                                
-   <not supported>      branches                                                    
-   <not supported>      branch-misses                                               
+        606.010051      task-clock (msec)         #    0.858 CPUs utilized
+               730      context-switches          #    0.001 M/sec
+                 0      cpu-migrations            #    0.000 K/sec
+           123,296      page-faults               #    0.203 M/sec
+   <not supported>      cycles
+   <not supported>      instructions
+   <not supported>      branches
+   <not supported>      branch-misses
 
        0.706142993 seconds time elapsed
 
@@ -1027,14 +1027,14 @@ elapse(0.0260171s)
 
  Performance counter stats for './press':
 
-        457.361877      task-clock (msec)         #    0.914 CPUs utilized          
-               572      context-switches          #    0.001 M/sec                  
-                 0      cpu-migrations            #    0.000 K/sec                  
-            19,711      page-faults               #    0.043 M/sec                  
-   <not supported>      cycles                                                      
-   <not supported>      instructions                                                
-   <not supported>      branches                                                    
-   <not supported>      branch-misses                                               
+        457.361877      task-clock (msec)         #    0.914 CPUs utilized
+               572      context-switches          #    0.001 M/sec
+                 0      cpu-migrations            #    0.000 K/sec
+            19,711      page-faults               #    0.043 M/sec
+   <not supported>      cycles
+   <not supported>      instructions
+   <not supported>      branches
+   <not supported>      branch-misses
 
        0.500588136 seconds time elapsed
 ```
@@ -1047,9 +1047,9 @@ elapse(0.0260171s)
 
 # 性能优化
 
-## Arena Allocation 
+## Arena Allocation
 
-引入arena 支持，减少大对象释放开销，可参考：[C++ Arena Allocation Guide](https://developers.google.com/protocol-buffers/docs/reference/arenas) 
+引入arena 支持，减少大对象释放开销，可参考：[C++ Arena Allocation Guide](https://developers.google.com/protocol-buffers/docs/reference/arenas)
 
 > Why use arena allocation?
 
@@ -1058,6 +1058,10 @@ Memory allocation and deallocation constitutes a significant fraction of CPU tim
 Arena-based allocation has been designed to reduce this performance cost. With arena allocation, new objects are allocated out of a large piece of preallocated memory called the arena. Objects can all be freed at once by discarding the entire arena, ideally without running destructors of any contained object (though an arena can still maintain a "destructor list" when required). This makes object allocation faster by reducing it to a simple pointer increment, and makes deallocation almost free. Arena allocation also provides greater cache efficiency: when messages are parsed, they are more likely to be allocated in continuous memory, which makes traversing messages more likely to hit hot cache lines.
 
 To get these benefits you'll need to be aware of object lifetimes and find a suitable granularity at which to use arenas (for servers, this is often per-request). You can find out more about how to get the most from arena allocation in [Usage patterns and best practices](https://developers.google.com/protocol-buffers/docs/reference/arenas#usage).
+
+# PB Code Style
+
+https://docs.buf.build/best-practices/style-guide
 
 
 # Refer

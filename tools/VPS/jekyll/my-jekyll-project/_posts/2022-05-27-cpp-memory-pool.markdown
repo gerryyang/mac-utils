@@ -11,7 +11,7 @@ categories: [C/C++]
 
 # 通过基类指针释放对象
 
-## 问题说明
+## 问题描述
 
 ``` cpp
 class Base;
@@ -25,7 +25,7 @@ MY_DELETE(Derived(b)); // ok，需要显式转换为子类类型
 
 如何不需要指定类型转换，且保证底层回收的内存长度是正确的？
 
-例子：显示调用子类 MY_DELETE_IGNORE_VIRTUAL(obj2)，可以不依赖虚函数
+例子：显示调用子类 MY_DELETE_IGNORE_VIRTUAL(obj2)，即，Derived(b)的形式，可以不依赖虚函数
 
 ``` cpp
 #include <iostream>
@@ -193,9 +193,11 @@ Recycle ptr: 0x1d72a80, size: 32
 */
 ```
 
-## 方案：通过基类指针偏移，获取底层记录的分配长度 (不可行)
+## 方案：通过分配额外的内存空间记录分配的内存大小
 
-此方案不可行。因为在多继承场景下，基类指针会发生偏移，无法计算得到子类分配时的地址。例如：
+若申请 sizeof(Type)，则分配 sizeof(Extra) + sizeof(Type)。其中，pBase 指向分配的地址空间，pMem 指向业务申请的分配空间，在 pMem - pBase 之间的内存用于记录业务申请的内存长度。
+
+此方案不可行。因为在多继承场景下，基类指针会发生偏移，无法根据子类的指针计算得到 pBase。例如：动态申请 C 的地址为 c，即 pBase == c。将 c 赋值给 b 后，b 的指针会发生偏移。若通过 MY_DELETE(b) 的方式，只能获取基类的大小，导致释放的内存空间不正确（即，传入的释放地址不正确）。
 
 ``` cpp
     // struct C : public A, public B
@@ -210,9 +212,9 @@ Recycle ptr: 0x1d72a80, size: 32
 
 参考 C++ 对象的内存布局：
 
-a: 0x15eaac0
-b: 0x15eaad0  若返回是 B* 的对象，则出现地址偏移，无法计算出 C* 时的地址
-c: 0x15eaac0
+* a: 0x15eaac0
+* b: 0x15eaad0  若返回是 B* 的对象，则出现地址偏移，无法计算出 C* 时的地址
+* c: 0x15eaac0
 
 ## 方案: 通过多态的方式
 
@@ -502,8 +504,75 @@ C::VirtualDeleteInfo
 */
 ```
 
+此方案需要考虑一个问题，如何兼容成员函数`VirtualDeleteInfo`没有定义的情况？
 
-## 方案2: 通过基类指针调用析构时，获取子类大小和地址
+解决方法：编译器检查。通过`SFINAE`模版推导的方式，检查类中是否定义了某个成员函数，若存在函数定义，则可以支持业务直接传父类指针进行销毁；若不存在函数定义，则忽略函数调用，由分配器底层进行校验检查。
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+struct A {
+    A() { std::cout << "A()\n"; }
+    virtual ~A() { std::cout << "~A()\n"; }
+
+    virtual void f() { std::cout << "A::f()\n"; }
+
+    int a1;
+    int a2;
+};
+
+struct B : public A {
+    B() { std::cout << "B()\n"; }
+    ~B() { std::cout << "~B()\n"; }
+
+    //virtual void f() { std::cout << "B::f()\n"; }
+
+    int b;
+};
+
+struct C : public B {
+    C() { std::cout << "C()\n"; }
+    ~C() { std::cout << "~C()\n"; }
+
+    virtual void f() { std::cout << "C::f()\n"; }
+
+    int c;
+};
+
+template<class T>
+struct has_member_f {
+  template<class U, void (U::*)()>
+  struct sfinae;
+
+  template<class U>
+  static char test(sfinae<U, &U::f>* unused);
+
+  template<class>
+  static int test(...);
+
+  static constexpr bool value = sizeof(test<T>(nullptr)) == sizeof(char);
+};
+
+struct foo {
+  void f() {}
+};
+
+int main()
+{
+    std::cout << has_member_f<foo>::value << std::endl;
+    std::cout << has_member_f<int>::value << std::endl;
+
+    std::cout << has_member_f<A>::value << std::endl;
+    std::cout << has_member_f<B>::value << std::endl;
+    std::cout << has_member_f<C>::value << std::endl;
+}
+```
+
+
+
+
+## 方案: 通过基类指针调用析构时，获取子类大小和地址
 
 TODO
 

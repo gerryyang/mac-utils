@@ -286,6 +286,8 @@ int main()
 }
 ```
 
+* https://stackoverflow.com/questions/58694521/what-is-stdfalse-type-or-stdtrue-type
+
 ## 偏特化
 
 * 函数模板不允许偏特化
@@ -588,6 +590,42 @@ int main()
 	std::cout << has_member_gc<int>::value;
 }
 ```
+
+``` cpp
+#include <type_traits>
+#include <iostream>
+
+template<class>
+static char CheckIgnoreVirtualDelete(...);
+
+#define IGNORE_VIRTUAL_DELETE(ClassName) \
+    template<class> \
+    static int CheckIgnoreVirtualDelete(ClassName*);
+
+template<class T>
+struct STIgnoreTest
+{
+    static const bool value = sizeof(CheckIgnoreVirtualDelete<T>((T*)nullptr)) == sizeof(int);
+};
+
+class CBase
+{
+};
+
+class CDerived : public CBase
+{
+};
+
+IGNORE_VIRTUAL_DELETE(CBase)
+
+int main()
+{
+    std::cout << STIgnoreTest<int>::value << std::endl;
+    std::cout << STIgnoreTest<CBase>::value << std::endl;
+    std::cout << STIgnoreTest<CDerived>::value << std::endl;
+}
+```
+
 
 # std::conditional
 
