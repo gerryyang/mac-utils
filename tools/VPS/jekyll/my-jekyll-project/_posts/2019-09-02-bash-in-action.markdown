@@ -16,9 +16,9 @@ categories: [Bash, 编程语言]
 # Shell Parameter Expansion (Default value)
 
 ``` bash
-if [ -z "${VARIABLE}" ]; then 
+if [ -z "${VARIABLE}" ]; then
     FOO='default'
-else 
+else
     FOO=${VARIABLE}
 fi
 ```
@@ -36,7 +36,7 @@ Or to assign default to VARIABLE at the same time:
 FOO="${VARIABLE:=default}"  # If variable not set or null, set it to default.
 ```
 
-refer: 
+refer:
 
 * [Assigning default values to shell variables with a single command in bash](https://stackoverflow.com/questions/2013547/assigning-default-values-to-shell-variables-with-a-single-command-in-bash)
 * [3.5 Shell Expansions](https://tiswww.case.edu/php/chet/bash/bashref.html#Shell-Expansions)
@@ -152,7 +152,7 @@ function get_sum()
 	for((i=0;i<$num;i++))
 	do
 		let sum=$sum+${input[i]}
-	
+
 	done
 	echo $sum
 }
@@ -176,9 +176,9 @@ do
         child_ids=($child_ids)
 	child_names=$(ps -ef | grep -e "$manager_name" | grep -v celery  | grep -v memmonitor_ros | grep -v ".sh" | grep -v grep |  awk -F ' ' '{ print $8"-"$9}')
 	child_names=($child_names)
-	
+
 	echo "manager_pid: $manager_pid"
-	
+
 	totalCpuTime=$(cat /proc/stat | grep -w cpu | sed "s/cpu/0/g")
 	total1=$(get_sum "${totalCpuTime[*]}")
 	#i=1 tr -d "   PID TTY          TIME CMD"
@@ -189,20 +189,20 @@ do
 		process=$(cat /proc/$each/stat | awk -F  " " '{print $14,$15,$16,$17}')
 		pro1[i]=$(get_sum "${process[*]}")
 	done
-	
+
 	for((i=0;i < ${#child_names[@]};i++))
 	do
 		each=${child_names[i]}
 		each_name=`echo $each | tr -d " " | sed "s/\//_/g"`
 		logfile[i]=${dir_head}"/"${child_ids[i]}"-"${each_name}.log
 	done
-	
+
 
 	sleep ${G_SLEEP_INTERVAL}
-	
+
 	totalCpuTime=$(cat /proc/stat | grep -w cpu | sed "s/cpu/0/g")
 	total2=$(get_sum "${totalCpuTime[*]}")
-	
+
 	for((i=1;i < ${#child_ids[@]};i++))
 	do
 		each=${child_ids[i]}
@@ -218,12 +218,12 @@ do
 		rate=0
 		let diff_pro=${pro2[i]}-${pro1[i]}
 		rate=`awk 'BEGIN{ rate='$core_num'*100*'$diff_pro'/'$diff_cpu'; print rate}'`
-		
+
 		rate=`echo $rate| awk '{if($1>100) $1=100;print $1}'` # 100校验
-		
+
 		echo -e "`date +"%Y-%m-%d %H:%M:%S"`\t$rate" >> ${logfile[i]}
 	done
-	
+
 
 	now=`date +%s`
 done
@@ -309,9 +309,9 @@ fi
 | -- | --
 | stdout 2 file | ls -l > ls-l.txt
 | stderr 2 file | grep da * 2> grep-errors.txt
-| stdout 2 stderr | grep da * 1>&2 
+| stdout 2 stderr | grep da * 1>&2
 | stderr 2 stdout | grep * 2>&1
-| stderr and stdout 2 file | rm -f $(find / -name core) &> /dev/null 
+| stderr and stdout 2 file | rm -f $(find / -name core) &> /dev/null
 
 
 * https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-3.html
@@ -376,7 +376,7 @@ Refer: https://tldp.org/LDP/abs/html/string-manipulation.html
 # Compare
 
 * `test` provides no output, but returns an exit status of 0 for "true" (test successful) and 1 for "false" (test failed).
-* The `test` command may also be expressed with **single brackets** `[ ... ]`, as long as they are separated from all other arguments with **whitespace**. 
+* The `test` command may also be expressed with **single brackets** `[ ... ]`, as long as they are separated from all other arguments with **whitespace**.
 
 ``` bash
 num=4; if (test $num -gt 5); then echo "yes"; else echo "no"; fi
@@ -406,7 +406,7 @@ if [[ -f "proc.pid" ]]; then
   pid=`cat proc.pid`
 fi
 
-./run.sh 
+./run.sh
 if [[ $? -ne 0 ]];then
   echo "run.sh failed"
   exit 1
@@ -446,14 +446,14 @@ echo $(dirname $(readlink -f $0))  # 获取当前脚本的绝对路径
 执行：
 
 ```
-$sh dirname.sh 
+$sh dirname.sh
 dirname.sh
 .
 /data/home/gerryyang/test/bash/dirname.sh
 /data/home/gerryyang/test/bash
 
 $cd ..
-$sh bash/dirname.sh 
+$sh bash/dirname.sh
 bash/dirname.sh
 bash
 /data/home/gerryyang/test/bash/dirname.sh
@@ -463,7 +463,7 @@ bash
 # Function
 
 ``` bash
-#!/bin/bash 
+#!/bin/bash
 function quit {
    exit
 }
@@ -472,23 +472,23 @@ function hello {
 }
 hello
 quit
-echo foo 
+echo foo
 ```
 
 Functions with parameters sample
 
 ``` bash
-#!/bin/bash 
+#!/bin/bash
 function quit {
    exit
-}  
+}
 function e {
-    echo $1 
-}  
+    echo $1
+}
 e Hello
 e World
 quit
-echo foo 
+echo foo
 ```
 
 https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-8.html
@@ -526,10 +526,10 @@ echo "Hello $USER"
 执行：
 
 ```
-$ sh ./test.sh 
+$ sh ./test.sh
 Hello gerryyang
 
-$ _DEBUG=true sh ./test.sh 
+$ _DEBUG=true sh ./test.sh
 do something...
 Hello gerryyang
 ```
@@ -552,11 +552,11 @@ echo "Today is $(date +'%Y-%m-%d')"
 执行或调试：
 
 ```
-sh ./test.sh 
+sh ./test.sh
 Hello gerryyang,
 Today is 2020-08-03
 
-$ sh -x ./test.sh 
+$ sh -x ./test.sh
 + echo 'Hello gerryyang,'
 Hello gerryyang,
 ++ date +%Y-%m-%d
@@ -567,7 +567,7 @@ Today is 2020-08-03
 输出行号，需设置 `export PS4='+${BASH_SOURCE}:${LINENO}:${FUNCNAME[0]}: '`
 
 ```
-$ sh -x ./test.sh 
+$ sh -x ./test.sh
 +./test.sh:3:: echo 'Hello gerryyang,'
 Hello gerryyang,
 ++./test.sh:4:: date +%Y-%m-%d
@@ -588,8 +588,8 @@ set +x
 
 调试：
 
-``` 
-$ sh -x./test.sh 
+```
+$ sh -x./test.sh
 +./test.sh:3:: echo 'Hello gerryyang,'
 Hello gerryyang,
 +./test.sh:4:: set -x
@@ -602,7 +602,7 @@ Today is 2020-08-03
 可以不用`-x`调试选项：
 
 ```
-$ sh ./test.sh 
+$ sh ./test.sh
 Hello gerryyang,
 ++./test.sh:5:: date +%Y-%m-%d
 +./test.sh:5:: echo 'Today is 2020-08-03'
@@ -694,7 +694,7 @@ done
 
 * 固定参数
 
-Arguments are accessed inside a script using the variables $1, $2, $3, etc., where $1 refers to the first argument, $2 to the second argument, and so on. 
+Arguments are accessed inside a script using the variables $1, $2, $3, etc., where $1 refers to the first argument, $2 to the second argument, and so on.
 
 * 变参参数
 
@@ -790,13 +790,13 @@ done
 START=1
 END=5
 echo "Countdown"
- 
+
 for (( c=$START; c<=$END; c++ ))
 do
 	echo -n "$c "
 	sleep 1
 done
- 
+
 echo
 echo "Boom!"
 ```
@@ -805,7 +805,7 @@ output:
 
 ```
 Countdown
-1 2 3 4 5 
+1 2 3 4 5
 Boom!
 ```
 
@@ -834,10 +834,10 @@ done
 
 ```
 #!/bin/bash
- 
+
 ## define an array ##
 arrayname=( Dell HP Oracle )
- 
+
 ## get item count using ${arrayname[@]} ##
 for m in "${arrayname[@]}"
 do
@@ -858,7 +858,7 @@ How can I read from variable with while read line? See [§3.6.7 "Here Strings" i
 
 ``` bash
 GIT_DIFF=$(git diff --cached --name-status)
-while read ST FILE; do 
+while read ST FILE; do
 echo $ST "," $FILE
 done <<< $GIT_DIFF
 ```
@@ -938,7 +938,7 @@ fi
 
 if [ -f "$FILE" ]; then
     echo "$FILE exist"
-else 
+else
     echo "$FILE does not exist"
 fi
 
@@ -1065,6 +1065,73 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
+## set
+
+Bash 执行脚本的时候，例如，` bash script.sh` 会创建一个新的 Shell，script.sh 是在一个新的 Shell 里面执行。这个 Shell 就是脚本的执行环境，Bash 默认给定了这个环境的各种参数。set 命令用来修改 Shell 环境的运行参数，也就是可以定制环境。一共有十几个参数可以定制，[官方手册](https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html)有完整清单。如果命令行下不带任何参数，直接运行set，会显示所有的环境变量和 Shell 函数。
+
+``` bash
+# 遇到不存在的变量不会忽略，而是报错并不再执行后续语句
+set -u
+
+# 用来在运行结果之前，先输出执行的那一行命令，这对于调试复杂的脚本是很有用的
+set -x
+
+# 错误处理，脚本只要发生错误，就终止执行
+# set -e根据返回值来判断，一个命令是否运行失败
+# set +e表示关闭-e选项，set -e表示重新打开-e选项
+set -e
+
+# set -e有一个例外情况，就是不适用于管道命令
+# 所谓管道命令，就是多个子命令通过管道运算符（|）组合成为一个大的命令。Bash 会把最后一个子命令的返回值，作为整个命令的返回值。也就是说，只要最后一个子命令不失败，管道命令总是会执行成功，因此它后面命令依然会执行，set -e就失效了
+# set -o pipefail用来解决这种情况，只要一个子命令失败，整个管道命令就失败，脚本就会终止执行
+set -o pipefail
+```
+
+通常的错误处理方法：对比 `set -e`
+
+``` bash
+# 只要command有非零返回值，脚本就会停止执行
+command || exit 1
+
+# 如果两个命令有继承关系，只有第一个命令成功了，才能继续执行第二个命令
+command1 && command2
+```
+
+``` bash
+# 写法一
+command || { echo "command failed"; exit 1; }
+
+# 写法二
+if ! command; then
+    echo "command failed";
+    exit 1;
+fi
+
+# 写法三
+command
+if [ "$?" -ne 0 ]; then
+    echo "command failed";
+    exit 1;
+fi
+```
+
+总结：set命令的上面这四个参数，一般都放在一起使用。
+
+``` bash
+# 这两种写法建议放在所有 Bash 脚本的头部
+# 另一种办法是在执行 Bash 脚本的时候，从命令行传入这些参数: bash -euxo pipefail script.sh
+
+# 写法一
+set -euxo pipefail
+
+# 写法二
+set -eux
+set -o pipefail
+```
+
+* http://www.ruanyifeng.com/blog/2017/11/bash-set.html
+* https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
+
 ## cp
 
 ``` bash
@@ -1083,11 +1150,11 @@ find /media/d/ -type f -size +50M ! \( -name "*deb" -o -name "*vmdk" \)
 ```
 
 > ! expression : Negation of a primary; the unary NOT operator.
-> 
+>
 > ( expression ): True if expression is true.
-> 
+>
 > expression -o expression: Alternation of primaries; the OR operator. The second expression shall not be evaluated if the first expression is true.
-> 
+>
 > Note that parenthesis, both opening and closing, are prefixed by a backslash (\) to prevent evaluation by the shell.
 
 * https://unix.stackexchange.com/questions/50612/how-to-combine-2-name-conditions-in-find
@@ -1130,10 +1197,10 @@ bar
 $ bash -c "help declare"
 declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
     Set variable values and attributes.
-    
+
     Declare variables and give them attributes.  If no NAMEs are given,
     display the attributes and values of all variables.
-    
+
     Options:
       -f        restrict action or display to function names and definitions
       -F        restrict display to function names only (plus line number and
@@ -1141,7 +1208,7 @@ declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
       -g        create global variables when used in a shell function; otherwise
         ignored
       -p        display the attributes and value of each NAME
-    
+
     Options which set attributes:
       -a        to make NAMEs indexed arrays (if supported)
       -A        to make NAMEs associative arrays (if supported)
@@ -1151,15 +1218,15 @@ declare: declare [-aAfFgilrtux] [-p] [name[=value] ...]
       -t        to make NAMEs have the `trace' attribute
       -u        to convert NAMEs to upper case on assignment
       -x        to make NAMEs export
-    
+
     Using `+' instead of `-' turns off the given attribute.
-    
+
     Variables with the integer attribute have arithmetic evaluation (see
     the `let' command) performed when the variable is assigned a value.
-    
+
     When used in a function, `declare' makes NAMEs local, as with the `local'
     command.  The `-g' option suppresses this behavior.
-    
+
     Exit Status:
     Returns success unless an invalid option is supplied or an error occurs.
 ```
@@ -1197,7 +1264,7 @@ echo "done"
 ## bc (计算)
 
 * 如果进行16进制计算，仅支持大写十六进制数字
-* 需要先设置`obase`，再设置`ibase` 
+* 需要先设置`obase`，再设置`ibase`
 
 ``` bash
 $echo "ibase=16;91A2A80-91A29B0" | bc
@@ -1246,7 +1313,7 @@ GDB=${GDB:-/usr/bin/gdb}
 
 # Run GDB, strip out unwanted noise.
 # --readnever is no longer used since .gdb_index is now in use.
-$GDB --quiet -nx $GDBARGS /proc/$1/exe $1 <<EOF 2>&1 | 
+$GDB --quiet -nx $GDBARGS /proc/$1/exe $1 <<EOF 2>&1 |
 set width 0
 set height 0
 set pagination no
@@ -1261,7 +1328,7 @@ EOF
 ## shopt (功能选项的开启和关闭)
 
 * 在非交互式模式下 alias 扩展功能默认是关闭的
-* shopt 是 shell 的内置命令，可以控制 shell 功能选项的开启和关闭，从而控制 shell 的行为 
+* shopt 是 shell 的内置命令，可以控制 shell 功能选项的开启和关闭，从而控制 shell 的行为
 
 ``` bash
 shopt -s opt_name        # Enable (set) opt_name.
@@ -1276,18 +1343,18 @@ shopt opt_name           # Show current status of opt_name.
 
 alias echo_hello="echo Hello"  # 命令别名
 
-shopt expand_aliases      # alias 默认关闭 
+shopt expand_aliases      # alias 默认关闭
 echo_hello                # 执行失败
 
 shopt -s expand_aliases   # 用 shopt 开启 expand_aliases
-shopt expand_aliases      
+shopt expand_aliases
 echo_hello                # 执行成功
 ```
 
 执行结果：
 
 ```
-$./shopt.sh 
+$./shopt.sh
 expand_aliases  off
 ./shopt.sh:行5: echo_hello: 未找到命令
 expand_aliases  on
@@ -1303,7 +1370,7 @@ date -d last-month +%Y%m
 
 # 2. 显示 20121217
 
-date +"%Y%m%d" 
+date +"%Y%m%d"
 
 # 3. Unix时间与系统时间之间的转换
 
@@ -1312,7 +1379,7 @@ date -d '1970-01-01 UTC 13379554 seconds' +"%Y-%m-%d %T %z"
 
 date -d @1356969600
 
-# 4. 得到从1970年1月1日00：00：00到目前经历的秒数 
+# 4. 得到从1970年1月1日00：00：00到目前经历的秒数
 
 date +%s
 
@@ -1334,6 +1401,9 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 ```
 
 
+# Manual
+
+* https://www.gnu.org/software/bash/manual/html_node/index.html#SEC_Contents
 
 
 # Reference

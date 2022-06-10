@@ -2461,4 +2461,21 @@ To make ADL examine a user-defined namespace, either std::vector should be repla
 * https://en.cppreference.com/w/cpp/language/dependent_name
 * https://stackoverflow.com/questions/64823299/why-doesnt-adl-work-with-functions-defined-outside-of-a-namespace
 
+## Difference between auto and auto* when storing a pointer
 
+``` cpp
+int main()
+{
+    int a = 1;
+    int* pa = &a;
+
+    auto pa2 = pa;     // ok, non-const
+    //auto* pa2 = pa;    // ok, non-const
+    //const auto* pa2 = pa;   // ok, const
+
+    std::cout << *pa2;  // 1
+}
+```
+
+* https://stackoverflow.com/questions/12773257/does-auto-type-assignments-of-a-pointer-in-c11-require
+* https://stackoverflow.com/questions/36211703/difference-between-auto-and-auto-when-storing-a-pointer
