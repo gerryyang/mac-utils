@@ -41,7 +41,7 @@ It's your team, your routine, and it's never just a ride.
 ![shimano0](/assets/images/202204/shimano0.jpeg)
 
 
-# 公路车套件
+# 公路车组成
 
 一辆公路自行车主要包括：车架，车叉，轮组，轮胎，车座，踏板，套件等。其中，**套件**在公路车传动，变速中起着主导作用。目前市场上知名的套件品牌是**禧玛诺(SHIMANO)**，**美国速联**，国产顺泰等。
 
@@ -101,7 +101,7 @@ It's your team, your routine, and it's never just a ride.
 
 ![shimano3](/assets/images/202204/shimano3.png)
 
-## 速联套件
+## 速联(SRAM) 套件
 
 * 速联sram：速别20，速联的套件比较少，而且最低20速，一般在组装车上比较常见。
 * 速联rival：3090元，速别22，rival对标105，价格更便宜。
@@ -128,7 +128,7 @@ It's your team, your routine, and it's never just a ride.
 
 ## 迪卡侬 rc520
 
-2022年5月份购入，价格6500，目前严重缺货。
+2022年5月份购入，价格`6500`，目前严重缺货。
 
 ![rc520_1](/assets/images/202204/rc520_1.jpg)
 
@@ -136,7 +136,7 @@ It's your team, your routine, and it's never just a ride.
 
 ### 基本介绍
 
-* [迪卡侬官网 rc-520-cycle-touring-road-bike](https://www.decathlon.com.cn/zh/p/triban-rc-520-cycle-touring-road-bike-cn/_/R-p-306932)
+* 商品链接：[迪卡侬官网 rc-520-cycle-touring-road-bike](https://www.decathlon.com.cn/zh/p/triban-rc-520-cycle-touring-road-bike-cn/_/R-p-306932)
 * 视频介绍：
     + [迪卡侬Decathlon Triban RC520公路车全面评测-哔哩哔哩](https://b23.tv/OUzPEto)
 * 配置
@@ -155,10 +155,32 @@ It's your team, your routine, and it's never just a ride.
 * 轮组。考虑 fulcrum r6 铝合金轮组 / 闪电 DT470 铝合金轮组
 
 
+## 20款美利达斯特拉KING
+
+* 整车采用铝合金内走线车架，碳纤维前叉。除链条外，变速套件采用禧玛诺Tiagra大套（20速），在同级中性价比爆棚。
+* 配置
+    + HFS铝合金内走线车架，锥形头管，6066铝合金
+    + 斯特拉碳纤维系列前叉
+    + Road seal Bearing花鼓
+    + 美利达轻量化铝合金圈刹轮组
+    + 玛吉斯Dolemites防刺外胎，700×23C，120TPI，最大胎压130PSI
+    + 禧玛诺Tiagra R4700变速控制杆（2×10）
+    + 禧玛诺Tiagra R4700前拨链器
+    + 禧玛诺Tiagra R4700后拨链器
+    + 禧玛诺Tiagra R4700齿盘，34/50T
+    + 禧玛诺Tiagra R4700双枢轴夹器
+    + 禧玛诺BB-RS500中空一体中轴
+    + 禧玛诺CS-HG500-10公路飞轮，12-28T
+    + KMC-X10银黑色
+
+![king](/assets/images/202204/king.png)
+
+https://zhuanlan.zhihu.com/p/426200312
+
 
 ## 迪卡侬 rc100
 
-2022年4月份购入，价格1700，2022年6月份已经涨到 1800。
+2022年4月份购入，价格`1700`，2022年6月份已经涨到`1800`。
 
 ![dkn-rc100](/assets/images/202204/dkn-rc100.png)
 
@@ -167,7 +189,7 @@ It's your team, your routine, and it's never just a ride.
 
 ### 基本介绍
 
-* [迪卡侬官网 triban-rc-100-road-bike](https://www.decathlon.com.cn/zh/p/triban-rc-100-road-bike/_/R-p-306913)
+* 商品链接：[迪卡侬官网 triban-rc-100-road-bike](https://www.decathlon.com.cn/zh/p/triban-rc-100-road-bike/_/R-p-306913)
 * 视频介绍：
     + [各方面完美，除了手变头，新手入门公路自行车推荐迪卡侬rc100 ](https://b23.tv/bvGflDq)
     + [开箱迪卡侬 RC100 自行车](https://www.bilibili.com/video/BV1YY411x7o2)
@@ -240,7 +262,7 @@ It's your team, your routine, and it's never just a ride.
 
 # 购买记录
 
-**当前总开销: 12000**
+**当前总开销: `12000`**
 
 * rc100 购买时间：2022-04-23，六个月后安全检查
 * rc520 购买时间：2022-05-16，六个月后安全检查

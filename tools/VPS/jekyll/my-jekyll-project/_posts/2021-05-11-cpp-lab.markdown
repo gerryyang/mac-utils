@@ -986,6 +986,29 @@ int main()
 * https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure
 * [Are C++11 thread_local variables automatically static?](https://stackoverflow.com/questions/22794382/are-c11-thread-local-variables-automatically-static)
 
+
+## inline namespace
+
+``` cpp
+#include <iostream>
+using namespace std;
+
+namespace xyz {
+inline namespace v2 {
+void foo() { cout << "xyz::v2::foo()" << endl; }
+}  // namespace v2
+
+namespace v1 {
+void foo() { cout << "xyz::v1::foo()" << endl; }
+}  // namespace v1
+}  // namespace xyz
+
+int main() {
+  xyz::foo();  // 直接调用 xyz::v2::foo()，而不用 using
+}
+```
+
+
 ## std::vector<T,Allocator>::shrink_to_fit
 
 Requests the removal of unused capacity. It is a non-binding request to reduce `capacity()` to `size()`. It depends on the implementation whether the request is fulfilled. If reallocation occurs, all iterators, including the past the end iterator, and all references to the elements are invalidated. If no reallocation takes place, no iterators or references are invalidated.
@@ -2479,3 +2502,26 @@ int main()
 
 * https://stackoverflow.com/questions/12773257/does-auto-type-assignments-of-a-pointer-in-c11-require
 * https://stackoverflow.com/questions/36211703/difference-between-auto-and-auto-when-storing-a-pointer
+
+## What's the difference between constexpr and const?
+
+What's the difference between `constexpr` and `const`?
+
+* When can I use only one of them?
+* When can I use both and how should I choose one?
+
+`constexpr` creates a compile-time constant; `const` simply means that value cannot be changed.
+
+Both keywords can be used in the declaration of objects as well as functions. The basic difference when applied to objects is this:
+
+* `const` declares an object as constant. This implies a guarantee that once initialized, the value of that object won't change, and the compiler can make use of this fact for optimizations. It also helps prevent the programmer from writing code that modifies objects that were not meant to be modified after initialization.
+
+* `constexpr` declares an object as fit for use in what the Standard calls constant expressions. But note that `constexpr` is not the only way to do this.
+
+refer:
+
+* https://stackoverflow.com/questions/14116003/whats-the-difference-between-constexpr-and-const?rq=1
+* https://en.cppreference.com/w/cpp/language/constexpr
+* https://www.zhihu.com/question/35614219
+
+

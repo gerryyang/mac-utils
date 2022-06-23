@@ -895,6 +895,59 @@ git cherry-pick --continue
 * https://git-scm.com/docs/git-cherry-pick
 * https://www.ruanyifeng.com/blog/2020/04/git-cherry-pick.html
 
+## 稀疏检出 git sparse-checkout
+
+git-sparse-checkout - Reduce your working tree to a subset of tracked files
+
+Using sparse-checkout with an existing repository
+
+To restrict your working directory to a set of directories, run the following commands:
+
+``` bash
+git sparse-checkout init --cone
+git sparse-checkout set <dir1> <dir2> ...
+```
+
+If you get stuck, run git sparse-checkout disable to return to a full working directory.
+
+使用示例：
+
+```
+git clone $repo --sparse
+cd $repo
+git sparse-checkout init --cone
+git sparse-checkout add $repo_sub_path
+```
+
+
+
+* https://git-scm.com/docs/git-sparse-checkout
+* https://github.blog/2020-01-17-bring-your-monorepo-down-to-size-with-sparse-checkout/
+
+## 导出补丁 git format-patch
+
+Prepare each non-merge commit with its "patch" in one "message" per commit, formatted to resemble a UNIX mailbox. The output of this command is convenient for e-mail submission or for use with `git am`.
+
+
+* https://git-scm.com/docs/git-format-patch
+
+## 应用补丁 git am
+
+Splits mail messages in a mailbox into commit log message, authorship information and patches, and applies them to the current branch.
+
+* https://git-scm.com/docs/git-am
+
+
+## 应用补丁 git apply
+
+ Apply a patch to files and/or to the index
+
+* https://git-scm.com/docs/git-apply
+
+
+
+
+
 # Git hooks
 
 ```

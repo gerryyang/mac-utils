@@ -305,6 +305,16 @@ message(<checkState> "message text" ...)
 
 https://cmake.org/cmake/help/latest/command/message.html
 
+## option
+
+Provides an option for the user to select as `ON` or `OFF`. If no initial `<value>` is provided, `OFF` is used. If `<variable>` is already set as a normal or cache variable, then the command does nothing (see policy [CMP0077](https://cmake.org/cmake/help/latest/policy/CMP0077.html#policy:CMP0077)).
+
+```
+option(<variable> "<help_text>" [value])
+```
+
+https://cmake.org/cmake/help/latest/command/option.html
+
 ## if
 
 Conditionally execute a group of commands.
@@ -690,6 +700,22 @@ get_filename_component(<var> <FileName> <mode> [CACHE])
 
 https://cmake.org/cmake/help/latest/command/get_filename_component.html
 
+## configure_file (代码生成)
+
+```
+configure_file(<input> <output>
+               [NO_SOURCE_PERMISSIONS | USE_SOURCE_PERMISSIONS |
+                FILE_PERMISSIONS <permissions>...]
+               [COPYONLY] [ESCAPE_QUOTES] [@ONLY]
+               [NEWLINE_STYLE [UNIX|DOS|WIN32|LF|CRLF] ])
+```
+
+Copies an `<input>` file to an `<output>` file and substitutes variable values referenced as `@VAR@` or `${VAR}` in the input file content. Each variable reference will be replaced with the current value of the variable, or the empty string if the variable is not defined.
+
+[See Example](https://cmake.org/cmake/help/latest/command/configure_file.html#example)
+
+https://cmake.org/cmake/help/latest/command/configure_file.html
+
 
 # Variable
 
@@ -899,8 +925,21 @@ https://cmake.org/cmake/help/latest/module/FetchContent.html
 
 This module defines functions to help use the Google Test infrastructure. Two mechanisms for adding tests are provided. `gtest_add_tests()` has been around for some time, originally via `find_package(GTest)`. `gtest_discover_tests()` was introduced in CMake 3.10.
 
-
 https://cmake.org/cmake/help/git-stage/module/GoogleTest.html
+
+## check_cxx_source_compiles
+
+```
+check_cxx_source_compiles(<code> <resultVar>
+                          [FAIL_REGEX <regex1> [<regex2>...]])
+```
+
+Check that the source supplied in `<code>` can be compiled as a C++ source file and linked as an executable (so it must contain at least a `main()` function). The result will be stored in the internal cache variable specified by `<resultVar>`, with a boolean true value for success and boolean false for failure.
+
+
+* https://cmake.org/cmake/help/latest/module/CheckCXXSourceCompiles.html
+* https://stackoverflow.com/questions/40877744/cmake-why-doesnt-cmake-cxx-standard-seem-to-work-with-check-cxx-source-compile
+
 
 # CTest
 

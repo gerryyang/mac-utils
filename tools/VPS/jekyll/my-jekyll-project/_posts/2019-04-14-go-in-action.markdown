@@ -726,7 +726,7 @@ var p Point
 ```
 
 * 指针。Go提供了指针，它的值是变量的地址。
-  
+
 > 区别：在C语言中，指针基本上是没有约束的。Go做了一个折中，指针显式可见。使用`&`操作符可以获取一个变量的地址，使用`*`操作符可以获取指针引用的变量值。但是指针不支持算术运算。
 
 * 方法和接口。
@@ -1281,7 +1281,14 @@ refer:
 * https://lailin.xyz/post/41140.html?f=tt
 * https://pkg.go.dev/go/ast
 
-# Q&A 
+# Tips
+
+## [go -ldflags 信息注入](https://ms2008.github.io/2018/10/08/golang-build-version/)
+
+
+
+
+# Q&A
 
 ## go_package
 

@@ -19,21 +19,6 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
-[ABI Policy and Guidelines](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html)
-
-当部署目标机器不能升级GCC版本，这种情况下需要使用目标机器上面的`GLIBCXX`版本对应的GCC版本重新编译代码。
-
-```
-GCC 4.8.3: libstdc++.so.6.0.19
-GCC 4.8.3: GLIBCXX_3.4.19, CXXABI_1.3.7
-
-GCC 8.1.0: libstdc++.so.6.0.25
-GCC 8.1.0: GLIBCXX_3.4.25, CXXABI_1.3.11
-```
-
-[Is it safe to link C++17, C++14, and C++11 objects](https://stackoverflow.com/questions/46746878/is-it-safe-to-link-c17-c14-and-c11-objects)
-
-
 ## CentOS
 
 Often people want the most recent version of gcc, and [devtoolset](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-6/) is being kept up-to-date, so maybe you want devtoolset-N where `N={4,5,6,7...}`, check yum for the latest available on your system. Updated the cmds below for N=7.
@@ -405,6 +390,281 @@ gcc 在产生调试符号时，同样采用了分级的思路，开发人员可�
 
 通常情况下使用 gcc 编译的目标代码都与使用的机器是一致的，但 gcc 也支持交叉编译的功能，能够编译其他不同CPU的目标代码。使用 gcc 开发嵌入式系统，我们几乎都是以通用的PC机（X86）平台来做宿主机，通过 gcc 的交叉编译功能对其他嵌入式CPU的开发任务。
 
+## Specifying Attributes of Variables (__attribute__)
+
+The keyword `__attribute__` allows you to specify special attributes of variables or structure fields. This keyword is followed by an attribute specification inside **double parentheses(双括号)**. Ten attributes are currently defined for variables: `aligned`, `mode`, `nocommon`, `packed`, `section`, `transparent_union`, `unused`, `deprecated`, `vector_size`, and `weak`.
+
+section ("section-name")
+
+Normally, the compiler places the objects it generates in sections like `data` and `bss`. Sometimes, however, you need additional sections, or you need certain particular variables to appear in special sections, for example to map to special hardware. The section attribute specifies that a variable (or function) lives in a particular section.
+
+示例：
+
+``` cpp
+#include <iostream>
+#include "mydefine.h"
+
+int main()
+{
+  BIN_INFO(DESC_VER("gerry"));
+}
+```
+
+``` cpp
+// mydefine.h
+#pragma once
+
+#ifndef MY_VER
+#define MY_VER ""
+#endif
+
+#define DESC_VER(info) MY_VER "(" info ")"
+
+#ifndef MY_DATE
+#define MY_DATE __DATE__ " " __TIME__
+#endif
+
+#define ___me(a, b) __me_ ##a ## b
+#define __me(a, b) ___me(a, b)
+#define __me_info(name, tag, info) \
+	static const char __me(name, __LINE__)[] \
+	__attribute_used__ \
+	__attribute__((section(tag),unused)) = \
+	"Ver_" info "-[" MY_DATE "][gcc_" __VERSION__ "]";
+
+#define BIN_INFO_EX(name, info) __me_info(name, ".bininfo", info)
+#define LIB_INFO_EX(name, info) __me_info(name, ".libinfo", info)
+#define MOD_INFO_EX(name, info) __me_info(name, ".modinfo", info)
+
+#define BIN_INFO(info) BIN_INFO_EX(bin, info)
+#define LIB_INFO(info) LIB_INFO_EX(lib, info)
+#define MOD_INFO(info) MOD_INFO_EX(mod, info)
+```
+
+用法解释：
+
+* `#define __attribute_used__ __attribute__((__used__))` 表示该函数或变量可能不使用，这个属性可以避免编译器产生警告信息。
+
+
+
+```
+# gcc -E main.cc
+
+ static const char __me_bin6[] __attribute__ ((__used__)) __attribute__((section(".bininfo"),unused)) = "Ver_" "" "(" "gerry" ")" "-[" "Jun 13 2022" " " "18:04:18" "][gcc_" "4.8.5 20150623 (Red Hat 4.8.5-39)" "]";
+ ```
+
+ ```
+$objdump -s a.out | grep .bininfo -A10
+Contents of section .bininfo:
+ 400820 5665725f 28676572 7279292d 5b4a756e  Ver_(gerry)-[Jun
+ 400830 20313320 32303232 2031363a 35313a33   13 2022 16:51:3
+ 400840 385d5b67 63635f34 2e382e35 20323031  8][gcc_4.8.5 201
+ 400850 35303632 33202852 65642048 61742034  50623 (Red Hat 4
+ 400860 2e382e35 2d333929 5d00               .8.5-39)].
+Contents of section .eh_frame_hdr:
+ 40086c 011b033b 40000000 07000000 34fdffff  ...;@.......4...
+ 40087c 8c000000 a4fdffff 5c000000 91feffff  ........\.......
+ 40088c b4000000 abfeffff d4000000 e8feffff  ................
+ 40089c f4000000 04ffffff 14010000 74ffffff  ............t...
+ ```
+
+
+* https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Variable-Attributes.html
+
+
+# [ABI Policy and Guidelines](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html)
+
+## The C++ Interface
+
+**The C++ Standard Library** has many **include files**, types defined in those include files, specific named functions, and other behavior. The text of these behaviors, as written in source include files, is called the `Application Programing Interface`, or `API`.
+
+Furthermore, **C++ source** that is compiled into **object files** is transformed by the compiler: **it arranges objects with specific alignment and in a particular layout, mangling names according to a well-defined algorithm, has specific arrangements for the support of virtual functions**, etc. These details are defined as the compiler `Application Binary Interface`, or `ABI`. From GCC version 3 onwards the GNU C++ compiler uses an industry-standard C++ ABI, the [Itanium C++ ABI](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html#biblio.cxxabi).
+
+The GNU C++ compiler, g++, has a compiler command line option to switch between various different C++ ABIs. This explicit version switch is the flag `-fabi-version`. In addition, some g++ command line options may change the ABI as a side-effect of use. Such flags include `-fpack-struct` and `-fno-exceptions`, but include others: see the complete list in the GCC manual under the heading [Options for Code Generation Conventions](http://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#Code%20Gen%20Options).
+
+The configure options used when building a specific **libstdc++** version may also impact the resulting library ABI. The available configure options, and their impact on the library ABI, are documented [here](https://gcc.gnu.org/onlinedocs/libstdc++/manual/configure.html).
+
+> Putting all of these ideas together results in the C++ Standard Library ABI, which is the compilation of a given library API by a given compiler ABI. In a nutshell: **library API + compiler ABI = library ABI**
+
+**The library ABI** is mostly of interest for end-users who have unresolved symbols and are linking dynamically to the C++ Standard library, and who thus must be careful to compile their application with a compiler that is compatible with the available C++ Standard library binary. In this case, compatible is defined with the equation above: given an application compiled with a given compiler ABI and library API, it will work correctly with a Standard C++ Library created with the same constraints.
+
+To use a specific version of the **C++ ABI**, one must use a corresponding **GNU C++ toolchain** (i.e., `g++` and `libstdc++`) that implements the **C++ ABI** in question.
+
+## Versioning
+
+The C++ interface has evolved throughout the history of the GNU C++ toolchain. With each release, various details have been changed so as to give distinct versions to the C++ interface.
+
+> Goals
+
+Extending existing, stable ABIs. Versioning gives subsequent releases of library binaries the ability to add new symbols and add functionality, all the while retaining compatibility with the previous releases in the series. Thus, program binaries linked with the initial release of a library binary will still run correctly if the library binary is replaced by carefully-managed subsequent library binaries. This is called **forward compatibility(向前兼容)**.
+
+The reverse (**backwards compatibility(向后兼容)**) is **not true**. It is **not possible to** take program binaries linked with the latest version of a library binary in a release series (with additional symbols added), substitute in the initial release of the library binary, and remain link compatible.
+
+**Allows multiple, incompatible ABIs to coexist at the same time**.
+
+> History
+
+**How can this complexity be managed?** What does C++ versioning mean? Because library and compiler changes often make binaries compiled with one version of the GNU tools **incompatible with** binaries compiled with other (either newer or older) versions of the same GNU tools, **specific techniques are used to make managing this complexity easier**.
+
+The following techniques are used:
+
+* Release versioning on the `libgcc_s.so` binary.
+
+This is implemented via file names and the ELF `DT_SONAME` mechanism (at least on `ELF` systems). It is versioned as follows:
+
+```
+GCC 3.x: libgcc_s.so.1
+GCC 4.x: libgcc_s.so.1
+...
+```
+
+* Symbol versioning on the `libgcc_s.so` binary.
+
+It is versioned with the following labels and version definitions, where the version definition is the maximum for a particular release. Labels are cumulative. If a particular release is not listed, it has the same version labels as the preceding release.
+
+This corresponds to the mapfile: `gcc/libgcc-std.ver`
+
+```
+GCC 3.0.0: GCC_3.0
+GCC 3.3.0: GCC_3.3
+...
+GCC 4.8.0: GCC_4.8.0
+```
+
+* Release versioning on the `libstdc++.so` binary, implemented in the same way as the `libgcc_s.so` binary above. Listed is the filename: `DT_SONAME` can be deduced from the filename by removing the last two period-delimited numbers. For example, filename `libstdc++.so.5.0.4` corresponds to a `DT_SONAME` of `libstdc++.so.5`. **Binaries with equivalent DT_SONAMEs are forward-compatibile**: in the table below, releases incompatible with the previous one are explicitly noted. If a particular release is not listed, its `libstdc++.so` binary has the same filename and `DT_SONAME` as the preceding release.
+
+It is versioned as follows:
+
+```
+GCC 3.0.0: libstdc++.so.3.0.0
+GCC 3.0.1: libstdc++.so.3.0.1
+...
+GCC 4.8.0: libstdc++.so.6.0.18
+GCC 4.8.3: libstdc++.so.6.0.19
+GCC 4.9.0: libstdc++.so.6.0.20
+GCC 5.1.0: libstdc++.so.6.0.21
+...
+GCC 10.1.0: libstdc++.so.6.0.28
+GCC 11.1.0: libstdc++.so.6.0.29
+```
+
+* Symbol versioning on the `libstdc++.so` binary.
+
+mapfile: `libstdc++-v3/config/abi/pre/gnu.ver`
+
+```
+GCC 4.8.0: GLIBCXX_3.4.18, CXXABI_1.3.7
+GCC 4.8.3: GLIBCXX_3.4.19, CXXABI_1.3.7
+GCC 4.9.0: GLIBCXX_3.4.20, CXXABI_1.3.8
+GCC 5.1.0: GLIBCXX_3.4.21, CXXABI_1.3.9
+...
+GCC 10.1.0: GLIBCXX_3.4.28, CXXABI_1.3.12
+GCC 11.1.0: GLIBCXX_3.4.29, CXXABI_1.3.13
+```
+
+* [See More](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html)
+
+
+## Testing
+
+> Single ABI Testing
+
+Testing for **GNU C++ ABI changes** is composed of two distinct areas: testing **the C++ compiler (g++) for compiler changes**, and testing **the C++ library (libstdc++) for library changes**.
+
+> Multiple ABI Testing
+
+A "C" application, dynamically linked to two shared libraries, `liba`, `libb`. The dependent library `liba` is a C++ shared library compiled with `GCC 3.3`, and uses io, exceptions, locale, etc. The dependent library `libb` is a C++ shared library compiled with `GCC 3.4`, and also uses io, exceptions, locale, etc.
+
+As above, `libone` is constructed as follows:
+
+```
+gcc-3.4.0/bin/g++ -fPIC -DPIC -c a.cc
+gcc-3.4.0/bin/g++ -shared -Wl,-soname -Wl,libone.so.1 -Wl,-O1 -Wl,-z,defs a.o -o libone.so.1.0.0
+
+ln -s libone.so.1.0.0 libone.so
+
+gcc-3.4.0/bin/g++ -c a.cc
+
+ar cru libone.a a.o
+```
+
+And, `libtwo` is constructed as follows:
+
+```
+gcc-3.3.3/bin/g++ -fPIC -DPIC -c b.cc
+gcc-3.3.3/bin/g++ -shared -Wl,-soname -Wl,libtwo.so.1 -Wl,-O1 -Wl,-z,defs b.o -o libtwo.so.1.0.0
+
+ln -s libtwo.so.1.0.0 libtwo.so
+
+gcc-3.3.3/bin/g++ -c b.cc
+ar cru libtwo.a b.o
+```
+
+with the resulting libraries looking like:
+
+```
+%ldd libone.so.1.0.0
+	libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0x40016000)
+	libm.so.6 => /lib/tls/libm.so.6 (0x400fa000)
+	libgcc_s.so.1 => /mnt/hd/bld/gcc/gcc/libgcc_s.so.1 (0x4011c000)
+	libc.so.6 => /lib/tls/libc.so.6 (0x40125000)
+	/lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x00355000)
+
+%ldd libtwo.so.1.0.0
+	libstdc++.so.5 => /usr/lib/libstdc++.so.5 (0x40027000)
+	libm.so.6 => /lib/tls/libm.so.6 (0x400e1000)
+	libgcc_s.so.1 => /mnt/hd/bld/gcc/gcc/libgcc_s.so.1 (0x40103000)
+	libc.so.6 => /lib/tls/libc.so.6 (0x4010c000)
+	/lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x00355000)
+```
+
+Then, the "C" compiler is used to compile a source file that uses functions from each library.
+
+```
+gcc test.c -g -O2 -L. -lone -ltwo /usr/lib/libstdc++.so.5 /usr/lib/libstdc++.so.6
+```
+
+Which gives the expected:
+
+```
+%ldd a.out
+	libstdc++.so.5 => /usr/lib/libstdc++.so.5 (0x00764000)
+	libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0x40015000)
+	libc.so.6 => /lib/tls/libc.so.6 (0x0036d000)
+	libm.so.6 => /lib/tls/libm.so.6 (0x004a8000)
+	libgcc_s.so.1 => /mnt/hd/bld/gcc/gcc/libgcc_s.so.1 (0x400e5000)
+	/lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x00355000)
+```
+
+This resulting binary, when executed, will be able to safely use code from both `liba`, and the dependent `libstdc++.so.6`, and `libb`, with the dependent `libstdc++.so.5`.
+
+
+
+# [Is it safe to link C++17, C++14, and C++11 objects](https://stackoverflow.com/questions/46746878/is-it-safe-to-link-c17-c14-and-c11-objects)
+
+For `GCC` it is safe to link together any combination of objects A, B, and C. If they are all built with the same version then they are ABI compatible, the standard version (i.e. the -std option) doesn't make any difference.
+
+Any combination of the following objects will work (although see note below about `libstdc++.so` version):
+
+For exmaple,
+
+```
+object D compiled with GCC 4.9 and -std=c++03
+object E compiled with GCC 5 and -std=c++11
+object F compiled with GCC 7 and -std=c++17
+```
+
+* because `C++03` support is stable in all three compiler versions used, and so the `C++03` components are compatible between all the objects.
+* C++11 support is stable since GCC 5, but object D doesn't use any C++11 features, and objects E and F both use versions where C++11 support is stable.
+* C++17 support is not stable in any of the used compiler versions, but only object F uses C++17 features and so there is no compatibility issue with the other two objects (the only features they share come from C++03 or C++11, and the versions used make those parts OK).
+* If you later wanted to compile a fourth object, G, using GCC 8 and -std=c++17 then you would need to recompile F with the same version (or not link to F) because the C++17 symbols in F and G are incompatible.
+
+**The only caveat for the compatibility described above between D, E and F is that your program must use the libstdc++.so shared library from GCC 7 (or later).** Because object F was compiled with GCC 7, you need to use the shared library from that release, because compiling any part of the program with GCC 7 might introduce dependencies on symbols that are not present in the libstdc++.so from GCC 4.9 or GCC 5. Similarly, if you linked to object G, built with GCC 8, you would need to use the libstdc++.so from GCC 8 to ensure all symbols needed by G are found. The simple rule is to ensure the shared library the program uses at run-time is at least as new as the version used to compile any of the objects.
+
+Another caveat when using GCC, already mentioned in the comments on your question, is that **since GCC 5 there are two implementations of std::string available in libstdc++. The two implementations are not link-compatible (they have different mangled names, so can't be linked together) but can co-exist in the same binary (they have different mangled names, so don't conflict if one object uses std::string and the other uses std::__cxx11::string)**. If your objects use `std::string` then usually they should all be compiled with the same string implementation. Compile with `-D_GLIBCXX_USE_CXX11_ABI=0` to select the original gcc4-compatible implementation, or `-D_GLIBCXX_USE_CXX11_ABI=1` to select the new cxx11 implementation (don't be fooled by the name, it can be used in C++03 too, it's called cxx11 because it conforms to the C++11 requirements). Which implementation is the default depends on how GCC was configured, but the default can always be overridden at compile-time with the macro.
+
+
+
 
 # Troubleshooting
 
@@ -483,14 +743,16 @@ $ ldd demo
         libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f37a0b06000)
         /lib64/ld-linux-x86-64.so.2 (0x00007f37a1a39000)
 ```
+
 * [We can’t mix the objects (or libraries) compiled by g++ and clang++ ? at least on Mac?](https://stackoverflow.com/questions/25266493/we-can-t-mix-the-objects-or-libraries-compiled-by-g-and-clang-at-least-o)
 * [Can Clang compile code with GCC compiled .a libs?](https://stackoverflow.com/questions/20875924/can-clang-compile-code-with-gcc-compiled-a-libs)
+* [Use libc++ standard library implementation on GCC instead of libstdc++](https://stackoverflow.com/questions/71675796/use-libc-standard-library-implementation-on-gcc-instead-of-libstdc/71681158)
 
 ## std::unordered_map在不同gcc版本的ABI兼容性问题
 
-In the GCC 5.1 release libstdc++ introduced a new library ABI that includes new implementations of std::string and std::list. These changes were necessary to conform to the 2011 C++ standard which forbids Copy-On-Write strings and requires lists to keep track of their size.
+In the GCC 5.1 release libstdc++ introduced a new library ABI that includes new implementations of `std::string` and `std::list`. These changes were necessary to conform to the 2011 C++ standard which forbids Copy-On-Write strings and requires lists to keep track of their size.
 
-_GLIBCXX_USE_CXX11_ABI
+> _GLIBCXX_USE_CXX11_ABI
 
 Defined to the value 1 by default. Configurable via --disable-libstdcxx-dual-abi and/or --with-default-libstdcxx-abi. ABI-changing. When defined to a non-zero value the library headers will use the new C++11-conforming ABI introduced in GCC 5, rather than the older ABI introduced in GCC 3.4. This changes the definition of several class templates, including std:string, std::list and some locale facets. For more details see [Dual ABI](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
 
@@ -514,6 +776,7 @@ int main()
 ```
 
 gcc 8.3.0编译：
+
 ```
 sizeof(std::unordered_map<uint64_t, uint64_t>) = 56
 sizeof(std::map<uint64_t, uint64_t>) = 48
@@ -522,6 +785,7 @@ sizeof(std::list<uint64_t>) = 24
 ```
 
 gcc 8.3.0编译：带 `-D_GLIBCXX_USE_CXX11_ABI=0` 选项，可以保证`std::string`和`std::list` 与 gcc 4.8.5 ABI兼容。
+
 ```
 sizeof(std::unordered_map<uint64_t, uint64_t>) = 56
 sizeof(std::map<uint64_t, uint64_t>) = 48
@@ -530,6 +794,7 @@ sizeof(std::list<uint64_t>) = 16
 ```
 
 gcc 4.8.5编译：
+
 ```
 sizeof(std::unordered_map<uint64_t, uint64_t>) = 48
 sizeof(std::map<uint64_t, uint64_t>) = 48
@@ -539,3 +804,4 @@ sizeof(std::list<uint64_t>) = 16
 
 * https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi
 * https://stackoverflow.com/questions/45417707/glibcxx-use-cxx11-abi-gcc-4-8-and-abi-compatibility
+
