@@ -639,33 +639,6 @@ Which gives the expected:
 This resulting binary, when executed, will be able to safely use code from both `liba`, and the dependent `libstdc++.so.6`, and `libb`, with the dependent `libstdc++.so.5`.
 
 
-
-# [Is it safe to link C++17, C++14, and C++11 objects](https://stackoverflow.com/questions/46746878/is-it-safe-to-link-c17-c14-and-c11-objects)
-
-For `GCC` it is safe to link together any combination of objects A, B, and C. If they are all built with the same version then they are ABI compatible, the standard version (i.e. the -std option) doesn't make any difference.
-
-Any combination of the following objects will work (although see note below about `libstdc++.so` version):
-
-For exmaple,
-
-```
-object D compiled with GCC 4.9 and -std=c++03
-object E compiled with GCC 5 and -std=c++11
-object F compiled with GCC 7 and -std=c++17
-```
-
-* because `C++03` support is stable in all three compiler versions used, and so the `C++03` components are compatible between all the objects.
-* C++11 support is stable since GCC 5, but object D doesn't use any C++11 features, and objects E and F both use versions where C++11 support is stable.
-* C++17 support is not stable in any of the used compiler versions, but only object F uses C++17 features and so there is no compatibility issue with the other two objects (the only features they share come from C++03 or C++11, and the versions used make those parts OK).
-* If you later wanted to compile a fourth object, G, using GCC 8 and -std=c++17 then you would need to recompile F with the same version (or not link to F) because the C++17 symbols in F and G are incompatible.
-
-**The only caveat for the compatibility described above between D, E and F is that your program must use the libstdc++.so shared library from GCC 7 (or later).** Because object F was compiled with GCC 7, you need to use the shared library from that release, because compiling any part of the program with GCC 7 might introduce dependencies on symbols that are not present in the libstdc++.so from GCC 4.9 or GCC 5. Similarly, if you linked to object G, built with GCC 8, you would need to use the libstdc++.so from GCC 8 to ensure all symbols needed by G are found. The simple rule is to ensure the shared library the program uses at run-time is at least as new as the version used to compile any of the objects.
-
-Another caveat when using GCC, already mentioned in the comments on your question, is that **since GCC 5 there are two implementations of std::string available in libstdc++. The two implementations are not link-compatible (they have different mangled names, so can't be linked together) but can co-exist in the same binary (they have different mangled names, so don't conflict if one object uses std::string and the other uses std::__cxx11::string)**. If your objects use `std::string` then usually they should all be compiled with the same string implementation. Compile with `-D_GLIBCXX_USE_CXX11_ABI=0` to select the original gcc4-compatible implementation, or `-D_GLIBCXX_USE_CXX11_ABI=1` to select the new cxx11 implementation (don't be fooled by the name, it can be used in C++03 too, it's called cxx11 because it conforms to the C++11 requirements). Which implementation is the default depends on how GCC was configured, but the default can always be overridden at compile-time with the macro.
-
-
-
-
 # Troubleshooting
 
 ## How to compile 32-bit program on 64-bit gcc in C and C++
@@ -748,7 +721,7 @@ $ ldd demo
 * [Can Clang compile code with GCC compiled .a libs?](https://stackoverflow.com/questions/20875924/can-clang-compile-code-with-gcc-compiled-a-libs)
 * [Use libc++ standard library implementation on GCC instead of libstdc++](https://stackoverflow.com/questions/71675796/use-libc-standard-library-implementation-on-gcc-instead-of-libstdc/71681158)
 
-## std::unordered_map在不同gcc版本的ABI兼容性问题
+## std::unordered_map 在不同gcc版本的ABI兼容性问题 (_GLIBCXX_USE_CXX11_ABI)
 
 In the GCC 5.1 release libstdc++ introduced a new library ABI that includes new implementations of `std::string` and `std::list`. These changes were necessary to conform to the 2011 C++ standard which forbids Copy-On-Write strings and requires lists to keep track of their size.
 
@@ -802,6 +775,54 @@ sizeof(std::string) = 8
 sizeof(std::list<uint64_t>) = 16
 ```
 
+在CMake中检查是否存在_GLIBCXX_USE_CXX11_ABI宏定义的方法：
+
+```
+# @refer https://gitcode.net/mirrors/intel-isl/Open3D/-/blob/wei/rename-voxelhashing/CMakeLists.txt
+# Check if the compiler defines the _GLIBCXX_USE_CXX11_ABI macro
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("#include <cxxabi.h>
+int main() { return _GLIBCXX_USE_CXX11_ABI; }" HAS_GLIBCXX_USE_CXX11_ABI)
+```
+
+测试代码：
+
+``` cpp
+#include <iostream>
+#include <cxxabi.h>
+#include <string>
+
+int main()
+{
+    std::cout << _GLIBCXX_USE_CXX11_ABI;
+    std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>> s;
+}
+```
+
+
 * https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi
 * https://stackoverflow.com/questions/45417707/glibcxx-use-cxx11-abi-gcc-4-8-and-abi-compatibility
+
+## [Is it safe to link C++17, C++14, and C++11 objects](https://stackoverflow.com/questions/46746878/is-it-safe-to-link-c17-c14-and-c11-objects)
+
+For `GCC` it is safe to link together any combination of objects A, B, and C. If they are all built with the same version then they are ABI compatible, the standard version (i.e. the -std option) doesn't make any difference.
+
+Any combination of the following objects will work (although see note below about `libstdc++.so` version):
+
+For exmaple,
+
+```
+object D compiled with GCC 4.9 and -std=c++03
+object E compiled with GCC 5 and -std=c++11
+object F compiled with GCC 7 and -std=c++17
+```
+
+* because `C++03` support is stable in all three compiler versions used, and so the `C++03` components are compatible between all the objects.
+* C++11 support is stable since GCC 5, but object D doesn't use any C++11 features, and objects E and F both use versions where C++11 support is stable.
+* C++17 support is not stable in any of the used compiler versions, but only object F uses C++17 features and so there is no compatibility issue with the other two objects (the only features they share come from C++03 or C++11, and the versions used make those parts OK).
+* If you later wanted to compile a fourth object, G, using GCC 8 and -std=c++17 then you would need to recompile F with the same version (or not link to F) because the C++17 symbols in F and G are incompatible.
+
+**The only caveat for the compatibility described above between D, E and F is that your program must use the libstdc++.so shared library from GCC 7 (or later).** Because object F was compiled with GCC 7, you need to use the shared library from that release, because compiling any part of the program with GCC 7 might introduce dependencies on symbols that are not present in the libstdc++.so from GCC 4.9 or GCC 5. Similarly, if you linked to object G, built with GCC 8, you would need to use the libstdc++.so from GCC 8 to ensure all symbols needed by G are found. The simple rule is to ensure the shared library the program uses at run-time is at least as new as the version used to compile any of the objects.
+
+Another caveat when using GCC, already mentioned in the comments on your question, is that **since GCC 5 there are two implementations of std::string available in libstdc++. The two implementations are not link-compatible (they have different mangled names, so can't be linked together) but can co-exist in the same binary (they have different mangled names, so don't conflict if one object uses std::string and the other uses std::__cxx11::string)**. If your objects use `std::string` then usually they should all be compiled with the same string implementation. Compile with `-D_GLIBCXX_USE_CXX11_ABI=0` to select the original gcc4-compatible implementation, or `-D_GLIBCXX_USE_CXX11_ABI=1` to select the new cxx11 implementation (don't be fooled by the name, it can be used in C++03 too, it's called cxx11 because it conforms to the C++11 requirements). Which implementation is the default depends on how GCC was configured, but the default can always be overridden at compile-time with the macro.
 

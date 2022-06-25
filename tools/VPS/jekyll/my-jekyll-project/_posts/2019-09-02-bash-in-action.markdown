@@ -54,6 +54,30 @@ When a login shell exits, bash reads and executes commands from the file ~/.bash
 
 https://stackoverflow.com/questions/25677790/bin-bash-login-vs-bin-bash
 
+# Align
+
+For bash, use the `printf` command with alignment flags.
+
+``` bash
+echo "Usage: $0 [option] [value]"
+printf "%-16s %-64s\n" -h 查看帮助
+printf "%-16s %-64s\n" -h xxxx
+```
+
+```
+Usage: main.sh [option] [value]
+-h               查看帮助
+-h               xxxx
+```
+
+* %s %c %d %f 都是格式替代符，％s 输出一个字符串，％d 整型输出，％c 输出一个字符，％f 输出实数，以小数形式输出
+* %-10s 指一个宽度为 10 个字符（- 表示左对齐，没有则表示右对齐），任何字符都会被显示在 10 个字符宽的字符内，如果不足则自动以空格填充，超过也会将内容全部显示出来
+* %-4.2f 指格式化为小数，其中 .2 指保留2位小数
+
+
+* https://stackoverflow.com/questions/994461/right-align-pad-numbers-in-bash
+* https://www.runoob.com/linux/linux-shell-printf.html
+
 # PreCheck
 
 ``` bash
@@ -411,10 +435,14 @@ if [[ $? -ne 0 ]];then
   echo "run.sh failed"
   exit 1
 fi
+
+# or check
+if [ "$fname" = "a.txt" ] || [ "$fname" = "c.txt" ]
 ```
 
 * [Is double square brackets [[ ]] preferable over single square brackets [ ] in Bash?](https://stackoverflow.com/questions/669452/is-double-square-brackets-preferable-over-single-square-brackets-in-ba)
 * [Bash test builtin command](https://www.computerhope.com/unix/bash/test.htm)
+* https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
 
 # ForceStopAll
 
@@ -430,6 +458,56 @@ function PrintColor {
 }
 PrintColor "Oops!"
 ```
+
+定义常用变量
+
+``` bash
+_ColorGreenBeg="\e[1;32m"
+_ColorRedBeg="\e[1;33m"
+_ColorBlueBeg="\e[1;34m"
+_ColorEnd="\e[m"
+
+function Usage()
+{
+    printf "$_ColorBlueBeg%-16s\n$_ColorEnd" "Usage: $0 [option] [value]"
+    printf "%-16s\n" "选项说明:"
+    printf "$_ColorGreenBeg%-32s %-64s\n$_ColorEnd" "-h" "查看帮助"
+}
+```
+
+``` bash
+#!/bin/bash
+
+# prints colored text
+print_style () {
+
+    if [ "$2" == "info" ] ; then
+        COLOR="96m";
+    elif [ "$2" == "success" ] ; then
+        COLOR="92m";
+    elif [ "$2" == "warning" ] ; then
+        COLOR="93m";
+    elif [ "$2" == "danger" ] ; then
+        COLOR="91m";
+    else #default color
+        COLOR="0m";
+    fi
+
+    STARTCOLOR="\e[$COLOR";
+    ENDCOLOR="\e[0m";
+
+    printf "$STARTCOLOR%b$ENDCOLOR" "$1";
+}
+
+print_style "This is a green text " "success";
+print_style "This is a yellow text " "warning";
+print_style "This is a light blue with a \t tab " "info";
+print_style "This is a red text with a \n new line " "danger";
+print_style "This has no color";
+```
+
+* https://stackoverflow.com/questions/5412761/using-colors-with-printf
+
 
 # CurrentPath
 
@@ -491,8 +569,8 @@ quit
 echo foo
 ```
 
-https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-8.html
-
+* https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-8.html
+* [How to Return a String from Bash Functions](https://linuxhint.com/return-string-bash-functions/)
 
 # Chmod
 
@@ -730,6 +808,86 @@ done
 
 如果flag后面带有冒号，那么代表此flag需要带有value。相反，如果没有冒号，则此flag可以不需要value。也就是，如果指定了某个flag需要带有value，但是没有传value，就会报类似`No arg for -u option`这样的错误。
 
+The basic syntax of getopts is (see: man bash):
+
+``` bash
+getopts OPTSTRING VARNAME [ARGS...]
+```
+
+where:
+
+`OPTSTRING` is string with list of expected arguments,
+
+`h` - check for option `-h` **without** parameters; gives error on unsupported options;
+`h:` - check for option `-h` **with** parameter; gives errors on unsupported options;
+`abc` - check for options `-a`, `-b`, `-c`; **gives** errors on unsupported options;
+`:abc` - check for options `-a`, `-b`, `-c`; **silences** errors on unsupported options;
+
+Notes: In other words, colon in front of options allows you handle the errors in your code. Variable will contain `?` in the case of unsupported option, `:` in the case of missing value.
+
+`OPTARG` - is set to current argument value,
+
+`OPTERR` - indicates if Bash should display error messages.
+
+So the code can be:
+
+``` bash
+#!/usr/bin/env bash
+usage() { echo "$0 usage:" && grep " .)\ #" $0; exit 0; }
+[ $# -eq 0 ] && usage
+while getopts ":hs:p:" arg; do
+  case $arg in
+    p) # Specify p value.
+      echo "p is ${OPTARG}"
+      ;;
+    s) # Specify strength, either 45 or 90.
+      strength=${OPTARG}
+      [ $strength -eq 45 -o $strength -eq 90 ] \
+        && echo "Strength is $strength." \
+        || echo "Strength needs to be either 45 or 90, $strength found instead."
+      ;;
+    h | *) # Display help.
+      usage
+      exit 0
+      ;;
+  esac
+done
+```
+
+Example usage:
+
+```
+$ ./foo.sh
+./foo.sh usage:
+    p) # Specify p value.
+    s) # Specify strength, either 45 or 90.
+    h | *) # Display help.
+$ ./foo.sh -s 123 -p any_string
+Strength needs to be either 45 or 90, 123 found instead.
+p is any_string
+$ ./foo.sh -s 90 -p any_string
+Strength is 90.
+p is any_string
+```
+
+See: [Small getopts tutorial](http://wiki.bash-hackers.org/howto/getopts_tutorial) at Bash Hackers Wiki
+
+* https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
+* [Handling positional parameters](https://wiki.bash-hackers.org/scripting/posparams)
+
+## pushd/popd
+
+``` bash
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
+```
+
+* https://stackoverflow.com/questions/25288194/dont-display-pushd-popd-stack-across-several-bash-scripts-quiet-pushd-popd
 
 ## group argument
 
@@ -998,6 +1156,8 @@ fi
 -w FILE - True if the FILE exists and is writable.
 -x FILE - True if the FILE exists and is executable.
 ```
+
+* https://stackoverflow.com/questions/669452/are-double-square-brackets-preferable-over-single-square-brackets-in-b
 
 # Parameter Substitution
 

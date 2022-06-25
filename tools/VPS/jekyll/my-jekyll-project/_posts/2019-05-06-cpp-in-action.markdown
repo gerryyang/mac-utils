@@ -11,7 +11,7 @@ categories: [C/C++, 编程语言]
 # 经验
 
 1. 对于完成相同的功能，C++需要的代码行数一般是Python的三倍，而性能则可达到其十倍以上。
-2. 当目标服务属于运算密集型或者内存密集型，需要性能且愿意为性能付出额外代价的时候，应该考虑使用C++。 
+2. 当目标服务属于运算密集型或者内存密集型，需要性能且愿意为性能付出额外代价的时候，应该考虑使用C++。
 3. C++是解决性能的利器，尤其在大公司和金融机构里。C++之父Bjarne Stroustrup目前就职的地方便是摩根斯坦利。
 4. 学习C++就像学习一门外语，你不要期望能够掌握所有的单词和语法，因此需要多看多写掌握合适的“语感”，而不是记住所有规则。
 5. Bjarne有一个洋葱理论，抽象层次就像一个洋葱，是层层嵌套的。如果想用较低的抽象层次表达较高的概念，就好比一次切过了很多层洋葱，会把自己的眼泪熏出来。因此主张学习应该自顶向下，先学习高层的抽象，再层层剥茧，丝丝入扣地一步步进入下层。
@@ -25,15 +25,16 @@ categories: [C/C++, 编程语言]
 # 标准参考
 
 * 编译器对标准的支持情况 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)
-* 实例化展示工具 [https://cppinsights.io/](https://cppinsights.io/) 
+* 实例化展示工具 [https://cppinsights.io/](https://cppinsights.io/)
 * 在线多语言编译服务 [https://wandbox.org/](https://wandbox.org/)
 * [Compiler Explorer](https://gcc.godbolt.org/)
 * [Compare C++ Builds](https://build-bench.com/)
 * [Quick C++ Benchmark](https://quick-bench.com/)
-* GCC reference 
+* GCC reference
     + [https://gcc.gnu.org/](https://gcc.gnu.org/)
     + GCC编译选项 [https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html](https://gcc.gnu.org/onlinedocs/gcc/Option-Index.html)
-* C++ language references 
+    + [C++ Standards Support in GCC](https://gcc.gnu.org/projects/cxx-status.html#tses)
+* C++ language references
     + [https://isocpp.org/](https://isocpp.org/)
     + [https://cppreference.com/](https://cppreference.com/)
     + [C++11 Support in GCC](https://gcc.gnu.org/projects/cxx-status.html#cxx11)
@@ -96,8 +97,8 @@ int main()
 
 }
 /*
-$ g++ -o stack_unwinding stack_unwinding.cpp 
-$ ./stack_unwinding 
+$ g++ -o stack_unwinding stack_unwinding.cpp
+$ ./stack_unwinding
 obj()
 ~obj()
 obj()
@@ -195,7 +196,7 @@ RAII(Resource Acquisition Is Initialization, pronounced as "R, A, double I")，�
 void foo()
 {
     bar* ptr = new bar();
-    
+
     // some operations and throw an exception
 
     delete ptr;
@@ -252,27 +253,27 @@ $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #include <chrono>
 #include <thread>
 #include <mutex>
- 
+
 std::map<std::string, std::string> g_pages;
 std::mutex g_pages_mutex;
- 
+
 void save_page(const std::string &url)
 {
     // 模拟长页面读取
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::string result = "fake content";
- 
+
     std::lock_guard<std::mutex> guard(g_pages_mutex);
     g_pages[url] = result;
 }
- 
-int main() 
+
+int main()
 {
     std::thread t1(save_page, "http://foo");
     std::thread t2(save_page, "http://bar");
     t1.join();
     t2.join();
- 
+
     // 现在访问g_pages是安全的，因为线程t1/t2生命周期已结束
     for (const auto &pair : g_pages) {
         std::cout << pair.first << " => " << pair.second << '\n';
@@ -280,7 +281,7 @@ int main()
 }
 /*
 $ g++ -o mutex mutex.cpp -lpthread
-$ ./mutex 
+$ ./mutex
 http://bar => fake content
 http://foo => fake content
 */
@@ -320,7 +321,7 @@ int main()
 }
 /*
 $ g++ -o mutex3 mutex3.cpp -lpthread
-$ ./mutex3 
+$ ./mutex3
 main: 0
 139691703760640: 1
 139691712153344: 2
@@ -385,7 +386,7 @@ smart_ptr<shape> ptr2 = std::move(ptr1);
 第二个表达式，`std::move(ptr1)`的作用是，**把一个左值引用强制转换成一个右值引用，而并不改变其内容**。可以把`std::move(ptr1)`看作是**一个有名字的右值**，为了和无名的纯右值prvalue相区别，C++里目前把这种表达式称为**xvalue**。与左值lvalue不同，xvalue仍然是不能取地址的（xvalue与prvalue相同），因此xvalue和prvalue都被归为**右值rvalue**。
 
 | 表达式值类别 | 不可移动 | 可移动 |
-| -- | -- | -- | 
+| -- | -- | -- |
 | glvalue | lvalue（有标识符）| xvalue（有标识符）
 | rvalue |  | prvalue（无标识符）xvalue（有标识符）
 
@@ -594,9 +595,9 @@ string result = string("Hello, ") + name + ".";
 
 执行流程大致如下：
 
-1. 调用构造函数 string(const char*)，生成临时对象1："Hello, "  
-2. 调用 operator+(const string&, const string&)，生成临时对象2："Hello, " 
-3. 调用 operator+(const string&, const char*)，生成临时对象3："Hello, ." 
+1. 调用构造函数 string(const char*)，生成临时对象1："Hello, "
+2. 调用 operator+(const string&, const string&)，生成临时对象2："Hello, "
+3. 调用 operator+(const string&, const char*)，生成临时对象3："Hello, ."
 4. 假设返回值优化能够生效（最佳情况），对象 3 可以直接在 result 里构造完成
 5. 临时对象 2 析构，释放指向 string("Hello, ") + name 的内存
 6. 临时对象 1 析构，释放指向 string("Hello, ") 的内存
@@ -661,14 +662,14 @@ public:
 };
 
 Obj simple()
-{ 
+{
         Obj obj;
         //  简单返回对象；一般有 NRVO
         return obj;
 }
 
 Obj simple_with_move()
-{ 
+{
         Obj obj;
         // move会禁止 NRVO
         // 需要生成一个 Obj，给了一个 Obj&&，因此会调用构造函数，所以就是多产生了一次Obj(Obj&&) 的调用
@@ -676,7 +677,7 @@ Obj simple_with_move()
 }
 
 Obj complicated(int n)
-{ 
+{
         Obj obj1;
         Obj obj2;
         //  有分支，一般无 NRVO
@@ -1091,8 +1092,8 @@ int main()
 
 }
 /*
-$ g++ -std=c++11 -o shared_count shared_count.cpp 
-$./shared_count 
+$ g++ -std=c++11 -o shared_count shared_count.cpp
+$./shared_count
 ptr: 1
 sptr1 use conut: 1
 sptr2 use conut: 0
@@ -1114,20 +1115,20 @@ sptr1 is empty
 #include <thread>
 #include <chrono>
 #include <mutex>
- 
+
 struct Base
 {
     Base() { std::cout << "  Base::Base()\n"; }
     // Note: non-virtual destructor is OK here
     ~Base() { std::cout << "  Base::~Base()\n"; }
 };
- 
+
 struct Derived: public Base
 {
     Derived() { std::cout << "  Derived::Derived()\n"; }
     ~Derived() { std::cout << "  Derived::~Derived()\n"; }
 };
- 
+
 void thr(std::shared_ptr<Base> p)
 {
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -1141,11 +1142,11 @@ void thr(std::shared_ptr<Base> p)
                   << ", lp.use_count() = " << lp.use_count() << '\n';
     }
 }
- 
+
 int main()
 {
     std::shared_ptr<Base> p = std::make_shared<Derived>();
- 
+
     std::cout << "Created a shared Derived (as a pointer to Base)\n"
               << "  p.get() = " << p.get()
               << ", p.use_count() = " << p.use_count() << '\n';
@@ -1159,8 +1160,8 @@ int main()
     std::cout << "All threads completed, the last one deleted Derived\n";
 }
 /*
-$ g++ -std=c++11 -o shared_ptr_demo shared_ptr_demo.cpp 
-$ ./shared_ptr_demo 
+$ g++ -std=c++11 -o shared_ptr_demo shared_ptr_demo.cpp
+$ ./shared_ptr_demo
   Base::Base()
   Derived::Derived()
 Created a shared Derived (as a pointer to Base)
@@ -1287,7 +1288,7 @@ int main()
         v1.emplace_back();  // 构造第二个对象，并拷贝第一个对象（移动构造函数没有声明 noexcept）
 
         vector<Obj2> v2;
-        v2.reserve(2);      
+        v2.reserve(2);
         v2.emplace_back();  // 构造第一个对象
         v2.emplace_back();  // 构造第二个对象
         v2.emplace_back();  // 构造第三个对象，并移动第一个和第二个对象（由于移动构造函数声明了 noexcept）
@@ -2448,14 +2449,14 @@ public:
   void foo() override; // OK
   void bar() override final; // OK
   //void foobar() override;   //  非虚函数不能  override
-  
+
 };
 
 class C final : public B {
 public:
   void foo() override; // OK
   //void bar() override;  // final  函数不可  override
-  
+
 };
 
 class D : public C {
@@ -2643,7 +2644,7 @@ A(A&&) = delete;
 理解了 C++ 里的对返回值的处理和返回值优化之后，我们再回过头看一下 `F.20` 里陈述的理由的话，应该就显得很自然了：
 
 > A return value is self-documenting, whereas a & could be either in-out or out-only and is liable to be misused.
-> 
+>
 > 返回值是可以自我描述的；而 & 参数既可能是输入输出，也可能是仅输出，且很容易被误用。（当然也有一些例外的情况）
 
 **总结：**
@@ -3466,7 +3467,7 @@ int main()
         printf("%d\n", n);
 }
 /*
-$ g++ -o constexpr constexpr.cpp 
+$ g++ -o constexpr constexpr.cpp
 constexpr.cpp: In function ‘int main()’:
 constexpr.cpp:21:29:   in constexpr expansion of ‘factorial(-1)’
 constexpr.cpp:8:31: error: expression ‘<throw-expression>’ is not a constant expression
@@ -3482,7 +3483,7 @@ constexpr.cpp:8:31: error: expression ‘<throw-expression>’ is not a constant
 如果没有检查判断，编译展开时会报错：
 
 ```
-$ g++ -o constexpr constexpr.cpp 
+$ g++ -o constexpr constexpr.cpp
 constexpr.cpp: In function ‘int main()’:
 constexpr.cpp:23:29:   in constexpr expansion of ‘factorial(-1)’
 constexpr.cpp:16:23:   in constexpr expansion of ‘factorial((n + -1))’
@@ -3540,7 +3541,7 @@ private:
 };
 
 adder add_2(2);
-int res = add_2(5);       // 2 + 5 = 7 
+int res = add_2(5);       // 2 + 5 = 7
 ```
 
 ### 函数的指针和引用
@@ -3758,7 +3759,7 @@ int main()
 }
 /*
 g++ -o lambda lambda.cpp -std=c++1z -lpthread
-$ ./lambda 
+$ ./lambda
 Done work 37 (No. 2) in thread 140555858978560
 Done work 37 (No. 1) in thread 140555867371264
 */
@@ -4521,11 +4522,11 @@ count_.fetch_add(
 > macOS 上在使用 Clang 时似乎不支持对需要加锁的对象使用 `is_lock_free` 成员函数，此时链接会出错。而 GCC 在这种情况下，需要确保系统上装了 libatomic。以 CentOS 7 下的 GCC 7 为例，我们可以使用下面的语句来安装：
 >
 > sudo yum install devtoolset-7-libatomic-devel
-> 
+>
 > 然后，用下面的语句编译可以通过：
 >
 > g++ -pthread test.cpp -latomic
-> 
+>
 > Windows 下使用 MSVC 则没有问题。
 
 
@@ -4572,7 +4573,7 @@ singleton* singleton::instance()
 ```
 
 > 注意：对互斥量和原子量的区别。
-> 
+>
 > 用原子量的地方，粗想一下，你用锁都可以。但如果锁导致阻塞的话，性能比起原子量那是会有好几个数量级的差异了。锁即使不导致阻塞，性能也会比原子量低——锁本身的实现就会用到原子量，是个复杂的复合操作。
 >
 > 反过来不成立，用互斥量的地方不能都改用原子量。原子量本身没有阻塞机制，没有保护代码段的功能。
@@ -5479,7 +5480,7 @@ int main()
 
 > 注意：
 > 1. 由于 Easylogging++ 本身有一定开销，且开销有一定的不确定性，这种方式**只适合颗粒度要求比较粗的性能跟踪**。
-> 
+>
 > 2. 性能跟踪产生的日志级别固定为 Info。性能跟踪本身可以在配置文件里的 GLOBAL 节下用 `PERFORMANCE_TRACKING = false` 来关闭。当然，关闭所有 Info 级别的输出也能达到关闭性能跟踪的效果。
 
 
@@ -5786,13 +5787,13 @@ void print(std::vector<std::string> &vec)
 int main()
 {
         std::vector<int> vec;
-        std::cout << "size: " << vec.size() 
+        std::cout << "size: " << vec.size()
                 << " capacity: " << vec.capacity() << std::endl;
 
         vec.reserve(10);
         vec.push_back(1);
 
-        std::cout << "size: " << vec.size() 
+        std::cout << "size: " << vec.size()
                 << " capacity: " << vec.capacity() << std::endl;
 
 
@@ -5873,7 +5874,7 @@ int main()
                 printf("strptime err\n");
                 return -1;
         }
-        time_t t = mktime(&tm); 
+        time_t t = mktime(&tm);
 
         // equal to `date -d "2019-10-01 18:00:00" +%s`
         printf("t[%ld]\n", t);
@@ -6020,14 +6021,14 @@ GCC为内联汇编提供特殊结构，其格式如下。`汇编程序模板`由
 
 ``` asm
 asm ( assembler template
-     
+
 : output operands               (optional)
-     
+
 : input operands                (optional)
-     
-: list of clobbered registers   
+
+: list of clobbered registers
     (optional)
-     
+
 );
 ```
 
@@ -6051,7 +6052,7 @@ asm ( assembler template
 C++ REST SDK（也写作 [cpprestsdk](https://github.com/microsoft/cpprestsdk))，一个支持 HTTP 协议、主要用于 [RESTful](https://restfulapi.net/) 接口开发的 C++ 库。
 
 > 问题，你认为用多少行代码可以写出一个类似于 curl 的 HTTP 客户端？
-> 
+>
 > 答案：使用 C++ REST SDK 的话，只需要五十多行有效代码（即使是适配到目前的窄小的手机屏幕上）。
 
 ``` cpp
