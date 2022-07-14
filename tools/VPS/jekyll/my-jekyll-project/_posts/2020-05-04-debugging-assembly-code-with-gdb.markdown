@@ -43,7 +43,7 @@ Options for Debugging Your Program: http://gcc.gnu.org/onlinedocs/gcc/Debugging-
 
 ```
 # debug a program
-gdb program  
+gdb program
 
 # debug a core file
 gdb program core
@@ -73,7 +73,7 @@ Reading symbols from a.out...done.
 6
 7               return 0;
 8       }
-(gdb) 
+(gdb)
 ```
 
 Starting your Program: https://sourceware.org/gdb/current/onlinedocs/gdb/Starting.html#Starting
@@ -208,7 +208,7 @@ Continuing.
 Thread 4 "100_Log" hit Catchpoint 1 (call to syscall 1), 0x00007f4f739d8a1d in write () from /lib64/libc.so.6
 (gdb) i b
 Num     Type           Disp Enb Address            What
-1       catchpoint     keep y                      syscall "1" 
+1       catchpoint     keep y                      syscall "1"
         catchpoint already hit 1 time
 (gdb) d 1
 (gdb) i b
@@ -366,8 +366,8 @@ gdb中简写命令配合tab键使用
 | frame 0 | 显示栈顶的信息
 | frame 1 | 显示堆栈栈顶下一层信息
 | up n | 表示向栈的上面移动n层，可以不打n，表示向上移动一层
-| down n | 表示向栈的下面移动n层，可以不打n，表示向下移动一层                              
-| info break | 查看所有断点的信息  
+| down n | 表示向栈的下面移动n层，可以不打n，表示向下移动一层
+| info break | 查看所有断点的信息
 | info threads | 查看所有线程的信息
 | info registers | 查看所有寄存器的信息
 | shell date | 在gdb中调用shell，使用完后exit重新返回到gdb中
@@ -379,6 +379,28 @@ gdb中简写命令配合tab键使用
 | stepi | Execute one machine instruction, then stop and return to the debugger
 | finish/fin | 跳出当前函数栈
 | set variable i = 10 | 修改变量值
+
+
+
+[GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
+
+You need to enable logging:
+
+```
+(gdb) set logging on
+```
+
+Now GDB will log to `./gdb.txt`. You can tell it which file to use:
+
+```
+(gdb) set logging file my_god_object.log
+```
+
+And you can examine the current logging configuration:
+
+```
+(gdb) show logging
+```
 
 
 # Refer

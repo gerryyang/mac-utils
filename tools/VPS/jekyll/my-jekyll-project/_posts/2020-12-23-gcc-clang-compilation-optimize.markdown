@@ -9,7 +9,9 @@ categories: [GCC/Clang]
 {:toc}
 
 
-# 编译优化 (gcc/clang)
+# 编译优化
+
+## gcc
 
 * 编译环境：x86-64 gcc 4.8.5
 * 在线编译工具：https://gcc.godbolt.org/
@@ -20,10 +22,10 @@ gcc默认使用`-O0`优化级别，可以通过`gcc -Q --help=optimizers -O<numb
 ```
 $gcc -Q --help=optimizers -O0 | head -n20
 The following options control optimizations:
-  -O<number>                  
-  -Ofast                      
-  -Og                         
-  -Os                         
+  -O<number>
+  -Ofast
+  -Og
+  -Os
   -faggressive-loop-optimizations       [enabled]
   -falign-functions                     [disabled]
   -falign-jumps                         [disabled]
@@ -60,7 +62,7 @@ int func2()
 }
 
 // 1M
-//char str[1024 * 1024] = {0, 1}; 
+//char str[1024 * 1024] = {0, 1};
 
 int main()
 {
@@ -98,7 +100,7 @@ CFLAGS += -fdata-sections -ffunction-sections
 
 INCLUDE = -I./
 LIBPATH = -L./
-LIBS = 
+LIBS =
 
 BIN = demo
 
@@ -112,7 +114,7 @@ all: $(BIN)
 
 $(BIN): $(OBJS)
         #$(CXX) -o $@ $^ $(LIBPATH) $(LIBS) -Wl,-Map=$(MAP_FILE)
-        $(CXX) -o $@ $^ $(LIBPATH) $(LIBS) -Wl,-Map=$(MAP_FILE) -Wl,--gc-sections 
+        $(CXX) -o $@ $^ $(LIBPATH) $(LIBS) -Wl,-Map=$(MAP_FILE) -Wl,--gc-sections
         @echo "build $(BIN) ok"
 
 install:
@@ -122,7 +124,7 @@ clean:
         rm -f $(OBJS) $(BIN) $(MAP_FILE)
 
 
-%.o: %.cpp 
+%.o: %.cpp
         $(CXX) $(CFLAGS) $(INCLUDE) -c $<
 %.o: %.c
         $(CC) $(CFLAGS) $(INCLUDE) -c $<
@@ -134,7 +136,7 @@ clean:
 (gdb) b main
 Breakpoint 1 at 0x400605: file demo.cpp, line 20.
 (gdb) r
-Starting program: /root/test/cpp/cpp_strip/demo 
+Starting program: /root/test/cpp/cpp_strip/demo
 
 Breakpoint 1, main () at demo.cpp:20
 20              int a = 1;
@@ -179,8 +181,8 @@ Dump of assembler code for function main():
    0x000000000040063f <+66>:    mov    $0x0,%eax
 
 30      }
-   0x0000000000400644 <+71>:    leaveq 
-   0x0000000000400645 <+72>:    retq   
+   0x0000000000400644 <+71>:    leaveq
+   0x0000000000400645 <+72>:    retq
 
 End of assembler dump.
 ```
@@ -191,7 +193,7 @@ End of assembler dump.
 (gdb) b main
 Breakpoint 1 at 0x40115f: file demo.cpp, line 20.
 (gdb) r
-Starting program: /root/test/cpp/cpp_strip/demo 
+Starting program: /root/test/cpp/cpp_strip/demo
 
 Breakpoint 1, main () at demo.cpp:20
 20              int a = 1;
@@ -234,7 +236,7 @@ Dump of assembler code for function main:
 29              return 0;
    0x0000000000401197 <+71>:    add    $0x20,%rsp
    0x000000000040119b <+75>:    pop    %rbp
-   0x000000000040119c <+76>:    retq   
+   0x000000000040119c <+76>:    retq
 
 End of assembler dump.
 ```
@@ -243,6 +245,213 @@ End of assembler dump.
 也可通过[在线编译工具](https://gcc.godbolt.org/)反汇编。
 
 ![gcc_compile](/assets/images/202101/gcc_compile.png)
+
+## clang
+
+* [Clang optimization levels](https://stackoverflow.com/questions/15548023/clang-optimization-levels)
+* [CLang optimizations on Mac OSX](https://gist.github.com/lolo32/fd8ce29b218ac2d93a9e)
+* [Compiling With Clang Optimization Flags](https://www.incredibuild.com/blog/compiling-with-clang-optimization-flags)
+* [In clang, how do you use per-function optimization attributes?](https://stackoverflow.com/questions/26266820/in-clang-how-do-you-use-per-function-optimization-attributes)
+* [How to change optimization level of one function?](https://stackoverflow.com/questions/31373885/how-to-change-optimization-level-of-one-function)
+* https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-selectively-disabling-optimization
+* [clang ignoring attribute noinline](https://stackoverflow.com/questions/54481855/clang-ignoring-attribute-noinline)
+* https://clang.llvm.org/docs/AttributeReference.html
+* [Does LLVM/clang have flags to control code padding?](https://stackoverflow.com/questions/27712716/does-llvm-clang-have-flags-to-control-code-padding)
+
+
+To sum it up, to find out about compiler optimization passes:
+
+`llvm-as < /dev/null | opt -O3 -disable-output -debug-pass=Arguments`
+
+clang additionally runs some higher level optimizations, which we can retrieve with:
+
+`echo 'int;' | clang -xc -O3 - -o /dev/null -\#\#\#`
+
+Documentation of individual passes is available [here](http://llvm.org/docs/Passes.html).
+
+You can compare the effect of changing high-level flags such as -O like this:
+
+``` bash
+diff -wy --suppress-common-lines  \
+  <(echo 'int;' | clang -xc -Os   - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp) \
+  <(echo 'int;' | clang -xc -O2 - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp)
+# will tell you that -O0 is indeed the default.
+```
+
+-O0 优化选项：
+
+``` bash
+$echo 'int;' | clang -xc -O0 - -o /dev/null -\#\#\#
+clang version 3.5.2 (tags/RELEASE_352/final)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+ "/usr/local/bin/clang-3.5" "-cc1" "-triple" "x86_64-unknown-linux-gnu" "-emit-obj" "-mrelax-all" "-disable-free" "-disable-llvm-verifier" "-main-file-name" "-" "-mrelocation-model" "static" "-mdisable-fp-elim" "-fmath-errno" "-masm-verbose" "-mconstructor-aliases" "-munwind-tables" "-fuse-init-array" "-target-cpu" "x86-64" "-dwarf-column-info" "-resource-dir" "/usr/local/bin/../lib/clang/3.5.2" "-internal-isystem" "/usr/local/include" "-internal-isystem" "/usr/local/bin/../lib/clang/3.5.2/include" "-internal-externc-isystem" "/include" "-internal-externc-isystem" "/usr/include" "-O0" "-fdebug-compilation-dir" "/data/home/gerryyang/pracing/build/release/src/gamesvr/CMakeFiles/gamesvr.dir" "-ferror-limit" "19" "-fmessage-length" "198" "-mstackrealign" "-fobjc-runtime=gcc" "-fdiagnostics-show-option" "-fcolor-diagnostics" "-o" "/tmp/--e22b2f.o" "-x" "c" "-"
+ "/bin/ld" "--eh-frame-hdr" "-m" "elf_x86_64" "-dynamic-linker" "/lib64/ld-linux-x86-64.so.2" "-o" "/dev/null" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crt1.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crti.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtbegin.o" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64" "-L/usr/local/bin/../lib64" "-L/lib/../lib64" "-L/usr/lib/../lib64" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../.." "-L/usr/local/bin/../lib" "-L/lib" "-L/usr/lib" "/tmp/--e22b2f.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtend.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crtn.o"
+```
+
+-O2 优化选项：
+
+``` bash
+$echo 'int;' | clang -xc -O2 - -o /dev/null -\#\#\#
+clang version 3.5.2 (tags/RELEASE_352/final)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+ "/usr/local/bin/clang-3.5" "-cc1" "-triple" "x86_64-unknown-linux-gnu" "-emit-obj" "-disable-free" "-disable-llvm-verifier" "-main-file-name" "-" "-mrelocation-model" "static" "-fmath-errno" "-masm-verbose" "-mconstructor-aliases" "-munwind-tables" "-fuse-init-array" "-target-cpu" "x86-64" "-momit-leaf-frame-pointer" "-dwarf-column-info" "-resource-dir" "/usr/local/bin/../lib/clang/3.5.2" "-internal-isystem" "/usr/local/include" "-internal-isystem" "/usr/local/bin/../lib/clang/3.5.2/include" "-internal-externc-isystem" "/include" "-internal-externc-isystem" "/usr/include" "-O2" "-fdebug-compilation-dir" "/data/home/gerryyang/pracing/build/release/src/gamesvr/CMakeFiles/gamesvr.dir" "-ferror-limit" "19" "-fmessage-length" "198" "-mstackrealign" "-fobjc-runtime=gcc" "-fdiagnostics-show-option" "-fcolor-diagnostics" "-vectorize-loops" "-vectorize-slp" "-o" "/tmp/--ebb79a.o" "-x" "c" "-"
+ "/bin/ld" "--eh-frame-hdr" "-m" "elf_x86_64" "-dynamic-linker" "/lib64/ld-linux-x86-64.so.2" "-o" "/dev/null" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crt1.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crti.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtbegin.o" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64" "-L/usr/local/bin/../lib64" "-L/lib/../lib64" "-L/usr/lib/../lib64" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../.." "-L/usr/local/bin/../lib" "-L/lib" "-L/usr/lib" "/tmp/--ebb79a.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtend.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crtn.o"
+```
+
+-O3 优化选项：
+
+``` bash
+$echo 'int;' | clang -xc -O3 - -o /dev/null -\#\#\#
+clang version 3.5.2 (tags/RELEASE_352/final)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+ "/usr/local/bin/clang-3.5" "-cc1" "-triple" "x86_64-unknown-linux-gnu" "-emit-obj" "-disable-free" "-disable-llvm-verifier" "-main-file-name" "-" "-mrelocation-model" "static" "-fmath-errno" "-masm-verbose" "-mconstructor-aliases" "-munwind-tables" "-fuse-init-array" "-target-cpu" "x86-64" "-momit-leaf-frame-pointer" "-dwarf-column-info" "-resource-dir" "/usr/local/bin/../lib/clang/3.5.2" "-internal-isystem" "/usr/local/include" "-internal-isystem" "/usr/local/bin/../lib/clang/3.5.2/include" "-internal-externc-isystem" "/include" "-internal-externc-isystem" "/usr/include" "-O3" "-fdebug-compilation-dir" "/data/home/gerryyang/pracing/build/release/src/gamesvr/CMakeFiles/gamesvr.dir" "-ferror-limit" "19" "-fmessage-length" "198" "-mstackrealign" "-fobjc-runtime=gcc" "-fdiagnostics-show-option" "-fcolor-diagnostics" "-vectorize-loops" "-vectorize-slp" "-o" "/tmp/--1ea6a8.o" "-x" "c" "-"
+ "/bin/ld" "--eh-frame-hdr" "-m" "elf_x86_64" "-dynamic-linker" "/lib64/ld-linux-x86-64.so.2" "-o" "/dev/null" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crt1.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crti.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtbegin.o" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64" "-L/usr/local/bin/../lib64" "-L/lib/../lib64" "-L/usr/lib/../lib64" "-L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../.." "-L/usr/local/bin/../lib" "-L/lib" "-L/usr/lib" "/tmp/--1ea6a8.o" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/crtend.o" "/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64/crtn.o"
+```
+
+
+```
+diff -wy --suppress-common-lines    <(echo 'int;' | clang -xc -O0   - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp)   <(echo 'int;' | clang -xc -O2 - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp)
+"-mrelax-all"                                                 <
+"-mdisable-fp-elim"                                           <
+                                                              > "-momit-leaf-frame-pointer"
+"-O0"                                                         | "-O2"
+                                                              > "-vectorize-loops"
+                                                              > "-vectorize-slp"
+```
+
+```
+diff -wy --suppress-common-lines  \
+>   <(echo 'int;' | clang -xc -O2   - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp) \
+>   <(echo 'int;' | clang -xc -O3 - -o /dev/null -\#\#\# 2>&1 | tr " " "\n" | grep -v /tmp)
+"-O2"                                                         | "-O3"
+```
+
+With `version 3.5` the passes are as follow (parsed output of the command above):
+
+* default (-O0): -targetlibinfo -verify -verify-di
+* -O1 is based on -O0
+   + adds: -correlated-propagation -basiccg -simplifycfg -no-aa -jump-threading -sroa -loop-unswitch -ipsccp -instcombine -memdep -memcpyopt -barrier -block-freq -loop-simplify -loop-vectorize -inline-cost -branch-prob -early-cse -lazy-value-info -loop-rotate -strip-dead-prototypes -loop-deletion -tbaa -prune-eh -indvars -loop-unroll -reassociate -loops -sccp -always-inline -basicaa -dse -globalopt -tailcallelim -functionattrs -deadargelim -notti -scalar-evolution -lower-expect -licm -loop-idiom -adce -domtree -lcssa
+* -O2 is based on -01
+   + adds: -gvn -constmerge -globaldce -slp-vectorizer -mldst-motion -inline
+   + removes: -always-inline
+* -O3 is based on -O2
+   + adds: -argpromotion
+* -Os is identical to -O2
+* -Oz is based on -Os
+   + removes: -slp-vectorizer
+
+
+[Extensions for selectively disabling optimization](https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-selectively-disabling-optimization)
+
+Clang provides a mechanism for selectively disabling optimizations in functions and methods.
+
+To disable optimizations in a single function definition, the GNU-style or C++11 non-standard attribute `optnone` can be used.
+
+``` cpp
+// The following functions will not be optimized.
+// GNU-style attribute
+__attribute__((optnone)) int foo() {
+  // ... code
+}
+
+// C++11 attribute
+[[clang::optnone]] int bar() {
+  // ... code
+}
+```
+
+To facilitate disabling optimization for a range of function definitions, a range-based pragma is provided. Its syntax is `#pragma clang optimize` followed by `off` or `on`.
+
+All function definitions in the region between an `off` and the following `on` will be decorated with the `optnone` attribute unless doing so would conflict with explicit attributes already present on the function (e.g. the ones that control inlining).
+
+``` cpp
+#pragma clang optimize off
+// This function will be decorated with optnone.
+int foo() {
+  // ... code
+}
+
+// optnone conflicts with always_inline, so bar() will not be decorated.
+__attribute__((always_inline)) int bar() {
+  // ... code
+}
+#pragma clang optimize on
+```
+
+If no `on` is found to close an `off` region, the end of the region is the end of the compilation unit.
+
+Note that a stray `#pragma clang optimize on` does not selectively enable additional optimizations when compiling at low optimization levels. This feature can only be used to selectively disable optimizations.
+
+[clang ignoring attribute noinline](https://stackoverflow.com/questions/54481855/clang-ignoring-attribute-noinline)
+
+I expected `__attribute__((noinline))`, when added to a function, to make sure that that function gets emitted. This works with gcc, but clang still seems to inline it.
+
+Here is an example, which you can also [open on Godbolt](https://godbolt.org/z/QMTL8f):
+
+``` cpp
+namespace {
+
+__attribute__((noinline))
+int inner_noinline() {
+    return 3;
+}
+
+int inner_inline() {
+    return 4;
+}
+
+int outer() {
+    return inner_noinline() + inner_inline();
+}
+
+}
+
+int main() {
+    return outer();
+}
+```
+
+When build with `-O3`, `gcc` emits `inner_noinline`, but not `inner_inline`:
+
+``` cpp
+(anonymous namespace)::inner_noinline():
+        mov     eax, 3
+        ret
+main:
+        call    (anonymous namespace)::inner_noinline()
+        add     eax, 4
+        ret
+```
+
+Clang insists on inlining it:
+
+``` cpp
+main: # @main
+  mov eax, 7
+  ret
+```
+
+If adding a parameter to the functions and letting them perform some trivial work, clang respects the noinline attribute: https://godbolt.org/z/NNSVab
+
+Shouldn't noinline be independent of how complex the function is? What am I missing?
+
+Answers:
+
+Does clang support noinline attribute?
+
+It doesn't have its own category in the [list of attributes](https://clang.llvm.org/docs/AttributeReference.html), but if you search for noinline there, you will find it mentioned several times.
+
+Also, looking at the version with parameters, if I remove it there, both functions are inlined. So clang seems to at least know it.
+
+related: [noinline attribute is not respected in -O1 and above #3409](github.com/emscripten-core/emscripten/issues/3409)
+
+`__attribute__((noinline))` prevents the compiler from inlining the function. It doesn't prevent it from doing constant folding. In this case, the compiler was able to recognize that there was no need to call `inner_noinline`, either as an inline insertion or an out-of-line call. It could just replace the function call with the constant `3`.
+
+It sounds like you want to use the `optnone` attribute instead, to prevent the compiler from applying even the most obvious of optimizations (as this one is).
+
 
 
 # 去除Dead Codes (删除未使用的函数)
@@ -257,7 +466,7 @@ End of assembler dump.
 > 注意：此选项对gcc和clang都生效。
 
 ```
-$readelf -t demo.o 
+$readelf -t demo.o
 There are 26 section headers, starting at offset 0x10b0:
 
 Section Headers:
@@ -265,10 +474,10 @@ Section Headers:
        Type              Address          Offset            Link
        Size              EntSize          Info              Align
        Flags
-  [ 0] 
+  [ 0]
        NULL                   NULL             0000000000000000  0000000000000000  0
        0000000000000000 0000000000000000  0                 0
-       [0000000000000000]: 
+       [0000000000000000]:
   [ 1] .text
        PROGBITS               PROGBITS         0000000000000000  0000000000000040  0
        0000000000000000 0000000000000000  0                 4
@@ -300,11 +509,11 @@ Section Headers:
   [ 8] .rela.text.main
        RELA                   RELA             0000000000000000  0000000000001970  24
        0000000000000048 0000000000000018  7                 8
-       [0000000000000000]: 
+       [0000000000000000]:
   [ 9] .debug_info
        PROGBITS               PROGBITS         0000000000000000  00000000000000b0  0
        000000000000076f 0000000000000000  0                 1
-       [0000000000000000]: 
+       [0000000000000000]:
 
 ...
 ```
@@ -326,7 +535,7 @@ Discarded input sections
  .bss           0x0000000000000000        0x0 demo.o
  .text._Z5func2v
                 0x0000000000000000       0x10 demo.o
-...               
+...
 ```
 
 ``` bash
@@ -346,7 +555,7 @@ refer:
 
 
 
-# strip 
+# strip
 
 * `strip`用于删除目标文件中的符号（Discard symbols from object files），通常用于删除已生成的可执行文件和库中不需要的符号。
 * 在想要减少文件的大小，并保留对调试有用的信息时，使用`-d`选项，可以删除不使用的信息（文件名和行号等），并可以保留函数名等一般的符号，用gdb进行调试时，只要保留了函数名，即便不知道文件名和行号，也可以进行调试。

@@ -12,6 +12,269 @@ categories: [Bash, 编程语言]
 
 * [Execute Bash Shell Online (GNU Bash v4.4)](https://www.tutorialspoint.com/execute_bash_online.php)
 
+# Shell Style Guide
+
+* [Google's Shell Style Guide](https://google.github.io/styleguide/shellguide.html#s7-naming-conventions)
+* https://unix.stackexchange.com/questions/42847/are-there-naming-conventions-for-variables-in-shell-scripts
+
+## Names convention
+
+Environment variables or shell variables introduced by the operating system, shell startup scripts, or the shell itself, etc., are usually all in **CAPITALS**.
+
+To prevent your variables from conflicting with these variables, it is a good practice to use **lower_case** variable names.
+
+> **Variable Names**: Lower-case, with underscores to separate words. Ex: `my_variable_name`
+>
+> **Constants and Environment Variable Names**: All caps, separated with underscores, declared at the top of the file. Ex: `MY_CONSTANT`
+
+# Shell-Parameter-Expansion
+
+https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Shell-Parameter-Expansion
+
+## ${#parameter}
+
+**The length in characters of the expanded value of parameter is substituted**. If parameter is `*` or `@`, the value substituted is the number of positional parameters. If parameter is an array name subscripted by `*` or `@`, the value substituted is the number of elements in the array. If parameter is an indexed array name subscripted by a negative number, that number is interpreted as relative to one greater than the maximum index of parameter, so negative indices count back from the end of the array, and an index of -1 references the last element.
+
+``` bash
+myvar="some string"
+echo ${#myvar}    # 11
+```
+
+* https://stackoverflow.com/questions/17368067/length-of-string-in-bash
+
+
+
+
+
+# Tips
+
+## [What is the difference between ${var}, "$var", and "${var}" in the Bash shell?](https://stackoverflow.com/questions/18135451/what-is-the-difference-between-var-var-and-var-in-the-bash-shell)
+
+``` bash
+# define a array
+declare -a groups
+
+groups+=("123")
+groups+=("456")
+
+# print
+# 123
+# 456
+for group in "${groups[@]}"; do
+    echo $group
+done
+
+# print
+# 123
+#for group in $groups; do
+#    echo $group
+#done
+
+# print
+# 123
+#for group in ${groups}; do
+#    echo $group
+#done
+```
+
+Question:
+
+Only the first one accomplishes what I want: to iterate through each element in the array. I'm not really clear on the differences between `$groups`, `"$groups"`, `${groups}` and `"${groups}"`. If anyone could explain it, I would appreciate it.
+
+Answers:
+
+> Braces (`$var` vs. `${var}`)
+
+In most cases, `$var` and `${var}` are the same:
+
+``` bash
+var=foo
+echo $var
+# foo
+echo ${var}
+# foo
+```
+
+The braces are only needed to resolve **ambiguity** in expressions:
+
+``` bash
+var=foo
+echo $varbar
+# Prints nothing because there is no variable 'varbar'
+echo ${var}bar
+# foobar
+```
+
+> Quotes (`$var` vs. `"$var"` vs. `"${var}"`)
+
+When you add **double quotes** around a variable, you tell the shell to **treat it as a single word**, even if it contains **whitespaces**:
+
+``` bash
+var="foo bar"
+for i in "$var"; do # Expands to 'for i in "foo bar"; do...'
+    echo $i         #   so only runs the loop once
+done
+# foo bar
+```
+
+Contrast that behavior with the following:
+
+``` bash
+var="foo bar"
+for i in $var; do # Expands to 'for i in foo bar; do...'
+    echo $i       #   so runs the loop twice, once for each argument
+done
+# foo
+# bar
+```
+
+As with `$var` vs. `${var}`, the braces are only needed for **disambiguation(消除模棱两可情况)**, for example:
+
+``` bash
+var="foo bar"
+for i in "$varbar"; do # Expands to 'for i in ""; do...' since there is no
+    echo $i            #   variable named 'varbar', so loop runs once and
+done                   #   prints nothing (actually "")
+
+var="foo bar"
+for i in "${var}bar"; do # Expands to 'for i in "foo barbar"; do...'
+    echo $i              #   so runs the loop once
+done
+# foo barbar
+```
+
+Note that `"${var}bar"` in the second example above could also be written `"${var}"bar`, in which case you don't need the braces anymore, i.e. `"$var"bar`. **However, if you have a lot of quotes in your string these alternative forms can get hard to read** (and therefore hard to maintain). [This page](http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_03_03.html) provides a good introduction to quoting in Bash.
+
+> Arrays (`$var` vs. `$var[@]` vs. `${var[@]}`)
+
+Now for your array. According to the [bash manual](http://linux.die.net/man/1/bash):
+
+> Referencing an array variable without a subscript is equivalent to referencing the array with a subscript of 0.
+
+In other words, if you don't supply an index with [], you get the first element of the array:
+
+``` bash
+foo=(a b c)
+echo $foo
+# a
+```
+
+Which is exactly the same as
+
+``` bash
+foo=(a b c)
+echo ${foo}
+# a
+```
+
+To get all the elements of an array, you need to use `@` as the index, e.g. `${foo[@]}`. The braces are required with arrays because without them, the shell would expand the `$foo` part first, giving the first element of the array followed by a literal `[@]`:
+
+``` bash
+foo=(a b c)
+echo ${foo[@]}
+# a b c
+echo $foo[@]
+# a[@]
+```
+
+[This page](http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_10_02.html) is a good introduction to arrays in Bash.
+
+> Quotes revisited (`${foo[@]}` vs. `"${foo[@]}"`)
+
+You didn't ask about this but it's a subtle difference that's good to know about. If the elements in your array could contain whitespace, you need to use double quotes so that each element is treated as a separate "word:"
+
+``` bash
+foo=("the first" "the second")
+for i in "${foo[@]}"; do # Expands to 'for i in "the first" "the second"; do...'
+    echo $i              #   so the loop runs twice
+done
+# the first
+# the second
+```
+
+Contrast this with the behavior without double quotes:
+
+``` bash
+foo=("the first" "the second")
+for i in ${foo[@]}; do # Expands to 'for i in the first the second; do...'
+    echo $i            #   so the loop runs four times!
+done
+# the
+# first
+# the
+# second
+```
+
+
+refer:
+
+* https://stackoverflow.com/questions/255898/how-to-iterate-over-arguments-in-a-bash-script
+* [Parameter expansion](http://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html)
+
+
+
+## [How to check if a string contains a substring in Bash](https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash)
+
+You can use [Marcus's answer (* wildcards)](https://stackoverflow.com/a/229585/3755692) outside a case statement, too, if you use double brackets:
+
+``` bash
+string='My long string'
+if [[ $string == *"My long"* ]]; then
+  echo "It's there!"
+fi
+```
+
+Note that spaces in the needle string need to be placed between **double quotes**, and the `*` wildcards should be outside. Also note that a simple comparison operator is used (i.e. `==`), not the regex operator `=~`.
+
+If you prefer the regex approach:
+
+``` bash
+string='My string';
+
+if [[ $string =~ "My" ]]; then
+   echo "It's there!"
+fi
+```
+
+I am not sure about using an if statement, but you can get a similar effect with a case statement:
+
+``` bash
+case "$string" in
+  *foo*)
+    # Do stuff
+    ;;
+esac
+```
+
+## [How to portability use "${@:2}"?](https://stackoverflow.com/questions/56822216/how-to-portability-use-2)
+
+Neither `${@:2}` nor `${*:2}` is portable, and many shells will reject both as invalid syntax. If you want to process all arguments except the first, you should get rid of the first with a `shift`.
+
+At this point, the first argument is in "$first" and the positional parameters are shifted down one.
+
+
+``` bash
+#!/bin/bash
+
+if [[ $# -eq 1 ]]; then
+        echo "$1"
+else
+        echo "$1 $(printf '%q' "${@:2}")"
+fi
+
+echo "another way..."
+
+first="${1}"
+shift
+echo The arguments after the first are:
+for x; do echo "$x"; done
+```
+
+* https://linuxize.com/post/bash-printf-command/
+
+
+
+
 
 # Shell Parameter Expansion (Default value)
 
@@ -397,21 +660,63 @@ echo ${stringZ%%b*c}     # a
 Refer: https://tldp.org/LDP/abs/html/string-manipulation.html
 
 
-# Compare
+# Concatenate Strings
 
-* `test` provides no output, but returns an exit status of 0 for "true" (test successful) and 1 for "false" (test failed).
-* The `test` command may also be expressed with **single brackets** `[ ... ]`, as long as they are separated from all other arguments with **whitespace**.
+The simplest way to concatenate two or more string variables is to write them one after another:
 
 ``` bash
-num=4; if (test $num -gt 5); then echo "yes"; else echo "no"; fi
+VAR1="Hello,"
+VAR2=" World"
+VAR3="$VAR1$VAR2"
+echo "$VAR3"
+```
 
-file="/etc/passwd"; if [ -e $file ]; then echo "whew"; else echo "uh-oh"; fi
+You can also concatenate one or more variable with literal strings. In the example above variable `VAR1` is enclosed in curly braces to protect the variable name from surrounding characters. When the variable is followed by another valid variable-name character you must enclose it in curly braces `${VAR1}`.
 
-if [[ $# -eq 0 ]]; then
-  # digital compare
-  # -eq / -lt / -le / -gt / -ge / -ne
-fi
+``` bash
+VAR1="Hello, "
+VAR2="${VAR1}World"
+echo "$VAR2"
+```
 
+Another way of concatenating strings in bash is by appending variables or literal strings to a variable using the `+=` operator:
+
+``` bash
+VAR1="Hello, "
+VAR1+=" World"
+echo "$VAR1"
+```
+
+The following example is using the `+=` operator to concatenate strings in bash for loop :
+
+``` bash
+VAR=""
+for ELEMENT in 'Hydrogen' 'Helium' 'Lithium' 'Beryllium'; do
+  VAR+="${ELEMENT} "
+done
+
+echo "$VAR"
+```
+
+* https://linuxize.com/post/bash-concatenate-strings/
+
+# Compare
+
+## Compare Strings
+
+* `string1 = string2` and `string1 == string2` - The equality operator returns true if the operands are equal.
+    + Use the `=` operator with the test `[` command.
+    + Use the `==` operator with the `[[` command for pattern matching.
+* `string1 != string2` - The inequality operator returns true if the operands are not equal.
+* `string1 =~ regex` - The regex operator returns true if the left operand matches the extended regular expression on the right.
+* `string1 > string2` - The greater than operator returns true if the left operand is greater than the right sorted by lexicographical (alphabetical) order.
+* `string1 < string2` - The less than operator returns true if the right operand is greater than the right sorted by lexicographical (alphabetical) order.
+* `-z string` - True if the string length is zero.
+* `-n string` - True if the string length is non-zero.
+
+示例：
+
+``` bash
 if [[ $1 = "start" ]]; then
   # string compare
   # 等于 = (plain sh) / == (only bash)
@@ -426,8 +731,82 @@ if [[ -z "$1" ]]; then
   echo "This succeeds if $1 is null or unset"
 fi
 
-if [[ -f "proc.pid" ]]; then
-  pid=`cat proc.pid`
+# or check
+if [ "$fname" = "a.txt" ] || [ "$fname" = "c.txt" ]
+
+[[ "string1" == "string2" ]] && echo "Equal" || echo "Not equal"
+```
+
+## Check if a String Contains a Substring
+
+There are multiple ways to check if a string contains a substring. One approach is to use surround the substring with asterisk symbols `*` which means match all characters.
+
+``` bash
+#!/bin/bash
+
+VAR='GNU/Linux is an operating system'
+if [[ $VAR == *"Linux"* ]]; then
+  echo "It's there."
+fi
+```
+
+Another option is to use the regex operator `=~` as shown below. The period followed by an asterisk `.*` matches zero or more occurrences any character except a newline character.
+
+``` bash
+#!/bin/bash
+
+VAR='GNU/Linux is an operating system'
+if [[ $VAR =~ .*Linux.* ]]; then
+  echo "It's there."
+fi
+```
+
+## Comparing Strings with the Case Operator
+
+Instead of using the `test` operators you can also use the `case` statement to compare strings:
+
+``` bash
+#!/bin/bash
+
+VAR="Arch Linux"
+
+case $VAR in
+
+  "Arch Linux")
+    echo -n "Linuxize matched"
+    ;;
+
+  Fedora | CentOS)
+    echo -n "Red Hat"
+    ;;
+esac
+```
+
+## Lexicographic Comparison
+
+Lexicographical comparison is an operation where two strings are compared alphabetically by comparing the characters in a string sequentially from left to right. This kind of comparison is rarely used. The following scripts compare two strings lexicographically:
+
+``` bash
+#!/bin/bash
+
+VAR1="Linuxize"
+VAR2="Ubuntu"
+
+if [[ "$VAR1" > "$VAR2" ]]; then
+    echo "${VAR1} is lexicographically greater then ${VAR2}."
+elif [[ "$VAR1" < "$VAR2" ]]; then
+    echo "${VAR2} is lexicographically greater than ${VAR1}."
+else
+    echo "Strings are equal"
+fi
+```
+
+## Compare Digital
+
+``` bash
+if [[ $# -eq 0 ]]; then
+  # digital compare
+  # -eq / -lt / -le / -gt / -ge / -ne
 fi
 
 ./run.sh
@@ -435,14 +814,24 @@ if [[ $? -ne 0 ]];then
   echo "run.sh failed"
   exit 1
 fi
+```
 
-# or check
-if [ "$fname" = "a.txt" ] || [ "$fname" = "c.txt" ]
+## Others
+
+``` bash
+num=4; if (test $num -gt 5); then echo "yes"; else echo "no"; fi
+
+file="/etc/passwd"; if [ -e $file ]; then echo "whew"; else echo "uh-oh"; fi
+
+if [[ -f "proc.pid" ]]; then
+  pid=`cat proc.pid`
+fi
 ```
 
 * [Is double square brackets [[ ]] preferable over single square brackets [ ] in Bash?](https://stackoverflow.com/questions/669452/is-double-square-brackets-preferable-over-single-square-brackets-in-ba)
 * [Bash test builtin command](https://www.computerhope.com/unix/bash/test.htm)
 * https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
+* [How to Compare Strings in Bash](https://linuxize.com/post/how-to-compare-strings-in-bash/)
 
 # ForceStopAll
 
@@ -1328,6 +1717,7 @@ Input shall be interpreted as a sequence of records. By default, a record is a l
 
 The awk utility shall interpret each input record as a sequence of fields where, by default, a field is a string of non- <blank> non- <newline> characters. This default <blank> and <newline> field delimiter can be changed by using the FS built-in variable or the -F sepstring option. The awk utility shall denote the first field in a record $1, the second $2, and so on. The symbol $0 shall refer to the entire record; setting any other field causes the re-evaluation of $0. Assigning to $0 shall reset the values of all other fields and the NF built-in variable.
 
+* https://www.tutorialspoint.com/awk/index.htm
 
 ## sed
 

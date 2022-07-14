@@ -230,6 +230,105 @@ cmake /path/to/your/project
 make
 ```
 
+# Using Dependencies Guide
+
+## Introduction
+
+Projects will frequently depend on other projects, assets, and artifacts. CMake provides a number of ways to incorporate such things into the build. Projects and users have the flexibility to choose between methods that best suit their needs.
+
+The primary methods of bringing dependencies into the build are the [find_package()](https://cmake.org/cmake/help/latest/command/find_package.html#command:find_package) command and the [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html#module:FetchContent) module.
+
+
+## Using Pre-built Packages With find_package()
+
+A package needed by the project may already be built and available at some location on the user's system. That package might have also been built by CMake, or it could have used a different build system entirely. It might even just be a collection of files that didn't need to be built at all. CMake provides the `find_package()` command for these scenarios. It searches well-known locations, along with additional hints and paths provided by the project or user. It also supports package components and packages being optional. Result variables are provided to allow the project to customize its own behavior according to whether the package or specific components were found.
+
+In most cases, projects should generally use the [Basic Signature](https://cmake.org/cmake/help/latest/command/find_package.html#basic-signature). Most of the time, this will involve just the package name, maybe a version constraint, and the `REQUIRED` keyword if the dependency is not optional. A set of package components may also be specified.
+
+Examples of `find_package()` basic signature
+
+```
+find_package(Catch2)
+find_package(GTest REQUIRED)
+find_package(Boost 1.79 COMPONENTS date_time)
+```
+
+### Config-file packages
+
+The preferred way for a third party to provide executables, libraries, headers, and other files for use with CMake is to provide [config files](https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#config-file-packages). These are text files shipped with the package, which define CMake targets, variables, commands, and so on. The config file is an ordinary CMake script, which is read in by the `find_package()` command.
+
+The config files can usually be found in a directory whose name matches the pattern `lib/cmake/<PackageName>`, although they may be in other locations instead (see [Config Mode Search Procedure](https://cmake.org/cmake/help/latest/command/find_package.html#search-procedure)). The `<PackageName>` is usually the first argument to the `find_package()` command, and it may even be the only argument. Alternative names can also be specified with the `NAMES` option:
+
+Providing alternative names when finding a package
+
+```
+find_package(SomeThing
+  NAMES
+    SameThingOtherName   # Another name for the package
+    SomeThing            # Also still look for its canonical name
+)
+```
+
+The config file must be named either `<PackageName>Config.cmake` or `<LowercasePackageName>-config.cmake` (the former is used for the remainder of this guide, but both are supported). This file is the entry point to the package for CMake.
+
+If the `<PackageName>Config.cmake` file is found and any version constraint is satisfied, the `find_package()` command considers the package to be found, and the entire package is assumed to be complete as designed.
+
+### Find Module Files
+
+See https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#find-module-files
+
+
+## Downloading And Building From Source With FetchContent¶
+
+Dependencies do not necessarily have to be pre-built in order to use them with CMake. They can be built from sources as part of the main project. The [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html#module:FetchContent) module provides functionality to download content (typically sources, but can be anything) and add it to the main project if the dependency also uses CMake. The dependency's sources will be built along with the rest of the project, just as though the sources were part of the project's own sources.
+
+The general pattern is that the project should first declare all the dependencies it wants to use, then ask for them to be made available. The following demonstrates the principle (see [Examples](https://cmake.org/cmake/help/latest/module/FetchContent.html#fetch-content-examples) for more):
+
+```
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
+)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
+)
+FetchContent_MakeAvailable(googletest Catch2)
+```
+
+Various download methods are supported, including downloading and extracting archives from a URL (a range of archive formats are supported), and a number of repository formats including Git, Subversion, and Mercurial. Custom download, update, and patch commands can also be used to support arbitrary use cases.
+
+When a dependency is added to the project with `FetchContent`, the project links to the dependency's targets just like any other target from the project. If the dependency provides namespaced targets of the form `SomePrefix::ThingName`, the project should link to those rather than to any non-namespaced targets. See the next section for why this is recommended.
+
+Not all dependencies can be brought into the project this way. Some dependencies define targets whose names clash with other targets from the project or other dependencies. Concrete executable and library targets created by `add_executable()` and `add_library()` are global, so each one must be unique across the whole build. If a dependency would add a clashing target name, it cannot be brought directly into the build with this method.
+
+
+## FetchContent And find_package() Integration
+
+```
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
+  FIND_PACKAGE_ARGS NAMES GTest
+)
+FetchContent_MakeAvailable(googletest)
+
+add_executable(ThingUnitTest thing_ut.cpp)
+target_link_libraries(ThingUnitTest GTest::gtest_main)
+```
+
+The above example calls `find_package(googletest NAMES GTest)` first. CMake provides a `FindGTest` module, so if that finds a `GTest` package installed somewhere, it will make it available, and the dependency will not be built from source. If no `GTest` package is found, it will be built from source. In either case, the `GTest::gtest_main` target is expected to be defined, so we link our unit test executable to that target.
+
+
+* https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#guide:Using%20Dependencies%20Guide
+
+
+
 # Command
 
 ## cmake_minimum_required
@@ -716,6 +815,19 @@ Copies an `<input>` file to an `<output>` file and substitutes variable values r
 
 https://cmake.org/cmake/help/latest/command/configure_file.html
 
+## find_package
+
+
+
+* https://cmake.org/cmake/help/latest/command/find_package.html
+* https://zhuanlan.zhihu.com/p/97369704
+
+## execute_process
+
+Execute one or more child processes. Commands are executed concurrently as a pipeline, with the standard output of each process piped to the standard input of the next. A single standard error pipe is used for all processes.
+
+* https://cmake.org/cmake/help/latest/command/execute_process.html
+
 
 # Variable
 
@@ -727,50 +839,47 @@ refer:
 * cmake-variables(7)
 
 ```
-MESSAGE(STATUS "CMAKE_CURRENT_LIST_FILE = ${CMAKE_CURRENT_LIST_FILE}")
+SET(PRINT_HEAD_INFO 1)
+
+IF(DEFINED PRINT_HEAD_INFO)
 
 MESSAGE(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
 MESSAGE(STATUS "CMAKE_SYSTEM = ${CMAKE_SYSTEM}")
 MESSAGE(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
-
 MESSAGE(STATUS "CMAKE_SYSTEM_VERSION = ${CMAKE_SYSTEM_VERSION}")
 MESSAGE(STATUS "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}")
 MESSAGE(STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+MESSAGE(STATUS "CMAKE_CURRENT_LIST_FILE = ${CMAKE_CURRENT_LIST_FILE}")
+
 MESSAGE(STATUS "PROJECT_SOURCE_DIR = ${PROJECT_SOURCE_DIR}")
 MESSAGE(STATUS "PROJECT_BINARY_DIR = ${PROJECT_BINARY_DIR}")
 
-MESSAGE(STATUS "CMAKE_CONFIGURATION_TYPES = ${CMAKE_CONFIGURATION_TYPES}")
-MESSAGE(STATUS "CMAKE_BUIlD_TYPE = ${CMAKE_BUIlD_TYPE}")
-
-MESSAGE(STATUS "CMAKE_C_FLAGS_DEBUG = ${CMAKE_C_FLAGS_DEBUG}")
-MESSAGE(STATUS "CMAKE_C_FLAGS_RELEASE = ${CMAKE_C_FLAGS_RELEASE}")
-MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG = ${CMAKE_CXX_FLAGS_DEBUG}")
-MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}")
-
+# Compiler (toolchain)
 MESSAGE(STATUS "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
 MESSAGE(STATUS "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 MESSAGE(STATUS "CMAKE_C_COMPILER_ID = ${CMAKE_C_COMPILER_ID}")
 MESSAGE(STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 MESSAGE(STATUS "CMAKE_C_COMPILER_ABI = ${CMAKE_C_COMPILER_ABI}")
 MESSAGE(STATUS "CMAKE_CXX_COMPILER_ABI = ${CMAKE_CXX_COMPILER_ABI}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER_VERSION = ${CMAKE_CXX_COMPILER_VERSION}")
 
+# CMAKE_BUILD_TYPE (Debug, Release, RelWithDebInfo and MinSizeRel)
+MESSAGE(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+
+MESSAGE(STATUS "CMAKE_C_FLAGS_DEBUG = ${CMAKE_C_FLAGS_DEBUG}")
+MESSAGE(STATUS "CMAKE_C_FLAGS_RELEASE = ${CMAKE_C_FLAGS_RELEASE}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG = ${CMAKE_CXX_FLAGS_DEBUG}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE = ${CMAKE_CXX_FLAGS_RELEASE}")
+
+# ToolChains
 MESSAGE(STATUS "CMAKE_AR = ${CMAKE_AR}")
 MESSAGE(STATUS "CMAKE_LINKER = ${CMAKE_LINKER}")
 MESSAGE(STATUS "CMAKE_NM = ${CMAKE_NM}")
 MESSAGE(STATUS "CMAKE_OBJDUMP = ${CMAKE_OBJDUMP}")
 MESSAGE(STATUS "CMAKE_RANLIB = ${CMAKE_RANLIB}")
 
-# Clang Version
-IF(CMAKE_C_COMPILER_ID STREQUAL Clang AND CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    MESSAGE(STATUS "CLANG_VERSION_MAJOR = ${CLANG_VERSION_MAJOR}")
-    MESSAGE(STATUS "CLANG_VERSION_MINOR = ${CLANG_VERSION_MINOR}")
-    MESSAGE(STATUS "CLANG_VERSION_PATCHLEVEL = ${CLANG_VERSION_PATCHLEVEL}")
-    MESSAGE(STATUS "CLANG_VERSION_STRING = ${CLANG_VERSION_STRING}")
-
-    # Under cmake v3.1.3 I had to check CMAKE_CXX_COMPILER_VERSION as there was no CLANG_VERSION_STRING so looks like a version is now defined for each compiler type giving more control.
-    MESSAGE(STATUS "CMAKE_CXX_COMPILER_VERSION = ${CMAKE_CXX_COMPILER_VERSION}")
-ENDIF()
+ENDIF() # IF(DEFINED PRINT_HEAD_INFO)
 ```
 
 ## CMAKE_CXX_STANDARD
@@ -919,7 +1028,8 @@ https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_ALL_DEPENDENCY.h
 
 This module enables populating content at configure time via any method supported by the `ExternalProject` module. Whereas `ExternalProject_Add()` downloads at build time, the `FetchContent` module makes content available immediately, allowing the configure step to use the content in commands like `add_subdirectory()`, `include()` or `file()` operations.
 
-https://cmake.org/cmake/help/latest/module/FetchContent.html
+* https://cmake.org/cmake/help/latest/module/FetchContent.html
+* https://cmake.org/cmake/help/latest/module/FetchContent.html#fetch-content-examples
 
 ## GoogleTest
 
@@ -1455,4 +1565,4 @@ popd
 * [Switching between GCC and Clang/LLVM using CMake](https://stackoverflow.com/questions/7031126/switching-between-gcc-and-clang-llvm-using-cmake)
 * [How to print messages after make done with cmake?](https://stackoverflow.com/questions/25240105/how-to-print-messages-after-make-done-with-cmake/34953585)
 * [CMake: Print out all accessible variables in a script](https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script)
-
+* https://github.com/BrightXiaoHan/CMakeTutorial

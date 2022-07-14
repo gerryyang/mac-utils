@@ -48,11 +48,11 @@ categories: C/C++
 | LOCK CMPXCHG (CAS) | 15-30
 | C/C++ Function Calls | 25-250
 | Allocations | 200-500
-| Kernel Calls | 1000-1500 
+| Kernel Calls | 1000-1500
 | C++ Exceptions | 5000
 | Thread Context Switches | 10000
 
-> A CPU with a clock speed of 2.4 GHz executes 2.4 billion cycles per second. Sometimes, multiple instructions are completed in a single clock cycle; in other cases, one instruction might be handled over multiple clock cycles. 
+> A CPU with a clock speed of 2.4 GHz executes 2.4 billion cycles per second. Sometimes, multiple instructions are completed in a single clock cycle; in other cases, one instruction might be handled over multiple clock cycles.
 
 ![share10](/assets/images/202110/share10.png)
 
@@ -142,16 +142,16 @@ BENCHMARK(test3);
 选择合适的Benchmarking 工具，提供标准的量化比较。[其他情况测试](https://github.com/gerryyang/mac-utils/blob/master/programing/protocol-buffers/tutorial/src/celero_benchmark.cc)
 
 ```
- $ ./celero_benchmark 
+ $ ./celero_benchmark
 Celero
 Timer resolution: 0.001000 us
-|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |   
+|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |
 |:--------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 | 
-|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 | 
-|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
-|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 | 
-|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 | 
+|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 |
+|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 |
+|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
+|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 |
+|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
 Completed in 00:00:00.028138
 ```
 
@@ -198,7 +198,7 @@ stress: info: [15180] successful run completed in 601s
 * 通过`top`或者`uptime`命令查看系统的负载情况。在实际生产环境中，通常当平均负载高于CPU数量70%的时候，就需要排查负载高的问题了。其中，CPU密集型和I/O密集型的服务，CPU负载和CPU使用率可能不一样。
 
 > 平均负载，是指单位时间内，处于可运行状态（R）和不可中断状态（D）的进程数。所以，它不仅包括了正在使用CPU的进程，还包括等待CPU和等待I/O的进程。
-> 
+>
 > CPU使用率，是单位时间内CPU使用情况的统计，以百分比的方式展示。CPU使用率 = 1 - 空闲时间/总CPU时间
 
 * 使用内存池减少内存的动态分配，以及禁止Swap。如果必须开启Swap，则降低 swappiness（`/proc/sys/vm/swappiness`）的值，减少内存回收时Swap的使用倾向。另外，可以使用`/dev/shm`共享内存改善程序的处理性能（例如，配置系统）。
@@ -211,7 +211,7 @@ stress: info: [15180] successful run completed in 601s
 
 | 存储类型 | 单盘最大 IOPS（4KB随机读写） | 单盘最大吞吐量（MB/s）
 | -- | -- | --
-| SSD (SATA -> PCIe -> NVMe，命令队列数量和深度不同) | 2w - 100w | 260 - 4000 
+| SSD (SATA -> PCIe -> NVMe，命令队列数量和深度不同) | 2w - 100w | 260 - 4000
 | HDD | 55 - 180 | 60 - 150
 
 `fio`的测试方法：
@@ -227,7 +227,7 @@ fio -name=randwrite -direct=1 -iodepth=64 -rw=randwrite -ioengine=libaio -bs=4k 
 fio -name=read -direct=1 -iodepth=64 -rw=read -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
 
 # 顺序写
-fio -name=write -direct=1 -iodepth=64 -rw=write -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb 
+fio -name=write -direct=1 -iodepth=64 -rw=write -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
 ```
 
 磁盘benchmark参考: https://cloud.tencent.com/document/product/362/2353
@@ -237,7 +237,7 @@ C10K -> C1000K，硬件的支持（万兆网卡，多队列网卡，CPU绑定）
 
 * 更多可以参考：[服务器常用性能瓶颈定位](https://km.woa.com/group/TimiJ1group/articles/show/433133)
 
-More: 
+More:
 
 1. [Introduction to DPDK: Architecture and Principles](https://blog.selectel.com/introduction-dpdk-architecture-principles/)
 2. [The Secret To 10 Million Concurrent Connections -The Kernel Is The Problem, Not The Solution](http://highscalability.com/blog/2013/5/13/the-secret-to-10-million-concurrent-connections-the-kernel-i.html)
@@ -294,7 +294,7 @@ C++11之前的方法：使用`offsetof`宏获取member的偏移量，从而获�
     result = offsetof(alignof_trick, member); \
     } while (0);
 
-typedef void (*f)(); 
+typedef void (*f)();
 
 int main()
 {
@@ -302,19 +302,19 @@ int main()
 
     ALIGNOF(char, len);
     std::cout << len << std::endl; // 1
-    
+
     ALIGNOF(int, len);
     std::cout << len << std::endl; // 4
-    
+
     ALIGNOF(short, len);
     std::cout << len << std::endl; // 2
-    
+
     ALIGNOF(float, len);
     std::cout << len << std::endl; // 4
-    
+
     ALIGNOF(double, len);
     std::cout << len << std::endl; // 8
-    
+
     ALIGNOF(long long, len);
     std::cout << len << std::endl; // 8
 
@@ -380,12 +380,12 @@ int main()
 
 // GCC
 #define ALIGNOF(type) __alignof__(type)
-#define ALIGNAS(len) __attribute__((aligned(len))) 
+#define ALIGNAS(len) __attribute__((aligned(len)))
 
 int main()
 {
     short x1;
-    ALIGNAS(8) short x2; 
+    ALIGNAS(8) short x2;
     std::cout << ALIGNOF(x1) << std::endl; // 2
     std::cout << ALIGNOF(x2) << std::endl; // 8
 }
@@ -405,8 +405,8 @@ int main()
     short x1;
     std::cout << ALIGNOF(short) << std::endl; // 2
     std::cout << ALIGNOF(decltype(x1)) << std::endl; // 2
-    
-    ALIGNAS(8) short x2; 
+
+    ALIGNAS(8) short x2;
     std::cout << ALIGNOF(decltype(x2)) << std::endl; // 2 TODO
 }
 ```
@@ -469,8 +469,8 @@ NUMA node0 CPU(s):   0
 Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx lm constant_tsc rep_good nopl cpuid pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm pti bmi1 avx2 bmi2 xsaveopt
 ```
 
-``` 
-$ ./tinymembench 
+```
+$ ./tinymembench
 tinymembench v0.4.9 (simple benchmark for memory throughput and latency)
 
 ==========================================================================
@@ -544,24 +544,24 @@ int main(int argc, char *argv[])
     constexpr int align_size = 32;
     constexpr int alloc_size = 10001;
     constexpr int buff_size = align_size + alloc_size;
-    
+
     char dst[buff_size] = {0};
     char src[buff_size] = {0};
-    
+
     void *dst_ori_ptr = dst;
     void *src_ori_ptr = src;
-    
+
     size_t dst_size = sizeof(dst);
     size_t src_size = sizeof(src);
-    
+
     char *dst_ptr = static_cast<char *>(std::align(align_size, alloc_size, dst_ori_ptr, dst_size));
     char *src_ptr = static_cast<char *>(std::align(align_size, alloc_size, src_ori_ptr, src_size));
-    
+
     if (argc == 2 && argv[1][0] == '1') {
         ++dst_ptr;
         ++src_ptr;
     }
-    
+
     auto beg = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 10000000; ++i) {
         __movsb(dst_ptr, src_ptr, alloc_size - 1);
@@ -581,7 +581,7 @@ int main(int argc, char *argv[])
 
 其中，`std::format`目前还没有编译器支持，此处使用`fmtlib`代替。
 
-* https://en.cppreference.com/w/cpp/compiler_support 
+* https://en.cppreference.com/w/cpp/compiler_support
 * https://stackoverflow.com/questions/65083544/format-no-such-file-or-directory
 
 ``` cpp
@@ -640,7 +640,7 @@ RandomDigit: Generates 1000 random double values, filtered out +/-inf and nan. T
 ![randomdigit](/assets/images/202110/randomdigit.png)
 
 > 1. Note that the null implementation does nothing. It measures the overheads of looping and function call.
-> 
+>
 > 2. Why fast dtoa() functions is needed? They are a very common operations in writing data in text format. The standard way of sprintf(), std::stringstream, often provides poor performance. The author of this benchmark would optimize the sprintf implementation in RapidJSON. https://github.com/fmtlib/dtoa-benchmark/blob/master/src/milo/dtoa_milo.h
 
 代码分析：
@@ -701,7 +701,7 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> m_beg;
 };
 
-void sprintf_string() 
+void sprintf_string()
 {
     ScopedTimer timer("sprintf_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -712,7 +712,7 @@ void sprintf_string()
     }
 }
 
-void ss_string() 
+void ss_string()
 {
     ScopedTimer timer("ss_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -733,7 +733,7 @@ void to_string()
     }
 }
 
-void fmt_string() 
+void fmt_string()
 {
     ScopedTimer timer("fmt_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -742,7 +742,7 @@ void fmt_string()
     }
 }
 
-void fmt_int_string() 
+void fmt_int_string()
 {
     ScopedTimer timer("fmt_int_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -754,7 +754,7 @@ void fmt_int_string()
 }
 
 #if 0
-void std_fmt_string() 
+void std_fmt_string()
 {
     ScopedTimer timer("std_fmt_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -764,7 +764,7 @@ void std_fmt_string()
 }
 #endif
 
-void tc_string() 
+void tc_string()
 {
     ScopedTimer timer("tc_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -854,7 +854,7 @@ char* uint2str(uint32_t n, char *buf)
     return p;
 }
 
-void table_string() 
+void table_string()
 {
     ScopedTimer timer("table_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -915,7 +915,7 @@ namespace detail
 template<typename T, T num>
 struct string_from : ::detail::explode<num < 0, ::detail::cabs(num)> {};
 
-void compileb_string() 
+void compileb_string()
 {
     ScopedTimer timer("compileb_string");
     for (auto i = 0; i < MAXCNT; ++i) {
@@ -924,7 +924,7 @@ void compileb_string()
     }
 }
 
-int main() 
+int main()
 {
     sprintf_string();
     ss_string();
@@ -969,7 +969,7 @@ int main()
 
 GCC内置宏[__builtin_expect](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html)提供了分支预测（[Branch predictor](https://en.wikipedia.org/wiki/Branch_predictor)）的能力，从而有助于CPU执行[Instruction pipelining](https://en.wikipedia.org/wiki/Instruction_pipelining)优化，其中，exp 为 integral expressions，__builtin_expect 为 true 的默认概率为 90%（依赖 -O2，而 -O0 不会优化）。
 
-> long __builtin_expect (long exp, long c) 
+> long __builtin_expect (long exp, long c)
 > long __builtin_expect_with_probability(long exp, long c, double probability)
 
 四阶段的 Instruction pipeline（`fetch`, `decode`, `execute` and `write-back`），其中，每个彩色格子表示相互独立的指令。
@@ -1048,7 +1048,7 @@ __attribute__ ((noinline)) int func(int a)
 }
 
 int main()
-{ 
+{
   auto a = std::rand();
   func(a);
   return 0;
@@ -1072,7 +1072,7 @@ int main()
  738:   31 c0                   xor    %eax,%eax
  73a:   5b                      pop    %rbx
  73b:   5d                      pop    %rbp
- 73c:   c3                      retq   
+ 73c:   c3                      retq
  73d:   0f 1f 00                nopl   (%rax)
 
  0000000000000860 <_Z4funci>:
@@ -1083,17 +1083,17 @@ int main()
  86d:   e8 6e fe ff ff          callq  6e0 <usleep@plt>
  872:   31 c0                   xor    %eax,%eax
  874:   48 83 c4 08             add    $0x8,%rsp
- 878:   c3                      retq   
+ 878:   c3                      retq
  879:   0f 1f 80 00 00 00 00    nopl   0x0(%rax)
  880:   31 ff                   xor    %edi,%edi
  882:   e8 49 fe ff ff          callq  6d0 <time@plt>
  887:   31 c0                   xor    %eax,%eax
  889:   48 83 c4 08             add    $0x8,%rsp
- 88d:   c3                      retq   
+ 88d:   c3                      retq
  88e:   66 90                   xchg   %ax,%ax
 ```
 
-程序2: 
+程序2:
 
 ``` cpp
 #define LIKELY(x)  __builtin_expect(!!(x), 1)
@@ -1119,9 +1119,9 @@ __attribute__ ((noinline)) int func(int a)
  85a:   e8 71 fe ff ff          callq  6d0 <time@plt>
  85f:   31 c0                   xor    %eax,%eax
  861:   48 83 c4 08             add    $0x8,%rsp
- 865:   c3                      retq   
+ 865:   c3                      retq
  866:   66 2e 0f 1f 84 00 00    nopw   %cs:0x0(%rax,%rax,1)
- 86d:   00 00 00 
+ 86d:   00 00 00
  870:   bf e8 03 00 00          mov    $0x3e8,%edi
  875:   e8 66 fe ff ff          callq  6e0 <usleep@plt>
  87a:   eb e3                   jmp    85f <_Z4funci+0xf>
@@ -1244,20 +1244,20 @@ main(int argc, char *argv[])
 
 通过选项让编译器帮助实现优化：
 
-Building the programming now involves two steps: **a profiling phase** and **an optimized compile**. 
+Building the programming now involves two steps: **a profiling phase** and **an optimized compile**.
 
 > -fprofile-generate
 > Enable options usually used for instrumenting application to produce profile useful for later recompilation with profile feedback based optimization. You must use -fprofile-generate both when compiling and when linking your program.
-> To optimize the program based on the collected profile information, use -fprofile-use. 
+> To optimize the program based on the collected profile information, use -fprofile-use.
 > Enable profile feedback-directed optimizations, and the following optimizations, many of which are generally profitable only with profile feedback available:
 
 ```
--fbranch-probabilities  -fprofile-values 
--funroll-loops  -fpeel-loops  -ftracer  -fvpt 
--finline-functions  -fipa-cp  -fipa-cp-clone  -fipa-bit-cp 
--fpredictive-commoning  -fsplit-loops  -funswitch-loops 
--fgcse-after-reload  -ftree-loop-vectorize  -ftree-slp-vectorize 
--fvect-cost-model=dynamic  -ftree-loop-distribute-patterns 
+-fbranch-probabilities  -fprofile-values
+-funroll-loops  -fpeel-loops  -ftracer  -fvpt
+-finline-functions  -fipa-cp  -fipa-cp-clone  -fipa-bit-cp
+-fpredictive-commoning  -fsplit-loops  -funswitch-loops
+-fgcse-after-reload  -ftree-loop-vectorize  -ftree-slp-vectorize
+-fvect-cost-model=dynamic  -ftree-loop-distribute-patterns
 -fprofile-reorder-functions
 ```
 
@@ -1265,7 +1265,7 @@ Building the programming now involves two steps: **a profiling phase** and **an 
 # profiling phase
 g++ -O2 -fprofile-generate a.cc -o a.prof
 
-# optimized compile 
+# optimized compile
 g++ -O2 -fprofile-use a.cc -o a.opt
 ```
 
@@ -1447,7 +1447,7 @@ int main()
 
 `vsyscall`或`virtual system call`是第一种也是最古老的一种用于加快系统调用的机制。`vsyscall`的工作原则其实十分简单。Linux 内核在用户空间映射一个包含一些变量及一些系统调用的实现的内存页。因此, 这些系统调用将在用户空间下执行，这意味着将不发生上下文切换。
 
-> `vsyscall` is an obsolete concept and replaced by the `vDSO` or `virtual dynamic shared object`. The main difference between the `vsyscall` and `vDSO` mechanisms is that `vDSO` maps memory pages into each process in a shared object form, but `vsyscall` is static in memory and has the same address every time. For the x86_64 architecture it is called `linux-vdso.so.1`. All userspace applications linked with this shared library via the `glibc`. 
+> `vsyscall` is an obsolete concept and replaced by the `vDSO` or `virtual dynamic shared object`. The main difference between the `vsyscall` and `vDSO` mechanisms is that `vDSO` maps memory pages into each process in a shared object form, but `vsyscall` is static in memory and has the same address every time. For the x86_64 architecture it is called `linux-vdso.so.1`. All userspace applications linked with this shared library via the `glibc`.
 
 ```
 $ cat /proc/1/maps | grep vsyscall
@@ -1536,7 +1536,7 @@ section .text
 
 _start:
   ; Print the string
-  mov rax, 1                  ; sys_write 
+  mov rax, 1                  ; sys_write
   mov rdi, 1                  ; param 1, stdout
   mov rsi, some_string        ; param 2
   mov rdx, [some_string_size] ; param 3
@@ -1606,19 +1606,19 @@ strip example
 * 宏观上，合理的架构。例如，Google的GFS的实现中，为了保持系统简单，在一致性（C）和可用性中（A），GFS选择了可用性，而放宽了对一致性的要求。追加写入是GFS中主要的写操作，追加写只保证至少写入一次的语义，每一次写入都需要等待所有副本节点写入成功，如果在任意一个节点上失败，客户端都会得到写失败的通知，然后发起重试，GFS并不会对之前在部分节点上写入的脏数据做处理，而是直接暴漏给了应用程序，让应用程序完成去重和排序的工作。
 
 * 微观上，合理的数据结构和算法。
-  
+
 * 基础组件的优化 (比如, gettimeofday, string_veiw, Log)
-  
+
 * 全静态编译 (相比动态编译会有几个点的提高)
-  
+
 * 减少系统调用（vDSO可以提升77%）
-  
+
 * 内存池优化 (tcmalloc)
-  
+
 * Zero Copy (sendfile)
-  
+
 * Pipeline [无锁编程介绍](https://km.woa.com/group/TimiJ1group/articles/show/445557)
-	
+
 * 利用新的硬件红利（NUMA架构的优化）
 
 
@@ -1630,3 +1630,4 @@ strip example
 * [Other Built-in Functions Provided by GCC](https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html)
 * [Technical Report on C++ Performance](http://www.open-std.org/jtc1/sc22/wg21/docs/TR18015.pdf)
 * [Why does clang produce inefficient asm with -O0 (for this simple floating point sum)?](https://stackoverflow.com/questions/53366394/why-does-clang-produce-inefficient-asm-with-o0-for-this-simple-floating-point)
+* [Why does GCC generate 15-20% faster code if I optimize for size instead of speed?](https://stackoverflow.com/questions/19470873/why-does-gcc-generate-15-20-faster-code-if-i-optimize-for-size-instead-of-speed?rq=1)

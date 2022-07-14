@@ -252,9 +252,15 @@ git rm --cached *.log
 
 此命令会把暂存区域的文件移除，同时文件仍然保留在磁盘。
 
+> **Note**
+> The purpose of gitignore files is to ensure that certain files not tracked by Git remain untracked.
+>
+> To stop tracking a file that is currently tracked, use git rm --cached.
+
 
 ![gitignore](/assets/images/201810/gitignore.jpg)
 
+* https://git-scm.com/docs/gitignore
 
 # Git的协作模式
 
@@ -894,6 +900,7 @@ git cherry-pick --continue
 
 * https://git-scm.com/docs/git-cherry-pick
 * https://www.ruanyifeng.com/blog/2020/04/git-cherry-pick.html
+* [Stop cherry-picking, start merging](https://devblogs.microsoft.com/oldnewthing/20180312-00/?p=98215)
 
 ## 稀疏检出 git sparse-checkout
 

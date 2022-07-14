@@ -37,7 +37,7 @@ categories: [Linux Performance]
 * The tool is capable to convert a perf data file to a `callgrind` one that can be displayed with `kcachegrind`
   + multiple events are supported
   + annotated source code, assembly and function list view
-  + complete inline chain  
+  + complete inline chain
 
 * The callgrind converter and the new GUI under development will offer an easy way to non experts to navigate and understand the profiled application
 
@@ -48,7 +48,7 @@ categories: [Linux Performance]
 * The converter reads the raw perf data file and produces spreadsheets, cycle accounting trees and call graphs
 * The GUI will be able to:
   + present the available data in spreadsheets, cycle accounting trees and callgraphs
-  + offer insights on the callgraph, e.g. mark as hot virtual methods with high call counts 
+  + offer insights on the callgraph, e.g. mark as hot virtual methods with high call counts
   + correlate different HW/SW events to gain a deeper understanding of the performance bottlenecks
 
 
@@ -71,7 +71,7 @@ The `perf` tool offers a rich set of commands to collect and analyze performance
 
 The list of supported commands:
 
-``` 
+```
 perf
 
  usage: perf [--version] [--help] COMMAND [ARGS]
@@ -208,14 +208,14 @@ pid: 24298
 
  Performance counter stats for './perf_stat_example':
 
-       1251.260398      task-clock (msec)         #    0.980 CPUs utilized          
-               107      context-switches          #    0.086 K/sec                  
-                 0      cpu-migrations            #    0.000 K/sec                  
-            48,878      page-faults               #    0.039 M/sec                  
-   <not supported>      cycles                                                      
-   <not supported>      instructions                                                
-   <not supported>      branches                                                    
-   <not supported>      branch-misses                                               
+       1251.260398      task-clock (msec)         #    0.980 CPUs utilized
+               107      context-switches          #    0.086 K/sec
+                 0      cpu-migrations            #    0.000 K/sec
+            48,878      page-faults               #    0.039 M/sec
+   <not supported>      cycles
+   <not supported>      instructions
+   <not supported>      branches
+   <not supported>      branch-misses
 
        1.276480272 seconds time elapsed
 ```
@@ -234,8 +234,8 @@ pid: 26956
 
  Performance counter stats for './perf_stat_example':
 
-                87      context-switches                                            
-            48,880      page-faults                                                 
+                87      context-switches
+            48,880      page-faults
 
        1.260494406 seconds time elapsed
 ```
@@ -258,37 +258,37 @@ It is possible to use perf to attach to an already running thread or process. Th
 ^C
  Performance counter stats for process id '917':
 
-         12.132072      task-clock (msec)         #    0.002 CPUs utilized          
-                45      context-switches          #    0.004 M/sec                  
-                 0      cpu-migrations            #    0.000 K/sec                  
-               640      page-faults               #    0.053 M/sec                  
-   <not supported>      cycles                                                      
-   <not supported>      instructions                                                
-   <not supported>      branches                                                    
-   <not supported>      branch-misses                                               
+         12.132072      task-clock (msec)         #    0.002 CPUs utilized
+                45      context-switches          #    0.004 M/sec
+                 0      cpu-migrations            #    0.000 K/sec
+               640      page-faults               #    0.053 M/sec
+   <not supported>      cycles
+   <not supported>      instructions
+   <not supported>      branches
+   <not supported>      branch-misses
 
        5.384885419 seconds time elapsed
 ```
 
 Even though we are attaching to a process, we can still pass the name of a command. It is used to time the measurement. Without it, perf monitors until it is killed.
 
-Also note that when attaching to a process, all threads of the process are monitored. Furthermore, given that inheritance is on by default, child processes or threads will also be monitored. To turn this off, you must use the `-i` option. It is possible to attach a specific thread within a process. By thread, we mean kernel visible thread. In other words, a thread visible by the ps or top commands. To attach to a thread, the `-t` option must be used. 
+Also note that when attaching to a process, all threads of the process are monitored. Furthermore, given that inheritance is on by default, child processes or threads will also be monitored. To turn this off, you must use the `-i` option. It is possible to attach a specific thread within a process. By thread, we mean kernel visible thread. In other words, a thread visible by the ps or top commands. To attach to a thread, the `-t` option must be used.
 
 ```
 $perf stat -p 39911 sleep 3
 
  Performance counter stats for process id '39911':
 
-        131.862207      task-clock (msec)         #    0.044 CPUs utilized          
-            12,148      context-switches          #    0.092 M/sec                  
-                59      cpu-migrations            #    0.447 K/sec                  
-                 4      page-faults               #    0.030 K/sec                  
-                 0      cycles                    #    0.000 GHz                    
-                 0      stalled-cycles-frontend   #    0.00% frontend cycles idle   
-                 0      stalled-cycles-backend    #    0.00% backend  cycles idle   
-                 0      instructions              #    0.00  insns per cycle        
-                 0      branches                  #    0.000 K/sec                  
-                 0      branch-misses             #    0.000 K/sec                  
+        131.862207      task-clock (msec)         #    0.044 CPUs utilized
+            12,148      context-switches          #    0.092 M/sec
+                59      cpu-migrations            #    0.447 K/sec
+                 4      page-faults               #    0.030 K/sec
+                 0      cycles                    #    0.000 GHz
+                 0      stalled-cycles-frontend   #    0.00% frontend cycles idle
+                 0      stalled-cycles-backend    #    0.00% backend  cycles idle
+                 0      instructions              #    0.00  insns per cycle
+                 0      branches                  #    0.000 K/sec
+                 0      branch-misses             #    0.000 K/sec
 
        3.001477374 seconds time elapsed
 ```
@@ -296,7 +296,7 @@ $perf stat -p 39911 sleep 3
 We look at `rsyslogd`, because it always runs on Ubuntu, with multiple threads. (使用 `-t` 采样指定的线程)
 
 ```
-# ps -L ax | fgrep rsyslogd 
+# ps -L ax | fgrep rsyslogd
   914   914 ?        Ssl    0:00 /usr/sbin/rsyslogd -n
   914   942 ?        Ssl    1:44 /usr/sbin/rsyslogd -n
   914   943 ?        Ssl    0:00 /usr/sbin/rsyslogd -n
@@ -306,14 +306,14 @@ We look at `rsyslogd`, because it always runs on Ubuntu, with multiple threads. 
 
  Performance counter stats for thread id '942':
 
-          0.045408      task-clock (msec)         #    0.000 CPUs utilized          
-                 3      context-switches          #    0.066 M/sec                  
-                 0      cpu-migrations            #    0.000 K/sec                  
-                 0      page-faults               #    0.000 K/sec                  
-   <not supported>      cycles                                                      
-   <not supported>      instructions                                                
-   <not supported>      branches                                                    
-   <not supported>      branch-misses                                               
+          0.045408      task-clock (msec)         #    0.000 CPUs utilized
+                 3      context-switches          #    0.066 M/sec
+                 0      cpu-migrations            #    0.000 K/sec
+                 0      page-faults               #    0.000 K/sec
+   <not supported>      cycles
+   <not supported>      instructions
+   <not supported>      branches
+   <not supported>      branch-misses
 
        2.000827441 seconds time elapsed
 ```
@@ -326,7 +326,7 @@ In this example, the thread 942 did not run during the 2s of the measurement. Ot
 
 * Pretty printing large numbers
 
-For most people, it is hard to read large numbers. With perf stat, it is possible to print large numbers using the comma separator for thousands (US-style). For that the `-B` option and the correct locale for `LC_NUMERIC` must be set. 
+For most people, it is hard to read large numbers. With perf stat, it is possible to print large numbers using the comma separator for thousands (US-style). For that the `-B` option and the correct locale for `LC_NUMERIC` must be set.
 
 * Machine readable output
 
@@ -349,14 +349,14 @@ Mon Jun 21 16:37:07 CST 2021
 
 The perf tool can be used to collect profiles on per-thread, per-process and per-cpu basis.
 
-There are several commands associated with sampling: `record`, `report`, `annotate`. You must first collect the samples using `perf record`. This generates an output file called `perf.data`. That file can then be analyzed, possibly on another machine, using the `perf report` and `perf annotate` commands. 
+There are several commands associated with sampling: `record`, `report`, `annotate`. You must first collect the samples using `perf record`. This generates an output file called `perf.data`. That file can then be analyzed, possibly on another machine, using the `perf report` and `perf annotate` commands.
 
 ## Period and rate
 
 The perf_events interface allows two modes to express the sampling period:
 
-1. the number of occurrences of the event (`period`) (即，`-c 200`) 
-2. the average rate of samples/sec (`frequency`) (即，`-F 1000`) 
+1. the number of occurrences of the event (`period`) (即，`-c 200`)
+2. the average rate of samples/sec (`frequency`) (即，`-F 1000`)
 
 The perf tool defaults to the average rate. It is set to `1000Hz`, or `1000 samples/sec`. That means that the kernel is dynamically adjusting the sampling period to achieve the target average rate. The adjustment in period is reported in the raw profile data. In contrast, with the other mode, the sampling period is set by the user and does not vary between samples. There is currently no support for sampling period randomization.
 
@@ -425,9 +425,9 @@ perf report
      [...]
 ```
 
-* The column 'Overhead' indicates the percentage of the overall samples collected in the corresponding function. 
-* The second column reports the process from which the samples were collected. In per-thread/per-process mode, this is always the name of the monitored command. But in cpu-wide mode, the command can vary. 
-* The third column shows the name of the ELF image where the samples came from. If a program is dynamically linked, then this may show the name of a shared library. When the samples come from the kernel, then the pseudo ELF image name `kernel.kallsyms` is used. 
+* The column 'Overhead' indicates the percentage of the overall samples collected in the corresponding function.
+* The second column reports the process from which the samples were collected. In per-thread/per-process mode, this is always the name of the monitored command. But in cpu-wide mode, the command can vary.
+* The third column shows the name of the ELF image where the samples came from. If a program is dynamically linked, then this may show the name of a shared library. When the samples come from the kernel, then the pseudo ELF image name `kernel.kallsyms` is used.
 * The fourth column indicates the privilege level at which the sample was taken, i.e. when the program was running when it was interrupted:
 
 ```
@@ -447,7 +447,7 @@ To make the output easier to parse, it is possible to change the column separato
 ```
 # perf report -t ","
 
-Samples: 302K of event 'cpu-clock', Event count (approx.): 302077                                                                                                                                        
+Samples: 302K of event 'cpu-clock', Event count (approx.): 302077
   4.48%,gamesvr,[vdso]                      ,[.] 0x0000000000000e6c
   4.37%,gamesvr,libc-2.17.so                ,[.] _dl_addr
   3.78%,gamesvr,gamesvr                     ,[.] JLib::my_gettimeofday(timeval*)
@@ -462,7 +462,7 @@ It is possible to drill down to the instruction level with `perf annotate`. For 
 # perf annotate
 ```
 
-`perf annotate` can generate sourcecode level information if the application is compiled with `-ggdb`. 
+`perf annotate` can generate sourcecode level information if the application is compiled with `-ggdb`.
 
 ![perf_annotate](/assets/images/202106/perf_annotate.png)
 
@@ -647,7 +647,7 @@ pid: 13985
 # Samples: 128K of event 'cpu-clock'
 # Event count (approx.): 128706000
 #
-# Overhead  Command          Shared Object      Symbol                            
+# Overhead  Command          Shared Object      Symbol
 # ........  ...............  .................  ..................................
 #
     99.90%  perf_top_exampl  perf_top_example   [.] _Z19compute_pi_baselinem
@@ -661,14 +661,14 @@ pid: 13985
      0.00%  perf_top_exampl  [kernel.kallsyms]  [k] iowrite16
 ```
 
-* Options included `-a` to trace all CPUs, and `-g` to capture call graphs (stack traces). 
+* Options included `-a` to trace all CPUs, and `-g` to capture call graphs (stack traces).
 
 更多用法：[Brendan Gregg's perf examples](http://www.brendangregg.com/perf.html)
 
 
 # Visualizations
 
-perf_events has a builtin visualization: timecharts, as well as text-style visualization via its text user interface (TUI) and tree reports. 
+perf_events has a builtin visualization: timecharts, as well as text-style visualization via its text user interface (TUI) and tree reports.
 
 refer:
 
@@ -686,7 +686,7 @@ refer:
   Enables call-graph (stack chain/backtrace) recording.
 ```
 
-Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using open source programs on [github.com/brendangregg/FlameGraph](https://github.com/brendangregg/FlameGraph), which create interactive `SVGs`.  
+Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using open source programs on [github.com/brendangregg/FlameGraph](https://github.com/brendangregg/FlameGraph), which create interactive `SVGs`.
 
 The following pages (or posts) introduce different types of flame graphs:
 
@@ -717,13 +717,15 @@ A flame graph has the following characteristics:
 
 Flame graphs can be interpreted as follows:
 
-* The top edge of the flame graph shows the function that was running on the CPU when the stack trace was collected. For CPU profiles, this is the function that is directly consuming CPU cycles. For other profile types, this is the function that directly led to the instrumented event. 
+* The top edge of the flame graph shows the function that was running on the CPU when the stack trace was collected. For CPU profiles, this is the function that is directly consuming CPU cycles. For other profile types, this is the function that directly led to the instrumented event.
 * Look for large plateaus along the top edge, as these show a single stack trace was frequently present in the profile. For CPU profiles, this means a single function was frequently running on-CPU. (最上面的function是频繁在CPU运行的函数)
 * Reading top down shows ancestry. A function was called by its parent, which is shown directly below it; the parent was called by its parent shown below it, and so on. A quick scan downward from a function identifies why it was called. (从上往下看)
 * Reading bottom up shows code flow and the bigger picture. A function calls any child functions shown above it, which, in turn, call functions shown above them. Reading bottom up also shows the big picture of code flow before various forks split execution into smaller towers. (从下往上看)
 * The width of function boxes can be directly compared: wider boxes mean a greater presence in the profile and are the most important to understand first.
 * **For CPU profiles that employ timed sampling of stack traces, if a function box is wider than another, this may be because it consumes more CPU per function call or that the function was simply called more often**. The function-call count is not shown or known via sampling. (**对于CPU，越宽的function表示消耗CPU越多，或者这个function被调用次数越多**)
 * Major forks in the flame graph, spotted as two or more large towers atop a single function, can be useful to study. They can indicate a logical grouping of code, where a function processes work in stages, each with its own function. It can also be caused by a conditional statement, which chooses which function to call.
+
+More: [如何读懂火焰图？](https://www.ruanyifeng.com/blog/2017/09/flame-graph.html)
 
 ### Interpretation Example
 

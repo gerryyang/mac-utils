@@ -56,7 +56,7 @@ int swap_add(int *xp, int *yp)
     *xp = y;
     *yp = x;
     return x + y;
-} 
+}
 
 int caller()
 {
@@ -83,13 +83,13 @@ swap_add(int*, int*):
         mov     QWORD PTR [rbp-24], rdi       ; 获取 xp
         mov     QWORD PTR [rbp-32], rsi       ; 获取 yp
 
-        mov     rax, QWORD PTR [rbp-24]       
+        mov     rax, QWORD PTR [rbp-24]
         mov     eax, DWORD PTR [rax]
         mov     DWORD PTR [rbp-4], eax        ; 分配局部变量 x
 
         mov     rax, QWORD PTR [rbp-32]
         mov     eax, DWORD PTR [rax]
-        mov     DWORD PTR [rbp-8], eax        ; 分配局部变量 y 
+        mov     DWORD PTR [rbp-8], eax        ; 分配局部变量 y
 
         mov     rax, QWORD PTR [rbp-24]
         mov     edx, DWORD PTR [rbp-8]
@@ -119,7 +119,7 @@ caller():
 
         call    swap_add(int*, int*)           ; 调用 swap_add 函数
 
-        mov     DWORD PTR [rbp-4], eax         ; 分配局部变量 sum 为 swap_add 函数的返回值 eax 
+        mov     DWORD PTR [rbp-4], eax         ; 分配局部变量 sum 为 swap_add 函数的返回值 eax
 
         mov     edx, DWORD PTR [rbp-12]
         mov     eax, DWORD PTR [rbp-16]
@@ -231,7 +231,7 @@ The Stack is usually used to pass arguments to functions or procedures and also 
 
 # CPU Registers
 
-`Registers` are a space in the CPU that can be used to hold data. In an x64 CPU, each register can hold 64 bits. 
+`Registers` are a space in the CPU that can be used to hold data. In an x64 CPU, each register can hold 64 bits.
 
 The most common registers are the **general-purpose registers**. They are called general-purpose because they can be used to store any kind of data. x64 defines `16 `of these registers: **rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14 and r15**
 
@@ -310,12 +310,12 @@ In the rest of the article I will use only `Intel syntax` because it’s the one
 +------------------------------+------------------------------------+
 |       Intel Code             |      AT&T Code                     |
 +------------------------------+------------------------------------+
-| mov     eax,1                |  movl    $1,%eax                   |   
-| mov     ebx,0ffh             |  movl    $0xff,%ebx                |   
-| int     80h                  |  int     $0x80                     |   
+| mov     eax,1                |  movl    $1,%eax                   |
+| mov     ebx,0ffh             |  movl    $0xff,%ebx                |
+| int     80h                  |  int     $0x80                     |
 | mov     ebx, eax             |  movl    %eax, %ebx                |
 | mov     eax,[ecx]            |  movl    (%ecx),%eax               |
-| mov     eax,[ebx+3]          |  movl    3(%ebx),%eax              | 
+| mov     eax,[ebx+3]          |  movl    3(%ebx),%eax              |
 | mov     eax,[ebx+20h]        |  movl    0x20(%ebx),%eax           |
 | add     eax,[ebx+ecx*2h]     |  addl    (%ebx,%ecx,0x2),%eax      |
 | lea     eax,[ebx+ecx]        |  leal    (%ebx,%ecx),%eax          |
@@ -486,7 +486,7 @@ $ hexdump example.o
 0000220 7261 0074 0000 0000 0000 0000 0000 0000
 0000230
 $ ld -o example example.o
-$ ./example 
+$ ./example
 -bash: ./example: cannot execute binary file: Exec format error
 ```
 
@@ -504,7 +504,7 @@ But we get a segmentation fault:
 ```
 $ nasm -f elf64 -o example.o example.asm
 $ ld -o example example.o
-$ ./example 
+$ ./example
 Segmentation fault (core dumped)
 ```
 
@@ -534,7 +534,7 @@ This program can be executed, and although it doesn’t do anything, it will end
 ```
 $ nasm -f elf64 -o example.o example.asm
 $ ld -o example example.o
-$ ./example 
+$ ./example
 $ echo $?
 0
 $ ls -rtlh
@@ -619,7 +619,7 @@ For `rdi` we will use `1` because that is **the file descriptor for stdout**. Le
 
 ``` asm
 section .data
-  some_string dq "Hello world"     
+  some_string dq "Hello world"
   some_string_size dq 11           ; "Hello world" contains 11 characters
 
 section .text
@@ -644,7 +644,7 @@ Executing this code will print `Hello world` to the terminal.
 ```
 $ nasm -f elf64 -o example.o example.asm
 $ ld -o example example.o
-$ ./example 
+$ ./example
 Hello world
 $ ls -rtlh
 total 12K
@@ -686,7 +686,7 @@ total 16K
 -rw-rw-r-- 1 ubuntu ubuntu   95 May  4 14:13 helloworld.c
 -rw-rw-r-- 1 ubuntu ubuntu  521 May  5 13:59 helloworld.s
 -rwxrwxr-x 1 ubuntu ubuntu 6.0K May  5 14:02 a.out
-``` 
+```
 
 ``` asm
 .file   "helloworld.c"
@@ -864,15 +864,15 @@ mov rdi, [rax]
 In the example above, `rax` contains **a memory address**. `rdi` will be set to **the value in that memory address**. This is easier to understand with an example. Imagine registers and memory looked like this before executing the instruction above:
 
 
-| Registers | 
+| Registers |
 | -- | --
 | rax | 0x40
 | rbx | 0x0
-| ... | 
+| ... |
 | rdi | 0x0
 
 | Memory |
-| -- | -- 
+| -- | --
 | 0x40 | 0xA
 | 0x48 | 0x00
 | 0x50 | 0x00
@@ -933,16 +933,17 @@ Disassembly of section .text:
   4000b0:       b8 01 00 00 00          mov    $0x1,%eax
   4000b5:       bf 01 00 00 00          mov    $0x1,%edi
   4000ba:       48 be dc 00 60 00 00    movabs $0x6000dc,%rsi
-  4000c1:       00 00 00 
+  4000c1:       00 00 00
   4000c4:       48 8b 14 25 ec 00 60    mov    0x6000ec,%rdx
-  4000cb:       00 
-  4000cc:       0f 05                   syscall 
+  4000cb:       00
+  4000cc:       0f 05                   syscall
   4000ce:       b8 3c 00 00 00          mov    $0x3c,%eax
   4000d3:       bf 00 00 00 00          mov    $0x0,%edi
-  4000d8:       0f 05                   syscall 
+  4000d8:       0f 05                   syscall
 ```
 
 * https://stackoverflow.com/questions/5125896/how-to-disassemble-a-binary-executable-in-linux-to-get-the-assembly-code
+* [What does data16 mean in objdump output?](https://stackoverflow.com/questions/36706280/what-does-data16-mean-in-objdump-output)
 
 # Debugging assembly with GDB
 
@@ -955,7 +956,7 @@ nasm -f elf64 -o example.o example.asm
 The `elf64` ([Executable and linkable format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)) parameter specifies **the format of the output file**. **This will generate a file with enough information so the Operating System can execute it, but it doesn’t contain any information to help debugging**. If we want our executable to contain debug information (information about the file and line number a program is executing) we need to say so when we assemble the program.
 
 ```
-$ gdb example 
+$ gdb example
 GNU gdb (Ubuntu 8.1-0ubuntu3.2) 8.1.0.20180409-git
 Copyright (C) 2018 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
@@ -971,7 +972,7 @@ Find the GDB manual and other documentation resources online at:
 For help, type "help".
 Type "apropos word" to search for commands related to "word"...
 Reading symbols from example...(no debugging symbols found)...done.  # 没有调试信息
-(gdb) 
+(gdb)
 ```
 
 To see what are the formats for debug information available in your version of `nasm`, you can use:
@@ -996,7 +997,7 @@ total 12K
 -rw-rw-r-- 1 ubuntu ubuntu 2.3K May  5 15:43 example.o
 -rwxrwxr-x 1 ubuntu ubuntu 2.0K May  5 15:44 example
 
-$ gdb --quiet example 
+$ gdb --quiet example
 Reading symbols from example...done.
 (gdb) l
 1
@@ -1009,8 +1010,8 @@ Reading symbols from example...done.
 8
 9       _start:
 10        ; Print the string
-(gdb) 
-11        mov rax, 1        
+(gdb)
+11        mov rax, 1
 12        mov rdi, 1
 13        mov rsi, some_string
 14        mov rdx, [some_string_size]
@@ -1020,7 +1021,7 @@ Reading symbols from example...done.
 18        mov rax, 60
 19        mov rdi, 0
 20        syscall
-(gdb) 
+(gdb)
 Line number 21 out of range; example.asm has 20 lines.
 ```
 
@@ -1029,22 +1030,22 @@ Line number 21 out of range; example.asm has 20 lines.
 Now, we can debug this program with GDB:
 
 ```
-$ gdb --quiet example 
+$ gdb --quiet example
 Reading symbols from example...done.
 (gdb) b _start
 Breakpoint 1 at 0x4000b0: file example.asm, line 11.
 (gdb) r
-Starting program: /home/ubuntu/code/nasm/example 
+Starting program: /home/ubuntu/code/nasm/example
 
 Breakpoint 1, _start () at example.asm:11
-11        mov rax, 1        
+11        mov rax, 1
 (gdb) l
 6       section .text
 7         global _start
 8
 9       _start:
 10        ; Print the string
-11        mov rax, 1        
+11        mov rax, 1
 12        mov rdi, 1
 13        mov rsi, some_string
 14        mov rdx, [some_string_size]
@@ -1059,19 +1060,19 @@ $2 = 1
 rax            0x1      1           # The first column is the hexadecimal value (0x1) and the second is decimal (1)
 (gdb) n
 13        mov rsi, some_string
-(gdb) 
+(gdb)
 14        mov rdx, [some_string_size]
-(gdb) 
+(gdb)
 15        syscall
-(gdb) 
+(gdb)
 Hello world18     mov rax, 60
-(gdb) 
+(gdb)
 19        mov rdi, 0
-(gdb) 
+(gdb)
 20        syscall
-(gdb) 
+(gdb)
 [Inferior 1 (process 26432) exited normally]
-(gdb) 
+(gdb)
 ```
 
 Use `q` to quit gdb.
@@ -1083,15 +1084,15 @@ Writing assembly code, you will find yourself moving things in and out of regist
 
 
 ```
-$ gdb --quiet example 
+$ gdb --quiet example
 Reading symbols from example...done.
 (gdb) b _start
 Breakpoint 1 at 0x4000b0: file example.asm, line 11.
 (gdb) r
-Starting program: /home/ubuntu/code/nasm/example 
+Starting program: /home/ubuntu/code/nasm/example
 
 Breakpoint 1, _start () at example.asm:11
-11        mov rax, 1        
+11        mov rax, 1
 (gdb) i r
 rax            0x0      0
 rbx            0x0      0
@@ -1144,7 +1145,7 @@ ds             0x0      0
 es             0x0      0
 fs             0x0      0
 gs             0x0      0
-(gdb) 
+(gdb)
 ```
 
 By printing the registers we can see that the breakpoint takes effect before executing the line: `mov rax, 60`. In many cases we probably only want to see a specific register. To do this we just need to add the register name to the command: `i r <register>`:
@@ -1159,17 +1160,17 @@ Reading symbols from example...done.
 (gdb) b _start
 Breakpoint 1 at 0x4000b0: file example.asm, line 11.
 (gdb) r
-Starting program: /home/ubuntu/code/nasm/example 
+Starting program: /home/ubuntu/code/nasm/example
 
 Breakpoint 1, _start () at example.asm:11
-11        mov rax, 1        
+11        mov rax, 1
 (gdb) l
 6       section .text
 7         global _start
 8
 9       _start:
 10        ; Print the string
-11        mov rax, 1        
+11        mov rax, 1
 12        mov rdi, 1
 13        mov rsi, some_string
 14        mov rdx, [some_string_size]
@@ -1191,12 +1192,12 @@ $2 = 11
 With extended `asm` you can read and write C variables from assembler and perform jumps from assembler code to C labels. Extended `asm` syntax uses colons (‘:’) to delimit the operand parameters after the assembler template:
 
 ```
-asm asm-qualifiers ( AssemblerTemplate 
-                 : OutputOperands 
+asm asm-qualifiers ( AssemblerTemplate
+                 : OutputOperands
                  [ : InputOperands
                  [ : Clobbers ] ])
 
-asm asm-qualifiers ( AssemblerTemplate 
+asm asm-qualifiers ( AssemblerTemplate
                       : OutputOperands
                       : InputOperands
                       : Clobbers
@@ -1221,7 +1222,7 @@ Therefore, taking one particular register as an example, you have the 8-bit `AL`
 ======================================
 .         .         | AH     | AL    |
 .         .         | AX             |
-.         | EAX                      | 
+.         | EAX                      |
 | RAX                                |
 ======================================
 | 63 - 32 | 31 - 16 | 15 - 8 | 7 - 0 |

@@ -2525,3 +2525,231 @@ refer:
 * https://www.zhihu.com/question/35614219
 
 
+## Color print
+
+``` cpp
+#include <cstdio>
+
+#define kColorNrm  "\x1B[0m"
+#define kColorRed  "\x1B[31m"
+#define kColorGrn  "\x1B[32m"
+#define kColorYel  "\x1B[33m"
+#define kColorBlu  "\x1B[34m"
+
+int main()
+{
+        printf(kColorRed"abc\n"kColorNrm);
+        printf("abc\n");
+        printf(kColorGrn"abc\n"kColorNrm);
+        printf("abc\n");
+        printf(kColorYel"abc\n"kColorNrm);
+        printf("abc\n");
+        printf(kColorBlue"abc\n"kColorNrm);
+        printf("abc\n");
+}
+```
+
+* https://stackoverflow.com/questions/5412761/using-colors-with-printf
+
+
+## Printf alignment
+
+``` cpp
+    printf("%-32s%-32s\n", "Type", "123");
+    printf("%-32s%-32s\n", "Name", "456789");
+```
+
+And then whatever's printed with that field will be blank-padded to the width you indicate. The `-` left-justifies your text in that field.
+
+* https://stackoverflow.com/questions/1809399/how-to-format-strings-using-printf-to-get-equal-length-in-the-output
+* https://stackoverflow.com/questions/2485963/c-alignment-when-printing-cout
+
+## _attribute__ ((format (printf, 2, 3)))
+
+The `format` attribute allows you to identify your own functions that take format strings as arguments, so that GCC can check the calls to these functions for errors.
+
+> format (archetype, string-index, first-to-check)
+
+The `format` attribute specifies that a function takes `printf`, `scanf`, `strftime` or `strfmon` style arguments that should be type-checked against a format string. For example, the declaration:
+
+``` cpp
+extern int
+my_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));
+```
+
+causes the compiler to check the arguments in calls to `my_printf` for consistency with the `printf` style format string argument `my_format`.
+
+The parameter `archetype` determines how the format string is interpreted, and should be `printf`, `scanf`, `strftime`, `gnu_printf`, `gnu_scanf`, `gnu_strftime` or `strfmon`.
+
+The parameter `string-index` specifies which argument is the format string argument (starting from `1`), while `first-to-check` is the number of the first argument to check against the format string.
+
+For functions where the arguments are not available to be checked (such as `vprintf`), specify the third parameter as zero. In this case the compiler only checks the format string for consistency. For `strftime` formats, the third parameter is required to be zero. **Since non-static C++ methods have an implicit this argument, the arguments of such methods should be counted from two, not one, when giving values for string-index and first-to-check**.
+
+In the example above, the format string (`my_format`) is the second argument of the function `my_print`, and the arguments to check start with the third argument, so the correct parameters for the format attribute are 2 and 3.
+
+使用示例：
+
+``` cpp
+#include <cstdio>
+#include <cstdarg>
+
+__attribute__ ((format (printf, 1, 2))) void func(const char *fmt, ...)
+{
+        va_list argptr;
+        va_start(argptr, fmt);
+        printf("fmt(%s)\n", fmt);
+        va_end(argptr);
+}
+
+int main()
+{
+        long long a = 1;    // if use int a = 1; will be ok
+        char b = '2';
+        func("a=%d&b=%c", a, b);
+}
+```
+
+clang++ prog.cc -Wall -Wextra -I/opt/wandbox/boost-1.75.0-clang-7.1.0/include -std=gnu++11
+
+```
+prog.cc:17:27: warning: format specifies type 'int' but the argument has type 'long long' [-Wformat]
+        func("a=%d&b=%c", a, b);
+                ~~        ^
+                %lld
+1 warning generated.
+fmt(a=%d&b=%c)
+```
+
+在类中使用：
+
+``` cpp
+#include <cstdio>
+#include <cstdarg>
+
+struct Foo
+{
+// static func
+__attribute__ ((format (printf, 1, 2))) static void func(const char *fmt, ...) // 类的静态函数不包含 this 指针，所以和普通函数用法一样
+{
+        va_list argptr;
+        va_start(argptr, fmt);
+        printf("fmt(%s)\n", fmt);
+        va_end(argptr);
+}
+};
+
+int main()
+{
+        long long a = 1;   // warning: format '%d' expects argument of type 'int', but argument 2 has type 'long long int' [-Wformat=]
+        char b = '2';
+        Foo::func("a=%d&b=%c", a, b);
+}
+```
+
+``` cpp
+#include <cstdio>
+#include <cstdarg>
+
+struct Foo
+{
+// non-static
+__attribute__ ((format (printf, 2, 3))) void func(const char *fmt, ...)  // 类的普通成员函数第一个参数为隐式的 this 指针，也需要作为参数计数
+{
+        va_list argptr;
+        va_start(argptr, fmt);
+        printf("fmt(%s)\n", fmt);
+        va_end(argptr);
+}
+};
+
+int main()
+{
+        long long a = 1;   // warning: format '%d' expects argument of type 'int', but argument 2 has type 'long long int' [-Wformat=]
+        char b = '2';
+        Foo foo;
+        foo.func("a=%d&b=%c", a, b);
+}
+```
+
+
+* [How should I properly use __attribute__ ((format (printf, x, y))) inside a class method in C++?](https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class)
+* https://gcc.gnu.org/onlinedocs/gcc-8.2.0/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+* https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+
+
+## __attribute__((deprecated))
+
+``` cpp
+class foo {
+public:
+  void my_func() __attribute__((deprecated)) {
+  }
+
+  void my_func2() __attribute__((noinline)) {
+  }
+};
+
+int main()
+{
+  foo f;
+  f.my_func();
+  f.my_func2();
+}
+```
+
+```
+$ g++ -c -Wall -pedantic a.cpp
+a.cpp: In function int main():
+a.cpp:12:13: warning: void foo::my_func() is deprecated (declared at a.cpp:3) [-Wdeprecated-declarations]
+```
+
+## 空值类型转换
+
+``` cpp
+#include <iostream>
+#include <string.h>
+
+class A
+{
+public:
+    void test() { std::cout << "test\n"; }
+};
+
+int main()
+{
+    auto a = (A*)10;
+    a->test(); // test
+
+    ((A*)nullptr)->test();  // test
+}
+```
+
+## 编译优化
+
+更多参考：[GCC/Clang Compilation Optimize](http://gerryyang.com/gcc/clang/2021/02/13/gcc-clang-compilation-optimize.html)
+
+``` cpp
+#include <iostream>
+#include <string.h>
+
+// clang
+[[clang::optnone]] void Test1() { std::cout << "Test1\n"; }
+
+// gcc
+__attribute__((noinline)) void Test2() { std::cout << "Test2\n"; }
+
+int main()
+{
+    Test1();
+    Test2();
+}
+```
+
+[clang ignoring attribute noinline](https://stackoverflow.com/questions/54481855/clang-ignoring-attribute-noinline)
+
+
+# Refer
+
+* [编程面试题在线训练平台](http://www.lintcode.com/zh-cn/)
+
+

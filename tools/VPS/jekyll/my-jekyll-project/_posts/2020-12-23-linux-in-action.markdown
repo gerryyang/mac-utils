@@ -165,7 +165,7 @@ L has pages locked into memory (for real-time and custom IO)
 
 s is a session leader
 
-l is multi-threaded (using CLONE_THREAD, like NPTL pthreads do) 
+l is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)
 
 + is in the foreground process group
 ```
@@ -253,7 +253,7 @@ CPU使用率衡量的是程序运行占用的CPU百分比。Linux的CPU使用率
 
 ```
 $ cat /proc/stat | grep 'cpu'
- 
+
 cpu  4409701839 5860491 3043372756 11777957443 471600199 13606335 49392558 0
 cpu0 980245201 1554799 596504303 3214215192 126029552 6603537 17697344 0
 cpu1 1209283591 1411942 861982464 2749190858 113506249 255348 7220138 0
@@ -278,19 +278,19 @@ cpu一行指的是总的CPU信息，cpu0、cpu1、cpu2、cpu3几行指的是CPU�
 ``` bash
 # 得到cpu0的信息
 cat /proc/stat | grep 'cpu0'
- 
+
 cpu_total1 = user + nice + system + idle + iowait + irq + softirq
 cpu_used1 = user + nice + system + irq + softirq
- 
+
 # 等待15s
 sleep 15
- 
+
 # 再次检查cpu信息
 cat /proc/stat | grep 'cpu0'
- 
+
 cpu_total2 = user + nice + system + idle + iowait + irq + softirq
 cpu_used2 = user + nice + system + irq + softirq
- 
+
 # 得到cpu0在15秒内的平均使用率
 (cpu_used2 - cpu_used1) / (cpu_total2 - cpu_total1) * 100%
 ```
@@ -323,10 +323,10 @@ Swap含义：交换分区。
 
 ```
 KiB Mem :  1009184 total,    98908 free,   399864 used,   510412 buff/cache
-KiB Swap:        0 total,        0 free,        0 used.   453712 avail Mem 
+KiB Swap:        0 total,        0 free,        0 used.   453712 avail Mem
 
-PID USER    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+  COMMAND                                                                                                                        
-1 root      20   0   77908   6184   3808 S  0.0  0.6   2:25.47 systemd 
+PID USER    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+  COMMAND
+1 root      20   0   77908   6184   3808 S  0.0  0.6   2:25.47 systemd
 ```
 
 * VIRT，进程虚拟内存的大小，虚拟内存并不会全部分配物理内存
@@ -397,7 +397,7 @@ Address           Kbytes     RSS   Dirty Mode  Mapping
 0000000005ac2000   12288    4264    4264 rwx--   [ anon ]
 00000000066c2000  505840  344500  344500 rwx--   [ anon ]
 ...
----------------- ------- ------- ------- 
+---------------- ------- ------- -------
 total kB         1372708  402092  367472
 ```
 
@@ -413,7 +413,7 @@ total kB         1372708  402092  367472
 
 或者：
 
-gdb --batch --pid {PID} -ex "dump memory native_memory.dump 0x66c2000 0x66d2000" 
+gdb --batch --pid {PID} -ex "dump memory native_memory.dump 0x66c2000 0x66d2000"
 
 ## refer
 
@@ -515,7 +515,7 @@ gamesvr   14407 14410 gerryyang   55u     IPv4         1098817885        0t0    
 ...
 ```
 
-## 根据fd找到ip信息 
+## 根据fd找到ip信息
 
 ```
 ls -lrt /proc/24748/fd | grep 854
@@ -553,25 +553,25 @@ $cat /proc/sys/net/ipv4/ip_local_port_range
 `ss` is used to dump socket statistics. It allows showing information similar to `netstat`.  It can display more TCP and state information than other tools.
 
 ```
-$ ss -s     
+$ ss -s
 Total: 2144
 TCP:   2000 (estab 1757, closed 200, orphaned 0, timewait 200)
 
 Transport Total     IP        IPv6
-RAW       2         1         1        
-UDP       13        11        2        
-TCP       1800      1795      5        
-INET      1815      1807      8        
-FRAG      0         0         0    
+RAW       2         1         1
+UDP       13        11        2
+TCP       1800      1795      5
+INET      1815      1807      8
+FRAG      0         0         0
 ```
 
 ```
 $ ss -ltupn
-State       Recv-Q Send-Q    Local Address:Port     Peer Address:Port                
+State       Recv-Q Send-Q    Local Address:Port     Peer Address:Port
 LISTEN      0      128       *:15434                *:*                     users:(("tconnd",pid=3304405,fd=35))
 ```
 
-### nslookup 
+### nslookup
 
 query Internet name servers interactively
 
@@ -648,7 +648,7 @@ vdk               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0
 * `avgqu-sz`: 平均I/O队列长度。
 * `await`: 平均每次设备I/O操作的等待时间 (毫秒)
 * `svctm`: 平均每次设备I/O操作的服务时间 (毫秒)
-* `%util`: 一秒中有百分之多少的时间用于 I/O 操作，或者说一秒中有多少时间 I/O 队列是非空的。  
+* `%util`: 一秒中有百分之多少的时间用于 I/O 操作，或者说一秒中有多少时间 I/O 队列是非空的。
 
 怎么理解这里的字段呢？下面以超市结账的例子来说明。
 
@@ -730,7 +730,7 @@ By default, all the threads created using `pthread_create()` inherit the program
 ## top (display Linux processes)
 
 | 常用命令 | 含义 | 备注
-| -- | -- | 
+| -- | -- |
 | Z,B,E,e |  Global: 'Z' colors; 'B' bold; 'E'/'e' summary/task memory scale | 显示相关的设置
 | l,t,m  |    Toggle Summary: 'l' load avg; 't' task/cpu stats; 'm' memory info | 最顶部的三部分信息切换(Toggle)：负载，cpu，memory
 | 0,1,2,3,I  | Toggle: '0' zeros; '1/2/3' cpus or numa node views; 'I' Irix mode | 查看cpu，numa node
@@ -738,11 +738,11 @@ By default, all the threads created using `pthread_create()` inherit the program
 | L,&,<,> | Locate: 'L'/'&' find/again; Move sort column: '<'/'>' left/right | 字符串查找，通过左右健移动查看
 | R,H,V,J | Toggle: 'R' Sort; 'H' Threads; 'V' Forest view; 'J' Num justify | 查看线程
 | c,i,S,j | Toggle: 'c' Cmd name/line; 'i' Idle; 'S' Time; 'j' Str justify | 查看程序命令行参数
-| x,y     | Toggle highlights: 'x' sort field; 'y' running tasks | 
+| x,y     | Toggle highlights: 'x' sort field; 'y' running tasks |
 | z,b     | Toggle: 'z' color/mono; 'b' bold/reverse (only if 'x' or 'y') | 切换颜色
 | u,U,o,O | Filter by: 'u'/'U' effective/any user; 'o'/'O' other criteria | 按用户过滤
 | n,#,^O  | Set: 'n'/'#' max tasks displayed; Show: Ctrl+'O' other filter(s) | 设置显示 task 的数量
-| C,...   | Toggle scroll coordinates msg for: up,down,left,right,home,end | 
+| C,...   | Toggle scroll coordinates msg for: up,down,left,right,home,end |
 | k,r     |  Manipulate tasks: 'k' kill; 'r' renice | 向进程发送信号，调整进程优先级
 | d or s  |  Set update interval | 设置更新频率
 | W,Y     |  Write configuration file 'W'; Inspect other output 'Y' | 保存配置文件 $HOME/.toprc
@@ -893,7 +893,7 @@ int main(int argc, char *argv[])
 /*
 g++ backtrace.cc
 
-$ ./a.out 
+$ ./a.out
 backtrace() returned 8 addresses
 ./a.out(_Z7myfunc3v+0x2e) [0x5568d100da93]
 ./a.out(+0xb65) [0x5568d100db65]
@@ -941,10 +941,10 @@ The definition of the macro assert depends on another macro, `NDEBUG`, which is 
 // uncomment to disable assert()
 // #define NDEBUG
 #include <cassert>
- 
+
 // Use (void) to silent unused warnings.
 #define assertm(exp, msg) assert(((void)msg, exp))
- 
+
 int main()
 {
     assert(2+2==4);
@@ -992,7 +992,7 @@ Aborted
 
 ```
 # 查看进程打开文件的情况
-lsof -p pid 
+lsof -p pid
 ```
 
 ## c++filt (Demangle C++ and Java symbols)
@@ -1027,7 +1027,7 @@ https://linux.die.net/man/1/addr2line
 
 ``` cpp
 // backtrace.c
-#include <execinfo.h>               
+#include <execinfo.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -1055,13 +1055,13 @@ print_trace (void)
 void
 dummy_function (void)
 {
-        print_trace (); 
+        print_trace ();
 }
 
 int
 main (void)
 {
-        dummy_function (); 
+        dummy_function ();
         return 0;
 }
 ```
@@ -1073,7 +1073,7 @@ gcc -rdynamic backtrace.c
 执行结果，可以显示堆栈的符号名称：
 
 ```
-$./a.out 
+$./a.out
 Obtained 5 stack frames.
 ./a.out(print_trace+0x19) [0x400896]
 ./a.out(dummy_function+0x9) [0x400918]
@@ -1099,7 +1099,7 @@ gcc -rdynamic backtrace.c -Wl,--version-script=symbol.txt
 执行结果，只显示了地址信息，而没有符号信息：
 
 ```
-$./a.out 
+$./a.out
 Obtained 5 stack frames.
 ./a.out() [0x400676]
 ./a.out() [0x4006f8]
@@ -1111,7 +1111,7 @@ Obtained 5 stack frames.
 使用 addr2line 对地址进行翻译：
 
 ```
-$addr2line 0x400676 -f -e a.out 
+$addr2line 0x400676 -f -e a.out
 print_trace
 :?
 ```
@@ -1119,9 +1119,9 @@ print_trace
 查看 elf 头部信息：
 
 ```
-$readelf -h a.out 
+$readelf -h a.out
 ELF 头：
-  Magic：  7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Magic：  7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
   类别:                              ELF64
   数据:                              2 补码，小端序 (little endian)
   版本:                              1 (current)
@@ -1145,7 +1145,7 @@ ELF 头：
 注意，在 ubuntu 18.04 上测试上述程序，使用 addr2line 无法翻译地址信息。具体原因可参考：[addr2line not woking on Ubuntu 16.10?](https://stackoverflow.com/questions/41890103/addr2line-not-woking-on-ubuntu-16-10)
 
 ```
-$ addr2line 0x55c43fa639fd -f -e a.out 
+$ addr2line 0x55c43fa639fd -f -e a.out
 ??
 ??:0
 ```
@@ -1155,7 +1155,7 @@ elf 的头部信息显示：The entry point doesn't start at `0x400000`
 ```
 $ readelf -h a.out
 ELF Header:
-  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
   Class:                             ELF64
   Data:                              2's complement, little endian
   Version:                           1 (current)
@@ -1198,3 +1198,31 @@ $ LD_DEBUG=all ./prog 2>&1 | grep cout
        919:     binding file ./libbar.so [0] to ./prog [0]: normal symbol `_ZSt4cout'
 ```
 
+## df -T (查看文件系统类型)
+
+[What is the maximum length of a file path in Ubuntu?](https://askubuntu.com/questions/859945/what-is-the-maximum-length-of-a-file-path-in-ubuntu)
+
+The max filename length is 255 bytes. Found in the [wiki page for ext4](https://en.wikipedia.org/wiki/Ext4).
+
+And a maximum path of 4096 characters. Found in [this Unix&Linux SE Question](https://unix.stackexchange.com/questions/32795/what-is-the-maximum-allowed-filename-and-folder-size-with-ecryptfs).
+
+Although, I did find [this wiki article](https://en.wikipedia.org/wiki/Comparison_of_file_systems) that does not specify a max file path in ext4.
+
+```
+JLib$df -T
+文件系统                        类型         1K-块      已用       可用 已用% 挂载点
+overlay                         overlay 1048064000 517494544  530569456   50% /
+tmpfs                           tmpfs        65536         0      65536    0% /dev
+tmpfs                           tmpfs     65716364    495452   65220912    1% /run
+/dev/vdi                        ext4     515928320 188255568  327656368   37% /data
+9.134.56.11:/data1/share/tlinux nfs4    2105390080 423112704 1575306240   22% /tools
+tmpfs                           tmpfs     65716364         0   65716364    0% /run/lock
+tmpfs                           tmpfs     65716364     38924   65677440    1% /dev/shm
+/dev/vdb                        xfs     1048064000 517494544  530569456   50% /etc/hosts
+tmpfs                           tmpfs     65716364         0   65716364    0% /sys/fs/cgroup
+tmpfs                           tmpfs     65716364         0   65716364    0% /proc/acpi
+tmpfs                           tmpfs     65716364         0   65716364    0% /proc/scsi
+tmpfs                           tmpfs     65716364         0   65716364    0% /sys/firmware
+tmpfs                           tmpfs     13143276         0   13143276    0% /run/user/0
+tmpfs                           tmpfs     13143276         0   13143276    0% /run/user/1012
+```

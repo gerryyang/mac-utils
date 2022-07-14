@@ -91,7 +91,7 @@ fi
 echo "have done"
 ```
 
-## ninja + gcc 
+## ninja + gcc
 
 ```
 top - 21:08:49 up 181 days, 16 min,  4 users,  load average: 8.18, 8.43, 16.17
@@ -105,17 +105,17 @@ Tasks: 193 total,  10 running, 183 sleeping,   0 stopped,   0 zombie
 %Cpu6  : 96.3 us,  3.7 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
 %Cpu7  : 92.7 us,  7.3 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
 KiB Mem : 16165976 total,  7329180 free,  4121088 used,  4715708 buff/cache
-KiB Swap:        0 total,        0 free,        0 used. 11429800 avail Mem 
+KiB Swap:        0 total,        0 free,        0 used. 11429800 avail Mem
 
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                                    
-19664 root      20   0  700252 652588   8600 R  99.7  4.0   0:07.02 cc1plus                                                                                                                    
-19684 root      20   0  446644 397780   6464 R  99.7  2.5   0:03.94 cc1plus                                                                                                                    
-19687 root      20   0  450332 402040   6400 R  99.7  2.5   0:03.84 cc1plus                                                                                                                    
-19677 root      20   0  665556 615736   6476 R  99.3  3.8   0:05.49 cc1plus                                                                                                                    
-19681 root      20   0  505488 457364   6452 R  98.7  2.8   0:04.45 cc1plus                                                                                                                    
-19691 root      20   0  444044 394996   6404 R  97.0  2.4   0:03.17 cc1plus                                                                                                                    
-19695 root      20   0  304324 254396   6028 R  47.2  1.6   0:01.42 cc1plus                                                                                                                    
-19699 root      20   0  149372 102168   5920 R  20.3  0.6   0:00.61 cc1plus     
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+19664 root      20   0  700252 652588   8600 R  99.7  4.0   0:07.02 cc1plus
+19684 root      20   0  446644 397780   6464 R  99.7  2.5   0:03.94 cc1plus
+19687 root      20   0  450332 402040   6400 R  99.7  2.5   0:03.84 cc1plus
+19677 root      20   0  665556 615736   6476 R  99.3  3.8   0:05.49 cc1plus
+19681 root      20   0  505488 457364   6452 R  98.7  2.8   0:04.45 cc1plus
+19691 root      20   0  444044 394996   6404 R  97.0  2.4   0:03.17 cc1plus
+19695 root      20   0  304324 254396   6028 R  47.2  1.6   0:01.42 cc1plus
+19699 root      20   0  149372 102168   5920 R  20.3  0.6   0:00.61 cc1plus
 ```
 
 results:
@@ -133,7 +133,7 @@ sys     14m17.540s
 
 ```
 [71/6710] Building CXX object lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o
-FAILED: lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o 
+FAILED: lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o
 /opt/rh/devtoolset-7/root/usr/bin/c++  -DGTEST_HAS_RTTI=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -Ilib/Support -I/root/compile/test/llvm-project-11.0.0/llvm/lib/Support -Iinclude -I/root/compile/test/llvm-project-11.0.0/llvm/include -fPIC -fvisibility-inlines-hidden -Werror=date-time -Wall -Wextra -Wno-unused-parameter -Wwrite-strings -Wcast-qual -Wno-missing-field-initializers -pedantic -Wno-long-long -Wimplicit-fallthrough -Wno-maybe-uninitialized -Wno-noexcept-type -Wdelete-non-virtual-dtor -Wno-comment -fdiagnostics-color -ffunction-sections -fdata-sections -O3 -DNDEBUG   -std=c++14  -fno-exceptions -fno-rtti -MD -MT lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -MF lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o.d -o lib/Support/CMakeFiles/LLVMSupport.dir/Debug.cpp.o -c /root/compile/test/llvm-project-11.0.0/llvm/lib/Support/Debug.cpp
 c++: internal compiler error: Killed (program cc1plus)
 Please submit a full bug report,
@@ -146,19 +146,19 @@ top - 23:38:58 up 181 days,  2:46,  4 users,  load average: 101.87, 24.81, 8.97
 Tasks: 693 total, 105 running, 587 sleeping,   0 stopped,   1 zombie
 %Cpu(s): 18.0 us, 17.8 sy,  0.0 ni,  0.2 id, 63.9 wa,  0.0 hi,  0.0 si,  0.0 st
 KiB Mem : 16165976 total,   157708 free, 15388396 used,   619872 buff/cache
-KiB Swap:        0 total,        0 free,        0 used.   183040 avail Mem 
+KiB Swap:        0 total,        0 free,        0 used.   183040 avail Mem
 
-  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                                    
-   64 root      20   0       0      0      0 R  27.8  0.0   3:15.14 kswapd0                                                                                                                    
-    7 root      rt   0       0      0      0 S  15.2  0.0   1:25.26 migration/0                                                                                                                
-   22 root      rt   0       0      0      0 S  14.8  0.0   1:20.00 migration/3                                                                                                                
-12958 root      20   0       0      0      0 Z   5.1  0.0   4:09.43 base_agent_net                                                                                                             
-15647 root      20   0   84008  35320    896 D   3.3  0.2   0:00.31 cc1plus                                                                                                                    
-26692 root      20   0  286276   4072      0 D   3.0  0.0  72:34.73 sap1012                                                                                                                    
-15430 root      20   0  109000  60828   2428 D   2.9  0.4   0:00.48 cc1plus                                                                                                                    
-15158 root      20   0  166464 116372   1908 R   2.7  0.7   0:00.86 cc1plus                                                                                                                    
-15470 root      20   0   99312  49680    356 R   2.6  0.3   0:00.41 cc1plus                                                                                                                    
-15532 root      20   0   99356  49384    360 R   2.6  0.3   0:00.37 cc1plus  
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+   64 root      20   0       0      0      0 R  27.8  0.0   3:15.14 kswapd0
+    7 root      rt   0       0      0      0 S  15.2  0.0   1:25.26 migration/0
+   22 root      rt   0       0      0      0 S  14.8  0.0   1:20.00 migration/3
+12958 root      20   0       0      0      0 Z   5.1  0.0   4:09.43 base_agent_net
+15647 root      20   0   84008  35320    896 D   3.3  0.2   0:00.31 cc1plus
+26692 root      20   0  286276   4072      0 D   3.0  0.0  72:34.73 sap1012
+15430 root      20   0  109000  60828   2428 D   2.9  0.4   0:00.48 cc1plus
+15158 root      20   0  166464 116372   1908 R   2.7  0.7   0:00.86 cc1plus
+15470 root      20   0   99312  49680    356 R   2.6  0.3   0:00.41 cc1plus
+15532 root      20   0   99356  49384    360 R   2.6  0.3   0:00.37 cc1plus
 ```
 
 ## makefile + gcc
@@ -280,7 +280,7 @@ More: https://llvm.org/
 
 ## [Building LLVM with CMake](http://llvm.org/docs/CMake.html#building-llvm-with-cmake)
 
-[CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM. 
+[CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM.
 
 编译时问题：
 
@@ -404,7 +404,7 @@ The LLVM suite may compile on other platforms, but it is not guaranteed to do so
 
 > Software
 
-Compiling LLVM requires that you have several software packages installed. The table below lists those required packages. The Package column is the usual name for the software package that LLVM depends on. The Version column provides “known to work” versions of the package. The Notes column describes how LLVM uses the package and provides other details. 
+Compiling LLVM requires that you have several software packages installed. The table below lists those required packages. The Package column is the usual name for the software package that LLVM depends on. The Version column provides “known to work” versions of the package. The Notes column describes how LLVM uses the package and provides other details.
 
 
 | Package | Version | Notes
@@ -435,7 +435,7 @@ Note:
 
 #### Build LLVM and Clang
 
-* This builds both LLVM and Clang for debug mode. 
+* This builds both LLVM and Clang for debug mode.
 * Note: For subsequent Clang development, you can just run make clang.
 * CMake allows you to generate project files for several IDEs: Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3. For more details see [Building LLVM with CMake](https://llvm.org/docs/CMake.html) page.
 
@@ -499,9 +499,9 @@ The clang driver is designed to work as closely to GCC as possible to maximize p
 ``` c
 // test.c
 typedef float V __attribute__((vector_size(16)));
-V foo(V a, V b) 
-{ 
-    return a + b * a; 
+V foo(V a, V b)
+{
+    return a + b * a;
 }
 ```
 
@@ -528,7 +528,7 @@ V foo(V a, V b)
 Type checking:
 
 ```
-$clang -fsyntax-only test.c 
+$clang -fsyntax-only test.c
 ```
 
 GCC options:
@@ -605,7 +605,7 @@ Replace `ld` to `lld`:
 rm /opt/rh/devtoolset-7/root/etc/alternatives/ld
 ln -s /root/compile/llvm_install/bin/ld.lld /opt/rh/devtoolset-7/root/etc/alternatives/ld
 
-ls -l /opt/rh/devtoolset-7/root/etc/alternatives/ld 
+ls -l /opt/rh/devtoolset-7/root/etc/alternatives/ld
 lrwxrwxrwx 1 root root 37 Dec 13 16:47 /opt/rh/devtoolset-7/root/etc/alternatives/ld -> /root/compile/llvm_install/bin/ld.lld
 ```
 
@@ -670,7 +670,7 @@ $which gcc
 /usr/lib64/ccache/gcc
 $ll -lh `which gcc`
 lrwxrwxrwx 1 root root 16 3月   5 2021 /usr/lib64/ccache/gcc -> ../../bin/ccache
-$ll -lh /usr/bin/ccache 
+$ll -lh /usr/bin/ccache
 -rwxr-xr-x 1 root root 135K 2月  19 2020 /usr/bin/ccache
 ```
 
@@ -692,7 +692,7 @@ Bazel offers the following advantages:
 * **Bazel is multi-platform**. Bazel runs on Linux, macOS, and Windows. Bazel can build binaries and deployable packages for multiple platforms, including desktop, server, and mobile, from the same project.
 * **Bazel scales**. Bazel maintains agility(敏捷) while handling builds with `100k+` source files. It works with multiple repositories and user bases in the tens of thousands.
 * **Bazel is extensible**. Many languages are supported, and you can extend Bazel to support any other language or framework.
-  
+
 一些测试结论：
 
 * `bazel`默认会限制并发度到其估计的机器性能上限，实际使用需要通过--local_cpu_resources=9999999等参数绕过这一限制
@@ -860,6 +860,49 @@ clang12 优于 gcc4.8/7/9，ninja 优于 make，lld 优于 ld。
 | gcc9 + ninja + lld    | 7.90s  |
 | gcc4.8 + make + lld   | 8.93s  |
 | gcc4.8 + ninja + lld  | 8.30s  |
+
+# Mixing Clang with GCC
+
+## [Can Clang compile code with GCC compiled .a libs?](https://stackoverflow.com/questions/20875924/can-clang-compile-code-with-gcc-compiled-a-libs)
+
+I have my project currently compiling under `gcc`. It uses Boost, ZeroMQ as static `.a` libraries and some `.so` libraries like SDL. I want to go `clang` all the way but not right now. I wonder if it is possible to compile code that uses `.a` and `.so` libraries that were compiled under gcc with clang?
+
+Answers:
+
+Yes, you usually can use `clang` with `GCC` compiled libraries (and vice versa, use `gcc` with `CLANG` compiled libraries), because in fact it is not **compilation**(编译) but **linking**(链接) which is relevant. You might be unlucky and get unpleasant suprises.
+
+You could in principle have some dependencies on the version of `libstdc++` used to link the relevant libraries (if they are coded in C++). Actually, that usually does not matter much.
+
+In C++, [name mangling](http://en.wikipedia.org/wiki/Name_mangling) might in theory be an issue (there might be some corner cases, even incompatibilities between two different versions of `g++`). Again, in practice it is usually not an issue.
+
+So usually you can mix `CLANG` (even different but close versions of it) with `GCC` **but you may have unpleasant surprises**. **What should be expected from any C++ compiler (be it `CLANG` or `GCC`) is just to be able to compile and link an entire software (and all libraries) together using the same compiler and version (and that includes the same [C++ standard library](https://en.wikipedia.org/wiki/C%2B%2B_Standard_Library) implementation). This is why upgrading a compiler in a distribution is a lot of work**: the distribution makers have to ensure that all the packages compile well (and they do get surprises!).
+
+Beware that the version of `libstdc++` does matter. Both `Clang` & `GCC` communities **work hard to make its ABI compatible for compiler upgrades, but there are subtle corner cases**. Read the documentation of your particular and specific C++ standard library implementation. These corner cases could explain mysterious crashes when using a good C++ library binary (compiled with `GCC 5`) in your code compiled with `GCC 8`. The bug is not in the library, **but the ABI evolved incompatibly**.
+
+Another answers:
+
+At least for [Crypto++ library](http://www.cryptopp.com/) this does not work (verified :-( ). So for c++ code it is less likely to work, while pure c code would probably link OK.
+
+The solution appears to be: **if you need to compile C++ code with clang, and link it to a gcc-compiled library**, use `clang++ -stdlib=libstdc++`. The linking is successful, and the resulting binary runs correctly.
+
+CAVEAT(注意): It does not seem to work the other way: even though you can build a library compiled with "clang++ -stdlib=libstdc++" and link gcc-compiled code with it, this code will crash with SEGV. So far I found the only way to link with a clang-compiled library is compiling your code with clang, not gcc.
+
+## [gcc vs clang common library issue](https://stackoverflow.com/questions/49715462/gcc-vs-clang-common-library-issue?noredirect=1&lq=1)
+
+I have two applications, one compiled with gcc(c++) and another compiled with clang++. I am to use common shared boost library for both the applications. My question is whether to compile boost shared library using clang compiler or gcc compiler. Can I use boost library compiled with gcc in my application that is being compiled using clang?
+
+Answers:
+
+`g++` and `clang++` are compatible as compilers (because they both follow the `Itanium ABI`), **but they may come with incompatible standard library implementations**.
+
+`g++` comes with a standard library implementation called `libstdc++`. You can direct g++ to use a different implementation but this is not exactly trivial.
+
+`clang++` sometimes comes without a standard library implementation of its own (and is configured to use implementation provided by `g++`), and sometimes comes with an implementation called `libc++`. One can easily switch `clang++` to use either `libc++` or `libstdc++` with a single command line option.
+
+**So your question boils down to what standard library implementation(s) your applications use.** If they use the same implementation, you need to build Boost with that implementation (and either compiler). If they use different implementations, you need two separate builds of Boost.
+
+Mixing components built against different standard library implementations in the same application can sometimes be done, but is not straightforward, entails a lot of restrictions, and with things like boost is either not feasible or downright impossible.
+
 
 
 

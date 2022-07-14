@@ -16,7 +16,7 @@ categories: [C/C++]
 | Boost Test Library | Boost  |  User decision | With additional library [Turtle](http://turtle.sourceforge.net/) | Part of [Boost](https://en.wikipedia.org/wiki/Boost_library). Powerful dataset concept for generating test cases. Different levels of fixtures (global, once per test suite, once per each test case in a suite). Powerful floating point comparison.
 | Catch or Catch2 | Boost | Yes | No | Header only, no external dependencies, auto-registration, tdd and bdd features
 | [Google Test](https://en.wikipedia.org/wiki/Google_Test) | BSD | Yes | Yes | Supports automatic test discovery, a rich set of assertions, user-defined assertions, death tests, fatal and non-fatal failures, various options for running the tests, and XML test report generation.
-| doctest | N/A | Yes | No   |  A new C++ testing framework but is by far the fastest both in compile times and runtime compared to other feature-rich alternatives. 
+| doctest | N/A | Yes | No   |  A new C++ testing framework but is by far the fastest both in compile times and runtime compared to other feature-rich alternatives.
 
 
 refer: https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++
@@ -32,7 +32,7 @@ refer: https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++
 
 googletest is a testing framework developed by the Testing Technology team with Google’s specific requirements and constraints in mind. Whether you work on Linux, Windows, or a Mac, if you write C++ code, googletest can help you. And it supports any kind of tests, not just unit tests.
 
-refer: 
+refer:
 
 * [Github GoogleTest](https://github.com/google/googletest)
 * [GoogleTest User’s Guide](https://google.github.io/googletest/)
@@ -439,7 +439,7 @@ Software developers also use coverage testing in concert with `testsuites`, to m
 
 **`gcov` works only on code compiled with `GCC`. It is not compatible with any other profiling or test coverage mechanism.**
 
-  
+
 ```
 # ubuntu
 sudo apt-get install -y gcovr
@@ -681,11 +681,24 @@ For example, if the object file `/user/build/foo.o` was built with `-fprofile-ar
 
 You must move the data files to the expected directory tree in order to use them for profile directed optimizations (`-fprofile-use`), or to use the `gcov` tool.
 
-refer: 
+refer:
 
 * [Can GCOV create .gcda file in the different directory structure?](https://stackoverflow.com/questions/51414640/can-gcov-create-gcda-file-in-the-different-directory-structure)
 * https://gcc.gnu.org/onlinedocs/gcc/Cross-profiling.html
 * [HOWTO: Dumping gcov data at runtime - simple example](https://www.osadl.org/Dumping-gcov-data-at-runtime-simple-ex.online-coverage-analysis.0.html)
+
+# Q&A
+
+* [Dozens of "profiling:invalid arc tag" when running code coverage in Xcode 5](https://stackoverflow.com/questions/22519530/dozens-of-profilinginvalid-arc-tag-when-running-code-coverage-in-xcode-5)
+
+Most likely this is a result of the build tools failing to merge current results into the existing `.gcda` coverage files. As [Dave Meehan points out here](http://davemeehan.com/technology/xcode/how-to-fix-profiler-invalid-magic-number-in-xcode-4-6-when-generate-test-coverage-files-is-enabled), there is a brute force way of dealing with this by cleaning the product build folder, but a less hard core approach is to delete the `.gcda` files from targets generating them (for me, just the test target) as part of the build process. Dave includes a sample script to be included as a build phase -- or, at the project root by hand:
+
+``` bash
+find . -name "*.gcda" -print0 | xargs -0 rm
+```
+
+
+
 
 
 

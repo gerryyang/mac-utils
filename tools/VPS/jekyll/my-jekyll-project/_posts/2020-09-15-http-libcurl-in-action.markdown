@@ -186,7 +186,7 @@ make && make install
 $./curl -V
 curl 7.82.0 (x86_64-pc-linux-gnu) libcurl/7.82.0 OpenSSL/1.0.2k-fips zlib/1.2.7
 Release-Date: 2022-03-05
-Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp 
+Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
 Features: alt-svc AsynchDNS HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTLM_WB SSL UnixSockets
 
 ./curl-config --cflags
@@ -272,6 +272,82 @@ class AClass {
     }
 }
 ```
+
+# Q&A
+
+## [Chunked encoded POSTs](https://everything.curl.dev/http/post/chunked)
+
+When talking to an `HTTP 1.1` server, you can tell curl to send the request body without a `Content-Length`: header upfront that specifies exactly how big the POST is. By insisting on curl using chunked Transfer-Encoding, curl will send the POST chunked piece by piece in a special style that also sends the size for each such chunk as it goes along.
+
+You send a chunked POST with curl like this:
+
+```
+curl -H "Transfer-Encoding: chunked" -d @file http://example.com
+```
+
+## [How does HTTP Deliver a Large File?](https://cabulous.medium.com/how-http-delivers-a-large-file-78af8840aad5)
+
+In the early era of the network, people send files in single-digit KB size. In 2021, we enjoy hi-res MB-size images and watch 4K (soon 8K) video in several GB. Even with a good internet connection, it still takes a while to download a 5GB file.
+
+We have three ways to shorten the time sending extensive data by HTTP:
+
+> compress data
+
+When sending a request, a browser includes a header `Accept-Encoding` with a list of supported compression algorithms, including `gzip` (GZIP), `compress`, `deflate`, and `br` (Brotli).
+
+Next, the server picks the one it supports from the list and sets the algorithm name in the `Content-Encoding` header.
+
+When the browser receives the response, it knows how to digest the data in the body.
+
+> send chunked data
+
+
+In version 1.1, HTTP introduced chunked data to help with the large-data cases.
+
+When sending a response, the server adds a header `Transfer-Encoding: chunked`, letting the browser know that data is transmitted in chunks.
+
+Each piece of chunked data has the following components:
+
+* a Length block marks, well, the length of the current part of chunked data
+* the chunked data block
+* a CRLF separator at the end of each block
+
+Wondering what a CRLF is?
+
+A `CR` immediately followed by an `LF` (`CRLF`, `\r\n`, or 0x0D0A) moves the cursor down to the next line and then to the beginning of the line.
+
+The server continues streaming chunked data to the browser.
+
+When reaching the end of the data stream, it attaches an end mark consisting of the following parts:
+
+* a Length block with the number 0 and a CRLF at the end
+* an additional CRLF
+
+On the browser side, it waits for all data chunks until it reaches the end mark. It then removes the chunked encoding, including the CRLF and the length information.
+
+Next, it combines the chunked data into a whole. Therefore, you can only see the assembled data on Chrome DevTools instead of chunked ones.
+
+Finally, you receive the entire data in one piece.
+
+![http_chunk](/assets/images/202207/http_chunk.png)
+
+Chunked data is useful. However, for a 5GB video, it still takes a while for the complete data to arrive.
+
+> request data in a selected range
+
+Can we get a selected chunk of the date and request the others when we need?
+
+HTTP says yes.
+
+Opening a video on YouTube, you see a grey progress bar is moving forward.
+
+What you just saw is YouTube requesting data in a selected range.
+
+This feature enables you to jump anywhere in the timeline. When clicking on the spot on the progress bar, the browser requests a specific range of the video data.
+
+It is optional to implement the range requests on a server. If it does, you can see the `Accept-Ranges: bytes` in the response header.
+
+
 
 
 
