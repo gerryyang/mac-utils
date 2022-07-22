@@ -170,6 +170,78 @@ l is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)
 + is in the foreground process group
 ```
 
+### ps
+
+`ps` displays information about a selection of the active processes.  If you want a repetitive update of the selection and the displayed information, use `top` instead.
+
+This version of `ps` accepts several kinds of options:
+
+* UNIX options, which may be grouped and **must be preceded by a dash**.
+* BSD options, which may be grouped and **must not be used with a dash**.
+* GNU long options, which **are preceded by two dashes**.
+
+EXAMPLES
+
+``` bash
+# To see every process on the system using standard syntax:
+ps -ef
+
+# To see every process on the system using BSD syntax:
+ps aux
+
+# To print a process tree:
+ps -ejH
+ps axjf
+
+# To get info about threads:
+ps -eLf
+ps axms
+
+# To get security info:
+ps -eo euser,ruser,suser,fuser,f,comm,label
+
+# To see every process running as root (real & effective ID) in user format:
+ps -U root -u root u
+
+# To see every process with a user-defined format:
+ps -eo pid,tid,class,rtprio,ni,pri,psr,pcpu,stat,wchan:14,comm
+ps axo stat,euid,ruid,tty,tpgid,sess,pgrp,ppid,pid,pcpu,comm
+ps -Ao pid,tt,user,fname,tmout,f,wchan
+
+# Print only the process IDs of syslogd:
+ps -C syslogd -o pid=
+
+# Print only the name of PID 42:
+ps -q 42 -o comm=
+```
+
+
+
+```
+$ps xao pid,ppid,pgid,sid,comm | head -n5
+    PID    PPID    PGID     SID COMMAND
+      1       0       1       1 systemd
+     26       1      26      26 systemd-journal
+     53       1      53      53 dbus-daemon
+     54       1      54      54 systemd-logind
+```
+
+```
+$ps -efj | less
+UID          PID    PPID    PGID     SID  C STIME TTY          TIME CMD
+root           1       0       1       1  0  2021 ?        00:44:06 /usr/sbin/init
+root          26       1      26      26  0  2021 ?        00:13:28 /usr/lib/systemd/systemd-journald
+```
+
+```
+# for example, ps -ejf | egrep 'STIME|http'
+$ps -ejf | egrep 'STIME|ProcessName'
+UID          PID    PPID    PGID     SID  C STIME TTY          TIME CMD
+gerryya+ 2527581 2233037 2527580 2233012  0 12:11 pts/3    00:00:00 grep -E --color=auto STIME|ProcessName
+```
+
+* https://unix.stackexchange.com/questions/82724/ps-arguments-to-display-pid-ppid-pgid-and-sid-collectively
+
 # CPU
 
 ## CPU个数

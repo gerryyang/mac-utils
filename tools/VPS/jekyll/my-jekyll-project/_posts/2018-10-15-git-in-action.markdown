@@ -691,6 +691,9 @@ Git最核心的特性就是，创建新分支操作几乎能在瞬间完成，�
 这与过去大多数版本控制系统形成了鲜明的对比，它们在创建分支时，将所有的项目文件都复制一遍，并保存到一个特定的目录。完成这样繁琐的过程通常需要好几秒钟，有时甚至需要好几分钟。所需时间的长短，完全取决于项目的规模。而在Git中，任何规模的项目都能在瞬间创建新分支。
 
 ``` bash
+# 更新远程分支信息
+git remote update origin --prune
+
 # 查看分支详细信息 (可以看出代码是否已经push)
 git branch -av
 
@@ -1388,7 +1391,10 @@ https://tortoisegit.org/
 
 # Q&A
 
-* https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
+* [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
+* [Closing multiple issues in Github with a commit message](https://stackoverflow.com/questions/3547445/closing-multiple-issues-in-github-with-a-commit-message)
+* [Automatically closing issue from pull request in GitHub](https://stackoverflow.com/questions/12235620/automatically-closing-issue-from-pull-request-in-github)
+
 
 
 # Refer

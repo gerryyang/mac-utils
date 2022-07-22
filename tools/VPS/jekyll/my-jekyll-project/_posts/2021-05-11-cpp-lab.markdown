@@ -2724,7 +2724,7 @@ int main()
 }
 ```
 
-## 编译优化
+## 禁止函数内敛
 
 更多参考：[GCC/Clang Compilation Optimize](http://gerryyang.com/gcc/clang/2021/02/13/gcc-clang-compilation-optimize.html)
 
