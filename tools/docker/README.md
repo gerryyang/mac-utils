@@ -1,27 +1,17 @@
 
 
-Q&A
-
-1. [Control startup order in Compose](https://docs.docker.com/compose/startup-order/)
-
-https://docs.docker.com/compose/compose-file/#depends_on
-
-2. find docker image with specific tag
-
-https://stackoverflow.com/questions/24481564/how-can-i-find-docker-image-with-specific-tag-in-docker-registry-in-docker-comma
-
----
-
-About Docker
+# About Docker
 
 Develop, Ship and Run Any Application, Anywhere
 
 Docker is a platform for developers and sysadmins to develop, ship, and run applications. Docker lets you quickly assemble applications from components and eliminates the friction that can come when shipping code. Docker lets you get your code tested and deployed into production as fast as possible.
 
+```
 Docker consists of:
 
     The Docker Engine - our lightweight and powerful open source container virtualization technology combined with a work flow for building and containerizing your applications.
     Docker Hub - our SaaS service for sharing and managing your application stacks.
+```
 
 Docker是一个开源项目，诞生于2013年初，最初是dotCloud公司内部的一个业余项目。它基于Google公司推出的Go语言实现。项目后来加入了Linux基金会，遵从了Apache 2.0协议，项目代码在GitHub (https://github.com/docker/docker) 上进行维护。
 
@@ -32,7 +22,7 @@ Docker项目的目标是实现轻量级的操作系统虚拟化解决方案。Do
 在LXC的基础上Docker进行了进一步的封装，让用户不需要去关心容器的管理，使得操作更为简便。用户操作Docker的容器就像操作一个快速轻量级的虚拟机一样简单。
 
 
-为什么要用Docker
+# 为什么要用Docker
 
 作为一种新兴的虚拟化方式，Docker跟传统的虚拟化方式相比具有众多的优势。
 
@@ -48,38 +38,54 @@ Docker项目的目标是实现轻量级的操作系统虚拟化解决方案。Do
 系统支持量     单机支持上千个容器         一般几十个
 
 
-基本概念
+# 基本概念
 
 (1) Docker 镜像
+
 Docker镜像就是一个只读的模板。
+
 例如：一个镜像可以包含一个完整的ubuntu操作系统环境，里面仅安装了Apache或用户需要的其它应用程序。
+
 镜像可以用来创建Docker容器。
+
 Docker提供了一个很简单的机制来创建镜像或者更新现有的镜像，用户甚至可以直接从其他人那里下载一个已经做好的镜像来直接使用。
 
 (2) Docker 容器
+
 Docker利用容器来运行应用。
+
 容器是从镜像创建的运行实例。它可以被启动、开始、停止、删除。每个容器都是相互隔离的、保证安全的平台。
+
 可以把容器看做是一个简易版的Linux环境（包括root用户权限、进程空间、用户空间和网络空间等）和运行在其中的应用程序。
-*注：镜像是只读的，容器在启动的时候创建一层可写层作为最上层。
+
+注：镜像是只读的，容器在启动的时候创建一层可写层作为最上层。
 
 (3) Docker 仓库
+
 仓库是集中存放镜像文件的场所。有时候会把仓库和仓库注册服务器（Registry）混为一谈，并不严格区分。实际上，仓库注册服务器上往往存放着多个仓库，每个仓库中又包含了多个镜像，每个镜像有不同的标签（tag）。
+
 仓库分为公开仓库（Public）和私有仓库（Private）两种形式。
+
 最大的公开仓库是 Docker Hub，存放了数量庞大的镜像供用户下载。国内的公开仓库包括 Docker Pool 等，可以提供大陆用户更稳定快速的访问。
+
 当然，用户也可以在本地网络内创建一个私有仓库。
+
 当用户创建了自己的镜像之后就可以使用 push 命令将它上传到公有或者私有仓库，这样下次在另外一台机器上使用这个镜像时候，只需要从仓库上 pull 下来就可以了。
-*注：Docker仓库的概念跟 Git 类似，注册服务器可以理解为 GitHub 这样的托管服务。
+
+注：Docker仓库的概念跟 Git 类似，注册服务器可以理解为 GitHub 这样的托管服务。
 
 
-Docker系统有两个程序：docker服务端和docker客户端。其中docker服务端是一个服务进程，管理着所有的容器。docker客户端则扮演着docker服务端的远程控制器，可以用来控制docker的服务端进程。大部分情况下，docker服务端和客户端运行在一台机器上。
+Docker系统有两个程序：
+
+docker服务端和docker客户端。其中docker服务端是一个服务进程，管理着所有的容器。docker客户端则扮演着docker服务端的远程控制器，可以用来控制docker的服务端进程。大部分情况下，docker服务端和客户端运行在一台机器上。
 
 docker容器可以理解为在沙盒中运行的进程。这个沙盒包含了该进程运行所必须的资源，包括文件系统、系统类库、shell 环境等等。但这个沙盒默认是不会运行任何程序的。你需要在沙盒中运行一个进程来启动某一个容器。这个进程是该容器的唯一进程，所以当该进程结束的时候，容器也会完全的停止。
 
-Docker支持的安装方式
-Docker有很多种安装的选择，我们推荐您在Ubuntu下面安装，因为docker是在Ubuntu下面开发的，安装包测试比较充分，可以保证软件包的可用性。Mac, windows和其他的一些linux发行版本无法原生运行Docker，可以使用虚拟软件创建一个ubuntu的虚拟机并在里面运行docker。 
+Docker支持的安装方式：
 
+Docker有很多种安装的选择，我们推荐您在Ubuntu下面安装，因为docker是在Ubuntu下面开发的，安装包测试比较充分，可以保证软件包的可用性。Mac, windows和其他的一些linux发行版本无法原生运行Docker，可以使用虚拟软件创建一个ubuntu的虚拟机并在里面运行docker。
 
-
+```
 gerryyang@mba:docker$docker run learn/tutorial uname -a
 Linux 0038d4f77199 3.16.7-tinycore64 #1 SMP Tue Dec 16 23:03:39 UTC 2014 x86_64 x86_64 x86_64 GNU/Linux
 
@@ -144,29 +150,32 @@ Run a command in a new container
   -v, --volume=[]            Bind mount a volume (e.g., from the host: -v /host:/container, from Docker: -v /container)
   --volumes-from=[]          Mount volumes from the specified container(s)
   -w, --workdir=""           Working directory inside the container
+```
 
 
-Tips:
 
+# Tips
+
+``` bash
+# 查看所有docker命令
 docker help
-查看所有docker命令
 
+# 更新docker
 boot2docker stop
 boot2docker download
 boot2docker start/up
-更新docker
 
+# 显示版本
 docker version
-显示版本
 
+# 查看所有正在运行中的容器列表
 docker ps -l
-查看所有正在运行中的容器列表
 
+# 查看更详细的关于某一个容器的信息
 docker inspect $containerid
-查看更详细的关于某一个容器的信息
 
-docker info
-例如
+
+# docker info
 gerryyang@mba:~$docker info
 Containers: 18
 Images: 27
@@ -190,112 +199,125 @@ Docker Root Dir: /mnt/sda1/var/lib/docker
 Username: gerryyang
 Registry: [https://index.docker.io/v1/]
 
+# 停止运行某个容器
 docker stop $containerid
-停止运行某个容器
 
+# 重启某个容器
 docker restart $containerid
-重启某个容器
 
+# 如果要完全移除容器，需要将该容器停止，然后才能移除
 docker stop $containerid && docker rm $containerid
-如果要完全移除容器，需要将该容器停止，然后才能移除
 
+# 将容器的状态保存为镜像，注意，镜像名称只能取字符[a-z]和数字[0-9]，镜像是存储在Docker registry
+# Create a new image from a container's changes
+# 当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号
 docker commit $containerid job1
-将容器的状态保存为镜像，注意，镜像名称只能取字符[a-z]和数字[0-9]，镜像是存储在Docker registry。
-Create a new image from a container's changes
-当你对某一个容器做了修改之后（通过在容器中运行某一个命令），可以把对容器的修改保存下来，这样下次可以从保存后的最新状态运行该容器。docker中保存状态的过程称之为committing，它保存的新旧状态之间的区别，从而产生一个新的版本。执行完docker commit命令之后，会返回新版本镜像的id号。
 
-docker search image-name 
-搜索镜像
-在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到。
+# 搜索镜像
+# 在docker的镜像索引网站上面，镜像都是按照用户名/镜像名的方式来存储的。有一组比较特殊的镜像，比如ubuntu这类基础镜像，经过官方的验证，值得信任，可以直接用镜像名来检索到
+docker search image-name
 
+# 查看镜像的历史版本
 docker history image-name
-查看镜像的历史版本
 
+# 下载镜像(docker命令和git有一些类似的地方)
 docker pull learn/tutorial
-下载镜像(docker命令和git有一些类似的地方)
 
+# 发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
 docker push gerryyang/ping
-发布镜像到docker的index网站(你只能将镜像发布到自己的空间下面)
 
+# 显示本地所有的镜像
 docker images
-显示本地所有的镜像
 
-docker tag
-为本地镜像添加新的标签，例如：
+# docker tag
+# 为本地镜像添加新的标签，例如：
 docker tag dl.dockerpool.com:5000/ubuntu:14.04 dockerpool_ubuntu_gerry:v14.04
 
-docker inspect
-获取该镜像的详细信息
+# docker inspect
+# 获取该镜像的详细信息
 docker inspect -f {{".Architecture"}}  550
 amd64
 
+# docker logs
+# 查看docker启动的日志信息
 docker logs $containerid
-docker logs -f $cid    # 类似tail -f
-docker logs --tail=10 $cid # 显示最近的10行日志
-docker logs contaiername >& logs/myFile.log (不推荐)
-# No need to redirect logs, Docker by default store logs to one log file. To check log file path run command: (推荐)
+# 类似tail -f
+docker logs -f $cid
+# 显示最近的10行日志
+docker logs --tail=10 $cid
+# 不推荐
+docker logs contaiername >& logs/myFile.log
+# 推荐
+# No need to redirect logs, Docker by default store logs to one log file. To check log file path run command
 root@ubuntu-s-1vcpu-3gb-nyc3-01:~/debug# docker inspect --format='{{.LogPath}}' 9d0329060dbb
 /var/lib/docker/containers/9d0329060dbb3d878f6bac1a7cbb09c29b3e9b31458f55a372372cd36d6aec9f/9d0329060dbb3d878f6bac1a7cbb09c29b3e9b31458f55a372372cd36d6aec9f-json.log
 root@ubuntu-s-1vcpu-3gb-nyc3-01:~/debug# docker inspect --format='{{.LogPath}}' peer1.org2.example.com
 /var/lib/docker/containers/5ed79df36f3510aeec0186803b6b74253287e9fd6ae8dd8bdc1ca76603684b45/5ed79df36f3510aeec0186803b6b74253287e9fd6ae8dd8bdc1ca76603684b45-json.log
-查看docker启动的日志信息
 
-docker rmi REPOSITORY:TAG
-删除镜像，例如：
+
+# docker rmi REPOSITORY:TAG
+# 删除镜像，例如：
 docker rmi ubuntu:lucid
 Untagged: ubuntu:lucid
-注意：应该先删除依赖该镜像的所有容器，再来删除镜像。否则会有如下错误提示：
+# 注意：应该先删除依赖该镜像的所有容器，再来删除镜像。否则会有如下错误提示：
 root@gerryyang:~# docker rmi 550
 Error response from daemon: Conflict, cannot delete image 550 because it is tagged in multiple repositories, use -f to force
 2015/01/10 06:06:22 Error: failed to remove one or more images
 
+# 若一个容器内运行了多个进程，可以通过docker top来查看进程信息
 docker top $containerid
-若一个容器内运行了多个进程，可以通过docker top来查看进程信息
 
+# 进入某个容器
 docker exec -it $cid /bin/bash
-进入某个容器
+```
 
 
 
+# Refer
 
-Refer:
-https://www.docker.com/
-http://www.docker.io/gettingstarted/#0
 入门手册
-http://www.docker.org.cn/
-http://www.docker.org.cn/book/docker.html
-镜像
-index.docker.io
 
-http://docs.docker.com/
-http://docs.docker.com/installation/#installation
-http://docs.docker.com/installation/mac/
-https://www.docker.com/tryit/#
+* https://www.docker.com/
+* http://www.docker.io/gettingstarted/#0
+* http://www.docker.org.cn/
+* http://www.docker.org.cn/book/docker.html
+
+镜像
+
+* index.docker.io
+* http://docs.docker.com/
+* http://docs.docker.com/installation/#installation
+* http://docs.docker.com/installation/mac/
+* https://www.docker.com/tryit/#
 
 Docker入门教程
-http://dockerone.com/article/111
+
+* http://dockerone.com/article/111
 
 Dockerfile Best Practices
-http://crosbymichael.com/dockerfile-best-practices.html
 
-https://github.com/yeasy/docker_practice
+* http://crosbymichael.com/dockerfile-best-practices.html
+* https://github.com/yeasy/docker_practice
 
 Docker —— 从入门到实践
-http://yeasy.gitbooks.io/docker_practice/content/
+
+* http://yeasy.gitbooks.io/docker_practice/content/
 
 Install Docker
-http://blog.csdn.net/delphiwcdj/article/details/41780063
 
-http://blog.tankywoo.com/docker/2014/05/08/docker-4-summary.html
-https://raw.githubusercontent.com/dotcloud/docker/master/contrib/check-config.sh
-http://blog.thoward37.me/articles/where-are-docker-images-stored/
-http://kencochrane.net/blog/2013/08/the-docker-guidebook/#terminology
-http://segmentfault.com/a/1190000000366923
-http://cdn.oreillystatic.com/en/assets/1/event/115/Introduction%20to%20Docker_%20Containerization%20is%20the%20New%20Virtualization%20Presentation.pdf
-http://viget.com/extend/how-to-use-docker-on-os-x-the-missing-guide
+* http://blog.csdn.net/delphiwcdj/article/details/41780063
+* http://blog.tankywoo.com/docker/2014/05/08/docker-4-summary.html
+* https://raw.githubusercontent.com/dotcloud/docker/master/contrib/check-config.sh
+* http://blog.thoward37.me/articles/where-are-docker-images-stored/
+* http://kencochrane.net/blog/2013/08/the-docker-guidebook/#terminology
+* http://segmentfault.com/a/1190000000366923
+* http://cdn.oreillystatic.com/en/assets/1/event/115/Introduction%20to%20Docker_%20Containerization%20is%20the%20New%20Virtualization%20Presentation.pdf
+* http://viget.com/extend/how-to-use-docker-on-os-x-the-missing-guide
 
 boycott docker
-http://www.boycottdocker.org/
+
+* http://www.boycottdocker.org/
+
 
 
 
