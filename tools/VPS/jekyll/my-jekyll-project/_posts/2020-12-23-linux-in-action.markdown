@@ -1298,3 +1298,38 @@ tmpfs                           tmpfs     65716364         0   65716364    0% /s
 tmpfs                           tmpfs     13143276         0   13143276    0% /run/user/0
 tmpfs                           tmpfs     13143276         0   13143276    0% /run/user/1012
 ```
+
+## jq (Command-line JSON processor)
+
+`jq` is a lightweight and flexible command-line JSON processor.
+
+https://stedolan.github.io/jq/
+
+
+## ethtool
+
+ethtool - query or control network driver and hardware settings
+
+```
+$ethtool eth0
+Settings for eth0:
+        Supported ports: [ ]
+        Supported link modes:   Not reported
+        Supported pause frame use: No
+        Supports auto-negotiation: No
+        Supported FEC modes: Not reported
+        Advertised link modes:  Not reported
+        Advertised pause frame use: No
+        Advertised auto-negotiation: No
+        Advertised FEC modes: Not reported
+        Speed: 10000Mb/s
+        Duplex: Full
+        Port: Twisted Pair
+        PHYAD: 0
+        Transceiver: internal
+        Auto-negotiation: off
+        MDI-X: Unknown
+Cannot get wake-on-lan settings: Operation not permitted
+        Link detected: yes
+```
+

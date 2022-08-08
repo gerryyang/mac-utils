@@ -2,7 +2,7 @@
 layout: post
 title:  "Docker in Action"
 date:   2019-02-22 08:00:00 +0800
-categories: Docker
+categories: 虚拟化
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -49,6 +49,28 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 
 ![docker_cmd](/assets/images/201902/docker_cmd.jpg)
 
+## Q&A
+
+## [How can I find a Docker image with a specific tag in Docker registry on the Docker command line?](https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock)
+
+Q:
+
+I try to locate one specific tag for a Docker image. How can I do it on the command line? I want to avoid downloading all the images and then removing the unneeded ones.
+
+A:
+
+
+``` bash
+#!/usr/bin/bashs
+
+# docker_remote_tags.sh
+curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' |sort
+```
+
+Reference:
+
+jq: https://stedolan.github.io/jq/ | apt-get install jq
+
 
 ## 历史文章
 
@@ -74,7 +96,7 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 
 [Docker使用桥接的通信方案]: https://blog.csdn.net/delphiwcdj/article/details/49508045
 
-[github-docker]: https://github.com/gerryyang/mac-utils/tree/master/tools/docker        
+[github-docker]: https://github.com/gerryyang/mac-utils/tree/master/tools/docker
 
 [Docker Release Notes]: https://docs.docker.com/release-notes/
 

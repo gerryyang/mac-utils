@@ -124,11 +124,40 @@ It's your team, your routine, and it's never just a ride.
 
 有些廉价自行车商家宣称，同一尺寸的自行车可以满足身高从150-185CM的范围需求，这是不科学的。如果选择了不合适的车架尺寸，不仅会因此形成错误的骑行姿势，导致身体上的疼痛，还有可能造成运动损伤，甚至带来巨大的安全隐患。
 
+## TCR 全能型公路競賽用車
+
+[最新12速 DURA ACE Di2的TCR Advanced SL 0 Disc](https://youtu.be/QvPzWgMG2gc)，建議售價	NT 308,000（人民币：70840）
+
+![TCR_Advanced_SL_0_Disc](/assets/images/202207/TCR_Advanced_SL_0_Disc.png)
+
+2022年7月22日，[2021 TCR ADV 0 Disc](http://www.giantgd.com/bikes/showproduct.php?id=1503)，深绿变色龙，尺寸 700C×500MM ML，价格`23800`，视频介绍：[捷安特TCR ADV 0 DISC深绿变色龙涂装](https://www.bilibili.com/video/BV1sA411n7Kg/?spm_id_from=333.788.recommend_more_video.4)
+
+* 配置
+    + 车架：GIANT TCR ADV碳纤维公路车架
+    + 前叉：GIANT 碳纤维碟刹前叉
+    + 车把手：GIANT CONTACT 31.8 弯把
+    + 车首竖杆：GIANT CONTACT竖杆
+    + 座垫杆：碳纤维垫杆
+    + 座垫：GIANT 碳弓公路车坐垫
+    + 变速把手：SRAM FORCE ETAP AXS 2*12S
+    + 前变速器：SRAM FORCE ETAP AXS
+    + 后变速器：SRAM FORCE ETAP AXS
+    + 刹车：SRAM FORCE HRD
+    + 飞轮：SRAM XG-1270 12S 10-33T
+    + 齿盘：SRAM FORCE 48/35T
+    + 轮胎：GAVIA AC 1 C3004U 700*25c
+    + 轮组：铝合金碟刹轮组
+    + 颜色：深绿变色龙
+
+* https://www.giantcyclingworld.com/bike_brand.php?id=20032620
+* https://www.giantcyclingworld.com/bike.php?id=20736388
+* https://www.giantcyclingworld.com/bike_brand.php
+* https://www.giant.com.cn/index.php/index/bike_view.html?id=500
 
 
 ## 迪卡侬 rc520
 
-2022年5月份购入，价格`6500`，目前严重缺货。
+2022年5月份，价格`6500`，目前严重缺货。
 
 ![rc520_1](/assets/images/202204/rc520_1.jpg)
 
@@ -180,7 +209,7 @@ https://zhuanlan.zhihu.com/p/426200312
 
 ## 迪卡侬 rc100
 
-2022年4月份购入，价格`1700`，2022年6月份已经涨到`1800`。
+2022年4月份，价格`1700`，2022年6月份已经涨到`1800`。
 
 ![dkn-rc100](/assets/images/202204/dkn-rc100.png)
 

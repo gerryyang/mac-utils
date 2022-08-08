@@ -460,6 +460,50 @@ enum UrlParseError{
 };
 ```
 
+## final specifier
+
+Specifies that a [virtual function](https://en.cppreference.com/w/cpp/language/virtual) cannot be overridden in a derived class or that a class cannot be [derived from](https://en.cppreference.com/w/cpp/language/derived_class).
+
+``` cpp
+struct Base
+{
+    virtual void foo();
+};
+
+struct A : Base
+{
+    void foo() final; // Base::foo is overridden and A::foo is the final override
+    void bar() final; // Error: bar cannot be final as it is non-virtual
+};
+
+struct B final : A // struct B is final
+{
+    void foo() override; // Error: foo cannot be overridden as it is final in A
+};
+
+struct C : B {}; // Error: B is final
+```
+
+Possible output:
+
+```
+main.cpp:9:10: error: 'void A::bar()' marked 'final', but is not virtual
+    9 |     void bar() final; // Error: bar cannot be final as it is non-virtual
+      |          ^~~
+main.cpp:14:10: error: virtual function 'virtual void B::foo()' overriding final function
+   14 |     void foo() override; // Error: foo cannot be overridden as it is final in A
+      |          ^~~
+main.cpp:8:10: note: overridden function is 'virtual void A::foo()'
+    8 |     void foo() final; // Base::foo is overridden and A::foo is the final override
+      |          ^~~
+main.cpp:17:8: error: cannot derive from 'final' base 'B' in derived type 'C'
+   17 | struct C : B // Error: B is final
+      |
+```
+
+* https://en.cppreference.com/w/cpp/language/final
+
+
 
 ## lambda
 
@@ -2746,6 +2790,225 @@ int main()
 ```
 
 [clang ignoring attribute noinline](https://stackoverflow.com/questions/54481855/clang-ignoring-attribute-noinline)
+
+## 多继承的指针偏移
+
+``` cpp
+#include <iostream>
+
+struct A
+{
+   int a1;   // 4B
+   int a2;   // 4B
+};
+
+struct B
+{
+   int b;
+};
+
+struct C : public A, public B
+{
+   int c;
+};
+
+int main()
+{
+    printf("%p\n", (B*)(C*)1); // 多重继承时，对象 C 的地址 0x1 在进行类型转换 B 时，会偏移 A 的大小 = 0x1 + 4 + 4 = 0x9
+}
+```
+
+``` cpp
+#include <iostream>
+
+struct A
+{
+   int a;
+};
+
+struct B
+{
+   int b;
+};
+
+struct C : public A, public B
+{
+   int c;
+};
+
+int main()
+{
+    C* pc = new C;
+    std::cout << "pc: " << pc << std::endl;;
+
+    B* pb = pc;
+    std::cout << "pb: " << pb << std::endl;
+
+    A* pa = pc;
+    std::cout << "pa: " << pa << std::endl;
+}
+/*
+pc: 0xddff40
+pb: 0xddff44
+pa: 0xddff40
+*/
+```
+
+## delete-non-virtual-dtor warning
+
+测试代码：
+
+``` cpp
+#include <iostream>
+
+struct Foo
+{
+    virtual void func() { }
+};
+
+struct Bar : public Foo
+{
+    void func() override { }
+};
+
+int main()
+{
+    Foo* f = new Bar;
+    f->func();
+    delete f;
+}
+```
+
+编译选项：-std=c++11 -Wall
+
+编译告警：
+
+```
+<source>:18:5: warning: delete called on non-final 'Foo' that has virtual functions but non-virtual destructor [-Wdelete-non-abstract-non-virtual-dtor]
+    delete f;
+    ^
+1 warning generated.
+```
+
+由于父类不是虚析构，因此在对象销毁时，只会调用父类的析构函数，而不会调用子类的析构函数。在父类定义中添加虚析构函数，可去除编译告警：
+
+``` cpp
+#include <iostream>
+
+struct Foo
+{
+    virtual void func() { }
+    virtual ~Foo() = default;   // 在基类定义中添加虚析构函数
+};
+
+struct Bar : public Foo
+{
+    void func() override { }
+};
+
+int main()
+{
+    Foo* f = new Bar;
+    f->func();
+    delete f;
+}
+```
+
+或者添加 final 去除告警：
+
+``` cpp
+#include <iostream>
+
+struct Foo
+{
+    virtual void doStuff() { }
+    //virtual ~Foo() = default;
+};
+
+struct Bar final : public Foo   // 添加 final 去除告警
+{
+    void doStuff() override { }
+};
+
+int main()
+{
+    Bar* f = new Bar;
+    f->doStuff();
+    delete f;
+}
+```
+
+
+参考 [Bug 53596 - g++-4.7 -Wall shouldn't complain for non-virtual protected dtor](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=53596) 中的例子：
+
+``` cpp
+#include <iostream>
+
+class Base {
+public:
+  virtual void foo() = 0;
+protected:
+  ~Base() { } // legal C++ code
+};
+
+class Derived : public Base {
+public:
+  virtual void foo() { std::cout << "Derived::foo()"      << std::endl; }
+  ~Derived()         { std::cout << "Derived::~Derived()" << std::endl; }
+};
+
+int main() {
+  Derived* derived = new Derived();
+  derived->foo();
+  delete derived; // legal, there must be no warning!
+  return 0;
+}
+```
+
+问题：
+
+g++-4.7 `-Wall` produces erronous `-Wdelete-non-virtual-dtor` warning
+
+g++-4.7 shouldn't complain for non-virtual protected dtor if the base class has virtual functions. Previous versions of g++ do not warn, other compilers (msvc /W4, sunCC +w2) do not warn.
+
+解释：
+
+The warning is valid, the fact `Base` is `protected` is irrelevant, you're not using delete with a `Base*` operand.
+
+Consider:
+
+``` cpp
+class MoreDerived : public Derived {
+public:
+  ~Derived() { std::cout << "MoreDerived::~MoreDerived()" << std::endl; }
+};
+
+int main() {
+  Derived* morederived = new MoreDerived();
+  morederived->foo();
+  delete morederived; // undefined behaviour
+}
+```
+
+**Now the warning is entirely correct**, you are deleting a `Derived*` which is a polymorphic type without a virtual destructor, so the program has undefined behaviour. That's substantially the same as your example, on the line:
+
+delete derived;
+
+the compiler doesn't know that the `Derived*` points to a `Derived` or a `MoreDerived`, **so it warns you it might cause undefined behaviour**.
+
+[N.B.](https://www.quora.com/What-does-the-abbreviation-N-B-mean-and-why-do-people-use-it) Clang (known for much better diagnostics than MSVC or Sun CC) also warns for your example.
+
+> “N.B.” means “nota bene” in Latin, which means “note well” (or “pay special attention to this”) in English.
+
+**The reason previous versions of GCC do not warn is because GCC has been improved and now issues a warning for unsafe code that it didn't diagnose before. This is a good thing.**
+
+
+
+* [Suppress delete-non-virtual-dtor warning when using a protected non-virtual destructor](https://stackoverflow.com/questions/43282826/suppress-delete-non-virtual-dtor-warning-when-using-a-protected-non-virtual-dest)
+* https://gcc.gnu.org/wiki/VerboseDiagnostics#delete-non-virtual-dtor
+
+
+
 
 
 # Refer

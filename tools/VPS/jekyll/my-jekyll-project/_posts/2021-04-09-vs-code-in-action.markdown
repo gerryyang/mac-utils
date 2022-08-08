@@ -49,7 +49,7 @@ If you go back to the File Explorer view (`⇧⌘E`), you'll see that VS Code ha
 
 > Launch versus Attach:
 
-In VS Code, there are two core debugging modes, `Launch` and `Attach`, which handle two different workflows and segments of developers. 
+In VS Code, there are two core debugging modes, `Launch` and `Attach`, which handle two different workflows and segments of developers.
 
 VS Code debuggers typically support launching a program in debug mode or attaching to an already running program in debug mode. Depending on the request (attach or launch), different attributes are required, and VS Code's `launch.json` validation and suggestions should help with that.
 
@@ -71,7 +71,7 @@ Breakpoints can be toggled by clicking on the **editor margin** or using **F9** 
 
 ## Debug C++ in Visual Studio Code
 
-To configure debug configuration, Two files are required `launch.json` and `tasks.json` inside `.vscode` folder. VSCode can create and auto-configure these files if we try to debug for the first time. 
+To configure debug configuration, Two files are required `launch.json` and `tasks.json` inside `.vscode` folder. VSCode can create and auto-configure these files if we try to debug for the first time.
 
 ### launch.json
 
@@ -217,13 +217,13 @@ Host $ip_ssh_config
 * `control + ~`: 打开terminal
 * `option`: 多行编辑
 * `shift + command + D`: 打开Debugging的Run view（`⇧⌘D`）
-  
+
 
 ## 代码快捷键
 
 * `command + tick`:  查找跳转
 * `control + -`/`shift + control + -`: 返回/前进
-* `command + P`:  
+* `command + P`:
 	+ 查找文件，显示最近打开的文件
 	+ 当前文件行数（`:行号`）或函数（`@函数名`）跳转。其中，函数跳转等价于：`shift + command + o`
 * `shift + u / l`: 大小写转化
@@ -279,7 +279,7 @@ Host $ip_ssh_config
 ## Bracket Pair Colorizer2
 
 * 括号通过不同颜色区分，多层级括号便于区分
-  
+
 > 注意：发现安装此插件后，输入汉字会卡顿，禁用后可恢复
 
 ##  Indenticator
@@ -345,7 +345,7 @@ Visual Studio code format all files.
 
 ## Switcher
 
-Switch between related files (same name, different extensions) using keybindings, context menu or command palette. 
+Switch between related files (same name, different extensions) using keybindings, context menu or command palette.
 
 `option+ o`: 实现`.h`和`.cc`之间的跳转。
 
@@ -366,9 +366,18 @@ Format / Beautify bash and shell scripts.
 
 CMake langage support for Visual Studio Code
 
+## protobuf
+
+这是有一个解析 google protobuf 提供提示 和 跳转的工具
+
+## Kubernetes
+
+Develop, deploy and debug Kubernetes applications
+
+
 # 有趣的扩展
 
-## LeetCode 
+## LeetCode
 
 Solve LeetCode problems in VS Code.
 
@@ -402,7 +411,6 @@ Solve LeetCode problems in VS Code.
 * https://code.visualstudio.com/docs/editor/codebasics
 
 
- 
 
-	
-	
+
+
