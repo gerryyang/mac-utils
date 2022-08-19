@@ -352,9 +352,18 @@ I would recommend you reach out to your local product support team, as it may be
 
 You can also try as one more attempt, press and hold the Lap button on your Edge while you connect it to the USB cable. This will hopefully force it into Mass Storage mode. If this does not work, please reach out to your local support team by visiting support.garmin.com.
 
-方案1：USB 导入数据方案失败，尝试方案2:[從 Garmin Connect 下載路線](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-414F5A9F-3B61-4A30-8E1B-58C3870B71CE-2740.html)，提示上传出错请重试（无语）。参考网上方案：[骑行 - 行者 gpx 导入 Garmin 出错](https://zhuanlan.zhihu.com/p/368952941)，具体方法是：将`xmlns="http://www.topografix.com/GPX/1/0"` 替换为`xmlns="http://www.topografix.com/GPX/1/1"`，可以导入成功。
+方案1：USB 导入数据方案失败，尝试方案2：[從 Garmin Connect 下載路線](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-414F5A9F-3B61-4A30-8E1B-58C3870B71CE-2740.html)，提示上传出错请重试（无语）。参考网上方案：[骑行 - 行者 gpx 导入 Garmin 出错](https://zhuanlan.zhihu.com/p/368952941)，具体方法是：
 
-注意，在[connect.Garmin.com](https://connect.garmin.com/modern/)注册账号时，选择的是 HongKong 地区，没有找到 China，因此，在 Connect App 上登陆时也需要重新选择 HongKong 地区登陆，这样才能找到对应的账号。
+```
+将
+xmlns="http://www.topografix.com/GPX/1/0"
+替换为
+xmlns="http://www.topografix.com/GPX/1/1"
+```
+
+可以导入成功。
+
+注意，在 [connect.Garmin.com](https://connect.garmin.com/modern/) 注册账号时，选择的是 HongKong 地区，没有找到 China，因此，在 Connect App 上登陆时也需要重新选择 HongKong 地区登陆，这样才能找到对应的账号。
 
 ![garmin_import_data](/assets/images/202208/garmin_import_data.png)
 
