@@ -1950,6 +1950,38 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 17697 Tue Dec  7 12:17:52 2021    08:07:21
 ```
 
+# Q&A
+
+## [Shebang](https://bash.cyberciti.biz/guide/Shebang)
+
+You will always see `#!/bin/bash` or `#!/usr/bin/env bash` as the first line when writing or reading bash scripts. **Shebang** starts with `#!` characters and the path to the bash or other interpreter of your choice. Let us see what is **Shebang** in Linux and Unix bash shell scripts.
+
+The `#!` syntax is used in scripts to indicate an interpreter for execution under UNIX / Linux operating systems. The directive must be the first line in the Linux shell script and must start with shebang `#!`. You can add argument after the **shebang** characters, which is optional. Make sure the interpreter is the full path to a binary file. For example: `/bin/bash`.
+
+The syntax is:
+
+``` bash
+#!/path/to/interpreter [arguments]
+#!/path/to/interpreter -arg1 -arg2
+```
+
+Most Linux shell and perl / python script starts with the following line. Bash or sh example:
+
+``` bash
+#!/bin/bash
+```
+
+Starting a Script With `#!`
+
+* It is called a **shebang** or a "bang" line.
+* It is nothing but the absolute path to the Bash interpreter.
+* It consists of a number sign and an exclamation point character (#!), followed by the full path to the interpreter such as /bin/bash.
+* All scripts under Linux execute using the interpreter specified on a first line.
+* Almost all bash scripts often begin with `#!/bin/bash` (assuming that Bash has been installed in `/bin`)
+* This ensures that Bash will be used to interpret the script, even if it is executed under another shell.
+* The **shebang** was introduced by Dennis Ritchie between Version 7 Unix and 8 at Bell Laboratories. It was then also added to the BSD line at Berkeley.
+
+
 
 # Manual
 

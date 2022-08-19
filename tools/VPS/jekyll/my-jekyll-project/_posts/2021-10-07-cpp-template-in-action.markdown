@@ -920,3 +920,59 @@ int main()
 
 More: [template_specialization, In detail](https://en.cppreference.com/w/cpp/language/template_specialization)
 
+## 判断一个类T是否定义了成员函数 (不包括继承)
+
+https://wandbox.org/permlink/FAu1kZMDGPW1u9Eg
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+#define CREATE_SPECIFIED_MEMBER_FUNC_DETECTOR(Func)                                \
+                                                                                   \
+template<typename T, typename MemFunc>                                             \
+struct has_specified_member_func_##Func                                            \
+{                                                                                  \
+  template<class U, MemFunc>                                                       \
+  struct HasSpecifiedMemberFunc;                                                   \
+                                                                                   \
+  template<class U>                                                                \
+  static char test(HasSpecifiedMemberFunc<U, &U::Func>* unused);                   \
+                                                                                   \
+  template<class>                                                                  \
+  static int test(...);                                                            \
+                                                                                   \
+  static constexpr bool value = sizeof(test<T>(nullptr)) == sizeof(char);          \
+};
+
+CREATE_SPECIFIED_MEMBER_FUNC_DETECTOR(CopyTo)
+
+class A
+{
+public:
+	template<typename T>
+	void CopyTo(T&)
+	{
+		// 可以换成static_assert
+		std::cout << has_specified_member_func_CopyTo<T, void(T::*)(T&)>::value << std::endl;
+	}
+};
+
+class B : public A
+{
+
+};
+
+int main()
+{
+   A a, a1;
+   a.CopyTo(a1);
+   B b, b1;
+   b.CopyTo(b1);
+   return 0;
+}
+/*
+1
+0
+*/
+```

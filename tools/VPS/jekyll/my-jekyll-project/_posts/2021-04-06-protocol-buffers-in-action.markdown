@@ -1049,7 +1049,17 @@ elapse(0.0260171s)
 
 ## Arena Allocation
 
-引入arena 支持，减少大对象释放开销，可参考：[C++ Arena Allocation Guide](https://developers.google.com/protocol-buffers/docs/reference/arenas)
+引入 Arena 支持，减少大对象释放开销，可参考：[C++ Arena Allocation Guide](https://developers.google.com/protocol-buffers/docs/reference/arenas)
+
+Arena 原理：Arena 就是由 protbuf 库去接管 pb 对象的内存管理。它的原理很简单，是预先分配一个内存块；解析消息和构建消息等触发对象创建时是在已分配好的内存块上 placement new 出来；arena对象析构时会释放所有内存，理想情况下不需要运行任何被包含对象的析构函数。
+
+好处：
+
+* 减少复杂的 pb 对象中多次 malloc/free 和析构带来的系统开销
+* 减少内存碎片
+* pb 对象的内存连续，cache line友好、读取性能高
+
+适用场景：pb 结构比较复杂，repeated 类型字段包含的数据个数比较多。
 
 > Why use arena allocation?
 

@@ -356,7 +356,36 @@ But maybe you think that writing all those `main` functions is too much work? We
 
 **Google Test is designed to be thread-safe**. The implementation is thread-safe on systems where the pthreads library is available. It is currently unsafe to use Google Test assertions from two threads concurrently on other systems (e.g. Windows). In most tests this is not an issue as usually the assertions are done in the main thread. If you want to help, you can volunteer to implement the necessary synchronization primitives in `gtest-port.h` for your platform.
 
+## Advanced googletest Topics
 
+TODO
+
+* http://google.github.io/googletest/advanced.html
+
+
+
+## Q&A
+
+### [Setup/TearDown/SetUpTestCase/TearDownTestCase 的区别](https://blog.csdn.net/carolzhang8406/article/details/54668319)
+
+### [Can you test SetUp success/failure in Google Test](https://stackoverflow.com/questions/20636539/can-you-test-setup-success-failure-in-google-test)
+
+If you put your fixture setup code into a `SetUp` method, and it fails and issues a fatal failure (ASSERT_XXX or FAIL macros), Google Test will not run your test body. So all you have to write is
+
+``` cpp
+class MyTestCase : public testing::Test {
+ protected:
+  bool InitMyTestData() { ... }
+
+  virtual void SetUp() {
+    ASSERT_TRUE(InitMyTestData());
+  }
+};
+
+TEST_F(MyTestCase, Foo) { ... }
+```
+
+More: [Checking for Failures in the Current Test](http://google.github.io/googletest/advanced.html#checking-for-failures-in-the-current-test)
 
 
 # doctest

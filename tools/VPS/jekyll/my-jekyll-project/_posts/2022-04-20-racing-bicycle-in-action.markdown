@@ -340,6 +340,37 @@ https://zhuanlan.zhihu.com/p/426200312
     + 骑行补给：200
 
 
+# Garmin EDGE 530 使用
+
+Edge 530 无法连接 USB 的问题：[Edge 530 does not connecting via USB](https://forums.garmin.com/sports-fitness/cycling/f/edge-530/258454/edge-530-does-not-connecting-via-usb)
+
+官方回答：
+
+I would also be curious if you have confirmed that this is a data transfer cable or not. Some cables will provide charge only, and it sounds like this is the case if your phone is also unable to transfer using this cable.
+
+I would recommend you reach out to your local product support team, as it may be an issue with the port on your device.
+
+You can also try as one more attempt, press and hold the Lap button on your Edge while you connect it to the USB cable. This will hopefully force it into Mass Storage mode. If this does not work, please reach out to your local support team by visiting support.garmin.com.
+
+方案1：USB 导入数据方案失败，尝试方案2:[從 Garmin Connect 下載路線](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-414F5A9F-3B61-4A30-8E1B-58C3870B71CE-2740.html)，提示上传出错请重试（无语）。参考网上方案：[骑行 - 行者 gpx 导入 Garmin 出错](https://zhuanlan.zhihu.com/p/368952941)，具体方法是：将`xmlns="http://www.topografix.com/GPX/1/0"` 替换为`xmlns="http://www.topografix.com/GPX/1/1"`，可以导入成功。
+
+注意，在[connect.Garmin.com](https://connect.garmin.com/modern/)注册账号时，选择的是 HongKong 地区，没有找到 China，因此，在 Connect App 上登陆时也需要重新选择 HongKong 地区登陆，这样才能找到对应的账号。
+
+![garmin_import_data](/assets/images/202208/garmin_import_data.png)
+
+![garmin_import_data2](/assets/images/202208/garmin_import_data2.png)
+
+![garmin_import_data3](/assets/images/202208/garmin_import_data3.png)
+
+![garmin_import_data4](/assets/images/202208/garmin_import_data4.png)
+
+其他参考：
+
+* [裝置介紹](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-100F630E-294B-4C37-BE6E-7399C5324333-9412.html)
+* [My Edge Device Will Not Fully Turn On](https://support.garmin.com/en-GB/?faq=PsxSBlFqTL57tN38aI6m29#:~:text=To%20force%20an%20Edge%20into%20mass%20storage%20mode%3A,%28s%29%20Edge%2020%20and%2025%3A%20START%2FSTOP%20%28top-right%20button%29)
+
+
+
 
 # Refer
 

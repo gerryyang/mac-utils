@@ -13,7 +13,7 @@ categories: [C/C++]
 `std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
 
 * the last remaining shared_ptr owning the object is destroyed; (**当所持对象的最后一个 shared_ptr 销毁时，才对所持的对象进行销毁**)
-* the last remaining shared_ptr owning the object is assigned another pointer via `operator=` or `reset()`. (**当所持对象的最后一个 shared_tpr 通过`operator=`赋值为另一个指针，或者`reset()`(replaces the managed object)替换为另一个对象时，才对所持的对象进行销毁**)
+* the last remaining shared_ptr owning the object is assigned another pointer via `operator=` or `reset()`. (**当所持对象的最后一个 shared_ptr 通过`operator=`赋值为另一个指针，或者`reset()`(replaces the managed object)替换为另一个对象时，才对所持的对象进行销毁**)
 
 The object is destroyed using `delete-expression` or a `custom deleter` that is supplied to shared_ptr during construction.
 
@@ -49,7 +49,7 @@ The **control block** is a dynamically-allocated object that holds:
 
 方式一：一次分配
 
-When `shared_ptr` is created by calling `std::make_shared` or `std::allocate_shared`, the memory for **both the control block and the managed object** is created with a single allocation. The managed object is constructed in-place in a data member of the control block. 
+When `shared_ptr` is created by calling `std::make_shared` or `std::allocate_shared`, the memory for **both the control block and the managed object** is created with a single allocation. The managed object is constructed in-place in a data member of the control block.
 
 方式二：两次分配
 
@@ -63,7 +63,7 @@ The destructor of shared_ptr decrements the number of shared owners of the contr
 
 To satisfy thread safety requirements, the reference counters are typically incremented using an equivalent of `std::atomic::fetch_add` with `std::memory_order_relaxed`(**松散内存序，只用来保证对原子对象的操作是原子的**) (decrementing requires stronger ordering to safely destroy the control block).
 
-> All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of shared_ptr without additional synchronization even if these instances are copies and share ownership of the same object. 
+> All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of shared_ptr without additional synchronization even if these instances are copies and share ownership of the same object.
 
 ## 线程安全 (std::shared_ptr)
 
@@ -80,6 +80,16 @@ The standard guarantees only one thread will call the delete operator on a share
 * shared_ptr does not guarantee any thread safety for object stored in it?
 
 No they do not, the object stored in it can be simultaneously edited by multiple threads.
+
+-----
+
+`std::shared_ptr` **is not thread safe**.
+
+A shared pointer is a pair of two pointers, one to the object and one to a control block (holding the ref counter, links to weak pointers ...).
+
+There can be multiple std::shared_ptr and whenever they access the control block to change the reference counter it's thread-safe **but the std::shared_ptr itself is NOT thread-safe or atomic.**
+
+**If you assign a new object to a std::shared_ptr while another thread uses it, it might end up with the new object pointer but still using a pointer to the control block of the old object => CRASH**.
 
 More: [std::shared_ptr thread safety](https://stackoverflow.com/questions/14482830/stdshared-ptr-thread-safety/65615682#65615682)
 
@@ -324,12 +334,12 @@ https://en.cppreference.com/w/cpp/memory/auto_ptr
 #include <iostream>
 #include <memory>
 
-struct C 
+struct C
 {
     int* data;
 };
 
-int main () 
+int main ()
 {
   std::shared_ptr<int> p1;
   std::shared_ptr<int> p2 (nullptr);
@@ -377,27 +387,27 @@ int main()
 {
     Foo *foo1 = new Foo(1);
     std::cout << "foo1: " <<  foo1 << ", " << foo1->Get() << std::endl;
-    
+
     {
         std::shared_ptr<Foo> foo2 = std::make_shared<Foo>(2);
         std::cout << "foo2: " << foo2 << ", " << foo2->Get() << std::endl;
-        
-        std::cout << "before reset, foo2 use_count: " << foo2.use_count() << std::endl; 
+
+        std::cout << "before reset, foo2 use_count: " << foo2.use_count() << std::endl;
         // foo2 is destructed and then constructs with foo1
         foo2.reset(foo1);
         std::cout << "after reset, foo2 use_count: " << foo2.use_count() << std::endl;
-        
+
         std::cout << "after reset, foo1: " << foo1 << ", " << foo1->Get() << std::endl;
         std::cout << "after reset, foo2: " << foo2 << ", " << foo2->Get() << std::endl;
-        
+
         foo1->Set(3);
         std::cout << "after foo1->Set(3), foo1: " << foo1 << ", " << foo1->Get() << std::endl;
         std::cout << "after foo1->Set(3), foo2: " << foo2 << ", " << foo2->Get() << std::endl;
-        
+
         // foo2 destruct, delete foo1 buffer
     }
     std::cout << "foo1 is deleted\n";
-    
+
     // error, foo1 is deleted
     std::cout << "after foo2 dtor, foo1: " << foo1 << ", " << foo1->Get() << std::endl;
 }
@@ -424,26 +434,26 @@ after foo2 dtor, foo1: 0x11b4d30, 18567616
 ``` cpp
 #include <memory>
 #include <iostream>
- 
+
 struct Foo {
     Foo() { std::cout << "Foo...\n"; }
     ~Foo() { std::cout << "~Foo...\n"; }
 };
- 
-struct D { 
+
+struct D {
     void operator()(Foo* p) const {
         std::cout << "Call delete from function object...\n";
         delete p;
     }
 };
- 
+
 int main()
 {
     {
         std::cout << "constructor with no managed object\n";
         std::shared_ptr<Foo> sh1; // 空的 shared_ptr
     }
- 
+
     {
         std::cout << "constructor with object\n";
         std::shared_ptr<Foo> sh2(new Foo);
@@ -451,7 +461,7 @@ int main()
         std::cout << sh2.use_count() << '\n';
         std::cout << sh3.use_count() << '\n';
     }
- 
+
     {
         std::cout << "constructor with object and deleter\n";
         std::shared_ptr<Foo> sh4(new Foo, D());
@@ -488,20 +498,20 @@ Call delete from function object...
 #include <thread>
 #include <chrono>
 #include <mutex>
- 
+
 struct Base
 {
     Base() { std::cout << "  Base::Base()\n"; }
     // Note: non-virtual destructor is OK here
     ~Base() { std::cout << "  Base::~Base()\n"; }
 };
- 
+
 struct Derived: public Base
 {
     Derived() { std::cout << "  Derived::Derived()\n"; }
     ~Derived() { std::cout << "  Derived::~Derived()\n"; }
 };
- 
+
 void thr(std::shared_ptr<Base> p)  // 传值
 {
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -515,11 +525,11 @@ void thr(std::shared_ptr<Base> p)  // 传值
                   << ", lp.use_count() = " << lp.use_count() << '\n';
     }
 }
- 
+
 int main()
 {
     std::shared_ptr<Base> p = std::make_shared<Derived>();
- 
+
     std::cout << "Created a shared Derived (as a pointer to Base)\n"
               << "  p.get() = " << p.get()
               << ", p.use_count() = " << p.use_count() << '\n';
@@ -536,10 +546,10 @@ int main()
 }
 ```
 
-g++ -std=c++11 -lpthread test.cc 
+g++ -std=c++11 -lpthread test.cc
 
 ```
-$./a.out 
+$./a.out
   Base::Base()
   Derived::Derived()
 Created a shared Derived (as a pointer to Base)
@@ -576,7 +586,7 @@ shared_ptr( const shared_ptr<Y>& r, element_type* ptr ) noexcept;
 template <class U> shared_ptr (const shared_ptr<U>& x, element_type* p) noexcept;
 ```
 
-The object does not own `p`, and will not manage its storage. Instead, it co-owns x's managed object and counts as one additional use of `x`. It will also delete x's pointer on release (and not `p`). It can be used to point to members of objects that are already managed. 
+The object does not own `p`, and will not manage its storage. Instead, it co-owns x's managed object and counts as one additional use of `x`. It will also delete x's pointer on release (and not `p`). It can be used to point to members of objects that are already managed.
 
 新构造的shared_ptr对象，假设为`y`，与构造参数shared_ptr对象`x`共享`x`所管理的指针资源的计数，当引用计数为0时，会自动释放`x`关联的指针，而非`element_type* p`。通常用法是，`y`指向的是`x`关联对象的成员`p`，`y`不负责对`p`的内存释放。
 
@@ -602,8 +612,8 @@ int main()
 {
     std::shared_ptr<Foo> foo = std::make_shared<Foo>(100);
     std::cout << "foo: " << foo.use_count() << '\n';
-    
-    std::shared_ptr<int> m(foo, &(foo.get()->m_a) ); 
+
+    std::shared_ptr<int> m(foo, &(foo.get()->m_a) );
     std::cout << *m.get() << std::endl;
     auto p_m = m.get();
     *p_m = 200;
@@ -657,7 +667,7 @@ int main()
 {
     std::shared_ptr<Foo> foo = std::make_shared<Foo>(100);
     std::cout << "foo: " << foo.use_count() << '\n';
-    
+
     std::shared_ptr<Bar> bar(foo, new Bar(&(foo.get()->m_a)) ); // memory leak !
     std::cout << "foo: " << foo.use_count() << '\n';
     foo.reset();
@@ -688,14 +698,14 @@ bar: 1
 ``` cpp
 #include <iostream>
 #include <memory>
- 
+
 struct Foo { // object to manage
     Foo() { std::cout << "Foo ctor\n"; }
     Foo(const Foo&) { std::cout << "Foo copy ctor\n"; }
     Foo(Foo&&) { std::cout << "Foo move ctor\n"; }
     ~Foo() { std::cout << "~Foo dtor\n"; }
 };
- 
+
 struct D { // deleter
     D() {};
     D(const D&) { std::cout << "D copy ctor\n"; }
@@ -706,47 +716,47 @@ struct D { // deleter
         delete p;
     };
 };
- 
+
 int main()
 {
     std::cout << "Example constructor(1)...\n";
     std::unique_ptr<Foo> up1;  // up1 is empty
     std::unique_ptr<Foo> up1b(nullptr);  // up1b is empty
- 
+
     std::cout << "Example constructor(2)...\n";
     {
         std::unique_ptr<Foo> up2(new Foo); //up2 now owns a Foo
     } // Foo deleted
- 
+
     std::cout << "Example constructor(3)...\n";
     D d;
     {  // deleter type is not a reference
        std::unique_ptr<Foo, D> up3(new Foo, d); // deleter copied
     }
-    {  // deleter type is a reference 
+    {  // deleter type is a reference
        std::unique_ptr<Foo, D&> up3b(new Foo, d); // up3b holds a reference to d
     }
- 
+
     std::cout << "Example constructor(4)...\n";
-    {  // deleter is not a reference 
+    {  // deleter is not a reference
        std::unique_ptr<Foo, D> up4(new Foo, D()); // deleter moved
     }
- 
+
     std::cout << "Example constructor(5)...\n";
     {
        std::unique_ptr<Foo> up5a(new Foo);
        std::unique_ptr<Foo> up5b(std::move(up5a)); // ownership transfer
     }
- 
+
     std::cout << "Example constructor(6)...\n";
     {
         std::unique_ptr<Foo, D> up6a(new Foo, d); // D is copied
         std::unique_ptr<Foo, D> up6b(std::move(up6a)); // D is moved
- 
+
         std::unique_ptr<Foo, D&> up6c(new Foo, d); // D is a reference
         std::unique_ptr<Foo, D> up6d(std::move(up6c)); // D is copied
     }
- 
+
 #if (__cplusplus < 201703L)
     std::cout << "Example constructor(7)...\n";
     {
@@ -754,7 +764,7 @@ int main()
         std::unique_ptr<Foo> up7b(std::move(up7a)); // ownership transfer
     }
 #endif
- 
+
     std::cout << "Example array constructor...\n";
     {
         std::unique_ptr<Foo[]> up(new Foo[3]);
@@ -779,7 +789,7 @@ D is deleting a Foo
 ~Foo dtor
 Example constructor(4)...
 Foo ctor
-D move ctor 
+D move ctor
 D is deleting a Foo
 ~Foo dtor
 Example constructor(5)...
@@ -788,7 +798,7 @@ Foo ctor
 Example constructor(6)...
 Foo ctor
 D copy ctor
-D move ctor 
+D move ctor
 Foo ctor
 D non-const copy ctor
 D is deleting a Foo
@@ -816,36 +826,36 @@ Foo ctor
 #include <iostream>
 #include <memory>
 #include <stdexcept>
- 
+
 // helper class for runtime polymorphism demo below
 struct B
 {
     virtual ~B() = default;
- 
+
     virtual void bar() { std::cout << "B::bar\n"; }
 };
- 
+
 struct D : B
 {
     D() { std::cout << "D::D\n"; }
     ~D() { std::cout << "D::~D\n"; }
- 
+
     void bar() override { std::cout << "D::bar\n"; }
 };
- 
+
 // a function consuming a unique_ptr can take it by value or by rvalue reference
 std::unique_ptr<D> pass_through(std::unique_ptr<D> p)
 {
     p->bar();
     return p;
 }
- 
+
 // helper function for the custom deleter demo below
 void close_file(std::FILE* fp)
 {
     std::fclose(fp);
 }
- 
+
 // unique_ptr-based linked list demo
 struct List
 {
@@ -854,9 +864,9 @@ struct List
         int data;
         std::unique_ptr<Node> next;
     };
- 
+
     std::unique_ptr<Node> head;
- 
+
     ~List()
     {
         // destroy list nodes sequentially in a loop, the default destructor
@@ -865,37 +875,37 @@ struct List
         while (head)
             head = std::move(head->next);
     }
- 
+
     void push(int data)
     {
         head = std::unique_ptr<Node>(new Node{data, std::move(head)});
     }
 };
- 
+
 int main()
 {
     std::cout << "1) Unique ownership semantics demo\n";
     {
         // Create a (uniquely owned) resource
         std::unique_ptr<D> p = std::make_unique<D>();   // C++14
- 
+
         // Transfer ownership to `pass_through`,
         // which in turn transfers ownership back through the return value
         std::unique_ptr<D> q = pass_through(std::move(p));
- 
+
         // `p` is now in a moved-from 'empty' state, equal to `nullptr`
         assert(!p);
     }
- 
+
     std::cout << "\n" "2) Runtime polymorphism demo\n";
     {
         // Create a derived resource and point to it via base type
         std::unique_ptr<B> p = std::make_unique<D>();
- 
+
         // Dynamic dispatch works as expected
         p->bar();
     }
- 
+
     std::cout << "\n" "3) Custom deleter demo\n";
     std::ofstream("demo.txt") << 'x'; // prepare the file to read
     {
@@ -904,7 +914,7 @@ int main()
         if (fp)
             std::cout << char(std::fgetc(fp.get())) << '\n';
     } // `close_file()` called here (if `fp` is not null)
- 
+
     std::cout << "\n" "4) Custom lambda-expression deleter and exception safety demo\n";
     try
     {
@@ -913,22 +923,22 @@ int main()
             std::cout << "destroying from a custom deleter...\n";
             delete ptr;
         });
- 
+
         throw std::runtime_error(""); // `p` would leak here if it were instead a plain pointer
     }
     catch (const std::exception&) { std::cout << "Caught exception\n"; }
- 
+
     std::cout << "\n" "5) Array form of unique_ptr demo\n";
     {
         std::unique_ptr<D[]> p(new D[3]);
     } // `D::~D()` is called 3 times
- 
+
     std::cout << "\n" "6) Linked list demo\n";
     {
         List wall;
         for (int beer = 0; beer != 1'000'000; ++beer)   // C++14
             wall.push(beer);
- 
+
         std::cout << "1'000'000 bottles of beer on the wall...\n";
     } // destroys all the beers
 }
@@ -941,21 +951,21 @@ int main()
 D::D
 D::bar
 D::~D
- 
+
 2) Runtime polymorphism demo
 D::D
 D::bar
 D::~D
- 
+
 3) Custom deleter demo
 x
- 
+
 4) Custom lambda-expression deleter and exception safety demo
 D::D
 destroying from a custom deleter...
 D::~D
 Caught exception
- 
+
 5) Array form of unique_ptr demo
 D::D
 D::D
@@ -963,7 +973,7 @@ D::D
 D::~D
 D::~D
 D::~D
- 
+
 6) Linked list demo
 1'000'000 bottles of beer on the wall...
 ```
@@ -977,7 +987,7 @@ D::~D
 ``` cpp
 #include <iostream>
 #include <memory>
- 
+
 std::weak_ptr<int> gw;
 
 void observe()
@@ -1026,7 +1036,6 @@ use_count == 0: gw is expired
 * [CppCon 2019: Chandler Carruth “There Are No Zero-cost Abstractions, unique_ptr 部分](https://youtu.be/rHIkrotSwcc?t=1063)
 
 
-  
 
-	
-	
+
+

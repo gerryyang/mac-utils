@@ -280,7 +280,7 @@ If the `<PackageName>Config.cmake` file is found and any version constraint is s
 See https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#find-module-files
 
 
-## Downloading And Building From Source With FetchContent¶
+## Downloading And Building From Source With FetchContent
 
 Dependencies do not necessarily have to be pre-built in order to use them with CMake. They can be built from sources as part of the main project. The [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html#module:FetchContent) module provides functionality to download content (typically sources, but can be anything) and add it to the main project if the dependency also uses CMake. The dependency's sources will be built along with the rest of the project, just as though the sources were part of the project's own sources.
 
@@ -1032,6 +1032,7 @@ This module enables populating content at configure time via any method supporte
 
 * https://cmake.org/cmake/help/latest/module/FetchContent.html
 * https://cmake.org/cmake/help/latest/module/FetchContent.html#fetch-content-examples
+* https://cliutils.gitlab.io/modern-cmake/chapters/projects/fetch.html
 
 ## GoogleTest
 
@@ -1568,3 +1569,7 @@ popd
 * [How to print messages after make done with cmake?](https://stackoverflow.com/questions/25240105/how-to-print-messages-after-make-done-with-cmake/34953585)
 * [CMake: Print out all accessible variables in a script](https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script)
 * https://github.com/BrightXiaoHan/CMakeTutorial
+
+# Manual
+
+* [An Introduction to Modern CMake](https://cliutils.gitlab.io/modern-cmake/)

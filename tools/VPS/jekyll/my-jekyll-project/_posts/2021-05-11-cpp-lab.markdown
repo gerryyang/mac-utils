@@ -1724,6 +1724,63 @@ allocated an int at 0x7ffd8d5dd9a0 (32 byte alignment)
 
 * https://en.cppreference.com/w/cpp/memory/align
 
+## std::priority_queue (heap)
+
+A `priority queue` is **a container adaptor** that provides **constant time lookup** of the largest (by default) element, at the expense of **logarithmic insertion and extraction**.
+
+A user-provided Compare can be supplied to change the ordering, e.g. using `std::greater<T>` would cause the smallest element to appear as the `top()`.
+
+Working with a `priority_queue` is similar to managing a [heap](https://en.cppreference.com/w/cpp/algorithm/make_heap) in some random access container, with the benefit of not being able to accidentally invalidate the heap.
+
+``` cpp
+#include <functional>
+#include <queue>
+#include <vector>
+#include <iostream>
+
+template<typename T>
+void print_queue(T q) { // NB: pass by value so the print uses a copy
+    while(!q.empty()) {
+        std::cout << q.top() << ' ';
+        q.pop();
+    }
+    std::cout << '\n';
+}
+
+int main() {
+    std::priority_queue<int> q;
+
+    const auto data = {1,8,5,6,3,4,0,9,7,2};
+
+    for(int n : data)
+        q.push(n);
+
+    print_queue(q);
+
+    std::priority_queue<int, std::vector<int>, std::greater<int>>
+        q2(data.begin(), data.end());
+
+    print_queue(q2);
+
+    // Using lambda to compare elements.
+    auto cmp = [](int left, int right) { return (left ^ 1) < (right ^ 1); };
+    std::priority_queue<int, std::vector<int>, decltype(cmp)> q3(cmp);
+
+    for(int n : data)
+        q3.push(n);
+
+    print_queue(q3);
+}
+/*
+9 8 7 6 5 4 3 2 1 0
+0 1 2 3 4 5 6 7 8 9
+8 9 6 7 4 5 2 3 0 1
+*/
+```
+
+* https://en.cppreference.com/w/cpp/container/priority_queue
+* https://blog.csdn.net/fengbingchun/article/details/70505628
+
 # C++14
 
 ## std::for_each
@@ -3007,7 +3064,61 @@ the compiler doesn't know that the `Derived*` points to a `Derived` or a `MoreDe
 * [Suppress delete-non-virtual-dtor warning when using a protected non-virtual destructor](https://stackoverflow.com/questions/43282826/suppress-delete-non-virtual-dtor-warning-when-using-a-protected-non-virtual-dest)
 * https://gcc.gnu.org/wiki/VerboseDiagnostics#delete-non-virtual-dtor
 
+## Static Members of a C++ Class
 
+We can define class members static using `static` keyword. When we declare a member of a class as static it means no matter how many objects of the class are created, there is only one copy of the static member.
+
+A static member is shared by all objects of the class. All static data is initialized to zero when the first object is created, if no other initialization is present. We can't put it in the class definition but it can be initialized outside the class as done in the following example by redeclaring the static variable, using the scope resolution operator `::` to identify which class it belongs to.
+
+``` cpp
+#include <iostream>
+using namespace std;
+
+class Box {
+   public:
+      static int objectCount;
+
+      // Constructor definition
+      Box(double l = 2.0, double b = 2.0, double h = 2.0) {
+         cout <<"Constructor called." << endl;
+         length = l;
+         breadth = b;
+         height = h;
+
+         // Increase every time object is created
+         objectCount++;
+      }
+      double Volume() {
+         return length * breadth * height;
+      }
+      static int getCount() {
+         return objectCount;
+      }
+
+   private:
+      double length;     // Length of a box
+      double breadth;    // Breadth of a box
+      double height;     // Height of a box
+};
+
+// Initialize static member of class Box
+int Box::objectCount = 0;
+
+int main(void) {
+   // Print total number of objects before creating object.
+   cout << "Inital Stage Count: " << Box::getCount() << endl;
+
+   Box Box1(3.3, 1.2, 1.5);    // Declare box1
+   Box Box2(8.5, 6.0, 2.0);    // Declare box2
+
+   // Print total number of objects after creating object.
+   cout << "Final Stage Count: " << Box::getCount() << endl;
+
+   return 0;
+}
+```
+
+* https://www.tutorialspoint.com/cplusplus/cpp_static_members.htm
 
 
 

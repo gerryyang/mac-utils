@@ -1702,3 +1702,4 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
 * [Dynamic Library Programming Topics](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html#//apple_ref/doc/uid/TP40001869)
 * [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/) (推荐)
 * [Weak dynamic symbols](https://www.humprog.org/~stephen//blog/2011/12/01/)
+* [Get all the thread_id created with pthread_created within an process (using LD_PRELOAD)](https://stackoverflow.com/questions/3707358/get-all-the-thread-id-created-with-pthread-created-within-an-process/3709027#3709027)
