@@ -20,6 +20,11 @@ categories: [Assembly Language,]
 * **栈**：用于维护函数调用的上下文空间；局部变量、函数参数、返回地址等
 * **内核虚拟空间**：用户代码不可见的内存区域，由内核管理(页表就存放在内核虚拟空间)
 
+``` bash
+objdump -dj .data your_binary | grep "g_"
+objdump -dj .bss your_binary | grep "g_"
+```
+
 ![virtual_process_space](/assets/images/202111/virtual_process_space.png)
 
 
@@ -236,6 +241,13 @@ The Stack is usually used to pass arguments to functions or procedures and also 
 The most common registers are the **general-purpose registers**. They are called general-purpose because they can be used to store any kind of data. x64 defines `16 `of these registers: **rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14 and r15**
 
 There is another kind of registers called **special-purpose registers**. These registers have a specific pupose. To give an example, `rip` is called the instruction pointer; it always points to the next instruction to be executed by the program. Another example is `rflags`; this register contains various flags that change depending on the result of an operation; the flags tell you things like if the result was zero, there was a carry or an overflow, etc. There are more special purpose registers, but I won’t explore them in this article.
+
+![x86-64-reg](/assets/images/202208/x86-64-reg.png)
+
+> 补充：协程切换原理
+>
+> X86-64 架构有如图 16 个通用目的寄存器，还有指令指针寄存器 rip，指向下一条要执行的指令地址。CPU 工作时根据 rip 寄存器取得指令的地址，取指译码执行。而在调用函数时，函数的返回地址、局部变量等就依次压入由 rsp 寄存器所指的栈中。这样只需改变 rip 和 rsp 的值 ，让其指向所要切换到的代码处和所使用的栈空间，就可以改变 CPU 的工作流，实现用户态的协程切换。而在需要切换回来时，则将之前的寄存器值恢复即可。
+
 
 # [x86 Assembly/X86 Architecture](https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture)
 

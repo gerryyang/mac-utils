@@ -1913,6 +1913,24 @@ Hello
 
 ## date
 
+`time_t` 若使用 int 存储，最高位为符号位，因此实际存储大小为 31bit，则可以表示到`2038年 01月 19日 星期二 11:14:07 CST`这个时间。
+
+``` bash
+$date -d@`echo $((16#7FFFFFFF))`
+2038年 01月 19日 星期二 11:14:07 CST
+```
+
+然而，当前时间为：1661223697，其十六进制的最高为是 `01`
+
+``` bash
+$date +%s
+1661223697
+```
+
+因此，在当前时间到`2038年 01月 19日 星期二 11:14:07 CST`这个时间段内，最高两位都是`01`，因此可以将 `time_t` 压缩为 30bit 存储。
+
+常用命令：
+
 ``` bash
 # 1. 获取上一个月时间，例如，201211
 
@@ -1980,6 +1998,40 @@ Starting a Script With `#!`
 * Almost all bash scripts often begin with `#!/bin/bash` (assuming that Bash has been installed in `/bin`)
 * This ensures that Bash will be used to interpret the script, even if it is executed under another shell.
 * The **shebang** was introduced by Dennis Ritchie between Version 7 Unix and 8 at Bell Laboratories. It was then also added to the BSD line at Berkeley.
+
+## converting hex to decimal
+
+[converting hex to decimal with bash](https://stackoverflow.com/questions/53440622/converting-hex-to-decimal-with-bash)
+
+I've seen some strange things. I tried to convert hex to dec with bash Shell. I used very very simple command.
+
+``` bash
+$ g_receiverBeforeToken=1158e460913d00000
+$ echo $((16#$g_receiverBeforeToken))
+1553255926290448384
+```
+
+As you guys know, this result should be '20000000000000000000'. When I put in any other hex number, it was correct. But only 1553255926290448384 was weird.
+
+Answers:
+
+It's not just that number, it's any number over `7fffffffffffffff`, because it's using **64-bit** integers and that's the largest one. **16-digit** numbers over that wrap around and become negative.
+
+``` bash
+$ echo $((16#7fffffffffffffff))
+9223372036854775807
+$ echo $((16#7fffffffffffffff + 1))
+-9223372036854775808
+$ echo $((16#8000000000000000))
+-9223372036854775808
+
+$ echo $((16#ffffffffffffffff))
+-1
+$ echo $((16#ffffffffffffffff + 1))
+0
+$ echo $((16#10000000000000000))
+0
+```
 
 
 

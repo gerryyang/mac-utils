@@ -444,7 +444,7 @@ https://en.cppreference.com/w/cpp/types/integer
 
 ## enum class
 
-枚举（包括作用域枚举和非作用域枚举）的命名应当和常量保持一致而不是宏。即使用`kEnumName`形式命名而不是`ENUM_NAME`形式。对于非作用域枚举，还应当将枚举类型作为枚举名的前缀，以减少潜在的命名冲突。如果使用 C++ 11 之后的编译器开发，优先考虑使用 enum class，它可以提供更强的类型检测，并减少潜在的命名冲突。
+枚举（包括作用域枚举和非作用域枚举）的命名应当和常量保持一致而不是宏。即使用`kEnumName`形式命名而不是`ENUM_NAME`形式。对于非作用域枚举，还应当将枚举类型作为枚举名的前缀，以减少潜在的命名冲突。如果使用 `C++11` 之后的编译器开发，优先考虑使用 `enum class`，它可以提供更强的类型检测，并减少潜在的命名冲突。
 
 ``` cpp
 enum class UrlTableErrors {
@@ -459,6 +459,27 @@ enum UrlParseError{
   kUrlParseErrorOutOfMemory,
 };
 ```
+
+[Forcing enum to be of unsigned long type](https://stackoverflow.com/questions/5084542/forcing-enum-to-be-of-unsigned-long-type)
+
+Is it possible to force the underlying type of an enumeration to be unsigned long type?
+
+In `C++11` and higher, you can explicitly mention what type you want:
+
+``` cpp
+enum MyEnumeration: unsigned long {
+   /* ... values go here ... */
+};
+```
+
+This will allow you to explicitly control the underlying type.
+
+In `C++03`, there is no way to force an enumerated type to have any particular underlying implementation. Quoth the `C++03` spec, §7.2/5:
+
+> The underlying type of an enumeration is an integral type that can represent all the enumerator values defined in the enumeration. **It is implementation-defined which integral type is used as the underlying type** for an enumeration except that the underlying type shall not be larger than int unless the value of an enumerator cannot fit in an int or unsigned int. If the enumerator-list is empty, the underlying type is as if the enumeration had a single enumerator with value 0. The value of sizeof() applied to an enumeration type, an object of enumeration type, or an enumerator, is the value of sizeof() applied to the underlying type.
+
+This is a pretty lax condition and says that not only can you not necessarily know the type, but because it's implementation-defined there's no guarantee that it even corresponds to one of the primitive types at all.
+
 
 ## final specifier
 
@@ -2281,6 +2302,25 @@ https://man7.org/linux/man-pages/man3/gethostbyname.3.html
 
 ## What is time_t ultimately a typedef to?
 
+Although not defined by the C standard, this is almost always an integral value holding the number of seconds (not counting leap seconds) since 00:00, Jan 1 1970 UTC, corresponding to POSIX time.
+
+``` cpp
+#include <stdio.h>
+#include <time.h>
+#include <stdint.h>
+
+int main(void)
+{
+    time_t epoch = 0;
+    printf("%jd seconds since the epoch began\n", (intmax_t)epoch);
+    printf("%s", asctime(gmtime(&epoch)));
+}
+/*
+0 seconds since the epoch began
+Thu Jan  1 00:00:00 1970
+*/
+```
+
 The `time_t` datatype is a data type in the ISO C library defined for storing system time values. Such values are returned from the standard time() library function. This type is a typedef defined in the standard header. **ISO C defines time_t as an arithmetic type, but does not specify any particular type**, range, resolution, or encoding for it. Also unspecified are the meanings of arithmetic operations applied to time values.
 
 **Unix and POSIX-compliant systems implement the `time_t` type as a `signed integer` (typically 32 or 64 bits wide) which represents the number of seconds since the start of the Unix epoch**: midnight UTC of January 1, 1970 (not counting leap seconds). Some systems correctly handle negative time values, while others do not. Systems using a 32-bit time_t type are susceptible to the [Year 2038 problem](http://en.wikipedia.org/wiki/Year_2038_problem).
@@ -2299,6 +2339,8 @@ typedef long int __time_t;
 */
 ```
 
+
+* https://en.cppreference.com/w/c/chrono/time_t
 * https://stackoverflow.com/questions/471248/what-is-time-t-ultimately-a-typedef-to
 
 ## Copy elision
@@ -3119,6 +3161,105 @@ int main(void) {
 ```
 
 * https://www.tutorialspoint.com/cplusplus/cpp_static_members.htm
+
+
+## inline
+
+[FAQ: How do you tell the compiler to make a member function inline? ](http://www.parashift.com/c++-faq-lite/inline-member-fns.html)
+
+[When should I write the keyword 'inline' for a function/method?](https://stackoverflow.com/questions/1759300/when-should-i-write-the-keyword-inline-for-a-function-method)
+
+## 数组传参
+
+在C++中有了引用语法，可以把数组类型进行传递。
+
+``` cpp
+void f1(int (&arr)[5]) // 必须传 int[5] 类型
+{
+    (void)arr;
+}
+
+int main()
+{
+  int arr1[5];
+  int arr2[8];
+
+  f1(arr1);      // ok
+  //f1(arr2);   // err
+}
+```
+
+一些新兴语言（例如 Go）注意到了这一点，因此将其进行了区分。在 Go 语言中，区分了“数组”和“切片”的概念，数组就是长度固定的，整体来传递；而切片则类似于首地址+长度的方式传递。
+
+``` go
+func f1(arr [5]int) {
+}
+func f2(arr []int) {
+}
+```
+
+f1 就必须传递长度是5的数组类型，而 f2 则可以传递任意长度的切片类型。
+
+而 C++ 其实也注意到了这一点，但由于兼容问题，它只能通过 STL 提供容器的方式来解决，std::array 就是定长数组，而 std::vector 就是变长数组，跟上述 Go 语言中的数组和切片的概念是基本类似的。这也是 C++ 中更加推荐使用 vector 而不是 C 风格数组的原因。
+
+
+## placement new
+
+There are situations when we don't want to rely upon Free Store for allocating memory and we want to use custom memory allocations using new. For these situations we can use **Placement New**, where we can tell `new' operator to allocate memory from a pre-allocated memory location.
+
+``` cpp
+int a4byteInteger;
+char *a4byteChar = new (&a4byteInteger) char[4];
+```
+
+In this example, the memory pointed by `a4byteChar` is 4 byte allocated to 'stack' via integer variable `a4byteInteger`.
+
+The benefit of this kind of memory allocation is the fact that programmers control the allocation. In the example above, since `a4byteInteger` is allocated on stack, we don't need to make an explicit call to `delete a4byteChar`.
+
+Same behavior can be achieved for dynamic allocated memory also. For example
+
+``` cpp
+int *a8byteDynamicInteger = new int[2];
+char *a8byteChar = new (a8byteDynamicInteger) char[8];
+```
+
+In this case, the memory pointer by `a8byteChar` will be referring to dynamic memory allocated by `a8byteDynamicInteger`. In this case however, we need to explicitly call `delete a8byteDynamicInteger` to release the memory.
+
+Another example for C++ Class
+
+``` cpp
+struct ComplexType {
+    int a;
+
+    ComplexType() : a(0) {}
+    ~ComplexType() {}
+};
+
+int main() {
+    char* dynArray = new char[256];
+
+    //Calls ComplexType's constructor to initialize memory as a ComplexType
+    new((void*)dynArray) ComplexType();
+
+    //Clean up memory once we're done
+    reinterpret_cast<ComplexType*>(dynArray)->~ComplexType();
+    delete[] dynArray;
+
+    //Stack memory can also be used with placement new
+    alignas(ComplexType) char localArray[256]; //alignas() available since C++11
+
+    new((void*)localArray) ComplexType();
+
+    //Only need to call the destructor for stack memory
+    reinterpret_cast<ComplexType*>(localArray)->~ComplexType();
+
+    return 0;
+}
+```
+
+* https://en.cppreference.com/w/cpp/language/new
+* https://en.cppreference.com/w/cpp/language/new#Placement_new
+* https://riptutorial.com/cplusplus/example/9740/placement-new
 
 
 

@@ -9,6 +9,33 @@ categories: 编程语言
 {:toc}
 
 
+# 分布式系统唯一ID生成方案
+
+常见方案：
+
+1. 数据库自增长序列或字段
+2. UUID。UUID (Universally Unique Identifier) 的标准型式包含 32 个 16 进制数字，以连字号分为五段，形式为8-4-4-4-12的 36 个字符(32 + 4)
+    + 不易于存储。UUID太长，16 字节 128 位，通常以 36 长度的字符串表示，很多场景不适用。示例：`550e8400-e29b-41d4-a716-446655440000`
+    + 信息不安全。基于 MAC 地址生成 UUID 的算法可能会造成 MAC 地址泄露，这个漏洞曾被用于寻找梅丽莎病毒的制作者位置
+    + ID 作为主键时在特定的环境会存在一些问题
+        - 做 DB 主键的场景下，UUID 就非常不适用。MySQL 官方有明确的建议主键要尽量越短越好，36 个字符长度的 UUID 不符合要求
+        - 对 MySQL 索引不利，如果作为数据库主键，在 InnoDB 引擎下，UUID 的无序性可能会引起数据位置频繁变动，严重影响性能
+    + 到目前为止业界一共有 5 种方式生成 UUID，详情见 IETF 发布的 UUID 规范 [A Universally Unique IDentifier (UUID) URN Namespace](http://www.ietf.org/rfc/rfc4122.txt)
+3. Twitter 的 snowflake 算法
+    + snowflake 是 Twitter 开源的分布式ID生成算法，结果是一个long型的ID。其核心思想是：使用41bit作为毫秒数，10bit作为机器的ID（5个bit是数据中心，5个bit的机器ID），12bit作为毫秒内的流水号（意味着每个节点在每毫秒可以产生 4096 个 ID），最后还有一个符号位，永远是0。具体实现可[参考代码](https://github.com/twitter/snowflake)。雪花算法支持的TPS可以达到419万左右（2^22*1000）
+    + 雪花算法在工程实现上有单机版本和分布式版本。分布式版本可以参看[美团leaf算法](https://github.com/Meituan-Dianping/Leaf)
+4. Redis生成ID。可以用 Redis 的原子操作 INCR 和 INCRBY 来实现
+5. 利用 Zookeeper 生成唯一ID。主要通过其 znode 数据版本来生成序列号，可以生成32位和64位的数据版本号，客户端可以使用这个版本号来作为唯一的序列号
+6. MongoDB 的 ObjectId，和 snowflake 算法类似
+
+
+参考方案：
+
+* https://www.cnblogs.com/haoxinyue/p/5208136.html
+* https://tech.meituan.com/2017/04/21/mt-leaf.html (美团方案)
+* https://github.com/baidu/uid-generator (百度方案)
+
+
 # 圈复杂度
 
 **圈复杂度**（**Cyclomatic complexity**，CC）也称为条件复杂度，是一种衡量代码复杂度的标准，其符号为`V(G)`。

@@ -49,6 +49,103 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 
 ![docker_cmd](/assets/images/201902/docker_cmd.jpg)
 
+
+## 测试使用 (CentOS)
+
+## 版本信息
+
+```
+$docker version
+Client:
+ Version:           18.09.7
+ API version:       1.39
+ Go version:        go1.10.8
+ Git commit:        2d0083d
+ Built:             Thu Jun 27 17:56:06 2019
+ OS/Arch:           linux/amd64
+ Experimental:      false
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          18.09.7
+  API version:      1.39 (minimum version 1.12)
+  Go version:       go1.10.8
+  Git commit:       2d0083d
+  Built:            Thu Jun 27 17:26:28 2019
+  OS/Arch:          linux/amd64
+  Experimental:     false
+```
+
+```
+$docker info
+Containers: 0
+ Running: 0
+ Paused: 0
+ Stopped: 0
+Images: 9
+Server Version: 18.09.7
+Storage Driver: overlay2
+ Backing Filesystem: extfs
+ Supports d_type: true
+ Native Overlay Diff: false
+Logging Driver: json-file
+Cgroup Driver: cgroupfs
+Plugins:
+ Volume: local
+ Network: bridge host macvlan null overlay
+ Log: awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog
+Swarm: inactive
+Runtimes: runc
+Default Runtime: runc
+Init Binary: docker-init
+containerd version: 894b81a4b802e4eb2a91d1ce216b8817763c29fb
+runc version: 425e105d5a03fabd737a126ad93d62a9eeede87f
+init version: fec3683
+Security Options:
+ seccomp
+  Profile: default
+Kernel Version: 3.10.107-1-tlinux2_kvm_guest-0049
+Operating System: Tencent tlinux 2.2 (Final)
+OSType: linux
+Architecture: x86_64
+CPUs: 16
+Total Memory: 31.17GiB
+Name: VM-11-48-centos
+ID: OLLW:ZRBS:Z2XV:34ER:NKGJ:NNH4:LKOX:YX3U:BSDO:SL2I:F7S7:CMSM
+Docker Root Dir: /data/docker
+Debug Mode (client): false
+Debug Mode (server): false
+Registry: https://index.docker.io/v1/
+Labels:
+Experimental: false
+Insecure Registries:
+ bk.artifactory.oa.com:8080
+ csighub.tencentyun.com
+ docker.oa.com:8080
+ hub.oa.com
+ 127.0.0.0/8
+Registry Mirrors:
+ http://docker.oa.com:8080/
+ http://csighub.tencentyun.com/
+Live Restore Enabled: false
+Product License: Community Engine
+```
+
+## 用户管理
+
+```
+sudo service docker start         # 启动 docker 服务
+sudo usermod -aG docker ${USER}   # 当前用户加入 docker 组
+```
+
+> 说明：
+>
+> service docker start 是启动 Docker 的后台服务
+>
+> usermod -aG 是把当前的用户加入 Docker 的用户组。这是因为操作 Docker 必须要有 root 权限，而直接使用 root 用户不够安全，加入 Docker 用户组是一个比较好的选择，这也是 Docker 官方推荐的做法。当然，如果只是为了图省事，也可以直接切换到 root 用户来操作 Docker
+
+
+
 ## Q&A
 
 ## [How can I find a Docker image with a specific tag in Docker registry on the Docker command line?](https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock)
