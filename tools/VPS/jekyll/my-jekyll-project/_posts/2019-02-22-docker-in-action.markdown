@@ -150,23 +150,16 @@ sudo usermod -aG docker ${USER}   # 当前用户加入 docker 组
 
 ## [How can I find a Docker image with a specific tag in Docker registry on the Docker command line?](https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock)
 
-Q:
-
 I try to locate one specific tag for a Docker image. How can I do it on the command line? I want to avoid downloading all the images and then removing the unneeded ones.
 
-A:
-
+Answers:
 
 ``` bash
 #!/usr/bin/bashs
 
 # docker_remote_tags.sh
-curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' |sort
+curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' | sort
 ```
-
-Reference:
-
-jq: https://stedolan.github.io/jq/ | apt-get install jq
 
 
 ## 历史文章

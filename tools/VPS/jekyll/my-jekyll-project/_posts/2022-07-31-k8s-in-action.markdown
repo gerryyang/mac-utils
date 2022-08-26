@@ -11,13 +11,15 @@ categories: 虚拟化
 
 关键字：容器编排，Kubernetes，云原生
 
-# 容器编排
+# 背景介绍
+
+## 容器编排
 
 容器技术的核心概念是容器，镜像，仓库。使用这三大基本要素就可以轻松地完成应用的打包，分发工作，实现“一次分发，到处运行”的梦想。不过，当要在服务器集群里大规模实施的时候，却会发现容器技术的创新只是解决了运维部署工作中的一部分。除此之外，还包括服务发现，负载均衡，状态监控，健康检查，动态扩缩容等。
 
 这些容器之上的管理，调度工作，就是所谓的“容器编排”（Container Orchestration）。面对单机上的几个容器，“人肉”编排调度还可以应付，但如果面对规模成千上万的容器，处理它们之间的复杂联系就必须依靠计算机了，而目前计算机用来调度管理的“事实标准”，就是 Kubernetes。
 
-# Kubernetes
+## Kubernetes
 
 作为世界上最大的搜索引擎，Google 拥有数量庞大的服务器集群，为例提高资源利用率和部署运维效率，专门开发了一个集群管理系统 `Borg`。在 2014 年，因为之前在发表 MapReduce，BigTable，GFS 时吃过亏，被 Yahoo 开发的 Hadoop 占领了市场，所以 Google 决定借着 Docker 的“东风”，在发表论文的同时，把 C++ 开发的 Borg 系统用 Go 语言重写并开源，于是 `Kubernetes` 就这样诞生了。然后，在 2015 年，Google 又联合 Linux 基金会成立了 CNCF (Cloud Native Computing Foundation，云原生基金会)，并把 Kubernetes 捐献出来作为种子项目。有了 Google 和 Linux 这两大家族的保驾护航，再加上宽容开放的社区，Kubernetes 仅用了两年的时间就打败了同期的竞争对手 `Apache Mesos` 和 `Docker Swarm`，成为了这个领域的唯一霸主。
 
@@ -25,13 +27,129 @@ categories: 虚拟化
 
 > Borg 系统的名字来自于《星际迷航》（Star Trek）里的外星人种族，Kubernetes 在开发之初为了延续与 Borg 的关系，使用了一个代号 Seven of Nine ，即 Borg 与地球文明之间联络人的名字，隐喻从内部系统到开源项目，所以 Kubernetes 的标志有七条轮辐。Kubernetes 这个词来自希腊语，意思是“舵手”，“领航员”，可以理解成是操控着满载集装箱（容器）大船的指挥官。Kubernetes 有时候会缩写成 “k8s”，这个是因为 k 和 s 之间有 8 个字符，类似的还有 i18n (internationalization)
 
-# minikube
+# Kubernetes 的基本架构
 
-Kubernetes 提供了一些快速搭建环境的工具，可以在本机上运行完整的 Kubernetes 环境。
+操作系统用来管理软件和硬件。Kubernetes 可以说是一个集群级别的操作系统，主要功能就是资源管理和作业调度。操作系统的一个重要功能就是**抽象**，从繁琐的底层事务中抽象出一些简洁的概念，然后基于这些概念去管理系统资源。
+
+Kubernetes 采用了现今流行的“控制面 / 数据面”（Control Plane / Data Plane）架构，集群里的计算机被称为“节点”（Node），可以是实机也可以是虚机，少量的节点用作控制面来执行集群的管理维护工作，其他的大部分节点都被划归数据面，用来跑业务应用。
+
+控制面的节点在 Kubernetes 里叫做 Master Node，一般简称为 Master，它是整个集群里最重要的部分，可以说是 Kubernetes 的大脑和心脏。
+
+数据面的节点叫做 Worker Node，一般就简称为 Worker 或者 Node，相当于 Kubernetes 的手和脚，在 Master 的指挥下干活。
+
+Node 的数量非常多，构成了一个资源池，Kubernetes 就在这个池里分配资源，调度应用。因为资源被“池化”了，所以管理也就变得比较简单，可以在集群中任意添加或者删除节点。
+
+**Kubernetes 的大致工作流程：**
+
+* 每个 Node 上的 kubelet 会定期向 apiserver 上报节点状态，apiserver 再存到 etcd 里。
+* 每个 Node 上的 kube-proxy 实现了 TCP/UDP 反向代理，让容器对外提供稳定的服务。
+* scheduler 通过 apiserver 得到当前的节点状态，调度 Pod，然后 apiserver 下发命令给某个 Node 的 kubelet，kubelet 调用 container-runtime 启动容器。
+* controller-manager 也通过 apiserver 得到实时的节点状态，监控可能的异常情况，再使用相应的手段去调节恢复。
+
+> 补充：
+> 1. 相比早期的架构，目前 Kubernetes 在控制面里多出了一个 cloud-controller-manager，顾名思义，是用来与特定云厂商连接进而控制 Kubernetes 对象的。
+> 2. 为例确保控制面的高可用，Kubernetes 集群里都会部署多个 Master 节点，数量一般会是奇数（3/5/7），这是由 etcd 的特性决定的。
+> 3. etcd 由 CoreOS 公司开发，基于类 Paxos 的 Raft 算法实现数据一致性。
+
+
+![k8s-arch](/assets/images/202208/k8s-arch.png)
+
+![k8s-arch0](/assets/images/202208/k8s-arch0.png)
+
+## 内部结构
+
+Kubernetes 的节点内部也具有复杂的结构，是由很多的模块构成的，这些模块又可以分成**组件（Component）**和**插件（Addon）**两类。
+
+### Master 的组件
+
+Master 里有 4 个组件，分别是 `apiserver`、`etcd`、`scheduler`、`controller-manager`。
+
+![k8s-arch2](/assets/images/202208/k8s-arch2.png)
+
+* apiserver 是 Master 节点，同时也是整个 Kubernetes 系统的唯一入口，它对外公开了一系列的 RESTful API，并且加上了验证、授权等功能，所有其他组件都只能和它直接通信，可以说是 Kubernetes 里的联络员。
+* etcd 是一个高可用的分布式 Key-Value 数据库，用来持久化存储系统里的各种资源对象和状态，相当于 Kubernetes 里的配置管理员。注意它只与 apiserver 有直接联系，也就是说任何其他组件想要读写 etcd 里的数据都必须经过 apiserver。
+* scheduler 负责容器的编排工作，检查节点的资源状态，把 Pod 调度到最适合的节点上运行，相当于部署人员。因为节点状态和 Pod 信息都存储在 etcd 里，所以 scheduler 必须通过 apiserver 才能获得。
+* controller-manager 负责维护容器和节点等资源的状态，实现故障检测、服务迁移、应用伸缩等功能，相当于监控运维人员。同样地，它也必须通过 apiserver 获得存储在 etcd 里的信息，才能够实现对资源的各种操作。
+
+这 4 个组件也都被容器化了，运行在集群的 Pod 里，可以用 kubectl 来查看它们的状态：
+
+```
+$ kubectl get pod -n kube-system
+NAME                               READY   STATUS             RESTARTS          AGE
+coredns-64897985d-256jm            0/1     CrashLoopBackOff   320 (4m29s ago)   23h
+etcd-minikube                      1/1     Running            0                 23h
+kube-apiserver-minikube            1/1     Running            0                 23h
+kube-controller-manager-minikube   1/1     Running            0                 23h
+kube-proxy-hvmcp                   1/1     Running            0                 23h
+kube-scheduler-minikube            1/1     Running            0                 23h
+storage-provisioner                1/1     Running            1 (23h ago)       23h
+```
+
+> 注意：命令行里要用 -n kube-system 参数，表示检查 kube-system 名字空间里的 Pod
+
+### Node 的组件
+
+Node 里的 3 个组件，分别是 kubelet、kube-proxy、container-runtime
+
+* kubelet 是 Node 的代理，负责管理 Node 相关的绝大部分操作，Node 上只有它能够与 apiserver 通信，实现状态报告、命令下发、启停容器等功能，相当于是 Node 上的一个“小管家”。
+* kube-proxy 的作用有点特别，它是 Node 的网络代理，只负责管理容器的网络通信，简单来说就是为 Pod 转发 TCP/UDP 数据包，相当于是专职的“小邮差”。
+* container-runtime 是容器和镜像的实际使用者，在 kubelet 的指挥下创建容器，管理 Pod 的生命周期，是真正干活的“苦力”。
+
+这 3 个组件中只有 kube-proxy 被容器化了，而 kubelet 因为必须要管理整个节点，容器化会限制它的能力，所以它必须在 container-runtime 之外运行。minikube ssh 登录到节点，可以用 docker ps | grep kube-proxy 看到 kube-proxy，而 kubelet 用 docker ps 是找不到的，需要用操作系统的 ps 命令查看。
+
+> 注意：因为 Kubernetes 的定位是容器编排平台，所以它没有限定 container-runtime 必须是 Docker，完全可以替换成任何符合标准的其他容器运行时，例如 containerd、CRI-O 等
+
+![k8s-arch3](/assets/images/202208/k8s-arch3.png)
+
+
+### 插件（Addons）
+
+只要服务器节点上运行了 apiserver、scheduler、kubelet、kube-proxy、container-runtime 等组件，就可以说是一个功能齐全的 Kubernetes 集群了。不过就像 Linux 一样，操作系统提供的基础功能虽然“可用”，但想达到“好用”的程度，还是要再安装一些附加功能，这在 Kubernetes 里就是插件（Addon）。
+
+由于 Kubernetes 本身的设计非常灵活，所以就有大量的插件用来扩展、增强它对应用和集群的管理能力。minikube 也支持很多的插件，使用命令 minikube addons list 就可以查看插件列表：
+
+![k8s-addons](/assets/images/202208/k8s-addons.png)
+
+通常必备的插件有 DNS 和 Dashboard。只要在 minikube 环境里执行一条简单的命令 minikube dashboard，就可以自动用浏览器打开 Dashboard 页面，而且还支持中文。
+
+
+
+
+
+
+
+
+
+
+# Kubernetes 命令
+
+``` bash
+# 查看 Kubernetes 的节点状态
+kubectl get node
+
+
+
+```
+
+# Kubernetes 工具
+
+https://kubernetes.io/zh-cn/docs/tasks/tools/
+
+## kubectl
+
+kubectl 是 Kubernetes 的命令行工具，使得可以对 Kubernetes 集群运行命令。可使用 kubectl 来部署应用、监测和管理集群资源以及查看日志。关于 kubectl 的更多用法可参考：https://kubernetes.io/zh-cn/docs/reference/kubectl/
+
+## minikube
+
+minikube 是一个工具，能在本地运行 Kubernetes。 minikube 在本地的个人计算机（包括 Windows、macOS 和 Linux PC）运行一个单节点的 Kubernetes 集群，以便来尝试 Kubernetes 或者开展每天的开发工作。[开始使用](https://minikube.sigs.k8s.io/docs/start/)
+
+> minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
+>
+> All you need is Docker (or similarly compatible) container or a Virtual Machine environment, and Kubernetes is a single command away: **minikube start**
 
 minikube 集成了 Kubernetes 的绝大多数功能特性，不仅有核心的容器编排功能，还有丰富的插件，例如：Dashboard，Ingress，Istio 等。从而可通过 minikube 来学些 Kubernetes。
 
-## 搭建 minikube 环境
+### 搭建 minikube 环境
 
 minikube 支持 Mac，Windows，Linux 这三种主流平台，可以在 https://minikube.sigs.k8s.io 官网找到详细的安装说明。
 
@@ -168,6 +286,9 @@ Server Version: v1.23.3
 ```
 $ kubectl run ngx --image=nginx:alpine
 pod/ngx created
+$ kubectl get node
+NAME       STATUS   ROLES                  AGE   VERSION
+minikube   Ready    control-plane,master   23h   v1.23.3
 $ kubectl get pod
 NAME   READY   STATUS    RESTARTS   AGE
 ngx    1/1     Running   0          3s
@@ -177,22 +298,8 @@ $ kubectl get pod
 No resources found in default namespace.
 ```
 
+> 注意：通过 kubectl get node 查看 Kubernetes 的节点状态，可以看到当前的 minikube 集群里只有一个 Master，那 Node 怎么不见了？这是因为 Master 和 Node 的划分不是绝对的。当集群的规模较小，工作负载较少的时候，Master 也可以承担 Node 的工作，搭建的 minikube 环境，它就只有一个节点，这个节点既是 Master 又是 Node。
 
-# Kubernetes 工具
-
-https://kubernetes.io/zh-cn/docs/tasks/tools/
-
-## kubectl
-
-kubectl 是 Kubernetes 的命令行工具，使得可以对 Kubernetes 集群运行命令。可使用 kubectl 来部署应用、监测和管理集群资源以及查看日志。关于 kubectl 的更多用法可参考：https://kubernetes.io/zh-cn/docs/reference/kubectl/
-
-## minikube
-
-minikube 是一个工具，能在本地运行 Kubernetes。 minikube 在本地的个人计算机（包括 Windows、macOS 和 Linux PC）运行一个单节点的 Kubernetes 集群，以便来尝试 Kubernetes 或者开展每天的开发工作。[开始使用](https://minikube.sigs.k8s.io/docs/start/)
-
-> minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes.
->
-> All you need is Docker (or similarly compatible) container or a Virtual Machine environment, and Kubernetes is a single command away: **minikube start**
 
 
 # Tips

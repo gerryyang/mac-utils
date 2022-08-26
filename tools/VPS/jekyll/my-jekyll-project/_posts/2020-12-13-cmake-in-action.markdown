@@ -414,6 +414,14 @@ Provides an option for the user to select as `ON` or `OFF`. If no initial `<valu
 option(<variable> "<help_text>" [value])
 ```
 
+```
+option(WITH_GLOG "using glog" ON)
+
+if (WITH_GLOG)
+  add_compile_definitions(WITH_GLOG)
+endif()
+```
+
 https://cmake.org/cmake/help/latest/command/option.html
 
 ## if
@@ -830,6 +838,48 @@ Execute one or more child processes. Commands are executed concurrently as a pip
 
 * https://cmake.org/cmake/help/latest/command/execute_process.html
 
+## add_compile_options
+
+Adds options to the COMPILE_OPTIONS directory property. These options are used when compiling targets from the current directory and below.
+
+Since different compilers support different options, a typical use of this command is in a compiler-specific conditional clause:
+
+```
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    add_compile_options(/W4 /WX)
+else()
+    # lots of warnings and all warnings as errors
+    add_compile_options(-Wall -Wextra -pedantic -Werror)
+endif()
+```
+
+* https://cmake.org/cmake/help/latest/command/add_compile_options.html
+
+## add_compile_definitions
+
+The preprocessor definitions are added to the COMPILE_DEFINITIONS directory property for the current CMakeLists file. They are also added to the COMPILE_DEFINITIONS target property for each target in the current CMakeLists file.
+
+* https://cmake.org/cmake/help/latest/command/add_compile_definitions.html
+
+
+## find_library
+
+```
+find_library (<VAR> name1 [path1 path2 ...])
+```
+
+This command is used to find a library. A cache entry, or a normal variable if `NO_CACHE` is specified, named by `<VAR>` is created to store the result of this command. If the library is found the result is stored in the variable and the search will not be repeated unless the variable is cleared. If nothing is found, the result will be `<VAR>-NOTFOUND`.
+
+* https://cmake.org/cmake/help/latest/command/find_library.html
+
+## add_link_options
+
+Add options to the link step for executable, shared library or module library targets in the current directory and below that are added after this command is invoked.
+
+* https://cmake.org/cmake/help/latest/command/add_link_options.html
+
+
 
 # Variable
 
@@ -970,6 +1020,14 @@ https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
 ## CMAKE_BUILD_TYPE
 
 Specifies the build type on single-configuration generators (e.g. **Makefile Generators** or **Ninja**). Typical values include `Debug`, `Release`, `RelWithDebInfo` and `MinSizeRel`, but custom build types can also be defined.
+
+```
+IF(PROJ_BUILD_TYPE STREQUAL release)
+    SET(CMAKE_BUILD_TYPE Release)
+ELSEIF(PROJ_BUILD_TYPE STREQUAL debug)
+    SET(CMAKE_BUILD_TYPE Debug)
+ENDIF()
+```
 
 https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
 
@@ -1557,6 +1615,26 @@ make install
 popd
 
 ```
+
+
+# Tips
+
+## 检查是否是 GCC 编译
+
+```
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  set(CC_GCC 1)
+  string(REGEX REPLACE "^([^\.]+)\..*$" \\1 GCC_MAJOR ${CMAKE_CXX_COMPILER_VERSION})
+  message("GCC Major:" ${GCC_MAJOR} " # " ${CMAKE_CXX_COMPILER_VERSION})
+else()
+  set(CC_GCC 0)
+  set(GCC_MAJOR 0)
+endif()
+```
+
+
+
+
 
 # Q&A
 

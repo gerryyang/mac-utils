@@ -2,7 +2,7 @@
 layout: post
 title:  "Modern CMake in Action"
 date:   2022-07-31 16:30:00 +0800
-categories: 虚拟化
+categories: [GCC/Clang]
 ---
 
 * Do not remove this line (it will not be displayed)

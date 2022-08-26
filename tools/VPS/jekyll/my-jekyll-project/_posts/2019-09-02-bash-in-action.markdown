@@ -1825,6 +1825,44 @@ D0
 
 * https://www.geeksforgeeks.org/bc-command-linux-examples/
 
+## shift
+
+[What is the purpose of using shift in shell scripts?](https://unix.stackexchange.com/questions/174566/what-is-the-purpose-of-using-shift-in-shell-scripts)
+
+I have came across this script:
+
+``` bash
+#! /bin/bash
+
+if (( $# < 3 )); then
+  echo "$0 old_string new_string file [file...]"
+  exit 0
+else
+  ostr="$1"; shift
+  nstr="$1"; shift
+fi
+
+echo "Replacing \"$ostr\" with \"$nstr\""
+for file in $@; do
+  if [ -f $file ]; then
+    echo "Working with: $file"
+    eval "sed 's/"$ostr"/"$nstr"/g' $file" > $file.tmp
+    mv $file.tmp $file
+  fi
+done
+```
+
+What is the meaning of the lines where they use shift? I presume the script should be used with at least arguments so...?
+
+Answers:
+
+`shift` is a bash built-in which kind of removes arguments from the beginning of the argument list. Given that the 3 arguments provided to the script are available in `$1`, `$2`, `$3`, then a call to `shift` will make `$2` the new `$1`. A `shift 2` will shift by two making new `$1` the old `$3`. For more information, see here:
+
+* http://ss64.com/bash/shift.html
+* http://www.tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_07.html
+
+
+
 # Example
 
 ## pstack
