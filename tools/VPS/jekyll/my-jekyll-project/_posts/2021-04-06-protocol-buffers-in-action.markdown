@@ -1043,35 +1043,494 @@ elapse(0.0260171s)
 
 [国内有什么大公司使用flatbuffers吗？它和protobuffer之间如何取舍？](https://www.zhihu.com/question/39585795)
 
+优势：fb 是一种无需解码的二进制格式，解码性能很高，适合使用在频繁解码的场景。
+不足：fb 的接口易用性较差，编码性能比 pb 低很多，编码后的数据长度也比 pb 长。
+
 * https://github.com/google/flatbuffers
 
-# 性能优化
 
-## Arena Allocation
+# Arena Allocation
 
 引入 Arena 支持，减少大对象释放开销，可参考：[C++ Arena Allocation Guide](https://developers.google.com/protocol-buffers/docs/reference/arenas)
 
-Arena 原理：Arena 就是由 protbuf 库去接管 pb 对象的内存管理。它的原理很简单，是预先分配一个内存块；解析消息和构建消息等触发对象创建时是在已分配好的内存块上 placement new 出来；arena对象析构时会释放所有内存，理想情况下不需要运行任何被包含对象的析构函数。
+Arena 就是由 protbuf 库去接管 pb 对象的内存管理。它的原理很简单，是预先分配一个内存块；解析消息和构建消息等触发对象创建时是在已分配好的内存块上 placement new 出来；arena 对象析构时会释放所有内存，理想情况下不需要运行任何被包含对象的析构函数。
+
+适用场景：
+
+pb 结构比较复杂，repeated 类型字段包含的数据个数比较多。（**注意：并非所有场景都是正收益**）
 
 好处：
 
-* 减少复杂的 pb 对象中多次 malloc/free 和析构带来的系统开销
+* 减少复杂 pb 对象中多次 malloc/free 和析构带来的系统开销
 * 减少内存碎片
-* pb 对象的内存连续，cache line友好、读取性能高
+* pb 对象的内存连续，cache line友好，读取性能高
 
-适用场景：pb 结构比较复杂，repeated 类型字段包含的数据个数比较多。
+## proto 文件声明
 
-> Why use arena allocation?
+`cc_enable_arenas` (file option): Enables [arena allocation](https://developers.google.com/protocol-buffers/docs/reference/arenas) for C++ generated code. [Refer proto3](https://developers.google.com/protocol-buffers/docs/proto3?hl=en)
+
+```
+option cc_enable_arenas = true;
+```
+
+## 线程安全
+
+This is a thread-safe implementation: multiple threads may allocate from the arena concurrently. **Destruction is not thread-safe** and the destructing thread must synchronize with users of the arena first.
+
+
+## arena 头文件部分注释
+
+### Arena message allocation protocol
+
+``` cpp
+// Arena allocator. Arena allocation replaces ordinary (heap-based) allocation
+// with new/delete, and improves performance by aggregating allocations into
+// larger blocks and freeing allocations all at once. Protocol messages are
+// allocated on an arena by using Arena::CreateMessage<T>(Arena*), below, and
+// are automatically freed when the arena is destroyed.
+//
+// This is a thread-safe implementation: multiple threads may allocate from the
+// arena concurrently. Destruction is not thread-safe and the destructing
+// thread must synchronize with users of the arena first.
+//
+// An arena provides two allocation interfaces: CreateMessage<T>, which works
+// for arena-enabled proto2 message types as well as other types that satisfy
+// the appropriate protocol (described below), and Create<T>, which works for
+// any arbitrary type T. CreateMessage<T> is better when the type T supports it,
+// because this interface (i) passes the arena pointer to the created object so
+// that its sub-objects and internal allocations can use the arena too, and (ii)
+// elides the object's destructor call when possible. Create<T> does not place
+// any special requirements on the type T, and will invoke the object's
+// destructor when the arena is destroyed.
+//
+// The arena message allocation protocol, required by CreateMessage<T>, is as
+// follows:
+//
+// - The type T must have (at least) two constructors: a constructor with no
+//   arguments, called when a T is allocated on the heap; and a constructor with
+//   a Arena* argument, called when a T is allocated on an arena. If the
+//   second constructor is called with a NULL arena pointer, it must be
+//   equivalent to invoking the first (no-argument) constructor.
+//
+// - The type T must have a particular type trait: a nested type
+//   |InternalArenaConstructable_|. This is usually a typedef to |void|. If no
+//   such type trait exists, then the instantiation CreateMessage<T> will fail
+//   to compile.
+//
+// - The type T *may* have the type trait |DestructorSkippable_|. If this type
+//   trait is present in the type, then its destructor will not be called if and
+//   only if it was passed a non-NULL arena pointer. If this type trait is not
+//   present on the type, then its destructor is always called when the
+//   containing arena is destroyed.
+//
+// - One- and two-user-argument forms of CreateMessage<T>() also exist that
+//   forward these constructor arguments to T's constructor: for example,
+//   CreateMessage<T>(Arena*, arg1, arg2) forwards to a constructor T(Arena*,
+//   arg1, arg2).
+//
+// This protocol is implemented by all arena-enabled proto2 message classes as
+// well as protobuf container types like RepeatedPtrField and Map. The protocol
+// is internal to protobuf and is not guaranteed to be stable. Non-proto types
+// should not rely on this protocol.
+//
+// Do NOT subclass Arena. This class will be marked as final when C++11 is
+// enabled.
+class PROTOBUF_EXPORT Arena {
+  // ...
+};
+```
+
+
+### CreateMessage
+
+``` cpp
+// protobuf/arena.h
+
+// API to create proto2 message objects on the arena. If the arena passed in
+// is NULL, then a heap allocated object is returned. Type T must be a message
+// defined in a .proto file with cc_enable_arenas set to true, otherwise a
+// compilation error will occur.
+//
+// RepeatedField and RepeatedPtrField may also be instantiated directly on an
+// arena with this method.
+//
+// This function also accepts any type T that satisfies the arena message
+// allocation protocol, documented above.
+template <typename T, typename... Args>
+PROTOBUF_ALWAYS_INLINE static T* CreateMessage(Arena* arena, Args&&... args) {
+  static_assert(
+      InternalHelper<T>::is_arena_constructable::value,
+      "CreateMessage can only construct types that are ArenaConstructable");
+  // We must delegate to CreateMaybeMessage() and NOT CreateMessageInternal()
+  // because protobuf generated classes specialize CreateMaybeMessage() and we
+  // need to use that specialization for code size reasons.
+  return Arena::CreateMaybeMessage<T>(arena, std::forward<Args>(args)...);
+}
+```
+
+### ArenaOptions
+
+``` cpp
+// protobuf/arena.h
+
+// ArenaOptions provides optional additional parameters to arena construction
+// that control its block-allocation behavior.
+struct ArenaOptions {
+  // This defines the size of the first block requested from the system malloc.
+  // Subsequent block sizes will increase in a geometric series up to a maximum.
+  size_t start_block_size;
+
+  // This defines the maximum block size requested from system malloc (unless an
+  // individual arena allocation request occurs with a size larger than this
+  // maximum). Requested block sizes increase up to this value, then remain
+  // here.
+  size_t max_block_size;
+
+  // An initial block of memory for the arena to use, or NULL for none. If
+  // provided, the block must live at least as long as the arena itself. The
+  // creator of the Arena retains ownership of the block after the Arena is
+  // destroyed.
+  char* initial_block;
+
+  // The size of the initial block, if provided.
+  size_t initial_block_size;
+
+  // A function pointer to an alloc method that returns memory blocks of size
+  // requested. By default, it contains a ptr to the malloc function.
+  //
+  // NOTE: block_alloc and dealloc functions are expected to behave like
+  // malloc and free, including Asan poisoning.
+  void* (*block_alloc)(size_t);
+  // A function pointer to a dealloc method that takes ownership of the blocks
+  // from the arena. By default, it contains a ptr to a wrapper function that
+  // calls free.
+  void (*block_dealloc)(void*, size_t);
+
+  ArenaOptions()
+      : start_block_size(kDefaultStartBlockSize),
+        max_block_size(kDefaultMaxBlockSize),
+        initial_block(NULL),
+        initial_block_size(0),
+        block_alloc(&::operator new),
+        block_dealloc(&internal::arena_free),
+        on_arena_init(NULL),
+        on_arena_reset(NULL),
+        on_arena_destruction(NULL),
+        on_arena_allocation(NULL) {}
+
+ private:
+  // Hooks for adding external functionality such as user-specific metrics
+  // collection, specific debugging abilities, etc.
+  // Init hook may return a pointer to a cookie to be stored in the arena.
+  // reset and destruction hooks will then be called with the same cookie
+  // pointer. This allows us to save an external object per arena instance and
+  // use it on the other hooks (Note: It is just as legal for init to return
+  // NULL and not use the cookie feature).
+  // on_arena_reset and on_arena_destruction also receive the space used in
+  // the arena just before the reset.
+  void* (*on_arena_init)(Arena* arena);
+  void (*on_arena_reset)(Arena* arena, void* cookie, uint64 space_used);
+  void (*on_arena_destruction)(Arena* arena, void* cookie, uint64 space_used);
+
+  // type_info is promised to be static - its lifetime extends to
+  // match program's lifetime (It is given by typeid operator).
+  // Note: typeid(void) will be passed as allocated_type every time we
+  // intentionally want to avoid monitoring an allocation. (i.e. internal
+  // allocations for managing the arena)
+  void (*on_arena_allocation)(const std::type_info* allocated_type,
+                              uint64 alloc_size, void* cookie);
+
+  // Constants define default starting block size and max block size for
+  // arena allocator behavior -- see descriptions above.
+  static const size_t kDefaultStartBlockSize = 256;
+  static const size_t kDefaultMaxBlockSize = 8192;
+
+  friend void arena_metrics::EnableArenaMetrics(ArenaOptions*);
+  friend class Arena;
+  friend class ArenaOptionsTestFriend;
+};
+```
+
+
+## Why use arena allocation?
 
 Memory allocation and deallocation constitutes a significant fraction of CPU time spent in protocol buffers code. By default, protocol buffers performs heap allocations for each message object, each of its subobjects, and several field types, such as strings. These allocations occur in bulk when parsing a message and when building new messages in memory, and associated deallocations happen when messages and their subobject trees are freed.
 
-Arena-based allocation has been designed to reduce this performance cost. With arena allocation, new objects are allocated out of a large piece of preallocated memory called the arena. Objects can all be freed at once by discarding the entire arena, ideally without running destructors of any contained object (though an arena can still maintain a "destructor list" when required). This makes object allocation faster by reducing it to a simple pointer increment, and makes deallocation almost free. Arena allocation also provides greater cache efficiency: when messages are parsed, they are more likely to be allocated in continuous memory, which makes traversing messages more likely to hit hot cache lines.
+**Arena-based allocation has been designed to reduce this performance cost. With arena allocation, new objects are allocated out of a large piece of preallocated memory called the arena. Objects can all be freed at once by discarding the entire arena, ideally without running destructors of any contained object (though an arena can still maintain a "destructor list" when required)**. This makes object allocation faster by reducing it to a simple pointer increment, and makes deallocation almost free. Arena allocation also provides greater cache efficiency: when messages are parsed, they are more likely to be allocated in continuous memory, which makes traversing messages more likely to hit hot **cache lines**.
 
-To get these benefits you'll need to be aware of object lifetimes and find a suitable granularity at which to use arenas (for servers, this is often per-request). You can find out more about how to get the most from arena allocation in [Usage patterns and best practices](https://developers.google.com/protocol-buffers/docs/reference/arenas#usage).
+**To get these benefits you'll need to be aware of object lifetimes and find a suitable granularity at which to use arenas (for servers, this is often per-request)**. You can find out more about how to get the most from arena allocation in [Usage patterns and best practices](https://developers.google.com/protocol-buffers/docs/reference/arenas#usage).
+
+
+## Getting started
+
+The protocol buffer compiler generates code for `arena` allocation for the messages in your file, as used in the following example.
+
+``` cpp
+#include <google/protobuf/arena.h>
+{
+  google::protobuf::Arena arena;
+  MyMessage* message = google::protobuf::Arena::CreateMessage<MyMessage>(&arena);
+  // ...
+}
+```
+
+The message object created by `CreateMessage()` exists for as long as `arena` exists, and you should not delete the returned message pointer. All of the message object's internal storage (**with a few exceptions**) and submessages (for example, submessages in a repeated field within MyMessage) are allocated on the `arena` as well.
+
+> Currently, string fields store their data on the heap even when the containing message is on the arena. Unknown fields are also heap-allocated
+
+For the most part, the rest of your code will be the same as if you weren't using `arena` allocation.
+
+## Arena class API
+
+You create message objects on the `arena` using the `google::protobuf::Arena` class. This class implements the following public methods.
+
+### Constructors
+
+* `Arena()`: Creates a new arena with default parameters, tuned for average use cases.
+* `Arena(const ArenaOptions& options)`: Creates a new arena that uses the specified allocation options. The options available in `ArenaOptions` include the ability to use an initial block of user-provided memory for allocations before resorting to the system allocator, control over the initial and maximum request sizes for blocks of memory, and allowing you to pass in custom block allocation and deallocation function pointers to build freelists and others on top of the blocks.
+
+### Allocation methods
+
+* `template<typename T> static T* CreateMessage(Arena* arena)`: Creates a new protocol buffer object of message type `T` on the `arena`.
+
+If `arena` is not NULL, the returned message object is allocated on the `arena`, its internal storage and submessages (if any) will be allocated on the same `arena`, and its lifetime is the same as that of the `arena`. **The object must not be deleted/freed manually: the `arena` owns the message object for lifetime purposes**.
+
+* `template<typename T> static T* Create(Arena* arena, args...)`: Similar to `CreateMessage()` but lets you create an object of any class on the `arena`, not just protocol buffer message types. For example, let's say you have this C++ class:
+
+``` cpp
+class MyCustomClass {
+    MyCustomClass(int arg1, int arg2);
+    // ...
+};
+```
+
+you can create an instance of it on the `arena` like this:
+
+``` cpp
+void func() {
+    // ...
+    google::protobuf::Arena arena;
+    MyCustomClass* c = google::protobuf::Arena::Create<MyCustomClass>(&arena, constructor_arg1, constructor_arg2);
+    // ...
+}
+```
+
+* `template<typename T> static T* CreateArray(Arena* arena, size_t n)`: If `arena` is not NULL, this method allocates raw storage for n elements of type T and returns it. The `arena` owns the returned memory and will free it on its own destruction. If `arena` is NULL, this method allocates storage on the heap and the caller receives ownership.
+
+**`T` must have a trivial constructor: constructors are not called when the array is created on the arena**.
+
+### "Owned list" methods
+
+The following methods let you specify that particular objects or destructors are "owned" by the arena, ensuring that they are deleted or called when the arena itself is deleted。
+
+* `template<typename T> void Own(T* object)`
+* `template<typename T> void OwnDestructor(T* object)`
+
+### Other methods
+
+* `uint64 SpaceUsed() const`
+* `uint64 Reset()`
+* `template<typename T> Arena* GetArena()`
+
+### Thread safety
+
+`google::protobuf::Arena`'s **allocation methods are thread-safe**, and the underlying implementation goes to some length to make multithreaded allocation fast. **The `Reset()` method is not thread-safe**: the thread performing the arena reset must synchronize with all threads performing allocations or using objects allocated from that arena first.
+
+## Generated message class
+
+The following message class members are changed or added when you enable `arena` allocation.
+
+### Message class methods
+
+
+* `Message(Message&& other)`: If the source message is not on `arena`, the move constructor efficiently moves all fields from one message to another without making copies or heap allocations (the time complexity of this operation is `O(number-of-declared-fields)` ). However, if the source message is on `arena`, it performs a deep copy of the underlying data. In both cases the source message is left in a valid but unspecified state.
+
+> 移动构造函数
+> 非 arena：移动语义，零拷贝
+> arena：深拷贝
+
+* `Message& operator=(Message&& other)`: If both messages are not on `arena` or are on the same `arena`, the move-assignment operator efficiently moves all fields from one message to another without making copies or heap allocations (the time complexity of this operation is `O(number-of-declared-fields)`). However, if only one message is on `arena`, or the messages are on different arenas, it performs a deep copy of the underlying data. In both cases the source message is left in a valid but unspecified state.
+
+> 移动赋值函数
+> 如果两个 message 都不是 arena 或者都是分配在同一个 arena，则移动赋值为零拷贝
+> 如果只有一个 message 分配在 arena，或者两个 message 分配在不同的 arena，则执行深拷贝
+
+* `void Swap(Message* other)`: If both messages to be swapped are not on arenas or are on the same `arena`, `Swap()` behaves as it does without having `arena` allocation enabled: it efficiently swaps the message objects' contents, usually via cheap pointer swaps and avoiding copies at all costs. However, if only one message is on an `arena`, or the messages are on different arenas, `Swap()` performs deep copies of the underlying data. **This new behavior is necessary because otherwise the swapped sub-objects could have differing lifetimes, leading potentially to use-after-free bugs**.
+
+> 交互函数
+> 如果两个 message 都不是 arena 或者都是分配在同一个 arena，交换的语义为指针的交互，则没有拷贝
+> 如果只有一个 message 分配在 arena，或者两个 message 分配在不同的 arena，则语义为深拷贝
+
+* `Message* New(Arena* arena)`: An alternate override for the standard `New()` method. It allows a new message object of this type to be created on the given `arena`. Its semantics are identical to `Arena::CreateMessage<T>(arena)` if the concrete message type on which it is called is generated with `arena` allocation enabled. If the message type is not generated with `arena` allocation enabled, then it is equivalent to an ordinary allocation followed by `arena->Own(message)` if `arena` is not NULL.
+
+* `Arena* GetArena()`: Returns the `arena` on which this message object was allocated, if any.
+
+* `void UnsafeArenaSwap(Message* other)`: Identical to `Swap()`, except it assumes both objects are on the same `arena` (or not on arenas at all) and always uses the efficient pointer-swapping implementation of this operation. Using this method can improve performance as, unlike `Swap()`, it doesn't need to check which messages live on which arena before performing the swap. **As the Unsafe prefix suggests, you should only use this method if you are sure the messages you want to swap aren't on different arenas; otherwise this method could have unpredictable results**.
+
+> UnsafeArenaSwap 相比 Swap 不需要一些前置检查，有更好的性能，但是需要开发者对使用约束的保证，否则会产生未定义行为
+
+### Embedded message fields
+
+When you allocate a message object on an `arena`, its embedded message field objects (submessages) are automatically owned by the `arena` as well. **How these message objects are allocated depends on where they are defined**:
+
+* If the message type is also defined in a `.proto` file with `arena` allocation enabled, the object is allocated on the `arena` directly.
+* If the message type is from another `.proto` **without** `arena` allocation enabled, **the object is heap-allocated but is "owned" by the parent** message's `arena`. This means that when the `arena` is destroyed, the object will be freed along with the objects on the `arena` itself.
+
+For either of these field definitions:
+
+```
+optional Bar foo = 1;
+required Bar foo = 1;
+```
+
+The following methods are added or have some special behavior when arena allocation is enabled. Otherwise, accessor methods just use the [default behavior](https://developers.google.com/protocol-buffers/docs/reference/cpp-generated#embeddedmessage).
+
+* `Bar* mutable_foo()`: Returns a mutable pointer to the submessage instance. If the parent object is on an `arena` then the returned object will be as well.
+
+
+* `void set_allocated_foo(Bar* bar)`: Takes a new object and adopts it as the new value for the field. Arena support adds additional copying semantics to maintain proper ownership when objects cross arena/arena or arena/heap boundaries:
+  + If the parent object is on the `heap` and `bar` is on the `heap`, or if the parent and message are on the same `arena`, this method's behavior is unchanged. (两个都分配在 heap 或者都分配的相同的 arena，则语义一样)
+  + If the parent is on an `arena` and `bar` is on the `heap`, the parent message adds bar to its arena's ownership list with `arena->Own()`. (parent 分配在 arena 而 bar 分配在 heap)
+  + If the parent is on an `arena` and `bar` is on a different `arena`, this method makes a copy of message and takes the copy as the new field value. (parent 分配在 arena 而 bar 分配在不同的 arena)
+
+* `Bar* release_foo()`: Returns the existing submessage instance of the field, if set, or a NULL pointer if not set, releasing ownership of this instance to the caller and clearing the parent message's field.
+
+* `void unsafe_arena_set_allocated_foo(Bar* bar)`: Identical to `set_allocated_foo`, but assumes both parent and submessage are on the same `arena`. Using this version of the method can improve performance as it doesn't need to check whether the messages are on a particular `arena` or the heap. See [allocated/release patterns](https://developers.google.com/protocol-buffers/docs/reference/arenas#set-allocatedadd-allocatedrelease) for details on safe ways to use this.
+
+### String fields
+
+Currently, `string` fields store their data on the heap even when their parent message is on the `arena`. Because of this, string accessor methods use the default behavior even when `arena` allocation is enabled.
+
+string 类型的字段还是在 heap 上分配，不管是否使用 arena。
+
+
+### Repeated fields
+
+`Repeated fields` allocate their internal array storage on the `arena` when the containing message is arena-allocated, and also allocate their elements on the `arena` when these elements are separate objects retained by pointer (messages or strings). At the message-class level, generated methods for repeated fields do not change. However, the `RepeatedField` and `RepeatedPtrField` objects that are returned by accessors do have new methods and modified semantics when `arena` support is enabled.
+
+> Repeated numeric fields (数字类型)
+
+`RepeatedField` objects that contain [primitive types](https://developers.google.com/protocol-buffers/docs/reference/arenas#repeatednumeric) have the following new/changed methods when arena allocation is enabled:
+
+* void `UnsafeArenaSwap(RepeatedField* other)`: Performs a swap of `RepeatedField` contents without validating that this repeated field and other are on the same arena. If they are not, the two repeated field objects must be on arenas with equivalent lifetimes. The case where one is on an arena and one is on the heap is checked and disallowed. (需要开发者保证约束)
+
+* `void Swap(RepeatedField* other)`: Checks each repeated field object's arena, and if one is on an arena while one is on the heap or if both are on arenas but on different ones, the underlying arrays are copied before the swap occurs. This means that after the swap, each repeated field object holds an array on its own arena or heap, as appropriate. (带检查操作，如果不符合约束，则会发生深拷贝)
+
+> Repeated embedded message fields (消息类型)
+
+`RepeatedPtrField` objects that contain messages have the following new/changed methods when arena allocation is enabled.
+
+* `void UnsafeArenaSwap(RepeatedPtrField* other)`
+* `void Swap(RepeatedPtrField* other)`
+* `void AddAllocated(SubMessageType* value)`
+* `SubMessageType* ReleaseLast()`
+* `void UnsafeArenaAddAllocated(SubMessageType* value)`
+* `SubMessageType* UnsafeArenaReleaseLast()`
+* `void ExtractSubrange(int start, int num, SubMessageType** elements)`
+* `void UnsafeArenaExtractSubrange(int start, int num, SubMessageType** elements)`
+
+> Repeated string fields
+
+Repeated fields of strings have the same new methods and modified semantics **as repeated fields of messages**, because they also maintain their underlying objects (namely, strings) by pointer reference.
+
+## Usage patterns and best practices
+
+**When using arena-allocated messages, several usage patterns can result in unintended copies or other negative performance effects**. You should be aware of the following common patterns that may need to be altered when adapting code for arenas. (Note that we have taken care in the API design to ensure that correct behavior still occurs — but higher-performance solutions may require some reworking.)
+
+### Unintended copies
+
+**Several methods that never create object copies when not using arena allocation may end up doing so when arena support is enabled**. These unwanted copies can be avoided if you make sure that your objects are allocated appropriately and/or use provided arena-specific method versions, as described in more detail below.
+
+> Set Allocated/Add Allocated/Release
+
+By default, the `release_field()` and `set_allocated_field()` methods (for singular message fields), and the `ReleaseLast()` and `AddAllocated()` methods (for repeated message fields) allow user code to directly attach and detach submessages, passing ownership of pointers without copying any data.
+
+However, when the parent message is on an arena, these methods now sometimes need to copy the passed in or returned object to maintain compatibility with existing ownership contracts. More specifically, methods that take ownership (`set_allocated_field()` and `AddAllocated()`) may copy data if the parent is on an arena and the new subobject is not, or vice versa, or they are on different arenas. Methods that release ownership (`release_field()` and `ReleaseLast()`) may copy data if the parent is on the arena, because the returned object must be on the heap, by contract.
+
+To avoid such copies, we have added corresponding "unsafe arena" versions of these methods where copies are never performed: `unsafe_arena_set_allocated_field()`, `unsafe_arena_release_field()`, `UnsafeArenaAddAllocated()`, and `UnsafeArenaRelease()` for singular and repeated fields, respectively. These methods should be used only when you know they are safe to do so.
+
+> Swap
+
+When two messages' contents are swapped with `Swap()`, the underlying subobjects may be copied if the two messages live on different arenas, or if one is on the arena and the other is on the heap. If you want to avoid this copy and either (i) know that the two messages are on the same arena or different arenas but the arenas have equivalent lifetimes, or (ii) know that the two messages are on the heap, you can use a new method, `UnsafeArenaSwap()`. This method both avoids the overhead of performing the arena check and avoids the copy if one would have occurred.
+
+### Granularity (粒度)
+
+We have found in most application server use cases that an "arena-per-request" model works well. You may be tempted to divide arena use further, either to reduce heap overhead (by destroying smaller arenas more often) or to reduce perceived thread-contention issues. However, the use of more fine-grained arenas may lead to unintended message copying, as we describe above. We have also spent effort to optimize the Arena implementation for the multithreaded use-case, so a single arena should be appropriate for use throughout a request lifetime even if multiple threads process that request.
+
+## Example
+
+Here's a simple complete example demonstrating some of the features of the arena allocation API.
+
+```
+// my_feature.proto
+
+syntax = "proto2";
+import "nested_message.proto";
+
+package feature_package;
+
+// NEXT Tag to use: 4
+message MyFeatureMessage {
+  optional string feature_name = 1;
+  repeated int32 feature_data = 2;
+  optional NestedMessage nested_message = 3;
+};
+```
+
+```
+// nested_message.proto
+
+syntax = "proto2";
+
+package feature_package;
+
+// NEXT Tag to use: 2
+message NestedMessage {
+  optional int32 feature_id = 1;
+};
+```
+
+``` cpp
+#include <google/protobuf/arena.h>
+
+Arena arena;
+
+MyFeatureMessage* arena_message =
+   google::protobuf::Arena::CreateMessage<MyFeatureMessage>(&arena);
+
+arena_message->set_feature_name("Proto2 Arena");
+arena_message->mutable_feature_data()->Add(2);
+arena_message->mutable_feature_data()->Add(4);
+arena_message->mutable_nested_message()->set_feature_id(247);
+```
+
 
 # PB Code Style
 
 https://docs.buf.build/best-practices/style-guide
+
+# Q&A
+
+## [How to statically link "protoc" on linux?](https://groups.google.com/g/protobuf/c/Hw0mHlyf6dY)
+
+```
+./configure --disable-shared
+```
+
+```
+$ldd protoc
+        linux-vdso.so.1 =>  (0x00007fffd73e1000)
+        /$LIB/libonion.so => /lib64/libonion.so (0x00007f26179d5000)
+        libz.so.1 => /lib64/libz.so.1 (0x00007f26176a6000)
+        libstdc++.so.6 => /lib64/libstdc++.so.6 (0x00007f261739e000)
+        libm.so.6 => /lib64/libm.so.6 (0x00007f261709c000)
+        libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007f2616e86000)
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007f2616c6a000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007f261689c000)
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007f2616698000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f26178bc000)
+```
+
 
 
 # Refer

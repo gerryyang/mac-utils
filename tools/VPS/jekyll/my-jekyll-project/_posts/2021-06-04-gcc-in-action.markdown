@@ -843,3 +843,23 @@ object F compiled with GCC 7 and -std=c++17
 
 Another caveat when using GCC, already mentioned in the comments on your question, is that **since GCC 5 there are two implementations of std::string available in libstdc++. The two implementations are not link-compatible (they have different mangled names, so can't be linked together) but can co-exist in the same binary (they have different mangled names, so don't conflict if one object uses std::string and the other uses std::__cxx11::string)**. If your objects use `std::string` then usually they should all be compiled with the same string implementation. Compile with `-D_GLIBCXX_USE_CXX11_ABI=0` to select the original gcc4-compatible implementation, or `-D_GLIBCXX_USE_CXX11_ABI=1` to select the new cxx11 implementation (don't be fooled by the name, it can be used in C++03 too, it's called cxx11 because it conforms to the C++11 requirements). Which implementation is the default depends on how GCC was configured, but the default can always be overridden at compile-time with the macro.
 
+
+## [Glibc vs GCC vs binutils compatibility](https://stackoverflow.com/questions/35873558/glibc-vs-gcc-vs-binutils-compatibility)
+
+Is there a sort of official documentation about version compatibility between `binutils`, `glibc` and `GCC`?
+
+glibc documents the min required version of binutils & gcc in its [INSTALL file](https://sourceware.org/git/?p=glibc.git;a=blob;f=INSTALL;hb=glibc-2.23).
+
+glibc-2.23 states:
+
+```
+Recommended Tools for Compilation
+GCC 4.7 or newer
+GNU 'binutils' 2.22 or later
+```
+
+typically if you want to go newer than those, glibc will generally work with the version of gcc that was in development at the time of the release. e.g. glibc-2.23 was released 18 Feb 2016 and gcc-6 was under development at that time, so glibc-2.23 will work with gcc-4.7 through gcc-6.
+
+so find the [version of gcc](https://ftp.gnu.org/pub/gnu/gcc/) you want, then find its release date, then look at the [glibc releases](https://ftp.gnu.org/pub/gnu/glibc/) from around the same time.
+
+all that said, using an old version of glibc is a terrible idea. it will be full of known security vulnerabilities (include remotely exploitable ones). the latest glibc-2.23 release for example fixed [CVE-2015-7547](https://sourceware.org/bugzilla/show_bug.cgi?id=18665) which affects any application doing DNS network resolution and affects versions starting with glibc-2.9. remember: this is not the only bug lurking.

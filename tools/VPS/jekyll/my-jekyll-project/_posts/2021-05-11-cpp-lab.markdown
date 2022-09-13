@@ -1802,6 +1802,49 @@ int main() {
 * https://en.cppreference.com/w/cpp/container/priority_queue
 * https://blog.csdn.net/fengbingchun/article/details/70505628
 
+## std::tie
+
+``` cpp
+#include <iostream>
+#include <string>
+#include <set>
+#include <tuple>
+
+struct S {
+    int n;
+    std::string s;
+    float d;
+    bool operator<(const S& rhs) const
+    {
+        // compares n to rhs.n,
+        // then s to rhs.s,
+        // then d to rhs.d
+        return std::tie(n, s, d) < std::tie(rhs.n, rhs.s, rhs.d);
+    }
+};
+
+int main()
+{
+    std::set<S> set_of_s; // S is LessThanComparable
+
+    S value{42, "Test", 3.14};
+    std::set<S>::iterator iter;
+    bool inserted;
+
+    // unpacks the return value of insert into iter and inserted
+    std::tie(iter, inserted) = set_of_s.insert(value);
+
+    if (inserted)
+        std::cout << "Value was inserted successfully\n";
+}
+// Value was inserted successfully
+```
+
+* https://en.cppreference.com/w/cpp/utility/tuple/tie
+
+
+
+
 # C++14
 
 ## std::for_each
@@ -3260,6 +3303,115 @@ int main() {
 * https://en.cppreference.com/w/cpp/language/new
 * https://en.cppreference.com/w/cpp/language/new#Placement_new
 * https://riptutorial.com/cplusplus/example/9740/placement-new
+
+
+## [Why doesn't ANSI C have namespaces?](https://stackoverflow.com/questions/4396140/why-doesnt-ansi-c-have-namespaces)
+
+ANSI C doesn't support it. Why not? Any plans to include it in a future standard?
+
+Answers:
+
+For completeness there are several ways to achieve the "benefits" you might get from namespaces, in C. One of my favorite methods is using a structure to house a bunch of method pointers which are the interface to your library/etc..
+
+You then use an extern instance of this structure which you initialize inside your library pointing to all your functions. This allows you to keep your names simple in your library without stepping on the clients namespace (other than the extern variable at global scope, 1 variable vs possibly hundreds of methods..)
+
+There is some additional maintenance involved but I feel that it is minimal.
+
+Here is an example:
+
+``` cpp
+/* interface.h */
+
+struct library {
+    const int some_value;
+    void (*method1)(void);
+    void (*method2)(int);
+    /* ... */
+};
+
+extern const struct library Library;
+```
+
+``` cpp
+/* interface.c */
+#include "interface.h"
+
+void method1(void)
+{
+   // ...
+}
+void method2(int arg)
+{
+   // ...
+}
+
+const struct library Library = {
+    .method1 = method1,
+    .method2 = method2,
+    .some_value = 36
+};
+```
+
+``` cpp
+/* client code */
+#include "interface.h"
+
+int main(void)
+{
+    Library.method1();
+    Library.method2(5);
+    printf("%d\n", Library.some_value);
+    return 0;
+}
+```
+
+The use of `.` syntax creates a strong association over the classic Library_function() Library_some_value method. There are some limitations however, for one you can't use **macros** as functions.
+
+## 指向 const 的指针 / const 指针
+
+``` cpp
+// 指向 const 的指针：p 这个指针可以修改，但是指针指向地址里面的值不能改变
+const int *p;
+int const *p;
+
+// const 指针：p 这个指针是常量的不能修改，因此必须初始化，但是指针所指的内容可以修改
+int a;
+int * const p = &a;
+
+// 指针和内容都不可变：结合上面两种情况
+int a;
+const int * const p = &a;
+```
+
+## [C++'s extern-"C" functionality to languages other than C](https://stackoverflow.com/questions/21484500/cs-extern-c-functionality-to-languages-other-than-c)
+
+As it is known, declaring `extern "C"` to C++ function makes its name have C linkage, enabling C code to link.
+
+My question is - are there other programming languages we can make C++ function names have linkage to, something like `extern "Lisp"` or `extern "FORTRAN"`?
+
+If not, why? What is the internal structure behind the "C", that makes the limitations?
+
+What are the alternatives?
+
+Answers:
+
+The C++ standard, 7.5.2 dcl.link, says:
+
+> Linkage between C++ and non-C++ code fragments can be achieved using a linkage-specification:
+> ``` cpp
+>linkage-specification:
+>   extern string-literal { declaration-seqopt}
+>   extern string-literal declaration
+>```
+> The string-literal indicates the required language linkage. This International Standard specifies the semantics for the string-literals "C" and "C++". Use of a string-literal other than "C" or "C++" is conditionally supported, with implementation-defined semantics. [ Note: Therefore, a linkage-specification with a string literal that is unknown to the implementation requires a diagnostic. —end note ] [ Note: It is recommended that the spelling of the string-literal be taken from the document defining that language. For example, Ada (not ADA) and Fortran or FORTRAN, depending on the vintage. —end note ]
+
+So in principle, implementers can choose to support other linkage specifications than C and C++.
+
+In practise however, on all modern platforms, C linkage is the lowest common denominator. As a general rule, these days, binary interop for languages other than C uses C linkage. On the widely used modern platforms, you will not see anything other than C and C++ linkage.
+
+
+
+
 
 
 

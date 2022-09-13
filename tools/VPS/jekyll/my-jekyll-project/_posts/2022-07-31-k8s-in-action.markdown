@@ -95,7 +95,7 @@ Node 里的 3 个组件，分别是 kubelet、kube-proxy、container-runtime
 * kube-proxy 的作用有点特别，它是 Node 的网络代理，只负责管理容器的网络通信，简单来说就是为 Pod 转发 TCP/UDP 数据包，相当于是专职的“小邮差”。
 * container-runtime 是容器和镜像的实际使用者，在 kubelet 的指挥下创建容器，管理 Pod 的生命周期，是真正干活的“苦力”。
 
-这 3 个组件中只有 kube-proxy 被容器化了，而 kubelet 因为必须要管理整个节点，容器化会限制它的能力，所以它必须在 container-runtime 之外运行。minikube ssh 登录到节点，可以用 docker ps | grep kube-proxy 看到 kube-proxy，而 kubelet 用 docker ps 是找不到的，需要用操作系统的 ps 命令查看。
+这 3 个组件中只有 kube-proxy 被容器化了，而 kubelet 因为必须要管理整个节点，容器化会限制它的能力，所以它必须在 container-runtime 之外运行。minikube ssh 登录到节点，可以用 `docker ps | grep kube-proxy` 看到 kube-proxy，而 kubelet 用 docker ps 是找不到的，需要用操作系统的 ps 命令查看。
 
 > 注意：因为 Kubernetes 的定位是容器编排平台，所以它没有限定 container-runtime 必须是 Docker，完全可以替换成任何符合标准的其他容器运行时，例如 containerd、CRI-O 等
 
@@ -121,15 +121,55 @@ Node 里的 3 个组件，分别是 kubelet、kube-proxy、container-runtime
 
 
 
-# Kubernetes 命令
+# kubectl 常用命令
 
+> kubectl [command] [TYPE] [NAME] [flags]
+
+{% raw %}
 ``` bash
-# 查看 Kubernetes 的节点状态
-kubectl get node
+kubectl help
 
+kubectl version
+kubectl cluster-info
+
+kubectl get nodes
+kubectl get namespaces
+
+# 获取 namespace 下 nodes 信息
+kubectl get nodes --namespace dev-test-gerry -o wide
+
+# 获取 namespace 下 pods 信息
+kubectl get pods --namespace dev-test-gerry -o wide
+
+# 获取 namespace 下 某个 pod 的 container 信息
+kubectl get pods deploy-redis1-7ffdbff548-2k4sf --namespace dev-test-gerry -o jsonpath='{.spec.containers[*].name}'
+
+kubectl describe nodes --namespace dev-test-gerry
+kubectl describe pods --namespace dev-test-gerry
+kubectl describe pods deploy-redis1-7ffdbff548-2k4sf --namespace dev-test-gerry
+
+kubectl logs deploy-redis1-7ffdbff548-2k4sf --namespace dev-test-gerry
+
+kubectl get services --namespace dev-test-gerry
+
+kubectl get deployments --namespace dev-test-gerry
+
+# 查询 namespace 下 pods 的容器镜像
+kubectl get pods --namespace dev-test-gerry -o jsonpath="{.items[*].spec.containers[*].image}"
+kubectl get pods --namespace dev-test-gerry -o go-template --template="{{range .items}}{{range .spec.containers}}{{.image}} {{end}}{{end}}"
+
+# 查询所有 namespace 下 pods 的容器镜像
+kubectl get pods --all-namespaces -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{range .spec.containers[*]}{.image}{", "}{end}{end}' |\ sort
+
+# 进入容器
+kubectl exec -it deploy-redis1-7ffdbff548-2k4sf -c container-redis-default  --namespace dev-test-gerry bash
+
+# 删除异常pod
+kubectl delete pods $pod-name -n dev
 
 
 ```
+{% endraw %}
 
 # Kubernetes 工具
 

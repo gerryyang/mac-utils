@@ -69,14 +69,31 @@ From [Lua 5.3 reference manual](http://www.lua.org/manual/5.3/manual.html#2.1)
 
 > The type number uses two internal representations, one called **integer** and the other called **float**. Lua has explicit rules about when each representation is used, but it also converts between them automatically as needed (see §3.4.3). Therefore, the programmer may choose to mostly ignore the difference between integers and floats or to assume complete control over the representation of each number. **Standard Lua uses 64-bit integers and double-precision (64-bit) floats, but you can also compile Lua so that it uses 32-bit integers and/or single-precision (32-bit) floats**. The option with 32 bits for both integers and floats is particularly attractive for small machines and embedded systems. (See macro `LUA_32BITS` in file `luaconf.h`.)
 
+# 与 C++ 的交互
 
-# Tools
+## LuaBridge
+
+LuaBridge is a lightweight and dependency-free library for mapping data, functions, and classes back and forth between C++ and Lua (a powerful, fast, lightweight, embeddable scripting language). LuaBridge has been tested and works with Lua revisions starting from 5.1.5, although it should work in any version of Lua from 5.1.0 as well as LuaJit.
+
+* https://github.com/vinniefalco/LuaBridge
+
+
+## Luna
+
+轻量化，易扩展。
 
 * https://github.com/trumanzhao/luna
 
 
+# 序列化
+
+* https://github.com/starwing/lua-protobuf
+
+# 代码静态检查
+
+* https://github.com/mpeterv/luacheck
 
 # Refer
 
 * https://lua.org/manual/5.3/manual.html
-
+* [Lua 5.3 参考手册](https://www.runoob.com/manual/lua53doc/contents.html)

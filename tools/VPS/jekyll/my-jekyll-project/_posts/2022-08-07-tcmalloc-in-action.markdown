@@ -128,9 +128,9 @@ int main(int argc, char** argv) {
   std::cout << msg << std::endl;
 
   // Allocate memory, printing the pointer to deter an optimizing compiler from
-  // eliding the allocation.
+  // eliding the allocation. (防止编译器优化)
   constexpr size_t kSize = 1024 * 1024 * 1024;
-  std::unique_ptr<char[]> ptr(new char[kSize]);
+  std::unique_ptr<char[]> ptr(new char[kSize]); // 动态内存分配
 
   std::cout << absl::StreamFormat("new'd %d bytes at %p\n", kSize, ptr.get());
 
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
     std::cout << "Current heap size = " << *heap_size << " bytes" << std::endl;
   }
 
-  void* ptr2 = malloc(kSize);
+  void* ptr2 = malloc(kSize); // 动态内存分配
   std::cout << absl::StreamFormat("malloc'd %d bytes at %p\n", kSize, ptr2);
 
   heap_size = tcmalloc::MallocExtension::GetNumericProperty(
@@ -210,13 +210,65 @@ TCMalloc requires [Abseil](https://abseil.io/) which you will also need to provi
 Congratulations! You've created your first binary using TCMalloc.
 
 
+# 原理介绍
+
+![tcmalloc-ds](/assets/images/202209/tcmalloc-ds.png)
+
+## 定长分配 (使用 freelist 进行对象分配)
+
+假设 Page 的内存大小为 4KB，需要以 16 字节为单位进行分配。通过 freelist 的方式，将 4KB 划分为 16 字节的 Object，每个单元的前 8 个字节作为节点的指针，指向下一个单元。分配时，从链表头分配一个 Object 出去，释放时，将 Object 再插入到链表中。
+
+## 变长分配
+
+扩展为多种定长分配的方式。
+
+把所有的变长记录进行“取整”，例如分配 7 字节，就分配 8 字节，31 字节分配 32 字节，得到多种规格的定长记录。这里带来了内部内存碎片的问题，即分配出去的空间不会被完全利用，有一定浪费。为了减少内部碎片，分配规则按照 8, 16, 32, 48, 64, 80 这样子来。注意到，这里并不是简单地使用 2 的幂级数，因为按照 2 的幂级数，内存碎片会相当严重，分配 65 字节，实际会分配 128 字节，接近 50% 的内存碎片。而按照这里的分配规格，只会分配 80 字节，一定程度上减轻了问题。
+
+## 大对象的分配
+
+多个连续的 Page 会组成一个 Span，在 Span 中记录起始 Page 的编号，以及 Page 的数量。分配对象时，小的对象从 Span 分配，大的对象直接分配 Span。(分级的思想)
+
+## Span 的管理
+
+使用类似的方案，用多种定长 Page 来实现变长 Page 的分配。
+
+![tcmalloc-ds2](/assets/images/202209/tcmalloc-ds2.png)
+
+Span 到 Page 的映射：由于 Span 中记录了起始的 Page，因而就知道了从 Span 到 Page 的映射。
+Page 到 Span 的映射：使用 RadixTree 来实现 PageMap，记录 Page 所属的 Span。
+
+从而，通过伙伴系统，实现 Span 的分裂与合并。
+
+## 全局对象分配
+
+有了基于 Page 的对象分配，以及 Page 的管理，从而可以得到一个简单的内存分配器了。
+
+每种规格的对象，都有一个独立的内存分配单元 CentralCache。通过链表把所有 Span 组织起来，每次需要分配时，就找一个 Span 从中分配一个 Object。当没有空闲的 Span 时，就从 PageHeap 申请 Span。
+
+但是，当在多线程场景下，所有线程都从 CentralCache 分配，竞争比较激烈。
+
+## ThreadCache
+
+每一个线程有一个 ThreadCache。ThreadCache 从 CentralCache 批量申请和释放内存。
+
+每个线程持有一个线程局部的 ThreadCache，按照不同的对象规格，维护了对象的链表。如果 ThreadCache 的对象不够了，就从 CentralCache 批量分配；如果 CentralCache 依然没有，就从 PageHeap 申请 Span；如果 PageHeap 也没有合适的 Page，就只能从操作系统申请了。
+
+在释放内存的时候，采用相反的顺序。ThreadCache 遵循批量释放的策略，当对象积累到一定程度时释放给 CentralCache；当 CentralCache 发现一个 Span 的内存完全释放了，就把这个 Span 归还给 PageHeap；当 PageHeap 发现一批连续的 Page 都释放了，就归还给操作系统。
+
+
+
+
 
 
 
 # Refer
 
 * https://github.com/google/tcmalloc
-
+* https://google.github.io/tcmalloc/
+* [TCMalloc : Thread-Caching Malloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html)
+* [图解 TCMalloc](https://zhuanlan.zhihu.com/p/29216091)
+* [TCMalloc 源码分析](https://dirtysalt.github.io/html/tcmalloc.html)
+* [jemalloc](https://github.com/jemalloc/jemalloc/releases)
 
 
 

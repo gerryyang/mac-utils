@@ -1081,6 +1081,36 @@ Don't make the install target depend on the all target.
 
 https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_ALL_DEPENDENCY.html
 
+## CMAKE_EXPORT_COMPILE_COMMANDS (输出编译命令)
+
+Enable/Disable output of compile commands during generation.
+
+If enabled, generates a compile_commands.json file containing the exact compiler calls for all translation units of the project in machine-readable form. The format of the JSON file looks like:
+
+``` json
+[
+  {
+    "directory": "/home/user/development/project",
+    "command": "/usr/bin/c++ ... -c ../foo/foo.cc",
+    "file": "../foo/foo.cc"
+  },
+
+  ...
+
+  {
+    "directory": "/home/user/development/project",
+    "command": "/usr/bin/c++ ... -c ../foo/bar.cc",
+    "file": "../foo/bar.cc"
+  }
+]
+```
+
+> Note: This option is implemented only by Makefile Generators and the Ninja. It is ignored on other generators.
+
+* https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html
+* https://stackoverflow.com/questions/20059670/how-to-use-cmake-export-compile-commands
+
+
 
 # Module
 
@@ -1632,7 +1662,9 @@ else()
 endif()
 ```
 
+# 参考示例
 
+* https://github.com/sogou/workflow/blob/master/CMakeLists.txt
 
 
 

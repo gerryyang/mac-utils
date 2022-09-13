@@ -339,8 +339,13 @@ https://zhuanlan.zhihu.com/p/426200312
     + 骑行配件：2952
     + 骑行补给：200
 
+# 工具
 
-# Garmin EDGE 530 使用
+## Garmin EDGE 530 码表的骑行数据导出到本地 (用于分享路书或制作视频)
+
+将码表连接到电脑，通过 Garmin Express 连接和管理码表，并下载 Garmin BaseCamp，通过 Garmin BaseCamp 可以将码表中的骑行数据导出到本地。
+
+> 注意需要使用原装匹配的 USB 数据线才能传输数据，电脑才能识别出码表，而非匹配数的据线只能充电而识别不出设备无法进行数据传输。
 
 Edge 530 无法连接 USB 的问题：[Edge 530 does not connecting via USB](https://forums.garmin.com/sports-fitness/cycling/f/edge-530/258454/edge-530-does-not-connecting-via-usb)
 
@@ -352,7 +357,16 @@ I would recommend you reach out to your local product support team, as it may be
 
 You can also try as one more attempt, press and hold the Lap button on your Edge while you connect it to the USB cable. This will hopefully force it into Mass Storage mode. If this does not work, please reach out to your local support team by visiting support.garmin.com.
 
-方案1：USB 导入数据方案失败，尝试方案2：[從 Garmin Connect 下載路線](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-414F5A9F-3B61-4A30-8E1B-58C3870B71CE-2740.html)，提示上传出错请重试（无语）。参考网上方案：[骑行 - 行者 gpx 导入 Garmin 出错](https://zhuanlan.zhihu.com/p/368952941)，具体方法是：
+
+## 将其他路线 gpx 数据导入 Garmin EDGE 530 码表 (用于导航)
+
+### 通过码表直接导入
+
+类似将数据导出到本地方法。
+
+### 通过 Garmin Web 导入
+
+[從 Garmin Connect 下載路線](https://www8.garmin.com/manuals-apac/webhelp/edge530/ZH-TW/GUID-414F5A9F-3B61-4A30-8E1B-58C3870B71CE-2740.html)，提示上传出错请重试，之后参考 [骑行 - 行者 gpx 导入 Garmin 出错](https://zhuanlan.zhihu.com/p/368952941) 的方法后可以实现上传，具体方法是：
 
 ```
 将
@@ -379,6 +393,32 @@ xmlns="http://www.topografix.com/GPX/1/1"
 * [My Edge Device Will Not Fully Turn On](https://support.garmin.com/en-GB/?faq=PsxSBlFqTL57tN38aI6m29#:~:text=To%20force%20an%20Edge%20into%20mass%20storage%20mode%3A,%28s%29%20Edge%2020%20and%2025%3A%20START%2FSTOP%20%28top-right%20button%29)
 
 
+## Garmin VIRB Edit 视频编辑
+
+1. 准备好制作的视频，以及视频匹配的 gpx 文件
+2. [Mac 版本下载 Garmin VIRB Edit](https://www8.garmin.com/support/download_details.jsp?id=6593)
+3. 打开Garmin VIRB Edit，选择创作视频，导入剪辑和照片，选择 G-Metrix，导入 G-Metrix，此时如果电脑连接了码表，Garmin VIRB Edit 会自动识别匹配码表中的 gpx 文件，或者手动将准备好的 gpx 文件拖入进来，选择使用此日志
+4. 选择 G-Metrix 同步，显示的步骤 1 为导入的视频，步骤 2 为 gpx 的路线图，将两个步骤进行同步匹配，通常步骤 2 gpx 的数据是完整的路线，因此需要在步骤 2 中选择到对应步骤 1 中的位置，此时视频和路线即为同步状态
+5. 播放视频检查是否同步，同时可自定义模版，通常选择专有的骑行的模版，比如包括的信息有：海拔，角度，时速，路线
+6. 将显示的指标单位改为公制，选择首选项，在单位中修改
+7. 最后确认无误后，选择导出视频
+
+## Garmin Express
+
+用于连接和管理码表。
+
+## alltrails
+
+gpx 导入和转换工具，以及分享。
+
+* https://www.alltrails.com/explore/map/map-a61f27a--54?u=m
+* https://www.alltrails.com/converter
+
+## Google Map
+
+gpx 导入和查看。
+
+* https://www.google.com/maps/d/
 
 
 # Refer
