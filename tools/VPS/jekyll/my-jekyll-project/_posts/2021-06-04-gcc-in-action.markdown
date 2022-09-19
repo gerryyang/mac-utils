@@ -742,6 +742,8 @@ $ ldd demo
 
 In the GCC 5.1 release libstdc++ introduced a new library ABI that includes new implementations of `std::string` and `std::list`. These changes were necessary to conform to the 2011 C++ standard which forbids Copy-On-Write strings and requires lists to keep track of their size.
 
+see: https://gcc.gnu.org/gcc-5/changes.html#libstdcxx
+
 > _GLIBCXX_USE_CXX11_ABI
 
 Defined to the value 1 by default. Configurable via --disable-libstdcxx-dual-abi and/or --with-default-libstdcxx-abi. ABI-changing. When defined to a non-zero value the library headers will use the new C++11-conforming ABI introduced in GCC 5, rather than the older ABI introduced in GCC 3.4. This changes the definition of several class templates, including std:string, std::list and some locale facets. For more details see [Dual ABI](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
@@ -863,3 +865,11 @@ typically if you want to go newer than those, glibc will generally work with the
 so find the [version of gcc](https://ftp.gnu.org/pub/gnu/gcc/) you want, then find its release date, then look at the [glibc releases](https://ftp.gnu.org/pub/gnu/glibc/) from around the same time.
 
 all that said, using an old version of glibc is a terrible idea. it will be full of known security vulnerabilities (include remotely exploitable ones). the latest glibc-2.23 release for example fixed [CVE-2015-7547](https://sourceware.org/bugzilla/show_bug.cgi?id=18665) which affects any application doing DNS network resolution and affects versions starting with glibc-2.9. remember: this is not the only bug lurking.
+
+# GCC 不同版本变更说明
+
+* https://gcc.gnu.org/gcc-5/changes.html#libstdcxx
+
+
+
+

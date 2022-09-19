@@ -3410,9 +3410,21 @@ So in principle, implementers can choose to support other linkage specifications
 In practise however, on all modern platforms, C linkage is the lowest common denominator. As a general rule, these days, binary interop for languages other than C uses C linkage. On the widely used modern platforms, you will not see anything other than C and C++ linkage.
 
 
+## AlignUpTo8 (参考 protobuf/arena_impl.h)
+
+``` cpp
+inline size_t AlignUpTo8(size_t n) {
+  // Align n to next multiple of 8 (from Hacker's Delight, Chapter 3.)
+  return (n + 7) & static_cast<size_t>(-8);
+}
+```
+
+## Variable-length array (C99)
+
+In computer programming, a variable-length array (VLA), also called variable-sized or runtime-sized, is an array data structure whose length is determined at run time (instead of at compile time). In C, the VLA is said to have a variably modified type that depends on a value (see Dependent type).
 
 
-
+https://en.wikipedia.org/wiki/Variable-length_array
 
 
 # Refer

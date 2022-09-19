@@ -15,6 +15,7 @@ categories: [C/C++, 编程语言]
 3. C++是解决性能的利器，尤其在大公司和金融机构里。C++之父Bjarne Stroustrup目前就职的地方便是摩根斯坦利。
 4. 学习C++就像学习一门外语，你不要期望能够掌握所有的单词和语法，因此需要多看多写掌握合适的“语感”，而不是记住所有规则。
 5. Bjarne有一个洋葱理论，抽象层次就像一个洋葱，是层层嵌套的。如果想用较低的抽象层次表达较高的概念，就好比一次切过了很多层洋葱，会把自己的眼泪熏出来。因此主张学习应该自顶向下，先学习高层的抽象，再层层剥茧，丝丝入扣地一步步进入下层。
+6. [C++强大背后](https://www.cnblogs.com/miloyip/archive/2010/09/17/behind_cplusplus.html)
 
 # 环境要求
 
@@ -6364,15 +6365,12 @@ Larry Wall 认为程序员该有的三大美德：懒惰，急切，傲慢（laz
 
 
 
+# 专栏
+
+* [https://blog.petrzemek.net/tag/c/](https://blog.petrzemek.net/tag/c/)
+
+
 # Refer
 
 
-[What are Aggregates and PODs and how/why are they special?](https://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special)
-
-
-# 专栏
-
-[https://blog.petrzemek.net/tag/c/](https://blog.petrzemek.net/tag/c/)
-
-
-
+* [What are Aggregates and PODs and how/why are they special?](https://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special)

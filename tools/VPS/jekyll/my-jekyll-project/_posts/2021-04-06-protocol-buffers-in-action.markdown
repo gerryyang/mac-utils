@@ -1166,6 +1166,83 @@ PROTOBUF_ALWAYS_INLINE static T* CreateMessage(Arena* arena, Args&&... args) {
   // need to use that specialization for code size reasons.
   return Arena::CreateMaybeMessage<T>(arena, std::forward<Args>(args)...);
 }
+
+// Allocate and also optionally call on_arena_allocation callback with the
+// allocated type info when the hooks are in place in ArenaOptions and
+// the cookie is not null.
+template <typename T>
+PROTOBUF_ALWAYS_INLINE void* AllocateInternal(bool skip_explicit_ownership) {
+  const size_t n = internal::AlignUpTo8(sizeof(T));
+  AllocHook(RTTI_TYPE_ID(T), n);
+  // Monitor allocation if needed.
+  if (skip_explicit_ownership) {
+    return impl_.AllocateAligned(n);
+  } else {
+    return impl_.AllocateAlignedAndAddCleanup(
+        n, &internal::arena_destruct_object<T>);
+  }
+}
+
+template <typename T, typename... Args>
+PROTOBUF_ALWAYS_INLINE T* DoCreateMessage(Args&&... args) {
+  return InternalHelper<T>::Construct(
+      AllocateInternal<T>(InternalHelper<T>::is_destructor_skippable::value),
+      this, std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+PROTOBUF_ALWAYS_INLINE static T* CreateMessageInternal(Arena* arena,
+                                                        Args&&... args) {
+  static_assert(
+      InternalHelper<T>::is_arena_constructable::value,
+      "CreateMessage can only construct types that are ArenaConstructable");
+  if (arena == NULL) {
+    return new T(nullptr, std::forward<Args>(args)...);
+  } else {
+    return arena->DoCreateMessage<T>(std::forward<Args>(args)...);
+  }
+}
+
+// This specialization for no arguments is necessary, because its behavior is
+// slightly different.  When the arena pointer is nullptr, it calls T()
+// instead of T(nullptr).
+template <typename T>
+PROTOBUF_ALWAYS_INLINE static T* CreateMessageInternal(Arena* arena) {
+  static_assert(
+      InternalHelper<T>::is_arena_constructable::value,
+      "CreateMessage can only construct types that are ArenaConstructable");
+  if (arena == NULL) {
+    return new T();
+  } else {
+    return arena->DoCreateMessage<T>();
+  }
+}
+
+// CreateMessage<T> requires that T supports arenas, but this private method
+// works whether or not T supports arenas. These are not exposed to user code
+// as it can cause confusing API usages, and end up having double free in
+// user code. These are used only internally from LazyField and Repeated
+// fields, since they are designed to work in all mode combinations.
+template <typename Msg, typename... Args>
+PROTOBUF_ALWAYS_INLINE static Msg* DoCreateMaybeMessage(Arena* arena,
+                                                        std::true_type,
+                                                        Args&&... args) {
+  return CreateMessageInternal<Msg>(arena, std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+PROTOBUF_ALWAYS_INLINE static T* DoCreateMaybeMessage(Arena* arena,
+                                                      std::false_type,
+                                                      Args&&... args) {
+  return CreateInternal<T>(arena, std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+PROTOBUF_ALWAYS_INLINE static T* CreateMaybeMessage(Arena* arena,
+                                                    Args&&... args) {
+  return DoCreateMaybeMessage<T>(arena, is_arena_constructable<T>(),
+                                  std::forward<Args>(args)...);
+}
 ```
 
 ### ArenaOptions

@@ -396,12 +396,51 @@ xmlns="http://www.topografix.com/GPX/1/1"
 ## Garmin VIRB Edit 视频编辑
 
 1. 准备好制作的视频，以及视频匹配的 gpx 文件
-2. [Mac 版本下载 Garmin VIRB Edit](https://www8.garmin.com/support/download_details.jsp?id=6593)
+2. 下载[Garmin VIRB Edit 的 Mac 版本](https://www8.garmin.com/support/download_details.jsp?id=6593)，最新的版本号为 version 5.4.3 as of September 11, 2018，可见这个软件已经不维护了
 3. 打开Garmin VIRB Edit，选择创作视频，导入剪辑和照片，选择 G-Metrix，导入 G-Metrix，此时如果电脑连接了码表，Garmin VIRB Edit 会自动识别匹配码表中的 gpx 文件，或者手动将准备好的 gpx 文件拖入进来，选择使用此日志
 4. 选择 G-Metrix 同步，显示的步骤 1 为导入的视频，步骤 2 为 gpx 的路线图，将两个步骤进行同步匹配，通常步骤 2 gpx 的数据是完整的路线，因此需要在步骤 2 中选择到对应步骤 1 中的位置，此时视频和路线即为同步状态
 5. 播放视频检查是否同步，同时可自定义模版，通常选择专有的骑行的模版，比如包括的信息有：海拔，角度，时速，路线
 6. 将显示的指标单位改为公制，选择首选项，在单位中修改
 7. 最后确认无误后，选择导出视频
+
+问题1: [Export of Large Video Files with VIRB Edit Fails](https://support.garmin.com/en-US/?faq=SYk8CPvglt9JdYglUJItf8)
+
+Description
+
+Videos contain a lot of data. High detail and long length will increase the length of time it takes to export and/or upload a video. If the file is too big, the export may fail. VIRB Edit uses Media Foundation, a Windows Media API, to export MP4 files which has a file size limitation of 4 gigabytes (GB) on Windows 7, but should not be limited in newer versions of Windows.
+
+Resolution
+
+There are a few troubleshooting steps that can be taken to resolve this issue:
+
+* If an export error occurs in Windows 7, decrease the video’s length or use a lower resolution to reduce the file size of the video to less than 4GB
+* Using smaller files will decrease the length of time for processing the video and prevent errors during the export process.
+* Check to make sure your computer meets the minimum system requirements for VIRB Edit
+* Check with your PC or video card manufacturer to ensure your display adapter drivers are up to date
+
+Taking these steps will help to make sure that you can successfully export your videos through VIRB Edit.
+
+> 解决方法：编辑的视频文件大小不要超过 4G，如果超过的话，VIRB Edit 可以编辑和播放，但是在导出视频的时候会报错。
+
+问题2: [Garmin Virb Edit 5.4.3 not playing GoPro Video](https://forums.garmin.com/apps-software/mac-windows-software/f/virb-edit-windows/235615/garmin-virb-edit-5-4-3-not-playing-gopro-video) or [Virb Edit not playing videos](https://forums.garmin.com/apps-software/mac-windows-software/f/virb-edit-windows/68188/virb-edit-not-playing-videos)
+
+I recently downloaded Garmin Virb Edit 5.4.3 and I am trying to upload video from my GoPro Hero7 Black and I keep getting this message "There was error playing the video."
+
+I am running the software on a MacBook 13-inch display, updated to the latest MacOS Catalina Software. The GPS data from my Edge 830 uploads fine as well. I have read online that the Virb software has stopped working since the Version 4.1 update. If anyone can help me fix my issue under the newest version, or link a google rive file for me to download the 4.1 version I would appreciate it.
+
+Anoter:
+
+Hi I have a Virb and Virb Edit uploads and catalogues the videos as it should but does not play most of them, it just goes to a blank screen and says the is an error playing this video.
+
+The videos play perfectly in Windows Movie Maker.
+
+Both Virb and Virb Edit are running the lastest software updated yesterday.
+
+Can anyone help?
+
+> 解决方法：此问题，起初以为可能和视频采用的编码器有关？进行对比，能正常播放的视频采用的编码器和不能正常播放的视频都是 AAC, HEVC，没有发现什么不同。使用`剪映`导出 1080p 分辨率的视频格式为 MOV，手动将视频文件后缀改为 MP4，使用 Garmin Virb Edit 无法播放。之后替换使用`必剪`导出 1080p 分辨率，60 FPS 帧率的视频格式直接是 MP4，这次发现可以播放了。问题的原因还是不太清楚。
+
+
 
 ## Garmin Express
 

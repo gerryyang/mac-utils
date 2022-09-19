@@ -29,12 +29,38 @@ int a = ({int b; b = 1; b;}); // a = 1
 
 # likely/unlikely
 
-```
+``` cpp
 #define likely(x)  __builtin_expect(!!(x), 1)
 #define unlikely(x)  __builtin_expect(!!(x), 0)
 ```
 
 `__builtin_expect`是gcc提供的宏，是编译器提供用来优化编译结果的。第一行代码意思是“x大概率为true”，第二行意思是“x大概率为false”，通过提供给编译器这样的信息，编译器可以在生成汇编代码时减少跳转指令被执行的概率。
+
+参考：protobuf/port_def.inc
+
+``` cpp
+#ifdef GOOGLE_PREDICT_TRUE
+#define PROTOBUF_PREDICT_TRUE GOOGLE_PREDICT_TRUE
+#else
+#ifdef __GNUC__
+// Provided at least since GCC 3.0.
+#define PROTOBUF_PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
+#else
+#define PROTOBUF_PREDICT_TRUE(x) (x)
+#endif
+#endif
+
+#ifdef GOOGLE_PREDICT_FALSE
+#define PROTOBUF_PREDICT_FALSE GOOGLE_PREDICT_FALSE
+#else
+#ifdef __GNUC__
+// Provided at least since GCC 3.0.
+#define PROTOBUF_PREDICT_FALSE(x) (__builtin_expect(x, 0))
+#else
+#define PROTOBUF_PREDICT_FALSE(x) (x)
+#endif
+#endif
+```
 
 # C++ style cast from unsigned char * to const char *
 
@@ -135,7 +161,7 @@ int main() {
 2. 模板实例化不检查参数的访问属性，因此模板实例化时模板参数可以传递私有成员的指针。
 3. 在模板类里就地定义友员，从而通过模板参数偷取了成员指针。
 
-> 17.7.2 Explicit instantiation 
+> 17.7.2 Explicit instantiation
 > http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf
 > The usual access checking rules do not apply to names used to specify explicit instantiations. [ Note: In particular, the template arguments and names used in the function declarator (including parameter types, return types and exception specifications) may be private types or objects which would normally not be accessible and the template may be a member template or member function which would not normally be accessible. — end note ]
 
@@ -446,7 +472,7 @@ refer: https://zh.cppreference.com/w/cpp/language/static_assert
 #include <vector>
 #include <numeric>
 #include <chrono>
- 
+
 volatile int sink;
 int main()
 {
@@ -459,7 +485,7 @@ int main()
         // record end time
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = end - start;
-        std::cout << "Time to fill and iterate a vector of " 
+        std::cout << "Time to fill and iterate a vector of "
                   << size << " ints : " << diff.count() << " s\n";
     }
 }
@@ -476,7 +502,7 @@ Time to fill and iterate a vector of 100000000 ints : 2.97886 s
 #include <iostream>
 #include <chrono>
 #include <thread>
- 
+
 int main()
 {
     using namespace std::chrono_literals;
@@ -530,7 +556,7 @@ int main(int argc, char* argv[]) {
     index = header.find(':', 0);
     if(index != std::string::npos) {
       m.insert(std::make_pair(
-        boost::algorithm::trim_copy(header.substr(0, index)), 
+        boost::algorithm::trim_copy(header.substr(0, index)),
         boost::algorithm::trim_copy(header.substr(index + 1))
       ));
     }
@@ -539,7 +565,7 @@ int main(int argc, char* argv[]) {
   for (auto& kv: m) {
     std::cout << "KEY: `" << kv.first << "`, VALUE: `" << kv.second << '`' << std::endl;
   }
-    
+
   std::string data(s);
   std::string msg(data.c_str() + data.rfind("\n") + 1);
   std::cout << "msg: " << msg << std::endl;

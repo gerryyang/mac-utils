@@ -210,7 +210,32 @@ TCMalloc requires [Abseil](https://abseil.io/) which you will also need to provi
 Congratulations! You've created your first binary using TCMalloc.
 
 
-# 原理介绍
+# TCMalloc : Thread-Caching Malloc
+
+TCMalloc is a memory allocator designed as an alternative to the system default allocator that has the following characteristics:
+
+* Fast, uncontended allocation and deallocation for most objects. Objects are cached, depending on mode, either per-thread, or per-logical-CPU. Most allocations do not need to take locks, so there is low contention and good scaling for multi-threaded applications.
+* Flexible use of memory, so freed memory can be reused for different object sizes, or returned to the OS.
+* Low per object memory overhead by allocating "pages" of objects of the same size. Leading to space-efficient representation of small objects.
+* Low overhead sampling, enabling detailed insight into applications memory usage.
+
+The following block diagram shows the rough internal structure of TCMalloc:
+
+![tcmalloc-overview](/assets/images/202209/tcmalloc-overview.png)
+
+We can break TCMalloc into three components. The front-end, middle-end, and back-end. We will discuss these in more details in the following sections. A rough breakdown of responsibilities is:
+
+* The front-end is a cache that provides fast allocation and deallocation of memory to the application.
+* The middle-end is responsible for refilling the front-end cache.
+* The back-end handles fetching memory from the OS.
+
+Note that the front-end can be run in either per-CPU or legacy per-thread mode, and the back-end can support either the hugepage aware pageheap or the legacy pageheap.
+
+See more: https://github.com/google/tcmalloc/blob/master/docs/design.md
+
+
+
+# 分配原理
 
 ![tcmalloc-ds](/assets/images/202209/tcmalloc-ds.png)
 
@@ -256,14 +281,84 @@ Page 到 Span 的映射：使用 RadixTree 来实现 PageMap，记录 Page 所�
 在释放内存的时候，采用相反的顺序。ThreadCache 遵循批量释放的策略，当对象积累到一定程度时释放给 CentralCache；当 CentralCache 发现一个 Span 的内存完全释放了，就把这个 Span 归还给 PageHeap；当 PageHeap 发现一批连续的 Page 都释放了，就归还给操作系统。
 
 
+# Understanding Malloc Stats
+
+Human-readable statistics can be obtained by calling `tcmalloc::MallocExtension::GetStats()`.
+
+The output contains a lot of information. Much of it can be considered debug info that's interesting to folks who are passingly familiar with the internals of TCMalloc, but potentially not that useful for most people.
+
+## Summary Section
+
+The most generally useful section is the first few lines:
+
+```
+See https://github.com/google/tcmalloc/tree/master/docs/stats.md for an explanation of this page
+------------------------------------------------
+MALLOC:    10858234672 (10355.2 MiB) Bytes in use by application
+MALLOC: +    827129856 (  788.8 MiB) Bytes in page heap freelist
+MALLOC: +    386098400 (  368.2 MiB) Bytes in central cache freelist
+MALLOC: +    105330688 (  100.5 MiB) Bytes in per-CPU cache freelist
+MALLOC: +      9095680 (    8.7 MiB) Bytes in transfer cache freelist
+MALLOC: +       660976 (    0.6 MiB) Bytes in thread cache freelists
+MALLOC: +     49333930 (   47.0 MiB) Bytes in malloc metadata
+MALLOC: +       629440 (    0.6 MiB) Bytes in malloc metadata Arena unallocated
+MALLOC: +      1599704 (    1.5 MiB) Bytes in malloc metadata Arena unavailable
+MALLOC:   ------------
+MALLOC: =  12238113346 (11671.2 MiB) Actual memory used (physical + swap)
+MALLOC: +    704643072 (  672.0 MiB) Bytes released to OS (aka unmapped)
+MALLOC:   ------------
+MALLOC: =  12942756418 (12343.2 MiB) Virtual address space used
+```
+
+* **Bytes in use by application**: Number of bytes that the application is actively using to hold data. This is computed by the bytes requested from the OS minus any bytes that are held in caches and other internal data structures.
+* **Bytes in page heap freelist**: The pageheap is a structure that holds memory ready for TCMalloc to use. This memory is not actively being used, and could be returned to the OS. See [TCMalloc tuning](https://github.com/google/tcmalloc/blob/master/docs/tuning.md)
+* **Bytes in central cache freelist**: This is the amount of memory currently held in the central freelist. This is a structure that holds partially used "[spans](https://github.com/google/tcmalloc/blob/master/docs/stats.md#more-detail-on-metadata)" of memory. The spans are partially used because some memory has been allocated from them, but not entirely used - since they have some free memory on them.
+* **Bytes in per-CPU cache freelist**: In per-cpu mode (which is the default) each CPU holds some memory ready to quickly hand to the application. The maximum size of this per-cpu cache is tunable. See [TCMalloc tuning](https://github.com/google/tcmalloc/blob/master/docs/tuning.md)
+* **Bytes in transfer cache freelist**: The transfer cache can be considered another part of the central freelist. It holds memory that is ready to be provided to the application for use.
+* **Bytes in thread cache freelists**: The TC in TCMalloc stands for thread cache. Originally each thread held its own cache of memory to provide to the application. Since the change of default to per-cpu caches, the thread caches are used by very few applications. However, TCMalloc starts in per-thread mode, so there may be some memory left in per-thread caches from before it switches into per-cpu mode.
+* **Bytes in malloc metadata**: the size of the data structures used for tracking memory allocation. This will grow as the amount of memory used grows.
+* **Bytes in malloc metadata Arena unallocated**: Metadata is allocated in an internal Arena. Memory requests to the OS are made in blocks which amortize several Arena allocations and this captures memory that is not yet allocated but could be by future Arena allocations.
+* **Bytes in malloc metadata Arena unavailable**: The Arena allocator may fail to allocate a block fully when a subsequent Arena allocation request is made that is larger than the block's remaining space. This memory is currently unavailable for allocation.
+
+There's a couple of summary lines:
+
+* **Actual memory used**: This is the total amount of memory that TCMalloc thinks it is using in the various categories. This is computed from the size of the various areas, the actual contribution to RSS may be larger or smaller than this value. The true RSS may be less if memory is not mapped in. In some cases RSS can be larger if small regions end up being mapped with huge pages. This does not count memory that TCMalloc is not aware of (eg memory mapped files, text segments etc.)
+* **Bytes released to OS**: TCMalloc can release memory back to the OS (see [tcmalloc tuning](https://github.com/google/tcmalloc/blob/master/docs/tuning.md)), and this is the upper bound on the amount of released memory. However, it is up to the OS as to whether the act of releasing the memory actually reduces the RSS of the application. The code uses MADV_DONTNEED/MADV_REMOVE which tells the OS that the memory is no longer needed.
+* **Virtual address space used**: This is the amount of virtual address space that TCMalloc believes it is using. This should match the later section on requested memory. There are other ways that an application can increase its virtual address space, and this statistic does not capture them.
 
 
+## More Detail On Metadata
+
+The next section gives some insight into the amount of metadata that TCMalloc is using. This is really debug information, and not very actionable.
+
+```
+MALLOC:         236176               Spans in use
+MALLOC:         238709 (   10.9 MiB) Spans created
+MALLOC:              8               Thread heaps in use
+MALLOC:             46 (    0.0 MiB) Thread heaps created
+MALLOC:          13517               Stack traces in use
+MALLOC:          13742 (    7.2 MiB) Stack traces created
+MALLOC:              0               Table buckets in use
+MALLOC:           2808 (    0.0 MiB) Table buckets created
+MALLOC:       11665416 (   11.1 MiB) Pagemap bytes used
+MALLOC:        4067336 (    3.9 MiB) Pagemap root resident bytes
+```
+
+* **Spans**: structures that hold multiple pages of allocatable objects.
+* **Thread heaps**: These are the per-thread structures used in per-thread mode.
+* **Stack traces**: These hold metadata for each sampled object.
+* **Table buckets**: These hold data for stack traces for sampled events.
+* **Pagemap**: This data structure supports the mapping of object addresses to information about the objects held on the page. The pagemap root is a potentially large array, and it is useful to know how much of it is actually memory resident.
+
+
+See more: https://github.com/google/tcmalloc/blob/master/docs/stats.md
 
 
 
 # Refer
 
 * https://github.com/google/tcmalloc
+* https://github.com/google/tcmalloc/tree/master/docs (官方文档)
 * https://google.github.io/tcmalloc/
 * [TCMalloc : Thread-Caching Malloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html)
 * [图解 TCMalloc](https://zhuanlan.zhihu.com/p/29216091)
