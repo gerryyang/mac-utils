@@ -13,6 +13,8 @@ categories: [GCC/Clang]
 
 # Install CMake
 
+## release 版本
+
 ```
 #!/bin/bash
 
@@ -28,6 +30,27 @@ sh cmake-linux.sh -- --skip-license --prefix=$CMAKE_INSTALL_DIR
 rm cmake-linux.sh
 $CMAKE_INSTALL_DIR/bin/cmake --version
 ```
+
+## 源码编译
+
+```
+yum info cmake
+yum remove cmake -y
+
+wget https://cmake.org/files/v3.17/cmake-3.17.5.tar.gz
+tar zxvf cmake-3.17.5.tar.gz
+cd cmake-3.17.5
+
+./bootstrap --prefix=/usr/local
+make -j16
+make install
+
+# 备份老版本，软链新版本
+mv /usr/bin/cmake /usr/bin/cmake2.8.11 && ln -s /usr/local/bin/cmake /usr/bin/
+
+/usr/bin/cmake --version
+```
+
 
 # CMake Introduction
 
@@ -371,6 +394,20 @@ include(<file|module> [OPTIONAL] [RESULT_VARIABLE <var>]
 ```
 
 https://cmake.org/cmake/help/latest/command/include.html
+
+## target_include_directories
+
+Add include directories to a target.
+
+```
+target_include_directories(<target> [SYSTEM] [AFTER|BEFORE]
+  <INTERFACE|PUBLIC|PRIVATE> [items1...]
+  [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
+```
+
+Specifies include directories to use when compiling a given target. The named `<target>` must have been created by a command such as add_executable() or add_library() and must not be an ALIAS target.
+
+https://cmake.org/cmake/help/latest/command/target_include_directories.html
 
 ## set
 

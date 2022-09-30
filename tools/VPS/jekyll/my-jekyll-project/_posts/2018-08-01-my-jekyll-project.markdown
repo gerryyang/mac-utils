@@ -425,17 +425,20 @@ More: https://github.com/hzlzh/Best-App
 	- 在线图形设计平台
 
 * [websequencediagrams](https://www.websequencediagrams.com/)
-	- 通过脚本语言生成**时序图**。
+	- 通过脚本语言生成**时序图**
+
+* [excalidraw](https://excalidraw.com/)
+  - 在线手绘风格
 
 * [flowchart.js](https://github.com/adrai/flowchart.js)
-	- 通过脚本语言生成**流程图**。
-	- 使用[diagrams](https://github.com/francoislaberge/diagrams/#flowchart)工具可以生成各种图形，包括flowchart。
+	- 通过脚本语言生成**流程图**
+	- 使用[diagrams](https://github.com/francoislaberge/diagrams/#flowchart)工具可以生成各种图形，包括flowchart
 
 * [Viz.js](https://github.com/mdaines/viz.js)
-	- 借助[Viz](http://viz-js.com/)Web平台使用`Graphviz`的`DOT`语言在浏览器中生成**广义的图形**。
+	- 借助[Viz](http://viz-js.com/)Web平台使用`Graphviz`的`DOT`语言在浏览器中生成**广义的图形**
 
 * [Evolus Pencil](http://pencil.evolus.vn/)
-	- An open-source GUI prototyping tool that's available for ALL platforms.
+	- An open-source GUI prototyping tool that's available for ALL platforms
 
 * [MacOS - OmniGraffle](https://support.omnigroup.com/documentation/omnigraffle/mac/7.11/en/basic-concepts/#basic-concepts)
   - MacOS 画图工具

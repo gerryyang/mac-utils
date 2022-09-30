@@ -661,3 +661,35 @@ refer: [How to generate gcc debug symbol outside the build target?](https://stac
 * https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
 * https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
 * https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class
+
+# -Wl,--start-group / -Wl,--end-group
+
+[What are the --start-group and --end-group command line options?](https://stackoverflow.com/questions/5651869/what-are-the-start-group-and-end-group-command-line-options)
+
+What is the purpose of those command line options? Please help to decipher the meaning of the following command line:
+
+```
+-Wl,--start-group -lmy_lib -lyour_lib -lhis_lib -Wl,--end-group -ltheir_lib
+```
+
+Apparently it has something to do with linking, but the GNU manual is quiet what exactly grouping means.
+
+Answers:
+
+It is for resolving circular dependences between several libraries (listed between `-(` and `-)`).
+
+Citing [Why does the order in which libraries are linked sometimes cause errors in GCC?](https://stackoverflow.com/questions/45135/linker-order-gcc/409470#409470) or man ld http://linux.die.net/man/1/ld
+
+> `-(` archives `-)` or `--start-group` archives `--end-group`
+>
+> The archives should be a list of archive files. They may be either explicit file names, or -l options.
+>
+> The specified archives are searched repeatedly until no new undefined references are created. Normally, an archive is searched only once in the order that it is specified on the command line. If a symbol in that archive is needed to resolve an undefined symbol referred to by an object in an archive that appears later on the command line, the linker would not be able to resolve that reference. By grouping the archives, they all be searched repeatedly until all possible references are resolved.
+>
+> Using this option has a significant performance cost. It is best to use it only when there are unavoidable circular references between two or more archives.
+
+So, libraries inside the group can be searched for new symbols several time, and you need no ugly constructs like `-llib1 -llib2 -llib1`
+
+PS archive means basically a static library (`*.a` files)
+
+

@@ -976,3 +976,8 @@ int main()
 0
 */
 ```
+
+# Q&A
+
+* [error: explicit specialization of non-template struct](https://stackoverflow.com/questions/49888638/template-specialization-error-explicit-specialization-of-non-template-struct)
+

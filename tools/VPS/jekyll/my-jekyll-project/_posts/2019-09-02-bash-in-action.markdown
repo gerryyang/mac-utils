@@ -1719,6 +1719,21 @@ The awk utility shall interpret each input record as a sequence of fields where,
 
 * https://www.tutorialspoint.com/awk/index.htm
 
+### Summing values of a column using awk command
+
+``` bash
+awk '{s+=$1;}END{print s}'
+```
+
+https://stackoverflow.com/questions/28445020/summing-values-of-a-column-using-awk-command
+
+
+### 历史文章
+
+https://blog.csdn.net/delphiwcdj/category_859397.html?spm=1001.2014.3001.5482
+
+
+
 ## sed
 
 The sed utility is a stream editor that shall read one or more text files, make editing changes according to a script of editing commands, and write the results to standard output. The script shall be obtained from either the script operand string or a combination of the option-arguments from the -e script and -f script_file options.
