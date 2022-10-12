@@ -866,6 +866,80 @@ so find the [version of gcc](https://ftp.gnu.org/pub/gnu/gcc/) you want, then fi
 
 all that said, using an old version of glibc is a terrible idea. it will be full of known security vulnerabilities (include remotely exploitable ones). the latest glibc-2.23 release for example fixed [CVE-2015-7547](https://sourceware.org/bugzilla/show_bug.cgi?id=18665) which affects any application doing DNS network resolution and affects versions starting with glibc-2.9. remember: this is not the only bug lurking.
 
+
+## 升级 GLIBC
+
+参考 [glibc升级到2.29](https://www.jianshu.com/p/f4d603967e1d) 升级 glibc 可行。
+
+例如，升级 glibc 2.18
+
+``` bash
+mkdir ~/glibc_install; cd ~/glibc_install
+wget http://ftp.gnu.org/gnu/glibc/glibc-2.18.tar.gz
+tar zxvf glibc-2.18.tar.gz
+cd glibc-2.18
+mkdir build
+cd build
+
+# 注意 --prefix=/usr
+../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
+
+make -j4
+sudo make install
+```
+
+验证：
+
+```
+$ ll /lib64/libc.so.6
+lrwxrwxrwx 1 root root 12 10月 11 21:33 /lib64/libc.so.6 -> libc-2.18.so
+$ strings /lib64/libc.so.6 | grep ^GLIBC
+GLIBC_2.2.5
+GLIBC_2.2.6
+GLIBC_2.3
+GLIBC_2.3.2
+GLIBC_2.3.3
+GLIBC_2.3.4
+GLIBC_2.4
+GLIBC_2.5
+GLIBC_2.6
+GLIBC_2.7
+GLIBC_2.8
+GLIBC_2.9
+GLIBC_2.10
+GLIBC_2.11
+GLIBC_2.12
+GLIBC_2.13
+GLIBC_2.14
+GLIBC_2.15
+GLIBC_2.16
+GLIBC_2.17
+GLIBC_2.18
+GLIBC_PRIVATE
+GLIBC_2.8
+GLIBC_2.5
+GLIBC_2.9
+GLIBC_2.7
+GLIBC_2.6
+GLIBC_2.18
+GLIBC_2.11
+GLIBC_2.16
+GLIBC_2.10
+GLIBC_2.17
+GLIBC_2.13
+GLIBC_2.2.6
+```
+
+refer:
+
+* [Multiple glibc libraries on a single host](https://stackoverflow.com/questions/847179/multiple-glibc-libraries-on-a-single-host)
+* [How to upgrade glibc from version 2.12 to 2.14 on CentOS?](https://stackoverflow.com/questions/35616650/how-to-upgrade-glibc-from-version-2-12-to-2-14-on-centos)
+
+
+
+
+
+
 # GCC 不同版本变更说明
 
 * https://gcc.gnu.org/gcc-5/changes.html#libstdcxx

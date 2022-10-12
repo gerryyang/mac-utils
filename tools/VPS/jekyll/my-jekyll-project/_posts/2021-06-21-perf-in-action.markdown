@@ -839,6 +839,17 @@ Since perf_events can record high resolution timestamps (microseconds) for event
 
 ![perf_heap_map](/assets/images/202106/perf_heap_map.png)
 
+# Q&A
+
+* [Linux Performance Monitoring, any way to monitor per-thread?](https://stackoverflow.com/questions/28058710/linux-performance-monitoring-any-way-to-monitor-per-thread?rq=1)
+
+```
+perf top -t $tid
+```
+
+
+
+
 # Refer
 
 * [Brendan Gregg's perf examples](http://www.brendangregg.com/perf.html)

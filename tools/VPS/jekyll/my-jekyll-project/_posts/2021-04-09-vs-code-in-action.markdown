@@ -260,6 +260,43 @@ Host $ip_ssh_config
 
 # 常用插件
 
+## clangd (C++)
+
+比 C/C++ 扩展执行效率更高，但是 clangd 需要使用 GLIBC_2.18 版本。
+
+```
+"clangd.arguments": [
+    "--clang-tidy",                 // 开启clang-tidy
+    "--all-scopes-completion",      // 全代码库补全
+    "--completion-style=detailed",  // 详细补全
+    "--header-insertion=iwyu",
+    "--pch-storage=disk",           // 如果内存够大可以关闭这个选项
+    "--log=error",
+    "--j=5",                        // 后台线程数，可根据机器配置自行调整
+    "--background-index"
+  ],
+"clangd.path": "xxx", // 安装的clangd地址
+"[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+},
+```
+
+
+* https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd
+* https://github.com/llvm/llvm-project/tree/main/clang-tools-extra/clangd#building-and-testing-clangd
+* https://github.com/clangd/clangd/releases/tag/15.0.1
+* https://clangd.llvm.org/installation.html
+
+## Error Lens
+
+Improve highlighting of errors, warnings and other language diagnostics.
+
+Error Lens 插件用于将错误提示直接展示在代码后。
+
+## ccls (C++)
+
+C/C++/ObjC language server supporting cross references, hierarchies, completion and semantic highlight
+
 ## Vim
 
 * 提供Vim快捷键操作

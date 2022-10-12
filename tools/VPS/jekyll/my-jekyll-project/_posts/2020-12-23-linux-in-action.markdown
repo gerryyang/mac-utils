@@ -408,6 +408,12 @@ PID USER    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+  COMMAND
 
 可以使用`pmap -xp $pid`分析下进程的内存分布，更详细的信息可以通过`cat /proc/$pid/smaps` (since Linux 2.6.14)来查看每个进程的内存消耗情况。
 
+refer:
+
+* [What does Virtual memory size in top mean?](https://serverfault.com/questions/138427/what-does-virtual-memory-size-in-top-mean)
+
+
+
 ## 整个内存采集算法
 
 采集`free`命令的这几个结果（跟free命令一样，都是通过读取`/proc/meminfo`来得到的），然后每4分钟上报一次：

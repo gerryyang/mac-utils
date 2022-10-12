@@ -257,10 +257,41 @@ git rm --cached *.log
 >
 > To stop tracking a file that is currently tracked, use git rm --cached.
 
+[Clear .gitignore cache](https://gist.github.com/ainsofs/2b80771a5582b7528d9e)
+
+``` bash
+# remove specific file from git cache
+git rm --cached filename
+
+# remove all files from git cache
+git rm -r --cached .
+git add .
+git commit -m ".gitignore is now working"
+```
+
+如果要忽略某个文件，但是又需要此文件在 git 工程中存在，可以：
+
+```
+# 先从工程中删除
+git rm --cached filename
+git commit -m "chore: rm filename"
+git push origin master
+
+# 修改 .gitignore 添加 filename
+
+# 再生成 filename 文件并强制添加提交
+git add -f filename
+git commit -m "chore: add filename"
+git push origin master
+```
+
 
 ![gitignore](/assets/images/201810/gitignore.jpg)
 
 * https://git-scm.com/docs/gitignore
+* [Why is .gitignore not ignoring my files?](https://stackoverflow.com/questions/45400361/why-is-gitignore-not-ignoring-my-files)
+
+
 
 # Git的协作模式
 
@@ -616,6 +647,7 @@ refer:
 
 * [git-add - Add file contents to the index](https://git-scm.com/docs/git-add)
 * https://stackoverflow.com/questions/572549/difference-between-git-add-a-and-git-add
+* [Force add despite the .gitignore file](https://stackoverflow.com/questions/8006393/force-add-despite-the-gitignore-file)
 
 ## 提交变更信息 - git commit
 
@@ -642,6 +674,102 @@ refer:
 
 * http://git-scm.com/docs/git-blame
 * [What does 'git blame' do?](https://stackoverflow.com/questions/31203001/what-does-git-blame-do)
+
+
+### Ignoring Refactoring Commits (Git 2.23 to the rescue)
+
+git 2.23 版本中 git blame 新增了 -ignore-rev 参数，可用于忽略不重要的提交记录，因此可用于忽略代码 format 的提交记录以保留重要的提交信息。
+
+测试：--ignore-rev 选项
+
+```
+$git blame -L 626,626 libs/common/Framework/IThread.cpp
+5cbab33d0 (user00 2021-08-04 12:53:00 +0800 626)     m_stLibEventMgr.SetupSingleton();
+$git blame -L 626,626 --ignore-rev 5cbab33d0 libs/common/Framework/IThread.cpp
+1595edd84 (user01 2020-12-31 01:46:35 +0000 626)     m_stLibEventMgr.SetupSingleton();
+$git blame --ignore-revs-file .git-blame-ignore-revs -L 626,626 JLib/libs/common/Framework/IThread.cpp
+1595edd84 (user01 2020-12-31 01:46:35 +0000 626)     m_stLibEventMgr.SetupSingleton();
+```
+
+参考 [Flink 文档](https://nightlies.apache.org/flink/flink-docs-release-1.15/docs/flinkdev/ide_setup/#ignoring-refactoring-commits)的一段描述：
+
+We keep a list of big refactoring commits in `.git-blame-ignore-revs`. When looking at change annotations using `git blame` it’s helpful to ignore these. You can configure git and your IDE to do so using:
+
+> git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+参考 [Ignoring bulk change commits with git blame](https://www.moxio.com/blog/43/ignoring-bulk-change-commits-with-git-blame)
+
+To limit the impact of such 'unimportant' bulk commits, `git 2.23` adds a new option to `git blame`. Using `--ignore-rev`, one can specify a commit to be ignored by `git blame`. Lines changed by the ignored commit will be attributed to the previous commit touching that line instead. This means that even after our bulk style change, we can get back a meaningful context for the 'real' changes to our function.
+
+When multiple bulk commits were added over time, it takes quite some effort to add a `--ignore-rev` for each of them in order to get a 'clean' output for `git blame`. Luckily, git also provides a way to make this easier on us. In your repository, create a file to hold commit hashes of commits to be ignored by `git blame`. Naming this file `.git-blame-ignore-revs` seems to be a common convention.
+
+```
+$ cat .git-blame-ignore-revs
+# Conversion to PSR-2 code style
+237de8a6367a88649a3f161112492d0d70d83707
+
+# Fix line endings
+df0ee6b006ee0f90cccc18b71ced290f6cae18d9
+```
+
+The file should contain the full (40 char) commit hashes. Lines starting with a `#` are considered comments and can be used to explain what makes the given commit(s) unimportant. Now we can call `git blame` with the `--ignore-revs-file` option to ignore all these commits at once.
+
+```
+git blame --ignore-revs-file .git-blame-ignore-revs describeBottles.php
+```
+
+The `.git-blame-ignore-revs` can be versioned inside the repository, so that all developers can use (and maintain) the same list of ignored commits. To avoid typing the extra option with every command, we can set the `blame.ignoreRevsFile` configuration variable:
+
+```
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+
+通过时间搜索需要忽略的 commit 提交记录。
+
+```
+git log --pretty=format:"%H %ad - %an: %s" --after="2021-08-04 00:00:00" --until="2021-08-04 23:59:59"
+```
+
+关于 git log --pretty=format 用法可参考：https://git-scm.com/docs/git-log
+
+```
+%H
+commit hash
+
+%an
+author name
+
+%ad
+author date (format respects --date= option)
+
+%s
+subject
+```
+
+在项目根目录执行`git config --local blame.ignoreRevsFile .git-blame-ignore-revs`，验证可以生效。但是需要每个项目都执行这个命令，所以考虑在公用的`.vscode/settings.json`里进行配置，可以使用`git blame`参数来实现这个命令。
+
+```
+{
+    "gitlens.advanced.blame.customArguments": [
+        "--ignore-revs-file=.git-blame-ignore-revs",
+    ],
+}
+```
+
+```
+$cat .git-blame-ignore-revs
+#
+# @refer https://www.moxio.com/blog/43/ignoring-bulk-change-commits-with-git-blame
+# @usage You can use following command to search which commit should be ignored and then add to this file
+# git log --pretty=format:"%H %ad - %an: %s" --after="2021-08-04 00:00:00" --until="2021-08-04 23:59:59"
+#
+
+# The following is ignore commit lists for git blame
+
+# Wed Aug 4 12:53:00 2021 +0800 - user00: fix(format): xxx
+5cbab33d098e411bfe7cd3ca6871f1ddab8970a9
+```
 
 ## 查看历史提交信息 - git log
 
@@ -954,8 +1082,63 @@ Splits mail messages in a mailbox into commit log message, authorship informatio
 
 * https://git-scm.com/docs/git-apply
 
+## 大文件管理 git lfs
 
+Git LFS 全名 Git Large File Storage，是 Github 带头在 2015 年推出的解决方案。
 
+* 下载安装扩展：https://github.com/git-lfs/git-lfs/releases
+
+``` bash
+tar xf git-lfs-*.tar.gz
+cd git-lfs-*
+sudo ./install.sh
+```
+
+* 初始化 git lfs
+
+```
+git lfs install
+```
+
+* 配置想要加入 lfs 托管的文件规则
+
+例如，添加目录下所有的.psd 和.a 文件，使其被 LFS 托管
+
+```
+git lfs track "*.psd"
+git lfs track "*.a"
+```
+
+或者直接编辑`.gitattributes`文件
+
+注意：`.gitattributes`需要加入到 git 库中，LFS 文件才能被其他人识别。
+
+* 只获取仓库本身而不获取任何 LFS 对象
+
+如果自己的相关工作不涉及到被 Git LFS 所管理的文件的话，可以选择只获取 Git 仓库自身的内容，而完全跳过 LFS 对象的获取。
+
+```
+GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/gerryyang/mac-utils.git
+# 或
+git -c filter.lfs.smudge= -c filter.lfs.required=false clone https://github.com/gerryyang/mac-utils.git
+```
+
+注意：`GIT_LFS_SKIP_SMUDGE=1` 及 `git -c filter.lfs.smudge= -c filter.lfs.required=false` 同样使用于其他 git 命令，如 checkout, reset 等
+
+* 获取当前 commit 下包含的 LFS 对象的当前版本
+
+如果起初获取代码时，没有一并获取 LFS 对象，而随后又需要这些被 LFS 管理的文件时，可以单独执行 LFS 命令来获取并签出 LFS 对象：
+
+```
+git lfs fetch
+git lfs checkout
+# 或
+git lfs pull
+```
+
+经过以上几步，psd 和 a 类型的大文件就会在 push 时自动向 LFS 服务器提交了。
+
+refer: https://git-lfs.github.com/
 
 
 # Git hooks
