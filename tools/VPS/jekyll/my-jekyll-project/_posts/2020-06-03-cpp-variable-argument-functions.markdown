@@ -30,7 +30,7 @@ We'll need to use some `macros` (which work much like functions, and you can tre
 To use these functions, we need a variable capable of storing a variable-length argument list--this variable will be of **type** `va_list`. `va_list` is like any other type. For example, the following code declares a list that can be used to store a variable number of arguments.
 
 ``` cpp
-va_list a_list; 
+va_list a_list;
 ```
 
 `va_start` is a macro which **accepts two arguments**, a va_list and the name of the variable that directly precedes the ellipsis ("..."). So in the function a_function, to initialize a_list with va_start, you would write `va_start ( a_list, x )`;
@@ -52,20 +52,20 @@ To show how each of the parts works, take an example function:
 ``` cpp
 #include <stdarg.h>
 #include <stdio.h>
- 
+
 /* this function will take the number of values to average
    followed by all of the numbers to average */
 double average ( int num, ... )
 {
-    va_list arguments;                     
+    va_list arguments;
     double sum = 0;
- 
+
     /* Initializing arguments to store all values after num */
     va_start ( arguments, num );
 
     /* Sum all the inputs; we still rely on the function caller to tell us how
      * many there are */
-    for ( int x = 0; x < num; x++ )        
+    for ( int x = 0; x < num; x++ )
     {
         sum += va_arg ( arguments, double ); // If the next argument is not of the specified type, the behaviour is undefined
                                              // The behaviour is also undefined if va_arg is called when there were no further arguments
@@ -73,9 +73,9 @@ double average ( int num, ... )
 
     va_end ( arguments );                  // Cleans up the list
                                            // If va_end is not used, the behaviour is undefined
-    return sum / num;                      
+    return sum / num;
 }
- 
+
 int main()
 {
     /* this computes the average of 13.2, 22.3 and 4.5 (3 indicates the number of values to average) */
@@ -156,7 +156,7 @@ void f(void) {
 }
 ```
 
-# Example 3 
+# Example 3
 
 The function foo takes a string of format characters and prints out the argument associated with each format character based on the type.
 
@@ -196,87 +196,87 @@ foo(char *fmt, ...)
 # Example 4
 
 ``` cpp
-#include<stdio.h> 
-#include<stdarg.h>                      
+#include<stdio.h>
+#include<stdarg.h>
 
 void Myprintf(char *, ...);              //Our printf function
 char* convert(unsigned int, int);       //Convert integer number into octal, hex, etc.
 
-int main() 
-{ 
-    Myprintf("hello world\n %d", 9); 
+int main()
+{
+    Myprintf("hello world\n %d", 9);
     return 0;
-} 
+}
 
-void Myprintf(char* format, ...) 
-{ 
-    char *traverse; 
-    unsigned int i; 
-    char *s; 
+void Myprintf(char* format, ...)
+{
+    char *traverse;
+    unsigned int i;
+    char *s;
 
-    //Module 1: Initializing Myprintf's arguments 
-    va_list arg; 
-    va_start(arg, format); 
+    //Module 1: Initializing Myprintf's arguments
+    va_list arg;
+    va_start(arg, format);
 
-    for (traverse = format; *traverse != '\0'; traverse++) 
-    { 
-        while ( *traverse != '%' ) 
-        { 
+    for (traverse = format; *traverse != '\0'; traverse++)
+    {
+        while ( *traverse != '%' )
+        {
             putchar(*traverse);
-            traverse++; 
-        } 
+            traverse++;
+        }
 
-        traverse++; 
+        traverse++;
 
         //Module 2: Fetching and executing arguments
-        switch (*traverse) 
-        { 
+        switch (*traverse)
+        {
             case 'c' : i = va_arg(arg, int);     //Fetch char argument
                         putchar(i);
-                        break; 
+                        break;
 
             case 'd' : i = va_arg(arg, int);     //Fetch Decimal/Integer argument
-                        if (i < 0) 
-                        { 
+                        if (i < 0)
+                        {
                             i = -i;
-                            putchar('-'); 
-                        } 
+                            putchar('-');
+                        }
                         puts(convert(i, 10));
-                        break; 
+                        break;
 
             case 'o': i = va_arg(arg,unsigned int); //Fetch Octal representation
                         puts(convert(i, 8));
-                        break; 
+                        break;
 
             case 's': s = va_arg(arg, char *);      //Fetch string
-                        puts(s); 
-                        break; 
+                        puts(s);
+                        break;
 
             case 'x': i = va_arg(arg, unsigned int); //Fetch Hexadecimal representation
                         puts(convert(i, 16));
-                        break; 
-        }   
-    } 
+                        break;
+        }
+    }
 
     //Module 3: Closing argument list to necessary clean-up
-    va_end(arg); 
-} 
+    va_end(arg);
+}
 
-char *convert(unsigned int num, int base) 
-{ 
+char *convert(unsigned int num, int base)
+{
     static char representation[]= "0123456789ABCDEF";
-    static char buffer[50]; 
-    char *ptr; 
+    static char buffer[50];
+    char *ptr;
 
-    ptr = &buffer[49]; 
-    *ptr = '\0'; 
+    ptr = &buffer[49];
+    *ptr = '\0';
 
-    do { 
-        *--ptr = representation[num % base]; 
-        num /= base; 
-    } while(num != 0); 
+    do {
+        *--ptr = representation[num % base];
+        num /= base;
+    } while(num != 0);
 
-    return(ptr); 
+    return(ptr);
 }
 ```
 
@@ -341,8 +341,8 @@ void func2(const char *fmt, ...)
         va_end(argptr);
 }
 
-void func1(const char *fmt, ...) 
-{    
+void func1(const char *fmt, ...)
+{
         va_list argptr;
         va_start(argptr, fmt);
         printf("fmt(%s)\n", fmt);
@@ -367,7 +367,7 @@ https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
 #   define DEBUG(...)  printString (__VA_ARGS__)
 #else
 void dummyFunc(void);
-#   define DEBUG(...)  dummyFunc()   
+#   define DEBUG(...)  dummyFunc()
 #endif
 DEBUG(1,2,3); //calls printString(1,2,3) or dummyFunc() depending on
               //-DDEBUG_THRU_UART0 compiler define was given or not, when compiling.
@@ -384,6 +384,35 @@ BAR("this breaks!");
 ```
 
 * https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
+
+
+
+``` cpp
+#include <cstdio>
+#include <string.h>
+
+#define LOG_INNER(format, ...) \
+do \
+{ \
+        char szBuf[1024]; \
+        snprintf(szBuf, sizeof(szBuf), "[%s:%s:%d]" format, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+        FILE* __fp = fopen("./log_inner.log", "a+"); \
+        fwrite(szBuf, strlen(szBuf), 1, __fp); \
+        fclose(__fp); \
+} while (0)
+
+#define LOG(...) \
+do \
+{ \
+        LOG_INNER("inner: " __VA_ARGS__); \
+} while (0)
+
+int main()
+{
+    //LOG_INNER("hi %s\n", "gerry");
+    LOG("hi %s\n", "gerry");
+}
+```
 
 
 # Refer

@@ -716,16 +716,45 @@ refer:
 * https://gcc.gnu.org/onlinedocs/gcc/Cross-profiling.html
 * [HOWTO: Dumping gcov data at runtime - simple example](https://www.osadl.org/Dumping-gcov-data-at-runtime-simple-ex.online-coverage-analysis.0.html)
 
+# [Clang Source-based Code Coverage](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html)
+
+This document explains how to use clang’s source-based code coverage feature. It’s called “source-based” because it operates on AST and preprocessor information directly. This allows it to generate very precise coverage data.
+
+Clang ships two other code coverage implementations:
+
+* [SanitizerCoverage](https://clang.llvm.org/docs/SanitizerCoverage.html) - A low-overhead tool meant for use alongside the various sanitizers. It can provide up to edge-level coverage.
+* gcov - A GCC-compatible coverage implementation which operates on DebugInfo. This is enabled by `-ftest-coverage` or `--coverage`.
+
+From this point onwards “code coverage” will refer to the source-based kind.
+
+> 注意：clang12 使用 gcov 链接库符号冲突问题
+
+```
+[turbo client] /usr/bin/ld: /usr/lib64/clang/12.0.1/lib/linux/libclang_rt.profile-x86_64.a(GCDAProfiling.c.o): in function `__gcov_fork':
+[turbo client] (.text+0xd00): multiple definition of `__gcov_fork'; /usr/lib/gcc/x86_64-redhat-linux/8/libgcov.a(_gcov_fork.o):(.text+0x0): first defin
+ed here
+[turbo client] /usr/bin/ld: /usr/lib64/clang/12.0.1/lib/linux/libclang_rt.profile-x86_64.a(GCDAProfiling.c.o): in function `__gcov_dump':
+[turbo client] (.text+0xdd0): multiple definition of `__gcov_dump'; /usr/lib/gcc/x86_64-redhat-linux/8/libgcov.a(_gcov_dump.o):(.text+0x50): first defi
+ned here
+[turbo client] /usr/bin/ld: /usr/lib64/clang/12.0.1/lib/linux/libclang_rt.profile-x86_64.a(GCDAProfiling.c.o): in function `__gcov_reset':
+[turbo client] (.text+0xe00): multiple definition of `__gcov_reset'; /usr/lib/gcc/x86_64-redhat-linux/8/libgcov.a(_gcov_reset.o):(.text+0x100): first d
+efined here
+[turbo client] clang-12: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+
+gcc 的使用方式：编译选项增加 `-ftest-coverage` 和 `-fprofile-arcs`，并增加 `-lgcov` 链接选项。在 clang 3.5.2 使用同样方式也没有问题，而使用 clang12 则出现下述链接错误。后在 clang12 改为只使用编译选项 `--coverage`，功能正常。
+
+
+
 # Q&A
 
-* [Dozens of "profiling:invalid arc tag" when running code coverage in Xcode 5](https://stackoverflow.com/questions/22519530/dozens-of-profilinginvalid-arc-tag-when-running-code-coverage-in-xcode-5)
+## [Dozens of "profiling:invalid arc tag" when running code coverage in Xcode 5](https://stackoverflow.com/questions/22519530/dozens-of-profilinginvalid-arc-tag-when-running-code-coverage-in-xcode-5)
 
 Most likely this is a result of the build tools failing to merge current results into the existing `.gcda` coverage files. As [Dave Meehan points out here](http://davemeehan.com/technology/xcode/how-to-fix-profiler-invalid-magic-number-in-xcode-4-6-when-generate-test-coverage-files-is-enabled), there is a brute force way of dealing with this by cleaning the product build folder, but a less hard core approach is to delete the `.gcda` files from targets generating them (for me, just the test target) as part of the build process. Dave includes a sample script to be included as a build phase -- or, at the project root by hand:
 
 ``` bash
 find . -name "*.gcda" -print0 | xargs -0 rm
 ```
-
 
 
 

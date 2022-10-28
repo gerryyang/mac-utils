@@ -1160,6 +1160,11 @@ If enabled, generates a compile_commands.json file containing the exact compiler
 * https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html
 * https://stackoverflow.com/questions/20059670/how-to-use-cmake-export-compile-commands
 
+## CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX
+
+Specify a `<suffix>` to tell the `find_library()` command to search in a `lib<suffix>` directory before each lib directory that would normally be searched.
+
+* https://cmake.org/cmake/help/v3.9/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.html
 
 
 # Module

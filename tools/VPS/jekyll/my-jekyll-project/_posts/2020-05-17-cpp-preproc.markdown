@@ -52,7 +52,7 @@ auto foo = (char *)malloc(BUFFER_SIZE);
 #endif
 
 // Here, the conditional codes are included in the program only if MACRO is defined.
-#ifdef MACRO     
+#ifdef MACRO
    // conditional codes
 #endif
 
@@ -70,7 +70,10 @@ auto foo = (char *)malloc(BUFFER_SIZE);
 
 * Variadic Macros (可变参宏)
 
+
 https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+
+https://en.wikipedia.org/wiki/Variadic_macro_in_the_C_preprocessor
 
 
 ``` cpp
@@ -78,7 +81,7 @@ https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
 #   define DEBUG(...)  printString (__VA_ARGS__)
 #else
 void dummyFunc(void);
-#   define DEBUG(...)  dummyFunc()   
+#   define DEBUG(...)  dummyFunc()
 #endif
 DEBUG(1,2,3); //calls printString(1,2,3) or dummyFunc() depending on
               //-DDEBUG_THRU_UART0 compiler define was given or not, when compiling.
@@ -94,7 +97,10 @@ FOO("this works fine");
 BAR("this breaks!");
 ```
 
-refer: https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
+refer:
+
+* https://stackoverflow.com/questions/5588855/standard-alternative-to-gccs-va-args-trick
+* https://stackoverflow.com/questions/26053959/what-does-va-args-in-a-macro-mean
 
 * C++17引入了一个新的预处理工具`__has_include`，可以检查文件是否存在，注意不是包含。
 * 有的编译器支持指令`#pragma once`，也可以实现`Include Guard`，但是它是非标准的，不推荐使用。
@@ -248,7 +254,7 @@ $ g++ -E -dM - < /dev/null
 #define __FLT64X_MANT_DIG__ 64
 #define __SIZEOF_INT__ 4
 #define __SIZEOF_POINTER__ 8
-#define __USER_LABEL_PREFIX__ 
+#define __USER_LABEL_PREFIX__
 #define __FLT64X_EPSILON__ 1.08420217248550443400745280086994171e-19F64x
 #define __STDC_HOSTED__ 1
 #define __LDBL_HAS_INFINITY__ 1
@@ -326,7 +332,7 @@ $ g++ -E -dM - < /dev/null
 #define __FLT64_MIN_10_EXP__ (-307)
 #define __FLT64X_DECIMAL_DIG__ 21
 #define __DEC128_MIN__ 1E-6143DL
-#define __REGISTER_PREFIX__ 
+#define __REGISTER_PREFIX__
 #define __UINT16_MAX__ 0xffff
 #define __DBL_HAS_DENORM__ 1
 #define __FLT32_MIN__ 1.17549435082228750796873653722224568e-38F32
@@ -612,7 +618,7 @@ int main()
  std::cout << "HAS_LINUX: " << 1 << std::endl;
 
  return 0;
-}    
+}
 ```
 
 

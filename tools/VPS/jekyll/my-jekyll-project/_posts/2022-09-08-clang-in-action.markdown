@@ -344,11 +344,21 @@ CheckOptions:
   - { key: readability-function-cognitive-complexity.Threshold, value: 100 }
 ```
 
+* [Setting a sub-option to clang-tidy](https://stackoverflow.com/questions/53185985/setting-a-sub-option-to-clang-tidy)
+
+
 ## clang-format 配置方法
 
 同样，可以在项目根目录下添加`.clang-format`文件，实现代码的自动格式化。
 
 可以参考：[CPP ClangFormat in Action](http://gerryyang.com/c/c++/2022/04/13/cpp-clangformat-in-action.html)
+
+## Q&A
+
+* [Any option to disable auto headers import? (clangd-9)](https://github.com/clangd/clangd/issues/55)
+
+There's a flag: `-header-insertion=never`. You should be able to set you editor to pass that flag to clangd.
+
 
 
 ## 其他参考
@@ -357,4 +367,4 @@ CheckOptions:
 * https://github.com/llvm/llvm-project/tree/main/clang-tools-extra/clangd#building-and-testing-clangd
 * https://github.com/clangd/clangd/releases/tag/15.0.1
 * https://clangd.llvm.org/installation.html
-
+* https://manpages.debian.org/experimental/clangd/clangd.1.en.html

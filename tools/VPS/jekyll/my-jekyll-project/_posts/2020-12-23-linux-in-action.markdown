@@ -885,6 +885,34 @@ Thread 2 (Thread 0x7f131c596700 (LWP 31315)):
 #10 0x0000000000416cb0 in main (argc=<optimized out>, argv=<optimized out>) at base_server/base_so_loader.cc:216
 ```
 
+## gcore
+
+[gcore](https://man7.org/linux/man-pages/man1/gcore.1.html) - Generate a core file of a running program.
+
+```
+gcore [-a] [-o prefix] pid1 [pid2...pidN]
+```
+
+Generate core dumps of one or more running programs with process IDs pid1, pid2, etc. **A core file produced by gcore is equivalent to one produced by the kernel when the process crashes (and when "ulimit -c" was used to set up an appropriate core dump limit). However, unlike after a crash, after gcore finishes its job the program remains running without any change**.
+
+```
+~$gcore 2302385
+[New LWP 2302394]
+[New LWP 2302403]
+[New LWP 2302406]
+[New LWP 2302412]
+[New LWP 2302419]
+[New LWP 2302457]
+[New LWP 2302458]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007ffb3f91f83d in nanosleep () from /lib64/libc.so.6
+warning: target file /proc/2302385/cmdline contained unexpected null characters
+Saved corefile core.2302385
+[Inferior 1 (process 2302385) detached
+```
+
+
 ## disassemble
 
 ```
@@ -1338,4 +1366,45 @@ Settings for eth0:
 Cannot get wake-on-lan settings: Operation not permitted
         Link detected: yes
 ```
+
+## scl
+
+Setup and run software from Software Collection environment. See: https://linux.die.net/man/1/scl
+
+```
+scl <action> [<collection1> <collection2> ...] <command>
+scl {-l|--list}
+```
+
+### CentOS 安装 scl 相关工具
+
+```
+yum install tlinux-release-scl -y
+yum install scl-utils -y
+```
+
+安装指定版本 gcc 工具，目前 scl 软件源中有 7/8/9 版本 devtoolset 安装的 gcc 中强制设置了 `_GLIBCXX_USE_CXX11_ABI=0`，如果需要采用 CXX11 ABI 为 1 的方式构建，需要手动修改对应的 `c++config.h` 配置
+
+```
+devtoolset-8的配置文件路径：/opt/rh/devtoolset-8/root/usr/include/c++/8/x86_64-redhat-linux/bits/c++config.h
+devtoolset-9的配置文件路径：/opt/rh/devtoolset-9/root/usr/include/c++/9/x86_64-redhat-linux/bits/c++config.h
+```
+
+``` cpp
+# define _GLIBCXX_USE_DUAL_ABI 1  // 将此值从0改为1
+
+#if ! _GLIBCXX_USE_DUAL_ABI
+// Ignore any pre-defined value of _GLIBCXX_USE_CXX11_ABI
+# undef _GLIBCXX_USE_CXX11_ABI
+#endif
+
+#ifndef _GLIBCXX_USE_CXX11_ABI
+# define _GLIBCXX_USE_CXX11_ABI 1  // 将此值从0改为1
+#endif
+```
+
+在当前会话中打开新的会话窗口使用 gcc9 开发环境 `scl enable devtoolset-9 /bin/bash`
+在编译脚本中执行时，在执行命令前通过 `source scl_source enable devtoolset-9`
+
+
 

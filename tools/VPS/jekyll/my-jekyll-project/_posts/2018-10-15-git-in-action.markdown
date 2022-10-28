@@ -913,6 +913,7 @@ git push <remote> -u <new_name>
 
 * [处理合并冲突](https://www.git-tower.com/learn/git/ebook/cn/command-line/advanced-topics/merge-conflicts)
 * [How do I rename both a Git local and remote branch name?](https://stackoverflow.com/questions/30590083/how-do-i-rename-both-a-git-local-and-remote-branch-name/30590238#30590238)
+* [How do I rename a local Git branch?](https://stackoverflow.com/questions/6591213/how-do-i-rename-a-local-git-branch)
 
 
 
@@ -1311,14 +1312,119 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 * https://github.com/features
 * https://github.com/trending
 
-# SSH免密提交
+# 免密提交
+
+如果你使用的是 SSH 方式连接远端，并且设置了一个没有口令的密钥，这样就可以在不输入用户名和密码的情况下安全地传输数据。 然而，这对 HTTP 协议来说是不可能的 —— 每一个连接都是需要用户名和密码的。
+
+参考：
+
+* [将远程 URL 从 HTTPS 切换到 SSH](https://docs.github.com/cn/get-started/getting-started-with-git/managing-remote-repositories#switching-remote-urls-from-https-to-ssh)
+* [How can I save username and password in Git?](https://stackoverflow.com/questions/35942754/how-can-i-save-username-and-password-in-git)
+* [Git push requires username and password](https://stackoverflow.com/questions/6565357/git-push-requires-username-and-password)
+
+```
+$git remote -v
+origin  git@git.woa.com:gerryyang/jlib_proj.git (fetch)
+origin  git@git.woa.com:gerryyang/jlib_proj.git (push)
+upstream        https://git.woa.com/jlib/jlib_proj.git (fetch)
+upstream        https://git.woa.com/jlib/jlib_proj.git (push)
+```
+
+## http 方式在本地保存密钥 (凭证存储)
+
+Git 拥有一个凭证系统来处理这个事情。下面有一些 Git 的选项：
+
+* 默认所有都不缓存。每一次连接都会询问你的用户名和密码。
+
+* “cache” 模式会将凭证存放在内存中一段时间。密码永远不会被存储在磁盘中，并且在15分钟后从内存中清除。
+
+* “store” 模式会将凭证用明文的形式存放在磁盘中，并且永不过期。这意味着除非你修改了你在 Git 服务器上的密码，否则你永远不需要再次输入你的凭证信息。这种方式的缺点是你的密码是用明文的方式存放在你的 home 目录下。
+
+* 如果你使用的是 Mac，Git 还有一种 “osxkeychain” 模式，它会将凭证缓存到你系统用户的钥匙串中。这种方式将凭证存放在磁盘中，并且永不过期，但是是被加密的，这种加密方式与存放 HTTPS 凭证以及 Safari 的自动填写是相同的。
+
+* 如果你使用的是 Windows，你可以安装一个叫做 “Git Credential Manager for Windows” 的辅助工具。这和上面说的 “osxkeychain” 十分类似。
+
+部分辅助工具有一些选项。 “store” 模式可以接受一个 `--file <path>` 参数，可以自定义存放密码的文件路径（默认是 `~/.git-credentials` ）。 “cache” 模式有 `--timeout <seconds>` 参数，可以设置后台进程的存活时间（默认是 “900”，也就是 15 分钟）。 下面是一个配置 “store” 模式自定义路径的例子：
+
+```
+$ git config --global credential.helper 'store --file ~/.my-credentials'
+```
+
+使用 http 的下载方式，并设置缓存（注意：每次修改密码后需要清理缓存重新设置），但是用户名和密码是以明文的形式存储的，存在安全风险。
+
+执行
+
+```
+git config --global credential.helper store
+```
+
+然后再 pull 或者 clone，正常输入一次密码
+
+后续就缓存了账号密码，http 也无需再输入密码了
+
+之后在 home 目录会生成如下文件：
+
+```
+~$ls -la .git*
+-rw-r--r-- 1 gerryyang users 85 10月 12 12:17 .gitconfig
+-rw------- 1 gerryyang users 44 10月 12 12:17 .git-credentials
+~$cat .gitconfig
+[user]
+        email = gerryyang@tencent.com
+        name = gerryyang
+[credential]
+        helper = store
+~$cat .git-credentials
+https://gerryyang:$password@git.woa.com  // $password 密码明文存储
+```
+
+也可以配置使用 oauth2 的凭证：
+
+```
+https://oauth2:$access_toekn@git.woa.com
+```
+
+Attention: This method saves the credentials in plaintext on your PC's disk. Everyone on your computer can access it, e.g. malicious NPM modules.
+
+Run
+
+```
+git config --global credential.helper store
+```
+
+then
+
+```
+git pull
+```
+
+provide a username and password and those details will then be remembered later. The credentials are stored in a file on the disk, with the disk permissions of "just user readable/writable" but still in plaintext.
+
+If you want to change the password later
+
+```
+git pull
+```
+
+Will fail, because the password is incorrect, git then removes the offending user+password from the `~/.git-credentials` file, so now re-run
+
+```
+git pull
+```
+
+to provide a new password so it works as earlier.
+
+refer: [Git 工具 - 凭证存储](https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E5%87%AD%E8%AF%81%E5%AD%98%E5%82%A8)
+
+
+## SSH 方式
 
 使用`ssh认证方式`可以实现免密提交，通过`ssh-keygen`可以生成ssh认证所需的`公钥`和`私钥`。执行`ssh-keygen`后直接回车，不用填写东西，之后会让你输入密码(根据安全性选择是否需要此密码，可以直接回车)，然后就生成一个`.ssh`目录，目录里会生成两个(默认)文件：`id_rsa`和`id_rsa.pub`。
 
 ``` bash
 cd $HOME/.ssh
-ssh-keygen -t rsa -C <email>                                 # 默认生成id_rsa私钥文件和id_rsa.pub公钥文件
-ssh-keygen -t rsa -C <email> -f <id_rsa> -C "公钥文件中的备注"  # 指定生成的私钥文件名
+ssh-keygen -t rsa -C <email>               # 默认生成 id_rsa 私钥文件和 id_rsa.pub 公钥文件
+ssh-keygen -t rsa -C <email> -f <id_rsa>   # -C "公钥文件中的备注"  -f 指定生成的私钥文件名
 ```
 
 生成公私钥后，复制公钥信息配置在Github上。并注意本地`.git/config`配置中的`url`为ssh要求的格式：
@@ -1366,17 +1472,10 @@ Host github.com
    IdentityFile ~/.ssh/id_rsa
 ```
 
-若配置使用http协议，通过在`.gitconfig`配置中添加`credential`选项也可以实现免密操作，但是用户名和密码是以明文的形式存储的，存在安全风险。
+refer:
 
-```
-[credential]
-        helper = store --file=/c/Users/gerryyang/.git_credentials
-```
-
-
-更多：[Connecting to GitHub with SSH]
-
-[Connecting to GitHub with SSH]: https://help.github.com/articles/connecting-to-github-with-ssh/
+* [Connecting to GitHub with SSH](https://help.github.com/articles/connecting-to-github-with-ssh/)
+* [Best way to use multiple SSH private keys on one client](https://stackoverflow.com/questions/2419566/best-way-to-use-multiple-ssh-private-keys-on-one-client)
 
 # GitHub 常用缩写
 

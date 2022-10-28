@@ -1047,9 +1047,10 @@ int main()
 }
 ```
 
-* https://en.cppreference.com/w/cpp/language/storage_duration
-* https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure
+* [Storage class specifiers](https://en.cppreference.com/w/cpp/language/storage_duration)
+* [Can you use thread local variables inside a class or structure](https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure)
 * [Are C++11 thread_local variables automatically static?](https://stackoverflow.com/questions/22794382/are-c11-thread-local-variables-automatically-static)
+* [What does the thread_local mean in C++11?](https://stackoverflow.com/questions/11983875/what-does-the-thread-local-mean-in-c11)
 
 
 ## inline namespace
@@ -3609,6 +3610,306 @@ If you have like 45+GB RAM installed, you can use a dynamic allocation (via std:
 
 * https://stackoverflow.com/questions/38403414/gcc-throwing-error-relocation-truncated-to-fit-r-x86-64-32-against-bss
 * https://stackoverflow.com/questions/57331990/c-compiling-relocation-truncated-to-fit-r-x86-64-pc32-against-symbol
+
+## [push_back vs emplace_back](https://stackoverflow.com/questions/4303513/push-back-vs-emplace-back)
+
+The real C++0x form of `emplace_back` is really useful: [void emplace_back(Args&&...)](https://en.cppreference.com/w/cpp/container/vector/emplace_back);
+
+Instead of taking a `value_type` it takes a variadic list of arguments, so that means that you can now perfectly forward the arguments and construct directly an object into a container without a temporary at all.
+
+## [Default arguments](https://en.cppreference.com/w/cpp/language/default_arguments)
+
+
+### 默认参数不是函数原型的一部分
+
+> The default arguments are not part of the function type
+
+``` cpp
+int f(int = 0);
+
+void h()
+{
+    int j = f(1);
+    int k = f(); // calls f(0);
+}
+
+int (*p1)(int) = &f;
+int (*p2)()    = &f; // Error: the type of f is int(int)
+```
+
+## [What is the difference between new/delete and malloc/free?](https://stackoverflow.com/questions/240212/what-is-the-difference-between-new-delete-and-malloc-free)
+
+> new / delete
+
+Allocate / release memory
+
+1. Memory allocated from 'Free Store'.
+2. Returns a fully typed pointer.
+3. `new` (standard version) never returns a `NULL` (will throw on failure).
+4. Are called with Type-ID (compiler calculates the size).
+5. Has a version explicitly to handle arrays.
+6. Reallocating (to get more space) not handled intuitively (because of copy constructor).
+7. Whether they call `malloc` / `free` is implementation defined.
+8. Can add a new memory allocator to deal with low memory (`std::set_new_handler`).
+9. `operator new` / `operator delete` can be overridden legally.
+10. **Constructor / destructor used to initialize / destroy the object**.
+
+> malloc / free
+
+Allocate / release memory
+
+1. Memory allocated from 'Heap'.
+2. Returns a `void*`.
+3. Returns `NULL` on failure.
+4. Must specify the size required in bytes.
+5. Allocating array requires manual calculation of space.
+6. Reallocating larger chunk of memory simple (no copy constructor to worry about).
+7. They will **NOT** call `new` / `delete`.
+8. No way to splice user code into the allocation sequence to help with low memory.
+9. `malloc` / `free` can **NOT** be overridden legally.
+
+
+![malloc-new-diff](/assets/images/202210/malloc-new-diff.png)
+
+
+https://en.cppreference.com/w/cpp/language/new
+
+
+## array 初始化性能差异
+
+[Really can't understand how gcc initialize array](https://stackoverflow.com/questions/56356196/really-cant-understand-how-gcc-initialize-array?noredirect=1&lq=1)
+
+My example is very simple:
+
+``` cpp
+extern int fun(int arr[]);
+int foo(void)
+{
+    int arr[64] = {0};
+    return fun(arr);
+}
+```
+
+When I compile it using **clang**, the asm code is very straightforward:
+
+``` cpp
+foo:                                    # @foo
+        .cfi_startproc
+# %bb.0:
+        subq    $264, %rsp              # imm = 0x108
+        .cfi_def_cfa_offset 272
+        xorps   %xmm0, %xmm0
+        movaps  %xmm0, 240(%rsp)
+        movaps  %xmm0, 224(%rsp)
+        movaps  %xmm0, 208(%rsp)
+        movaps  %xmm0, 192(%rsp)
+        movaps  %xmm0, 176(%rsp)
+        movaps  %xmm0, 160(%rsp)
+        movaps  %xmm0, 144(%rsp)
+        movaps  %xmm0, 128(%rsp)
+        movaps  %xmm0, 112(%rsp)
+        movaps  %xmm0, 96(%rsp)
+        movaps  %xmm0, 80(%rsp)
+        movaps  %xmm0, 64(%rsp)
+        movaps  %xmm0, 48(%rsp)
+        movaps  %xmm0, 32(%rsp)
+        movaps  %xmm0, 16(%rsp)
+        movaps  %xmm0, (%rsp)
+        movq    %rsp, %rdi
+        callq   fun
+        addq    $264, %rsp              # imm = 0x108
+        .cfi_def_cfa_offset 8
+        retq
+```
+
+Though **gcc** generate shorter asm code, I can't really understand it.Here is the code from **gcc**:
+
+```
+foo:
+.LFB0:
+        .cfi_startproc
+        subq    $264, %rsp
+        .cfi_def_cfa_offset 272
+        xorl    %eax, %eax
+        movl    $32, %ecx
+        movq    %rsp, %rdi
+        rep stosq
+        movq    %rsp, %rdi
+        call    fun@PLT
+        addq    $264, %rsp
+        .cfi_def_cfa_offset 8
+        ret
+```
+
+I am an asm code novice. Sorry about that if my question is stupid. But any guidance is welcome.
+
+Answers:
+
+[rep stosq](https://www.felixcloutier.com/x86/rep:repe:repz:repne:repnz) = `memset(rdi, rax, rcx*8)`.
+
+Neither of these are obviously great choices; that's maybe too much unrolling from clang, and ERMSB doesn't make `rep stos` that great. But a medium-sized memset is a hard problem on modern x86; it's small enough that `rep stos` startup overhead matters.
+
+It is clear if "req stosq" means "call memset" ?
+
+It doesn't actually call memset, there's no call instruction. It invokes the optimized microcode inside the CPU that implements `rep stos`. (And leaves RDI and RCX modified.)
+
+测试汇编代码：
+
+* https://gcc.godbolt.org/z/r4z6n6az8 (clang 11)
+* https://gcc.godbolt.org/z/x6K8h95Te (gcc 4.8.5)
+
+``` cpp
+int main() {
+
+  char s[256] = {0};
+  s[0] = '1';
+  printf("%s\n", s);
+  return 0;
+}
+```
+
+![array-init-asm](/assets/images/202210/array-init-asm.png)
+
+![array-init-asm2](/assets/images/202210/array-init-asm2.png)
+
+性能测试对比：https://quick-bench.com/q/E4CUT5V18h-B2n0B_Q6ML59GbjU
+
+![array-init-benchmark](/assets/images/202210/array-init-benchmark.png)
+
+
+see: [REP/REPE/REPZ/REPNE/REPNZ — Repeat String Operation Prefix](https://www.felixcloutier.com/x86/rep:repe:repz:repne:repnz)
+
+## [operator overloading](https://en.cppreference.com/w/cpp/language/operators)
+
+Customizes the C++ operators for operands of user-defined types.
+
+When an operator appears in an [expression](https://en.cppreference.com/w/cpp/language/expressions), and at least one of its operands has a [class type](https://en.cppreference.com/w/cpp/language/class) or an [enumeration type](https://en.cppreference.com/w/cpp/language/enum), then [overload resolution](https://en.cppreference.com/w/cpp/language/overload_resolution) is used to determine the user-defined function to be called among all the functions whose signatures match the following:
+
+
+![overloaded-operators](/assets/images/202210/overloaded-operators.png)
+
+
+# C++ 异常
+
+https://en.cppreference.com/w/cpp/language/throw
+
+``` cpp
+#include <iostream>
+#include <stdexcept>
+
+struct A
+{
+    int n;
+
+    A(int n = 0): n(n) { std::cout << "A(" << n << ") constructed successfully\n"; }
+    ~A() { std::cout << "A(" << n << ") destroyed\n"; }
+};
+
+int foo()
+{
+    throw std::runtime_error("error");
+}
+
+struct B
+{
+    A a1, a2, a3;
+
+    B() try : a1(1), a2(foo()), a3(3)
+    {
+        std::cout << "B constructed successfully\n";
+    }
+    catch(...)
+    {
+    	std::cout << "B::B() exiting with exception\n";
+    }
+
+    ~B() { std::cout << "B destroyed\n"; }
+};
+
+struct C : A, B
+{
+    C() try
+    {
+        std::cout << "C::C() completed successfully\n";
+    }
+    catch(...)
+    {
+        std::cout << "C::C() exiting with exception\n";
+    }
+
+    ~C() { std::cout << "C destroyed\n"; }
+};
+
+int main () try
+{
+    // creates the A base subobject
+    // creates the a1 member of B
+    // fails to create the a2 member of B
+    // unwinding destroys the a1 member of B
+    // unwinding destroys the A base subobject
+    C c;
+}
+catch (const std::exception& e)
+{
+    std::cout << "main() failed to create C with: " << e.what();
+}
+```
+
+Output:
+
+```
+A(0) constructed successfully
+A(1) constructed successfully
+A(1) destroyed
+B::B() exiting with exception
+A(0) destroyed
+C::C() exiting with exception
+main() failed to create C with: error
+```
+
+## 异常性能测试
+
+当平凡触发异常的时候，性能开销非常大。测试代码 https://quick-bench.com/q/OvaL3gUmfugz1YfSjwelTEimCho
+
+``` cpp
+static void A(benchmark::State& state) {
+  int a = -1;
+  auto f = [](int& a)
+  {
+    try {
+     if (a < 0) throw std::invalid_argument( "test" );
+    }
+    catch (const std::exception& e)
+    {
+    }
+  };
+  // Code inside this loop is measured repeatedly
+  for (auto _ : state) {
+      f(a);
+      // Make sure the variable is not optimized away by compiler
+      benchmark::DoNotOptimize(f);
+  }
+}
+// Register the function as a benchmark
+BENCHMARK(A);
+
+static void B(benchmark::State& state) {
+  // Code before the loop is not measured
+  int a = 1;
+  auto f = [](int a)
+  {
+    if (a < 0) a += 1;
+  };
+  for (auto _ : state) {
+    f(a + 1);
+    // Make sure the variable is not optimized away by compiler
+    benchmark::DoNotOptimize(f);
+  }
+}
+BENCHMARK(B);
+```
+
+![exception-performance](/assets/images/202210/exception-performance.png)
 
 
 

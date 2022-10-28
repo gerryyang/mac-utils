@@ -2,13 +2,37 @@
 layout: post
 title:  "Questions about Dev"
 date:   2020-02-22 20:00:00 +0800
-categories: Questions
+categories: 杂记
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
 
 # Question about Dev
+
+## 必知必会
+
+### OAuth 2.0
+
+[OAuth](https://en.wikipedia.org/wiki/OAuth) 是一个关于授权（authorization）的开放网络标准，在全世界得到广泛应用，目前的版本是 2.0 版。OAuth 2.0 是目前最流行的授权机制，用来授权第三方应用，获取用户数据。
+
+简单说，OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。
+
+令牌（token）与密码（password）的作用是一样的，都可以进入系统，但是有三点差异。
+
+1. 令牌是短期的，到期会自动失效，用户自己无法修改。密码一般长期有效，用户不修改，就不会发生变化。
+2. 令牌可以被数据所有者撤销，会立即失效。以上例而言，屋主可以随时取消快递员的令牌。密码一般不允许被他人撤销。
+3. 令牌有权限范围（scope），比如只能进小区的二号门。对于网络服务来说，只读令牌就比读写令牌更安全。密码一般是完整权限。
+
+上面这些设计，保证了令牌既可以让第三方应用获得权限，同时又随时可控，不会危及系统安全。这就是 OAuth 2.0 的优点。
+
+注意，只要知道了令牌，就能进入系统。系统一般不会再次确认身份，所以令牌必须保密，泄漏令牌与泄漏密码的后果是一样的。 这也是为什么令牌的有效期，一般都设置得很短的原因。
+
+* [理解 OAuth 2.0](https://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html)
+* [OAuth 2.0 的一个简单解释](https://www.ruanyifeng.com/blog/2019/04/oauth_design.html)
+
+
+
 
 ## 基础问题
 
@@ -65,16 +89,16 @@ return 0;
 }
 ```
 
-A: call Derive::bar(). 
+A: call Derive::bar().
 call Derive::foo().
 
-B: call Derive::bar(). 
+B: call Derive::bar().
 call Base::foo().
 
-C: call Base::bar(). 
+C: call Base::bar().
 call Derive::foo().
 
-D: call Base::bar(). 
+D: call Base::bar().
 call Base::foo().
 
 正确答案：C
@@ -108,20 +132,20 @@ D: 线程不安全函数通过加锁可以改造成可重入函数
 * C++实现单例模式
 
 ``` cpp
-class A  
-{  
-private:  
-    static const A* m_instance;  
-    A(){}  
-public:  
-    static A* getInstance()  
-   {  
-        return m_instance;  
-   }  
-};  
-  
+class A
+{
+private:
+    static const A* m_instance;
+    A(){}
+public:
+    static A* getInstance()
+   {
+        return m_instance;
+   }
+};
+
 //外部初始化
-const A* A::m_instance = new A;  
+const A* A::m_instance = new A;
 ```
 
 * 用宏定义MAX(a,b,c)求三个数最大值
@@ -179,7 +203,7 @@ void test(int a[], int size)
 int main()
 {
   int a[] = {1, 2, 3, 4};
-  test(a, sizeof(a)/sizeof(int)); 
+  test(a, sizeof(a)/sizeof(int));
   return 0;
 }
 ```
@@ -248,17 +272,17 @@ D 归并排序
 
 
 | 算法 | 步骤
-| -- | -- 
-| 冒泡排序(Bubble Sort) | 比较相邻的元素。如果第一个比第二个大，就交换他们两个。对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。针对所有的元素重复以上的步骤，除了最后一个。持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较 | 
-| 插入排序 | 将第一待排序序列第一个元素看做一个有序序列，把第二个元素到最后一个元素当成是未排序序列。从头到尾依次扫描未排序序列，将扫描到的每个元素插入有序序列的适当位置。（如果待插入的元素与有序序列中的某个元素相等，则将待插入元素插入到相等元素的后面） | 
-| 选择排序 | 首先在未排序序列中找到最小（大）元素，存放到排序序列的起始位置。再从剩余未排序元素中继续寻找最小（大）元素，然后放到已排序序列的末尾。重复第二步，直到所有元素均排序完毕 | 
+| -- | --
+| 冒泡排序(Bubble Sort) | 比较相邻的元素。如果第一个比第二个大，就交换他们两个。对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。针对所有的元素重复以上的步骤，除了最后一个。持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较 |
+| 插入排序 | 将第一待排序序列第一个元素看做一个有序序列，把第二个元素到最后一个元素当成是未排序序列。从头到尾依次扫描未排序序列，将扫描到的每个元素插入有序序列的适当位置。（如果待插入的元素与有序序列中的某个元素相等，则将待插入元素插入到相等元素的后面） |
+| 选择排序 | 首先在未排序序列中找到最小（大）元素，存放到排序序列的起始位置。再从剩余未排序元素中继续寻找最小（大）元素，然后放到已排序序列的末尾。重复第二步，直到所有元素均排序完毕 |
 | 归并排序 | 该算法是采用分治法（Divide and Conquer）的一个非常典型的应用。1. 申请空间，使其大小为两个已经排序序列之和，该空间用来存放合并后的序列；2. 设定两个指针，最初位置分别为两个已经排序序列的起始位置；3. 比较两个指针所指向的元素，选择相对小的元素放入到合并空间，并移动指针到下一位置；4. 重复步骤 3 直到某一指针达到序列尾；5. 将另一序列剩下的所有元素直接复制到合并序列尾。 |
 | 快速排序 | 快速排序是由东尼·霍尔所发展的一种排序算法。在平均状况下，排序 n 个项目要 Ο(nlogn) 次比较。在最坏状况下则需要 Ο(n2) 次比较，但这种状况并不常见。事实上，快速排序通常明显比其他 Ο(nlogn) 算法更快，因为它的内部循环（inner loop）可以在大部分的架构上很有效率地被实现出来。1. 从数列中挑出一个元素，称为 "基准"（pivot）; 2. 重新排序数列，所有元素比基准值小的摆放在基准前面，所有元素比基准值大的摆在基准的后面（相同的数可以到任一边）。在这个分区退出之后，该基准就处于数列的中间位置。这个称为分区（partition）操作；3. 递归地（recursive）把小于基准值元素的子数列和大于基准值元素的子数列排序；|
 
 
 ![sort](/assets/images/202006/sort.png)
 
-refer: 
+refer:
 
 [十大经典排序算法](https://sort.hust.cc/)
 
@@ -266,7 +290,7 @@ refer:
 
 [堆排序](https://www.cnblogs.com/lanhaicode/p/10546257.html)
 
- 
+
 * 主机甲和主机乙之间已建立一个TCP连接，TCP最大段长度为1000字节，若主机甲的当前拥塞窗口为4000字节，在主机甲向主机乙连接发送2个最大段后，成功收到主机乙发送的第一段的确认段，确认段中通告的接收窗口大小为3000字节，则此时主机甲还可以向主机乙发送的最大字节数是：2000字节
 
 * 为数据动态分配内存时，有时要求对内存的起始地址做对齐操作以提高其访问效率。请问将某个指针地址Addr对齐到8字节可以使用下列哪条语句实现：
@@ -318,7 +342,7 @@ std::string operator()() const
 }
 
 myclass obj;
-std::string str = obj(); 
+std::string str = obj();
 
 ```
 
@@ -366,7 +390,7 @@ http://www.cplusplus.com/reference/new/operator%20new[]/
 (2) 将一个对象作为实参传递给非引用类型的行参；
 (3) 一个返回类型为非引用类型的函数返回一个对象；
 (4) 用花括号列表初始化一个数组中的元素或一个聚合类中的成员；
-(5) 初始化标准库容器或调用其insert/push操作时，容器会对其元素进行拷贝初始化； 
+(5) 初始化标准库容器或调用其insert/push操作时，容器会对其元素进行拷贝初始化；
 
 * 拷贝赋值运算符是什么？什么时候使用它？合成拷贝赋值运算符完成什么工作？什么时候会生成合成拷贝赋值运算符？
 
@@ -494,7 +518,7 @@ int * const p2 = &i;
 * 宏
 
 测试方法：
-``` 
+```
 gcc –E  macro.test.c
 ```
 
@@ -588,7 +612,7 @@ static pid_t GetPid()
         {
             tid = pid;
         }
-#else 
+#else
         tid = syscall( __NR_gettid );
 #endif
 
@@ -599,7 +623,7 @@ static pid_t GetPid()
 // or
 static unsigned long long GetTickMS()
 {
-#if defined( __LIBCO_RDTSCP__) 
+#if defined( __LIBCO_RDTSCP__)
     static uint32_t khz = getCpuKhz();
     return counter() / khz;
 #else
@@ -915,7 +939,7 @@ $(patsubst %.cpp,%.o,$(wildcard *.cpp))：表示对.cpp文件列表字符串进�
 ```
 
 Makefile.comm
-``` 
+```
 CXX = g++
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 OBJS_I = $(patsubst %.cpp,%.i,$(wildcard *.cpp))
@@ -1006,7 +1030,7 @@ struct foo {
 #endif /* GRANDPARENT_H */
 
 // or
-#pragma once  // most C and C++ implementations provide a non-standard #pragma once directive. This directive, inserted at the top of a header file, will ensure that the file is included only once. 
+#pragma once  // most C and C++ implementations provide a non-standard #pragma once directive. This directive, inserted at the top of a header file, will ensure that the file is included only once.
 ```
 
 ## 数据库部分
@@ -1089,14 +1113,14 @@ static class Entry<K,V> implements Map.Entry<K,V> {
 }
 
 // 核心算法
-static int hash(int h) { 
-        h ^= (h >>> 20) ^ (h >>> 12); 
-        return h ^ (h >>> 7) ^ (h >>> 4); 
-} 
+static int hash(int h) {
+        h ^= (h >>> 20) ^ (h >>> 12);
+        return h ^ (h >>> 7) ^ (h >>> 4);
+}
 
-static int indexFor(int h, int length) { 
-        return h & (length-1); 
- } 
+static int indexFor(int h, int length) {
+        return h & (length-1);
+ }
 ```
 [Why initialCapacity of Hashtable is 11 while the DEFAULT_INITIAL_CAPACITY in HashMap is 16 and requires a power of 2](https://stackoverflow.com/questions/9413966/why-initialcapacity-of-hashtable-is-11-while-the-default-initial-capacity-in-has)
 
@@ -1325,7 +1349,7 @@ cat /proc/cpuinfo | grep "core id"
 
 * GCC中-O1 -O2 -O3 优化的原理是什么？
 
--finline-small-functions 
+-finline-small-functions
 https://www.zhihu.com/question/27090458
 
 * DPDK
@@ -1407,7 +1431,7 @@ Send packet CA->Netherlands->CA .... 150,000,000 ns = 150 ms
 
 | 理论方法 | 解决的问题 |
 | -- | --
-| CAP | 提出一致性，可用性，分区容忍性的取舍问题 
+| CAP | 提出一致性，可用性，分区容忍性的取舍问题
 | Paxos | 一致性的解决方案。是一个解决分布式系统中，多个节点之间就某个值（提案）达成一致（决议）的通信协议。它能够处理在少数节点离线的情况下，剩余的多数节点仍能够达成一致。
 | Raft | 一致性的解决方案
 | 2PC/3PC | 一致性的解决方案
@@ -1415,7 +1439,7 @@ Send packet CA->Netherlands->CA .... 150,000,000 ns = 150 ms
 | Quorum NWR | 解决分布式存储的一致性问题。N: 同一份数据的拷贝份数 W: 更新一个数据对象的时候需要确保成功更新的份数 R: 读取一个数据需要读取的拷贝份数。一般：N=3, R=2, W=2
 | MVCC | 解决分布式存储的一致性问题。Multiversion concurrency control 基于多版本的并发控制。一般把基于锁（比如行级锁）的并发控制机制称为悲观机制；而把MVCC机制称为乐观机制。由于MVCC是一种宽松的设计，读写互相不阻塞，可以获得好的并发性能
 | Gossip | 一种去中心化，容错，最终一致的算法。对于集群中出现的部分网络分割，消息也能通过别的路径传播到这个集群
-| ACID | 
+| ACID |
 | BASE | Basically Available, Soft state, Eventually consistent (基本可用，软状态，最终一致性)
 | 脑裂问题 | 主备是实现高可用的有效方式，但存在一个脑裂问题。脑裂（split-brain），指在一个HA系统中，当联系着的两个节点断开联系时，本来为一个整体的系统，分裂为两个独立节点，这时两个节点开始争抢共享资源，结果会导致系统混乱，数据损坏
 
@@ -1443,7 +1467,7 @@ Send packet CA->Netherlands->CA .... 150,000,000 ns = 150 ms
 
 **分布式系统设计实践**
 
-* 全局ID生成 
+* 全局ID生成
 	* UUID。当前时间 + 时钟序列 + 全局唯一的IEEE机器识别号（比如，网卡）。优点：API简单易用；缺点：占用空间大，字符串本身无法加工，可读性不强。
 	* ID生成表。使用MySQL自增长ID的机制。启用两台数据库服务器来生成ID，通过区分auto_increment的起始值和步长来生成奇偶数的ID。
 
@@ -1479,7 +1503,7 @@ SELECT LAST_INSERT_ID();
 
 * 数据拆分 sharding
 
-由proxy中间件或者数据库内部做数据分片。客户端在使用时认为操作的是一个数据库。 
+由proxy中间件或者数据库内部做数据分片。客户端在使用时认为操作的是一个数据库。
 
 
 **分布式事务相关理论**
@@ -1500,16 +1524,16 @@ COMMIT;
 
 `ACID`表示原子性，一致性，隔离性和持久性。一个运行良好的事务处理系统，必须具备这些标准特征。事务的ACID特性可以确保银行不会弄丢你的钱
 
-原子性（atomicity） 
+原子性（atomicity）
 对于一个事务来说，不可能只执行其中一部分操作，这就是事务的原子性。
 
-一致性（consistency） 
+一致性（consistency）
 数据库总是从一个一致性的状态转换到另外一个一致性的状态。
 
-隔离性（isolation） 
+隔离性（isolation）
 通常来说（根据不同的隔离级别），一个事务所做的修改在最终提交以前，对其他事务是不可见的。
 
-持久性（durability） 
+持久性（durability）
 一旦事务提交，则其所做的修改就会永久保存在数据库中。
 
 隔离级别
@@ -1518,16 +1542,16 @@ COMMIT;
 
 较低级别的隔离通常可以执行更高的并发，系统的开销也更低。每种存储引擎实现的隔离级别不尽相同，请查阅具体相关手册。
 
-READ UNCOMMITTED（未提交读） 
+READ UNCOMMITTED（未提交读）
 在此级别，事务中的修改即使没有提交，对其他事务也都是可见的，即，“赃读”。（实际应用中，很少使用）
 
-READ COMMITTED（提交读，不可重复读） 
+READ COMMITTED（提交读，不可重复读）
 大多数数据的默认隔离级别都是此级别（但MySQL不是）。此级别满足隔离性的简单定义：一个事务开始时，只能看见已经提交的事务所做的修改（或者，一个事务从开始直到提交之前，所做的任何修改对其他事务都是不可见的）。此级别，也称为“不可重复读”，因为两次执行同样的查询，可能会得到不一样的结果。
 
-REPEATABLE READ（可重复读） 
+REPEATABLE READ（可重复读）
 此级别保证了在同一个事务中，多次读取同样纪录的结果是一致的。此级别，是MySQL的默认事务隔离级别。
 
-SERIALIZABLE（可串行化） 
+SERIALIZABLE（可串行化）
 此级别是最高的隔离级别。它通过强制事务串行执行，避免了“幻读”的问题。此级别，会在读取的每一行数据上都加锁，所以可能导致大量的超时和锁争用的问题。（实际应用中也很少使用这个隔离级别，只有在非常需要确保数据的一致性而且可以接受没有并发的情况下，才考虑使用此级别）
 
 
@@ -1684,7 +1708,6 @@ C++的map怎么实现的？avl的区别？其他查找结构
 
 
 
-  
 
-	
-	
+
+
