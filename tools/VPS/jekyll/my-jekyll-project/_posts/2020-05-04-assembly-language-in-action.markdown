@@ -27,7 +27,6 @@ objdump -dj .bss your_binary | grep "g_"
 
 ![virtual_process_space](/assets/images/202111/virtual_process_space.png)
 
-
 # 函数调用栈
 
 ![func_call_asm](/assets/images/202110/func_call_asm.png)
@@ -156,6 +155,19 @@ main:
 * `lea`(load effective address) 将有效地址传送到指定的的寄存器，类似C语言中的`&`
 
 ![stack_space3](/assets/images/202111/stack_space3.png)
+
+# 函数调用约定
+
+x86-64 函数调用约定：https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
+
+| Argument Type | Registers
+| -- | --
+| Integer/Pointer Arguments 1-6 | RDI, RSI, RDX, RCX, R8, R9
+| Floating Point Arguments 1-8 | XMM0 - XMM7
+| Excess Arguments | Stack
+| Static chain pointer | R10
+
+
 
 
 # Common Knowledge

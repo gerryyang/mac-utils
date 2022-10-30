@@ -25,6 +25,31 @@ TODOs should include the string TODO in all caps, followed by the name, e-mail a
 If your TODO is of the form "At a future date do something" make sure that you either include a very specific date ("Fix by November 2005") or a very specific event ("Remove this code when all clients can handle XML responses.").
 
 
+## [Designated Initializers](https://google.github.io/styleguide/cppguide.html#Designated_initializers)
+
+Use designated initializers only in their C++20-compliant form.
+
+[Designated initializers](https://en.cppreference.com/w/cpp/language/aggregate_initialization#Designated_initializers) are a syntax that allows for initializing an aggregate ("plain old struct") by naming its fields explicitly:
+
+``` cpp
+struct Point {
+    float x = 0.0;
+    float y = 0.0;
+    float z = 0.0;
+  };
+
+  Point p = {  // Designated Initializers
+    .x = 1.0,
+    .y = 2.0,
+    // z will be 0.0
+  };
+```
+
+The explicitly listed fields will be initialized as specified, and others will be initialized in the same way they would be in a traditional aggregate initialization expression like `Point{1.0, 2.0}`.
+
+
+
+
 # LLVM Coding Standards
 
 
@@ -63,6 +88,19 @@ void foo(int Value) {
 * [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)
 
 
+# Other
+
+## [Initialization](https://en.cppreference.com/w/cpp/language/initialization)
+
+Initialization of a variable provides its initial value at the time of construction.
+
+* [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization)
+* [constant initialization](https://en.cppreference.com/w/cpp/language/constant_initialization)
+* [copy initialization](https://en.cppreference.com/w/cpp/language/copy_initialization)
+* [direct initialization](https://en.cppreference.com/w/cpp/language/direct_initialization)
+* [reference initialization](https://en.cppreference.com/w/cpp/language/reference_initialization)
+* [value initialization](https://en.cppreference.com/w/cpp/language/value_initialization)
+* [zero initialization](https://en.cppreference.com/w/cpp/language/zero_initialization)
 
 
 

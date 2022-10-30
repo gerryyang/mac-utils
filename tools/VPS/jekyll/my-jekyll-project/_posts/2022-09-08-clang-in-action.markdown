@@ -8,6 +8,35 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# [LLVM](https://github.com/llvm/llvm-project)
+
+https://llvm.org/docs/GettingStarted.html
+
+## Overview
+
+The LLVM project has multiple components. The core of the project is itself called "LLVM". This contains all of the tools, libraries, and header files needed to process intermediate representations and convert them into object files. Tools include an assembler, disassembler, bitcode analyzer, and bitcode optimizer. It also contains basic regression tests.
+
+C-like languages use the [Clang](http://clang.llvm.org/) frontend. This component compiles C, C++, Objective-C, and Objective-C++ code into LLVM bitcode -- and from there into object files, using LLVM.
+
+Other components include: the [libc++ C++ standard library](https://libcxx.llvm.org/), the [LLD linker](https://lld.llvm.org/), and more.
+
+## Getting the Source Code and Building LLVM
+
+This is an example work-flow and configuration to get and build the LLVM source:
+
+* Checkout LLVM (including related sub-projects like Clang): `git clone https://github.com/llvm/llvm-project.git`
+* Configure and build LLVM and Clang
+
+```
+cd llvm-project
+
+cmake -S llvm -B build -G <generator> [options]
+
+cmake --build build [-- [options] <target>]
+```
+
+
+
 # 安装 Clang
 
 ## Clang 3.5.2
@@ -355,9 +384,22 @@ CheckOptions:
 
 ## Q&A
 
-* [Any option to disable auto headers import? (clangd-9)](https://github.com/clangd/clangd/issues/55)
+* 禁止自动插入包含头文件
+
+[Any option to disable auto headers import? (clangd-9)](https://github.com/clangd/clangd/issues/55)
 
 There's a flag: `-header-insertion=never`. You should be able to set you editor to pass that flag to clangd.
+
+* clangd 内存开销过大问题
+
+[Excessive memory consumption #251](https://github.com/clangd/clangd/issues/251)
+
+[Clion clangd, how to limit memory usage](https://stackoverflow.com/questions/61346400/clion-clangd-how-to-limit-memory-usage)
+
+* 设置 `--background-index` 选项 (Index project code in the background and persist index on disk)
+* 设置 `--pch-storage=disk` 选项 (Storing PCHs in memory increases memory usages, but may improve performance)
+
+Default limit for clangd is 8GB, but you can easily customize it. BTW, clangd works only with opened files. So as few files opened in editor as less memory clangd eats.
 
 
 
