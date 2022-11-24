@@ -77,6 +77,8 @@ go version go1.17.6 linux/amd64
 
 ## 环境变量
 
+编辑 `~/.bashrc` 添加如下内容，之后执行 `source ~/.bashrc`。
+
 ``` bash
 # go的安装路径
 export GOROOT=/usr/local/go
@@ -84,15 +86,39 @@ export PATH=$GOROOT/bin:$PATH
 
 # go的目标文件安装目录
 export GOBIN=$HOME/go
+
+# @refer https://learnku.com/go/t/39086#0b3da8
+export GO111MODULE=on
 ```
 
 refer: [Compile and install the application](https://go.dev/doc/tutorial/compile-install)
+
+### GOPATH
 
 * `GOPATH`允许多个目录(Linux下用冒号分割)，当`GOPATH`指定了**多个目录时**，默认将`go get`的内容放在**第一个目录**。
 * `GOPATH`目录约定有3个子目录：
 	- `src` (源代码，例如，`.go`, `.c`, `.h`, `.s`等)
 	- `pkg` (编译后生成的文件，例如，.a)
 	- `bin` (编译后生成的可执行文件)
+
+[从 GOPATH 到 GO111MODULE](https://learnku.com/go/t/39086#0b3da8)
+
+> 关于 GOPATH
+
+当 Go 在 2009 年首次推出时，它并没有随包管理器一起提供。取而代之的是 `go get`，通过使用它们的导入路径来获取所有源并将其存储在 `$GOPATH/src` 中，没有版本控制并且 `master` 分支表示该软件包的稳定版本。
+
+> 关于 Go Modules
+
+Go 1.11 引入了 Go 模块。 `Go Modules` 不使用 `GOPATH` 存储每个软件包的单个 `git checkout`，而是存储带有 `go.mod` 的标记版本，并跟踪每个软件包的版本。
+
+> 关于 GO111MODULE 环境变量
+
+`GO111MODULE` 是一个环境变量，更改 Go 导入包的方式时进行设置。**根据 Go 版本，其语义会发生变化**。
+
+由于 `GO111MODULE=on` 允许你选择一个行为。如果不使用 `Go Modules`, `go get` 将会从模块代码的 `master` 分支拉取，而若使用 `Go Modules` 则你可以利用 `Git Tag` 手动选择一个特定版本的模块代码。
+
+
+
 
 ## 编译和执行
 
@@ -101,6 +127,21 @@ refer: [Compile and install the application](https://go.dev/doc/tutorial/compile
 ```
 $go get gopl.io/ch1/helloworld
 ```
+
+注意：从 Go 1.17 版本开始，go get 已废弃，不建议再使用。
+
+> Starting in Go 1.17, installing executables with go get is deprecated. go install may be used instead. In Go 1.18, go get will no longer build packages; it will only be used to add, update, or remove dependencies in go.mod. Specifically, go get will always act as if the -d flag were enabled.
+
+> go help get
+> The -d flag instructs get not to build or install packages. get will only update go.mod and download source code needed to build packages.
+
+```
+go get: installing executables with 'go get' in module mode is deprecated.
+        Use 'go install pkg@version' instead.
+        For more information, see https://golang.org/doc/go-get-install-deprecation
+        or run 'go help get' or 'go help install'.
+```
+
 
 源码在`$(GOBIN)/src/gopl.io/ch1/helloworld/main.go`。
 

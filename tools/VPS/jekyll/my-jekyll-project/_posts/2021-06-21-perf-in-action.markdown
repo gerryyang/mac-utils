@@ -747,6 +747,10 @@ Challenges with flame graphs mostly involve system profilers and not flame graph
 
 * **Stack traces are incomplete**. Some system profilers truncate to a fixed stack depth (e.g., 10 frames), which must be increased to capture the full stack traces, or else frame merging can fail. A worse problem is when the software compiler reuses the frame pointer register as a compiler optimization, breaking the typical method of stack-trace collection. The fix requires either a different compiled binary (e.g., using gcc's -fno-omit-frame-pointer) or a different stack-walking technique.
 
+> [Does omitting the frame pointers really have a positive effect on performance and a negative effect on debug-ability?](https://stackoverflow.com/questions/13006371/does-omitting-the-frame-pointers-really-have-a-positive-effect-on-performance-an)
+
+
+
 * **Function names are missing**. In this case, the stack trace is complete, but many function names are missing and may be represented as hexadecimal addresses. This commonly happens with JIT (just-in-time) compiled code, which may not create a standard symbol table for profilers. Depending on the profiler and runtime, there are different fixes. For example, Linux perf_events supports supplemental symbol files, which the application can create.
 ### Usage
 

@@ -24,6 +24,26 @@ Many options have long names starting with `-f` or with `-W---for` example, `-fm
 
 More: man gcc
 
+# [C++ Standards Support in GCC](https://gcc.gnu.org/projects/cxx-status.html)
+
+
+GCC supports different dialects of C++, corresponding to the multiple published ISO standards. Which standard it implements can be selected using the `-std=` command-line option.
+
+* [C++98](https://gcc.gnu.org/projects/cxx-status.html#cxx98)
+* [C++11](https://gcc.gnu.org/projects/cxx-status.html#cxx11)
+* [C++14](https://gcc.gnu.org/projects/cxx-status.html#cxx14)
+* [C++17](https://gcc.gnu.org/projects/cxx-status.html#cxx17)
+* [C++20](https://gcc.gnu.org/projects/cxx-status.html#cxx20)
+* [C++23](https://gcc.gnu.org/projects/cxx-status.html#cxx23)
+* [Technical Specifications](https://gcc.gnu.org/projects/cxx-status.html#tses)
+
+
+For information about the status of C++ defect reports, please see [C++ Defect Report Support in GCC](https://gcc.gnu.org/projects/cxx-dr-status.html).
+
+For information about the status of the library implementation, please see the [Implementation Status](https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html) section of the Libstdc++ manual.
+
+
+
 
 # Update GCC
 
@@ -487,6 +507,73 @@ Contents of section .eh_frame_hdr:
 
 
 * https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Variable-Attributes.html
+
+# Pragmas
+
+关于编译器 [pragmas](https://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas) 的用法：
+
+GCC supports several types of `pragmas`, primarily in order to compile code originally written for other compilers. Note that in general we do not recommend the use of `pragmas`; See [Function Attributes](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function-Attributes), for further explanation.
+
+The GNU C preprocessor recognizes several `pragmas` in addition to the compiler `pragmas` documented here. Refer to the CPP manual for more information.
+
+• [AArch64 Pragmas](https://gcc.gnu.org/onlinedocs/gcc/AArch64-Pragmas.html#AArch64-Pragmas)
+• [ARM Pragmas](https://gcc.gnu.org/onlinedocs/gcc/ARM-Pragmas.html#ARM-Pragmas)
+• [M32C Pragmas](https://gcc.gnu.org/onlinedocs/gcc/M32C-Pragmas.html#M32C-Pragmas)
+• [PRU Pragmas](https://gcc.gnu.org/onlinedocs/gcc/PRU-Pragmas.html#PRU-Pragmas)
+• [RS/6000 and PowerPC Pragmas](https://gcc.gnu.org/onlinedocs/gcc/RS_002f6000-and-PowerPC-Pragmas.html#RS_002f6000-and-PowerPC-Pragmas)
+• [S/390 Pragmas](https://gcc.gnu.org/onlinedocs/gcc/S_002f390-Pragmas.html#S_002f390-Pragmas)
+• [Darwin Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Darwin-Pragmas.html#Darwin-Pragmas)
+• [Solaris Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Solaris-Pragmas.html#Solaris-Pragmas)
+• [Symbol-Renaming Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Symbol-Renaming-Pragmas.html#Symbol-Renaming-Pragmas)
+• [Structure-Layout Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Structure-Layout-Pragmas.html#Structure-Layout-Pragmas)
+• [Weak Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Weak-Pragmas.html#Weak-Pragmas)
+• [Diagnostic Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html#Diagnostic-Pragmas)
+• [Visibility Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Visibility-Pragmas.html#Visibility-Pragmas)
+• [Push/Pop Macro Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Push_002fPop-Macro-Pragmas.html#Push_002fPop-Macro-Pragmas)
+• [Function Specific Option Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Function-Specific-Option-Pragmas.html#Function-Specific-Option-Pragmas)
+• [Loop-Specific Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html#Loop-Specific-Pragmas)
+
+
+## [Diagnostic Pragmas](https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html#Diagnostic-Pragmas)
+
+示例代码：https://wandbox.org/permlink/U4CUnRy09abxOSHy
+
+``` cpp
+#include <iostream>
+#include <stdint.h>
+
+int main()
+{
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic push
+#  endif
+#  pragma GCC diagnostic ignored "-Wsign-compare"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wtype-limits"
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wsign-conversion"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic ignored "-Wtype-limits"
+#endif
+
+  auto a = (uint32_t(0) < -1);
+  std::cout << std::boolalpha <<  a << std::endl;
+
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__apple_build_version__)
+#  if (__GNUC__ * 100 + __GNUC_MINOR__ * 10) >= 460
+#    pragma GCC diagnostic pop
+#  endif
+#elif defined(__clang__) || defined(__apple_build_version__)
+#  pragma clang diagnostic pop
+#endif
+
+  auto b = (uint32_t(0) < -1);
+  std::cout << std::boolalpha <<  b << std::endl;
+
+}
+```
 
 
 # [ABI Policy and Guidelines](https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html)

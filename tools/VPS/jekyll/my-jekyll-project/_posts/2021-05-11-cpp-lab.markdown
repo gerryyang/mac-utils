@@ -444,6 +444,9 @@ https://en.cppreference.com/w/cpp/types/integer
 
 ## enum class
 
+> [Why is enum class preferred over plain enum?](https://stackoverflow.com/questions/18335861/why-is-enum-class-preferred-over-plain-enum)
+> enum classes should be preferred because they cause fewer surprises that could potentially lead to bugs.
+
 枚举（包括作用域枚举和非作用域枚举）的命名应当和常量保持一致而不是宏。即使用`kEnumName`形式命名而不是`ENUM_NAME`形式。对于非作用域枚举，还应当将枚举类型作为枚举名的前缀，以减少潜在的命名冲突。如果使用 `C++11` 之后的编译器开发，优先考虑使用 `enum class`，它可以提供更强的类型检测，并减少潜在的命名冲突。
 
 ``` cpp
@@ -479,6 +482,7 @@ In `C++03`, there is no way to force an enumerated type to have any particular u
 > The underlying type of an enumeration is an integral type that can represent all the enumerator values defined in the enumeration. **It is implementation-defined which integral type is used as the underlying type** for an enumeration except that the underlying type shall not be larger than int unless the value of an enumerator cannot fit in an int or unsigned int. If the enumerator-list is empty, the underlying type is as if the enumeration had a single enumerator with value 0. The value of sizeof() applied to an enumeration type, an object of enumeration type, or an enumerator, is the value of sizeof() applied to the underlying type.
 
 This is a pretty lax condition and says that not only can you not necessarily know the type, but because it's implementation-defined there's no guarantee that it even corresponds to one of the primitive types at all.
+
 
 
 ## final specifier
@@ -2438,9 +2442,6 @@ offset of char   m3 = 18
 
 https://en.cppreference.com/w/cpp/types/offsetof
 
-## malloc_trim
-
-* [malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html) function attempts to release free memory from the heap (by calling `sbrk(2)` or `madvise(2)` with suitable arguments). This function is a GNU extension.
 
 ## operator<<
 
@@ -3061,6 +3062,27 @@ $ g++ -c -Wall -pedantic a.cpp
 a.cpp: In function int main():
 a.cpp:12:13: warning: void foo::my_func() is deprecated (declared at a.cpp:3) [-Wdeprecated-declarations]
 ```
+
+``` cpp
+#ifdef __GNUC__
+#define DEPRECATED(func) func __attribute__ ((deprecated))
+#elif defined(_MSC_VER)
+#define DEPRECATED(func) __declspec(deprecated) func
+#else
+#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
+#define DEPRECATED(func) func
+#endif
+
+//don't use me any more
+DEPRECATED(void OldFunc(int a, float b));
+
+//use me instead
+void NewFunc(int a, double b);
+```
+
+However, you will encounter problems if a function return type has a commas in its name e.g. `std::pair<int, int>` as this will be interpreted by the preprocesor as passing 2 arguments to the DEPRECATED macro. In that case you would have to typedef the return type.
+
+* https://stackoverflow.com/questions/295120/c-mark-as-deprecated
 
 ## 空值类型转换
 
@@ -3789,9 +3811,94 @@ When an operator appears in an [expression](https://en.cppreference.com/w/cpp/la
 ![overloaded-operators](/assets/images/202210/overloaded-operators.png)
 
 
+## [When is it necessary to use the flag -stdlib=libstdc++?](https://stackoverflow.com/questions/19774778/when-is-it-necessary-to-use-the-flag-stdlib-libstdc)
+
+> When is it necessary to use use the flag `-stdlib=libstdc++` for the compiler and linker when compiling with gcc?
+
+Short answer: **never**
+
+Longer answer: `-stdlib` is a Clang flag and will not work with any version of GCC ever released. On Mac OS X sometimes the gcc and g++ commands are actually aliases for Clang not GCC, and the version of libstdc++ that Apple ships is ancient (circa 2008) so of course it doesn't support C++11. This means that on OS X when using Clang-pretending-to-be-GCC, you can use `-stdlib=libc++` to select Clang's new C++11-compatible library, or you can use `-stdlib=libstdc++` to select the pre-C++11 antique version of libstdc++ that belongs in a museum. But on GNU/Linux gcc and g++ really are GCC not Clang, and so the `-stdlib` option won't work at all.
+
+> Does the compiler automatically use libstdc++?
+
+Yes, GCC always uses libstdc++ unless you tell it to use no standard library at all with the `-nostdlib` option (in which case you either need to avoid using any standard library features, or use -I and -L and -l flags to point it to an alternative set of header and library files).
+
+> I am using gcc4.8.2 on Ubuntu 13.10 and I would like to use the c++11 standard. I already pass -std=c++11 to the compiler.
+
+You don't need to do anything else. GCC comes with its own implementation of the C++ standard library (libstdc++) which is developed and tested alongside GCC itself so the version of GCC and the version of libstdc++ are 100% compatible. If you compile with -std=c++11 then that enables the C++11 features in g++ compiler and also the C++11 features in the libstdc++ headers.
+
+## [Use new operator to initialise an array](https://stackoverflow.com/questions/9603696/use-new-operator-to-initialise-an-array)
+
+In the new Standard for C++ (C++11), you can do this:
+
+``` cpp
+int* a = new int[10] { 1,2,3,4,5,6,7,8,9,10 };
+```
+
+It's called an initializer list. But in previous versions of the standard that was not possible.
+
+The relevant online reference with further details (and very hard to read) is [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2672.htm). I also tried it using GCC and the `--std=c++0x` option and confirmed that it works indeed.
+
+
+
+
+
 # C++ 异常
 
 https://en.cppreference.com/w/cpp/language/throw
+
+``` cpp
+#include <iostream>
+#include <stdexcept>
+
+void f()
+{
+  std::cout << "f\n";
+  throw std::runtime_error("err");
+}
+
+int main()
+{
+  f();
+}
+```
+
+```
+(gdb) bt
+#0  0x00007f1b122862e7 in __GI_raise (sig=sig@entry=6) at ../nptl/sysdeps/unix/sysv/linux/raise.c:56
+#1  0x00007f1b122876c8 in __GI_abort () at abort.c:89
+#2  0x00007f1b12b75a95 in __gnu_cxx::__verbose_terminate_handler() () from /lib64/libstdc++.so.6
+#3  0x00007f1b12b73a06 in ?? () from /lib64/libstdc++.so.6
+#4  0x00007f1b12b73a33 in std::terminate() () from /lib64/libstdc++.so.6
+#5  0x00007f1b12b73c53 in __cxa_throw () from /lib64/libstdc++.so.6
+#6  0x0000000000400bbe in f() ()
+#7  0x0000000000400bfa in main ()
+```
+
+## rethrow
+
+When rethrowing exceptions, the second form must be used to avoid object slicing in the (typical) case where exception objects use inheritance:
+
+``` cpp
+try
+{
+    std::string("abc").substr(10); // throws std::length_error
+}
+catch (const std::exception& e)
+{
+    std::cout << e.what() << '\n';
+
+    //  throw e; // copy-initializes a new exception object of type std::exception
+    throw;   // rethrows the exception object of type std::length_error
+}
+```
+
+## Stack unwinding
+
+If the exception is thrown from a constructor that is invoked by a new-expression, the matching deallocation function is called, if available.
+
+This process is called stack unwinding.
+
 
 ``` cpp
 #include <iostream>
@@ -3910,6 +4017,87 @@ BENCHMARK(B);
 ```
 
 ![exception-performance](/assets/images/202210/exception-performance.png)
+
+
+## [noexcept](https://en.cppreference.com/w/cpp/language/noexcept)
+
+``` cpp
+// Returns a prvalue of type bool.
+noexcept( expression )
+```
+
+The `noexcept` operator performs a compile-time check that returns **true** if an expression is declared to not throw any exceptions.
+
+It can be used within a function template's noexcept specifier to declare that the function will throw exceptions for some types but not others.
+
+[When should I really use noexcept?](https://stackoverflow.com/questions/10787766/when-should-i-really-use-noexcept)
+
+``` cpp
+#include <iostream>
+#include <utility>
+#include <vector>
+
+void may_throw();
+void no_throw() noexcept;
+auto lmay_throw = []{};
+auto lno_throw = []() noexcept {};
+
+class T
+{
+public:
+    ~T(){} // dtor prevents move ctor
+           // copy ctor is noexcept
+};
+
+class U
+{
+public:
+    ~U(){} // dtor prevents move ctor
+           // copy ctor is noexcept(false)
+    std::vector<int> v;
+};
+
+class V
+{
+public:
+    std::vector<int> v;
+};
+
+int main()
+{
+    T t;
+    U u;
+    V v;
+
+    std::cout << std::boolalpha
+        << "Is may_throw() noexcept? " << noexcept(may_throw()) << '\n'
+        << "Is no_throw() noexcept? " << noexcept(no_throw()) << '\n'
+        << "Is lmay_throw() noexcept? " << noexcept(lmay_throw()) << '\n'
+        << "Is lno_throw() noexcept? " << noexcept(lno_throw()) << '\n'
+        << "Is ~T() noexcept? " << noexcept(std::declval<T>().~T()) << '\n'
+        // note: the following tests also require that ~T() is noexcept because
+        // the expression within noexcept constructs and destroys a temporary
+        << "Is T(rvalue T) noexcept? " << noexcept(T(std::declval<T>())) << '\n'
+        << "Is T(lvalue T) noexcept? " << noexcept(T(t)) << '\n'
+        << "Is U(rvalue U) noexcept? " << noexcept(U(std::declval<U>())) << '\n'
+        << "Is U(lvalue U) noexcept? " << noexcept(U(u)) << '\n'
+        << "Is V(rvalue V) noexcept? " << noexcept(V(std::declval<V>())) << '\n'
+        << "Is V(lvalue V) noexcept? " << noexcept(V(v)) << '\n';
+}
+/*
+Is may_throw() noexcept? false
+Is no_throw() noexcept? true
+Is lmay_throw() noexcept? false
+Is lno_throw() noexcept? true
+Is ~T() noexcept? true
+Is T(rvalue T) noexcept? true
+Is T(lvalue T) noexcept? true
+Is U(rvalue U) noexcept? false
+Is U(lvalue U) noexcept? false
+Is V(rvalue V) noexcept? true
+Is V(lvalue V) noexcept? false
+*/
+```
 
 
 

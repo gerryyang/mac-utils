@@ -51,6 +51,15 @@ How Linux programs call functions in the Linux kernel.
   * 其他寄存器的值保留
 
 
+[x86-64 函数调用约定](https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI):
+
+| Argument Type | Registers
+| -- | --
+| Integer/Pointer Arguments 1-6 | RDI, RSI, RDX, RCX, R8, R9
+| Floating Point Arguments 1-8 | XMM0 - XMM7
+| Excess Arguments | Stack
+| Static chain pointer | R10
+
 * [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
 * [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
 
@@ -788,20 +797,83 @@ delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed)
 # Linux/UNIX Programming Interface
 
 
-## clock_gettime
+## clock_getres/clock_gettime/clock_settime
 
-https://linux.die.net/man/3/clock_gettime
+``` cpp
+#include <time.h>
+
+int clock_getres(clockid_t clk_id, struct timespec *res);
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
+int clock_settime(clockid_t clk_id, const struct timespec *tp);
+```
+
+The function `clock_getres()` finds the resolution (precision) of the specified clock `clk_id`, and, if `res` is non-NULL, stores it in the struct `timespec` pointed to by `res`. The resolution of clocks depends on the implementation and cannot be configured by a particular process. If the time value pointed to by the argument tp of `clock_settime()` is not a multiple of `res`, then it is truncated to a multiple of `res`.
+
+The functions `clock_gettime()` and `clock_settime()` retrieve and set the time of the specified clock `clk_id`.
+
+The `res` and `tp` arguments are `timespec` structs, as specified in `<time.h>`:
+
+``` cpp
+struct timespec {
+        time_t   tv_sec;        /* seconds */
+        long     tv_nsec;       /* nanoseconds */
+};
+```
+
+The `clk_id` argument is the identifier of the particular clock on which to act. A clock may be system-wide and hence visible for all processes, or per-process if it measures time only within a single process.
+
+* https://linux.die.net/man/3/clock_gettime
 
 ## pthread_setname_np
 
-By default, all the threads created using `pthread_create()` inherit the program name.  The `pthread_setname_np()` function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.
+``` cpp
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <pthread.h>
+
+int pthread_setname_np(pthread_t thread, const char *name);
+int pthread_getname_np(pthread_t thread, char *name, size_t len);
+```
+
+By default, all the threads created using `pthread_create()` inherit the program name.  The [pthread_setname_np()](https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html) function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.
 
 `pthread_setname_np()` internally writes to the thread-specific comm file under the /proc filesystem: `/proc/self/task/[tid]/comm`.
 
 > Note: These functions are nonstandard GNU extensions; hence the suffix "_np" (nonportable) in the names.
 
+## pthread_kill
 
-* https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
+``` cpp
+#include <signal.h>
+int pthread_kill(pthread_t thread, int sig);
+```
+
+The [pthread_kill()](https://man7.org/linux/man-pages/man3/pthread_kill.3.html) function sends the signal sig to thread, a thread in the same process as the caller. The signal is asynchronously directed to thread. If sig is 0, then no signal is sent, but error checking is still performed.
+
+POSIX.1-2008 recommends that if an implementation detects the use of a thread ID after the end of its lifetime, `pthread_kill()` should return the error **ESRCH**. The glibc implementation returns this error in the cases where an invalid thread ID can be detected.
+
+
+## malloc_trim
+
+``` cpp
+#include <malloc.h>
+int malloc_trim(size_t pad);
+```
+
+[malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html) function **attempts to release free memory from the heap** (by calling `sbrk(2)` or `madvise(2)` with suitable arguments). This function is a GNU extension.
+
+The `pad` argument specifies **the amount of free space to leave untrimmed at the top of the heap**.  If this argument is 0, only the minimum amount of memory is maintained at the top of the heap (i.e., one page or less). A nonzero argument can be used to maintain some trailing space at the top of the heap in order to allow future allocations to be made without having to extend the heap with `sbrk(2)`.
+
+## madvise
+
+``` cpp
+#include <sys/mman.h>
+int madvise(void *addr, size_t length, int advice);
+```
+
+The [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) system call is used to give advice or directions to the kernel about the address range beginning at address addr and with size length bytes In most cases, the goal of such advice is **to improve system or application performance**.
+
+
+
 
 # 问题定位
 

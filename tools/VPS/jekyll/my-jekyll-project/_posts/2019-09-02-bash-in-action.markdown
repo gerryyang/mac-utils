@@ -1733,6 +1733,14 @@ https://stackoverflow.com/questions/28445020/summing-values-of-a-column-using-aw
 https://blog.csdn.net/delphiwcdj/category_859397.html?spm=1001.2014.3001.5482
 
 
+## cut
+
+``` bash
+cut -d "delimiter" -f (field number) file.txt
+```
+
+https://www.geeksforgeeks.org/cut-command-linux-examples/
+
 
 ## sed
 
@@ -2085,6 +2093,77 @@ $ echo $((16#ffffffffffffffff + 1))
 $ echo $((16#10000000000000000))
 0
 ```
+
+## nohup
+
+The meaning of `nohup` is ‘**no hangup**‘. Normally, when we log out from the system then all the running programs or processes are hangup or terminated. **If you want to run any program after log out or exit from Linux operating system then you have to use `nohup` command**. There are many programs that require many hours to complete. We don’t need to log in for long times to complete the task of the command. We can keep these type of programs running in the background by using `nohup` command and check the output later. Some example of using `nohup` command are memory check, server restart, synchronization etc.
+
+* Using nohup command without ‘&’
+
+When you run nohup command without ‘&’ then it returns to shell command prompt immediately after running that particular command in the background.
+
+The output of the nohup command will write in nohup.out the file if any redirecting filename is not mentioned in nohup command.
+
+``` bash
+nohup bash sleep1.sh
+cat nohup.out
+```
+
+You can execute the command in the following way to redirect the output to the output.txt file. Check the output of output.txt.
+
+``` bash
+nohup bash sleep2.sh > output.txt
+cat output.txt
+```
+
+* Using nohup command with ‘&’
+
+When nohup command use with ‘&’ then it doesn’t return to shell command prompt after running the command in the background. But if you want you can return to shell command prompt by typing ‘fg’
+
+``` bash
+nohup bash sleep1.sh &
+fg
+```
+
+* Using nohup command to run multiple commands in the background
+
+You can run multiple commands in the background by using nohup command. In the following command, mkdir and ls command are executed in the background by using nohup and bash commands. You can get the output of the commands by checking output.txt file.
+
+``` bash
+nohup bash -c 'mkdir myDir && ls'> output.txt
+cat output.txt
+```
+
+* Start any process in the background by using nohup
+
+When any process starts and the user closes the terminal before completing the task of the running process then the process stops normally. If the run the process with `nohup` then it will able to run the process in the background without any issue. For example, if you run the ping command normally then it will terminate the process when you close the terminal.
+
+Run ping command with `nohup` command. Re-open the terminal and run pgrep command again. You will get the list of the process with process id which is running.
+
+
+https://linuxhint.com/nohup_command_linux/
+
+
+## pgrep
+
+`pgrep` looks through the currently running processes and lists the process IDs which match the selection criteria to stdout. All the criteria have to match. For example,
+
+```
+pgrep -u root sshd
+```
+
+will only list the processes called `sshd` AND owned by `root`.
+
+```
+$pgrep unittestsvr
+4110947
+4110948
+
+$pgrep -a unittestsvr
+4110947 /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.1 --bus-key=3233 --svr-id-mask=7.8.8.9
+4110948 /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.2 --bus-key=3233 --svr-id-mask=7.8.8.9
+```
+
 
 
 

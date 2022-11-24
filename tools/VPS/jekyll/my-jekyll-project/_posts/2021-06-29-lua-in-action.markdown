@@ -73,8 +73,8 @@ $tree
 # 基础
 
 * Lua 语言是一种动态类型语言，在这种语言中没有类型定义，每个值都带有其自身的类型信息。
-    + Lua 语言中有 8 种基本类型，使用函数 type 可获得一个值对应的类型名称
-    + userdata 类型允许把任意的 C 语言数据保存在 Lua 语言变量中。在 Lua 语言中，用户数据类型除了赋值和相等性测试外，没有其他预定义的操作。用户数据被用来表示由应用或 C 语言编写的库所创建的新类型。
+    + Lua 语言中有 **8 种基本类型**，使用函数 `type` 可获得一个值对应的类型名称
+    + `userdata` 类型允许把任意的 C 语言数据保存在 Lua 语言变量中。在 Lua 语言中，用户数据类型除了赋值和相等性测试外，没有其他预定义的操作。用户数据被用来表示由应用或 C 语言编写的库所创建的新类型。
     + **变量没有预定义的类型，任何变量都可以包含任何类型的值**。一般情况下，将一个变量用作不同类型时，会导致代码的可读性不佳，但是，在某些情况下谨慎地使用这个特性，可能会带来一定程度的便利。例如，当代码发生异常时可以返回一个 nil 以区别于其他正常情况下的返回值
 
 ```
@@ -116,12 +116,76 @@ string
 > Lua 语言的保留字：and break do else elseif end false goto for fucntiion if in local nil not or repeat return then true until while
 
 * Lua 语言对大小写敏感。and 和 And 是两个不同的标识符。
-* 在 Lua 语言中，全局变量无须声明即可使用，使用未经初始化的全局变量也不会导致错误，当使用未经初始化的全局变量时，得到的结果是 nil。
-    + 当把 nil 赋值给全局变量时，Lua 会回收该全局变量
+* 在 Lua 语言中，全局变量无须声明即可使用，使用未经初始化的全局变量也不会导致错误，当使用未经初始化的全局变量时，得到的结果是 nil。当把 nil 赋值给全局变量时，Lua 会回收该全局变量。
+* nil 是一种只有一个 nil 值的类型，它的主要作用是与其他所有值进行区分
+    + 使用 nil 来表示无效值
     + Lua 语言不区分**未初始化变量**和**被赋值为 nil 的变量**
 
+* 将除 Boolean 值 `false` 和 `nil` **外的**所有其他值视为**真**。注意：**零**和**空字符串**都是为真。
+* 逻辑运算符：and, or, not
+    + 当 x 未被初始化时，将其默认值设为 v: if not x then x = v end
+    + (x>y) and x or y 与 C 语言的三目运算符 a ? b : c 含义等价
+    + not 运算符永远返回 Boolean 类型的值
+
+```
+> print(not nil)
+true
+> print(not false)
+true
+> print(not 0)
+false
+> print(not not 1)
+true
+> print(not not nil)
+false
+```
 
 
+
+
+
+```
+> print(4 and 5)
+5
+> print(nil and 13)
+nil
+> print(false and 13)
+false
+> print(0 or 5)
+0
+> print(false or "hi")
+hi
+> print(nil or false)
+```
+
+
+
+
+
+
+# 与 C++ 的交互
+
+## LuaBridge
+
+LuaBridge is a lightweight and dependency-free library for mapping data, functions, and classes back and forth between C++ and Lua (a powerful, fast, lightweight, embeddable scripting language). LuaBridge has been tested and works with Lua revisions starting from 5.1.5, although it should work in any version of Lua from 5.1.0 as well as LuaJit.
+
+* https://github.com/vinniefalco/LuaBridge
+
+
+## Luna
+
+轻量化，易扩展。
+
+* https://github.com/trumanzhao/luna
+
+
+# 序列化
+
+* https://github.com/starwing/lua-protobuf
+
+# 代码静态检查
+
+* https://github.com/mpeterv/luacheck
 
 # Q&A
 
@@ -182,29 +246,20 @@ From [Lua 5.3 reference manual](http://www.lua.org/manual/5.3/manual.html#2.1)
 
 > The type number uses two internal representations, one called **integer** and the other called **float**. Lua has explicit rules about when each representation is used, but it also converts between them automatically as needed (see §3.4.3). Therefore, the programmer may choose to mostly ignore the difference between integers and floats or to assume complete control over the representation of each number. **Standard Lua uses 64-bit integers and double-precision (64-bit) floats, but you can also compile Lua so that it uses 32-bit integers and/or single-precision (32-bit) floats**. The option with 32 bits for both integers and floats is particularly attractive for small machines and embedded systems. (See macro `LUA_32BITS` in file `luaconf.h`.)
 
-# 与 C++ 的交互
 
-## LuaBridge
-
-LuaBridge is a lightweight and dependency-free library for mapping data, functions, and classes back and forth between C++ and Lua (a powerful, fast, lightweight, embeddable scripting language). LuaBridge has been tested and works with Lua revisions starting from 5.1.5, although it should work in any version of Lua from 5.1.0 as well as LuaJit.
-
-* https://github.com/vinniefalco/LuaBridge
+## [Using lua_checkstack?](https://stackoverflow.com/questions/63272970/using-lua-checkstack)
 
 
-## Luna
+``` c
+void luaL_checkstack (lua_State *L, int sz, const char *msg);
 
-轻量化，易扩展。
+// Grows the stack size to top + sz elements, raising an error if the stack cannot grow to that size. msg is an additional text to go into the error message (or NULL for no additional text).
+```
 
-* https://github.com/trumanzhao/luna
+* https://github.com/starwing/lua-protobuf/commit/d5f144b0f2a1930f700b5a7cce106374c0e64adf
 
 
-# 序列化
 
-* https://github.com/starwing/lua-protobuf
-
-# 代码静态检查
-
-* https://github.com/mpeterv/luacheck
 
 # Refer
 

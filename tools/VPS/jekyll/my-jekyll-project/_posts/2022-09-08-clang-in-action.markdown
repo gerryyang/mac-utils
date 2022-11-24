@@ -382,6 +382,7 @@ CheckOptions:
 
 可以参考：[CPP ClangFormat in Action](http://gerryyang.com/c/c++/2022/04/13/cpp-clangformat-in-action.html)
 
+
 ## Q&A
 
 * 禁止自动插入包含头文件
@@ -410,3 +411,9 @@ Default limit for clangd is 8GB, but you can easily customize it. BTW, clangd wo
 * https://github.com/clangd/clangd/releases/tag/15.0.1
 * https://clangd.llvm.org/installation.html
 * https://manpages.debian.org/experimental/clangd/clangd.1.en.html
+
+
+# Diagnostic (诊断)
+
+https://clang.llvm.org/docs/DiagnosticsReference.html#diagnostic-flags
+

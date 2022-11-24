@@ -10,6 +10,37 @@ categories: [C/C++]
 
 # Google C++ Style Guide
 
+## [Casting](https://google.github.io/styleguide/cppguide.html#Casting)
+
+Use C++-style casts like `static_cast<float>(double_value)`, or brace initialization for conversion of arithmetic types like `int64_t y = int64_t{1} << 42`. Do not use cast formats like `(int)x` unless the cast is to `void`. You may use cast formats like `T(x)` only when `T` is a class type.
+
+**Definitions:**
+
+C++ introduced a different cast system from C that distinguishes the types of cast operations.
+
+**Pros:**
+
+The problem with C casts is the ambiguity of the operation; sometimes you are doing a conversion (e.g., `(int)3.5`) and sometimes you are doing a cast (e.g., `(int)"hello"`). Brace initialization and C++ casts can often help avoid this ambiguity. Additionally, C++ casts are more visible when searching for them.
+
+**Cons:**
+
+The C++-style cast syntax is verbose and cumbersome.
+
+**Decision:**
+
+In general, do not use C-style casts. Instead, use these C++-style casts when explicit type conversion is necessary.
+
+* Use brace initialization to **convert arithmetic types** (e.g., `int64_t{x}`). This is the safest approach because code will not compile if conversion can result in information loss. The syntax is also concise.
+* Use `absl::implicit_cast` to safely **cast up a type hierarchy**, e.g., casting a `Foo*` to a `SuperclassOfFoo*` or casting a `Foo*` to a `const Foo*`. C++ usually does this automatically but some situations need an explicit up-cast, such as use of the `?:` operator.
+* Use `static_cast` as the equivalent of a C-style cast that does value conversion, when you need to explicitly up-cast a pointer from a class to its superclass, or when you need to explicitly cast a pointer from a superclass to a subclass. In this last case, you must be sure your object is actually an instance of the subclass.
+* Use `const_cast` to **remove the const qualifier** (see **const**).
+* Use `reinterpret_cast` to do **unsafe conversions of pointer types to and from integer and other pointer types**, including `void*`. Use this only if you know what you are doing and you understand the aliasing issues. Also, consider the alternative `absl::bit_cast`.
+* Use `absl::bit_cast` to interpret the raw bits of a value using a different type of the same size (a type pun), such as interpreting the bits of a double as int64_t.
+
+See the [RTTI section](https://google.github.io/styleguide/cppguide.html#Run-Time_Type_Information__RTTI_) for guidance on the use of `dynamic_cast`.
+
+
+
 ## [TODO Comments](https://google.github.io/styleguide/cppguide.html#TODO_Comments)
 
 Use TODO comments for code that is temporary, a short-term solution, or good-enough but not perfect.
@@ -78,6 +109,19 @@ void foo(int Value) {
     Local++;
   }
 }
+```
+
+## [modernize-use-noexcept](https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-noexcept.html)
+
+This check replaces deprecated dynamic exception specifications with the appropriate noexcept specification (introduced in C++11). By default this check will replace `throw()` with `noexcept`, and `throw(<exception>[,...])` or `throw(...)` with `noexcept(false)`.
+
+``` cpp
+void foo() throw();    // 列表为空表示不抛出异常
+void bar() throw(int) {}
+
+// transforms to:
+void foo() noexcept;
+void bar() noexcept(false) {}
 ```
 
 
