@@ -376,9 +376,16 @@ Protobuf 3 support for Visual Studio Code
 
 Clang-Format is a tool to format C/C++/Java/JavaScript/Objective-C/Objective-C++/Protobuf code. It can be configured with a config file within the working folder or a parent folder. Configuration see: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
-## Format Files
+## Format Files (批量格式化代码)
 
-Visual Studio code format all files.
+Visual Studio code format all files
+
+Use the extension called Format Files.
+
+Download the extension called ”Format Files” on VSCode.
+Select and open the folder with files to format on VSCode.
+Press Ctrl+Shift+P to open command palette.
+Enter "Start Format Files: Workspace" and select this option.
 
 ## Switcher
 

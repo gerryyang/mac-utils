@@ -1706,6 +1706,19 @@ find /media/d/ -type f -size +50M ! \( -name "*deb" -o -name "*vmdk" \)
 >
 > Note that parenthesis, both opening and closing, are prefixed by a backslash (\) to prevent evaluation by the shell.
 
+删除某个目录下的 coredump 文件：
+
+``` bash
+#!/bin/bash
+
+CORE_FILES=`find /data/home/gerryyang -type f -size +50M -name "*core*"`
+if [[ -n $CORE_FILES ]]; then
+  rm $CORE_FILES
+else
+  echo "no find core files"
+fi
+```
+
 * https://unix.stackexchange.com/questions/50612/how-to-combine-2-name-conditions-in-find
 * https://pubs.opengroup.org/onlinepubs/009695399/utilities/find.html
 

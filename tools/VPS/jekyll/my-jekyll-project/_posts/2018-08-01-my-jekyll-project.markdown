@@ -8,6 +8,9 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+> In the field of pedagogy(教育学), [learning by teaching](https://en.wikipedia.org/wiki/Learning_by_teaching) is a method of teaching in which students are made to learn material and prepare lessons to teach it to the other students. There is a strong emphasis on acquisition of life skills along with the subject matter. This method was originally defined by [Jean-Pol Martin](https://en.wikipedia.org/wiki/Jean-Pol_Martin) in the 1980s.
+
+
 就像[这篇博文]的作者一样，最早在接触互联网的时候就开始养成写博客的习惯，因为上中学的时候对化学老师的`好记性不如烂笔头`一句话铭记于心。当时互联网还没有微博，微信，逛论坛和博客是那时的主流。最早写博文是在沪江英语的博客上，因为经常逛沪江论坛，后来由于沪江英语转型博客服务已经不再提供，之前写的一些文章也找不到了。后来又经常逛CSDN论坛，就改为在[CSDN的博客]上继续写博客，因为是免费的服务，天下没有免费的午餐，博客上的广告投放越来越多，有时还经常显示网站在维护不能访问，故而觉得有必要搭建一个自己的博客。目前是在[DigitalOcean]上购买的[VPS]服务，主要用于公众号和博客。其中博客选择的[jekyll]，因为它的哲学思想就是注重内容，界面简单，可以像hacker一样写文章，正如你看到的样子。工作和生活中难免存在很多琐碎的事情，维护博客目的是将一些有价值的事情记录下来，让自己多一些思考。
 
 

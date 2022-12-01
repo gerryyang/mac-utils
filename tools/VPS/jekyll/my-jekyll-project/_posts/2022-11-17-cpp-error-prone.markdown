@@ -202,5 +202,148 @@ void func(unsigned int ui_a, unsigned int ui_b) {
 ```
 
 
+# [Order of evaluation](https://en.cppreference.com/w/cpp/language/eval_order) (未定义行为)
 
 
+Order of evaluation of any part of any expression, including order of evaluation of function arguments is **unspecified** (with some exceptions listed below). The compiler can evaluate operands and other subexpressions in any order, and may choose another order when the same expression is evaluated again.
+
+> There is no concept of left-to-right or right-to-left evaluation in C++.
+
+``` cpp
+#include <cstdio>
+
+int a() { return std::puts("a"); }
+int b() { return std::puts("b"); }
+int c() { return std::puts("c"); }
+
+void z(int, int, int) {}
+
+int main()
+{
+    z(a(), b(), c());       // all 6 permutations of output are allowed
+    return a() + b() + c(); // all 6 permutations of output are allowed
+}
+```
+
+Possible output:
+
+```
+b
+c
+a
+c
+a
+b
+```
+
+## Undefined behavior
+
+* If a side effect on a memory location is unsequenced relative to another side effect on the same memory location, [the behavior is undefined](https://en.cppreference.com/w/cpp/language/ub).
+
+``` cpp
+i = ++i + 2;       // well-defined
+i = i++ + 2;       // undefined behavior until C++17
+f(i = -2, i = -2); // undefined behavior until C++17
+f(++i, ++i);       // undefined behavior until C++17, unspecified after C++17
+i = ++i + i++;     // undefined behavior
+```
+
+* If a side effect on a memory location is unsequenced relative to a value computation using the value of any object in the same memory location, [the behavior is undefined](https://en.cppreference.com/w/cpp/language/ub).
+
+``` cpp
+cout << i << i++; // undefined behavior until C++17
+a[i] = i++;       // undefined behavior until C++17
+n = ++i + i;      // undefined behavior
+```
+
+## 业务代码中遇到的错误场景
+
+
+``` cpp
+#include <iostream>
+
+const char* f(const char* s)
+{
+    static std::string* g_pStr = NULL;
+    if (NULL == g_pStr)
+    {
+        g_pStr = new std::string;
+    }
+
+    *g_pStr = std::string(s);
+    return g_pStr->c_str();
+}
+
+const char* g(const char* s)
+{
+    static std::string str;
+    str = s;
+    return str.c_str();
+}
+
+void print(const char* s1, const char* s2)
+{
+    std::cout << s1 << " " << s2 << std::endl;
+}
+
+int main()
+{
+    print(f("a"), f("b"));
+    print(g("a"), g("b"));
+}
+```
+
+输出结果对比：(未定义行为)
+
+```
+  // -std=c++11
+
+  // f()
+  // gcc 4.8.5: a b
+  // gcc 5.1.0:  a a
+  // clang 3.5.2: b b
+  // clang 11.0.0: b b
+
+  // g()
+  // gcc 4.8.5: a a
+  // gcc 5.1.0:  a a
+  // clang 3.5.2: b b
+  // clang 11.0.0: b b
+
+
+
+  // -std=c++17
+
+  // f()
+  // gcc 5.1.0:  a a
+  // clang 3.5.2: b b
+  // clang 11.0.0: b b
+
+
+  // g()
+  // gcc 5.1.0:  a a
+  // clang 3.5.2: b b
+  // clang 11.0.0:  b b
+```
+
+修改为：
+
+``` cpp
+#include <iostream>
+#include <string>
+
+std::string f(const char* s)
+{
+    return s;
+}
+
+void print(std::string s1, std::string s2)
+{
+    std::cout << s1 << " " << s2 << std::endl;
+}
+
+int main()
+{
+    print(f("a"), f("b"));
+}
+```

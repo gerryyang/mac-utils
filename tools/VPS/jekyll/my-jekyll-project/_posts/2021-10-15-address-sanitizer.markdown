@@ -65,7 +65,7 @@ Note: [Clang 3.1 release uses another flag syntax](http://llvm.org/releases/3.1/
 #include <thread>
 #include "sanitizer/lsan_interface.h"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     // ...
 
@@ -140,7 +140,7 @@ AddressSanitizer is not expected to produce false positives. If you see one, loo
 
 ### Suppressing Reports in External Libraries
 
-Runtime interposition allows AddressSanitizer to find bugs in code that is not being recompiled. If you run into an issue in external libraries, we recommend immediately reporting it to the library maintainer so that it gets addressed. However, you can use the following suppression mechanism to unblock yourself and continue on with the testing. 
+Runtime interposition allows AddressSanitizer to find bugs in code that is not being recompiled. If you run into an issue in external libraries, we recommend immediately reporting it to the library maintainer so that it gets addressed. However, you can use the following suppression mechanism to unblock yourself and continue on with the testing.
 
 See: https://clang.llvm.org/docs/AddressSanitizer.html#id10
 
@@ -240,7 +240,7 @@ See: [AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitiz
 
 # AddressSanitizer Algorithm
 
-[AddressSanitizerAlgorithm](https://github.com/google/sanitizers/wiki//AddressSanitizerAlgorithm) 
+[AddressSanitizerAlgorithm](https://github.com/google/sanitizers/wiki//AddressSanitizerAlgorithm)
 
 Short version:
 
@@ -263,7 +263,7 @@ if (IsPoisoned(address)) {
 
 The tricky part is how to implement `IsPoisoned` very fast and `ReportError` very compact. Also, instrumenting some of the accesses may be [proven redundant](https://github.com/google/sanitizers/wiki//AddressSanitizerCompileTimeOptimizations).
 
-# GCC 
+# GCC
 
 [GCC -fsanitize=address](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#Instrumentation-Options)
 
@@ -276,7 +276,7 @@ Enable AddressSanitizer, a fast memory error detector. Memory access instruction
 ```
 yum install libasan
 
-gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c 
+gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c
 ```
 
 ![gcc_sanitize](/assets/images/202106/gcc_sanitize.png)
@@ -339,17 +339,37 @@ A: This may happen when the C++ standard library is linked statically. Prebuilt 
 * [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
 * [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
 
+# 误报场景
 
-# Refer 
+## stack-buffer-overflow
+
+参考 [Suspicious stack-overflow message that points to a valid stack range](https://github.com/google/sanitizers/issues/1533)
+
+This is `stack-buffer-overflow`, **not** `stack-overflow`. **Meaning read or write out of bounds of some local variable on stack**. If you are sure that this particular access is within bounds and within lifetime of whatever location it targets, then the common cause of **false positives** would be moving the stack pointer up (i.e. taking a function frame or several off the stack, like `longjmp` would) without telling asan about it. Sounds like your "breaking out" of the handler is exactly that.
+
+If it's not done with `longjmp-in-libc` (the one that ASan intercepts), you'd need to call `__asan_unpoison` on the relevant portion of the stack.
+
+Switching between coroutines would generally be fine with ASan. It's undeclared returns from functions (longjmp, exceptions, etc) that asan has
+problems with because we rely on each function to clear the stack shadow
+after itself.
+
+`__asan_unpoison_memory_region` does solve the issue.
+
+
+
+
+
+
+# Refer
 
 * https://github.com/google/sanitizers/wiki/
+* https://www.usenix.org/system/files/conference/atc12/atc12-final39.pdf
 * [No more leaks with sanitize flags in gcc and clang](https://lemire.me/blog/2016/04/20/no-more-leaks-with-sanitize-flags-in-gcc-and-clang/)
 * [Building better software with better tools: sanitizers versus valgrind](https://lemire.me/blog/2019/05/16/building-better-software-with-better-tools-sanitizers-versus-valgrind/)
 * [How to use gcc with fsanitize=address?](https://stackoverflow.com/questions/58262749/how-to-use-gcc-with-fsanitize-address)
 
 
 
-  
 
-	
-	
+
+

@@ -348,7 +348,8 @@ Show current activation stack.
 
 To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file character (usually `Ctrl-d`). An interrupt (often `Ctrl-c`) does not exit from GDB, but rather terminates the action of any GDB command that is in progress and returns to GDB command level.
 
-# Common Use
+
+# 常用命令
 
 gdb中简写命令配合tab键使用
 
@@ -370,6 +371,9 @@ gdb中简写命令配合tab键使用
 | info break | 查看所有断点的信息
 | info threads | 查看所有线程的信息
 | info registers | 查看所有寄存器的信息
+| [info variables](http://sourceware.org/gdb/current/onlinedocs/gdb/Symbols.html#index-info-variables-918) | list "All global and static variable names" (huge list)
+| [info locals](http://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-locals-435) | list "Local variables of current stack frame" (names and values), including static variables in that function
+| [info args](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-args) | list "Arguments of the current stack frame" (names and values)
 | shell date | 在gdb中调用shell，使用完后exit重新返回到gdb中
 | set args | 可指定运行时参数（如：set args 10 20 30 40 50）
 | show args | 命令可以查看设置好的运行参数
@@ -381,8 +385,9 @@ gdb中简写命令配合tab键使用
 | set variable i = 10 | 修改变量值
 
 
+# [Information About a Frame](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html)
 
-[GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
+# [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 
 You need to enable logging:
 

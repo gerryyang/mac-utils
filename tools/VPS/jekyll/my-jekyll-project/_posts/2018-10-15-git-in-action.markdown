@@ -1004,11 +1004,17 @@ git clone --recursive https://github.com/chaconinc/MainProject
 
 # 清除子模块
 git submodule deinit --all
+
+# https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt-sync--recursive--ltpathgt82308203
+git submodule sync
 ```
 
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 * [How do git submodules work?](https://matthew-brett.github.io/curious-git/git_submodules.html#how-do-git-submodules-work)
+* [Git - How to change url/path of a submodule](https://stackoverflow.com/questions/3796927/how-do-i-git-clone-a-repo-including-its-submodules)
+* [git submodule 游离分支(detached)产生原因及解决办法](https://www.jianshu.com/p/8646bddede23)
+
 
 ## 取消某次提交 git revert
 
@@ -1141,6 +1147,12 @@ git lfs pull
 
 refer: https://git-lfs.github.com/
 
+
+## git bisect
+
+git bisect 是一个很有用的命令，用来查找哪一次代码提交引入了错误。它的原理很简单，就是将代码提交的历史，按照两分法不断缩小定位。所谓"两分法"，就是将代码历史一分为二，确定问题出在前半部分，还是后半部分，不断执行这个过程，直到范围缩小到某一次代码提交。
+
+* https://www.ruanyifeng.com/blog/2018/12/git-bisect.html
 
 # Git hooks
 
@@ -1673,8 +1685,16 @@ https://tortoisegit.org/
 
 # Q&A
 
-* [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
+## [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
+
+```
+git config core.fileMode false
+```
+
+## Automatically closing issue from pull request
+
 * [Closing multiple issues in Github with a commit message](https://stackoverflow.com/questions/3547445/closing-multiple-issues-in-github-with-a-commit-message)
+
 * [Automatically closing issue from pull request in GitHub](https://stackoverflow.com/questions/12235620/automatically-closing-issue-from-pull-request-in-github)
 
 

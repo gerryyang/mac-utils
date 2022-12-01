@@ -9,6 +9,22 @@ categories: [GCC/Clang]
 {:toc}
 
 
+# 编译加速 (统一编译)
+
+```
+bUseUnityBuild
+Whether to unify C++ code into larger files for faster compilation.
+
+bForceUnityBuild
+Whether to force C++ source files to be combined into larger files for faster compilation.
+```
+
+* https://stackoverflow.com/questions/45110783/when-do-i-need-to-include-cpp-files
+* https://accu.org/journals/overload/25/138/thomason_2360/
+* https://leegoonz.blog/2020/04/26/disable-to-buseunitybuild-even-building-to-ue4-source-code/
+* https://docs.unrealengine.com/5.1/en-US/build-configuration-for-unreal-engine/
+
+
 # 编译优化
 
 ## gcc

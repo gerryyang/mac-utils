@@ -1276,6 +1276,58 @@ r15             | r15d          | r15w          | r15b
 * [What are the names of the new X86_64 processors registers?](https://stackoverflow.com/questions/1753602/what-are-the-names-of-the-new-x86-64-processors-registers/1753627#1753627)
 * [The MSDN documentation includes information about the x64 registers](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/x64-architecture?redirectedfrom=MSDN)
 
+
+# Q&A
+
+## test 命令
+
+From [Not sure about using test command with al in assembly](https://stackoverflow.com/questions/25021566/not-sure-about-using-test-command-with-al-in-assembly):
+
+The first command is "anding" together the constant 1 and eax. If eax is something like 10101010 and 1 is: 00000001, then "anding" them together would produce: 0. But what does testing the lowest four bits of the register have to do with anything - and why is it important? What is this entire expression doing?
+
+```
+8049ac0:       83 e0 01                and    $0x1,%eax // "and" these bits together
+8049ac3:       84 c0                   test   %al,%al  // check the last
+8049ac5:       74 05                   je     8049acc <level_4+0x60> // if it is equal, then skip down.
+```
+
+解释：
+
+The `test` instruction is actually redundant, so doesn't do anything useful. It probably comes about because the compiler that produced this code is not very good at optimizing, so included an unnecessary instruction that doesn't hurt anything.
+
+```
+and  $1,%eax    ; clear all bits of %eax except the lowest, set ZF if all bits are now zero
+test %al,%al    ; set ZF if %al (the lowest 8 bits of %eax) are all clear
+je   somewhere  ; branch if ZF is set
+```
+
+So the `and` instruction will set the `ZF` flag equal to the complement of the lowest bit of `%eax`, and the test instruction will set it again to the same thing. This probably comes from code that looks like:
+
+``` cpp
+if (var & 1) {
+    // ... do something ...
+}
+```
+
+where it loads `var` into `%eax` just before your code snip, and the branch target is just after the `}`. The code that is generated first computes `var & 1` into a temp register (the `and` instruction), then tests to see if the result is non-zero (the `test` instruction), then branches over the `...do something...` if the test was false (the `je` instruction).
+
+
+The register are named, for example:
+
+8bits lowest -> `AL`
+8bits highest of the 16bits lowest -> `AH`
+16bits -> `AX`
+32bits -> `EAX`
+64bits -> `RAX`
+
+In [x86 Wikipedia](http://en.wikipedia.org/wiki/X86) is a more detail explanation of CPU registers and pictures of then to better understand.
+
+In your case you are clearing all the bits of `EAX` (32bits register) except the lowest and testing the 8 lowest bits of `EAX` (`AL`). The test instruction will perform a Bitwise `AND` and update the cpu flags accordingly, this flags will be used by `je` (jump if equal, that test for the `Zero Flag`). In this case is checking if the lowest 8 bits of `EAX` are 0 or not, if they are, jump to the address indicate in the jump.
+
+
+
+
+
 # More
 
 * [Assembly Language Step By Step, for Linux, by Jeff Duntemann](http://www.duntemann.com/assembly.html)
@@ -1287,6 +1339,7 @@ r15             | r15d          | r15w          | r15b
 # Refer
 
 * 汇编语言（第2版），清华大学出版社，王爽
+* https://en.wikipedia.org/wiki/X86
 * [x86 instruction listings](https://en.wikipedia.org/wiki/X86_instruction_listings)
 * [Introduction to assembly - Assembling a program - Posted by adrian.ancona on January 30, 2019](https://ncona.com/2019/01/introduction-to-assembly-assembling-a-program/)
 * [Assembly - Variables, instructions and addressing modes - Posted by adrian.ancona on February 27, 2019](https://ncona.com/2019/02/assembly-variables-instructions-and-addressing-modes/)
