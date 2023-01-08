@@ -2,7 +2,7 @@
 layout: post
 title:  "Python in Action"
 date:   2022-11-25 12:00:00 +0800
-categories: Lua
+categories: Python
 ---
 
 * Do not remove this line (it will not be displayed)
