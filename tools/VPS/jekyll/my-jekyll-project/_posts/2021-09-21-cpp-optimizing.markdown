@@ -1622,6 +1622,12 @@ strip example
 * 利用新的硬件红利（NUMA架构的优化）
 
 
+# Memory Benchmark
+
+* [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
+* [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
+
+
 # Refer
 
 * [Linux Load Averages: Solving the Mystery](https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html)，其中，译文可参考[此文](https://zhuanlan.zhihu.com/p/75975041)

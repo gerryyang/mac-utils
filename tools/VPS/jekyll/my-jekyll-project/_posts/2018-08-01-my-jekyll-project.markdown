@@ -312,6 +312,7 @@ More: https://github.com/hzlzh/Best-App
 * [my vim configuration, based on amix's project](https://github.com/ArthurChiao/vim_awesome)
 * [Turning off auto indent when pasting text into vim](https://stackoverflow.com/questions/2514445/turning-off-auto-indent-when-pasting-text-into-vim)
 * [How to reset Visual Studio Code key bindings](https://stackoverflow.com/questions/49313485/how-to-reset-visual-studio-code-key-bindings)
+* http://vim-adventures.com/
 
 ### Sublime
 
@@ -485,6 +486,7 @@ More: https://github.com/hzlzh/Best-App
 * [I'm talking dev](https://www.jesuisundev.com/en/)
 * [Better Programming](https://medium.com/better-programming)
 * [云图](https://huataihuang.gitbooks.io/cloud-atlas/content/)
+* http://coolshell.cn/
 
 # Books
 

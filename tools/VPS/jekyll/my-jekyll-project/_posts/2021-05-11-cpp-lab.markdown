@@ -2213,6 +2213,66 @@ Hello world!
 
 # Algorithm
 
+## std::find / std::find_if / std::find_if_not
+
+* `find` searches for an element equal to value (using operator==)
+* `find_if` searches for an element for which predicate p returns true
+* `find_if_not` searches for an element for which predicate q returns false
+
+``` cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <iterator>
+
+int main()
+{
+    std::vector<int> v{1, 2, 3, 4};
+    int n1 = 3;
+    int n2 = 5;
+    auto is_even = [](int i){ return i%2 == 0; };
+
+    auto result1 = std::find(begin(v), end(v), n1);
+    auto result2 = std::find(begin(v), end(v), n2);
+    auto result3 = std::find_if(begin(v), end(v), is_even);
+
+    (result1 != std::end(v))
+        ? std::cout << "v contains " << n1 << '\n'
+        : std::cout << "v does not contain " << n1 << '\n';
+
+    (result2 != std::end(v))
+        ? std::cout << "v contains " << n2 << '\n'
+        : std::cout << "v does not contain " << n2 << '\n';
+
+    (result3 != std::end(v))
+        ? std::cout << "v contains an even number: " << *result3 << '\n'
+        : std::cout << "v does not contain even numbers\n";
+}
+/*
+v contains 3
+v does not contain 5
+v contains an even number: 2
+*/
+```
+
+## std::any_of / std::all_of / std::none_of
+
+``` cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main()
+{
+  std::vector<int> v{1, 2, 3, 4};
+  std::cout <<  std::any_of(v.cbegin(), v.cend(), [&](int i) { if (i > 3) {return true;} return false; }) << std::endl;    // 1  任意一个大于 3
+  std::cout <<  std::all_of(v.cbegin(), v.cend(), [&](int i) { if (i > 0) {return true;} return false; }) << std::endl;    // 1   全部大于 0
+  std::cout <<  std::none_of(v.cbegin(), v.cend(), [&](int i) { if (i > 0) {return true;} return false; }) << std::endl;   // 0   没有一个大于 0
+}
+```
+
+https://en.cppreference.com/w/cpp/algorithm/all_any_none_of
+
 ## std::lower_bound (下界)
 
 ``` cpp
@@ -2274,6 +2334,41 @@ int main()
 102.5 at index 2
 110.2 not found
 */
+```
+
+``` cpp
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+struct Comparer
+{
+    inline bool operator()(const int a, const int b) const
+    {
+       	//return a < b;  // 从小到大
+        return a > b;    // 从大到小
+    }
+};
+
+int main()
+{
+    Comparer cmp;
+    const std::vector<int> data = { 2,
+        3,
+        4
+    };
+
+    int i = 1;
+    auto lower = std::lower_bound(data.begin(), data.end(), i, cmp);
+    if (lower != data.end())
+    {
+        std::cout << "ok\n";
+    }
+    else
+    {
+        std::cout << "end\n";
+    }
+}
 ```
 
 
@@ -3875,6 +3970,115 @@ int main()
 #7  0x0000000000400bfa in main ()
 ```
 
+## abort (异常没有捕获触发系统 abort 产生 core-dump)
+
+即使捕获了 SIGABRT 信号，glibc 在执行完信号 handler 后会将其移出，再次执行 raise 调用，然后产生 core-dump
+
+参考 `glibc-2.18/stdlib/abort.c` 代码：
+
+``` cpp
+/* Cause an abnormal program termination with core-dump.  */
+void
+abort (void)
+{
+  struct sigaction act;
+  sigset_t sigs;
+
+  /* First acquire the lock.  */
+  __libc_lock_lock_recursive (lock);
+
+  /* Now it's for sure we are alone.  But recursive calls are possible.  */
+
+  /* Unlock SIGABRT.  */
+  if (stage == 0)
+    {
+      ++stage;
+      if (__sigemptyset (&sigs) == 0 &&
+	  __sigaddset (&sigs, SIGABRT) == 0)
+	__sigprocmask (SIG_UNBLOCK, &sigs, (sigset_t *) NULL);
+    }
+
+  /* Flush all streams.  We cannot close them now because the user
+     might have registered a handler for SIGABRT.  */
+  if (stage == 1)
+    {
+      ++stage;
+      fflush (NULL);
+    }
+
+  /* Send signal which possibly calls a user handler.  */
+  if (stage == 2)
+    {
+      /* This stage is special: we must allow repeated calls of
+	 `abort' when a user defined handler for SIGABRT is installed.
+	 This is risky since the `raise' implementation might also
+	 fail but I don't see another possibility.  */
+      int save_stage = stage;
+
+      stage = 0;
+      __libc_lock_unlock_recursive (lock);
+
+      raise (SIGABRT);
+
+      __libc_lock_lock_recursive (lock);
+      stage = save_stage + 1;
+    }
+
+  /* There was a handler installed.  Now remove it.  */
+  if (stage == 3)
+    {
+      ++stage;
+      memset (&act, '\0', sizeof (struct sigaction));
+      act.sa_handler = SIG_DFL;
+      __sigfillset (&act.sa_mask);
+      act.sa_flags = 0;
+      __sigaction (SIGABRT, &act, NULL);
+    }
+
+  /* Now close the streams which also flushes the output the user
+     defined handler might has produced.  */
+  if (stage == 4)
+    {
+      ++stage;
+      __fcloseall ();
+    }
+
+  /* Try again.  */
+  if (stage == 5)
+    {
+      ++stage;
+      raise (SIGABRT);
+    }
+
+  /* Now try to abort using the system specific command.  */
+  if (stage == 6)
+    {
+      ++stage;
+      ABORT_INSTRUCTION;
+    }
+
+  /* If we can't signal ourselves and the abort instruction failed, exit.  */
+  if (stage == 7)
+    {
+      ++stage;
+      _exit (127);
+    }
+
+  /* If even this fails try to use the provided instruction to crash
+     or otherwise make sure we never return.  */
+  while (1)
+    /* Try for ever and ever.  */
+    ABORT_INSTRUCTION;
+}
+```
+
+## 异常产生 core 但无法显示正确的函数调用栈信息
+
+* https://blog.csdn.net/u013272009/article/details/101458409
+* [Bug 55917 - Impossible to find/debug unhandled exceptions in an std::thread](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55917)
+* [我们是怎么发现C++异常从堆栈追踪中消失的原因的](https://zhuanlan.zhihu.com/p/59554240)
+
+
 ## rethrow
 
 When rethrowing exceptions, the second form must be used to avoid object slicing in the (typical) case where exception objects use inheritance:
@@ -4100,9 +4304,140 @@ Is V(lvalue V) noexcept? false
 ```
 
 
+# TODO
+
+## 拷贝构造/赋值构造/移动拷贝构造/移动赋值构造
+
+``` cpp
+#include <iostream>
+
+class A
+{
+public:
+explicit A(int _a, int _b)
+{
+    std::cout << "explicit A(int _a, int _b) \n";
+    a = _a;
+    b = _b;
+}
+
+A(const A& rhs)
+{
+    std::cout << "A(const A& rhs)\n";
+    this->a = rhs.a;
+    this->b = rhs.b;
+}
+
+A(const A&& rhs)
+{
+    std::cout << "A(const A&& rhs)\n";
+    this->a = rhs.a;
+}
+
+A& operator=(const A& rhs)
+{
+    std::cout << "A& operator=(const A& rhs)\n";
+    this->a = rhs.a;
+    this->b = rhs.b;
+    return *this;
+}
+
+A& operator=(const A&& rhs)
+{
+    std::cout << "A& operator=(const A&& rhs)\n";
+    this->a = rhs.a;
+    return *this;
+}
+
+int a;
+int b;
+};
+
+A f()
+{
+    A a(1, 2);
+    return a;
+}
+
+int main()
+{
+    A a(1, 2);
+    A b(3, 4);
+    b = a;
+    std::cout << b.a << " " << b.b << std::endl;
+}
+```
+
+## static 单例线程安全
+
+``` cpp
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <stdint.h>
+
+int init()
+{
+    std::cout << "init" << std::endl;
+    return 1;
+}
+
+int get_singleton()
+{
+    static int s = init();
+    return s;
+}
+
+int main()
+{
+    static uint32_t kThreadNum = 10;
+    std::vector<std::thread > th_vec(kThreadNum);
+
+    for (std::size_t i = 0; i < kThreadNum; ++i)
+    {
+        th_vec[i] = std::thread([]()
+        {
+            get_singleton();
+        });
+    }
+
+    for (std::size_t i = 0; i < kThreadNum; ++i)
+    {
+        th_vec[i].join();
+    }
+}
+```
+
+https://blog.csdn.net/qq_44951325/article/details/124676268
+
+
+## ODR 问题
+
+[Is there a way to detect inline function ODR violations?](https://stackoverflow.com/questions/31722473/is-there-a-way-to-detect-inline-function-odr-violations)
+
+So I have this code in 2 separate translation units:
+
+``` cpp
+// a.cpp
+#include <stdio.h>
+inline int func() { return 5; }
+int proxy();
+int main() { printf("%d", func() + proxy()); }
+
+// b.cpp
+inline int func() { return 6; }
+int proxy() { return func(); }
+```
+
+When compiled normally the result is `10`. When compiled with `-O3` (`inlining` on) I get `11`.
+
+I have clearly done an `ODR` violation for `func()`.
+
+This is a really nasty C++ issue and I am amazed there isn't reliable tooling for detecting it.
+
 
 # Refer
 
 * [编程面试题在线训练平台](http://www.lintcode.com/zh-cn/)
-
+* http://www.linuxhowtos.org/C_C++/
 

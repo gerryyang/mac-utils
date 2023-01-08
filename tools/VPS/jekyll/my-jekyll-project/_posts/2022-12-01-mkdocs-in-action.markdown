@@ -226,3 +226,7 @@ To get help with MkDocs, please use the [GitHub discussions](https://github.com/
 
 
 
+# Other Tools
+
+* https://obsidian.md/
+

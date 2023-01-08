@@ -46,6 +46,9 @@ export PATH=/usr/local/bin:$PATH
 
 ```
 /usr/local/bin/pip install xxhash
+
+# or
+python3 -m pip install xxhash
 ```
 
 # 错误定位

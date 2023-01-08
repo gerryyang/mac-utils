@@ -1023,6 +1023,20 @@ git revert [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <commit>…�
 git revert (--continue | --skip | --abort | --quit)
 ```
 
+Given one or more existing commits, revert the changes that the related patches introduce, and record some new commits that record them. This requires your working tree to be clean (no modifications from the HEAD commit).
+
+Examples:
+
+```
+git revert HEAD~3
+
+Revert the changes specified by the fourth last commit in HEAD and create a new commit with the reverted changes.
+
+git revert -n master~5..master~2
+
+Revert the changes done by commits from the fifth last commit in master (included) to the third last commit in master (included), but do not create any commit with the reverted changes. The revert only modifies the working tree and the index.
+```
+
 * https://git-scm.com/docs/git-revert
 
 ## 将指定的提交应用于其他分支 git cherry-pick
@@ -1668,6 +1682,18 @@ refer:
 * [Creating a pull request](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
 * [Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
 * [Autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests)
+
+# 使用技巧
+
+##  添加常用的 alias
+
+```
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.ci commit
+git config --global alias.br branch
+```
+
 
 # Git相关工具
 

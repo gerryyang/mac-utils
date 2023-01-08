@@ -1439,6 +1439,26 @@ Cannot get wake-on-lan settings: Operation not permitted
         Link detected: yes
 ```
 
+## yum (CentOS)
+
+查看安装包信息：
+
+```
+rpm -qa | grep redis
+redis-3.2.10-2.el7.x86_64
+```
+
+查看安装包路径：
+
+```
+rpm -ql redis-3.2.10-2.el7.x86_64
+```
+
+
+
+
+
+
 ## scl
 
 Setup and run software from Software Collection environment. See: https://linux.die.net/man/1/scl

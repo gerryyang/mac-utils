@@ -130,6 +130,11 @@ make -j16 && make install
 clang --version
 ```
 
+> LLVM_ENABLE_PROJECTS:STRING  用法参考：https://llvm.org/docs/CMake.html
+>
+> Semicolon-separated list of projects to build, or all for building all (clang, lldb, lld, polly, etc) projects. This flag assumes that projects are checked out side-by-side and not nested, i.e. clang needs to be in parallel of llvm instead of nested in llvm/tools. This feature allows to have one build for only LLVM and another for clang+llvm using the same source checkout. The full list is: clang;clang-tools-extra;cross-project-tests;libc;libclc;lld;lldb;openmp;polly;pstl
+
+
 升级 gcc
 
 ```
@@ -316,7 +321,9 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 ln -s ~/myproject-build/compile_commands.json ~/myproject/
 ```
 
-## clang-tidy 配置方法
+## clang-tidy
+
+### 配置方法
 
 在 vscode 通过配置 clangd + clang-tidy + Error Lens 插件，实现代码检查和提示。在项目根目录创建 `.clang-tidy` 配置文件。
 
@@ -376,6 +383,67 @@ CheckOptions:
 * [Setting a sub-option to clang-tidy](https://stackoverflow.com/questions/53185985/setting-a-sub-option-to-clang-tidy)
 
 
+### Suppressing Undesired Diagnostics
+
+参考：https://clang.llvm.org/extra/clang-tidy/#suppressing-undesired-diagnostics
+
+clang-tidy diagnostics are intended to call out code that does not adhere(遵守) to a coding standard, or is otherwise problematic in some way. However, if the code is known to be correct, it may be useful to silence the warning. Some clang-tidy checks provide a check-specific way to silence the diagnostics, e.g. [bugprone-use-after-move](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-use-after-move.html) can be silenced by re-initializing the variable after it has been moved out, [bugprone-string-integer-assignment](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-string-integer-assignment.html) can be suppressed by explicitly casting the integer to char, [readability-implicit-bool-conversion](https://clang.llvm.org/extra/clang-tidy/checks/readability-implicit-bool-conversion.html) can also be suppressed by using explicit casts, etc.
+
+If a specific suppression mechanism is not available for a certain warning, or its use is not desired for some reason, clang-tidy has a generic mechanism to suppress diagnostics using `NOLINT`, `NOLINTNEXTLINE`, and `NOLINTBEGIN` ... `NOLINTEND` comments.
+
+The `NOLINT` comment instructs clang-tidy to ignore warnings on the same line (it doesn’t apply to a function, a block of code or any other language construct; it applies to the line of code it is on). If introducing the comment on the same line would change the formatting in an undesired way, the `NOLINTNEXTLINE` comment allows suppressing clang-tidy warnings on the next line. The `NOLINTBEGIN` and `NOLINTEND` comments allow suppressing clang-tidy warnings on multiple lines (affecting all lines between the two comments).
+
+All comments can be followed by an optional list of check names in parentheses (see below for the formal syntax). The list of check names supports globbing, with the same format and semantics as for enabling checks. Note: negative globs are ignored here, as they would effectively re-activate the warning.
+
+For example:
+
+``` cpp
+class Foo {
+  // Suppress all the diagnostics for the line
+  Foo(int param); // NOLINT
+
+  // Consider explaining the motivation to suppress the warning
+  Foo(char param); // NOLINT: Allow implicit conversion from `char`, because <some valid reason>
+
+  // Silence only the specified checks for the line
+  Foo(double param); // NOLINT(google-explicit-constructor, google-runtime-int)
+
+  // Silence all checks from the `google` module
+  Foo(bool param); // NOLINT(google*)
+
+  // Silence all checks ending with `-avoid-c-arrays`
+  int array[10]; // NOLINT(*-avoid-c-arrays)
+
+  // Silence only the specified diagnostics for the next line
+  // NOLINTNEXTLINE(google-explicit-constructor, google-runtime-int)
+  Foo(bool param);
+
+  // Silence all checks from the `google` module for the next line
+  // NOLINTNEXTLINE(google*)
+  Foo(bool param);
+
+  // Silence all checks ending with `-avoid-c-arrays` for the next line
+  // NOLINTNEXTLINE(*-avoid-c-arrays)
+  int array[10];
+
+  // Silence only the specified checks for all lines between the BEGIN and END
+  // NOLINTBEGIN(google-explicit-constructor, google-runtime-int)
+  Foo(short param);
+  Foo(long param);
+  // NOLINTEND(google-explicit-constructor, google-runtime-int)
+
+  // Silence all checks from the `google` module for all lines between the BEGIN and END
+  // NOLINTBEGIN(google*)
+  Foo(bool param);
+  // NOLINTEND(google*)
+
+  // Silence all checks ending with `-avoid-c-arrays` for all lines between the BEGIN and END
+  // NOLINTBEGIN(*-avoid-c-arrays)
+  int array[10];
+  // NOLINTEND(*-avoid-c-arrays)
+};
+```
+
 ## clang-format 配置方法
 
 同样，可以在项目根目录下添加`.clang-format`文件，实现代码的自动格式化。
@@ -385,13 +453,13 @@ CheckOptions:
 
 ## Q&A
 
-* 禁止自动插入包含头文件
+### 禁止自动插入包含头文件
 
 [Any option to disable auto headers import? (clangd-9)](https://github.com/clangd/clangd/issues/55)
 
 There's a flag: `-header-insertion=never`. You should be able to set you editor to pass that flag to clangd.
 
-* clangd 内存开销过大问题
+### clangd 内存开销过大问题
 
 [Excessive memory consumption #251](https://github.com/clangd/clangd/issues/251)
 
@@ -401,6 +469,13 @@ There's a flag: `-header-insertion=never`. You should be able to set you editor 
 * 设置 `--pch-storage=disk` 选项 (Storing PCHs in memory increases memory usages, but may improve performance)
 
 Default limit for clangd is 8GB, but you can easily customize it. BTW, clangd works only with opened files. So as few files opened in editor as less memory clangd eats.
+
+### 将 preamble-xxx.pch 默认的 root 输出目录改为用户目录
+
+vscode 的 clangd 插件在 disk 模式下会在 /tmp 目录下产生大量的 preamble-xxx.pch 的文件，导致 / 挂载盘空间占满。
+解决方案：(将 tmp 文件重定向到用户 data 目录下)
+1. ~/.bash_profile 中加上 export TMPDIR=$HOME/tmp
+2. kill掉服务器上的vscode进程，重新连接进入
 
 
 
@@ -416,4 +491,9 @@ Default limit for clangd is 8GB, but you can easily customize it. BTW, clangd wo
 # Diagnostic (诊断)
 
 https://clang.llvm.org/docs/DiagnosticsReference.html#diagnostic-flags
+
+
+# Manual
+
+* http://developer.amd.com/wordpress/media/2013/12/AOCC-1.1-Clang-the-C-C-Compiler.pdf
 

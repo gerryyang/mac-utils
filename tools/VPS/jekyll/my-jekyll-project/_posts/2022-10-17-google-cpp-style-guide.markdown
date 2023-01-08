@@ -124,6 +124,53 @@ void foo() noexcept;
 void bar() noexcept(false) {}
 ```
 
+## [readability-use-anyofallof](https://clang.llvm.org/extra/clang-tidy/checks/readability/use-anyofallof.html)
+
+Finds range-based for loops that can be replaced by a call to `std::any_of` or `std::all_of`. In C++ 20 mode, suggests `std::ranges::any_of` or `std::ranges::all_of`.
+
+``` cpp
+bool all_even(std::vector<int> V) {
+  for (int I : V) {
+    if (I % 2)
+      return false;
+  }
+  return true;
+
+  // Replace loop by
+  // return std::ranges::all_of(V, [](int I) { return I % 2 == 0; });
+}
+```
+
+## [readability-simplify-boolean-expr](https://clang.llvm.org/extra/clang-tidy/checks/readability/simplify-boolean-expr.html)
+
+Looks for boolean expressions involving boolean constants and simplifies them to use the appropriate boolean expression directly. Simplifies boolean expressions by application of DeMorgan’s Theorem.
+
+Examples:
+
+| Initial expression	| Result
+| -- | --
+| if (b == true)	| if (b)
+| if (b == false)	 | if (!b)
+| if (b && true)	| if (b)
+| if (b && false)	| if (false)
+| if (b || true)	| if (true)
+| if (b || false)	| if (b)
+| e ? true : false	| e
+| e ? false : true	| !e
+| if (true) t(); else f();	| t();
+| if (false) t(); else f();	| f();
+| if (e) return true; else return false;	| return e;
+| if (e) return false; else return true;	| return !e;
+| if (e) b = true; else b = false;	| b = e;
+| if (e) b = false; else b = true;	| b = !e;
+| if (e) return true; return false;	| return e;
+| if (e) return false; return true;	| return !e;
+| !(!a || b)	| a && !b
+| !(a || !b)	| !a && b
+| !(!a || !b)	| a && b
+| !(!a && b)	| a || !b
+| !(a && !b)	| !a || b
+| !(!a && !b)	| a || b
 
 
 # Refer

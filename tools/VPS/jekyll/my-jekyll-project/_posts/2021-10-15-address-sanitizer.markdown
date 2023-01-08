@@ -8,96 +8,68 @@ categories: [Linux Performance]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# AddressSanitizer (ASan)
+# Introduction
 
-[AddressSanitizer page at clang.llvm.org](https://clang.llvm.org/docs/AddressSanitizer.html)
+[AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) (aka `ASan`) is a memory error detector for C/C++. It finds:
 
-`AddressSanitizer` is a fast memory error detector. It consists of a compiler instrumentation module and a run-time library. The tool can detect the following types of bugs:
++ [Use after free (dangling pointer dereference)](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterFree) (dangling pointer dereference)
++ [Heap buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleHeapOutOfBounds)
++ [Stack buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleStackOutOfBounds)
++ [Global buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleGlobalOutOfBounds)
++ [Use after return](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterReturn)
++ [Use after scope](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterScope)
++ [Initialization order bugs](https://github.com/google/sanitizers/wiki//AddressSanitizerInitializationOrderFiasco)
++ [Memory leaks](https://github.com/google/sanitizers/wiki//AddressSanitizerLeakSanitizer)
 
-* Out-of-bounds accesses to heap, stack and globals
-* Use-after-free
-* Use-after-return (clang flag `-fsanitize-address-use-after-return=(never|runtime|always)` default: `runtime`). Enable runtime with: `ASAN_OPTIONS=detect_stack_use_after_return=1`
-* Use-after-scope (clang flag `-fsanitize-address-use-after-scope`)
-* Double-free, invalid free
-* Memory leaks (experimental)
-
-Typical slowdown introduced by AddressSanitizer is `2x`.
+This tool is very fast. The average slowdown of the instrumented program is `~2x` (see [AddressSanitizerPerformanceNumbers](https://github.com/google/sanitizers/wiki/AddressSanitizerPerformanceNumbers)).
 
 The tool consists of a compiler instrumentation module (currently, an `LLVM` pass) and a run-time library which replaces the `malloc` function.
 
-AddressSanitizer is a part of `LLVM` starting with version `3.1` and a part of `GCC` starting with version `4.8` If you prefer to build from source, see [AddressSanitizerHowToBuild](https://github.com/google/sanitizers/wiki//AddressSanitizerHowToBuild).
+See also:
+
+* [AddressSanitizerAlgorithm](https://github.com/google/sanitizers/wiki/AddressSanitizerAlgorithm) -- if you are curious how it works.
+* [AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitizers/wiki/AddressSanitizerComparisonOfMemoryTools)
+
+## Getting AddressSanitizer
+
+[AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) is a part of [LLVM](http://llvm.org/) starting with version **3.1** and a part of [GCC](http://gcc.gnu.org/) starting with version **4.8** If you prefer to build from source, see [AddressSanitizerHowToBuild](https://github.com/google/sanitizers/wiki/AddressSanitizerHowToBuild).
 
 
-* [AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer)
-  + [Use after free](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterFree) (dangling pointer dereference)
-  + [Heap buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleHeapOutOfBounds)
-  + [Stack buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleStackOutOfBounds)
-  + [Global buffer overflow](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleGlobalOutOfBounds)
-  + [Use after return](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterReturn)
-  + [Use after scope](https://github.com/google/sanitizers/wiki//AddressSanitizerExampleUseAfterScope)
-  + [Initialization order bugs](https://github.com/google/sanitizers/wiki//AddressSanitizerInitializationOrderFiasco)
-  + [Memory leaks](https://github.com/google/sanitizers/wiki//AddressSanitizerLeakSanitizer)
+## Using AddressSanitizer
 
-## Usage (LLVM/Clang)
+In order to use `AddressSanitizer` you will need to compile and link your program using `clang` with the `-fsanitize=address` switch. To get a reasonable performance add `-O1` or higher. To get nicer stack traces in error messages add `-fno-omit-frame-pointer`. Note: [Clang 3.1 release uses another flag syntax](http://llvm.org/releases/3.1/tools/clang/docs/AddressSanitizer.html).
 
-Simply compile and link your program with `-fsanitize=address` flag. The AddressSanitizer run-time library should be linked to the final executable, so make sure to use `clang` (not `ld`) for the final link step. When linking shared libraries, the AddressSanitizer run-time is not linked, so `-Wl,-z,defs` may cause link errors (don’t use it with AddressSanitizer). To get a reasonable performance add `-O1` or higher. To get nicer stack traces in error messages add `-fno-omit-frame-pointer`. To get perfect stack traces you may need to disable inlining (just use `-O1`) and tail call elimination (`-fno-optimize-sibling-calls`).
-
-Note: [Clang 3.1 release uses another flag syntax](http://llvm.org/releases/3.1/tools/clang/docs/AddressSanitizer.html).
-
-
-使用步骤：
-
-1. 安装依赖 sudo yum install libasan
-2. 配置编译选项，建议选项
-	+ `-O1` 禁止优化
-	+ `-fno-omit-frame-pointer` 不忽略堆栈信息
-	+ `-fsanitize=address` 包括 LeakSanitizer MemorySanitizer 功能
-	+ `-fsanitize-recover=address` 检查出错不退出继续执行，refer: [Address Sanitizer option "-fsanitize-recover=address" is not supported](https://stackoverflow.com/questions/53391286/address-sanitizer-option-fsanitize-recover-address-is-not-supported)
-3. `export LD_PRELOAD=/lib64/libasan.so.0` 启用lib库的预加载
-4. `export ASAN_OPTIONS=halt_on_error=0` 通过环境变量配置 Sanitizers，遇到错误不停止运行
-5. 启动程序，观察`stdout`的输出。因为 AddressSanitizer put errors in the stderr, but not in stdout, 所以，如果要输出到文件，可以 `a.out &>asan.log`，或者使用 `ASAN_OPTIONS="log_path=asan.log" ./a.out`
-
-注意：LeakSanitizer 的检测结果，默认是在程序退出前打印出来的。
-
-因此对于后台允许的Server方式，可以在代码里定期调用 LeakSanitizer 接口输出：
 
 ``` cpp
-#include <thread>
-#include "sanitizer/lsan_interface.h"
-
-int main(int argc, char** argv)
-{
-    // ...
-
-    // 定期采集
-    std::thread check([]() {
-    while (true) {
-	    __lsan_do_recoverable_leak_check();    // 此处打印检测结果到stdout
-	    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-    }});
-
+% cat tests/use-after-free.c
+#include <stdlib.h>
+int main() {
+  char *x = (char*)malloc(10 * sizeof(char*));
+  free(x);
+  return x[5];
 }
+% ../clang_build_Linux/Release+Asserts/bin/clang -fsanitize=address -O1 -fno-omit-frame-pointer -g   tests/use-after-free.c
 ```
 
-简单的例子：
+Now, run the executable. [AddressSanitizerCallStack](https://github.com/google/sanitizers/wiki/AddressSanitizerCallStack) page describes how to obtain symbolized stack traces.
 
-``` bash
-% cat example_UseAfterFree.cc
-int main(int argc, char **argv) {
-  int *array = new int[100];
-  delete [] array;
-  return array[argc];  // BOOM
-}
-
-# Compile and link
-% clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer example_UseAfterFree.cc
-
-# or
-
-# Compile
-% clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer -c example_UseAfterFree.cc
-# Link
-% clang++ -g -fsanitize=address example_UseAfterFree.o
+```
+% ./a.out
+==9901==ERROR: AddressSanitizer: heap-use-after-free on address 0x60700000dfb5 at pc 0x45917b bp 0x7fff4490c700 sp 0x7fff4490c6f8
+READ of size 1 at 0x60700000dfb5 thread T0
+    #0 0x45917a in main use-after-free.c:5
+    #1 0x7fce9f25e76c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+    #2 0x459074 in _start (a.out+0x459074)
+0x60700000dfb5 is located 5 bytes inside of 80-byte region [0x60700000dfb0,0x60700000e000)
+freed by thread T0 here:
+    #0 0x4441ee in __interceptor_free projects/compiler-rt/lib/asan/asan_malloc_linux.cc:64
+    #1 0x45914a in main use-after-free.c:4
+    #2 0x7fce9f25e76c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+previously allocated by thread T0 here:
+    #0 0x44436e in __interceptor_malloc projects/compiler-rt/lib/asan/asan_malloc_linux.cc:74
+    #1 0x45913f in main use-after-free.c:3
+    #2 0x7fce9f25e76c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+SUMMARY: AddressSanitizer: heap-use-after-free use-after-free.c:5 main
 ```
 
 If a bug is detected, the program will print an error message to `stderr` and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
@@ -105,9 +77,175 @@ If a bug is detected, the program will print an error message to `stderr` and ex
 * This approach allows AddressSanitizer to produce faster and smaller generated code (both by ~5%).
 * Fixing bugs becomes unavoidable. AddressSanitizer does not produce false alarms. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
 
-## Symbolizing the Reports
 
-See: https://clang.llvm.org/docs/AddressSanitizer.html#id4
+## Interaction with other tools
+
+### gdb
+
+See [AddressSanitizerAndDebugger](https://github.com/google/sanitizers/wiki/AddressSanitizerAndDebugger)
+
+You can use `gdb` with binaries built by `AddressSanitizer` in a usual way. When `AddressSanitizer` finds a bug it calls one of the functions `__asan_report_{load,store}{1,2,4,8,16}` which in turn calls `__asan::ReportGenericError`.
+
+If you want gdb to stop before asan reports an error, set a breakpoint on `__asan::ReportGenericError`.
+
+If you want gdb to stop after asan has reported an error, set a breakpoint on `__sanitizer::Die` or use `ASAN_OPTIONS=abort_on_error=1`.
+
+Inside gdb you can ask asan to describe a memory location:
+
+```
+(gdb) set overload-resolution off
+(gdb) p __asan_describe_address(0x7ffff73c3f80)
+0x7ffff73c3f80 is located 0 bytes inside of 10-byte region [0x7ffff73c3f80,0x7ffff73c3f8a)
+freed by thread T0 here:
+...
+```
+
+## AddressSanitizerFlags
+
+See the separate [AddressSanitizerFlags](https://github.com/google/sanitizers/wiki/AddressSanitizerFlags) page.
+
+**Compiler flags:**
+
+| flag | description
+| -- | --
+| -fsanitize=address | Enable [AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer)
+| -fno-omit-frame-pointer | Leave frame pointers. Allows the fast unwinder to function properly.
+| -fsanitize-blacklist=path | Pass a [blacklist file](https://github.com/google/sanitizers/wiki/AddressSanitizer#turning-off-instrumentation)
+| -fno-common | Do not treat global variable in C as common variables (allows ASan to instrument them)
+
+ASan-specific compile-time flags are passed via clang flag `-mllvm <flag>`. In most cases you don't need them.
+
+| flag | default | description
+| -- | -- | --
+| -asan-stack | 1 | Detect overflow/underflow for stack objects
+| -asan-globals | 1 | Detect overflow/underflow for global objects
+| -asan-use-private-alias	 | 0 | Use private aliases for global objects
+
+**Run-time flags:**
+
+Most run-time flags are passed to `AddressSanitizer` via `ASAN_OPTIONS` environment variable like this:
+
+```
+ASAN_OPTIONS=verbosity=1:malloc_context_size=20 ./a.out
+```
+
+but you could also embed default flags in the source code by implementing `__asan_default_options` function:
+
+``` cpp
+const char *__asan_default_options() {
+  return "verbosity=1:malloc_context_size=20";
+}
+```
+
+Note that the list below list may be (and probably is) **incomplete**. Also older versions of ASan may not support some of the listed flags. To get the idea of what's supported in your version, run
+
+```
+ASAN_OPTIONS=help=1 ./a.out
+```
+
+| Flag | Default value | Description
+| -- | -- | --
+| redzone | 16 | Minimal size (in bytes) of redzones around heap objects. Requirement: redzone >= 16, is a power of two.
+| max_redzone | 2048 | Maximal size (in bytes) of redzones around heap objects.
+| sleep_before_dying | 0 | Number of seconds to sleep between printing an error report and terminating the program. Useful for debugging purposes (e.g. when one needs to attach gdb).
+| print_stats | false | Print various statistics after printing an error message or if atexit=1.
+| atexit | false | If set, prints ASan exit stats even after program terminates successfully.
+| halt_on_error | true | Crash the program after printing the first error report (WARNING: USE AT YOUR OWN RISK!). The flag has effect only if code was compiled with -fsanitize-recover=address compile option.
+| log_path | stderr | Write logs to log_path.pid. The special values are stdout and stderr
+
+
+## [SanitizerCommonFlags](https://github.com/google/sanitizers/wiki/SanitizerCommonFlags)
+
+Each tool parses the common options from the corresponding environment variable (`ASAN_OPTIONS`, `TSAN_OPTIONS`, `MSAN_OPTIONS`, `LSAN_OPTIONS`) together with the tool-specific options.
+
+**Run-time flags:**
+
+| Flag | Default value | Description
+| -- | -- | --
+| symbolize | true | If set, use the online symbolizer from common sanitizer runtime to turn virtual addresses to file/line locations.
+| malloc_context_size | 30 | Max number of stack frames kept for each allocation/deallocation.
+| log_path | stderr | Write logs to "log_path.pid". The special values are "stdout" and "stderr". The default is "stderr".
+| log_exe_name | false | Mention name of executable when reporting error and append executable name to logs (as in "log_path.exe_name.pid").
+| verbosity | 0 | Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
+| detect_leaks | true | Enable memory leak detection.
+| leak_check_at_exit | true | Invoke leak checking in an atexit handler. Has no effect if detect_leaks=false, or if __lsan_do_leak_check() is called before the handler has a chance to run.
+| allocator_may_return_null | false | If false, the allocator will crash instead of returning 0 on out-of-memory.
+| print_summary | true | If false, disable printing error summaries in addition to error reports.
+| handle_abort | false | Controls custom tool's SIGABRT handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it). Ignored on Windows.
+| help | false | Print the flag ptions.
+| coverage | false | If set, coverage information will be dumped at program shutdown (if the coverage instrumentation was enabled at compile time).
+| disable_coredump | true (false on non-64-bit systems) | Disable core dumping. By default, disable_coredump=1 on 64-bit to avoid dumping a 16T+ core file. Ignored on OSes that don't dump core by default and for sanitizers that don't reserve lots of virtual memory.
+| exitcode | 1 | Override the program exit status if the tool found an error
+| abort_on_error | false (true on Darwin) | If set, the tool calls abort() instead of _exit() after printing the error report.
+
+
+
+## Call stack
+
+See the separate [AddressSanitizerCallStack](https://github.com/google/sanitizers/wiki/AddressSanitizerCallStack) page.
+
+`AddressSanitizer` collects call stacks on the following events:
+
+* `malloc` and `free`
+* thread creation
+* failure
+
+
+## Incompatibility
+
+Sometimes an `AddressSanitizer` build may behave differently than the regular one. See [AddressSanitizerIncompatiblity](https://github.com/google/sanitizers/wiki/AddressSanitizerIncompatiblity) for details.
+
+
+### malloc
+
+AddressSanitizer uses its own memory allocator (`malloc`, `free`, etc). If your code depends on a particular feature or extension of glibc malloc, tcmalloc or some other malloc, it may not work as you expect.
+
+### Virtual memory
+
+`AddressSanitizer` uses a lot of virtual address space (`20T` on x86_64 Linux)
+
+
+## Turning off instrumentation
+
+In some cases a particular function should be ignored (not instrumented) by `AddressSanitizer`:
+
+* Ignore a very hot function known to be correct to speedup the app.
+* Ignore a function that does some low-level magic (e.g. walking through the thread's stack bypassing the frame boundaries).
+* Don't report a known problem. In either case, be very careful.
+
+To ignore certain functions, one can use the `no_sanitize_address` attribute supported by Clang (3.3+) and GCC (4.8+). You can define the following macro:
+
+``` cpp
+#if defined(__clang__) || defined (__GNUC__)
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+...
+ATTRIBUTE_NO_SANITIZE_ADDRESS
+void ThisFunctionWillNotBeInstrumented() {...}
+```
+
+Clang 3.1 and 3.2 supported `__attribute__((no_address_safety_analysis))` instead.
+
+You may also ignore certain functions using a blacklist: create a file `my_ignores.txt` and pass it to `AddressSanitizer` at compile time using `-fsanitize-blacklist=my_ignores.txt` (This flag is new and is only supported by Clang now):
+
+```
+# Ignore exactly this function (the names are mangled)
+fun:MyFooBar
+# Ignore MyFooBar(void) if it is in C++:
+fun:_Z8MyFooBarv
+# Ignore all function containing MyFooBar
+fun:*MyFooBar*
+```
+
+## Talks and papers
+
+* Watch the presentation from the [LLVM Developer's meeting](http://llvm.org/devmtg/2011-11/) (Nov 18, 2011): [Video](http://www.youtube.com/watch?v=CPnRS1nv3_s), [slides](http://llvm.org/devmtg/2011-11/Serebryany_FindingRacesMemoryErrors.pdf).
+* Read the [USENIX ATC '2012 paper](http://research.google.com/pubs/pub37752.html).
+
+
+
 
 ## Additional Checks
 
@@ -230,21 +368,120 @@ AddressSanitizer is fully functional on supported platforms starting from LLVM 3
 
 The Windows port is functional and is used by Chrome and Firefox, but it is not as well supported as the other ports.
 
-## More Information
 
-See: https://github.com/google/sanitizers/wiki/AddressSanitizer
+# AddressSanitizerLeakSanitizer
 
-# AddressSanitizer Comparison Of MemoryTools
+`LeakSanitizer` is a memory leak detector which is integrated into `AddressSanitizer`. The tool is supported on x86_64 Linux and OS X.
 
-See: [AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitizers/wiki/AddressSanitizerComparisonOfMemoryTools/d06210f759fec97066888e5f27c7e722832b0924)
+`LeakSanitizer` is enabled **by default** in ASan builds of x86_64 Linux, and can be enabled with `ASAN_OPTIONS=detect_leaks=1` on x86_64 OS X. **`LSan` lies dormant until the very end of the process, at which point there is an extra leak detection phase.** In performance-critical scenarios, `LSan` can also be used without ASan instrumentation.
+
+See also: [design document](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizerDesignDocument), [comparison with tcmalloc's heap leak checker](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizerVsHeapChecker)
+
+## Using LeakSanitizer
+
+To use `LSan`, simply build your program with `AddressSanitizer`:
+
+``` cpp
+$ cat memory-leak.c
+#include <stdlib.h>
+
+void *p;
+
+int main() {
+  p = malloc(7);
+  p = 0; // The memory is leaked here.
+  return 0;
+}
+```
+
+```
+$ clang -fsanitize=address -g memory-leak.c
+$ ./a.out
+
+=================================================================
+==7829==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 7 byte(s) in 1 object(s) allocated from:
+    #0 0x42c0c5 in __interceptor_malloc /usr/home/hacker/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:74
+    #1 0x43ef81 in main /usr/home/hacker/memory-leak.c:6
+    #2 0x7fef044b876c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+
+SUMMARY: AddressSanitizer: 7 byte(s) leaked in 1 allocation(s).
+```
+
+If you want to run an ASan-instrumented program without leak detection, you can pass `detect_leaks=0` in the `ASAN_OPTIONS` environment variable.
+
+### Stand-alone mode
+
+If you just need leak detection, and don't want to bear the ASan slowdown, you can build with `-fsanitize=leak` instead of `-fsanitize=address`. This will link your program against a runtime library containing just the bare necessities required for `LeakSanitizer` to work. **No compile-time instrumentation will be applied**.
+
+Be aware that the stand-alone mode is less well tested compared to running `LSan` on top of `ASan`.
+
+### Flags
+
+You can fine-tune LeakSanitizer's behavior through the `LSAN_OPTIONS` environment variable.
+
+| flag | default | description
+| -- | -- | --
+| exitcode | 23 | If non-zero, `LSan` will call `_exit(exitcode)` upon detecting leaks. This can be different from the exit code used to signal ASan errors.
+| max_leaks | 0 | If non-zero, report only this many top leaks.
+
+### Suppressions
+
+You can instruct `LeakSanitizer` to ignore certain leaks by passing in a suppressions file. The file must contain one suppression rule per line, each rule being of the form `leak:<pattern>`. The pattern will be substring-matched against the symbolized stack trace of the leak. If either function name, source file name or binary file name matches, the leak report will be suppressed.
+
+The special symbols `^` and `$` match the beginning and the end of string.
+
+```
+$ cat suppr.txt
+# This is a known leak.
+leak:FooBar
+$ cat lsan-suppressed.cc
+#include <stdlib.h>
+
+void FooBar() {
+  malloc(7);
+}
+
+void Baz() {
+  malloc(5);
+}
+
+int main() {
+  FooBar();
+  Baz();
+  return 0;
+}
+$ clang++ lsan-suppressed.cc -fsanitize=address
+$ ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=suppr.txt ./a.out
+
+=================================================================
+==26475==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 5 byte(s) in 1 object(s) allocated from:
+    #0 0x44f2de in malloc /usr/home/hacker/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:74
+    #1 0x464e86 in Baz() (/usr/home/hacker/a.out+0x464e86)
+    #2 0x464fb4 in main (/usr/home/hacker/a.out+0x464fb4)
+    #3 0x7f7e760b476c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+
+-----------------------------------------------------
+Suppressions used:[design document](AddressSanitizerLeakSanitizerDesignDocument)
+  count      bytes template
+      1          7 FooBar
+-----------------------------------------------------
+
+SUMMARY: AddressSanitizer: 5 byte(s) leaked in 1 allocation(s).
+```
+
+
 
 # AddressSanitizer Algorithm
 
-[AddressSanitizerAlgorithm](https://github.com/google/sanitizers/wiki//AddressSanitizerAlgorithm)
+参考 [AddressSanitizerAlgorithm](https://github.com/google/sanitizers/wiki//AddressSanitizerAlgorithm)
 
-Short version:
+## Short version
 
-The run-time library replaces the `malloc` and `free` functions. The memory around malloc-ed regions (red zones) is poisoned. The free-ed memory is placed in quarantine and also poisoned. Every memory access in the program is transformed by the compiler in the following way:
+The run-time library replaces the `malloc` and `free` functions. The memory around malloc-ed regions (red zones) is poisoned. The `free`-ed memory is placed in quarantine(隔离) and also poisoned. Every memory access in the program is transformed by the compiler in the following way:
 
 Before:
 
@@ -263,15 +500,251 @@ if (IsPoisoned(address)) {
 
 The tricky part is how to implement `IsPoisoned` very fast and `ReportError` very compact. Also, instrumenting some of the accesses may be [proven redundant](https://github.com/google/sanitizers/wiki//AddressSanitizerCompileTimeOptimizations).
 
-# GCC
+## Memory mapping and Instrumentation
 
-[GCC -fsanitize=address](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#Instrumentation-Options)
+The **virtual address space** is divided into 2 disjoint(不相交的) classes:
 
--fsanitize=address
+* Main application memory (`Mem`): this memory is used by the regular application code.
+* Shadow memory (`Shadow`): this memory contains the shadow values (or metadata). There is a correspondence(关联) between the shadow and the main application memory. **Poisoning a byte in the main memory means writing some special value into the corresponding shadow memory**.
 
-Enable AddressSanitizer, a fast memory error detector. Memory access instructions are instrumented to detect out-of-bounds and use-after-free bugs. The option enables -fsanitize-address-use-after-scope. See https://github.com/google/sanitizers/wiki/AddressSanitizer for more details. The run-time behavior can be influenced using the ASAN_OPTIONS environment variable. When set to help=1, the available options are shown at startup of the instrumented program. See https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags for a list of supported options. The option cannot be combined with -fsanitize=thread or -fsanitize=hwaddress. Note that the only target -fsanitize=hwaddress is currently supported on is AArch64.
+These 2 classes of memory should be organized in such a way that computing the shadow memory (`MemToShadow`) is fast.
+
+The **instrumentation(插桩)** performed by the compiler:
+
+``` cpp
+shadow_address = MemToShadow(address);
+if (ShadowIsPoisoned(shadow_address)) {
+  ReportError(address, kAccessSize, kIsWrite);
+}
+```
+
+### Mapping
+
+**`AddressSanitizer` maps `8` bytes of the application memory into `1` byte of the shadow memory**.
+
+There are only **`9` different values** for **any aligned `8` bytes** of the application memory:
+
+* All 8 bytes in qword are unpoisoned (i.e. addressable). The shadow value is 0.
+* All 8 bytes in qword are poisoned (i.e. not addressable). The shadow value is negative.
+* First `k` bytes are unpoisoned, the rest `8-k` are poisoned. The shadow value is `k`. This is guaranteed by the fact that `malloc` returns `8-byte` aligned chunks of memory. The only case where different bytes of an aligned qword have different state is the tail of a malloc-ed region. For example, if we call `malloc(13)`, we will have one full unpoisoned qword and one qword where 5 first bytes are unpoisoned.
+
+The instrumentation looks like this:
+
+``` cpp
+byte *shadow_address = MemToShadow(address);
+byte shadow_value = *shadow_address;
+if (shadow_value) {
+  if (SlowPathCheck(shadow_value, address, kAccessSize)) {
+    ReportError(address, kAccessSize, kIsWrite);
+  }
+}
+```
+
+
+``` cpp
+// Check the cases where we access first k bytes of the qword
+// and these k bytes are unpoisoned.
+bool SlowPathCheck(shadow_value, address, kAccessSize) {
+  last_accessed_byte = (address & 7) + kAccessSize - 1;
+  return (last_accessed_byte >= shadow_value);
+}
+```
+
+`MemToShadow(ShadowAddr)` falls into the `ShadowGap` region which is unaddressable. So, if the program tries to directly access a memory location in the shadow region, it will crash.
+
+示例：
+
+```
+|| `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+|| `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+|| `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+|| `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+|| `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+MemToShadow(shadow): 0x00008fff7000 0x000091ff6dff 0x004091ff6e00 0x02008fff6fff
+redzone=16
+max_redzone=2048
+quarantine_size_mb=256M
+thread_local_quarantine_size_kb=1024K
+malloc_context_size=30
+SHADOW_SCALE: 3
+SHADOW_GRANULARITY: 8
+SHADOW_OFFSET: 0x7fff8000
+```
+
+**64-bit**
+
+> `Shadow = (Mem >> 3) + 0x7fff8000;`
+
+```
+[0x10007fff8000, 0x7fffffffffff]	HighMem
+[0x02008fff7000, 0x10007fff7fff]	HighShadow
+[0x00008fff7000, 0x02008fff6fff]	ShadowGap
+[0x00007fff8000, 0x00008fff6fff]	LowShadow
+[0x000000000000, 0x00007fff7fff]	LowMem
+```
+
+**32 bit**
+
+> `Shadow = (Mem >> 3) + 0x20000000;`
+
+```
+[0x40000000, 0xffffffff]	HighMem
+[0x28000000, 0x3fffffff]	HighShadow
+[0x24000000, 0x27ffffff]	ShadowGap
+[0x20000000, 0x23ffffff]	LowShadow
+[0x00000000, 0x1fffffff]	LowMem
+```
+
+### Ultra compact shadow
+
+It is possible to use even more compact shadow memory, e.g.
+
+> `Shadow = (Mem >> 7) | kOffset;`
+
+Experiments are in flight.
+
+
+### Report Error
+
+The `ReportError` could be implemented as a call (this is the default now), but there are some other, slightly more efficient and/or more compact solutions. At some point the default behaviour **was**:
+
+* copy the failure address to `%rax` (`%eax`).
+* execute `ud2` (generates SIGILL)
+* Encode access type and size in a one-byte instruction which follows `ud2`. Overall these 3 instructions require 5-6 bytes of machine code.
+
+It is possible to use just a single instruction (e.g. `ud2`), but this will require to have a full disassembler in the run-time library (or some other hacks).
+
+### Stack
+
+In order to catch **stack buffer overflow**, `AddressSanitizer` instruments the code like this:
+
+Original code:
+
+``` cpp
+void foo() {
+  char a[8];
+  ...
+  return;
+}
+```
+
+Instrumented code:
+
+``` cpp
+void foo() {
+  char redzone1[32];  // 32-byte aligned
+  char a[8];          // 32-byte aligned
+  char redzone2[24];
+  char redzone3[32];  // 32-byte aligned
+  int  *shadow_base = MemToShadow(redzone1);
+  shadow_base[0] = 0xffffffff;  // poison redzone1
+  shadow_base[1] = 0xffffff00;  // poison redzone2, unpoison 'a'
+  shadow_base[2] = 0xffffffff;  // poison redzone3
+  ...
+  shadow_base[0] = shadow_base[1] = shadow_base[2] = 0; // unpoison all
+  return;
+}
+```
+
+### Examples of instrumented code (x86_64)
+
+```
+# long load8(long *a) { return *a; }
+0000000000000030 <load8>:
+  30:	48 89 f8             	mov    %rdi,%rax
+  33:	48 c1 e8 03          	shr    $0x3,%rax
+  37:	80 b8 00 80 ff 7f 00 	cmpb   $0x0,0x7fff8000(%rax)
+  3e:	75 04                	jne    44 <load8+0x14>
+  40:	48 8b 07             	mov    (%rdi),%rax   <<<<<< original load
+  43:	c3                   	retq
+  44:	52                   	push   %rdx
+  45:	e8 00 00 00 00       	callq  __asan_report_load8
+```
+
+```
+# int  load4(int *a)  { return *a; }
+0000000000000000 <load4>:
+   0:	48 89 f8             	mov    %rdi,%rax
+   3:	48 89 fa             	mov    %rdi,%rdx
+   6:	48 c1 e8 03          	shr    $0x3,%rax
+   a:	83 e2 07             	and    $0x7,%edx
+   d:	0f b6 80 00 80 ff 7f 	movzbl 0x7fff8000(%rax),%eax
+  14:	83 c2 03             	add    $0x3,%edx
+  17:	38 c2                	cmp    %al,%dl
+  19:	7d 03                	jge    1e <load4+0x1e>
+  1b:	8b 07                	mov    (%rdi),%eax    <<<<<< original load
+  1d:	c3                   	retq
+  1e:	84 c0                	test   %al,%al
+  20:	74 f9                	je     1b <load4+0x1b>
+  22:	50                   	push   %rax
+  23:	e8 00 00 00 00       	callq  __asan_report_load4
+```
+
+### Unaligned accesses
+
+The current compact mapping will not catch unaligned partially out-of-bound accesses:
+
+``` cpp
+int *x = new int[2]; // 8 bytes: [0,7].
+int *u = (int*)((char*)x + 6);
+*u = 1;  // Access to range [6-9]
+```
+
+A viable solution is described in https://github.com/google/sanitizers/issues/100 but it comes at a performance cost.
+
+## Run-time library
+
+
+### Malloc
+
+The run-time library replaces `malloc`/`free` and provides error reporting functions like `__asan_report_load8`.
+
+`malloc` allocates the requested amount of memory with **redzones** around it. The shadow values corresponding to the redzones are poisoned and the shadow values for the main memory region are cleared.
+
+`free` poisons shadow values for the entire region and puts the chunk of memory into a quarantine(检疫) queue (such that this chunk will not be returned again by malloc during some period of time).
+
+
+
+
+
+# 性能测试对比
+
+This tool is very fast. The average slowdown of the instrumented program is `~2x` (see [AddressSanitizerPerformanceNumbers](https://github.com/google/sanitizers/wiki/AddressSanitizerPerformanceNumbers)).
+
+
+不同工具的性能比较：[AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitizers/wiki/AddressSanitizerComparisonOfMemoryTools)
+
+
+
+# 不同编译器
+
+
+## GCC
+
+参考 GCC [-fsanitize=address](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#Instrumentation-Options) 使用说明如下：
+
+Enable AddressSanitizer, a fast memory error detector. Memory access instructions are instrumented to detect out-of-bounds and use-after-free bugs. The option enables `-fsanitize-address-use-after-scope`. See https://github.com/google/sanitizers/wiki/AddressSanitizer for more details.
+
+The run-time behavior can be influenced using the `ASAN_OPTIONS` environment variable. When set to `help=1`, the available options are shown at startup of the instrumented program. See https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags for a list of supported options.
+
+The option cannot be combined with `-fsanitize=thread` or `-fsanitize=hwaddress`. Note that the only target `-fsanitize=hwaddress` is currently supported on is AArch64.
 
 测试代码：
+
+``` cpp
+#include <stdlib.h>
+
+void f(void)
+{
+    int *x = malloc(10* sizeof(int));
+    x[10] = 0;  // problem 1: heap block overrun
+}               // problem 2: memory leak -- x not freed
+
+int main(void)
+{
+    f();
+}
+```
 
 ```
 yum install libasan
@@ -281,14 +754,35 @@ gcc -g -fsanitize=address -fno-omit-frame-pointer demo.c
 
 ![gcc_sanitize](/assets/images/202106/gcc_sanitize.png)
 
-# Clang
+## Clang
+
+编译选项：
 
 ```
-# 设置编译选项
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer")
-# 设置链接选项
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
+# AddressSanitizer
+IF(USE_ASAN EQUAL 1)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-optimize-sibling-calls")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-recover=address")  # 设置遇到错误时继续运行
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mllvm -asan-stack=0")     # 关闭 stack 检查
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mllvm -asan-globals=1")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mllvm -asan-use-private-alias=0")
+
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+ENDIF()
 ```
+
+启动选项：
+
+```
+ASAN_OPTIONS=debug=true:verbosity=2:print_stats=true:print_suppressions=false:halt_on_error=false:log_exe_name=true:log_path=asan.log ./your_program
+```
+
 
 # Valgrind vs Sanitizers
 
@@ -313,6 +807,31 @@ See: https://lemire.me/blog/2019/05/16/building-better-software-with-better-tool
 
 A: Yes it can, AddressSanitizer has recently got `continue-after-error` mode. This is somewhat experimental so may not yet be as reliable as default setting (and not as timely supported). Also keep in mind that errors after the first one may actually be spurious(假的). To enable `continue-after-error`, compile with `-fsanitize-recover=address` and then run your code with `ASAN_OPTIONS=halt_on_error=0`.
 
+* [Address Sanitizer option "-fsanitize-recover=address" is not supported](https://stackoverflow.com/questions/53391286/address-sanitizer-option-fsanitize-recover-address-is-not-supported)
+
+## Q: 如何让后台服务定期采集内存泄漏，而不是在程序退出的时候
+
+LeakSanitizer 的检测结果，默认是在程序退出前输出的，因此对于后台服务可以在代码里定期调用接口输出。
+
+``` cpp
+#include <thread>
+#include "sanitizer/lsan_interface.h"
+
+int main(int argc, char** argv)
+{
+    // ...
+
+    // 定期采集
+    std::thread check([]() {
+    while (true) {
+      __lsan_do_recoverable_leak_check();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    }});
+
+}
+```
+
+
 ## Q: Why didn't ASan report an obviously invalid memory access in my code?
 
 A1: If your errors is too obvious, compiler might have already optimized it out by the time Asan runs.
@@ -334,10 +853,16 @@ A: Try to compile your code with `-fno-omit-frame-pointer` or set `ASAN_OPTIONS=
 A: This may happen when the C++ standard library is linked statically. Prebuilt `libstdc++`/`libc++` often do not use frame pointers, and it breaks fast (frame-pointer-based) unwinding. Either switch to the shared library with the `-shared-libstdc++` flag, or use `ASAN_OPTIONS=fast_unwind_on_malloc=0`. The latter could be very slow.
 
 
-# Memory Benchmark
+## Q: [What does it mean if you're getting a "addresssanitizer: segv on unknown address" error (c++, runtime error, development)?](https://www.quora.com/What-does-it-mean-if-youre-getting-a-addresssanitizer-segv-on-unknown-address-error-c-runtime-error-development)
 
-* [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
-* [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
+It means that you contains at least one serious bug, that under certain circumstances it dereferences a pointer, or accesses an array element, that does not point to a valid memory address.
+
+## 更多问题
+
+* https://github.com/google/sanitizers/wiki/AddressSanitizer
+* https://github.com/google/sanitizers/issues
+
+
 
 # 误报场景
 
@@ -359,7 +884,6 @@ after itself.
 
 
 
-
 # Refer
 
 * https://github.com/google/sanitizers/wiki/
@@ -367,7 +891,7 @@ after itself.
 * [No more leaks with sanitize flags in gcc and clang](https://lemire.me/blog/2016/04/20/no-more-leaks-with-sanitize-flags-in-gcc-and-clang/)
 * [Building better software with better tools: sanitizers versus valgrind](https://lemire.me/blog/2019/05/16/building-better-software-with-better-tools-sanitizers-versus-valgrind/)
 * [How to use gcc with fsanitize=address?](https://stackoverflow.com/questions/58262749/how-to-use-gcc-with-fsanitize-address)
-
+* http://gavinchou.github.io/experience/summary/syntax/gcc-address-sanitizer/
 
 
 
