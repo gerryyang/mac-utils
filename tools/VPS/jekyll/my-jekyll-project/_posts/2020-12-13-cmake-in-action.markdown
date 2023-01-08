@@ -1166,6 +1166,17 @@ Specify a `<suffix>` to tell the `find_library()` command to search in a `lib<su
 
 * https://cmake.org/cmake/help/v3.9/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.html
 
+## CMAKE_MODULE_PATH
+
+[Semicolon-separated list](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#cmake-language-lists) of directories specifying a search path for CMake modules to be loaded by the [include()](https://cmake.org/cmake/help/latest/command/include.html#command:include) or [find_package()](https://cmake.org/cmake/help/latest/command/find_package.html#command:find_package) commands before checking the default modules that come with CMake. By default it is empty, it is intended to be set by the project.
+
+```
+set(THIRDPARTY_PATH "${SLN_ROOT}/thirdparty")
+set(CMAKE_MODULE_PATH "${THIRDPARTY_PATH}/cmake;${CMAKE_MODULE_PATH}")
+```
+
+* https://cmake.org/cmake/help/latest/variable/CMAKE_MODULE_PATH.html
+
 
 # Module
 
