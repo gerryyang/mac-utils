@@ -259,6 +259,14 @@ void luaL_checkstack (lua_State *L, int sz, const char *msg);
 * https://github.com/starwing/lua-protobuf/commit/d5f144b0f2a1930f700b5a7cce106374c0e64adf
 
 
+# Lua 5.3 升级注意事项
+
+``` bash
+sudo yum install readline-devel
+```
+
+* [Lua 5.3 升级注意](https://blog.codingnow.com/2015/01/lua_53_update.html)
+
 
 
 # Refer

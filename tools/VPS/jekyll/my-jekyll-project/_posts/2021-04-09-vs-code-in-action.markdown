@@ -419,6 +419,18 @@ CMake langage support for Visual Studio Code
 
 Develop, deploy and debug Kubernetes applications
 
+## Excalidraw (画图，素材丰富)
+
+Draw schemas in VS Code using Excalidraw
+
+This extension integrates Excalidraw into VS Code. To use it, create an empty file with a .excalidraw, .excalidraw.json, .excalidraw.svg or excalidraw.png extension and open it in Visual Studio Code.
+
+Try the web version at : https://excalidraw.com/
+
+Import Public Library
+
+Check out the available libraries at libraries.excalidraw.com, and don't hesitate to contribute your own !
+
 
 # 有趣的扩展
 

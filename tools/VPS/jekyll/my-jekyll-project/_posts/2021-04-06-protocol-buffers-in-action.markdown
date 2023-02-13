@@ -1588,6 +1588,296 @@ https://docs.buf.build/best-practices/style-guide
 
 # Q&A
 
+## string 类型会检查 UTF-8 编码，编码提示错误而解码失败
+
+测试代码：
+
+非法 UTF-8 字符参考：[Example invalid utf8 string?](https://stackoverflow.com/questions/1301402/example-invalid-utf8-string)
+
+https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
+
+``` cpp
+void PbAbnormalTestImpl()
+{
+    ProtocolPB::CSMsg stMsg;
+
+    std::string strName = "my\xbcvalue"; // invalid UTF8 data
+    stMsg.mutable_MsgPara()->mutable_CSReqLoginPara()->set_Name(strName);
+
+    MSG_BUF(abyBuf);
+    uint32 uBufSize = MAX_MSG_BUF_SIZE;
+    google::protobuf::io::ArrayOutputStream stStream((void*)abyBuf, uBufSize);
+    if (!stMsg.SerializeToZeroCopyStream(&stStream))
+    {
+        LOG_ERROR("Encode(SerializeToZeroCopyStream) error\n");
+        return;
+    }
+    auto uLen = (uint32)stStream.ByteCount();
+
+    LOG_DEBUG("Encode(SerializeToZeroCopyStream) ok, uLen(%u)\n", uLen);
+
+    if (!stMsg.ParseFromArray((const void*)abyBuf, uLen))
+    {
+        LOG_ERROR("Decode(ParseFromArray) error\n");
+        return;
+    }
+    LOG_DEBUG("Decode(ParseFromArray) ok\n");
+}
+```
+
+
+对于 string 类型的字段，PB 在编码时会调用 VerifyUtf8String 检查字段内容是否符合 UTF-8 编码，若不是则会编码失败，但不会返回错误。而在解码时同样会调用 VerifyUtf8String 检查，此时检查失败会返回解码错误。问题影响是，业务在编码时没有及时发现错误，导致保存的编码内容是错误的，而在解码时才出现异常，导致异常不可恢复。
+
+``` cpp
+  // Verifies that a string field is valid UTF8, logging an error if not.
+  // This function will not be called by newly generated protobuf code
+  // but remains present to support existing code.
+  static void VerifyUTF8String(const char* data, int size, Operation op);
+  // The NamedField variant takes a field name in order to produce an
+  // informative error message if verification fails.
+  static void VerifyUTF8StringNamedField(const char* data, int size,
+                                         Operation op, const char* field_name);
+```
+
+`VerifyUtf8String` 具体实现：
+
+``` cpp
+bool WireFormatLite::VerifyUtf8String(const char* data,
+                                      int size,
+                                      Operation op,
+                                      const char* field_name) {
+  if (!IsStructurallyValidUTF8(data, size)) {
+    const char* operation_str = NULL;
+    switch (op) {
+      case PARSE:
+        operation_str = "parsing";
+        break;
+      case SERIALIZE:
+        operation_str = "serializing";
+        break;
+      // no default case: have the compiler warn if a case is not covered.
+    }
+    string quoted_field_name = "";
+    if (field_name != NULL) {
+      quoted_field_name = StringPrintf(" '%s'", field_name);
+    }
+    // no space below to avoid double space when the field name is missing.
+    GOOGLE_LOG(ERROR) << "String field" << quoted_field_name << " contains invalid "
+               << "UTF-8 data when " << operation_str << " a protocol "
+               << "buffer. Use the 'bytes' type if you intend to send raw "
+               << "bytes. ";
+    return false;
+  }
+  return true;
+}
+```
+
+编码接口：
+
+``` cpp
+// Serialization ---------------------------------------------------
+  // Methods for serializing in protocol buffer format.  Most of these
+  // are just simple wrappers around ByteSize() and SerializeWithCachedSizes().
+
+  // Write a protocol buffer of this message to the given output.  Returns
+  // false on a write error.  If the message is missing required fields,
+  // this may GOOGLE_CHECK-fail.
+  bool SerializeToCodedStream(io::CodedOutputStream* output) const;
+  // Like SerializeToCodedStream(), but allows missing required fields.
+  bool SerializePartialToCodedStream(io::CodedOutputStream* output) const;
+  // Write the message to the given zero-copy output stream.  All required
+  // fields must be set.
+  bool SerializeToZeroCopyStream(io::ZeroCopyOutputStream* output) const;
+  // Like SerializeToZeroCopyStream(), but allows missing required fields.
+  bool SerializePartialToZeroCopyStream(io::ZeroCopyOutputStream* output) const;
+  // Serialize the message and store it in the given string.  All required
+  // fields must be set.
+  bool SerializeToString(std::string* output) const;
+  // Like SerializeToString(), but allows missing required fields.
+  bool SerializePartialToString(std::string* output) const;
+  // Serialize the message and store it in the given byte array.  All required
+  // fields must be set.
+  bool SerializeToArray(void* data, int size) const;
+  // Like SerializeToArray(), but allows missing required fields.
+  bool SerializePartialToArray(void* data, int size) const;
+
+  // ...
+```
+
+业务协议生成代码，编码时调用 `SerializeWithCachedSizes` 接口，其中 `VerifyUtf8String` 检查失败，不会返回错误。
+
+``` cpp
+  // string Name = 2;
+  if (this->Name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->Name().data(), static_cast<int>(this->Name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "ProtocolPB.CSReqLoginPara.Name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->Name(), output);
+  }
+```
+
+解码接口：
+
+``` cpp
+// Several of the Parse methods below just do one thing and then call another
+// method.  In a naive implementation, we might have ParseFromString() call
+// ParseFromArray() which would call ParseFromZeroCopyStream() which would call
+// ParseFromCodedStream() which would call MergeFromCodedStream() which would
+// call MergePartialFromCodedStream().  However, when parsing very small
+// messages, every function call introduces significant overhead.  To avoid
+// this without reproducing code, we use these forced-inline helpers.
+GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE bool InlineMergeFromCodedStream(
+    io::CodedInputStream* input, MessageLite* message);
+GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE bool InlineParseFromCodedStream(
+    io::CodedInputStream* input, MessageLite* message);
+GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE bool InlineParsePartialFromCodedStream(
+    io::CodedInputStream* input, MessageLite* message);
+GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE bool InlineParseFromArray(
+    const void* data, int size, MessageLite* message);
+GOOGLE_PROTOBUF_ATTRIBUTE_ALWAYS_INLINE bool InlineParsePartialFromArray(
+    const void* data, int size, MessageLite* message);
+```
+
+业务协议生成代码，解码时调用 `MergePartialFromCodedStream` 接口，其中 `VerifyUtf8String` 检查失败则返回错误。
+
+``` cpp
+      // string Name = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_Name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->Name().data(), static_cast<int>(this->Name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "ProtocolPB.CSReqLoginPara.Name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+```
+
+VerifyUtf8String 检查是 Protobuf 3.0.0 版本引入的特性，可参考[v3.0.0 版本发布说明](https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0)。
+
+> Proto3 enforces strict UTF-8 checking. Parsing will fail if a string field contains non UTF-8 data.
+
+**如何解决上面提到的问题呢，下面是相关的一些 issue:**
+
+问题描述1: [UTF8 validation error is not returned during message creation #7364](https://github.com/protocolbuffers/protobuf/issues/7364)
+
+Using C++ it's currently possible to create a message with non valid UTF8 strings as UTF8 validation errors are only reported via logs. But then it is not possible to parse such message back as during parsing UTF8 validation errors are actually treated as errors.
+
+My expectation is that SerializeToString should return false and UTF8 validation should be treated as error for both decoding and encoding of a message.
+
+And wonder if [this line is exactly about it](https://github.com/protocolbuffers/protobuf/blob/e667bf6eaaa2fb1ba2987c6538df81f88500d030/src/google/protobuf/generated_message_table_driven_lite.h#L289)?
+
+官方没有答复是否支持 Encode 序列化时直接返回失败，而不是只是提示错误。
+
+问题描述2: [How to handle parse of persisted objects due to new UTF-8 validation #922](https://github.com/golang/protobuf/issues/922)
+
+"Recently" (i.e. since the last time we performed a vendored code update), strings gained UTF-8 validation of data. So now parsing objects stored in a database or log files no longer works, if they had any offending sequences (which, generically, could be in any string).
+
+The solutions I see:
+
+1. Use "proto2". This is a non-starter since it would require a rewrite of all proto definitions (and, I think, code).
+2. Do a global `s/string/bytes/` and adjust all the code to wrap each field access in `string()` and write in a `[]byte()`. This is a lot of replacement, but doable. However printing objects will be nasty now, we can no longer printf("%v") it and expect to see a string.
+3. Set `validateUTF8 = false` in the vendored code instead of `= true`. Easy enough, but begins a maintenance burden and moves us away from upstream.
+4. At every Marshal/Unmarshal site, check the returned error for being of type "interface{ `InvalidUTF8() bool` }". Seems feasible, esp if we provide our own wrappers for Marshal/Unmarshal and update all the existing call sites to use the new wrappers.
+
+I was wondering if the protobuf team (or anyone else) had any other suggestions or opinions on good ways to address this.
+
+官方的回答：
+
+A central problem is that by the protobuf standards for a string (which applies for proto3 as well as proto2) apply and say:
+
+> A string must always contain UTF-8 encoded or 7-bit ASCII text, and cannot be longer than 2³².
+
+If you’re storing raw binary data in a protobuf `string` type, then that is out of standard. For cases where you have non-utf8 values in a byte sequence, you should use `bytes`. (官方建议如果 `string` 编码不是 UTF-8 需要改为 `btyes` 类型)
+
+> I think a global option for disabling utf-8 validation would be the best thing.
+
+I've advocated for this, but the protobuf team is afraid of prolific use of the option where it becomes increasingly problematic for language implementations that can't handle invalid UTF-8 in strings, which is a reasonable concern. (官方默认没有提供可选项)
+
+问题描述3: [protoc allows invalid UTF-8 in source and in option values whose type is string #9175](https://github.com/protocolbuffers/protobuf/issues/9175)
+
+官方的回答：
+
+I wonder if we can use the explicit field option "enforce_utf8" on those fields. If so, I think we could simply modify descriptor.proto such that string-type options such as java_outer_classname would be declared like this:
+
+```
+optional string java_outer_classname = 8 [enforce_utf8 = true];
+```
+
+Indeed, **it is internal only** but it might have been worth externalizing except that it only works for turning off UTF8 validation in proto3. It never allowed turning on UTF8 validation in proto2.
+
+开源的外部版本还不支持设置 `enforce_utf8` 选项，只有 Google 的内部版本支持。目前此问题还处于 Open 状态。
+
+
+## Protobuf 日志输出
+
+[GOOGLE_LOG - where is the log to inspect protobuf errors etc. #5641](https://github.com/protocolbuffers/protobuf/issues/5641)
+
+The [default log handler](https://github.com/protocolbuffers/protobuf/blob/a21caa237a92b21d9af7e9aba2ea3600885ae5f9/src/google/protobuf/stubs/common.cc#L163) just sends messages to `stderr`, but you might need to check that `GOOGLE_PROTOBUF_MIN_LOG_LEVEL` was set to an appropriate level (should be set to `LOGLEVEL_INFO` if you want to see all log messages.)
+
+``` cpp
+enum LogLevel {
+  LOGLEVEL_INFO,     // Informational.  This is never actually used by
+                     // libprotobuf.
+  LOGLEVEL_WARNING,  // Warns about issues that, although not technically a
+                     // problem now, could cause problems in the future.  For
+                     // example, a // warning will be printed when parsing a
+                     // message that is near the message size limit.
+  LOGLEVEL_ERROR,    // An error occurred which should never happen during
+                     // normal use.
+  LOGLEVEL_FATAL,    // An error occurred from which the library cannot
+                     // recover.  This usually indicates a programming error
+                     // in the code which calls the library, especially when
+                     // compiled in debug mode.
+
+#ifdef NDEBUG
+  LOGLEVEL_DFATAL = LOGLEVEL_ERROR
+#else
+  LOGLEVEL_DFATAL = LOGLEVEL_FATAL
+#endif
+};
+```
+
+``` cpp
+LogHandler* SetLogHandler(LogHandler* new_func) {
+  LogHandler* old = internal::log_handler_;
+  if (old == &internal::NullLogHandler) {
+    old = nullptr;
+  }
+  if (new_func == nullptr) {
+    internal::log_handler_ = &internal::NullLogHandler;
+  } else {
+    internal::log_handler_ = new_func;
+  }
+  return old;
+}
+```
+
+修改 LogHandler:
+
+``` cpp
+#include "google/protobuf/stubs/logging.h"
+#include "google/protobuf/stubs/common.h"
+
+void CapturePBLog(google::protobuf::LogLevel level, const char* filename, int line,
+                const std::string& message) {
+    LOGGER_TMP("level(%d) filename(%s) line(%d) message(%s)\n", level, filename, line, message.c_str());
+}
+
+int main(int argc, const char* argv[])
+{
+    SetLogHandler(&CapturePBLog);
+    return Proc(argc, argv);
+}
+```
+
+
 ## [How to statically link "protoc" on linux?](https://groups.google.com/g/protobuf/c/Hw0mHlyf6dY)
 
 ```
@@ -1607,6 +1897,14 @@ $ldd protoc
         libdl.so.2 => /lib64/libdl.so.2 (0x00007f2616698000)
         /lib64/ld-linux-x86-64.so.2 (0x00007f26178bc000)
 ```
+
+# ChangeLog
+
+## [Protocol Buffers v3.0.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.0.0)
+
+This change log summarizes all the changes since the last stable release (v2.6.1). See the last section about changes since v3.0.0-beta-4.
+
+
 
 
 

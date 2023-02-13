@@ -151,8 +151,46 @@ GDB provides these facilities for debugging multi-thread programs:
 * thread-specific breakpoints
 * `set print thread-events`, which controls printing of messages on thread start and exit.
 
-
 https://sourceware.org/gdb/current/onlinedocs/gdb/Threads.html#Threads
+
+### All-Stop Mode
+
+用 gdb 调试多线程程序时，一旦程序断住，所有的线程都处于暂停状态。此时当你调试其中一个线程时（比如执行 `step`，`next` 命令），所有的线程都会同时执行。如果想在调试一个线程时，让其它线程暂停执行，可以使用 `set scheduler-locking on` 命令。
+
+In all-stop mode, whenever your program stops under GDB for any reason, all threads of execution stop, not just the current thread. This allows you to examine the overall state of the program, including switching between threads, without worrying that things may change underfoot.
+
+Conversely, whenever you restart the program, all threads start executing. This is true even when single-stepping with commands like `step` or `next`.
+
+On some OSes, you can modify GDB’s default behavior by locking the OS scheduler to allow only a single thread to run.
+
+``` bash
+# Set the scheduler locking mode. It applies to normal execution, record mode, and replay mode. mode can be one of the following
+set scheduler-locking mode
+```
+
+* `off`
+  * There is no locking and any thread may run at any time.
+* `on`
+  * Only the current thread may run when the inferior is resumed.
+* `step`
+* `replay`
+  * Behaves like on in replay mode, and off in either record mode or during normal execution. This is the default mode.
+
+``` bash
+# Display the current scheduler locking mode.
+show scheduler-locking
+
+# 禁止线程调度切换，固定当前线程
+set scheduler-locking on
+```
+
+refer:
+
+* https://github.com/hellogcc/100-gdb-tips/blob/master/src/set-scheduler-locking-on.md
+* https://sourceware.org/gdb/onlinedocs/gdb/All_002dStop-Mode.html#All_002dStop-Mode
+* https://code.visualstudio.com/docs/cpp/cpp-debug
+
+
 
 ## Debugging Forks
 

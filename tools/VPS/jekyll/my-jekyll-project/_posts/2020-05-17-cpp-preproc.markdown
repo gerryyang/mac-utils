@@ -554,6 +554,44 @@ $ g++ -E -dM - < /dev/null
 
 ```
 
+# Tips
+
+## `__PRETTY_FUNCTION__`
+
+``` cpp
+#include <iostream>
+
+template<typename T>
+void func(T&& param)
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::cout << param << std::endl;
+}
+
+void f()
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::cout << __FUNCTION__ << std::endl;
+}
+
+int main()
+{
+    f();
+
+    int a{100};
+    func(a); // ok
+    func(100); // ok
+}
+/*
+void f()
+f
+void func(T&&) [with T = int&]
+100
+void func(T&&) [with T = int]
+100
+*/
+```
+
 
 
 # 测试代码

@@ -475,7 +475,7 @@ Default limit for clangd is 8GB, but you can easily customize it. BTW, clangd wo
 vscode 的 clangd 插件在 disk 模式下会在 /tmp 目录下产生大量的 preamble-xxx.pch 的文件，导致 / 挂载盘空间占满。
 解决方案：(将 tmp 文件重定向到用户 data 目录下)
 1. ~/.bash_profile 中加上 export TMPDIR=$HOME/tmp
-2. kill掉服务器上的vscode进程，重新连接进入
+2. kill 掉服务器上的 vscode 进程，重新连接进入
 
 
 

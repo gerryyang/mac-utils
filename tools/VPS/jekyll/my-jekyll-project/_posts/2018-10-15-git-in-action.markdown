@@ -567,6 +567,15 @@ $ git remote rm <主机名>
 
 # 远程主机的改名
 $ git remote rename <原主机名> <新主机名>
+
+# 更新
+git remote -v
+git remote set-url origin <新地址>
+
+# 或者在 ~/.gitconfig 里配置
+[url "新地址:"]
+    insteadOf = 老地址:
+
 ```
 
 ## 远程仓库操作 - git fetch

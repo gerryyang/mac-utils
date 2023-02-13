@@ -246,7 +246,79 @@ pop ax ; pop the element on top of the stack, 0x006A, into AX; the stack is now 
 
 The Stack is usually used to pass arguments to functions or procedures and also to keep track of control flow when the call instruction is used. The other common use of the Stack is temporarily saving registers.
 
-# CPU Registers
+# CPU Registers (CPU 寄存器)
+
+| 寄存器 | 8 位 | 16 位 | 32 位 | 64 位
+| -- | -- | -- | -- | --
+| 通用寄存器 | 累加寄存器 | AH : AL | AX | EAX | RAX
+|           | 基址寄存器 | BH : BL | BX | EBX | RBX
+|           | 计数寄存器 | CH : CL | CX | ECX | RCX
+|           | 数据寄存器 | DH : DL | DX | EDX | RDX
+|           | 堆栈基指针 |         | BP | EBP | RBP
+|           | 堆栈指针   |         | SP | ESP | RSP
+|           | 变址寄存器 |         | SI | ESI | RSI
+|           | 指令寄存器 |         | DI | EDI | RDI
+| 指令指针寄存器 |        |         | IP | EIP | RIP
+| 新增       |          |         |    |    | r8 - r15
+
+* AX，BX，CX，DX 这些寄存器用来保存操作数和运算结果等信息，从而节省读取操作数所需占用总线和访问存储器的时间。
+* 指针寄存器(SP，BP)，用于维护和访问堆栈存储单元。SP 为堆栈指针(Stack Pointer)寄存器，用它只可访问栈顶；BP 为基指针(Base Pointer)寄存器，用它可直接存取堆栈中的数据。
+* 变址寄存器(SI，DI)，Index Register，它们主要用于存放存储单元在段内的偏移量。
+* 指令指针寄存器(IP)，Instruction Pointer，是存放下次将要执行的指令在代码段的偏移量。在具有预取指令功能的系统中，下次要执行的指令通常已被预取到指令队列中，除非发生转移情况。
+
+* AT&T 格式和 Intel 格式的指令的源操作数和目的操作数的顺序是相反的。下面指令的含义是将 rax 寄存器的值存入 rdi 寄存器中。
+
+| AT&T格式 | Intel格式
+| -- | --
+| mov %rax %rdi | mov rdi rax
+
+* 汇编中的寻址方式：立即数寻址，直接寻址，间接寻址，变址寻址；下面是AT&T指令格式示例。
+
+| 寻址方式 | 指令 | AT&T格式
+| -- | -- | --
+| 立即数寻址 | movl $0x123, %edx | 数字->寄存器
+| 直接寻址 | movl 0x123, %edx | 0x123 指向内存数据->寄存器
+| 间接寻址 | movl (%ebx), %edx | ebx 寄存器指向内存数据-> edx 寄存器
+| 变址寻址 | movl 4(%ebx), %edx | ebx+4 指向内存数据-> edx 寄存器
+
+* lea 指令，装入有效地址到寄存器
+* 跳转指令：call，ret。
+
+``` bash
+# cpu 执行 call 跳转指令时，cpu 做了如下操作：
+
+rsp = rsp – 8
+rsp = rip
+# 即跳转之前会将下一条要执行语句指令地址压入栈顶
+# call等同于以下两条语句，但call本身就一条指令
+push %rip
+jmp 标号
+```
+
+类似 ret 指令会将栈顶的内容弹出到 rip 寄存器中，继续执行：
+
+```
+rip = rsp
+rsp = rsp + 8
+# 等同于
+pop %rip
+```
+
+* GCC 关于寄存器的使用
+
+GCC 中对这些寄存器的调用规则如下：
+
+rax 作为函数返回值使用；
+rsp 栈指针寄存器，指向栈顶；
+rdi，rsi，rdx，rcx，r8，r9 用作函数参数，依次对应第1参数，第2参数等。当参数超过6个，才会通过压栈的方式传参数。
+rbx，rbp，r12，r13，r14，r15 用作数据存储，遵循被调用者保存规则，简单说就是随便用，在调用函数中如果要使用这些寄存器要先备份它，退出调用函数前进行恢复；
+r10，r11 用作数据存储，遵循调用者保存规则，简单说就是调用函数之前要先保存原值；
+
+
+
+
+
+
 
 `Registers` are a space in the CPU that can be used to hold data. In an x64 CPU, each register can hold 64 bits.
 

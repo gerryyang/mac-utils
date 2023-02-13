@@ -1500,3 +1500,20 @@ devtoolset-9的配置文件路径：/opt/rh/devtoolset-9/root/usr/include/c++/9/
 
 
 
+# 第三方工具
+
+## diskusage
+
+A tool for showing disk usage. (Linux, MacOS and Windows)
+
+https://github.com/chenquan/diskusage
+
+```
+$diskusage .
+Total: 4.514M   /data/home/gerryyang/tools/diskusage
+-------------------------------------------------------------
+ 4.5M  99.9% ┌─ diskusage
+ 2.7K   0.1% └─ README.md
+```
+
+

@@ -433,6 +433,8 @@ More: https://github.com/hzlzh/Best-App
 
 * [excalidraw](https://excalidraw.com/)
   - 在线手绘风格
+  - 素材丰富
+  - 支持 vscode
 
 * [flowchart.js](https://github.com/adrai/flowchart.js)
 	- 通过脚本语言生成**流程图**
