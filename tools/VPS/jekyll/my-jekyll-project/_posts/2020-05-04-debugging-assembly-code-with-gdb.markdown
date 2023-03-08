@@ -267,6 +267,31 @@ disassemble /m [...]
 disassemble /r [...]
 ```
 
+Parameters
+
+* Function
+
+Specifies the function to disassemble. If specified, the disassemble command will produce the disassembly output of the entire function.
+
+* Address
+
+Specifies the address inside a function to disassemble. Note that when only one address is specified, this command will disassemble the entire function that includes the given address, including the instructions above it.
+
+* Start/End
+
+Specifies starting and ending addresses to disassemble. If this form is used, the command won't disassemble the entire function, but only the instructions between the starting and ending addresses.
+
+* Length
+
+Specifies the amount of bytes to disassemble starting from the given address or function.
+
+* /m
+
+When this option is specified, the disassemble command will show the source lines that correspond to the disassembled instructions.
+
+* /r
+When this option is specified, the disassemble command will show the raw byte values of all disassembled instructions.
+
 https://visualgdb.com/gdbreference/commands/disassemble
 
 
@@ -425,7 +450,11 @@ gdb中简写命令配合tab键使用
 
 # [Information About a Frame](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html)
 
-# [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
+TODO
+
+# 常用技巧
+
+## [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 
 You need to enable logging:
 
@@ -444,6 +473,33 @@ And you can examine the current logging configuration:
 ```
 (gdb) show logging
 ```
+
+## 打印 STL 容器中的内容
+
+``` cpp
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main ()
+{
+  vector<int> vec(10); // 10 zero-initialized elements
+
+  for (int i = 0; i < vec.size(); i++)
+    vec[i] = i;
+
+  cout << "vec contains:";
+  for (int i = 0; i < vec.size(); i++)
+    cout << ' ' << vec[i];
+  cout << '\n';
+
+  return 0;
+}
+```
+
+https://github.com/hellogcc/100-gdb-tips/blob/master/src/print-STL-container.md
+
 
 
 # Refer

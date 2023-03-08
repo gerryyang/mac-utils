@@ -8,6 +8,8 @@ categories: [VS Code,]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+> Tips: Whenever you want to do something in VS Code and don't know how, it's a good idea to bring up the command palette with `CTRL+SHIFT+P` on Windows(`CMD+SHIFT+P` on mac), and try typing in a keyword for you want. Oftentimes the command will show up there so you don't have to go searching the net for how to do something.
+
 
 VS Code [下载地址](https://code.visualstudio.com/)，当前版本：1.55 版本，2021-04
 

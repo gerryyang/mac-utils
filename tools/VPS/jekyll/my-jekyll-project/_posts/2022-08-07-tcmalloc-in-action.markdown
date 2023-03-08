@@ -364,7 +364,8 @@ See more: https://github.com/google/tcmalloc/blob/master/docs/stats.md
 * [图解 TCMalloc](https://zhuanlan.zhihu.com/p/29216091)
 * [TCMalloc 源码分析](https://dirtysalt.github.io/html/tcmalloc.html)
 * [jemalloc](https://github.com/jemalloc/jemalloc/releases)
-
+* [ptmalloc、tcmalloc与jemalloc对比分析](https://www.cyningsun.com/07-07-2018/memory-allocator-contrasts.html)
+* [ptmalloc,tcmalloc和jemalloc内存分配策略研究](https://cloud.tencent.com/developer/article/1173720)
 
 
 

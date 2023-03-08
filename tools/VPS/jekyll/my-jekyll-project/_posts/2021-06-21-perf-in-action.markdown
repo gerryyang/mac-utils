@@ -851,6 +851,31 @@ Since perf_events can record high resolution timestamps (microseconds) for event
 perf top -t $tid
 ```
 
+* [What do the perf record choices of LBR vs DWARF vs fp do?](https://stackoverflow.com/questions/57430338/what-do-the-perf-record-choices-of-lbr-vs-dwarf-vs-fp-do)
+
+When I use the perf record on my code, I find three choices for the `--call-graph` option: `lbr` (last branch record), `dwarf` and `fp`. What is difference between these?
+
+```
+perf record -h
+
+--call-graph <record_mode[,record_size]>
+                          setup and enables call-graph (stack chain/backtrace):
+
+                                record_mode:    call graph recording mode (fp|dwarf|lbr)
+                                record_size:    if record_mode is 'dwarf', max size of stack recording (<bytes>)
+                                                default: 8192 (bytes)
+
+                                Default: fp
+```
+
+
+The option `--call-graph` refers to the collection of call graphs / call chains, i.e. the function stack for a sample.
+
+The default, `fp`, uses frame pointers. This is very efficient but can be unreliable, particularly for optimized code. By explicitly using `-fno-omit-frame-pointer`, you can ensure that this is available for your code. Nevertheless, the result for libraries may vary.
+
+With `dwarf`, perf actually collects and stores a part of the stack memory itself and unwinds it with post-processing. This can be very resource consuming and may have limited stack depth. The default stack memory chunk is 8 kiB, but can be configured.
+
+`lbr` stands for last branch records. This is a hardware mechanism support by Intel CPUs. This will probably offer the best performance at the cost of portability. lbr is also limited to userspace functions.
 
 
 

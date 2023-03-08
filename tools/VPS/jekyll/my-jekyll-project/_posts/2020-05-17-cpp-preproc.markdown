@@ -790,4 +790,4 @@ namespace std
 
 * [The C Preprocessor](https://gcc.gnu.org/onlinedocs/gcc-3.0.2/cpp.html#SEC_Top)
 * [C/C++ preprocessor reference](https://docs.microsoft.com/en-us/cpp/preprocessor/c-cpp-preprocessor-reference?view=msvc-160)
-
+* [C/C++ 预处理器参考](https://learn.microsoft.com/zh-cn/cpp/preprocessor/c-cpp-preprocessor-reference?view=msvc-170)

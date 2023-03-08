@@ -140,7 +140,7 @@ Run CMake with one of the following command signatures to specify the source and
 Uses the current working directory as the **build tree**, and `<path-to-source>` as the **source tree**. The specified path may be absolute or relative to the current working directory. The source tree must contain a `CMakeLists.txt` file and must not contain a `CMakeCache.txt` file because the latter identifies an existing build tree. For example:
 
 ```
-$ mkdir build ; cd build
+$ mkdir build; cd build
 $ cmake ../src
 ```
 
@@ -1714,6 +1714,37 @@ popd
 
 
 # Tips
+
+## 检查 CXX 编译器是否支持某个编译选项 (CheckCXXCompilerFlag)
+
+Check whether the CXX compiler supports a given flag.
+
+```
+INCLUDE(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" SUPPORT_CXX11)
+IF(NOT SUPPORT_CXX11)
+    MESSAGE(FATAL_ERROR "compiler not support c++11")
+ENDIF()
+```
+
+* https://cmake.org/cmake/help/latest/module/CheckCXXCompilerFlag.html
+
+
+## (FindPackageHandleStandardArgs)
+
+This module provides functions intended to be used in Find Modules implementing `find_package(<PackageName>`) calls.
+
+```
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Protobuf
+    REQUIRED_VARS Protobuf_PROTOC_EXECUTABLE Protobuf_LIBRARIES Protobuf_INCLUDE_DIRS
+    VERSION_VAR Protobuf_VERSION
+)
+```
+
+* https://cmake.org/cmake/help/latest/module/FindPackageHandleStandardArgs.html
+* https://stackoverflow.com/questions/52785157/what-does-findpackagehandlestandardargs-do-exactly
+
 
 ## 检查是否是 GCC 编译
 

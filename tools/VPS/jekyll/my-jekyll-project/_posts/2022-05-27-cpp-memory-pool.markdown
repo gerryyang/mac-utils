@@ -8,6 +8,61 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# 问题描述
+
+``` cpp
+#include <iostream>
+
+class A
+{
+public:
+    A() { std::cout << "A()\n"; }
+    virtual ~A() { std::cout << "~A()\n"; }
+    int a[5];
+};
+
+class B
+{
+public:
+    B() { std::cout << "B()\n"; }
+    virtual ~B() { std::cout << "~B()\n"; }
+    int b;
+};
+
+class C : public A, public B
+{
+public:
+    C() { std::cout << "C()\n"; }
+    ~C() { std::cout << "~C()\n"; }
+    int c;
+};
+
+int main()
+{
+    C* pC = new C();
+    std::cout << "pC: " << pC << std::endl;
+
+    A* pA = pC;
+    std::cout << "pA: " << pA << std::endl;
+
+    B* pB = pC;
+    std::cout << "pB: " << pB << std::endl;
+
+    delete pB; // ok?
+}
+/*
+A()
+B()
+C()
+pC: 0x8fbeb0
+pA: 0x8fbeb0
+pB: 0x8fbed0
+~C()
+~B()
+~A()
+*/
+```
+
 
 # 通过基类指针释放对象
 

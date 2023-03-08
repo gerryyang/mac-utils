@@ -60,11 +60,36 @@ Refer:
 
 
 
+# ECS 架构
+
+参考 [ECS 架构简介](https://johnyoung404.github.io/2019/06/27/ECS%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/)
+
+在面向对象编程中，抽象是很重要的概念。一般地使用虚函数来实现动态绑定，从而达成运行时的多态性。这种多态性意味着，可以仅仅操作父类，而不需要关心子类中与该操作无关的部分，这其实就达成了一种解耦（外部系统只与父类耦合，但是父类和子类之间还是强耦合的）。
+
+然而正是因为继承时父类和子类的强耦合性，只有在两个类之间有 `Is-A` 关系的时候才能使用**继承**（Liskov 替换原则）。在游戏编程中（其他领域也基本如此），大多数时候 `Has-A` 可能更适合于描述两个类之间的关系，所谓**组合优于继承**，这其实就是组件的思想。在 Unity 的设计之初，组件系统在游戏引擎的设计中已经非常流行，Unity 也正是采用的组件系统，通过附加不同的组件，来描述不同的游戏对象（Transform 组件、Renderer 组件等）。Unity 的这种组件系统和将要介绍的 ECS 也不一样（实际上 Unity 也已经发布了面向数据的技术栈 DOTS，其中包含了 Unity ECS，Unity 旧的组件系统基于的还是传统的面向对象的编码方式，包含堆内存分配、GC、虚函数（Monobehaviour 的 Awake、Update 等方法）等等，这些因素从底层形成了代码的运行速率提升的瓶颈。
+
+要想突破这些瓶颈，不得不放弃面向对象，换一种从一开始就从效率角度考虑的程序设计方式。ECS 是就是这样一种以数据为主导的一种程序架构，它可以提供给开发者一种方便的写出高性能代码的方式，同时代码的逻辑架构足够清晰，模块之间的耦合性足够小。**它的基本思想是将数据与行为分离，让数据在内存中紧凑排列，提高 CPU 的缓存命中率；同时不使用引用类型，不使用继承，让多线程代码的编写更为简单，使各种 Batch 技术的应用成为可能；从程序的可维护性、可扩展性上来看，ECS 将数据和行为分离，在 Component 中仅储存数据，System 中仅储存行为，System 通过依赖注入的方式访问 Component，这可以很大程度上解耦，框架的表达能力和模块化并不会比面向对象的方式弱**。
 
 
+# SpatialOS
 
+https://improbable.io/games
 
+> SpatialOS enables game creators to build rich, large-scale multiplayer experiences where hundreds or even thousands of players can play together in new and dynamic virtual worlds.
 
+Google 正与总部位于英国伦敦的模拟现实、仿真世界初创企业 Improbable 推出联合项目，帮助游戏开发者创造和测试“虚拟世界”。
+
+这个联合项目名为 SpatialOS Games Innovation Program，将利用谷歌的 Cloud Platform 帮助开发在线游戏场景世界。谷歌和 Improbable 在新闻稿中解释称，他们将在 Improbable 的 SpatialOS 平台上资助合格的开发者。Improbable 也会借此机会为 SpatialOS 平台推出 Game Developer Open Alpha。在 Games Innovation Program 明年初全面启动前，任何游戏开发者都可以利用 SpatialOS 平台及其开发工具测试自己的游戏创意。
+
+**SpatialOS 平台可被用于创造能够同时容纳成千上万模拟玩家的虚拟世界，它可以超过常规游戏服务器的限制，这些模拟支持新游戏所带来的的复杂运算。更重要的是，SpatialOS 还可被用于模拟创建真实世界中的巨大城市、整个经济体以及生物系统，以研究它们如何运转以及如何应对变化等，比如基础设施或气候变化等**。通过在谷歌的 Cloud Platform 上运行，这些虚拟世界可以横跨巨大的计算机网络，扩展到更大规模和更复杂的水平。
+
+# Dedicated server
+
+https://en.wikipedia.org/wiki/Game_server#Dedicated_server
+
+Dedicated servers simulate game worlds without supporting direct input or output, except that required for their administration. Players must connect to the server with separate client programs in order to see and interact with the game.
+
+The foremost advantage of dedicated servers is their suitability for hosting in professional data centers, with all of the reliability and performance benefits that entails. Remote hosting also eliminates the low-latency advantage that would otherwise be held by any player who hosts and connects to a server from the same machine or local network.
 
 
 

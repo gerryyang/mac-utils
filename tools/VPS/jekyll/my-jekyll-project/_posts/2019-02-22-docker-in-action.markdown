@@ -45,14 +45,25 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 
 ![docker_dev_flow_example](/assets/images/201902/docker_dev_flow_example.jpg)
 
-## 常用命令
+# 常用命令
 
 ![docker_cmd](/assets/images/201902/docker_cmd.jpg)
 
+## docker build
 
-## 测试使用 (CentOS)
+https://docs.docker.com/engine/reference/commandline/build/
 
-## 版本信息
+``` bash
+docker build -t vieux/apache:2.0 .
+```
+
+# 容器指标
+
+[cAdvisor](https://github.com/google/cadvisor) (Container Advisor) provides container users an understanding of the resource usage and performance characteristics of their running containers. It is a running daemon that collects, aggregates, processes, and exports information about running containers. Specifically, for each container it keeps resource isolation parameters, historical resource usage, histograms of complete historical resource usage and network statistics. This data is exported by container and machine-wide.
+
+
+# 测试使用 (CentOS)
+
 
 ```
 $docker version
@@ -131,7 +142,7 @@ Live Restore Enabled: false
 Product License: Community Engine
 ```
 
-## 用户管理
+# 用户管理
 
 ```
 sudo service docker start         # 启动 docker 服务
@@ -146,7 +157,7 @@ sudo usermod -aG docker ${USER}   # 当前用户加入 docker 组
 
 
 
-## Q&A
+# Q&A
 
 ## [How can I find a Docker image with a specific tag in Docker registry on the Docker command line?](https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock)
 
@@ -162,14 +173,20 @@ curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | 
 ```
 
 
-## 历史文章
+# 历史文章
 
 * [Where are Docker images stored? (杂译)]
 * [使用Docker registry镜像创建私有仓库]
 * [Docker使用桥接的通信方案]
 * [github-docker]
 
-## 官方文档
+
+# 书籍
+
+* [Docker - 从入门到实践](https://yeasy.gitbook.io/docker_practice/)
+
+
+# 官方文档
 
 * https://docs.docker.com/engine/reference/run/
 * [Docker Release Notes]

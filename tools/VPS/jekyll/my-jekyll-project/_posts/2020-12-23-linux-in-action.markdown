@@ -10,6 +10,71 @@ categories: Linux
 
 # Linux操作系统
 
+## /proc (process information pseudo-filesystem)
+
+refer: https://man7.org/linux/man-pages/man5/proc.5.html
+
+The proc filesystem is a pseudo-filesystem which provides an interface to kernel data structures.  It is commonly mounted at `/proc`. Typically, it is mounted automatically by the system, but it can also be mounted manually using a command such as:
+
+``` bash
+mount -t proc proc /proc
+```
+Most of the files in the proc filesystem are read-only, but some files are writable, allowing kernel variables to be changed.
+
+Underneath `/proc`, there are the following general groups of files and subdirectories:
+
+###  `/proc/[pid]`
+
+Each one of these subdirectories contains files and subdirectories exposing information about the **process** with the corresponding process ID.
+
+Underneath each of the `/proc/[pid]` directories, a task subdirectory contains subdirectories of the form `task/[tid]`, which contain corresponding information about each of the **threads** in the process, where tid is the kernel thread ID of the thread.
+
+### `/proc/[tid]`
+
+Each one of these subdirectories contains files and subdirectories exposing information about the **thread** with the corresponding thread ID.  The contents of these directories are the same as the corresponding `/proc/[pid]/task/[tid]` directories.
+
+## `/proc/self`
+
+When a process accesses this magic symbolic link, it resolves to the process's own `/proc/[pid]` directory.
+
+## `/proc/thread-self`
+
+When a thread accesses this magic symbolic link, it resolves to the process's own `/proc/self/task/[tid]` directory.
+
+## `/proc/[pid]/statm`
+
+Provides information about memory usage, measured in **pages**. The columns are:
+
+```
+$getconf -a|grep -i page
+PAGESIZE                           4096
+PAGE_SIZE                          4096
+_AVPHYS_PAGES                      157508
+_PHYS_PAGES                        32857825
+```
+
+```
+$cat /proc/1457274/statm
+1079417 108417 5394 10532 0 887414 0
+```
+
+size       (1) total program size
+                             (same as `VmSize` in `/proc/[pid]/status`)
+resident   (2) resident set size
+                             (inaccurate; same as `VmRSS` in `/proc/[pid]/status`)
+shared     (3) number of resident shared pages
+                             (i.e., backed by a file)
+                             (inaccurate; same as `RssFile+RssShmem` in
+                             `/proc/[pid]/status`)
+text       (4) text (code)
+lib        (5) library (unused since Linux 2.6; always 0)
+data       (6) data + stack
+dt         (7) dirty pages (unused since Linux 2.6; always 0)
+
+Some of these values are **inaccurate** because of a kernel-internal scalability optimization.  If accurate values are required, use `/proc/[pid]/smaps` or `/proc/[pid]/smaps_rollup` instead, which are much slower but provide accurate, detailed information.
+
+
+
 ## Signal
 
 Linux supports both POSIX reliable signals (hereinafter "standard signals") and POSIX real-time signals.
@@ -1517,3 +1582,9 @@ Total: 4.514M   /data/home/gerryyang/tools/diskusage
 ```
 
 
+# Q&A
+
+## [LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
+
+
+https://unix.stackexchange.com/questions/225687/what-happens-to-a-multithreaded-linux-process-if-it-gets-a-signal
