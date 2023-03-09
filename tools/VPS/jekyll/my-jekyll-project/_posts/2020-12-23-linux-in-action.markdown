@@ -51,12 +51,15 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
 ```
 
 (1) **pid**  %d
+
     The process ID.
 
 (2) **comm**  %s
+
     The filename of the executable, in parentheses. Strings longer than `TASK_COMM_LEN (16)` characters (including the terminating null byte) are silently truncated. This is visible whether or not the executable is swapped out.
 
 (3) **state**  %c
+
     One of the following characters, indicating process state:
 
     `R`  Running
@@ -84,36 +87,47 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
     `P`  Parked (Linux 3.9 to 3.13 only)
 
 (4) **ppid**  %d
+
     The PID of the parent of this process.
 
 (5) **pgrp**  %d
+
     The process group ID of the process.
 
 (6) **session**  %d
+
     The session ID of the process.
 
 (7) **tty_nr**  %d
+
     The controlling terminal of the process.
 
 (8) **tpgid**  %d
+
     The ID of the foreground process group of the controlling terminal of the process.
 
 (9) **flags**  %u
+
     The kernel flags word of the process. For bit meanings, see the PF_* defines in the Linux kernel source file include/linux/sched.h. Details depend on the kernel version.
 
 (10) **minflt**  %lu
+
     The number of minor faults the process has made which have not required loading a memory page from disk.
 
 (11) **cminflt**  %lu
+
     The number of minor faults that the process's waited-for children have made.
 
 (12) **majflt**  %lu
+
     The number of major faults the process has made which have required loading a memory page from disk.
 
 (13) **cmajflt**  %lu
+
     The number of major faults that the process's waited-for children have made.
 
 (14) **utime**  %lu
+
         Amount of time that this process has been scheduled
         in user mode, measured in clock ticks (divide by
         `sysconf(_SC_CLK_TCK)`).  This includes guest time,
@@ -123,11 +137,13 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
         their calculations.
 
 (15) **stime**  %lu
+
         Amount of time that this process has been scheduled
         in kernel mode, measured in clock ticks (divide by
         `sysconf(_SC_CLK_TCK)`).
 
 (16) **cutime**  %ld
+
         Amount of time that this process's waited-for
         children have been scheduled in user mode, measured
         in clock ticks (divide by `sysconf(_SC_CLK_TCK)`).
@@ -136,12 +152,14 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
         below).
 
 (17) **cstime**  %ld
+
         Amount of time that this process's waited-for
         children have been scheduled in kernel mode,
         measured in clock ticks (divide by
         `sysconf(_SC_CLK_TCK)`).
 
 (18) **priority**  %ld
+
         (Explanation for Linux 2.6) For processes running a
         real-time scheduling policy (policy below; see
         sched_setscheduler(2)), this is the negated
@@ -155,21 +173,25 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
         the user-visible nice range of -20 to 19.
 
 (19) **nice**  %ld
+
     The nice value (see setpriority(2)), a value in the
     range 19 (low priority) to -20 (high priority).
 
 (20) **num_threads**  %ld
+
     Number of threads in this process (since Linux
     2.6).  Before kernel 2.6, this field was hard coded
     to 0 as a placeholder for an earlier removed field.
 
 (21) **itrealvalue**  %ld
+
     The time in jiffies before the next SIGALRM is sent
     to the process due to an interval timer.  Since
     kernel 2.6.17, this field is no longer maintained,
     and is hard coded as 0.
 
 (22) **starttime**  %llu
+
     The time the process started after system boot.  In
     kernels before Linux 2.6, this value was expressed
     in jiffies.  Since Linux 2.6, the value is
@@ -179,6 +201,7 @@ Status information about the process.  This is used by `ps(1)`.  It is defined i
 ...
 
 (52) **exit_code**  %d  (since Linux 3.5)  [PT]
+
         The thread's exit status in the form reported by
         waitpid(2).
 
@@ -591,7 +614,7 @@ cpu_used2 = user + nice + system + irq + softirq
 采集策略：每分钟会采集4次15秒内的CPU平均使用率。为了避免漏采集CPU峰值，取这一分钟内四次采集的最大值上报。
 
 
-## 进程 CPU 使用率采集算法
+## CPU进程使用率采集算法
 
 ```
 $cat /proc/3100717/stat
