@@ -41,6 +41,153 @@ When a process accesses this magic symbolic link, it resolves to the process's o
 
 When a thread accesses this magic symbolic link, it resolves to the process's own `/proc/self/task/[tid]` directory.
 
+## `/proc/[pid]/stat`
+
+Status information about the process.  This is used by `ps(1)`.  It is defined in the kernel source file `fs/proc/array.c`.
+
+```
+~$cat /proc/3100717/stat
+3100717 (unittestsvr) S 1 3100716 3100716 0 -1 4202560 1123163 0 56 0 1377525 296772 0 0 20 0 8 0 4715620677 3944722432 109878 18446744073709551615 4194304 47321236 140734650356688 140734650335168 140232066947133 0 0 3215367 18976 18446744073709551615 0 0 17 4 0 0 49 0 0 49420928 50225480 119697408 140734650366993 140734650367104 140734650367104 140734650392510 0
+```
+
+(1) **pid**  %d
+    The process ID.
+
+(2) **comm**  %s
+    The filename of the executable, in parentheses. Strings longer than `TASK_COMM_LEN (16)` characters (including the terminating null byte) are silently truncated. This is visible whether or not the executable is swapped out.
+
+(3) **state**  %c
+    One of the following characters, indicating process state:
+
+    `R`  Running
+
+    `S`  Sleeping in an interruptible wait
+
+    `D`  Waiting in uninterruptible disk sleep
+
+    `Z`  Zombie
+
+    `T`  Stopped (on a signal) or (before Linux 2.6.33) trace stopped
+
+    `t`  Tracing stop (Linux 2.6.33 onward)
+
+    `W`  Paging (only before Linux 2.6.0)
+
+    `X`  Dead (from Linux 2.6.0 onward)
+
+    `x`  Dead (Linux 2.6.33 to 3.13 only)
+
+    `K`  Wakekill (Linux 2.6.33 to 3.13 only)
+
+    `W`  Waking (Linux 2.6.33 to 3.13 only)
+
+    `P`  Parked (Linux 3.9 to 3.13 only)
+
+(4) **ppid**  %d
+    The PID of the parent of this process.
+
+(5) **pgrp**  %d
+    The process group ID of the process.
+
+(6) **session**  %d
+    The session ID of the process.
+
+(7) **tty_nr**  %d
+    The controlling terminal of the process.
+
+(8) **tpgid**  %d
+    The ID of the foreground process group of the controlling terminal of the process.
+
+(9) **flags**  %u
+    The kernel flags word of the process. For bit meanings, see the PF_* defines in the Linux kernel source file include/linux/sched.h. Details depend on the kernel version.
+
+(10) **minflt**  %lu
+    The number of minor faults the process has made which have not required loading a memory page from disk.
+
+(11) **cminflt**  %lu
+    The number of minor faults that the process's waited-for children have made.
+
+(12) **majflt**  %lu
+    The number of major faults the process has made which have required loading a memory page from disk.
+
+(13) **cmajflt**  %lu
+    The number of major faults that the process's waited-for children have made.
+
+(14) **utime**  %lu
+        Amount of time that this process has been scheduled
+        in user mode, measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).  This includes guest time,
+        guest_time (time spent running a virtual CPU, see
+        below), so that applications that are not aware of
+        the guest time field do not lose that time from
+        their calculations.
+
+(15) **stime**  %lu
+        Amount of time that this process has been scheduled
+        in kernel mode, measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).
+
+(16) **cutime**  %ld
+        Amount of time that this process's waited-for
+        children have been scheduled in user mode, measured
+        in clock ticks (divide by `sysconf(_SC_CLK_TCK)`).
+        (See also times(2).)  This includes guest time,
+        cguest_time (time spent running a virtual CPU, see
+        below).
+
+(17) **cstime**  %ld
+        Amount of time that this process's waited-for
+        children have been scheduled in kernel mode,
+        measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).
+
+(18) **priority**  %ld
+        (Explanation for Linux 2.6) For processes running a
+        real-time scheduling policy (policy below; see
+        sched_setscheduler(2)), this is the negated
+        scheduling priority, minus one; that is, a number
+        in the range -2 to -100, corresponding to real-time
+        priorities 1 to 99.  For processes running under a
+        non-real-time scheduling policy, this is the raw
+        nice value (setpriority(2)) as represented in the
+        kernel.  The kernel stores nice values as numbers
+        in the range 0 (high) to 39 (low), corresponding to
+        the user-visible nice range of -20 to 19.
+
+(19) **nice**  %ld
+    The nice value (see setpriority(2)), a value in the
+    range 19 (low priority) to -20 (high priority).
+
+(20) **num_threads**  %ld
+    Number of threads in this process (since Linux
+    2.6).  Before kernel 2.6, this field was hard coded
+    to 0 as a placeholder for an earlier removed field.
+
+(21) **itrealvalue**  %ld
+    The time in jiffies before the next SIGALRM is sent
+    to the process due to an interval timer.  Since
+    kernel 2.6.17, this field is no longer maintained,
+    and is hard coded as 0.
+
+(22) **starttime**  %llu
+    The time the process started after system boot.  In
+    kernels before Linux 2.6, this value was expressed
+    in jiffies.  Since Linux 2.6, the value is
+    expressed in clock ticks (divide by
+    sysconf(_SC_CLK_TCK)).
+
+...
+
+(52) **exit_code**  %d  (since Linux 3.5)  [PT]
+        The thread's exit status in the form reported by
+        waitpid(2).
+
+
+
+
+
+
+
 ## `/proc/[pid]/statm`
 
 Provides information about memory usage, measured in **pages**. The columns are:
@@ -442,6 +589,27 @@ cpu_used2 = user + nice + system + irq + softirq
 ```
 
 采集策略：每分钟会采集4次15秒内的CPU平均使用率。为了避免漏采集CPU峰值，取这一分钟内四次采集的最大值上报。
+
+
+## 进程 CPU 使用率采集算法
+
+```
+$cat /proc/3100717/stat
+3100717 (unittestsvr) S 1 3100716 3100716 0 -1 4202560 1123163 0 56 0 1377525 296772 0 0 20 0 8 0 4715620677 3944722432 109878 18446744073709551615 4194304 47321236 140734650356688 140734650335168 140232066947133 0 0 3215367 18976 18446744073709551615 0 0 17 4 0 0 49 0 0 49420928 50225480 119697408 140734650366993 140734650367104 140734650367104 140734650392510 0
+```
+
+参考 https://man7.org/linux/man-pages/man5/proc.5.html，其中 14 -17 四个参数中分别表示进程的 utime，stime，cutime，cstime。
+
+公式：ProcessTime = utime + stime + cutime + cstime
+
+每个进程的 CPU 利用率的计算方法如下：
+
+(1) T1 时刻读取 /proc/stat，计算 sum1，读取 /proc/pid/stat，利用公式二计算 pt1
+
+(2) T2 时刻读取 /proc/stat，计算 sum2，读取 /proc/pid/stat，利用公式二计算 pt2
+
+(3) 进程 CPU 利用率 = (pt2 - pt1) * 100 /（sum2 - sum1）
+
 
 
 # 内存
@@ -858,6 +1026,432 @@ delta(reads merged) = reads merged的值 - t秒前reads merged的值
 svctm的计算方式：
 delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed))
 ```
+
+
+# 信号处理
+
+Signals are very useful feature in linux to send notification from one process to another and from the kernel to the process. Signals are sent in some error cases (accessing wrong memory address, bus error, floating point error, …) and also to inform the user application (timer expired, child process finished, IO is ready, ….)
+
+## [问题：What happens to a multithreaded Linux process if it gets a signal](https://unix.stackexchange.com/questions/225687/what-happens-to-a-multithreaded-linux-process-if-it-gets-a-signal)
+
+**Question:**
+
+If a Unix (Posix) process receives a signal, a signal handler will run.
+
+What will happen to it in a multithreaded process? Which thread receives the signal?
+
+In my opinion, the signal API should be extended to handle that (i.e. the thread of the signal handler should be able to be determined), but hunting for infos on the net I only found year long flames on the linux kernel mailing list and on different forums. As I understood, Linus' concept differed from the Posix standard, and first some compat layer was built, but now the Linux follows the posix model.
+
+What is the current state?
+
+**Answer:**
+
+The entry in POSIX on "[Signal Generation and Delivery](http://pubs.opengroup.org/onlinepubs/9699919799/xrat/V4_xsh_chap02.html#tag_22_02_04_02)" in "Rationale: System Interfaces General Information" says
+
+> Signals generated for a process are delivered to only one thread. Thus, if more than one thread is eligible to receive a signal, one has to be chosen. The choice of threads is left entirely up to the implementation both to allow the widest possible range of conforming implementations and to give implementations the freedom to deliver the signal to the "easiest possible" thread should there be differences in ease of delivery between different threads.
+
+From the [signal(7)](http://man7.org/linux/man-pages/man7/signal.7.html) manual on a Linux system:
+
+> A signal may be generated (and thus pending) for a process as a whole (e.g., when sent using `kill(2)`) or for a specific thread (e.g., certain signals, such as `SIGSEGV` and `SIGFPE`, generated as a consequence of executing a specific machine-language instruction are thread directed, as are signals targeted at a specific thread using `pthread_kill(3)`). A process-directed signal may be delivered to any one of the threads that does not currently have the signal blocked. If more than one of the threads has the signal unblocked, then the kernel chooses an arbitrary thread to which to deliver the signal.
+
+And in [pthreads(7)](http://man7.org/linux/man-pages/man7/pthreads.7.html):
+
+> Threads have distinct alternate signal stack settings. However, a new thread's alternate signal stack settings are copied from the thread that created it, so that the threads initially share an alternate signal stack (fixed in kernel 2.6.16).
+
+From the [pthreads(3)](http://man.openbsd.org/pthreads.3) manual on an OpenBSD system (as an example of an alternate approach):
+
+> Signals handlers are normally run on the stack of the currently executing thread.
+
+(I'm currently not aware of how this is handled when multiple threads are executing concurrently on a multi-processor machine)
+
+The older LinuxThread implementation of POSIX threads only allowed distinct single threads to be targeted by signals. From [pthreads(7)](http://man7.org/linux/man-pages/man7/pthreads.7.html) on a Linux system:
+
+> LinuxThreads does not support the notion of process-directed signals: signals may be sent only to specific threads.
+
+
+Extending the accepted answer, there is a more practical view, what I found here - [LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
+
+The essence is the following:
+
+> Signal handlers are per-process, but signal masks are per-thread.
+
+1. Thus, if we install/uninstall a signal handler (with signal() or sigaction()) on any thread, it will affect all of them.
+
+2. If a process gets a signal, the handler will be executed only on a single thread. This thread is pseudo-randomly selected among them, whose signal mask accepts it. My experiments show that it is always the thread with the least pid. (Comment says it might by also the thread created first. Both would match the posix standard, so do not trust it in your code.)
+
+3. Signals sent to any thread are considered as signal sent to the main process. Thus, if a thread gets a signal, it is quite possible that an other thread will execute the handler. Best if we see that as if threads (identified by tids, thread ids) would be considered as masked processes (identified by pids), and signals sent to a tid would be forwarded to their pid.
+
+4. For the execution of a signal handler, in its signal mask the given signal number is automatically masked. This is to prevent stacked signal handler execution in a signal burst. This can be changed with the `SA_NODEFER` flag of the `sigaction(...)` call.
+
+5. (3) and (4) results that in the case of a signal burst, the system distributes the signal handlers possibly most parallelly.
+
+6. However, if we have set up the sigaction with `SA_NODEFER`, always the same thread will get the signal and they will stack.
+
+## [测试程序：LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
+
+### The signal context
+
+While a signal arrives on a single threaded process, the thread complete the current instruction, jump to the signal handler and return when it finish.
+
+Signal handlers are per process, signal masks are per thread
+
+On a multithreaded application – the signal handler execute in one of the thread contexts. We can’t predict the thread that will be chosen to run the signal handler:
+
+测试程序：
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+void *threadfn1(void *p)
+{
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<10;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+Compile and run the app, you will see periodic output for each thread:
+
+```
+thread1
+thread2
+thread3
+thread1
+thread2
+thread3
+...
+```
+
+Now send a signal to the process using the kill command:
+
+```
+# kill -37 [pid]
+```
+
+The kernel choose one thread and run the signal handler in its context. In my case thread 1 selected so the output for 10 times is:
+
+```
+signal
+thread2
+thread3
+signal
+thread2
+thread3
+...
+```
+
+This behaviour can be problematic in case the selected thread is an important task.
+
+(Note that if the signal is an exception (SIGSEGV, SIGFPE, SIGBUS, SIGILL, …) the signal will be caught by the thread doing the exception)
+
+We can’t choose the selected thread but we can do a little trick to hack the system to choose the thread we want. The trick is to block the signal on all threads except one thread – the one we want  to run the signal in:
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+void mask_sig(void)
+{
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGRTMIN+3);
+
+    pthread_sigmask(SIG_BLOCK, &mask, NULL);
+
+}
+
+void *threadfn1(void *p)
+{
+	mask_sig();
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	mask_sig();
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<10;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+We block the signal on threads 1,2 so the system will deliver the signal to thread 3
+
+Run the app, send the signal with kill command. The output:
+
+```
+signal
+thread1
+thread2
+signal
+thread1
+thread2
+...
+```
+
+Another trick is to create a thread for signal handling that will be blocked using sigwait , waiting for signal.
+
+### Behind the scenes
+
+Inside the kernel, each thread has a `task_struct` object defines in `sched.h`:
+
+All the signals fields are stored per thread. Actually , there is no structure for the process , all the threads on the same process points to the same memory and files tables so the kernel need to choose a thread to deliver the signal to:
+
+``` cpp
+struct task_struct {
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	/*
+	 * For reasons of header soup (see current_thread_info()), this
+	 * must be the first element of task_struct.
+	 */
+	struct thread_info		thread_info;
+#endif
+	/* -1 unrunnable, 0 runnable, >0 stopped: */
+	volatile long			state;
+...
+...
+...
+	/* Signal handlers: */
+	struct signal_struct		*signal;
+	struct sighand_struct		*sighand;
+	sigset_t			blocked;
+	sigset_t			real_blocked;
+	/* Restored if set_restore_sigmask() was used: */
+	sigset_t			saved_sigmask;
+	struct sigpending		pending;
+	unsigned long			sas_ss_sp;
+	size_t				sas_ss_size;
+	unsigned int			sas_ss_flags;
+...
+...
+}
+```
+
+### Sending signals to a thread
+
+Another option is to use `pthread_kill(3)` to send a signal directly to a thread. This can be done only in the same process. For example:
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+
+void *threadfn1(void *p)
+{
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<5;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	sleep(3);
+	pthread_kill(t1,SIGRTMIN+3);
+	sleep(15);
+	pthread_kill(t2,SIGRTMIN+3);
+	pthread_kill(t3,SIGRTMIN+3);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+We start with creating 3 threads, then we send a signal to thread 1, wait for the signal handler to finish then send signals both to threads 2 and 3 , they will run the signal handler at the same time so in this case we will see :
+
+```
+signal
+signal
+thread1
+...
+```
+
+
 
 # Linux/UNIX Programming Interface
 
@@ -1582,9 +2176,5 @@ Total: 4.514M   /data/home/gerryyang/tools/diskusage
 ```
 
 
-# Q&A
-
-## [LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
 
 
-https://unix.stackexchange.com/questions/225687/what-happens-to-a-multithreaded-linux-process-if-it-gets-a-signal

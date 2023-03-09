@@ -4518,3 +4518,7 @@ This is a really nasty C++ issue and I am amazed there isn't reliable tooling fo
 * [编程面试题在线训练平台](http://www.lintcode.com/zh-cn/)
 * http://www.linuxhowtos.org/C_C++/
 
+# TODO
+
+* [C PITFALLS – TEST YOURSELF (WHAT WILL BE PRINTED)](https://devarea.com/c-pitfalls-test-yourself-what-will-be-printed/#.ZAmpHOxBw0R)
+

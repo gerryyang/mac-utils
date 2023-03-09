@@ -347,3 +347,16 @@ int main()
     print(f("a"), f("b"));
 }
 ```
+
+# Other
+
+## [Understanding "corrupted size vs. prev_size" glibc error](https://stackoverflow.com/questions/49628615/understanding-corrupted-size-vs-prev-size-glibc-error)
+
+First of all - A practical cause to "corrupted size vs. prev_size" is quite simple - memory chunk control structure fields in the adjacent following chunk are being overwritten due to out-of-bounds access by the code. if you allocate x bytes for pointer p but wind up writing beyond x in regards to the same pointer, you might get this error, indicating the current memory allocation (chunk) size is not the same as what's found in the next chunk control structure (due to it being overwritten).
+
+As for the cause for this memory leak - structure mapping done in the Java/JNA layer implied different `#pragma` related padding/alignment from what dll/so was compiled with. This in turn, caused data to be written beyond the allocated structure boundary. Disabling that alignment made the issues go away. (Thousands of executions without a single crash!).
+
+
+
+
+

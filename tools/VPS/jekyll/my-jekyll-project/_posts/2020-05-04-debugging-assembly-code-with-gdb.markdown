@@ -501,6 +501,15 @@ int main ()
 https://github.com/hellogcc/100-gdb-tips/blob/master/src/print-STL-container.md
 
 
+## gdb in one command
+
+```
+gdb -q -ex "show envir" -ex "quit" your_bin | grep your_env
+```
+
+* https://unix.stackexchange.com/questions/456294/gdb-in-one-command
+* [How to get environment of a program while debugging it in GDB](https://stackoverflow.com/questions/32917033/how-to-get-environment-of-a-program-while-debugging-it-in-gdb)
+
 
 # Refer
 

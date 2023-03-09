@@ -433,5 +433,6 @@ printf("%s\n", str); // prints "192.0.2.33"
 # Refer
 
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+* [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll/#.ZAmnruxBw0Q)
 
 

@@ -1731,6 +1731,7 @@ Input shall be interpreted as a sequence of records. By default, a record is a l
 The awk utility shall interpret each input record as a sequence of fields where, by default, a field is a string of non- <blank> non- <newline> characters. This default <blank> and <newline> field delimiter can be changed by using the FS built-in variable or the -F sepstring option. The awk utility shall denote the first field in a record $1, the second $2, and so on. The symbol $0 shall refer to the entire record; setting any other field causes the re-evaluation of $0. Assigning to $0 shall reset the values of all other fields and the NF built-in variable.
 
 * https://www.tutorialspoint.com/awk/index.htm
+* [UNDERSTANDING AWK – PRACTICAL GUIDE](https://devarea.com/understanding-awk-practical-guide/#.ZAmnr-xBw0Q)
 
 ### Summing values of a column using awk command
 
@@ -1776,6 +1777,8 @@ bar
 bar
 456
 ```
+
+[UNDERSTANDING SED – PRACTICAL GUIDE](https://devarea.com/understanding-sed-practical-guide/#.ZAmnYuxBw0Q)
 
 ## declare
 

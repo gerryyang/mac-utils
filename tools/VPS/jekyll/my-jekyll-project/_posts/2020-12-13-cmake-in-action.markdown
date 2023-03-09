@@ -1788,3 +1788,4 @@ TODO
 # Manual
 
 * [An Introduction to Modern CMake](https://cliutils.gitlab.io/modern-cmake/)
+* [MAKEFILES TUTORIAL](https://devarea.com/makefiles-tutorial/#.ZAmnUuxBw0Q)

@@ -1743,6 +1743,7 @@ git config core.fileMode false
 * [这才是真正的GIT - GIT原理及实用技巧 - PPT](https://www.lzane.com/slide/git-under-the-hood/index.html#/)
 * [这才是真正的 Git（freeCodeConf 2019 深圳站）- video](https://www.bilibili.com/video/av77252063)
 * [廖雪峰: Git教程](https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000)
+* [PRACTICAL GIT AND GITHUB](https://devarea.com/practical-git-and-github/#.ZAmpS-xBw0Q)
 
 
 
