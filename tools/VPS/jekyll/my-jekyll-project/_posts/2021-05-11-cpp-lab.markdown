@@ -2047,7 +2047,103 @@ If B is true, std::enable_if has a public member typedef type, equal to T; other
 https://en.cppreference.com/w/cpp/types/enable_if
 
 
-## std::atomic
+## std::atomic (代替 volatile)
+
+**Question：**
+
+1. [Volatile in C++11](https://stackoverflow.com/questions/12878344/volatile-in-c11)
+2. [volatile (computer programming)](https://en.wikipedia.org/wiki/Volatile_(computer_programming))
+
+
+In **C++11 standard** the machine model changed from **a single thread machine** to **a multi threaded machine**.
+
+Does this mean that the typical `static int x; void func() { x = 0; while (x == 0) {} }` example of optimized out read will no longer happen in C++11?
+
+EDIT: for those who don't know this example (I'm seriously astonished), please read this: https://en.wikipedia.org/wiki/Volatile_variable
+
+EDIT2: OK, I was really expecting that everyone who knew what `volatile` is has seen this example.
+
+If you use the code in the example the variable read in the cycle will be optimized out, making the cycle endless.
+
+The solution of course is to use `volatile` which will force the compiler to read the variable on each access.
+
+My question is if this is a **deprecated** problem in **C++11**, since the machine model is **multi-threaded**, therefore the compiler should consider concurrent access to variable to be present in the system.
+
+**Answer:**
+
+
+Let's look at [the code you cite](https://gist.github.com/HappyCerberus/3886984), with respect to the standard. Section 1.10, p8 speaks of the ability of certain library calls to cause a thread to "synchronize with" another thread. Most of the other paragraphs explain how synchronization (and other things) build an order of operations between threads. Of course, your code doesn't invoke any of this. There is no synchronization point, no dependency ordering, nothing.
+
+It does rely on ordering and atomicity. The change from the other thread must become visible to this one. Which means it must become ordered before some operation in this thread. Since `volatile` doesn't deal with ordering, there is no guarantee that it will become visible.
+
+``` cpp
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <atomic>
+using namespace std;
+
+// int notify;
+// volatile int notify;
+atomic<int> notify;
+
+void watcher()
+{
+	this_thread::sleep_for(chrono::seconds(2));
+	notify = 1;
+	cout << "Notification sent." << endl;
+}
+
+int main()
+{
+	thread(watcher).detach();
+
+	notify = 0;
+	while (!notify)
+	{
+		cout << "Waiting." << endl;
+		this_thread::sleep_for(chrono::seconds(1));
+	}
+
+	cout << "Notification received." << endl;
+
+	return 0;
+}
+```
+
+编译：
+
+```
+g++ volatile.cc -std=c++11 -lpthread
+```
+
+执行：
+
+```
+Waiting.
+Waiting.
+Notification sent.
+Notification received.
+```
+
+Without such protection, without some form of synchronization or ordering, 1.10 p21 comes in:
+
+> The execution of a program contains a data race if it contains two conflicting actions in different threads, at least one of which is not atomic, and neither happens before the other. Any such data race results in undefined behavior.
+
+Your program contains two conflicting actions (reading from x and writing to x). Neither is atomic, and neither is ordered by synchronization to happen before the other.
+
+Thus, you have achieved undefined behavior.
+
+So the only case where you get guaranteed multithreaded behavior by the C++11 memory model is if you use a proper mutex or `std::atomic<int> x` with the proper atomic `load`/`store` calls.
+
+Oh, and you don't need to make x `volatile` too. Anytime you call a (non-inline) function, that function or something it calls could modify a global variable. So it cannot optimize away the read of x in the while loop. And every C++11 mechanism to synchronize requires calling a function. That just so happens to invoke a memory barrier.
+
+
+
+------------
+
+
+
 
 ``` cpp
 template< class T >
@@ -2090,6 +2186,60 @@ Your code compiles fine with g++ 10.2: [Try on godbolt](https://godbolt.org/z/Th
 
 What doesn't exist until C++20 are **atomic RMW operations like** `x.fetch_add(3.14)`; or for short `x += 3.14`. ([Why isn't atomic double fully implemented](https://stackoverflow.com/questions/30048533/why-isnt-atomic-double-fully-implemented) wonders why not). Those member functions were only available in the atomic integer specializations, so you could only load, store, exchange, and CAS on `float` and `double`, like for arbitrary `T` like class types.
 
+测试代码：
+
+``` cpp
+#include <iostream>
+#include <atomic>
+
+struct Foo
+{
+  int baz;
+  int bar;
+};
+
+int main () {
+    std::atomic<Foo> atomic_foo {Foo {1, 2}};
+    auto foo {atomic_foo.load()};
+
+    return 0;
+}
+```
+
+* int 使用 x86-64 gcc 4.8.5 编译正常
+* int 使用 x86-64 clang 3.5.2，编译提示：undefined reference to __atomic_load_8 错误，编译需要额外链接 `-latomic`
+* 如果将 int 改为 long，使用 x86-64 gcc 4.8.5，编译提示：undefined reference to __atomic_load_16 错误，编译需要额外链接 `-latomic`
+
+> 参考：[To use 16-byte atomics with gcc you need -latomic](https://stackoverflow.com/questions/59641984/red-hat-using-atomic-compiles-fine-but-linker-cant-find-atomic-store-16-w)
+>
+> Just like `-lm` if you use any math.h functions, use `-latomic` if you use any `<atomic>` functions. The difference is that many math library functions won't inline, but most stuff you use from `<atomic>` will be lock-free and inline so you don't normally actually need any functions from the shared library. So you can go a long time before hitting a case where you actually do need `-latomic`. **GCC7 changed 16-byte atomics to not inline even with -mcx16 (cmpxchg16b), and not to call them lock-free**. (Even though they actually are; only the earlier AMD64 were missing cmpxchg16b.
+>
+> On my Arch Linux system, /usr/lib/libatomic.so is owned by gcc-libs 9.1.0-2 according to pacman (Arch's equivalent of rpm). On an Ubuntu system, /usr/lib/x86_64-linux-gnu/libatomic.so.1 seems to be packaged in the libatomic1 package, which gcc dev packages depend on. And there are `.a` static versions of it in gcc directories, according to locate libatomic.
+
+
+
+[How To Install libatomic on CentOS 7](https://installati.one/centos/7/libatomic/)
+
+> What is libatomic ?
+>
+> This package contains the GNU Atomic library which is a GCC support runtime library for atomic operations not supported by hardware. This package contains the GNU Atomic library which is a GCC support runtime library for atomic operations not supported by hardware.
+
+``` bash
+sudo yum -y install libatomic
+```
+
+参考问题：[C++ 11 undefined reference to __atomic_*](https://stackoverflow.com/questions/25403736/c-11-undefined-reference-to-atomic-store-16)
+
+> [Atomic API is not complete in GCC 4.7](https://gcc.gnu.org/wiki/Atomic/GCCMM)
+>
+> When lock free instructions are not available (either through hardware or OS support) atomic operations are left as function calls to be resolved by a library. **Due to time constraints and an API which is not finalized, there is no libatomic supplied with GCC 4.7. This is easily determined by encountering unsatisfied external symbols beginning with `__atomic_*`**.
+
+Since there is no libatomic shipped with GCC 4.7 you need to use another compiler which actually supports the features you want or provide the missing features.
+
+
+
+
+refer:
 
 * https://en.cppreference.com/w/cpp/atomic/atomic
 * https://en.cppreference.com/w/cpp/atomic/atomic/load
