@@ -190,6 +190,28 @@ To prevent an error, you'll need to wrap the JSON in Liquid raw tags, like this:
 
 # 工具
 
+
+## 建站工具
+
+* [HUGO](https://gohugo.io/)
+
+The world’s fastest framework for building websites. Hugo is one of the most popular open-source static site generators. With its amazing speed and flexibility, Hugo makes building websites fun again.
+
+refer:
+
+1. https://gohugo.io/getting-started/quick-start/
+2. https://gohugo.io/installation/linux/
+
+* NodeJS
+
+1. https://github.com/nodejs/help/wiki/Installation
+2. https://github.com/nodejs/Release
+
+
+
+
+
+
 ## MacOS 环境
 
 ### 常用设置

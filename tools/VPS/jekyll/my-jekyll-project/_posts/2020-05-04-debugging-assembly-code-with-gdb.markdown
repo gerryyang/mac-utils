@@ -454,6 +454,7 @@ TODO
 
 # 常用技巧
 
+
 ## [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 
 You need to enable logging:
@@ -510,6 +511,16 @@ gdb -q -ex "show envir" -ex "quit" your_bin | grep your_env
 * https://unix.stackexchange.com/questions/456294/gdb-in-one-command
 * [How to get environment of a program while debugging it in GDB](https://stackoverflow.com/questions/32917033/how-to-get-environment-of-a-program-while-debugging-it-in-gdb)
 
+
+## 条件断点
+
+```
+set scheduler-locking on
+b CMemoryPool::StatOnFree if uSize==112
+c
+```
+
+https://wizardforcel.gitbooks.io/100-gdb-tips/content/set-condition-break.html
 
 # Refer
 

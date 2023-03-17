@@ -345,6 +345,146 @@ https://zhuanlan.zhihu.com/p/426200312
     + 骑行配件：2952
     + 骑行补给：200
 
+# Brompton 折叠自行车
+
+## 基本介绍
+
+> [Brompton](https://cn.brompton.com/) 单车，无与伦比的折叠体验
+
+Invented by our founder, Andrew Ritchie, in 1975, expertly engineered to transform the bike into a small, locked package a little larger than its wheels - all in under 20-seconds. Nothing folds like a Brompton folds. (1975年，创始人 Andrew Ritchie 发明了 Brompton 折叠自行车。经过专业设计，单车折叠锁紧后，尺寸稍大于车轮，耗时不超过 20 秒。无与伦比的折叠体验)
+
+> Made in London
+
+Every Brompton bike is handmade and quality assured in our London factory. Watch our steel brazers, wheel builders and engineers at work with our interactive 360° factory tour. (每辆 Brompton 折叠自行车都是在伦敦工厂手工制造的，确保质量。互动式 360 度工厂之旅，观看钎焊工、车轮工等员工的工作流程)
+
+> 折后尺寸小巧
+
+长 585 毫米，高 565 毫米，宽 270 毫米。折叠，打开，骑上，骑下。无论室内外，均可随身携带 Brompton。
+
+> 折后随身携带
+
+无需托运，即可带上高峰期的火车。可放在小型汽车后备箱，出租车、船、渡轮、电车、公交车上。可携带至会议室、咖啡馆、图书馆、超市。功能性设计满足日常需求。
+
+> 整齐折叠
+
+Brompton 经过专业设计，可折叠锁定，尺寸小巧。整齐折叠，弄脏的部件不会露在外面。折后的 Brompton 可轻松拖拽、收纳、滑行和滚动。
+
+## [BROMPTON 产品线说明](https://cn.brompton.com/bikes/help-me-choose)
+
+Brompton 折叠自行车专为在城市生活、工作或享受娱乐的人而设计。Brompton 自行车可折叠至其尺寸的三分之一，标准车款的平均重量仅为 11 公斤，易于携带和存放。能实现各种交通工具的携带—高峰时段的火车、汽车或出租车后备箱。
+
+我们重新定义了产品线，如果您熟悉我们之前的产品规格，本指南将对您有所帮助。
+
+折叠自行车系列，包括五大产品线：A Line、C Line, 和电动助力C Line，P Line, T Line 旨在满足不同骑行者的需求。
+
+> A Line
+
+Brompton 折叠自行车具有通用规格。 坚固的全钢车架在伦敦手工制作完成。专为城市骑行而设计的3速变速。更省时、更省钱、也更省事。
+
+```
+变速: 3速
+把型: 中型
+颜色: 白色主车架，黑色末端
+挡泥板: 无
+照明: 无
+```
+
+> C Line
+
+继承我们自 1975 年创立以来的折叠和延展设计，并全程由伦敦工厂手工制作完成。 更紧凑，更坚固，精心的设计，让您的骑行之旅增添更多乐趣。
+
+```
+最广泛的涂装色选项：无论您的骑行风格如何，总有一款 C Line 适合您。
+2速 / 3速 / 6速的变速选择。
+3 种类型的车把及座杆选项。
+以及更多个性化配置方案：使用随车附送的前车架将车前包卡入到位；添加货车架以装载更多行李；将鞍座换成手工制作的 Brooks坐垫；升级电动型照明等。
+```
+
+* Brompton C Line 城市系列：都市穿行者
+
+```
+2速，C Line 城市系列比所有其他 C Line 型号更易于骑行和携带。单速的设置，使用起来更易上手，这款折叠自行车的轻巧性，在上下楼梯、手拎着行走以及进出电梯时，您将有清晰的体会。
+
+变速: 2速
+
+把型: 低型 / 中型 / 高型
+
+挡泥板: 包括
+
+照明: 可选
+
+机架: 可选
+
+类比型号包括：Brompton M2L、Brompton S2L
+```
+
+* Brompton C Line 实用系列：可靠的都市骑士
+
+```
+3速钢制自行车是 Brompton 制造的第一辆自行车—专为伦敦街头的都市骑士打造。 密封齿轮让轮胎免受沙砾、和雨水的影响，让自行车拥有更长使用寿命，以及更少维护。易行轮的轮毂齿轮让您在静止时换档，使C Line实用系列成为启动 / 短暂停靠的优先通勤选择，尤其是在潮湿的城市。
+
+变速: 3速
+
+把型: 低型 / 中型 / 高型
+
+挡泥板: 包括
+
+照明: 可选
+
+机架: 可选
+
+类比型号包括：Brompton M3L、Brompton M3R、Brompton S3L
+```
+
+* Brompton C Line 探索系列：长途骑行者的选择
+
+```
+您可以在这辆 6 速全钢自行车装上前车架和货车架，以便全天候的通勤 / 旅行 / 探索。 C Line探索系列适合几乎所有地形，是长途旅行者环游世界的选择，当然大多数人还是用于日常生活需求。
+
+变速: 6速
+
+把型: 低型 / 中型 / 高型
+
+挡泥板: 包括
+
+照明: 可选
+
+机架: 可选
+
+类比型号包括：Brompton M6L、Brompton M6R、Brompton S6L、Brompton S6R、Brompton H6L、Brompton H6R。
+```
+
+> P Line
+
+轻量化性能的转型之作。
+
+P Line 的重量比同等的全钢型号轻 1.55 公斤，具有轻巧的性能，可轻易折叠和展开。这款精心设计的车款，配备钛金属后车架、前叉和全新的悬架块，非常适合在城市道路上骑行。更高级的组件和增强的便携功能使其骑乘速度更快、携带更轻且更易于在城市中穿梭。
+
+提供一种型号以应对城市需求：城市系列。
+
+> T Line
+
+这是Brompton。重新定义。7.45 公斤。钛合金精密设计。重新打造T Line钛金属车架，相比原来的全钢车架要轻37%，但强度不变。
+
+T Line 的总重量仅为 7.45 公斤，可与碳纤维公路自行车相媲美，但仍能够承重110公斤，适合全天候骑行。 每一次和Brompton的骑行总是很愉快，现在他们在各个方面都得到了提升。
+
+碳纤维曲柄和铸钛中轴可转移您的动力以实现更快的骑行。显然，钛金属减震块会使骑行顺畅。 钛合金材质有效缓冲路面冲击，让骑行路感更平顺。一体化碳纤维前叉，加宽碳纤维车把，兼具刚性和灵敏度，非凡构造带来非凡体验。
+
+准备好飞跃这座城市了吗？
+
+
+
+refer:
+
+* [開箱我的新小摺 / 比較親民的英國小布 2022 C LINE 折疊車 / Brompton C Line 自行車 6 速](https://www.youtube.com/watch?v=2e-tTaCbusU)
+* [Can A Folding Bike Climb? Superbike Vs Brompton Challenge!](https://www.youtube.com/watch?v=CCAwg9OMa84)
+
+
+
+
+
+
+
 # 工具
 
 ## Garmin EDGE 530 码表的骑行数据导出到本地 (用于分享路书或制作视频)
