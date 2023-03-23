@@ -290,6 +290,7 @@ Specifies the amount of bytes to disassemble starting from the given address or 
 When this option is specified, the disassemble command will show the source lines that correspond to the disassembled instructions.
 
 * /r
+
 When this option is specified, the disassemble command will show the raw byte values of all disassembled instructions.
 
 https://visualgdb.com/gdbreference/commands/disassemble
@@ -502,14 +503,28 @@ int main ()
 https://github.com/hellogcc/100-gdb-tips/blob/master/src/print-STL-container.md
 
 
-## gdb in one command
+## 命令行执行 gdb
 
 ```
-gdb -q -ex "show envir" -ex "quit" your_bin | grep your_env
+gdb -q -ex "show envir" -ex "quit" your_bin your_corefile | grep your_env
 ```
 
 * https://unix.stackexchange.com/questions/456294/gdb-in-one-command
 * [How to get environment of a program while debugging it in GDB](https://stackoverflow.com/questions/32917033/how-to-get-environment-of-a-program-while-debugging-it-in-gdb)
+
+
+## 从 corefile 获取环境变量
+
+```
+gdb -q -ex "p *__environ" -ex "quit" your_bin your_corefile
+
+# 环境变量基本都是在core文件的末尾，所以只需要搜索后面的内容即可
+tail -c 1048576  your_corefile | grep -a -o -P 'gerry=\K[^[:cntrl:]]*'
+```
+
+[How to get environment variable from a core dump](https://stackoverflow.com/questions/44686478/how-to-get-environment-variable-from-a-core-dump)
+
+
 
 
 ## 条件断点
@@ -521,6 +536,50 @@ c
 ```
 
 https://wizardforcel.gitbooks.io/100-gdb-tips/content/set-condition-break.html
+
+## 查找符号
+
+```
+(gdb) i var CCoroutineMgr
+All variables matching regular expression "CCoroutineMgr":
+
+Non-debugging symbols:
+0x00000000000000c0  JLib::IThreadSingleton<JLib::CCoroutineMgr>::GetSingletonPtr()::g_pPtr
+0x00000000000fe9b0  JLib::CCoroutineMgr::GetLogFeature() const::pInfo
+0x00000000000fe9b8  guard variable for JLib::CCoroutineMgr::GetLogFeature() const::pInfo
+...
+```
+
+```
+(gdb) p 'JLib::IThreadSingleton<JLib::CCoroutineMgr>::GetSingletonPtr()::g_pPtr'
+$1 = 74619576
+```
+
+## 调试 static 全局静态变量
+
+```
+info var _instance
+```
+
+[print static variable from member function of template class in gdb](https://stackoverflow.com/questions/39724087/print-static-variable-from-member-function-of-template-class-in-gdb)
+
+## 调试 __thead 线程变量
+
+
+[Debugging __thead variables from coredumps](https://www.technovelty.org/linux/debugging-__thead-variables-from-coredumps.html)
+
+
+## 在 gdb 中执行 shell 命令
+
+```
+gdb$ shell
+
+shell$ execute_your_commands
+
+shell$ exit
+
+gdb$ you_have_returned_back_to_gdb_prompt
+```
 
 # Refer
 

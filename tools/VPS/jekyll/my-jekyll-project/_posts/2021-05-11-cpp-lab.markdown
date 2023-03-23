@@ -1147,11 +1147,66 @@ int main()
 }
 ```
 
+``` cpp
+#include <iostream>
+#include <cstdint>
+#include <unistd.h>
+
+#define N 2
+__thread int myVar;
+int *commonVar;
+
+void *th(void *arg)
+{
+        int myid = *((int *)arg);
+        myVar = myid;
+        printf("thread %d set myVar=%d, &myVar=%p\n", myid, myVar, &myVar);
+        sleep(1);
+        printf("thread %d now has myVar=%d\n", myid, myVar);
+        sleep(1 + myid);
+        printf("thread %d sees this value at *commonVar=%d, commonVar=%p\n", myid, *commonVar, commonVar);
+        commonVar = &myVar;
+        printf("thread %d sets commonVar pointer to his myVar and now *commonVar=%d, commonVar=%p\n", myid, *commonVar, commonVar);
+
+    return 0;
+}
+
+int main()
+{
+        int a = 123;
+        pthread_t t[N];
+        int arg[N];
+        commonVar = &a;
+
+        printf("size of pointer: %lu bits\n", 8UL * sizeof(&a));
+        for (int i = 0; i < N; i++)
+        {
+                arg[i] = i;
+                pthread_create(&t[i], 0, th, arg + i);
+        }
+        for (int i = 0; i < N; i++)
+                pthread_join(t[i], 0);
+        printf("all done\n");
+}
+/*
+size of pointer: 64 bits
+thread 0 set myVar=0, &myVar=0x7f8fea8556fc
+thread 1 set myVar=1, &myVar=0x7f8fea0546fc
+thread 0 now has myVar=0
+thread 1 now has myVar=1
+thread 0 sees this value at *commonVar=123, commonVar=0x7fff95aa1a3c
+thread 0 sets commonVar pointer to his myVar and now *commonVar=0, commonVar=0x7f8fea8556fc
+thread 1 sees this value at *commonVar=0, commonVar=0x7f8fea8556fc
+thread 1 sets commonVar pointer to his myVar and now *commonVar=1, commonVar=0x7f8fea0546fc
+all done
+*/
+```
+
 * [Storage class specifiers](https://en.cppreference.com/w/cpp/language/storage_duration)
 * [Can you use thread local variables inside a class or structure](https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure)
 * [Are C++11 thread_local variables automatically static?](https://stackoverflow.com/questions/22794382/are-c11-thread-local-variables-automatically-static)
 * [What does the thread_local mean in C++11?](https://stackoverflow.com/questions/11983875/what-does-the-thread-local-mean-in-c11)
-
+* [GDB support for thread-local storage](https://gdb.sourceware.narkive.com/zdu9KCAa/support-for-thread-local-storage)
 
 ## inline namespace
 
@@ -4681,6 +4736,57 @@ I have clearly done an `ODR` violation for `func()`.
 
 This is a really nasty C++ issue and I am amazed there isn't reliable tooling for detecting it.
 
+
+# 开发框架
+
+## libatbus
+
+用于搭建高性能、全异步(a)、树形结构(t)的BUS消息系统的跨平台框架库
+
+* https://github.com/atframework/libatbus
+
+
+
+# string 操作
+
+## [C++ convert string to hexadecimal and vice versa](https://stackoverflow.com/questions/3381614/c-convert-string-to-hexadecimal-and-vice-versa)
+
+``` cpp
+#include <string>
+#include <cstdint>
+
+std::string string_to_hex(const std::string& in) {
+    std::stringstream ss;
+
+    ss << std::hex << std::setfill('0');
+    for (size_t i = 0; in.length() > i; ++i) {
+        ss << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(in[i]));
+    }
+
+    return ss.str();
+}
+
+std::string hex_to_string(const std::string& in) {
+    std::string output;
+
+    if ((in.length() % 2) != 0) {
+        throw std::runtime_error("String is not valid length ...");
+    }
+
+    size_t cnt = in.length() / 2;
+
+    for (size_t i = 0; cnt > i; ++i) {
+        uint32_t s = 0;
+        std::stringstream ss;
+        ss << std::hex << in.substr(i * 2, 2);
+        ss >> s;
+
+        output.push_back(static_cast<unsigned char>(s));
+    }
+
+    return output;
+}
+```
 
 # Refer
 

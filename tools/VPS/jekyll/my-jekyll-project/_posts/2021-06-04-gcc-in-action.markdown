@@ -56,6 +56,15 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
+GCC 安装脚本：
+
+https://github.com/owent-utils/bash-shell/tree/main/GCC%20Installer
+
+Clang 安装脚本：
+
+https://github.com/owent-utils/bash-shell/tree/main/LLVM&Clang%20Installer
+
+
 ## CentOS
 
 Often people want the most recent version of gcc, and [devtoolset](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-6/) is being kept up-to-date, so maybe you want devtoolset-N where `N={4,5,6,7...}`, check yum for the latest available on your system. Updated the cmds below for N=7.

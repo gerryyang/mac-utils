@@ -2136,11 +2136,6 @@ redis-3.2.10-2.el7.x86_64
 rpm -ql redis-3.2.10-2.el7.x86_64
 ```
 
-
-
-
-
-
 ## scl
 
 Setup and run software from Software Collection environment. See: https://linux.die.net/man/1/scl
@@ -2180,6 +2175,42 @@ devtoolset-9的配置文件路径：/opt/rh/devtoolset-9/root/usr/include/c++/9/
 在当前会话中打开新的会话窗口使用 gcc9 开发环境 `scl enable devtoolset-9 /bin/bash`
 在编译脚本中执行时，在执行命令前通过 `source scl_source enable devtoolset-9`
 
+
+## eu-readelf
+
+```
+Usage: eu-readelf [OPTION...] FILE...
+```
+
+Print information from ELF file in human-readable form.
+
+
+## xxd
+
+make a hexdump or do the reverse.
+
+```
+$xxd --help
+Usage:
+       xxd [options] [infile [outfile]]
+    or
+       xxd -r [-s [-]offset] [-c cols] [-ps] [infile [outfile]]
+Options:
+    -a          toggle autoskip: A single '*' replaces nul-lines. Default off.
+    -b          binary digit dump (incompatible with -ps,-i,-r). Default hex.
+    -c cols     format <cols> octets per line. Default 16 (-i: 12, -ps: 30).
+    -E          show characters in EBCDIC. Default ASCII.
+    -g          number of octets per group in normal output. Default 2.
+    -h          print this summary.
+    -i          output in C include file style.
+    -l len      stop after <len> octets.
+    -ps         output in postscript plain hexdump style.
+    -r          reverse operation: convert (or patch) hexdump into binary.
+    -r -s off   revert with <off> added to file positions found in hexdump.
+    -s [+][-]seek  start at <seek> bytes abs. (or +: rel.) infile offset.
+    -u          use upper case hex letters.
+    -v          show version: "xxd V1.10 27oct98 by Juergen Weigert".
+```
 
 
 # 第三方工具

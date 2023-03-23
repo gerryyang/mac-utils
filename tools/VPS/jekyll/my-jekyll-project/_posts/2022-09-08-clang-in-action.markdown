@@ -39,6 +39,15 @@ cmake --build build [-- [options] <target>]
 
 # 安装 Clang
 
+
+GCC 安装脚本：
+
+https://github.com/owent-utils/bash-shell/tree/main/GCC%20Installer
+
+Clang 安装脚本：
+
+https://github.com/owent-utils/bash-shell/tree/main/LLVM&Clang%20Installer
+
 ## Clang 3.5.2
 
 下载 llvm 源码：

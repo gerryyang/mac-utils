@@ -1614,6 +1614,38 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
+# eval
+
+`eval` is part of POSIX. It's an interface which can be a shell built-in.
+
+It's described in the "POSIX Programmer's Manual": http://www.unix.com/man-page/posix/1posix/eval/
+
+> eval - construct command by concatenating arguments
+
+It will take an argument and construct a command of it, which will then be executed by the shell. This is the example from the manpage:
+
+``` bash
+foo=10 x=foo
+y='$'$x
+echo $y
+$foo
+eval y='$'$x
+echo $y
+10
+
+```
+
+1. In the first line you define `$foo` with the value `'10'` and `$x` with the value `'foo'`.
+2. Now define `$y`, which consists of the string `'$foo'`. The dollar sign must be escaped with `'$'`.
+3. To check the result, `echo $y`.
+4. The result will be the string `'$foo'`
+5. Now we repeat the assignment with `eval`. It will first evaluate `$x` to the string `'foo'`. Now we have the statement `y=$foo` which will get evaluated to `y=10`.
+6. The result of echo `$y` is now the value `'10'`.
+
+
+https://unix.stackexchange.com/questions/23111/what-is-the-eval-command-in-bash
+
+
 ## set
 
 Bash 执行脚本的时候，例如，` bash script.sh` 会创建一个新的 Shell，script.sh 是在一个新的 Shell 里面执行。这个 Shell 就是脚本的执行环境，Bash 默认给定了这个环境的各种参数。set 命令用来修改 Shell 环境的运行参数，也就是可以定制环境。一共有十几个参数可以定制，[官方手册](https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html)有完整清单。如果命令行下不带任何参数，直接运行set，会显示所有的环境变量和 Shell 函数。
@@ -2046,6 +2078,25 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 ```
 
 # Q&A
+
+
+
+## i=`expr $i + 1` 执行效率问题
+
+由于创建子进程造成了 i=`expr $i + 1` 执行效率低。
+
+``` bash
+# 执行 100 万次大约需要 884 秒
+i=`expr $i + 1`
+
+# 执行 100 万次大约需要 18 秒
+i=$(($i+1))
+
+# 执行 100 万次大约需要 18 秒
+let i+=1
+```
+
+
 
 ## [Shebang](https://bash.cyberciti.biz/guide/Shebang)
 

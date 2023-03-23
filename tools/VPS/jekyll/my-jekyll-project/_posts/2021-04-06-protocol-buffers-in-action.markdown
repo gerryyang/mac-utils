@@ -562,7 +562,11 @@ protoc --proto_path=IMPORT_PATH --cpp_out=DST_DIR --java_out=DST_DIR --python_ou
 	+ ...
 * You must provide one or more `.proto` files as input. Multiple `.proto` files can be specified at once. Although the files are named relative to the current directory, each file must reside in one of the `IMPORT_PATHs` so that the compiler can determine its canonical name.
 
-# Encoding
+# [Encoding](https://protobuf.dev/programming-guides/encoding)
+
+This document describes **the protocol buffer wire format**, which defines the details of how your message is sent on the wire and how much space it consumes on disk. You probably don’t need to understand this to use protocol buffers in your application, but it’s useful information for doing optimizations.
+
+
 
 ## A Simple Message
 
@@ -574,21 +578,224 @@ message Test1 {
 }
 ```
 
-In an application, you create a Test1 message and set a to 150. You then serialize the message to an output stream. If you were able to examine the encoded message, you'd see three bytes:
+In an application, you create a Test1 message and set a to 150. You then serialize the message to an output stream. If you were able to examine the encoded message, you'd see **three bytes**:
 
 ```
 08 96 01
 ```
 
-So far, so small and numeric – but what does it mean? Read on...
+So far, so small and numeric – but what does it mean? If you use the [Protoscope](https://github.com/protocolbuffers/protoscope) tool to dump those bytes, you’d get something like `1: 150`. How does it know this is the contents of the message?
 
-## Base 128 Varints
 
-To understand your simple protocol buffer encoding, you first need to understand `varints`. **Varints are a method of serializing integers using one or more bytes. Smaller numbers take a smaller number of bytes**.
+## [Base 128 Varints](https://developers.google.com/protocol-buffers/docs/encoding#varints)
 
-When a message is encoded, the keys and values are concatenated into a byte stream. When the message is being decoded, the parser needs to be able to skip fields that it doesn't recognize. This way, new fields can be added to a message without breaking old programs that do not know about them.
+Variable-width integers, or varints, are at the core of the wire format. They allow encoding unsigned 64-bit integers using anywhere between one and ten bytes, with small values using fewer bytes.
 
-https://developers.google.com/protocol-buffers/docs/encoding#varints
+Each byte in the varint has a continuation bit that indicates if the byte that follows it is part of the varint. This is the **most significant bit** (`MSB`) of the byte (sometimes also called the sign bit). The lower 7 bits are a payload; the resulting integer is built by appending together the 7-bit payloads of its constituent bytes.
+
+So, for example, here is the number 1, encoded as `01` – it’s a single byte, so the `MSB` is not set:
+
+```
+0000 0001
+^ msb
+```
+
+And here is 150, encoded as `9601` – this is a bit more complicated:
+
+```
+10010110 00000001
+^ msb    ^ msb
+```
+
+How do you figure out that this is 150? First you drop the `MSB` from each byte, as this is just there to tell us whether we’ve reached the end of the number (as you can see, it’s set in the first byte as there is more than one byte in the varint). Then we concatenate the 7-bit payloads, and interpret it as a little-endian, 64-bit unsigned integer:
+
+```
+10010110 00000001        // Original inputs.
+ 0010110  0000001        // Drop continuation bits.
+ 0000001  0010110        // Put into little-endian order.
+ 10010110                // Concatenate.
+ 128 + 16 + 4 + 2 = 150  // Interpret as integer.
+```
+
+Because varints are so crucial to protocol buffers, in protoscope syntax, we refer to them as plain integers. 150 is the same as `9601`.
+
+
+## Message Structure
+
+A protocol buffer message is a series of key-value pairs. The binary version of a message just uses **the field’s number** as the key – the **name** and **declared type** for each field can only be determined **on the decoding end by referencing the message type’s definition**(i.e. the `.proto` file). `Protoscope` does not have access to this information, **so it can only provide the field numbers**.
+
+When a message is encoded, each key-value pair is turned into a record consisting of the `field number`, `a wire type` and `a payload`. The `wire type` tells the parser how big the payload after it is. This allows old parsers to skip over new fields they don’t understand. This type of scheme is sometimes called `Tag-Length-Value`, or **TLV**.
+
+There are **six** wire types: `VARINT`, `I64`, `LEN`, `SGROUP`, `EGROUP`, and `I32`
+
+| ID | Name | Used For
+| -- | -- | --
+| 0 | VARINT | int32, int64, uint32, uint64, sint32, sint64, bool, enum
+| 1 | I64 | fixed64, sfixed64, double
+| 2 | LEN | string, bytes, embedded messages, packed repeated fields
+| 3 | SGROUP | group start (deprecated)
+| 4 | EGROUP | group end (deprecated)
+| 5 | I32 | fixed32, sfixed32, float
+
+The “tag” of a record is encoded as a varint formed from the `field number` and the `wire type` via the formula `(field_number << 3) | wire_type`. In other words, **after decoding the varint representing a field, the low 3 bits tell us the wire type, and the rest of the integer tells us the field number**.
+
+Now let’s look at our simple example again. You now know that the first number in the stream is always a varint key, and here it’s `08`, or (dropping the MSB):
+
+```
+000 1000
+```
+
+You take the last three bits to get the wire type (0) and then right-shift by three to get the field number (1). Protoscope represents a tag as an integer followed by a colon and the wire type, so we can write the above bytes as `1:VARINT`.
+
+Because the wire type is 0, or `VARINT`, we know that we need to decode a varint to get the payload. As we saw above, the bytes `9601` varint-decode to 150, giving us our record. We can write it in Protoscope as `1:VARINT 150`.
+
+
+
+
+
+## Protoscope
+
+[Protoscope](https://github.com/protocolbuffers/protoscope) is a simple, human-editable language for representing and emitting the **Protobuf wire format**. It is inspired by, and is significantly based on, [DER ASCII](https://github.com/google/der-ascii), a similar tool for working with DER and BER, wire formats of ASN.1.
+
+Unlike most Protobuf tools, it is normally ignorant of schemata specified in `.proto` files; it has just enough knowledge of the wire format to provide primitives for constructing messages (such as field tags, varints, and length prefixes). A disassembler is included that uses heuristics to try convert encoded Protobuf into Protoscope, although the heuristics are necessarily imperfect.
+
+We provide the Go package `github.com/protocolbuffers/protoscope`, as well as the `protoscope` tool, which can be installed with the Go tool via
+
+```
+go install github.com/protocolbuffers/protoscope/cmd/protoscope...@latest
+```
+
+```
+$which protoscope
+~/go/bin/protoscope
+$protoscope -h
+Usage: protoscope [-s] [OPTION...] [INPUT]
+Assemble a Protoscope file to binary, or inspect binary data as Protoscope text.
+Run with -spec to learn more about the Protoscope language.
+
+  -all-fields-are-messages
+        try really hard to disassemble all fields as messages
+  -descriptor-set string
+        path to a file containing an encoded FileDescriptorSet, for aiding disassembly
+  -explicit-length-prefixes
+        emit literal length prefixes instead of braces
+  -explicit-wire-types
+        include an explicit wire type for every field
+  -message-type string
+        full name of a type in the FileDescriptorSet given by -descriptor-set;
+        the decoder will assume that the input file is an encoded binary proto
+        of this type for the purposes of providing better output
+  -no-groups
+        do not try to disassemble groups
+  -no-quoted-strings
+        assume no fields in the input proto are strings
+  -o string
+        output file to use (defaults to stdout)
+  -print-enum-names
+        prints out enum value names, if using -message-type
+  -print-field-names
+        prints out field names, if using -message-type
+  -s    whether to treat the input as a Protoscope source file
+  -spec
+        opens the Protoscope spec in $PAGER
+```
+
+### Exploring Binary Dumps
+
+Sometimes, while working on a library that emits wire format, it may be necessary to debug the precise output of a test failure. If your test prints out a hex string, you can use the `xxd` command to turn it into raw binary data and pipe it into `protoscope`.
+
+Consider the following example of a message with a `google.protobuf.Any` field:
+
+```
+$ cat hexdata.txt
+0a400a26747970652e676f6f676c65617069732e636f6d2f70726f746f332e546573744d65737361676512161005420e65787065637465645f76616c756500000000
+$ xxd -r -ps hexdata.txt | protoscope
+1: {
+  1: {"type.googleapis.com/proto3.TestMessage"}
+  2: {`1005420e65787065637465645f76616c756500000000`}
+}
+$ xxd -r -ps <<< "1005420e65787065637465645f76616c756500000000" | protoscope
+2: 5
+8: {"expected_value"}
+`00000000`
+```
+
+If your test failure output is made up of C-style escapes and text, the `printf` command can be used instead of `xxd`:
+
+```
+$ printf '\x10\x05B\x0eexpected_value\x00\x00\x00\x00' | protoscope
+2: 5
+8: {"expected_value"}
+`00000000`
+```
+
+The `protoscope` command has many flags for refining the heuristic used to decode the binary.
+
+If an encoded `FileDescriptorSet` proto is available that contains your message's type, you can use it to get schema-aware decoding:
+
+```
+$ cat hexdata.txt
+086510661867206828d20130d4013d6b000000416c000000000000004d6d000000516e000000000000005d0000de42610000000000005c40680172033131357a0331313683018801758401
+$ xxd -r -ps hexdata.txt | protoscope \
+  -descriptor-set path/to/fds.pb -message-type unittest.TestAllTypes \
+  -print-field-names
+1: 101        # optional_int32
+2: 102        # optional_int64
+3: 103        # optional_uint32
+4: 104        # optional_uint64
+5: 105z       # optional_sint32
+6: 106z       # optional_sint64
+7: 107i32     # optional_fixed32
+8: 108i64     # optional_fixed64
+9: 109i32     # optional_sfixed32
+10: 110i64    # optional_sfixed64
+11: 111.0i32  # optional_float, 0x42de0000i32
+12: 112.0     # optional_double, 0x405c000000000000i64
+13: true      # optional_bool
+14: {"115"}   # optional_string
+15: {"116"}   # optional_bytes
+16: !{        # optionalgroup
+  17: 117     # a
+}
+```
+
+You can get an encoded `FileDescriptorSet` by invoking
+
+```
+protoc -Ipath/to/imported/protos -o my_fds.pb my_proto.proto
+```
+
+### Modifying Existing Files
+
+
+```
+$ xxd foo.bin
+00000000: 082a 1213 d202 106d 7920 6177 6573 6f6d  .*.....my awesom
+00000010: 6520 7072 6f74 6f                        e proto
+
+$ protoscope foo.bin > foo.txt  # Disassemble.
+$ cat foo.txt
+1: 42
+2: {
+  42: {"my awesome proto"}
+}
+
+$ vim foo.txt  # Make some edits.
+$ cat foo.txt
+1: 43
+2: {
+  42: {"my even more awesome awesome proto"}
+}
+
+$ protoscope -s foo.txt > foo.bin  # Reassemble.
+$ xxd foo.bin
+00000000: 082b 1225 d202 226d 7920 6576 656e 206d  .+.%.."my even m
+00000010: 6f72 6520 6177 6573 6f6d 6520 6177 6573  ore awesome awes
+00000020: 6f6d 6520 7072 6f74 6f                   ome proto
+```
+
+
+
 
 
 # Other
@@ -1897,6 +2104,36 @@ $ldd protoc
         libdl.so.2 => /lib64/libdl.so.2 (0x00007f2616698000)
         /lib64/ld-linux-x86-64.so.2 (0x00007f26178bc000)
 ```
+
+# Tools
+
+## protobuf / json 数据转换
+
+protobuf 3.0 版本支持 protobuf 与 json 数据相互转换。
+
+``` cpp
+/* protobuf 转 json */
+inline util::Status MessageToJsonString(const Message& message, std::string* output);
+
+/* json 换 protobuf */
+inline util::Status JsonStringToMessage(StringPiece input, Message* message);
+```
+
+``` cpp
+int PbToJson(const google::protobuf::Message& stMsg, std::string& strJson)
+{
+    google::protobuf::util::JsonOptions jOptions;
+    google::protobuf::util::Status ret = MessageToJsonString(stMsg, &strJson, jOptions);
+    if (!ret.ok())
+    {
+        return ret.error_code();
+    }
+    return 0;
+}
+```
+
+https://wenfh2020.com/2020/10/28/protobuf-convert-json/
+
 
 # ChangeLog
 
