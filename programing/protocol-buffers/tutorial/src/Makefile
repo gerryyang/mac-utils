@@ -21,7 +21,7 @@ CELERO_BANCHMARK_OBJS = celero_benchmark.o addressbook.pb.o
 
 .PHONY: clean
 
-all: $(TARGET) $(CELERO_BANCHMARK)
+all: $(TARGET) $(TARGET2) $(CELERO_BANCHMARK)
 
 $(TARGET): $(TARGET_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) -Wl,-rpath $(PB_PATH)/lib
