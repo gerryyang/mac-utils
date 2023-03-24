@@ -13,6 +13,12 @@ function Proc {
 			echo "protoc $file failed"
 			exit 1
 		fi
+
+		protoc -I$PROTOCOL_DIR -o $file.pb $file
+		if [ $? -ne 0 ]; then
+			echo "protoc $file failed"
+			exit 1
+		fi
 	done
 }
 
