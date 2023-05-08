@@ -1323,9 +1323,54 @@ refer:
 * https://lailin.xyz/post/41140.html?f=tt
 * https://pkg.go.dev/go/ast
 
+
+
+
+# Golang Runtime
+
+TODO
+
+
+# 开源代码
+
+## https://github.com/urfave/cli
+
+cli is a simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
+
+
+
+# Tools
+
+## golangci-lint
+
+[golangci-lint](https://golangci-lint.run/) is a Go linters aggregator.
+
+```
+# binary will be $(go env GOPATH)/bin/golangci-lint
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
+
+golangci-lint --version
+```
+
+
+
 # Tips
 
 ## [go -ldflags 信息注入](https://ms2008.github.io/2018/10/08/golang-build-version/)
+
+## 构建时指定 -mod=vendor 的作用
+
+在使用 Go 1.11 及以上版本的时候，Go 引入了 Go Modules 的特性，用于管理项目的依赖关系。在使用 Go Modules 的时候，可以通过在项目根目录下创建 go.mod 文件来指定项目的依赖关系。
+
+在使用 Go Modules 的时候，可以通过 go build 命令来构建项目。如果项目依赖的包已经被下载到本地缓存中，go build 命令会自动使用本地缓存中的包。如果本地缓存中没有需要的包，go build 命令会从远程仓库中下载需要的包。
+
+在使用 Go Modules 的时候，可以通过 -mod 参数来指定包的下载方式。其中，`-mod=vendor` **表示优先使用项目根目录下的 vendor 目录中的包**，如果 vendor 目录中没有需要的包，则从远程仓库中下载需要的包。
+
+使用 `-mod=vendor` 的好处是可以将项目依赖的包保存在项目根目录下的 vendor 目录中，避免了依赖包的版本冲突和不稳定性。同时，也可以避免在构建项目时从远程仓库中下载依赖包，提高了构建的速度和稳定性。
+
+需要注意的是，使用 `-mod=vendor` 的时候，需要在项目根目录下创建 vendor 目录，并将依赖的包复制到 vendor 目录中。可以使用 `go mod vendor` 命令来自动将依赖的包复制到 vendor 目录中。
+
+
 
 
 

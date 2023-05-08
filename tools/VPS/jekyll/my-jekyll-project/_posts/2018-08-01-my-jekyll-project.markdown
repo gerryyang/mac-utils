@@ -8,6 +8,8 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+> 我这辈子遇到的聪明人（来自各行各业的聪明人）没有不每天阅读的——没有，一个都没有。——《穷查理宝典》查理·芒格
+
 > In the field of pedagogy(教育学), [learning by teaching](https://en.wikipedia.org/wiki/Learning_by_teaching) is a method of teaching in which students are made to learn material and prepare lessons to teach it to the other students. There is a strong emphasis on acquisition of life skills along with the subject matter. This method was originally defined by [Jean-Pol Martin](https://en.wikipedia.org/wiki/Jean-Pol_Martin) in the 1980s.
 
 
@@ -241,6 +243,7 @@ Shift+Command+5
 
 | 工具 | 功能
 | -- | --
+| [有数](https://apps.apple.com/cn/app/%E6%9C%89%E6%95%B0-%E9%87%8D%E6%96%B0%E5%AE%9A%E4%B9%89%E8%AE%A1%E7%AE%97%E5%99%A8/id721606556) | 补充 MacOS 计算器的功能
 | [Cleaner One](https://apps.apple.com/cn/app/apple-store/id1133028347) | 磁盘清理(免费) [refer: Mac 存储空间里面的“其他”怎么清理](https://zhuanlan.zhihu.com/p/349862578)
 | [Homebrew](https://brew.sh/) | 软件包管理，第二个AppStore
 | [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起，例如，`open xxx`打开一个目录或文件
@@ -279,6 +282,7 @@ More: https://github.com/hzlzh/Best-App
 
 | **扩展程序** | **功能**
 | -- | --
+| Tampermonkey 油猴 | https://www.zhihu.com/question/382845649
 | 印象笔记剪裁 | 保存网页
 | FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
 | Vimium | 可以使用Vim快捷键浏览网页
@@ -315,6 +319,28 @@ More: https://github.com/hzlzh/Best-App
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
 
+#### 常用操作
+
+* [VIM 的分屏功能](https://coolshell.cn/articles/1679.html)
+
+| 操作 | 快捷键
+| -- | -- |
+| 使用大写的O参数来垂直分屏 | `vim -On file1 file2 ...`
+| 使用小写的o参数来水平分屏 | `vim -on file1 file2 ...`
+| 左右分割当前打开的文件 | `Ctrl+W v`
+| 上下分割当前打开的文件 | `Ctrl+W s`
+| 左右分割，并打开一个新的文件 |`:vsp filename`
+| 上下分割，并打开一个新的文件 | `:sp filename`
+| 关闭当前窗口 | `Ctrl+W c`
+| 把光标移到右边的屏 | `Ctrl+W l`
+| 把光标移到左边的屏 | `Ctrl+W h`
+| 把光标移到上边的屏 | `Ctrl+W k`
+| 把光标移到下边的屏 | `Ctrl+W j`
+| 把光标移到下一个的屏 | `Ctrl+W w`
+
+
+* 粘贴功能
+
 ```
 # To turn off autoindent when you paste code
 :set paste
@@ -323,10 +349,14 @@ More: https://github.com/hzlzh/Best-App
 :set nopaste
 ```
 
-**常用插件：**
+
+
+#### 常用插件
 
 * [YouCompleteMe - A code-completion engine for Vim](https://github.com/ycm-core/YouCompleteMe)
 * [ccls - C/C++/ObjC language server supporting cross references, hierarchies, completion and semantic highlighting](https://github.com/MaskRay/ccls)
+
+
 
 **refer:**
 
@@ -515,6 +545,20 @@ More: https://github.com/hzlzh/Best-App
 # Books
 
 * [awesome-programming-books.github.io](https://awesome-programming-books.github.io/)
+* The Art of Doing Science and Engineering (Richard Wesley Hamming)
+* Probability and Computing
+
+
+
+# Developer Roadmaps
+
+[roadmap.sh](https://roadmap.sh/) is a community effort to create roadmaps, guides and other educational content to help guide the developers in picking up the path and guide their learnings.
+
+
+## golang
+
+https://roadmap.sh/golang
+
 
 
 

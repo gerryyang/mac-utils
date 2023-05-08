@@ -457,6 +457,9 @@ ps -C syslogd -o pid=
 
 # Print only the name of PID 42:
 ps -q 42 -o comm=
+
+# 查看进程精确的启动时间
+ps -eo pid,lstart,cmd | grep your_process_name
 ```
 
 
@@ -947,6 +950,8 @@ https://en.wikipedia.org/wiki/Netcat#Test_if_UDP_port_is_open:_simple_UDP_server
 
 # 磁盘IO
 
+## iostat
+
 ```
 $ iostat -x 10
 
@@ -1011,6 +1016,25 @@ vdk               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0
 * 队列长度（`avgqu-sz`）也可作为衡量系统 I/O 负荷的指标，但由于 `avgqu-sz` 是按照单位时间的平均值，所以不能反映瞬间的 I/O 洪水。
 * 如果响应时间超过了用户可以容许的范围，这时可以考虑更换更快的磁盘，调整内核elevator算法，优化应用，或者升级 CPU。
 * 如果`%util`很大，而`rkB/s`和`wkB/s`很小，一般是因为磁盘存在较多的磁盘随机读写，最好把磁盘随机读写优化成顺序读写。
+
+
+## nfsiostat
+
+使用 iostat -x 命令时没有看到 CFS 文件系统的信息，可能是因为 iostat 命令默认只显示本地设备的信息，而不包括网络文件系统（NFS）等远程文件系统。nfsiostat 是一个专门用于监视 NFS 文件系统的工具，可以显示每个 NFS 服务器的 I/O 使用率和延迟时间等信息。
+
+
+```
+# nfsiostat 5
+
+11.147.151.12:/log/121 mounted on /var/lib/kubelet/pods/eb7854e4-a01a-4a95-8f6e-ccb761ca0e4d/volumes/kubernetes.io~nfs/friendsvr-121-pv-log:
+
+   op/s         rpc bklog
+  35.93    0.00
+read:            ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.126   1.496  11.860       0 (0.0%)    2.875   2.945
+write:           ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                 11.843 434.621  36.698       0 (0.0%)   12.302  15.766
+```
 
 ## 磁盘IO采集算法
 
@@ -2211,6 +2235,101 @@ Options:
     -u          use upper case hex letters.
     -v          show version: "xxd V1.10 27oct98 by Juergen Weigert".
 ```
+
+## nfsiostat
+
+`nfsiostat` 是一个用于监视 NFS（Network File System）I/O 性能的命令行工具。它可以显示 NFS 客户端和服务器上的 I/O 统计信息，包括读写操作的数量、传输速率和延迟等。
+
+``` bash
+sudo yum install nfs-utils
+```
+
+显示 NFS 客户端上的 I/O 统计信息，包括读写操作的数量、传输速率和延迟等。
+
+``` bash
+$nfsiostat
+
+9.134.56.11:/data1/share/tlinux mounted on /tools:
+
+   op/s         rpc bklog
+   0.65    0.00
+read:            ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.000   0.000 318.509       0 (0.0%)    4.600   5.000
+write:           ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.000   0.000   0.000       0 (0.0%)    0.000   0.000
+```
+
+
+## netcat (nc)
+
+在本地启动一个监听 TCP 端口 `8080` 的 `netcat` 服务，并将接收到的数据输出到终端
+
+``` bash
+nc -l 8080
+```
+
+在本地计算机上启动一个监听 TCP 端口 `8080` 的 `netcat` 服务，并将接收到的数据保存到名为 `received_data.txt` 的文件
+
+``` bash
+nc -l 8080 > received_data.txt
+```
+
+连接到名为 `remote.host.com` 的远程主机上的 TCP 端口 `8080`，并向其发送字符串 `"Hello, World!"`
+
+``` bash
+echo "Hello, World!" | nc remote.host.com 8080
+```
+
+将连接到名为 `remote.host.com` 的远程主机上的 TCP 端口 `8080`，并从名为 `data_to_send.txt` 的文件中读取数据并将其发送到远程主机
+
+``` bash
+nc remote.host.com 8080 < data_to_send.txt
+```
+
+
+## ldconfig
+
+列出系统中已安装的所有动态库及其版本信息
+
+``` bash
+ldconfig -p
+```
+
+## rsync
+
+``` bash
+# 将 /a/b/file.txt 文件保持目录层级复制到 tmp 目录下
+mkdir -p tmp
+rsync -avz --relative ./a/b/file.txt tmp
+```
+
+* `-avz` 选项表示以归档模式拷贝文件，保留文件属性和权限
+* `--relative` 选项表示保持相对路径结构
+
+
+## bpftrace
+
+bpftrace is a high-level tracing language for Linux enhanced Berkeley Packet Filter (eBPF) available in recent Linux kernels (4.x).
+
+EXAMPLES
+
+```
+bpftrace -l '*sleep*'
+        List probes containing "sleep".
+
+bpftrace -e 'kprobe:do_nanosleep { printf("PID %d sleeping\n", pid); }'
+        Trace processes calling sleep.
+
+bpftrace -c 'sleep 5' -e 'kprobe:do_nanosleep { printf("PID %d sleeping\n", pid); }'
+        run "sleep 5" in a new process and then trace processes calling sleep.
+
+bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm]=count(); }'
+        Count syscalls by process name.
+```
+
+FURTHER READING
+
+The official documentation can be found here: https://github.com/iovisor/bpftrace/blob/master/docs
 
 
 # 第三方工具

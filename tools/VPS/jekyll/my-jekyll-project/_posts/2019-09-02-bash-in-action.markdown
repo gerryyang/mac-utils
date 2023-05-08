@@ -714,6 +714,23 @@ echo "$VAR"
 * `-z string` - True if the string length is zero.
 * `-n string` - True if the string length is non-zero.
 
+```
+-e <file_a>: File_a exists.
+-f <file_a>: File_a exists and a regular file.
+-d <file_a>: File_a exists and is a directory.
+-r <file_a>: File_a exists with read permissions.
+-w <file_a>: File_a exists with write permissions.
+-x <file_a>: File_a exists with execute permissions.
+-s <file_a>: File_a exists and file size is greater than zero.
+-O <file_a>: File_a exists and the owner is effective user ID.
+-G <file_a>: File_a exists and the owner is effective group ID.
+-h <file_a>: File_a exists and it’s a symbolic link.
+-L <file_a>: File_a exists and it’s a symbolic link.
+-b <file_a>: File_a exists. It’s a block-special file.
+-c <file_a>: File_a exists. It’s a character-special file.
+-S <file_a>: File_a exists. It’s a socket.
+```
+
 示例：
 
 ``` bash
@@ -832,6 +849,7 @@ fi
 * [Bash test builtin command](https://www.computerhope.com/unix/bash/test.htm)
 * https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
 * [How to Compare Strings in Bash](https://linuxize.com/post/how-to-compare-strings-in-bash/)
+* https://linuxhint.com/bash-test-command/
 
 # ForceStopAll
 
@@ -851,16 +869,20 @@ PrintColor "Oops!"
 定义常用变量
 
 ``` bash
-_ColorGreenBeg="\e[1;32m"
-_ColorRedBeg="\e[1;33m"
-_ColorBlueBeg="\e[1;34m"
-_ColorEnd="\e[m"
+ColorRedBeg="\e[1;31m"
+ColorGreenBeg="\e[1;32m"
+ColorYellowBeg="\e[1;33m"
+ColorBlueBeg="\e[1;34m"
+ColorMagentaBeg="\e[1;35m"
+ColorCyanBeg="\e[1;36m"
+ColorWhiteBeg="\e[1;37m"
+ColorEnd="\e[m"
 
 function Usage()
 {
-    printf "$_ColorBlueBeg%-16s\n$_ColorEnd" "Usage: $0 [option] [value]"
+    printf "$ColorBlueBeg%-16s\n$ColorEnd" "Usage: $0 [option] [value]"
     printf "%-16s\n" "选项说明:"
-    printf "$_ColorGreenBeg%-32s %-64s\n$_ColorEnd" "-h" "查看帮助"
+    printf "$ColorGreenBeg%-32s %-64s\n$ColorEnd" "-h" "查看帮助"
 }
 ```
 
@@ -1120,7 +1142,7 @@ Total Number of Parameters : 2
 `$*` 和 `$@` 用法测试：
 
 
-```
+``` bash
 #! /bin/bash
 
 echo "\$*=" $*
@@ -1152,6 +1174,24 @@ for var in "$@"
 do
     echo "$var"
 done
+```
+
+## BASH_SOURCE 变量
+
+保存了当前脚本的路径，包括文件名。
+
+``` bash
+CUR_DIR=$(dirname $(readlink -f $BASH_SOURCE))
+PROJ_DIR=`readlink -f $CUR_DIR/../..`
+```
+
+## FUNCNAME 变量
+
+``` bash
+make()
+{
+    echo "$FUNCNAME: do nothing"
+}
 ```
 
 
@@ -1614,7 +1654,30 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
-# eval
+## eval
+
+``` bash
+#!/bin/bash
+
+f()
+{
+    echo "abc"
+    exit 1
+}
+
+OUTPUT=`eval f`
+if [[ $? -ne 0 ]]; then
+    printf "error: %s\n" "${OUTPUT}"
+else
+    printf "ok: %s\n" "${OUTPUT}"
+fi
+```
+
+```
+$./eval.sh
+error: abc
+```
+
 
 `eval` is part of POSIX. It's an interface which can be a shell built-in.
 
@@ -1762,6 +1825,13 @@ Input shall be interpreted as a sequence of records. By default, a record is a l
 
 The awk utility shall interpret each input record as a sequence of fields where, by default, a field is a string of non- <blank> non- <newline> characters. This default <blank> and <newline> field delimiter can be changed by using the FS built-in variable or the -F sepstring option. The awk utility shall denote the first field in a record $1, the second $2, and so on. The symbol $0 shall refer to the entire record; setting any other field causes the re-evaluation of $0. Assigning to $0 shall reset the values of all other fields and the NF built-in variable.
 
+
+| 特殊变量 | 含义
+| -- | --
+| `NF` | Number Field
+| `$NF` | Last Field (最后一个字段)
+
+
 * https://www.tutorialspoint.com/awk/index.htm
 * [UNDERSTANDING AWK – PRACTICAL GUIDE](https://devarea.com/understanding-awk-practical-guide/#.ZAmnr-xBw0Q)
 
@@ -1813,6 +1883,45 @@ bar
 [UNDERSTANDING SED – PRACTICAL GUIDE](https://devarea.com/understanding-sed-practical-guide/#.ZAmnYuxBw0Q)
 
 ## declare
+
+这个脚本定义了三个测试函数 `foo`、`bar` 和 `baz`，然后使用 `declare -F` 命令和 `awk` 命令来获取所有的函数名。在执行 `declare -F` 命令时，它会列出所有已定义的函数名和函数定义的位置。使用 `awk` 命令可以提取函数名并将其输出。最后，它遍历所有的函数名并输出它们。
+
+``` bash
+#!/bin/bash
+
+# 定义几个测试函数
+function foo() {
+    echo "foo"
+}
+
+function bar() {
+    echo "bar"
+}
+
+function baz() {
+    echo "baz"
+}
+
+DUMMY=$(declare -F)
+echo $DUMMY
+
+# 获取所有的函数名
+function_names=$(declare -F | awk '{print $NF}')
+
+# 遍历所有的函数名并输出
+for name in $function_names; do
+        echo $name
+done
+```
+
+```
+$./declare.sh
+declare -f bar declare -f baz declare -f foo
+bar
+baz
+foo
+```
+
 
 ```
 $ bash -c "help declare"

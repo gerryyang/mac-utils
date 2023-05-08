@@ -139,6 +139,17 @@ temperature,machine=unit42,type=assembly external=25,internal=37 143406746700000
 * 集群方案数据一致性如何保证，数据是否会丢失（事务能力是否有保障）
 * 非标准 SQL 生态不完善
 
+# InfluxQL
+
+* https://docs.influxdata.com/influxdb/v1.8/query_language/ (InfluxQL tutorial)
+* https://docs.influxdata.com/influxdb/v1.8/query_language/functions/ (InfluxQL functions)
+
+
+# Documentation
+
+* https://docs.influxdata.com/influxdb/v1.8/ (1.8 版本)
+* https://docs.influxdata.com/flux/v0.x/ (Flux documentation)
+
 
 # Refer
 

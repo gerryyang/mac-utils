@@ -975,6 +975,7 @@ sdb              0.00    0.00      0.00      0.00     0.00     0.00   0.00   0.0
 
 > r_await + w_await = 响应时间
 
+https://linux.die.net/man/1/iostat
 
 ### 进程I/O观测
 

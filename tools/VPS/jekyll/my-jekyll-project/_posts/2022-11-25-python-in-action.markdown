@@ -51,6 +51,31 @@ export PATH=/usr/local/bin:$PATH
 python3 -m pip install xxhash
 ```
 
+
+# Tips
+
+## 指定使用的 Python 版本 (shebang)
+
+在 Python 脚本中指定使用的 Python 版本，可以通过在脚本文件的开头添加 shebang 行来实现。shebang 行是一个以 `#!` 开头的特殊注释行，用于指定脚本文件的解释器。
+
+例如，如果我们想要在 Python 3 中运行脚本，可以在脚本文件的开头添加以下 shebang 行：
+
+``` python
+#!/usr/bin/env python3
+```
+
+这行代码告诉操作系统，使用 `/usr/bin/env` 命令来查找 Python 3 的解释器，并将该解释器用于执行脚本文件。如果系统中安装了多个 Python 版本，这种方式可以自动选择最新的 Python 3 版本。
+
+如果我们想要在 Python 2 中运行脚本，可以使用以下 shebang 行：
+
+``` python
+#!/usr/bin/env python2
+```
+
+需要注意的是，不同的操作系统可能支持的 shebang 行格式不同。在 Linux 和 macOS 等类 Unix 系统中，shebang 行的格式为 `#!interpreter [optional-arg]`，其中 `interpreter` 是解释器的路径，`optional-arg` 是传递给解释器的可选参数。在 Windows 系统中，shebang 行的格式为 `#!python`，其中 `python` 是解释器的名称。因此，在编写跨平台的 Python 脚本时，需要注意 shebang 行的格式。
+
+
+
 # 错误定位
 
 参考：[How to catch and print the full exception traceback without halting/exiting the program?](https://stackoverflow.com/questions/3702675/how-to-catch-and-print-the-full-exception-traceback-without-halting-exiting-the)

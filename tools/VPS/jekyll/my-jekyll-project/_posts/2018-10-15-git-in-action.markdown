@@ -230,7 +230,27 @@ $ git init your_project   # 会在当前路径下创建your_project目录
 $ cd your_project
 ```
 
-## 忽略文件
+# 特殊文件
+
+## .gitkeep
+
+[What is .gitkeep? How to Track and Push Empty Folders in Git](https://www.freecodecamp.org/news/what-is-gitkeep/)
+
+[git can't push empty directories](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/Git_FAQ.html#Can_I_add_empty_directories.3F). It can only track files.
+
+If you try to push a folder with nothing in it, although it will exist on your local machine, nothing will go into your branch. So if someone tries to clone your code, they won't have the same folder structure as you do on your local machine. So if it doesn't work, what do you need to do?
+
+Now we know that Git only tracks files, so we know we need to add something to the folder. You can add anything. You just need to add a really simple dummy file to make sure that the folder is tracked, and will be pushed. You could copy and paste a text file `file.txt` with nothing in it, and that would work. You could put a PNG image of a cat.
+
+**A common, standardised practice to solve this exact issue, however, is to push a file called `.gitkeep` into your empty folders.**
+
+This isn't a feature of Git! So you could name it anything. There's nothing special about the name `.gitkeep` – some developers add `.gitignore` instead, for example. `.gitignore` is a little confusing, though, as you are trying to make git not ignore your file, and actually push it into your branch. Either way, by adding this simple file to your folders, they'll get pushed when the time comes.
+
+`.gitkeep` is a common thing you will see in codebases, where an empty folder needs to be tracked via Git. The name of the dummy file may not always be .gitkeep but you'll see the actual practice over and over again as a developer.
+
+
+
+## .gitignore
 
 A [gitignore](https://git-scm.com/docs/gitignore) file specifies intentionally untracked files that Git should ignore. Files already tracked by Git are not affected.
 
@@ -339,6 +359,11 @@ git push origin master
 * 生成了新的local untracked files
 ```
 git clean -fd
+```
+
+* 还原为上一次提交的状态
+```
+git restore <file>
 ```
 
 * 文件被修改了，但未执行git add操作(working tree内撤销)
@@ -578,6 +603,23 @@ git remote set-url origin <新地址>
 
 ```
 
+## 远程仓库操作 - git checkout
+
+部分 checkout
+
+一些构建部署场景下为提升速度，只需要检出部分业务相关的目录，可以使用 git 的稀疏检出 (git version >= 2.27)。
+
+例如，部署更新只需要`lay1/lay2`目录即可
+
+```
+git clone git@git.woa.com:gerryyang/proj.git --sparse
+
+cd proj
+git sparse-checkout init --cone
+git sparse-checkout add lay1/lay2
+```
+
+
 ## 远程仓库操作 - git fetch
 
 一旦远程主机的版本库有了更新（Git术语叫做commit），需要将这些更新取回本地，这时就要用到`git fetch`命令。`git fetch`命令通常用来查看其他人的进程，因为它取回的代码对你本地的开发代码没有影响。取回远程主机的更新以后，可以在它的基础上，使用`git checkout`命令创建一个新的分支。
@@ -666,6 +708,14 @@ refer:
 
 * [git-commit - Record changes to the repository](https://git-scm.com/docs/git-commit)
 * [Git 合并多个 commit，保持历史简洁](https://cloud.tencent.com/developer/article/1690638)
+
+
+## 查看某次提交信息 - git show
+
+```
+git show <commit-id>
+```
+
 
 ## 查看文件最后一次修改信息 - git blame
 
@@ -1007,7 +1057,7 @@ git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-u
 git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
 
 
-# 添加子模块
+# 添加子模块 (在根目录执行)
 git submodule add https://github.com/chaconinc/DbConnector
 git clone --recursive https://github.com/chaconinc/MainProject
 
@@ -1016,6 +1066,9 @@ git submodule deinit --all
 
 # https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt-sync--recursive--ltpathgt82308203
 git submodule sync
+
+# 删除子模块
+git rm -f $submodule
 ```
 
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
@@ -1740,6 +1793,10 @@ git config core.fileMode false
 
 * [Automatically closing issue from pull request in GitHub](https://stackoverflow.com/questions/12235620/automatically-closing-issue-from-pull-request-in-github)
 
+
+# Manual
+
+* [Git FAQ](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/Git_FAQ.html)
 
 
 # Refer

@@ -1121,7 +1121,7 @@ void observe()
 
     // lock: creates a shared_ptr that manages the referenced object
     if (auto spt = gw.lock()) { // Has to be copied into a shared_ptr before usage
-	std::cout << *spt << "\n";
+        std::cout << *spt << "\n";
     }
     else {
         std::cout << "gw is expired\n";
@@ -1146,10 +1146,153 @@ use_count == 1: 42
 use_count == 0: gw is expired
 ```
 
+# Tips
+
+## 自定义 custom_deleter
+
+``` cpp
+#include <iostream>
+#include <memory>
+#include <set>
+
+std::set<void*> g_objects;
+
+template<typename T>
+void custom_deleter(T* ptr) {
+    g_objects.insert(ptr);
+    std::cout << "Object " << ptr << " created." << std::endl;
+    delete ptr;
+    g_objects.erase(ptr);
+    std::cout << "Object " << ptr << " destroyed." << std::endl;
+}
+
+int main() {
+    {
+        std::shared_ptr<int> p1(new int(42), custom_deleter<int>);
+        std::shared_ptr<int> p2(new int(100), custom_deleter<int>);
+        std::shared_ptr<int> p3(p2);
+        std::cout << "p1.use_count() = " << p1.use_count() << std::endl;
+        std::cout << "p2.use_count() = " << p2.use_count() << std::endl;
+        std::cout << "p3.use_count() = " << p3.use_count() << std::endl;
+    }
+    std::cout << "Objects still held: " << g_objects.size() << std::endl;
+    for (auto obj : g_objects) {
+        std::cout << "Object " << obj << " still held." << std::endl;
+    }
+    return 0;
+}
+```
+
+输出：
+
+```
+p1.use_count() = 1
+p2.use_count() = 2
+p3.use_count() = 2
+Object 0xb21f00 created.
+Object 0xb21f00 destroyed.
+Object 0xb21eb0 created.
+Object 0xb21eb0 destroyed.
+Objects still held: 0
+```
+
+## 检查 shared_ptr 对象是否被释放
+
+使用 `std::weak_ptr`，它是一种弱引用智能指针，可以用来检查 `std::shared_ptr` 对象是否已经被释放。参考：https://en.cppreference.com/w/cpp/memory/weak_ptr/lock
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+void observe(std::weak_ptr<int> weak)
+{
+    if (auto observe = weak.lock()) {
+        std::cout << "\tobserve() able to lock weak_ptr<>, value=" << *observe << "\n";
+    } else {
+        std::cout << "\tobserve() unable to lock weak_ptr<>\n";
+    }
+}
+
+int main()
+{
+    std::weak_ptr<int> weak;
+    std::cout << "weak_ptr<> not yet initialized\n";
+    observe(weak);
+
+    {
+        auto shared = std::make_shared<int>(42);
+        weak = shared;
+        std::cout << "weak_ptr<> initialized with shared_ptr.\n";
+        observe(weak);
+    }
+
+    std::cout << "shared_ptr<> has been destructed due to scope exit.\n";
+    observe(weak);
+}
+```
+
+输出：
+
+```
+weak_ptr<> not yet initialized
+        observe() unable to lock weak_ptr<>
+weak_ptr<> initialized with shared_ptr.
+        observe() able to lock weak_ptr<>, value=42
+shared_ptr<> has been destructed due to scope exit.
+        observe() unable to lock weak_ptr<>
+```
 
 
+``` cpp
+#include <iostream>
+#include <memory>
+#include <vector>
 
+std::vector<std::weak_ptr<int>> g_weak_objects;
 
+void check_objects() {
+    std::cout << "Checking objects..." << std::endl;
+    for (auto obj : g_weak_objects) {
+        if (auto p = obj.lock()) {
+            std::cout << "Object " << *p << " still held." << std::endl;
+        } else {
+            std::cout << "Object has been released." << std::endl;
+        }
+    }
+}
+
+int main() {
+    {
+        auto p1 = std::make_shared<int>(42);
+        auto p2 = std::make_shared<int>(100);
+        auto p3 = p2;
+
+        g_weak_objects.emplace_back(p1);
+        g_weak_objects.emplace_back(p2);
+        g_weak_objects.emplace_back(p3);
+
+        std::cout << "p1.use_count() = " << p1.use_count() << std::endl;
+        std::cout << "p2.use_count() = " << p2.use_count() << std::endl;
+        std::cout << "p3.use_count() = " << p3.use_count() << std::endl;
+    }
+
+    check_objects();
+
+    return 0;
+}
+```
+
+输出：
+
+```
+p1.use_count() = 1
+p2.use_count() = 2
+p3.use_count() = 2
+Checking objects...
+Object has been released.
+Object has been released.
+Object has been released.
+```
 
 
 

@@ -1319,7 +1319,7 @@ d => ddd
 
 ## std::enable_shared_from_this
 
-* `std::enable_shared_from_this` allows an object `t` that is currently managed by a `std::shared_ptr` named `pt` to safely generate additional `std::shared_ptr` instances pt1, pt2, ... that all share ownership of t with `pt`.
+* `std::enable_shared_from_this` allows an object `t` that is currently managed by a `std::shared_ptr` named `pt` to safely generate additional `std::shared_ptr` instances pt1, pt2, ... that all share ownership of `t` with `pt`.
 * **Publicly inheriting** from `std::enable_shared_from_this<T>` provides the type T with a member function `shared_from_this`. If an object t of type `T` is managed by a `std::shared_ptr<T>` named `pt`, then calling `T::shared_from_this` will return a new `std::shared_ptr<T>` that shares ownership of t with `pt`.
 
 ``` cpp
@@ -1664,15 +1664,107 @@ false
 */
 ```
 
+## decltype specifier
+
+Inspects the declared type of an entity or the type and value category of an expression.
+
+``` cpp
+#include <iostream>
+#include <type_traits>
+
+struct A { double x; };
+const A* a;
+
+decltype(a->x) y;       // type of y is double (declared type)
+decltype((a->x)) z = y; // type of z is const double& (lvalue expression)
+
+template<typename T, typename U>
+auto add(T t, U u) -> decltype(t + u) // return type depends on template parameters
+                                      // return type can be deduced since C++14
+{
+    return t + u;
+}
+
+const int& getRef(const int* p) { return *p; }
+static_assert(std::is_same_v<decltype(getRef), const int&(const int*)>);
+auto getRefFwdBad(const int* p) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdBad), int(const int*)>,
+    "Just returning auto isn't perfect forwarding.");
+decltype(auto) getRefFwdGood(const int* p) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdGood), const int&(const int*)>,
+    "Returning decltype(auto) perfectly forwards the return type.");
+
+// Alternatively:
+auto getRefFwdGood1(const int* p) -> decltype(getRef(p)) { return getRef(p); }
+static_assert(std::is_same_v<decltype(getRefFwdGood1), const int&(const int*)>,
+    "Returning decltype(return expression) also perfectly forwards the return type.");
+
+int main()
+{
+    int i = 33;
+    decltype(i) j = i * 2;
+
+    std::cout << "i and j are the same type? " << std::boolalpha
+              << std::is_same_v<decltype(i), decltype(j)> << '\n';
+
+    std::cout << "i = " << i << ", "
+              << "j = " << j << '\n';
+
+    auto f = [](int a, int b) -> int
+    {
+        return a * b;
+    };
+
+    decltype(f) g = f; // the type of a lambda function is unique and unnamed
+    i = f(2, 2);
+    j = g(3, 3);
+
+    std::cout << "i = " << i << ", "
+              << "j = " << j << '\n';
+}
+/*
+i and j are the same type? true
+i = 33, j = 66
+i = 4, j = 9
+*/
+```
+
+
+https://en.cppreference.com/w/cpp/language/decltype
+
+
+
 ## std::declval
 
-Converts any type T to a reference type, making it possible to use member functions in decltype expressions without the need to go through constructors.
+Converts any type `T` to **a reference type**, making it possible to use member functions in the operand of the **decltype specifier** without the need to go through constructors.
+
+`std::declval` is commonly used in templates where acceptable template parameters **may have no constructor** in common, but have the same member function whose return type is needed.
+
+Note that `std::declval` can only be used in [unevaluated contexts](https://en.cppreference.com/w/cpp/language/expressions#Potentially-evaluated_expressions) and is not required to be defined; it is an error to evaluate an expression that contains this function. Formally, the program is ill-formed if this function is [odr-used](https://en.cppreference.com/w/cpp/language/definition#ODR-use).
+
+Possible implementation:
+
+``` cpp
+template<typename T>
+constexpr bool always_false = false;
+
+template<typename T>
+typename std::add_rvalue_reference<T>::type declval() noexcept
+{
+    static_assert(always_false<T>, "declval not allowed in an evaluated context");
+}
+```
+
+Example:
 
 ``` cpp
 #include <utility>
 #include <iostream>
 
-struct Default { int foo() const { return 1; } };
+struct Default
+{
+    int foo() const { return 1; }
+};
 
 struct NonDefault
 {
@@ -1688,9 +1780,14 @@ int main()
     std::cout << "n1 = " << n1 << '\n'
               << "n2 = " << n2 << '\n';
 }
+/*
+n1 = 1
+n2 = 1
+*/
 ```
 
 https://en.cppreference.com/w/cpp/utility/declval
+
 
 ## std::is_convertible
 
@@ -2109,6 +2206,47 @@ double&: false
 https://en.cppreference.com/w/cpp/types/is_floating_point
 
 
+## std::remove / std::remove_if
+
+``` cpp
+#include <algorithm>
+#include <cctype>
+#include <iostream>
+#include <string>
+#include <string_view>
+
+int main()
+{
+    std::string str1 {"Text with some   spaces"};
+
+    auto noSpaceEnd = std::remove(str1.begin(), str1.end(), ' ');
+
+    // The spaces are removed from the string only logically.
+    // Note, we use view, the original string is still not shrunk:
+    std::cout << std::string_view(str1.begin(), noSpaceEnd)
+              << " size: " << str1.size() << '\n';
+
+    str1.erase(noSpaceEnd, str1.end());
+
+    // The spaces are removed from the string physically.
+    std::cout << str1 << " size: " << str1.size() << '\n';
+
+    std::string str2 = "Text\n with\tsome \t  whitespaces\n\n";
+    str2.erase(std::remove_if(str2.begin(),
+                              str2.end(),
+                              [](unsigned char x) { return std::isspace(x); }),
+               str2.end());
+    std::cout << str2 << '\n';
+}
+/*
+Textwithsomespaces size: 23
+Textwithsomespaces size: 18
+Textwithsomewhitespaces
+*/
+```
+
+https://en.cppreference.com/w/cpp/algorithm/remove
+
 ## std::enable_if
 
 ``` cpp
@@ -2298,9 +2436,19 @@ int main () {
 >
 > This package contains the GNU Atomic library which is a GCC support runtime library for atomic operations not supported by hardware. This package contains the GNU Atomic library which is a GCC support runtime library for atomic operations not supported by hardware.
 
+在 CentOS 上安装 libatomic 库：
+
 ``` bash
-sudo yum -y install libatomic
+# 安装
+sudo yum install libatomic
+
+# 查看版本信息
+rpm -qa | grep libatomic
+
+# 查看所在目录
+ldconfig -p | grep libatomic
 ```
+
 
 参考问题：[C++ 11 undefined reference to __atomic_*](https://stackoverflow.com/questions/25403736/c-11-undefined-reference-to-atomic-store-16)
 
@@ -2317,9 +2465,6 @@ refer:
 
 * https://en.cppreference.com/w/cpp/atomic/atomic
 * https://en.cppreference.com/w/cpp/atomic/atomic/load
-
-
-
 
 
 
@@ -4739,21 +4884,126 @@ This is a really nasty C++ issue and I am amazed there isn't reliable tooling fo
 
 # 开发框架
 
-## libatbus
+## [libatbus](https://github.com/atframework/libatbus)
 
 用于搭建高性能、全异步(a)、树形结构(t)的BUS消息系统的跨平台框架库
 
-* https://github.com/atframework/libatbus
+
+## [PhotonLibOS](https://github.com/alibaba/PhotonLibOS) (阿里)
+
+Photon is a high-efficiency LibOS framework, based on a set of carefully selected C++ libs.
+
+The role of LibOS is to connect user apps and the OS. Following the principle of Least Astonishment, we designed Photon's API to be as consistent as possible with C++ std and POSIX semantics. This flattens the learning curve for lib users and brings convenience when migrating legacy codebases.
+
+Photon's runtime is driven by a coroutine lib. Out tests show that it has the best I/O performance in the open source world by the year of 2022, even among different programing languages.
+
+As to the project vision, we hope that Photon would help programs run as fast and agile as the [photon](https://en.wikipedia.org/wiki/Photon) particle, which exactly is the naming came from.
+
+## [Coost](https://github.com/idealvin/coost)
+
+coost is an elegant and efficient cross-platform C++ base library. Its goal is to create a sword of C++ to make C++ programming easy and enjoyable.
+
+The original name of coost is co or cocoyaxi. It is like boost, but more lightweight, the static library built on linux or mac is only about 1MB in size. However, it still provides enough powerful features.
+
+## [Libgo](https://github.com/yyzybb537/libgo)
+
+Libgo is a stackful coroutine library for collaborative scheduling written in C++11, and it is also a powerful and easy-to-use parallel programming library.
+
+## [asyncio](https://github.com/netcan/asyncio)
+
+Asyncio is a C++20 coroutine library to write concurrent code using the await syntax, and imitate python asyncio library.
+
+## [boost::asio](https://think-async.com/Asio/)
+
+Asio is a cross-platform C++ library for network and low-level I/O programming that provides developers with a consistent asynchronous model using a modern C++ approach.
 
 
 
-# string 操作
 
-## [C++ convert string to hexadecimal and vice versa](https://stackoverflow.com/questions/3381614/c-convert-string-to-hexadecimal-and-vice-versa)
+
+
+# [basic_string](https://en.cppreference.com/w/cpp/string/basic_string/) 相关
+
+## 构造函数
+
+``` cpp
+#include <cassert>
+#include <cctype>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <string>
+
+int main()
+{
+    std::cout << "1) string(); ";
+    std::string s1;
+    assert(s1.empty() && (s1.length() == 0) && (s1.size() == 0));
+    std::cout << "s1.capacity(): " << s1.capacity() << '\n'; // unspecified
+
+    std::cout << "2) string(size_type count, CharT ch): ";
+    std::string s2(4, '=');
+    std::cout << std::quoted(s2) << '\n'; // "===="
+
+    std::cout << "3) string(const string& other, size_type pos, size_type count): ";
+    std::string const other3("Exemplary");
+    std::string s3(other3, 0, other3.length()-1);
+    std::cout << quoted(s3) << '\n'; // "Exemplar"
+
+    std::cout << "4) string(const string& other, size_type pos): ";
+    std::string const other4("Mutatis Mutandis");
+    std::string s4(other4, 8);
+    std::cout << quoted(s4) << '\n'; // "Mutandis", i.e. [8, 16)
+
+    std::cout << "5) string(CharT const* s, size_type count): ";
+    std::string s5("C-style string", 7);
+    std::cout << quoted(s5) << '\n'; // "C-style", i.e. [0, 7)
+
+    std::cout << "6) string(CharT const* s): ";
+    std::string s6("C-style\0string");
+    std::cout << quoted(s6) << '\n'; // "C-style"
+
+    std::cout << "7) string(InputIt first, InputIt last): ";
+    char mutable_c_str[] = "another C-style string";
+    std::string s7(std::begin(mutable_c_str) + 8, std::end(mutable_c_str) - 1);
+    std::cout << quoted(s7) << '\n'; // "C-style string"
+
+    std::cout << "8) string(string&): ";
+    std::string const other8("Exemplar");
+    std::string s8(other8);
+    std::cout << quoted(s8) << '\n'; // "Exemplar"
+
+    std::cout << "9) string(string&&): ";
+    std::string s9(std::string("C++ by ") + std::string("example"));
+    std::cout << quoted(s9) << '\n'; // "C++ by example"
+
+    std::cout << "a) string(std::initializer_list<CharT>): ";
+    std::string sa({'C', '-', 's', 't', 'y', 'l', 'e'});
+    std::cout << quoted(sa) << '\n'; // "C-style"
+
+    // before C++11, overload resolution selects string(InputIt first, InputIt last)
+    // [with InputIt = int] which behaves *as if* string(size_type count, CharT ch)
+    // after C++11 the InputIt constructor is disabled for integral types and calls:
+    std::cout << "b) string(size_type count, CharT ch) is called: ";
+    std::string sb(3, std::toupper('a'));
+    std::cout << quoted(sb) << '\n'; // "AAA"
+
+    [[maybe_unused]]
+    auto zero = [] { /* ... */ return nullptr; };
+//  std::string sc{zero()}; // Before C++23: throws std::logic_error
+                            // Since C++23: won't compile, see overload (12)
+}
+```
+
+## str2hex / hex2string
+
+[C++ convert string to hexadecimal and vice versa](https://stackoverflow.com/questions/3381614/c-convert-string-to-hexadecimal-and-vice-versa)
 
 ``` cpp
 #include <string>
 #include <cstdint>
+#include <sstream>
+#include <iomanip>
 
 std::string string_to_hex(const std::string& in) {
     std::stringstream ss;
@@ -4788,10 +5038,48 @@ std::string hex_to_string(const std::string& in) {
 }
 ```
 
+# abi Namespace Reference
+
+## abi::__cxa_demangle
+
+Transforming C++ ABI identifiers (like RTTI symbols) into the original C++ source identifiers is called “demangling.”
+
+If you have read the [source documentation for namespace abi](http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/namespaces.html) then you are aware of the cross-vendor C++ ABI in use by GCC. One of the exposed functions is used for demangling, `abi::__cxa_demangle`.
+
+In programs like `c++filt`, the linker, and other tools have the ability to decode C++ ABI names, and now so can you.
+
+``` cpp
+#include <cxxabi.h>
+#include <string>
+#include <iostream>
+
+int main() {
+    std::string mangled = "N4JLib17CApolloServiceMgr5STCfgE";
+    int status;
+    char* demangled = abi::__cxa_demangle(mangled.c_str(), nullptr, nullptr, &status);
+    if (status == 0) {
+        std::cout << "Demangled: " << demangled << std::endl;
+        std::free(demangled);
+    } else {
+        std::cerr << "Demangling failed" << std::endl;
+    }
+    return 0;
+}
+/*
+Demangled: JLib::CApolloServiceMgr::STCfg
+*/
+```
+
+* https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html
+* https://gcc.gnu.org/onlinedocs/libstdc++/libstdc++-html-USERS-4.3/a01696.html
+
+
+
 # Refer
 
 * [编程面试题在线训练平台](http://www.lintcode.com/zh-cn/)
 * http://www.linuxhowtos.org/C_C++/
+* [The GNU C++ Library Manual](https://gcc.gnu.org/onlinedocs/libstdc++/manual/)
 
 # TODO
 

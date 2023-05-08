@@ -15,12 +15,16 @@ Grafana 的权限分为三个等级：Viewer、Editor 和 Admin，Viewer 只能�
 
 
 
+# HTTP API
+
+The Grafana backend exposes an HTTP API, which is the same API that is used by the frontend to do everything from saving dashboards, creating users, and updating data sources. See [HTTP API reference](https://grafana.com/docs/grafana/latest/developers/http_api/)
 
 
 
 
 # Refer
 
+* https://grafana.com/docs/grafana/latest/introduction/
 * [Grafana 的一些使用技巧](https://zhuanlan.zhihu.com/p/34005738)
 
 
