@@ -43,7 +43,7 @@ std::string hex_to_string(const std::string& in)
 int main()
 {
 	tutorial::AddressBook address_book;
-	address_book.add_people()->set_id(1);
+	address_book.add_people()->set_name("gerry");
 
 	const int kBufSize = 1024;
 	unsigned char abyBuf[kBufSize];
