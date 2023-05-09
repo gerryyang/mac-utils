@@ -455,6 +455,47 @@ TODO
 
 # 常用技巧
 
+## 打印内存的值
+
+``` cpp
+#include <stdio.h>
+
+int main(void)
+{
+    int i = 0;
+    char a[100];
+
+    for (i = 0; i < sizeof(a); i++)
+    {
+        a[i] = i;
+    }
+
+    return 0;
+}
+```
+
+
+gdb 中使用 `x` 命令来打印内存的值，格式为 `x/nfu addr`。含义为以`f`格式打印从`addr`开始的`n`个长度单元为`u`的内存值。参数具体含义如下：
+
+* `n`：输出单元的个数
+* `f`：是输出格式。比如，`x`是以 16 进制形式输出，`o`是以 8 进制形式输出
+* `u`：标明一个单元的长度。`b`是一个 byte，`h`是两个`byte（halfword），`w`是四个 byte（word），`g`是八个 byte（giant word）
+
+使用示例：
+
+```
+// 打印某个地址开始的 8 字节内容
+(gdb) x /1gx 0x7fd3e1ed30b8
+0x7fd3e1ed30b8: 0x00007fd3d00019fd
+
+
+// 以 16 进制格式打印数组前 a 16 个 byte 的值
+(gdb) x/16xb a
+0x7fffffffe4a0: 0x00    0x01    0x02    0x03    0x04    0x05    0x06    0x07
+0x7fffffffe4a8: 0x08    0x09    0x0a    0x0b    0x0c    0x0d    0x0e    0x0f
+```
+
+
 
 ## [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 

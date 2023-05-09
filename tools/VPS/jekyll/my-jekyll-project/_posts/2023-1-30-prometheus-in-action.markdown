@@ -16,7 +16,7 @@ categories: Prometheus
 `Prometheus` 是一个开源监控系统。与 `Kubernetes` 相似，Prometheus 受启发于 Google 的 `Borgman` 监控系统，而 Kubernetes 也是从 Google 的 `Borg` 演变而来的。Prometheus 始于2012年，并由 SoundCloud 内部工程师开发，于2015年1月发布。2016年5月，其成为继 Kubernetes 之后第二个正式加入 Cloud Native Computing Foundation（CNCF） 基金会的项目。现最常见的 Kubernetes 容器管理系统中，通常会搭配 Prometheus 进行监控。
 
 
-![prometheus_arch](/assets/images/202304/prometheus_arch.png)
+![prometheus_arch](/assets/images/202304/prometheus_arch.svg)
 
 # 安装测试
 
