@@ -14,4 +14,4 @@ categories: Clickhouse
 # Refer
 
 * https://clickhouse.com/docs/en/sql-reference
-
+* https://clickhouse.com/docs/zh/sql-reference

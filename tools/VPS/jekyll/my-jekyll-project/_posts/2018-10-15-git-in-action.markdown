@@ -1230,6 +1230,63 @@ git bisect 是一个很有用的命令，用来查找哪一次代码提交引入
 
 * https://www.ruanyifeng.com/blog/2018/12/git-bisect.html
 
+## git ls-tree
+
+Lists the contents of a given tree object, like what "/bin/ls -a" does in the current working directory.
+
+``` bash
+# 列出 Git 仓库中所有文件的大小，并按照文件大小排序
+git ls-tree -r -t -l HEAD | sort -k 4 -n
+
+# 列出 Git 仓库中大小超过指定大小的文件
+git ls-tree -r -t -l HEAD | awk '$4 >= <file-size> {print $0}'
+```
+
+* https://git-scm.com/docs/git-ls-tree
+
+## git reflog
+
+This command manages the information recorded in the reflogs.
+
+`git reflog show `accepts any of the options accepted by `git log`.
+
+```
+git reflog show --oneline -n5
+```
+
+* https://git-scm.com/docs/git-reflog
+
+
+## git rev-list (列出 commitid 记录)
+
+Lists commit objects in reverse chronological order
+
+```
+git rev-list --all --abbrev-commit | head -n5
+```
+
+* https://git-scm.com/docs/git-rev-list
+
+## git gc
+
+Cleanup unnecessary files and optimize the local repository.
+
+```
+git gc --aggressive --prune=now
+```
+
+* https://git-scm.com/docs/git-gc
+
+
+## git filter-branch
+
+Rewrite branches
+
+* https://git-scm.com/docs/git-filter-branch
+
+
+
+
 # Git hooks
 
 ```
@@ -1792,6 +1849,161 @@ git config core.fileMode false
 * [Closing multiple issues in Github with a commit message](https://stackoverflow.com/questions/3547445/closing-multiple-issues-in-github-with-a-commit-message)
 
 * [Automatically closing issue from pull request in GitHub](https://stackoverflow.com/questions/12235620/automatically-closing-issue-from-pull-request-in-github)
+
+## [Maintain a Git repository](https://support.atlassian.com/bitbucket-cloud/docs/maintain-a-git-repository/) (对 Git 仓库瘦身)
+
+Maintenance of your Git repository typically involves reducing a repository's size.
+
+> Understanding file removal from Git history
+
+Recall that cloning a repository clones the entire history — including every version of every source code file.  If a user commits a huge file, such as a JAR, every clone thereafter includes this file. Even if a user ends up removing the file from the project with a subsequent commit, the file still exists in the repository history.  To remove this file from your repository you must:
+
+* remove the file from your project's **current file-tree**
+* remove the file from repository history - **rewriting Git history**, deleting the file from **all commits** containing it
+* remove all [reflog](http://git-scm.com/docs/git-reflog) history that refers to the old commit history
+* repack the repository, garbage-collecting the now-unused data using [git gc](http://git-scm.com/docs/git-gc)
+
+Git 'gc' (garbage collection) will remove all data from the repository that is not actually used, or in some way referenced, by any of your branches or tags. In order for that to be useful, we need to rewrite all Git repository history that contained the unwanted file, so that it no longer references it - git gc will then be able to discard the now-unused data.
+
+Rewriting repository history is a tricky business, because every commit depends on it's parents, so any small change will change the commit id of every subsequent commit. There are two automated tools for doing this:
+
+1. [the BFG Repo Cleaner](http://rtyley.github.io/bfg-repo-cleaner/) - fast, simple, easy to use. Require Java 6 or above.
+2. [git filter-branch](http://git-scm.com/docs/git-filter-branch) - powerful, tricky to configure, slow on big repositories. Part of the core Git suite.
+
+Remember, after you rewrite the history, whether you use the BFG or filter-branch, you will need to remove `reflog` entries that point to old history, and finally run the garbage collector to purge the old data.
+
+
+下面是关于使用 git filter-branch 的方法介绍：
+
+Antony Stubbs 提供了一个可以查找 git 大文件的 bash 脚本 [git_find_big.sh](https://stubbisms.wordpress.com/2009/07/10/git-script-to-show-largest-pack-objects-and-trim-your-waist-line/)
+
+``` bash
+#!/bin/bash
+#set -x
+
+# Shows you the largest objects in your repo's pack file.
+# Written for osx.
+#
+# @see http://stubbisms.wordpress.com/2009/07/10/git-script-to-show-largest-pack-objects-and-trim-your-waist-line/
+# @author Antony Stubbs
+
+# set the internal field spereator to line break, so that we can iterate easily over the verify-pack output
+IFS=$'\n';
+
+# list all objects including their size, sort by size, take top 10
+objects=`git verify-pack -v .git/objects/pack/pack-*.idx | grep -v chain | sort -k3nr | head -n10`
+
+echo "All sizes are in kB's. The pack column is the size of the object, compressed, inside the pack file."
+
+output="size,pack,SHA,location"
+for y in $objects
+do
+	# extract the size in bytes
+	size=$((`echo $y | cut -f 5 -d ' '`/1024))
+	# extract the compressed size in bytes
+	compressedSize=$((`echo $y | cut -f 6 -d ' '`/1024))
+	# extract the SHA
+	sha=`echo $y | cut -f 1 -d ' '`
+	# find the objects location in the repository tree
+	other=`git rev-list --all --objects | grep $sha`
+	#lineBreak=`echo -e "\n"`
+	output="${output}\n${size},${compressedSize},${other}"
+done
+
+echo -e $output | column -t -s ', '
+```
+
+输出：
+
+```
+All sizes are in kB's. The pack column is the size of the object, compressed, inside the pack file.
+size    pack   SHA                                       location
+132011  24488  c26f3ca0ad465e93a98aea7d6c9c697dcba05dac  JLib/libs/lib/protobuf/libprotoc.a
+128799  24669  422bd00a3ce77aaf9623d4643bdd138d19867e89  JLib/libs/lib/irpc/lib64/libtsf4g2.a
+102317  28626  f1700e3d6ed6faa2857ffb2718ebe6b081d20f83  JLib/tools/cmd/cmdtool
+101967  20128  8f2dd4caf83888e79f3eab6f03ff091c8ce0592c  JLib/libs/lib/irpc/lib64/libbase_agent_client_api.a
+86066   14985  ca911a78a4dcb60b6a53b7298e16987d11c4c8b8  JLib/libs/lib/protobuf/libprotoc.a
+82541   13534  57bfd8bd1274c5b76820ecba4ad0d3d181361837  JLib/libs/lib/tsf4g/libapolloservice.a
+80786   15872  af7db1120203eb1afb31f6090125f8e5e1c452fe  JLib/libs/lib/protobuf/libprotobuf.a
+80495   15869  93995fcad84daef208561c34b2f8a3ac32ce9872  JLib/libs/lib/irpc/lib64/thirdparty/libprotobuf.a
+77920   14125  a607eb72817c4e58494ad5b895d8f8e5e17b1425  JLib/libs/lib/irpc/lib64/submod/libmicro_service_sdk.a
+63532   19468  afb521929d9f4c38fb0a07b644b9eefa36f05874  JLib/bin/tconnd/tconnd
+```
+
+获得大文件信息后，通过 `git filter-branch` 删除大文件：
+
+``` bash
+git filter-branch --force --prune-empty --index-filter 'git rm -rf --cached --ignore-unmatch $file' --tag-name-filter cat -- --all
+```
+
+* `--index-filter` 选项可以修改仓库的索引
+* `--cached` 选项从索引中而不是磁盘来删除文件，这样会更快，因为你不需要在运行这个过滤器前检查每个修订版本
+* `--ignore-unmatch` 选项可以防止在尝试移走不存在的文件 pathname 的时候命令失败
+
+结合上面 `git_find_big.sh` 的输出 `file.txt`，将删除逻辑封装成 `git_strip.sh` 脚本
+
+``` bash
+#!/bin/bash
+
+while read -r path; do
+  git filter-branch --force --prune-empty --index-filter "git rm -rf --cached --ignore-unmatch $path" --tag-name-filter cat -- --all
+done < <(sed '1,2d' file.txt | awk '{print $NF}')
+
+echo "done"
+```
+
+* 使用 `sed` 和 `awk` 命令来删除文件的前两行，并提取每一行的最后一个字段
+* `< <()` 语法用于将命令的输出作为输入传递给 `while` 循环
+
+
+再通过 `git_gc_data.sh` 进行数据回收：
+
+``` bash
+#!/bin/bash
+
+# Prune all of the reflog references from now on back (unless you're explicitly only operating on one branch).
+git reflog expire --expire=now --all
+
+# Repack the repository by running the garbage collector and pruning old objects.
+git gc --prune=now
+
+echo "done"
+```
+
+最后推送到远端仓库：
+
+``` bash
+# Push all your changes back to the Bitbucket repository.
+git push --all --force
+
+# Make sure all your tags are current too
+git push --tags --force
+```
+
+另外一种完全清除历史记录的方案：[git-clearHistory](https://gist.github.com/stephenhardy/5470814)
+
+Steps to clear out the history of a git/github repository
+
+``` bash
+# Remove the history from
+rm -rf .git
+
+# recreate the repos from the current content only
+git init
+git add .
+git commit -m "Initial commit"
+
+# push to the github remote repos ensuring you overwrite history
+git remote add origin git@github.com:<YOUR ACCOUNT>/<YOUR REPOS>.git
+git push -u --force origin master
+```
+
+
+refer:
+
+* [Git 仓库瘦身](https://www.lixueduan.com/posts/git/04-git-reduce/)
+* [Maintain a Git repository](https://support.atlassian.com/bitbucket-cloud/docs/maintain-a-git-repository/) (好文)
+* [git-clearHistory](https://gist.github.com/stephenhardy/5470814)
 
 
 # Manual

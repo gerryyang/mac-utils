@@ -1372,6 +1372,9 @@ golangci-lint --version
 
 
 
+# 问题调试
+
+服务启动前加上 `GOTRACEBACK=crash`，可以生成 corefile，和 `gdb` 类似，可以用 `dlv` 进行调试。
 
 
 
