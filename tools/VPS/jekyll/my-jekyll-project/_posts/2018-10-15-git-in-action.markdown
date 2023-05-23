@@ -852,6 +852,9 @@ git log --since=2.weeks
 git log --pretty=oneline
 git log --oneline -n3
 git log --oneline -n3 --graph
+
+# 指定用户
+git log --oneline -n3 --author=gerryyang
 ```
 更多: [Git-基础-查看提交历史]
 

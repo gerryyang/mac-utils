@@ -634,6 +634,7 @@ TODO
 
 # Refer
 
+* [Heap Memory](https://heap-exploitation.dhavalkapil.com/heap_memory)
 
 
 

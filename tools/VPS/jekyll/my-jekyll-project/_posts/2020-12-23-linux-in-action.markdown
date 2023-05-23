@@ -1813,6 +1813,10 @@ $9 = (void *) 0x55555555478a <_start+42>
 $10 = (void *) 0x0
 ```
 
+More:
+
+* [C++的backtrace](https://blog.owent.net/2018/1801)
+
 ## assert
 
 The definition of the macro assert depends on another macro, `NDEBUG`, which is not defined by the standard library.

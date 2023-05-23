@@ -5038,6 +5038,38 @@ std::string hex_to_string(const std::string& in) {
 }
 ```
 
+## std::setw / std::left (输出对齐)
+
+可以使用 `std::setw()` 函数和 `std::left`、`std::right`、`std::internal` 等标志来控制输出的对齐方式。
+
+``` cpp
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+
+int main() {
+    std::stringstream ss;
+    ss << std::setw(15) << std::left << "thread" << std::setw(15) << std::left << "reporttime" << std::setw(15) << std::left << "status(0:OK, 1:Exception, 2:Timeout)" << std::endl;
+    ss << std::setw(15) << std::left << "NetMsgThread" << std::setw(15) << std::left << 1684460218 << std::setw(15) << std::left << 0 << std::endl;
+    ss << std::setw(15) << std::left << "unittest" << std::setw(15) << std::left << 1684460218 << std::setw(15) << std::left << 0 << std::endl;
+    ss << std::setw(15) << std::left << "unittestsvr" << std::setw(15) << std::left << 1684460223 << std::setw(15) << std::left << 0 << std::endl;
+    std::cout << ss.str();
+    return 0;
+}
+```
+
+使用 `std::setw` 函数设置输出的宽度，使用 `std::left` 标志控制输出的对齐方式。需要注意的是，`std::setw` 函数只对下一个输出字段起作用，因此在输出多个字段时，需要多次调用该函数。
+
+输出的结果如下：
+
+```
+thread         reporttime     status(0:OK, 1:Exception, 2:Timeout)
+NetMsgThread   1684460218     0
+unittest       1684460218     0
+unittestsvr    1684460223     0
+```
+
+
 # abi Namespace Reference
 
 ## abi::__cxa_demangle
