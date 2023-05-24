@@ -2,7 +2,7 @@
 layout: post
 title:  "Kubernetes in Action"
 date:   2022-07-31 16:30:00 +0800
-categories: 虚拟化
+categories: 云原生
 ---
 
 * Do not remove this line (it will not be displayed)

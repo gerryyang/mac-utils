@@ -2,7 +2,7 @@
 layout: post
 title:  "Docker in Action"
 date:   2019-02-22 08:00:00 +0800
-categories: 虚拟化
+categories: 云原生
 ---
 
 * Do not remove this line (it will not be displayed)
