@@ -46,7 +46,66 @@ std::forward_list is a container that supports fast insertion and removal of ele
 
 * https://en.cppreference.com/w/cpp/container/forward_list
 
-## std::map
+## Iterator invalidation
+
+https://en.cppreference.com/w/cpp/container
+
+
+Read-only methods never invalidate iterators or references. Methods which modify the contents of a container may invalidate iterators and/or references, as summarized in this table.
+
+![iterator_invalidation](/assets/images/202305/iterator_invalidation.png)
+
+``` cpp
+#include <iostream>
+#include <map>
+
+int main() {
+
+    std::map<int, int> m = { {1,1},{2,2},{3,3},{4,4,},{6,6} };
+
+    auto iter1 = m.find(1);
+    auto iter3 = m.find(3);
+    auto iter6 = m.find(6);
+
+    m[5] = 5;
+
+    auto iter2 = m.find(2);
+    {
+        std::cout << "find 2 to delete it\n";
+        m.erase(iter2);
+    }
+
+    std::cout << iter1->first << "," << iter1->second << std::endl;
+    std::cout << iter3->first << "," << iter3->second << std::endl;
+    std::cout << iter6->first << "," << iter6->second << std::endl;
+}
+```
+
+
+## std::map (自定义 Key 比较)
+
+当节点键大于等于所要查找或插入的键时，返回 0 (false)，反之为 1 (true)，这是由内部源代码所决定的。
+
+`std::map` is a sorted associative container that contains key-value pairs with unique keys. Keys are sorted by using the comparison function **Compare**. Search, removal, and insertion operations have logarithmic complexity. Maps are usually implemented as [Red–black trees](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree).
+
+Everywhere the standard library uses the **Compare** requirements, uniqueness is determined by using the equivalence relation. In imprecise terms, two objects `a` and `b` are considered equivalent (not unique) if neither compares less than the other: `!comp(a, b) && !comp(b, a)`.
+
+关于 C++ STL 中比较函数的要求和容器中元素唯一性的说明。
+
+在 C++ STL 中，比较函数是用于比较容器中元素大小关系的函数。比较函数需要满足一定的要求，即它必须是一个严格弱序关系（strict weak ordering），也就是说，它必须满足以下三个条件：
+
+1. 反自反性（irreflexivity）：对于任意元素 x，comp(x, x) 必须返回 false。
+2. 反对称性（antisymmetry）：对于任意元素 x 和 y，如果 comp(x, y) 返回 true，则 comp(y, x) 必须返回 false。
+3. 传递性（transitivity）：对于任意元素 x、y 和 z，如果 comp(x, y) 返回 true，comp(y, z) 返回 true，则 comp(x, z) 必须返回 true。
+
+在使用等价关系判断元素唯一性时，两个元素 a 和 b 被认为是等价的（不唯一），当且仅当它们满足以下条件：!comp(a, b) && !comp(b, a)。也就是说，如果 a 和 b 之间不存在大小关系，它们就被认为是等价的，不唯一。
+
+
+* https://en.cppreference.com/w/cpp/container/map
+* https://en.cppreference.com/w/cpp/named_req/Compare
+* [STL中改变map的默认比较方式](https://www.cnblogs.com/zjfdlut/archive/2011/08/12/2135698.html)
+
+
 
 ``` cpp
 
@@ -176,7 +235,9 @@ int main()
     };
     f2();
 
-    // find 操作会对每个元素比较两次，两次比较结果都是false则认为相等
+    // find 操作会对每个元素交换位置比较两次，两次比较结果都是 false 则认为相等
+    // an expression-equivalent to !comp(a, b) && !comp(b, a)
+
     S k(1, 2);
     auto iter = m.find(k);
     if (iter != m.end()) {
@@ -5104,6 +5165,9 @@ Demangled: JLib::CApolloServiceMgr::STCfg
 
 * https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html
 * https://gcc.gnu.org/onlinedocs/libstdc++/libstdc++-html-USERS-4.3/a01696.html
+
+
+
 
 
 

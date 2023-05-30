@@ -231,6 +231,11 @@ curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | 
 * [Docker - 从入门到实践](https://yeasy.gitbook.io/docker_practice/)
 
 
+# 优化
+
+* [三个技巧，将 Docker 镜像体积减小 90%](https://www.infoq.cn/article/3-simple-tricks-for-smaller-docker-images)
+
+
 # 官方文档
 
 * https://docs.docker.com/engine/reference/run/
