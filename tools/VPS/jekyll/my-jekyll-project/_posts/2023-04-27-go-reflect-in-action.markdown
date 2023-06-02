@@ -2,7 +2,7 @@
 layout: post
 title:  "Go Reflect in Action"
 date:   2023-04-27 12:30:00 +0800
-categories: [GoLang, 编程语言]
+categories: [GoLang]
 ---
 
 * Do not remove this line (it will not be displayed)
