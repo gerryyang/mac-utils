@@ -8,12 +8,53 @@ categories: [TCP/IP]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# TCP 核心思想：带重传的累积正向应答
+
+1. Cumulative positive acknowledgement with retransmission
+2. Flow control (sliding window)
+3. Congestion control
+
+> 2 & 3 are optional ! Really ?!
+
+TCP/IP 协议中的**拥塞控制**和**流量控制**都是为了保证网络传输的可靠性和效率，但它们的目的和实现方式有所不同。
+
+**拥塞控制**是为了防止网络拥塞，即当网络中的数据流量过大时，导致网络性能下降或数据丢失。拥塞控制的目的是通过限制发送方的数据发送速率，以避免网络拥塞。TCP 协议中的拥塞控制算法包括慢启动、拥塞避免、快速重传和快速恢复等。
+
+**流量控制**是为了防止接收方无法处理发送方发送的数据，即当接收方处理速度较慢时，导致数据丢失或缓存溢出。流量控制的目的是通过限制发送方的数据发送速率，以避免接收方无法处理数据。TCP 协议中的流量控制使用了滑动窗口机制，接收方通过发送窗口大小告诉发送方可以接收的数据量，发送方根据接收方的窗口大小来控制发送速率。
+
+因此，拥塞控制和流量控制都是为了保证网络传输的可靠性和效率，但拥塞控制是为了避免网络拥塞，而流量控制是为了避免接收方无法处理数据。
+
+
+# 正确使用 TCP/IP 首要原则：别添乱
+
+* 不要轻易相信网上来路不明，相互抄袭，似是而非，以讹传讹的过时“调优”经验
+
+例如，Buffer auto-tuning: don't set SNDBUF/RCVBUF unless you want to reduce them
+
+* [从一次经历谈 TIME_WAIT 的那些事 - 陈皓](https://coolshell.cn/articles/22263.html)
+* [Coping with the TCP TIME-WAIT state on busy Linux servers](https://vincent.bernat.ch/en/blog/2014-tcp-time-wait-state-linux)
+* [TCP 的那些事儿（上）- 陈皓](https://coolshell.cn/articles/11564.html)
+* [TCP 的那些事儿（下）- 陈皓](https://coolshell.cn/articles/11609.html)
+
+
+# IPv4 Header
+
+
+![ipv4header](/assets/images/202306/ipv4header.jpg)
+
+
+
+# TCP Header
+
+![tcpheader](/assets/images/202306/tcpheader.jpg)
+
+
 
 # Network address
 
 ![network_address](/assets/images/202205/network_address.png)
 
-A [network address](https://en.wikipedia.org/wiki/Network_address) is an identifier for a [node](https://en.wikipedia.org/wiki/Node_(networking)) or [host](https://en.wikipedia.org/wiki/Host_(networking)) on a [telecommunications network](https://en.wikipedia.org/wiki/Telecommunications_network). Network addresses are designed to be [unique identifiers](https://en.wikipedia.org/wiki/Unique_identifier) across the network, although some networks allow for [local](https://en.wikipedia.org/wiki/Link-local_address), [private addresses](https://en.wikipedia.org/wiki/Private_network), or [locally administered addresses](https://en.wikipedia.org/wiki/Locally_administered_address) that may not be unique.[1] Special network addresses are allocated as [broadcast](https://en.wikipedia.org/wiki/Broadcast_address) or [multicast addresses](https://en.wikipedia.org/wiki/Multicast_address). These too are not unique.
+A [network address](https://en.wikipedia.org/wiki/Network_address) is an identifier for a [node](https://en.wikipedia.org/wiki/Node_(networking)) or [host](https://en.wikipedia.org/wiki/Host_(networking)) on a [telecommunications network](https://en.wikipedia.org/wiki/Telecommunications_network). Network addresses are designed to be [unique identifiers](https://en.wikipedia.org/wiki/Unique_identifier) across the network, although some networks allow for [local](https://en.wikipedia.org/wiki/Link-local_address), [private addresses](https://en.wikipedia.org/wiki/Private_network), or [locally administered addresses](https://en.wikipedia.org/wiki/Locally_administered_address) that may not be unique. Special network addresses are allocated as [broadcast](https://en.wikipedia.org/wiki/Broadcast_address) or [multicast addresses](https://en.wikipedia.org/wiki/Multicast_address). These too are not unique.
 
 In some cases, network hosts may have more than one network address. For example, each [network interface controller](https://en.wikipedia.org/wiki/Network_interface_controller) may be uniquely identified. Further, because protocols are frequently [layered](https://en.wikipedia.org/wiki/Abstraction_layer), more than one protocol's network address can occur in any particular network interface or node and more than one type of network address may be used in any one network.
 
@@ -409,9 +450,18 @@ refer:
 * https://cloud.tencent.com/developer/article/1481046
 
 
+# Tools
+
+## EaseProbe
+
+[EaseProbe](https://github.com/megaease/easeprobe) is a simple, standalone, and lightweight tool that can do health/status checking, written in Go.
+
+
+
+
 # Q&A
 
-# [How to convert string to IP address and vice versa](https://stackoverflow.com/questions/5328070/how-to-convert-string-to-ip-address-and-vice-versa)
+## [How to convert string to IP address and vice versa](https://stackoverflow.com/questions/5328070/how-to-convert-string-to-ip-address-and-vice-versa)
 
 Use `inet_ntop()` and `inet_pton()` if you need it other way around. Do not use `inet_ntoa()`, `inet_aton()` and similar as they are deprecated and don't support ipv6.
 
@@ -432,6 +482,7 @@ printf("%s\n", str); // prints "192.0.2.33"
 
 # Refer
 
+* [TCP/IP 概述 by 陈硕](https://b23.tv/lBAsi98)
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
 * [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll/#.ZAmnruxBw0Q)
 

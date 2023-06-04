@@ -8,6 +8,91 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# [Allocator](https://en.cppreference.com/w/cpp/named_req/Allocator) (标准库分配器)
+
+> Encapsulates strategies for access/addressing, allocation/deallocation and construction/destruction of objects.
+
+分配器，封装了内存分配、释放、对象构造和析构的策略。它被许多标准库组件使用，包括容器如 std::vector、std::map 和 std::unordered_map，以及智能指针如 std::shared_ptr。
+
+为了能够与标准库组件一起使用，分配器必须满足一定的要求。这些要求包括提供 `allocate` 和 `deallocate` 成员函数用于内存分配和释放，以及 `construct` 和 `destroy` 成员函数用于对象构造和析构。此外，分配器必须是可复制和可赋值的，并且必须提供一个 `rebind` 成员模板，用于创建不同类型的分配器。
+
+通过使用分配器，标准库组件可以定制使用不同的内存分配策略，例如使用自定义的内存池或不同的内存分配算法。这在某些情况下非常有用，例如在高性能计算应用程序中优化性能时。
+
+许多分配器的要求是可选的，因为包括标准库容器在内的所有分配器感知类都是通过 `std::allocator_traits` 间接访问分配器的，而 `std::allocator_traits` 提供了这些要求的默认实现。
+
+例如，`std::allocator_traits` 为 `allocate` 和 `deallocate` 成员函数提供了默认实现，这些函数只是调用分配器对象上对应的函数。类似地，`std::allocator_traits` 为 construct 和 destroy 成员函数提供了默认实现，分别使用放置 new 和显式析构函数调用。
+
+通过使用 `std::allocator_traits`，分配器感知类可以以与使用的特定分配器类型无关的方式编写。这允许代码具有更大的灵活性和可重用性，因为可以使用不同的分配器类型与相同的分配器感知类交换使用。
+
+代码示例：
+
+``` cpp
+#include <cstdlib>
+#include <new>
+#include <limits>
+#include <iostream>
+#include <vector>
+
+template<class T>
+struct Mallocator
+{
+    typedef T value_type;
+
+    Mallocator () = default;
+
+    template<class U>
+    constexpr Mallocator (const Mallocator <U>&) noexcept {}
+
+    [[nodiscard]] T* allocate(std::size_t n)
+    {
+        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+            throw std::bad_array_new_length();
+
+        if (auto p = static_cast<T*>(std::malloc(n * sizeof(T))))
+        {
+            report(p, n);
+            return p;
+        }
+
+        throw std::bad_alloc();
+    }
+
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+        report(p, n, 0);
+        std::free(p);
+    }
+private:
+    void report(T* p, std::size_t n, bool alloc = true) const
+    {
+        std::cout << (alloc ? "Alloc: " : "Dealloc: ") << sizeof(T) * n
+                  << " bytes at " << std::hex << std::showbase
+                  << reinterpret_cast<void*>(p) << std::dec << '\n';
+    }
+};
+
+template<class T, class U>
+bool operator==(const Mallocator <T>&, const Mallocator <U>&) { return true; }
+
+template<class T, class U>
+bool operator!=(const Mallocator <T>&, const Mallocator <U>&) { return false; }
+
+int main()
+{
+    std::vector<int, Mallocator<int>> v(8);
+    v.push_back(42);
+}
+```
+
+```
+Alloc: 32 bytes at 0x2020c20
+Alloc: 64 bytes at 0x2023c60
+Dealloc: 32 bytes at 0x2020c20
+Dealloc: 64 bytes at 0x2023c60
+```
+
+
+
 # 问题描述
 
 ``` cpp
