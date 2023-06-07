@@ -280,9 +280,12 @@ delete pf;            // 将对象析构，然后释放内存
 {% endhighlight %}
 
 `new`算式内含两阶段操作：
+
 1. 调用`::operator new`配置内存
 2. 调用`Foo::Foo()`构造对象内容
+
 `delete`算式也内含两阶段操作：
+
 1. 调用`Foo::~Foo()`将对象析构
 2. 调用`::operator delete`释放内存
 
@@ -293,7 +296,7 @@ STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
 3. 对象构造操作由`::construct()`负责
 4. 对象析构操作由`::destroy()`负责
 
-考虑到小型区块所可能造成的内存碎片问题，。SGI容器使用了`两级空间适配器`的设计。
+考虑到小型区块所可能造成的内存碎片问题，SGI容器使用了`两级空间适配器`的设计。
 
 1. 第一级配置器直接使用`malloc()`和`free()`
 2. 第二级配置器则视情况采取不同的策略
@@ -561,6 +564,22 @@ char * __default_alloc_template<threads, inst>::chunk_alloc(size_t size, int& no
     }
 }
 {% endhighlight %}
+
+
+# [C++ named requirements: Compare](https://en.cppreference.com/w/cpp/named_req/Compare)
+
+`Compare` is a set of requirements expected by some of the standard library facilities from the user-provided function object types.
+
+The return value of the function call operation applied to an object of a type satisfying Compare, when contextually converted to bool, yields `true` if the first argument of the call appears before the second in the strict weak ordering relation induced by this type, and `false` otherwise.
+
+The following expressions must be valid and have their specified effects:
+
+| Expression | Requirements
+| -- | --
+| `comp(a, b)` | Establishes strict weak ordering relation with the following properties
+| | For all a, `comp(a, a) == false`
+| | If `comp(a, b) == true` then `comp(b, a) == false`
+| | if `comp(a, b) == true` and `comp(b, c) == true` then `comp(a, c) == true`
 
 
 

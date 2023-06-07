@@ -483,6 +483,8 @@ printf("%s\n", str); // prints "192.0.2.33"
 # Refer
 
 * [TCP/IP 概述 by 陈硕](https://b23.tv/lBAsi98)
+* [Shuo Chen's notes on Linux TCP/IP stack](https://chenshuo.com/tcpip-study/)
+* https://github.com/chenshuo/tcpip-study
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
 * [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll/#.ZAmnruxBw0Q)
 

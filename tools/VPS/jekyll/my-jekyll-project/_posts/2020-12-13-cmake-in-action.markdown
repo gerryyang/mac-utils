@@ -833,6 +833,23 @@ install(EXPORT <export-name> [...])
 install(RUNTIME_DEPENDENCY_SET <set-name> [...])
 ```
 
+单独 install 某个 target：
+
+```
+INSTALL(TARGETS ${TARGET_NAME} DESTINATION ${TARGET_INSTALL_PATH} COMPONENT ${TARGET_NAME})
+```
+
+``` bash
+#make install
+
+# install 支持单独 target
+if [[ $COMPILE_TARGET = "all" ]]; then
+    cmake --install .
+else
+    cmake --install . --component $COMPILE_TARGET
+fi
+```
+
 https://cmake.org/cmake/help/latest/command/install.html
 
 ## get_filename_component

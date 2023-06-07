@@ -122,7 +122,7 @@ Take a look below at how it’s structured:
 There are three sets of files, each set representing a stage in this tutorial.
 
 * In the first stage, you will build a single target residing in a single package.
-* In the second stage, you will you will build both a binary and a library from a single package.
+* In the second stage, you will build both a binary and a library from a single package.
 * In the third and final stage, you will build a project with multiple packages and build it with multiple targets.
 
 
@@ -164,12 +164,12 @@ cpp-tutorial/
 
 Before you can build a project, you need to set up its workspace. A workspace is a directory that holds your project's source files and Bazel's build outputs. It also contains these significant files:
 
-* The `WORKSPACE file` , which identifies the directory and its contents as a Bazel workspace and lives at the root of the project's directory structure.
-* One or more `BUILD files` , which tell Bazel how to build different parts of the project. A directory within the workspace that contains a `BUILD` file is a [package](https://bazel.build/reference/glossary#package). (More on packages later in this tutorial.)
+* The `WORKSPACE` file , which identifies the directory and its contents as a Bazel workspace and lives at the root of the project's directory structure.
+* One or more `BUILD` files, which tell Bazel how to build different parts of the project. A directory within the workspace that contains a `BUILD` file is a [package](https://bazel.build/reference/glossary#package). (More on packages later in this tutorial.)
 
 In future projects, to designate a directory as a Bazel workspace, create an empty file named `WORKSPACE` in that directory. For the purposes of this tutorial, a `WORKSPACE` file is already present in each stage.
 
-NOTE: When Bazel builds the project, all inputs must be in the same workspace. Files residing in different workspaces are independent of one another unless linked. More detailed information about workspace rules can be found in [this guide](https://bazel.build/reference/be/workspace).
+> NOTE: When Bazel builds the project, all inputs must be in the same workspace. Files residing in different workspaces are independent of one another unless linked. More detailed information about workspace rules can be found in [this guide](https://bazel.build/reference/be/workspace).
 
 ## Understand the BUILD file
 
@@ -184,7 +184,7 @@ cc_binary(
 )
 ```
 
-In our example, the `hello-world` target instantiates Bazel's built-in `cc_binary rule`. The rule tells Bazel to build a self-contained executable binary from the `hello-world.cc` source file with no dependencies.
+In our example, the `hello-world` target instantiates Bazel's built-in `cc_binary` rule. The rule tells Bazel to build a self-contained executable binary from the `hello-world.cc` source file with no dependencies.
 
 Now you are familiar with some key terms, and what they mean in the context of this project and Bazel in general. In the next section, you will build and test Stage 1 of the project.
 
@@ -214,7 +214,7 @@ Next, run:
 $ bazel build //main:hello-world
 ```
 
-In the target label, the `//main`: part is the location of the `BUILD` file relative to the root of the workspace, and `hello-world` is the target name in the `BUILD` file.
+In the target label, the `//main:` part is the location of the `BUILD` file relative to the root of the workspace, and `hello-world` is the target name in the `BUILD` file.
 
 ```
 ~/github/examples/cpp-tutorial/stage1/main$cat BUILD

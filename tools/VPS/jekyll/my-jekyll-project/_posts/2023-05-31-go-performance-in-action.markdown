@@ -38,42 +38,30 @@ Go 语言支持自动内存管理，那还存在内存泄漏问题吗？
 
 
 
-# Go 代码性能分析
+# [Profiling a Go program](https://golang.org/pkg/runtime/pprof/)
 
-使用 GoLang 自带的 `pprof` 工具。官网参考：https://golang.org/pkg/runtime/pprof/
+[pprof](https://github.com/google/pprof/blob/main/doc/README.md) is a tool for visualization and analysis of profiling data.
 
-pprof 有两种使用方式：
-
-1. 生成 pprof 文件，根据 pprof 文件分析代码性能
-2. 在 HTTP 服务中多监听一个 pprof 端口，使用 HTTP 服务实时查看性能分析
-
-集成 pprof 只需要在工程中引入如下代码即可：
+在 Go 语言中，可以通过在程序中导入 `net/http/pprof` 包来启用性能分析。这个包提供了一个 HTTP 服务器，可以通过浏览器访问并查看程序的性能分析结果。在程序中导入 `net/http/pprof` 包后，可以在程序中添加一些代码来启动 HTTP 服务器，例如：
 
 ``` golang
-import _ "net/http/pprof"
+import (
+    "net/http"
+    _ "net/http/pprof"
+)
 
-go func() {
-	log.Println(http.ListenAndServe("localhost:6060", nil))
-}()
+func main() {
+    // 启动 HTTP 服务器
+    go func() {
+        http.ListenAndServe("localhost:6060", nil)
+    }()
+
+    // 程序的其他代码
+    // ...
+}
 ```
 
-然后运行 go tool pprof 进行采样：
-
-```
-go tool pprof -seconds=10 -http=:9999 http://localhost:6060/debug/pprof/heap
-```
-
-如果由于网络原因无法访问，可以先生成采样数据，再下载到本地分析：
-
-```
-curl http://localhost:6060/debug/pprof/heap?seconds=30 > heap.out
-
-# sz 下载 heap.out 到本地
-go tool pprof heap.out
-```
-
-
-
+在程序中添加这些代码后，可以通过访问 `http://localhost:6060/debug/pprof/` 来查看程序的性能分析结果。
 
 
 ## 使用 HTTP 服务实时性能分析
@@ -90,10 +78,14 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello World")
 
-	// http://localhost:8080/debug/pprof/
-	http.ListenAndServe("localhost:8080", nil)
+	// 启动 HTTP 服务器
+	go func() {
+		// http://localhost:8080/debug/pprof/
+		http.ListenAndServe("localhost:8080", nil)
+	}()
+
+	fmt.Println("Hello World")
 }
 ```
 

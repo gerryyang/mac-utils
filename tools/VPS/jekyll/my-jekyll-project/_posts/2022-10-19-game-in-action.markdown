@@ -19,7 +19,6 @@ categories: Game
 
 
 
-
 # 视野管理 (AOI - Area Of Interest)
 
 ## 背景
@@ -71,7 +70,7 @@ Refer:
 要想突破这些瓶颈，不得不放弃面向对象，换一种从一开始就从效率角度考虑的程序设计方式。ECS 是就是这样一种以数据为主导的一种程序架构，它可以提供给开发者一种方便的写出高性能代码的方式，同时代码的逻辑架构足够清晰，模块之间的耦合性足够小。**它的基本思想是将数据与行为分离，让数据在内存中紧凑排列，提高 CPU 的缓存命中率；同时不使用引用类型，不使用继承，让多线程代码的编写更为简单，使各种 Batch 技术的应用成为可能；从程序的可维护性、可扩展性上来看，ECS 将数据和行为分离，在 Component 中仅储存数据，System 中仅储存行为，System 通过依赖注入的方式访问 Component，这可以很大程度上解耦，框架的表达能力和模块化并不会比面向对象的方式弱**。
 
 
-# SpatialOS
+# SpatialOS (游戏大世界)
 
 https://improbable.io/games
 
@@ -83,7 +82,7 @@ Google 正与总部位于英国伦敦的模拟现实、仿真世界初创企业 
 
 **SpatialOS 平台可被用于创造能够同时容纳成千上万模拟玩家的虚拟世界，它可以超过常规游戏服务器的限制，这些模拟支持新游戏所带来的的复杂运算。更重要的是，SpatialOS 还可被用于模拟创建真实世界中的巨大城市、整个经济体以及生物系统，以研究它们如何运转以及如何应对变化等，比如基础设施或气候变化等**。通过在谷歌的 Cloud Platform 上运行，这些虚拟世界可以横跨巨大的计算机网络，扩展到更大规模和更复杂的水平。
 
-# Dedicated server
+# Dedicated Server
 
 https://en.wikipedia.org/wiki/Game_server#Dedicated_server
 
@@ -91,13 +90,37 @@ Dedicated servers simulate game worlds without supporting direct input or output
 
 The foremost advantage of dedicated servers is their suitability for hosting in professional data centers, with all of the reliability and performance benefits that entails. Remote hosting also eliminates the low-latency advantage that would otherwise be held by any player who hosts and connects to a server from the same machine or local network.
 
-# PSK (Player Skill Score)
+
+# 游戏匹配
+
+## PSK (Player Skill Score)
 
 游戏匹配是将不同用户撮合到一个 PVP 单局的系统，常规的做法是引入一个或多个“数值”来评估用户的实力。在系统运行过程中，也会通过用户的对局结果、操作表现对“数值”进行校准，是一套复杂严谨的公式模型的动态结果。如何评价一款游戏的匹配系统好坏，在于是否可以很好地将公平性、游戏性与用户主观认知进行平衡，愿意投入更多的时间进行游戏。在游戏里，这个“数值”叫做技能分 (Player Skill Score，简称 PSK)，PSK 作为匹配机制的基础与核心要素，成为玩法调优的一个关键抓手。
 
-# AI投放
+## AI 投放
 
 本质是希望通过投放 AI 来提升玩家的体验，进而来提升玩家的对局和留存。常见的优化方向如：AI 本身能力和难度的优化，AI 投放时机的优化，AI 投放强度的优化。
+
+## ELO 匹配算法
+
+ELO 是指由匈牙利裔美国物理学家**阿帕德·埃洛**创建的**一个衡量各类对弈活动水平的评价方法**，是当今对弈水平评估的公认的权威方法。被广泛用于国际象棋、围棋、足球、篮球等运动。埃洛排名系统是基于统计学的一个评估棋手水平的方法。美国国际象棋协会在 1960 年首先使用这种计分方法。由于它比先前的方法更公平客观，这种方法很快流行开来。1970 年国际棋联正式开始使用这个系统。网络游戏里的天梯或者是匹配等核心玩法系统，常常是以 ELO 算法作为基础。
+
+ELO 通常会包含两个公式：
+
+![elo](/assets/images/202306/elo.png)
+
+
+* RA，RB 分别是玩家 A，B 的积分
+* EA 是玩家 A 针对玩家 B 的获胜概率
+* SA 是玩家 A 的比赛结果有三种可能：SA=1 A胜，SA=0 A负，SA=0.5 平局
+* K 是变化系数，决定了单场比赛的积分变化幅度
+
+ELO 的算法本质：依据玩家的胜负概率和比赛结果来更新玩家积分，符合预期的积分变化的少，不符合预期的变化的多。
+
+
+
+
+
 
 
 

@@ -1627,6 +1627,10 @@ strip example
 * [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
 * [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
 
+# More
+
+* [2022 全球 C++ 及系统软件技术大会 - C++ 性能、工具、库](https://chenshuo.com/data/summit2022.pdf)
+
 
 # Refer
 
