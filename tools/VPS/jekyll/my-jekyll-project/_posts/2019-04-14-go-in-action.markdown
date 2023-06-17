@@ -1371,6 +1371,70 @@ golangci-lint --version
 需要注意的是，使用 `-mod=vendor` 的时候，需要在项目根目录下创建 vendor 目录，并将依赖的包复制到 vendor 目录中。可以使用 `go mod vendor` 命令来自动将依赖的包复制到 vendor 目录中。
 
 
+# Utils
+
+## [exec](https://pkg.go.dev/os/exec)
+
+Package `exec` runs external commands. It wraps os.StartProcess to make it easier to remap stdin and stdout, connect I/O with pipes, and do other adjustments.
+
+`exec` 包是 Go 语言中用于运行外部命令的标准库。它封装了 `os.StartProcess` 函数，使得重定向标准输入输出、使用管道连接 I/O 等操作更加方便。
+
+与其他语言中的 "system" 库调用不同，`os/exec` 包有意地不调用系统 shell，并且不会扩展任何通配符模式或处理其他扩展、管道或重定向，这通常是 shell 所做的。该包的行为更像 C 语言中的 "exec" 函数族。要扩展通配符模式，请直接调用 shell，注意转义任何危险的输入，或使用 `path/filepath` 包的 `Glob` 函数。要扩展环境变量，请使用 `os` 包的 `ExpandEnv` 函数。
+
+https://pkg.go.dev/os/exec#Cmd.Start
+
+``` golang
+package main
+
+import (
+	"log"
+	"os/exec"
+)
+
+func main() {
+	cmd := exec.Command("sleep", "5")
+	err := cmd.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Waiting for command to finish...")
+	err = cmd.Wait()
+	log.Printf("Command finished with error: %v", err)
+}
+```
+
+
+``` golang
+package main
+
+import (
+	"context"
+	"fmt"
+	"os/exec"
+	"time"
+)
+
+func main() {
+	// 创建一个上下文对象，设置超时时间为 5 秒
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 创建一个命令对象
+	cmd := exec.CommandContext(ctx, "ls", "-l")
+
+	// 执行命令，并获取输出
+	output, err := cmd.Output()
+
+	// 判断命令是否执行成功
+	if err != nil {
+		fmt.Println("Command failed:", err)
+		return
+	}
+
+	// 打印命令的输出
+	fmt.Println(string(output))
+}
+```
 
 # 问题调试
 

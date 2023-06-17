@@ -2352,6 +2352,95 @@ Total: 4.514M   /data/home/gerryyang/tools/diskusage
  2.7K   0.1% └─ README.md
 ```
 
+## [Dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html)
 
+The DNS subsystem provides a local DNS server for the network, with forwarding of all query types to upstream recursive DNS servers and caching of common record types (A, AAAA, CNAME and PTR, also DNSKEY and DS when DNSSEC is enabled).
+
+## /etc/nsswitch.conf
+
+`/etc/nsswitch.conf` 文件是一个文本配置文件，主要用于控制在 Linux 和类 Unix 系统上进行各种名称服务查找时如何处理不同的数据库。换句话说，它定义了操作系统应该按照什么顺序或源（例如：文件、DNS、LDAP 或其他目录服务）查找主机名、用户、组等信息。
+
+/etc/nsswitch.conf 中的配置与请求的信息类型相关。这包括主机名解析（主机）、用户和组名称解析（passwd 和 group）和其他数据库，如服务、网络和 RPC。
+
+文件格式：
+
+`/etc/nsswitch.conf` 文件以关键字和与其关联的多个服务条目组成。每行开始一个关键字，后跟一个冒号，随后是以空格分隔的一系列服务，按优先级顺序排列。
+
+用法示例：
+
+```
+passwd:         compat
+group:          compat
+shadow:         compat
+
+hosts:          files dns
+networks:       files
+
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+
+netgroup:       nis
+```
+
+* `passwd: compat`、`group: compat` 和 `shadow: compat` 字段定义了在解析用户、组和阴影密码方面使用`/etc/passwd`、`/etc/group` 和 `/etc/shadow` 文件中的兼容信息。
+* `hosts: files dns` 表示在解析主机名时，首先查看 `/etc/hosts` 文件，然后再查询 DNS 服务器。
+* `networks: files` 表示在查找网络名称时，只查询 `/etc/networks` 文件。
+* `protocols: db files`、`services: db files` 等字段表示从相应的 /etc 目录中的数据库文件中查找信息。
+
+备注：
+
+* 修改 `/etc/nsswitch.conf` 文件后，更改会立即生效，无需重新启动任何服务。
+* 请谨慎修改 `/etc/nsswitch.conf` 文件，因为错误的设置可能导致系统无法正常解析主机名、用户或组。始终确保在进行更改之前创建备份。
+
+## /etc/resolv.conf
+
+`/etc/resolv.conf` 是一个文本配置文件，主要用于配置在 Linux 和类 Unix 系统上进行域名解析时使用的 DNS 服务器。该文件受到 GNU C Library 的 `libc` 解析器(`getaddrinfo()` 和 `gethostbyname()` 等函数)和其他低级DNS解析库的支持。
+
+文件格式：
+
+`/etc/resolv.conf` 文件由一系列简单的关键字-值对行组成，每行关键字后面跟一个或多个值，值之间以空格分隔。
+
+用法示例：
+
+```
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+search example.com example.org
+options timeout:2 attempts:3
+```
+
+* 第一行和第二行定义了两个 DNS 服务器。它们分别使用了 Google 公共 DNS 服务器的 IP 地址 8.8.8.8 和 8.8.4.4。解析器将首先查询第一个服务器，在查询失败的情况下尝试第二个服务器。
+* 第三行表示非 FQDN 查询时，系统将按顺序尝试在 example.com 和 example.org 两个域中查找。
+* 第四行为高级选项，定义了查询超时时间为 2 秒，并将尝试最多 3 次。
+
+备注：
+
+* 修改 /etc/resolv.conf 文件后，更改会立即生效，无需重新启动任何服务。
+* 许多现代 Linux 发行版使用 DHCP 客户端、网络管理器或其他网络服务自动管理 /etc/resolv.conf 文件，并可以生成动态版本。要将用户自定义设置添加到由这些服务自动更新的 /etc/resolv.conf 文件，请查阅特定服务的文档。
+
+## /etc/hosts
+
+`/etc/hosts` 文件是一个简单的文本文件，主要用于在没有 DNS 服务器的情况下解析主机名到 IP 地址。当 Linux 系统中的一个程序在进行主机名到 IP 地址的解析时，Linux 将首先检查 /etc/hosts 文件中是否存在与该主机名匹配的条目，之后才会查询 DNS 服务器。这意味着 /etc/hosts 文件中的定义具有优先权，可以用于覆盖 DNS 中的记录。
+
+文件格式：
+
+`/etc/hosts` 文件的格式很简单，每行定义一个主机名到 IP 地址的映射。每行至少包含一个 IP 地址和一个主机名，它们之间用空格或制表符分隔。您还可以在同一行中提供多个主机名（绰号）以在查找某个 IP 地址时使用，每个主机名之间用空格或制表符分隔。
+
+用法示例：
+
+```
+127.0.0.1   localhost
+192.168.1.1 myserver.example.com myserver
+```
+
+* 第一行将 IP 地址 127.0.0.1 映射到主机名 localhost，它表示当前设备。
+* 第二行将 IP 地址 192.168.1.1 映射到主机名 myserver.example.com 和 myserver。在这种情况下，myserver.example.com 是完全限定域名（FQDN），而 myserver 是一个简称，可以在解析这个 IP 地址时使用。
+
+备注：
+
+* 要修改 /etc/hosts 文件，您需要使用 root（管理员）权限。
+* 修改 /etc/hosts 文件后，更改会立即生效，无需重新启动任何服务。
 
 

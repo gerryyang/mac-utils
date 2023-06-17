@@ -1059,20 +1059,35 @@ git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-u
 # 如果忘记了 --recurse-submodules
 git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
 
-
 # 添加子模块 (在根目录执行)
 git submodule add https://github.com/chaconinc/DbConnector
 git clone --recursive https://github.com/chaconinc/MainProject
 
-# 清除子模块
-git submodule deinit --all
-
 # https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt-sync--recursive--ltpathgt82308203
 git submodule sync
-
-# 删除子模块
-git rm -f $submodule
 ```
+
+在 Git 中，删除子模块可以分为两个步骤：
+
+* 删除子模块的引用：在父仓库中删除子模块的引用，即删除 `.gitmodules` 文件中对应子模块的配置信息和子模块目录下的 `.git` 目录。
+
+``` bash
+git submodule deinit -f <submodule-path>
+git rm -f <submodule-path>
+rm -rf .git/modules/<submodule-path>
+```
+
+* 删除子模块的代码：在子模块目录中删除代码，并提交删除操作。
+
+``` bash
+rm -rf <submodule-path>
+git commit -m "Remove submodule <submodule-path>"
+```
+
+需要注意的是，删除子模块会删除子模块的所有历史记录，因此在删除子模块之前需要备份子模块的代码和历史记录。另外，删除子模块后，如果需要重新添加子模块，需要重新执行 `git submodule add` 命令来添加子模块。
+
+
+
 
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
@@ -1113,6 +1128,8 @@ git cherry-pick (--continue | --skip | --abort | --quit)
 git cherry-pick <commitHash>
 git cherry-pick <HashA> <HashB>
 git cherry-pick --continue
+
+git cherry-pick A^..B -x   # merge 从 A 到 B 的所有 commit，加不加  ^   就代表包不包括 A 这个 commit，加了就是包含 A，不加就是从 A 后面那个开始
 ```
 
 * https://git-scm.com/docs/git-cherry-pick
@@ -1287,6 +1304,51 @@ Rewrite branches
 
 * https://git-scm.com/docs/git-filter-branch
 
+
+## git rev-parse
+
+
+``` bash
+# 获取当前分支名
+git rev-parse --abbrev-ref=strict HEAD
+```
+
+* https://git-scm.com/docs/git-rev-parse
+* https://stackoverflow.com/questions/15798862/what-does-git-rev-parse-do
+
+
+## git tag
+
+
+``` bash
+# 切换到要打 tag 的分支
+git checkout <branch-name>
+
+# 创建一个 tag
+git tag <tag_name>
+git tag -a <tag_name> -m "<tag_message>"
+
+# 推送单个标签
+git push origin <tag_name>
+
+# 推送所有本地标签
+git push --tags
+
+# 列出所有 tag
+git tag
+
+# 查看远程仓库中的 tag
+git ls-remote --tags origin <tag_name>
+
+# 切换到指定的 tag
+git checkout <tag_name>
+
+# 删除本地 tag
+git tag -d <tag-name>
+
+# 删除远程仓库中的 tag
+git push <remote-name> :<tag-name>
+```
 
 
 

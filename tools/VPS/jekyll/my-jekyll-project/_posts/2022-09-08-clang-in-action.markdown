@@ -453,6 +453,159 @@ class Foo {
 };
 ```
 
+### 基于 clang-tidy AST 语法树代码自定义检查
+
+* 场景：标准工具覆盖不到的场景
+
+![clang-tidy-extend2](/assets/images/202306/clang-tidy-extend2.png)
+
+
+* 生成规则代码
+
+```
+$ cd llvm-project-11.0.0/clang-tools-extra/clang-tidy
+$ ./add_new_check.py performance JLibTest
+$ cd performance
+$ ls JlibtestCheck.*
+JlibtestCheck.cpp  JlibtestCheck.h
+```
+
+![clang-tidy-extend](/assets/images/202306/clang-tidy-extend.png)
+
+
+* 实现代码检查规则
+
+
+
+``` cpp
+// JlibtestCheck.h
+
+//===--- JlibtestCheck.h - clang-tidy ---------------------------*- C++ -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_JLIBTESTCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_JLIBTESTCHECK_H
+
+#include "../ClangTidyCheck.h"
+
+namespace clang {
+namespace tidy {
+namespace performance {
+
+/// FIXME: Write a short description.
+///
+/// For the user-facing documentation see:
+/// http://clang.llvm.org/extra/clang-tidy/checks/performance-JLibTest.html
+class JlibtestCheck : public ClangTidyCheck {
+public:
+  JlibtestCheck(StringRef Name, ClangTidyContext *Context)
+      : ClangTidyCheck(Name, Context) {}
+  void registerMatchers(ast_matchers::MatchFinder *Finder) override;
+  void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+};
+
+} // namespace performance
+} // namespace tidy
+} // namespace clang
+
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_JLIBTESTCHECK_H
+```
+
+``` cpp
+// JlibtestCheck.cpp
+
+//===--- JlibtestCheck.cpp - clang-tidy -----------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#include "JlibtestCheck.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
+
+using namespace clang::ast_matchers;
+
+namespace clang {
+namespace tidy {
+namespace performance {
+
+void JlibtestCheck::registerMatchers(MatchFinder *Finder) {
+  // FIXME: Add matchers.
+  //Finder->addMatcher(functionDecl().bind("x"), this);
+
+  // Matcher for for-loops having a call to strlen in the loop condition.
+  //Finder->addMatcher(forStmt(hasCondition(hasDescendant(callExpr(callee(functionDecl(hasName("strlen"))))))).bind("myForLoop"), this);
+  Finder->addMatcher(
+      forStmt(hasCondition(hasDescendant(
+          callExpr(callee(functionDecl(hasName("strlen")))))))
+          .bind("myForLoop"),
+      this);
+}
+
+void JlibtestCheck::check(const MatchFinder::MatchResult &Result) {
+  // FIXME: Add callback implementation.
+
+  // Retrieve the matched for-loop node.
+  const ForStmt *myForLoop = Result.Nodes.getNodeAs<ForStmt>("myForLoop");
+
+  // If for some reason it's not retrieved, return early.
+  if (!myForLoop) {
+    return;
+  }
+
+  // Initialize a diagnostic message.
+  diag(myForLoop->getBeginLoc(), "for-loop with strlen() called in loop condition found");
+
+  // Apply possible fixes, if necessary.
+
+
+/*
+  const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
+  if (MatchedDecl->getName().startswith("awesome_"))
+    return;
+  diag(MatchedDecl->getLocation(), "function %0 is insufficiently awesome")
+      << MatchedDecl;
+  diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note)
+      << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
+*/
+}
+
+} // namespace performance
+} // namespace tidy
+} // namespace clang
+```
+
+
+* 构建编译 clang-tidy
+
+```
+$ cd llvm-project-11.0.0/build
+$ cmake -DLLVM_ENABLE_PROJECTS="clang-tools-extra" -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ../llvm
+$ make -j16
+$ cd bin
+$ ls clang-tidy
+clang-tidy
+```
+
+* 使用方法
+
+```
+$ cd llvm-project-11.0.0/build/bin
+$ ./clang-tidy --checks="-*,performance-JLibTest" test.cc
+```
+
+![clang-tidy-extend3](/assets/images/202306/clang-tidy-extend3.png)
+
+
+
 ## clang-format 配置方法
 
 同样，可以在项目根目录下添加`.clang-format`文件，实现代码的自动格式化。
