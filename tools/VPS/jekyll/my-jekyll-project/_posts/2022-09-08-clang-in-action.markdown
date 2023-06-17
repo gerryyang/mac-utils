@@ -614,6 +614,12 @@ $ ./clang-tidy --checks="-*,performance-JLibTest" test.cc
 ![clang-tidy-extend3](/assets/images/202306/clang-tidy-extend3.png)
 
 
+* 更多参考
+  + [2022 全球 C++ 及系统软件技术大会 - C++ 性能、工具、库 - 陈硕](https://chenshuo.com/data/summit2022.pdf)
+  + [How to build a C++ processing tool using the Clang libraries](https://static.linaro.org/connect/yvr18/presentations/yvr18-223.pdf)
+  + [AST Matcher Reference](https://clang.llvm.org/docs/LibASTMatchersReference.html)
+  + https://zhuanlan.zhihu.com/p/573342695
+
 
 ## clang-format 配置方法
 
