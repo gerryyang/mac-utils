@@ -332,6 +332,14 @@ ln -s ~/myproject-build/compile_commands.json ~/myproject/
 
 ## clang-tidy
 
+> clang-tidy is a clang-based C++ “linter” tool. Its purpose is to provide an extensible framework for diagnosing and fixing typical programming errors, like style violations, interface misuse, or bugs that can be deduced via static analysis. clang-tidy is modular and provides a convenient interface for writing new checks.
+
+Clang 项目也提供了其他一些工具，包括代码的静态检查工具 [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) 。这是一个比较全面的工具，它除了会提示你危险的用法，也会告诉你如何去现代化你的代码。默认情况下，Clang-Tidy 只做基本的分析。你也可以告诉它你想现代化你的代码和提高代码的可读性：
+
+```
+clang-tidy --checks='clang-analyzer-*,modernize-*,readability-*' test.cpp
+```
+
 ### 配置方法
 
 在 vscode 通过配置 clangd + clang-tidy + Error Lens 插件，实现代码检查和提示。在项目根目录创建 `.clang-tidy` 配置文件。
@@ -454,6 +462,7 @@ class Foo {
 ```
 
 ### 基于 clang-tidy AST 语法树代码自定义检查
+
 
 * 场景：标准工具覆盖不到的场景
 
