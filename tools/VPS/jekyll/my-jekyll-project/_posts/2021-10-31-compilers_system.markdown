@@ -542,6 +542,7 @@ refer:
 
 * [LLD - The LLVM Linker](https://lld.llvm.org/#lld-the-llvm-linker)
 * [gold (linker)](https://en.wikipedia.org/wiki/Gold_%28linker%29)
+* [Replacing ld with gold - any experience?](https://stackoverflow.com/questions/3476093/replacing-ld-with-gold-any-experience)
 
 
 # CCache (a fast C/C++ compiler cache)

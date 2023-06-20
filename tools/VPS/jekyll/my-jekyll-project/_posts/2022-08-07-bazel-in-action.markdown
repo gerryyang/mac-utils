@@ -8,6 +8,9 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+> [Bazel](https://bazel.build/) is an open-source build and test tool similar to `Make`, `Maven`, and `Gradle`. **It uses a human-readable, high-level build language.** `Bazel` supports projects in multiple languages and builds outputs for multiple platforms. `Bazel` supports large codebases across multiple repositories, and large numbers of users.
+
 # 构建基础知识
 
 观看一段简短的历史记录，了解基于工件的构建系统如何发展，以实现规模、速度和封闭性。
@@ -18,22 +21,160 @@ categories: [GCC/Clang]
 * [分布式构建](https://bazel.build/basics/distributed-builds)
 * [依赖项管理](https://bazel.build/basics/dependencies)
 
-# 基本概念
+
+
+# [Bazel 基础概念](https://bazel.build/concepts/build-ref?hl=en)
 
 了解源代码布局、BUILD 文件语法以及规则和依赖项类型等基本概念。
 
-* [工作区、软件包和目标](https://bazel.build/concepts/build-ref)
+## [Workspaces, packages, and targets](https://bazel.build/concepts/build-ref) / [中文版](https://bazel.build/concepts/build-ref?hl=zh-cn)
+
 
 Bazel 会根据名为“工作区”的目录树整理的源代码构建软件。工作区中的源文件以嵌套的软件包层次结构进行组织，其中每个软件包都是一个包含一组相关源文件和一个 BUILD 文件的目录。BUILD 文件指定可以从源代码构建哪些软件输出。
 
+### Workspace
+
+A workspace is a directory tree on your filesystem that contains the source files for the software you want to build. Each workspace has a text file named `WORKSPACE` which may be empty, or may contain references to [external dependencies](https://bazel.build/docs/external) required to build the outputs.
+
+Directories containing a file called `WORKSPACE` are considered the root of a workspace. Therefore, Bazel ignores any directory trees in a workspace rooted at a subdirectory containing a `WORKSPACE` file, as they form another workspace.
+
+Bazel also supports `WORKSPACE.bazel` file as an alias of `WORKSPACE` file. If both files exist, `WORKSPACE.bazel` is used.
 
 
-# Bazel
+### Repositories
 
-[Bazel](https://bazel.build/) is an open-source build and test tool similar to `Make`, `Maven`, and `Gradle`. **It uses a human-readable, high-level build language.** `Bazel` supports projects in multiple languages and builds outputs for multiple platforms. `Bazel` supports large codebases across multiple repositories, and large numbers of users.
+Code is organized in repositories. The directory containing the `WORKSPACE` file is the root of the main repository, also called `@`. Other, (external) repositories are defined in the `WORKSPACE` file using workspace rules, or generated from modules and extensions in the Bzlmod system. See [external dependencies overview](https://bazel.build/external/overview) for more information.
+
+The workspace rules bundled with Bazel are documented in the [Workspace Rules](https://bazel.build/reference/be/workspace) section in the [Build Encyclopedia](https://bazel.build/reference/be/overview) and the documentation on [embedded Starlark repository rules](https://bazel.build/rules/lib/repo).
+
+As external repositories are repositories themselves, they often contain a `WORKSPACE` file as well. However, these additional `WORKSPACE` files are ignored by Bazel. In particular, repositories depended upon transitively are not added automatically.
 
 
-# Install Bazel (CentOS)
+### Packages
+
+The primary unit of code organization in a repository is the **package**. A package is a collection of related files and a specification of how they can be used to produce output artifacts.
+
+A package is defined as a directory containing a `BUILD` file named either `BUILD` or `BUILD.bazel`. A package includes all files in its directory, plus all subdirectories beneath it, except those which themselves contain a `BUILD` file. From this definition, no file or directory may be a part of two different packages.
+
+For example, in the following directory tree there are two packages, `my/app`, and the subpackage `my/app/tests`. Note that `my/app/data` is not a package, but a directory belonging to package `my/app`.
+
+```
+src/my/app/BUILD
+src/my/app/app.cc
+src/my/app/data/input.txt
+src/my/app/tests/BUILD
+src/my/app/tests/test.cc
+```
+
+### Targets
+
+A package is a container of **targets**, which are defined in the package's `BUILD` file. Most targets are one of two principal kinds, **files** and **rules**.
+
+Files are further divided into two kinds. **Source files** are usually written by the efforts of people, and checked in to the repository. **Generated files**, sometimes called derived files or output files, are not checked in, but are generated from source files.
+
+The second kind of target is declared with a **rule**. Each rule instance specifies the relationship between a set of input and a set of output files. The inputs to a rule may be source files, but they also may be the outputs of other rules.
+
+Whether the input to a rule is a source file or a generated file is in most cases immaterial; what matters is only the contents of that file. This fact makes it easy to replace a complex source file with a generated file produced by a rule, such as happens when the burden of manually maintaining a highly structured file becomes too tiresome, and someone writes a program to derive it. No change is required to the consumers of that file. Conversely, a generated file may easily be replaced by a source file with only local changes.
+
+**The inputs to a rule may also include other rules**. The precise meaning of such relationships is often quite complex and language- or rule-dependent, but intuitively it is simple: **a C++ library rule A might have another C++ library rule B for an input. The effect of this dependency is that B's header files are available to A during compilation, B's symbols are available to A during linking, and B's runtime data is available to A during execution**.
+
+An invariant of all rules is that the files generated by a rule always belong to the same package as the rule itself; it is not possible to generate files into another package. It is not uncommon for a rule's inputs to come from another package, though.
+
+Package groups are sets of packages whose purpose is to limit accessibility of certain rules. Package groups are defined by the `package_group` function. They have three properties: the list of packages they contain, their name, and other package groups they include. The only allowed ways to refer to them are from the `visibility` attribute of rules or from the `default_visibility` attribute of the package function; they do not generate or consume files. For more information, refer to the [package_group documentation](https://bazel.build/reference/be/functions#package_group).
+
+## [Labels](https://bazel.build/concepts/labels?hl=en)
+
+All targets belong to exactly one package. The name of a target is called its **label**. Every label uniquely identifies a target. A typical label in canonical form looks like:
+
+```
+@myrepo//my/app/main:app_binary
+```
+
+## [BUILD files](https://bazel.build/concepts/build-files?hl=en)
+
+The previous sections described packages, targets and labels, and the build dependency graph abstractly. This section describes the concrete syntax used to define a package.
+
+By definition, every package contains a `BUILD` file, **which is a short program**.
+
+> Note: The BUILD file can be named either BUILD or BUILD.bazel. If both files exist, BUILD.bazel takes precedence over BUILD. For simplicity's sake, the documentation refers to these files simply as BUILD files.
+
+`BUILD` files are evaluated using an imperative language, [Starlark](https://github.com/bazelbuild/starlark/).
+
+
+### Loading an extension
+
+Bazel extensions are files ending in `.bzl`. Use the `load` statement to import a symbol from an extension.
+
+```
+load("//foo/bar:file.bzl", "some_library")
+```
+
+This code loads the file `foo/bar/file.bzl` and adds the `some_library` symbol to the environment. This can be used to load new rules, functions, or constants (for example, a string or a list). Multiple symbols can be imported by using additional arguments to the call to `load`. Arguments must be string literals (no variable) and `load` statements must appear at top-level — they cannot be in a function body.
+
+The first argument of `load` is a [label](https://bazel.build/concepts/labels) identifying a `.bzl` file. If it's a relative label, it is resolved with respect to the package (not directory) containing the current `bzl` file. Relative labels in load statements should use a leading `:`.
+
+In a `.bzl` file, symbols starting with `_` are not exported and cannot be loaded from another file.
+
+You can use [load visibility](https://bazel.build/concepts/visibility#load-visibility) to restrict who may load a `.bzl` file.
+
+
+## Types of build rules
+
+The majority of build rules come in families, grouped together by language. For example, `cc_binary`, `cc_library` and `cc_test` are the build rules for C++ `binaries`, `libraries`, and `tests`, respectively. Other languages use the same naming scheme, with a different prefix, such as `java_*` for Java. Some of these functions are documented in the [Build Encyclopedia](https://bazel.build/reference/be/overview), but it is possible for anyone to create new rules.
+
+
+* `*_binary` rules build executable programs in a given language. After a build, the executable will reside in the build tool's binary output tree at the corresponding name for the rule's label, so `//my:program` would appear at (for example) `$(BINDIR)/my/program`.
+
+In some languages, such rules also create a runfiles directory containing all the files mentioned in a `data` attribute belonging to the rule, or any rule in its transitive closure of dependencies; this set of files is gathered together in one place for ease of deployment to production.
+
+* `*_test` rules are a specialization of a `*_binary` rule, used for automated testing. Tests are simply programs that return zero on success.
+
+Like binaries, tests also have runfiles trees, and the files beneath it are the only files that a test may legitimately open at runtime. For example, a program `cc_test(name='x', data=['//foo:bar'])` may open and read `$TEST_SRCDIR/workspace/foo/bar` during execution. (Each programming language has its own utility function for accessing the value of `$TEST_SRCDIR`, but they are all equivalent to using the environment variable directly.) Failure to observe the rule will cause the test to fail when it is executed on a remote testing host.
+
+* `*_library` rules specify separately-compiled modules in the given programming language. Libraries can depend on other libraries, and binaries and tests can depend on libraries, with the expected separate-compilation behavior.
+
+
+## [Dependencies](https://bazel.build/concepts/dependencies?hl=en)
+
+A target `A` depends upon a target `B` if `B` is needed by `A` at build or execution time. The depends upon relation induces a `Directed Acyclic Graph` (**DAG**) over targets, and it is called a dependency graph.
+
+**A target's direct dependencies (直接依赖)** are those other targets reachable by a path of length 1 in the dependency graph. **A target's transitive dependencies (间接依赖)** are those targets upon which it depends via a path of any length through the graph.
+
+In fact, in the context of builds, there are **two** dependency graphs, **the graph of actual dependencies (实际依赖图)** and **the graph of declared dependencies (声明依赖图)**. Most of the time, the two graphs are so similar that this distinction need not be made, but it is useful for the discussion below.
+
+### Actual and declared dependencies
+
+A target `X` is actually dependent on target `Y` if `Y` must be present, built, and up-to-date in order for `X` to be built correctly. Built could mean generated, processed, compiled, linked, archived, compressed, executed, or any of the other kinds of tasks that routinely occur during a build.
+
+
+### Types of dependencies (依赖类型)
+
+Most build rules have three attributes for specifying different kinds of generic dependencies: `srcs`, `deps` and `data`. These are explained below. For more details, see [Attributes common to all rules](https://bazel.build/reference/be/common-definitions).
+
+Many rules also have additional attributes for rule-specific kinds of dependencies, for example, `compiler` or `resources`. These are detailed in the [Build Encyclopedia](https://bazel.build/reference/be).
+
+
+> srcs dependencies
+
+Files consumed directly by the rule or rules that output source files.
+
+> deps dependencies
+
+Rule pointing to separately-compiled modules providing header files, symbols, libraries, data, etc.
+
+> data dependencies
+
+A build target might need some data files to run correctly. These data files aren't source code: they don't affect how the target is built. For example, a unit test might compare a function's output to the contents of a file. When you build the unit test you don't need the file, but you do need it when you run the test. The same applies to tools that are launched during execution.
+
+## [Visibility](https://bazel.build/concepts/visibility?hl=en)
+
+This page covers Bazel's two visibility systems: [target visibility](https://bazel.build/concepts/visibility?hl=en#target-visibility) and [load visibility](https://bazel.build/concepts/visibility?hl=en#load-visibility).
+
+
+
+
+
+# Bazel 安装 (CentOS)
 
 [Bazel 安装说明](https://bazel.build/install)，本文使用方式三。
 
@@ -48,7 +189,7 @@ yum install bazel4
 方式三：[使用release版本](https://github.com/bazelbuild/bazel/releases)
 
 
-# Bazel 的优势
+# Bazel 优势
 
 Bazel offers the following advantages:
 
@@ -64,7 +205,7 @@ Bazel offers the following advantages:
 * 已知（部分版本的）bazel在并发度过高（如`-j320`）下，bazel自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时bazel自身CPU（`400~500%`）、内存（几G）占用很高。
 * 如果机器资源充足且对并发度有较高要求（几百并发），可以考虑使用其他构建系统构建。
 
-# 使用 Bazel
+# Bazel 使用流程
 
 To build or test a project with Bazel, you typically do the following:
 
@@ -98,14 +239,8 @@ Since all previous build work is cached, Bazel can identify and reuse cached art
 The action graph represents the build artifacts, the relationships between them, and the build actions that Bazel will perform. Thanks to this graph, Bazel can track changes to file content as well as changes to actions, such as build or test commands, and know what build work has previously been done. The graph also enables you to easily trace dependencies in your code.
 
 
-# Getting Started
 
-To get started with Bazel, see [Getting Started](https://docs.bazel.build/versions/4.2.1/getting-started.html) or jump directly to the Bazel tutorials:
-
-* [Tutorial: Build a C++ Project](https://docs.bazel.build/versions/4.2.1/tutorial/cpp.html)
-
-
-# Bazel Tutorial: Build a C++ Project
+# [Bazel Tutorial: Build a C++ Project](https://docs.bazel.build/versions/4.2.1/tutorial/cpp.html)
 
 Start by [installing Bazel](https://bazel.build/install), if you haven’t already. This tutorial uses Git for source control, so for best results [install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) as well.
 
@@ -729,7 +864,383 @@ cc_library(
 
 This way, other C++ targets in your workspace can depend on this rule.
 
+# [Build programs with Bazel](https://bazel.build/run/build?hl=en)
 
+
+## Available commands
+
+```
+bazel help
+```
+
+* [analyze-profile](https://bazel.build/docs/user-manual#analyze-profile): Analyzes build profile data.
+* [aquery](https://bazel.build/docs/user-manual#aquery): Executes a query on the [post-analysis](https://bazel.build/run/build?hl=en#analysis) action graph.
+* [build](https://bazel.build/run/build?hl=en#bazel-build): Builds the specified targets.
+* [canonicalize-flags](https://bazel.build/docs/user-manual#canonicalize-flags): Canonicalize Bazel flags.
+* [clean](https://bazel.build/docs/user-manual#clean): Removes output files and optionally stops the server.
+* [cquery](https://bazel.build/query/cquery): Executes a [post-analysis](https://bazel.build/run/build?hl=en#analysis) dependency graph query.
+* [dump](https://bazel.build/docs/user-manual#dump): Dumps the internal state of the Bazel server process.
+* [help](https://bazel.build/docs/user-manual#help): Prints help for commands, or the index.
+* [info](https://bazel.build/docs/user-manual#info): Displays runtime info about the bazel server.
+* [fetch](https://bazel.build/run/build?hl=en#fetching-external-dependencies): Fetches all external dependencies of a target.
+* [mobile-install](https://bazel.build/docs/user-manual#mobile-install): Installs apps on mobile devices.
+* [query](https://bazel.build/query/guide): Executes a dependency graph query.
+* [run](https://bazel.build/docs/user-manual#running-executables): Runs the specified target.
+* [shutdown](https://bazel.build/docs/user-manual#shutdown): Stops the Bazel server.
+* [test](https://bazel.build/docs/user-manual#running-tests): Builds and runs the specified test targets.
+* [version](https://bazel.build/docs/user-manual#version): Prints version information for Bazel.
+
+
+## Getting help
+
+* `bazel help command`: Prints help and options for **command**.
+* `bazel help [startup_options](https://bazel.build/docs/user-manual#startup-options)`: Options for the JVM hosting Bazel.
+* `bazel help [target-syntax](https://bazel.build/run/build?hl=en#specifying-build-targets)`: Explains the syntax for specifying targets.
+* `bazel help info-keys`: Displays a list of keys used by the info command.
+
+The `bazel` tool performs many functions, called commands. The most commonly used ones are `bazel build` and `bazel test`. You can browse the online help messages using `bazel help`.
+
+
+## [Building one target](https://bazel.build/run/build?hl=en#bazel-build)
+
+```
+bazel build //foo
+```
+
+## [Building multiple targets](https://bazel.build/run/build?hl=en#specifying-build-targets)
+
+Bazel allows a number of ways to specify the targets to be built. Collectively, these are known as target patterns. This syntax is used in commands like `build`, `test`, or `query`.
+
+All target patterns starting with `//` are resolved relative to the current workspace.
+
+![bazel_build](/assets/images/202306/bazel_build.png)
+
+Target patterns that **do not begin with** `//` are resolved relative to the current working directory. These examples assume a working directory of `foo`:
+
+![bazel_build2](/assets/images/202306/bazel_build2.png)
+
+
+## [Fetching external dependencies](https://bazel.build/run/build?hl=en#fetching-external-dependencies)
+
+By default, Bazel will download and symlink external dependencies during the build. However, this can be undesirable, either because you'd like to know when new external dependencies are added or because you'd like to "prefetch" dependencies (say, before a flight where you'll be offline). If you would like to prevent new dependencies from being added during builds, you can specify the `--fetch=false` flag. Note that this flag only applies to repository rules that do not point to a directory in the local file system. Changes, for example, to local_repository, new_local_repository and Android SDK and NDK repository rules will always take effect regardless of the value `--fetch` .
+
+If you disallow fetching during builds and Bazel finds new external dependencies, your build will fail.
+
+You can manually fetch dependencies by running `bazel fetch`. If you disallow during-build fetching, you'll need to run `bazel fetch`:
+
+* Before you build for the first time.
+* After you add a new external dependency.
+
+Once it has been run, you should not need to run it again until the `WORKSPACE` file changes.
+
+fetch takes a list of targets to fetch dependencies for. For example, this would fetch dependencies needed to build `//foo:bar` and `//bar:baz`:
+
+```
+bazel fetch //foo:bar //bar:baz
+```
+
+To fetch all external dependencies for a workspace, run:
+
+```
+bazel fetch //...
+```
+
+
+# [Commands and Options](https://bazel.build/docs/user-manual?hl=en)
+
+This page covers the options that are available with various Bazel commands, such as `bazel build`, `bazel run`, and `bazel test`. This page is a companion to the list of Bazel's commands in [Build with Bazel](https://bazel.build/run/build).
+
+
+## [Options](https://bazel.build/docs/user-manual?hl=en#build-options)
+
+The following sections describe the options available during a build. When `--long` is used on a help command, the on-line help messages provide summary information about the meaning, type and default value for each option.
+
+Most options can only be specified once. When specified multiple times, the last instance wins. Options that can be specified multiple times are identified in the on-line help with the text 'may be used multiple times'.
+
+
+
+```
+$bazel help build --short
+                                                           [bazel release 6.2.1]
+Usage: bazel build <options> <targets>
+
+Builds the specified targets, using the options.
+
+See 'bazel help target-syntax' for details and examples on how to
+specify targets to build.
+
+Options that appear before the command and are parsed by the client:
+  --distdir
+  --[no]experimental_repository_cache_hardlinks
+  --[no]experimental_repository_cache_urls_as_default_canonical_id
+  --[no]experimental_repository_disable_download
+  --experimental_repository_downloader_retries
+  --experimental_scale_timeouts
+  --http_timeout_scaling
+  --repository_cache
+```
+
+```
+$bazel help build --long | head -n50
+                                                           [bazel release 6.2.1]
+Usage: bazel build <options> <targets>
+
+Builds the specified targets, using the options.
+
+See 'bazel help target-syntax' for details and examples on how to
+specify targets to build.
+
+Options that appear before the command and are parsed by the client:
+  --distdir (a path; may be used multiple times)
+    Additional places to search for archives before accessing the network to
+    download them.
+      Tags: bazel_internal_configuration
+  --[no]experimental_repository_cache_hardlinks (a boolean; default: "false")
+    If set, the repository cache will hardlink the file in case of a cache hit,
+    rather than copying. This is intended to save disk space.
+      Tags: bazel_internal_configuration
+```
+
+
+### Package location
+
+
+* `--package_path`
+
+This option specifies the set of directories that are searched to find the BUILD file for a given package.
+
+
+### Error checking
+
+These options control Bazel's error-checking and/or warnings.
+
+
+* `--[no]check_visibility`
+* `--output_filter=regex`
+
+
+### Tool flags
+
+These options control which options Bazel will pass to other tools.
+
+
+* `--copt=cc-option`
+
+This option takes an argument which is to be passed to the compiler. The argument will be passed to the compiler whenever it is invoked for preprocessing, compiling, and/or assembling C, C++, or assembler code. **It will not be passed when linking**.
+
+This option can be used multiple times. For example:
+
+```
+% bazel build --copt="-g0" --copt="-fpic" //foo
+```
+
+will compile the foo library without debug tables, generating position-independent code.
+
+> Note: Changing --copt settings will force a recompilation of all affected object files. Also note that copts values listed in specific cc_library or cc_binary build rules will be placed on the compiler command line after these options.
+
+> Warning: C++-specific options (such as -fno-implicit-templates) should be specified in --cxxopt, not in --copt. Likewise, C-specific options (such as -Wstrict-prototypes) should be specified in --conlyopt, not in copt. Similarly, compiler options that only have an effect at link time (such as -l) should be specified in --linkopt, not in --copt.
+
+
+* `--cxxopt=cc-option`
+
+This option takes an argument which is to be passed to the compiler when compiling C++ source files.
+
+This is similar to `--copt`, but only applies to C++ compilation, not to C compilation or linking. So you can pass C++-specific options (such as `-fpermissive` or `-fno-implicit-templates`) using `--cxxopt`.
+
+For example:
+
+```
+% bazel build --cxxopt="-fpermissive" --cxxopt="-Wno-error" //foo/cruddy_code
+```
+
+> Note: copts parameters listed in specific cc_library or cc_binary build rules are placed on the compiler command line after these options.
+
+
+* `--linkopt=linker-option`
+
+This option takes an argument which is to be passed to the compiler when linking.
+
+This is similar to `--copt`, but only applies to linking, not to compilation. So you can pass compiler options that only make sense at link time (such as `-lssp` or `-Wl,--wrap,abort`) using `--linkopt`. For example:
+
+```
+% bazel build --copt="-fmudflap" --linkopt="-lmudflap" //foo/buggy_code
+```
+
+Build rules can also specify link options in their attributes. This option's settings always take precedence. Also see [cc_library.linkopts](https://bazel.build/reference/be/c-cpp#cc_library.linkopts).
+
+
+* `--strip (always|never|sometimes)`
+
+This option determines whether Bazel will strip debugging information from all binaries and shared libraries, by invoking the linker with the `-Wl,--strip-debug` option. `--strip=always` means always strip debugging information. `--strip=never` means never strip debugging information. The default value of `--strip=sometimes` means strip if the `--compilation_mode` is `fastbuild`.
+
+```
+% bazel build --strip=always //foo:bar
+```
+
+will compile the target while stripping debugging information from all generated binaries.
+
+> Note: If you want debugging information, it's not enough to disable stripping; you also need to make sure that the debugging information was generated by the compiler, which you can do by using either -c dbg or --copt -g.
+
+
+### Build semantics
+
+These options affect the build commands and/or the output file contents.
+
+* `--compilation_mode (fastbuild|opt|dbg) (-c)`
+
+The `--compilation_mode` option (often shortened to `-c`, especially `-c opt`) takes an argument of `fastbuild`, `dbg` or `opt`, and affects various C/C++ code-generation options, such as the level of optimization and the completeness of debug tables. Bazel uses a different output directory for each different compilation mode, so you can switch between modes without needing to do a full rebuild every time.
+
+**fastbuild** means build as fast as possible: generate minimal debugging information (`-gmlt -Wl,-S`), and don't optimize. This is the default. Note: `-DNDEBUG` will not be set.
+
+**dbg** means build with debugging enabled (`-g`), so that you can use `gdb` (or another debugger).
+
+**opt** means build with optimization enabled and with `assert()` calls disabled (`-O2 -DNDEBUG`). Debugging information will not be generated in `opt` mode unless you also pass `--copt -g`.
+
+
+
+
+
+
+
+
+
+
+
+
+# Tips
+
+## bazel info
+
+bazel info 提供了有关 Bazel 工作空间和其配置的信息。这些信息使您能够更好地了解构建环境和输出位置。
+
+* 获取输出基本目录：此命令返回输出基本目录，该目录包含 Bazel 执行期间产生的中间文件和构建产物。
+
+```
+ls -l `bazel info output_base`
+总用量 18260
+drwxr-xr-x  2 gerryyang users     4096 6月  20 13:09 action_cache
+-rw-r--r--  1 gerryyang users       84 6月  20 13:13 command.log
+-rw-r--r--  1 gerryyang users    69253 6月  20 13:09 command.profile.gz
+-rw-r--r--  1 gerryyang users       35 6月  20 12:08 DO_NOT_BUILD_HERE
+drwxr-xr-x  3 gerryyang users     4096 6月  20 13:08 execroot
+drwxr-xr-x 28 gerryyang users     4096 6月  20 13:08 external
+lrwxrwxrwx  1 gerryyang users       91 6月  19 11:50 install -> /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/install/50a5a3eaeaa5297d31568ab6a3a702d9
+lrwxrwxrwx  1 gerryyang users       76 6月  20 12:08 java.log -> java.log.gerryyang1631112241020-0.gerryyang.log.java.20230620-120813.3969149
+-rw-r--r--  1 gerryyang users 15523519 6月  20 00:15 java.log.gerryyang1631112241020-0.gerryyang.log.java.20230619-115035.3573878
+-rw-r--r--  1 gerryyang users  3052736 6月  20 13:13 java.log.gerryyang1631112241020-0.gerryyang.log.java.20230620-120813.3969149
+-rw-r--r--  1 gerryyang users      544 6月  20 13:13 javalog.properties
+-rw-r--r--  1 gerryyang users       82 6月  20 13:13 lock
+-rw-r--r--  1 gerryyang users      789 6月  20 12:08 README
+drwx------  2 gerryyang users     4096 6月  20 12:08 server
+```
+
+* 获取 bazel-bin 目录：此命令返回包含构建产物（如可执行文件和库）的 bazel-bin 目录。
+
+```
+$ls -l `bazel info bazel-bin`
+总用量 20
+drwxr-xr-x  3 gerryyang users 4096 6月  20 13:08 external
+drwxr-xr-x  4 gerryyang users 4096 6月  20 13:08 frame
+drwxr-xr-x  3 gerryyang users 4096 6月  20 13:08 protocol
+drwxr-xr-x 14 gerryyang users 4096 6月  20 13:09 src
+drwxrwxrwx 24 gerryyang users 4096 6月  20 13:08 thirdparty
+```
+
+* 获取工作空间根目录：此命令返回当前 Bazel 工作空间的根目录。
+
+```
+$ls -l `bazel info workspace`
+总用量 156
+lrwxrwxrwx  1 gerryyang users   128 6月  20 13:08 bazel-bin -> /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out/k8-fastbuild/bin
+-rwxr-xr-x  1 gerryyang users   719 6月  20 13:08 bazel_build.sh
+lrwxrwxrwx  1 gerryyang users   101 6月  20 13:08 bazel-JLib -> /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__
+lrwxrwxrwx  1 gerryyang users   111 6月  20 13:08 bazel-out -> /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out
+lrwxrwxrwx  1 gerryyang users   133 6月  20 13:08 bazel-testlogs -> /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out/k8-fastbuild/testlogs
+drwxr-xr-x  6 gerryyang users  4096 6月  11 21:27 benchmark
+drwxr-xr-x 22 gerryyang users  4096 6月  12 21:15 bin
+drwxr-xr-x  4 gerryyang users  4096 6月  12 21:15 build
+-rwxr-xr-x  1 gerryyang users  4914 6月  18 19:34 build.sh
+-rw-r--r--  1 gerryyang users   501 6月  12 21:15 CHANGELOG.md
+drwxr-xr-x  6 gerryyang users  4096 6月  11 21:27 charts
+-rwxr-xr-x  1 gerryyang users   758 6月  11 21:27 chmod.sh
+-rw-r--r--  1 gerryyang users  5789 6月  20 12:01 CMakeLists.txt
+lrwxrwxrwx  1 gerryyang users    53 6月  20 12:05 compile_commands.json -> /data/home/gerryyang/JLib_Build/compile_commands.json
+drwxr-xr-x 25 gerryyang users  4096 6月  12 21:15 config
+drwxr-xr-x  8 gerryyang users  4096 6月  11 21:27 deploy
+drwxr-xr-x  8 gerryyang users  4096 6月  11 21:27 deploy_apps
+-rw-r--r--  1 gerryyang users   448 6月  11 21:27 DevopsPlan.txt
+drwxr-xr-x  3 gerryyang users  4096 6月  11 21:27 doc
+-rw-r--r--  1 gerryyang users   669 6月  11 21:27 Dockerfile4Yunguan
+drwxr-xr-x  4 gerryyang users  4096 6月  19 20:40 frame
+-rwxr-xr-x  1 gerryyang users 10117 6月  11 21:27 optools
+-rwxr-xr-x  1 gerryyang users 17386 6月  11 21:27 optools2
+-rw-r--r--  1 gerryyang users   780 6月  20 12:05 Project.cfg
+drwxr-xr-x 21 gerryyang users  4096 6月  19 09:44 protocol
+drwxr-xr-x  3 gerryyang users  4096 6月  11 21:27 resources
+drwxr-xr-x 16 gerryyang users  4096 6月  12 21:15 src
+drwxr-xr-x  9 gerryyang users  4096 6月  11 21:27 testcase
+drwxr-xr-x 35 gerryyang users  4096 6月  19 15:35 thirdparty
+drwxr-xr-x 23 gerryyang users  4096 6月  11 21:27 tools
+drwxr-xr-x  5 gerryyang users  4096 6月  12 21:15 unittest
+-rw-r--r--  1 gerryyang users     0 6月  19 21:05 WORKSPACE
+drwxr-xr-x  7 gerryyang users  4096 6月  11 21:27 world-values
+```
+
+* 获取构建配置信息：此命令可获取有关当前 Bazel 构建配置的详细信息。
+
+```
+$bazel info --show_make_env
+BINDIR: bazel-out/k8-fastbuild/bin
+COMPILATION_MODE: fastbuild
+GENDIR: bazel-out/k8-fastbuild/bin
+TARGET_CPU: k8
+bazel-bin: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out/k8-fastbuild/bin
+bazel-genfiles: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out/k8-fastbuild/bin
+bazel-testlogs: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out/k8-fastbuild/testlogs
+character-encoding: file.encoding = ISO-8859-1, defaultCharset = ISO-8859-1
+command_log: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/command.log
+committed-heap-size: 142MB
+execution_root: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__
+gc-count: 126
+gc-time: 3862ms
+install_base: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/install/50a5a3eaeaa5297d31568ab6a3a702d9
+java-home: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/install/50a5a3eaeaa5297d31568ab6a3a702d9/embedded_tools/jdk
+java-runtime: OpenJDK Runtime Environment (build 11.0.6+10-LTS) by Azul Systems, Inc.
+java-vm: OpenJDK 64-Bit Server VM (build 11.0.6+10-LTS, mixed mode) by Azul Systems, Inc.
+max-heap-size: 16387MB
+output_base: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6
+output_path: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/execroot/__main__/bazel-out
+package_path: %workspace%
+release: release 6.2.1
+repository_cache: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/cache/repos/v1
+server_log: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6/java.log.gerryyang1631112241020-0.gerryyang.log.java.20230620-120813.3969149
+server_pid: 3969149
+used-heap-size: 69MB
+workspace: /data/home/gerryyang/jlib_proj/JLib
+```
+
+
+## bazel aquery
+
+bazel aquery 是一个强大的命令，用于查询关于构建操作的详细信息。它提供了有关构建过程、目标输出、依赖项和更多内容的信息。
+
+* 查询特定构建目标的信息：此命令查询特定构建目标的详细信息。
+
+```
+bazel aquery '//path/to/package:target_name'
+```
+
+* 查询特定构建目标和其直接依赖项的信息：此命令查询指定构建目标的详细信息，并包括其直接依赖项。
+
+```
+bazel aquery 'deps(//path/to/package:target_name)'
+```
+
+* 查询具有特定属性的构建目标信息：此命令查询具有特定属性的构建目标及其直接依赖项的详细信息。
+
+```
+bazel aquery 'attr("srcs", ".*/file_to_search\\.cpp", deps(//path/to/package:target_name))'
+```
 
 
 # Refer
@@ -737,6 +1248,9 @@ This way, other C++ targets in your workspace can depend on this rule.
 * https://bazel.build/start
 * https://bazel.build/tutorials/cpp
 * https://bazel.build/tutorials/cpp-use-cases
+* https://bazel.build/reference?hl=zh-cn
+
+
 
 
 

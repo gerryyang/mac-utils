@@ -812,6 +812,7 @@ https://cmake.org/cmake/help/latest/command/string.html
 Set a named property in a given scope.
 
 ```
+# Run command and display elapsed time for global
 set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 ```
 
