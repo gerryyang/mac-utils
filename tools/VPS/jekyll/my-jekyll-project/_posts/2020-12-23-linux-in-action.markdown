@@ -2335,6 +2335,19 @@ FURTHER READING
 
 The official documentation can be found here: https://github.com/iovisor/bpftrace/blob/master/docs
 
+## true
+
+true - do nothing, successfully
+
+```
+$ which true
+/bin/true
+$ true
+$ echo $?
+0
+```
+
+
 
 # 第三方工具
 

@@ -11,6 +11,7 @@ categories: [GCC/Clang]
 
 > [Bazel](https://bazel.build/) is an open-source build and test tool similar to `Make`, `Maven`, and `Gradle`. **It uses a human-readable, high-level build language.** `Bazel` supports projects in multiple languages and builds outputs for multiple platforms. `Bazel` supports large codebases across multiple repositories, and large numbers of users.
 
+
 # 构建基础知识
 
 观看一段简短的历史记录，了解基于工件的构建系统如何发展，以实现规模、速度和封闭性。
@@ -22,17 +23,142 @@ categories: [GCC/Clang]
 * [依赖项管理](https://bazel.build/basics/dependencies)
 
 
+# TLDR (Bazel 构建需要完成的三件事)
+
+
+* 修改头文件的路径，以 `WORKSPACE` 所在目录为基准
+* 编写 `BUILD` (对该模块的描述)
+  + 我是谁 (name)
+  + 我有什么 (srcs / hdrs)
+  + 我依赖什么 (deps)
+  + 其他 (copts / linkopts / ...)
+* 解决链接问题 (依赖顺序导致的问题)
+
+# 依赖图
+
+通过 `bazel query` 输出 `graphviz` 格式数据，然后在 [GraphvizOnline](https://dreampuf.github.io/GraphvizOnline) 查看依赖图。
+
+```
+~/github/bazelbuild/examples/cpp-tutorial/stage1$ bazel query --nohost_deps --noimplicit_deps 'deps(//main:hello-world)' --output graph
+digraph mygraph {
+  node [shape=box];
+  "//main:hello-world"
+  "//main:hello-world" -> "//main:hello-world.cc"
+  "//main:hello-world.cc"
+}
+Loading: 0 packages loaded
+```
+
+
+![bazel_build5](/assets/images/202306/bazel_build5.png)
+
+完整的依赖图：
+
+```
+~/github/bazelbuild/examples/cpp-tutorial/stage1$bazel query 'deps(//main:hello-world)' --output graph
+digraph mygraph {
+  node [shape=box];
+  "//main:hello-world"
+  "//main:hello-world" -> "//main:hello-world.cc"
+  "//main:hello-world" -> "@bazel_tools//tools/cpp:malloc"
+  "//main:hello-world" -> "@bazel_tools//tools/cpp:current_cc_toolchain"
+  "//main:hello-world" -> "@bazel_tools//tools/def_parser:def_parser"
+  "//main:hello-world" -> "@bazel_tools//tools/cpp:toolchain_type"
+  "//main:hello-world.cc"
+  "@bazel_tools//tools/def_parser:def_parser"
+  "@bazel_tools//tools/def_parser:def_parser" -> "@bazel_tools//tools/def_parser:def_parser_windows"
+  [label="@bazel_tools//src/conditions:host_windows"];
+  "@bazel_tools//tools/def_parser:def_parser" -> "@bazel_tools//src/conditions:host_windows"
+  "@bazel_tools//tools/def_parser:def_parser" -> "@bazel_tools//tools/def_parser:no_op.bat"
+  [label="//conditions:default"];
+  "@bazel_tools//tools/def_parser:no_op.bat"
+  "@bazel_tools//src/conditions:host_windows"
+  "@bazel_tools//src/conditions:host_windows" -> "@bazel_tools//src/conditions:host_windows_x64_constraint\n@bazel_tools//src/conditions:host_windows_arm64_constraint"
+  [label="//conditions:default@bazel_tools//src/conditions:host_windows_arm64_constraint"];
+  "@bazel_tools//src/conditions:host_windows_x64_constraint\n@bazel_tools//src/conditions:host_windows_arm64_constraint"
+  "@bazel_tools//tools/def_parser:def_parser_windows"
+  "@bazel_tools//tools/def_parser:def_parser_windows" -> "@bazel_tools//tools/def_parser:def_parser.exe\n@bazel_tools//src/conditions:remote"
+  [label="//conditions:default"];
+  "@bazel_tools//tools/def_parser:def_parser_windows" -> "@bazel_tools//third_party/def_parser:def_parser"
+  [label="@bazel_tools//src/conditions:remote"];
+  "@bazel_tools//third_party/def_parser:def_parser"
+  "@bazel_tools//third_party/def_parser:def_parser" -> "@bazel_tools//third_party/def_parser:def_parser_main.cc"
+  "@bazel_tools//third_party/def_parser:def_parser" -> "@bazel_tools//third_party/def_parser:def_parser_lib"
+  "@bazel_tools//third_party/def_parser:def_parser" -> "@bazel_tools//tools/cpp:malloc"
+  "@bazel_tools//third_party/def_parser:def_parser" -> "@bazel_tools//tools/cpp:current_cc_toolchain"
+  "@bazel_tools//third_party/def_parser:def_parser" -> "@bazel_tools//tools/cpp:toolchain_type"
+  "@bazel_tools//tools/cpp:toolchain_type"
+  "@bazel_tools//tools/cpp:malloc"
+  "@bazel_tools//tools/cpp:malloc" -> "@bazel_tools//tools/cpp:grep-includes"
+  "@bazel_tools//tools/cpp:malloc" -> "@bazel_tools//tools/cpp:current_cc_toolchain"
+  "@bazel_tools//third_party/def_parser:def_parser_lib"
+  "@bazel_tools//third_party/def_parser:def_parser_lib" -> "@bazel_tools//third_party/def_parser:def_parser.cc\n@bazel_tools//third_party/def_parser:def_parser.h"
+  "@bazel_tools//third_party/def_parser:def_parser_lib" -> "@bazel_tools//tools/cpp:grep-includes"
+  "@bazel_tools//third_party/def_parser:def_parser_lib" -> "@bazel_tools//tools/cpp:current_cc_toolchain"
+  "@bazel_tools//tools/cpp:current_cc_toolchain"
+  "@bazel_tools//tools/cpp:current_cc_toolchain" -> "@bazel_tools//tools/cpp:toolchain"
+  "@bazel_tools//tools/cpp:toolchain"
+  "@bazel_tools//tools/cpp:toolchain" -> "@local_config_cc//:toolchain"
+  "@local_config_cc//:toolchain"
+  "@local_config_cc//:toolchain" -> "@local_config_cc//:cc-compiler-k8"
+  "@local_config_cc//:toolchain" -> "@local_config_cc//:cc-compiler-armeabi-v7a"
+  "@local_config_cc//:cc-compiler-armeabi-v7a"
+  "@local_config_cc//:cc-compiler-armeabi-v7a" -> "@bazel_tools//tools/build_defs/cc/whitelists/parse_headers_and_layering_check:disabling_parse_headers_and_layering_check_allowed\n@local_config_cc//:empty\n@bazel_tools//tools/build_defs/cc/whitelists/starlark_hdrs_check:loose_header_check_allowed_in_toolchain"
+  "@local_config_cc//:cc-compiler-armeabi-v7a" -> "@local_config_cc//:stub_armeabi-v7a"
+  "@local_config_cc//:cc-compiler-armeabi-v7a" -> "@bazel_tools//tools/cpp:link_dynamic_library"
+  "@local_config_cc//:cc-compiler-armeabi-v7a" -> "@bazel_tools//tools/cpp:interface_library_builder"
+  "@local_config_cc//:stub_armeabi-v7a"
+  "@local_config_cc//:cc-compiler-k8"
+  "@local_config_cc//:cc-compiler-k8" -> "@local_config_cc//:compiler_deps"
+  "@local_config_cc//:cc-compiler-k8" -> "@bazel_tools//tools/build_defs/cc/whitelists/parse_headers_and_layering_check:disabling_parse_headers_and_layering_check_allowed\n@local_config_cc//:empty\n@bazel_tools//tools/build_defs/cc/whitelists/starlark_hdrs_check:loose_header_check_allowed_in_toolchain"
+  "@local_config_cc//:cc-compiler-k8" -> "@local_config_cc//:local"
+  "@local_config_cc//:cc-compiler-k8" -> "@bazel_tools//tools/cpp:interface_library_builder"
+  "@local_config_cc//:cc-compiler-k8" -> "@bazel_tools//tools/cpp:link_dynamic_library"
+  "@bazel_tools//tools/cpp:link_dynamic_library"
+  "@bazel_tools//tools/cpp:link_dynamic_library" -> "@bazel_tools//tools/cpp:link_dynamic_library.sh"
+  "@bazel_tools//tools/cpp:link_dynamic_library.sh"
+  "@bazel_tools//tools/cpp:interface_library_builder"
+  "@bazel_tools//tools/cpp:interface_library_builder" -> "@bazel_tools//tools/cpp:build_interface_so"
+  "@local_config_cc//:local"
+  "@bazel_tools//tools/cpp:grep-includes"
+  "@bazel_tools//tools/cpp:grep-includes" -> "@bazel_tools//tools/cpp:grep-includes.sh"
+  "@bazel_tools//tools/cpp:grep-includes.sh"
+  "@bazel_tools//third_party/def_parser:def_parser.cc\n@bazel_tools//third_party/def_parser:def_parser.h"
+  "@bazel_tools//third_party/def_parser:def_parser_main.cc"
+  "@bazel_tools//tools/def_parser:def_parser.exe\n@bazel_tools//src/conditions:remote"
+  "@local_config_cc//:compiler_deps"
+  "@local_config_cc//:compiler_deps" -> "@local_config_cc//:builtin_include_directory_paths"
+  "@local_config_cc//:builtin_include_directory_paths"
+  "@bazel_tools//tools/build_defs/cc/whitelists/parse_headers_and_layering_check:disabling_parse_headers_and_layering_check_allowed\n@local_config_cc//:empty\n@bazel_tools//tools/build_defs/cc/whitelists/starlark_hdrs_check:loose_header_check_allowed_in_toolchain"
+  "@bazel_tools//tools/cpp:build_interface_so"
+}
+Loading: 0 packages loaded
+```
+
+也可安装 [xdot](https://pypi.org/project/xdot/#files) 直接显示：`bazel query --nohost_deps --noimplicit_deps 'deps(//main:hello-world)' --output graph | xdot`
+
+```
+~/tools/xdot/xdot-1.2$./setup.py install
+```
+
+
+
+![graphviz](/assets/images/202306/graphviz.svg)
+
 
 # [Bazel 基础概念](https://bazel.build/concepts/build-ref?hl=en)
 
 了解源代码布局、BUILD 文件语法以及规则和依赖项类型等基本概念。
+
+![bazel_build4](/assets/images/202306/bazel_build4.png)
+
 
 ## [Workspaces, packages, and targets](https://bazel.build/concepts/build-ref) / [中文版](https://bazel.build/concepts/build-ref?hl=zh-cn)
 
 
 Bazel 会根据名为“工作区”的目录树整理的源代码构建软件。工作区中的源文件以嵌套的软件包层次结构进行组织，其中每个软件包都是一个包含一组相关源文件和一个 BUILD 文件的目录。BUILD 文件指定可以从源代码构建哪些软件输出。
 
-### Workspace
+### Workspace (**工作空间**位于根目录)
 
 A workspace is a directory tree on your filesystem that contains the source files for the software you want to build. Each workspace has a text file named `WORKSPACE` which may be empty, or may contain references to [external dependencies](https://bazel.build/docs/external) required to build the outputs.
 
@@ -50,7 +176,7 @@ The workspace rules bundled with Bazel are documented in the [Workspace Rules](h
 As external repositories are repositories themselves, they often contain a `WORKSPACE` file as well. However, these additional `WORKSPACE` files are ignored by Bazel. In particular, repositories depended upon transitively are not added automatically.
 
 
-### Packages
+### Packages (包含 BUILD 文件的目录称为**包**)
 
 The primary unit of code organization in a repository is the **package**. A package is a collection of related files and a specification of how they can be used to produce output artifacts.
 
@@ -66,7 +192,7 @@ src/my/app/tests/BUILD
 src/my/app/tests/test.cc
 ```
 
-### Targets
+### Targets (BUILD 中的每个构建规则称为**目标**)
 
 A package is a container of **targets**, which are defined in the package's `BUILD` file. Most targets are one of two principal kinds, **files** and **rules**.
 
@@ -187,6 +313,18 @@ yum install bazel4
 方式二：[源码编译](https://bazel.build/install/compile-source)
 
 方式三：[使用release版本](https://github.com/bazelbuild/bazel/releases)
+
+
+方式四：基于 [Bazelisk](https://github.com/bazelbuild/bazelisk/releases/) 的安装
+
+> Bazelisk is a wrapper for Bazel written in Go. It automatically picks a good version of Bazel given your current working directory, downloads it from the official server (if required) and then transparently passes through all command-line arguments to the real Bazel binary. You can call it just like you would call Bazel.
+
+
+``` bash
+sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64
+sudo chmod +x /usr/local/bin/bazel
+```
+
 
 
 # Bazel 优势
@@ -894,8 +1032,8 @@ bazel help
 ## Getting help
 
 * `bazel help command`: Prints help and options for **command**.
-* `bazel help [startup_options](https://bazel.build/docs/user-manual#startup-options)`: Options for the JVM hosting Bazel.
-* `bazel help [target-syntax](https://bazel.build/run/build?hl=en#specifying-build-targets)`: Explains the syntax for specifying targets.
+* bazel help [startup_options](https://bazel.build/docs/user-manual#startup-options): Options for the JVM hosting Bazel.
+* bazel help [target-syntax](https://bazel.build/run/build?hl=en#specifying-build-targets): Explains the syntax for specifying targets.
 * `bazel help info-keys`: Displays a list of keys used by the info command.
 
 The `bazel` tool performs many functions, called commands. The most commonly used ones are `bazel build` and `bazel test`. You can browse the online help messages using `bazel help`.
@@ -1097,17 +1235,331 @@ The `--compilation_mode` option (often shortened to `-c`, especially `-c opt`) t
 **opt** means build with optimization enabled and with `assert()` calls disabled (`-O2 -DNDEBUG`). Debugging information will not be generated in `opt` mode unless you also pass `--copt -g`.
 
 
+* `--action_env=VAR=VALUE`
+
+Specifies the set of environment variables available during the execution of all actions. Variables can be either specified by name, in which case the value will be taken from the invocation environment, or by the `name=value` pair which sets the value independent of the invocation environment.
+
+This `--action_env` flag can be specified multiple times. If a value is assigned to the same variable across multiple `--action_env` flags, the latest assignment wins.
+
+### Execution strategy
+
+These options affect how Bazel will execute the build. They should not have any significant effect on the output files generated by the build. **Typically their main effect is on the speed of the build**.
+
+* `--spawn_strategy=strategy`
+
+This option controls where and how commands are executed.
+
+**standalone** causes commands to be executed as local subprocesses. **This value is deprecated**. Please use **local** instead.
+
+**sandboxed** causes commands to be executed inside a sandbox on the local machine. This requires that all input files, data dependencies and tools are listed as direct dependencies in the `srcs`, `data` and `tools` attributes. Bazel enables local sandboxing by default, on systems that support sandboxed execution.
+
+**local** causes commands to be executed as local subprocesses.
+
+**worker** causes commands to be executed using a persistent worker, if available.
+
+**docker** causes commands to be executed inside a docker sandbox on the local machine. This requires that docker is installed.
+
+**remote** causes commands to be executed remotely; this is only available if a remote executor has been configured separately.
+
+
+* `--jobs=n (-j)`
+
+This option, which takes an integer argument, specifies a limit on the number of jobs that should be executed concurrently during the execution phase of the build.
+
+> Note: The number of concurrent jobs that Bazel will run is determined not only by the --jobs setting, but also by Bazel's scheduler, which tries to avoid running concurrent jobs that will use up more resources (RAM or CPU) than are available, based on some (very crude) estimates of the resource consumption of each job. The behavior of the scheduler can be controlled by the --local_ram_resources option.
+
+
+### Verbosity
+
+These options control the verbosity of Bazel's output, either to the terminal, or to additional log files.
+
+* `--explain=logfile`
+
+This option, which requires a filename argument, causes the dependency checker in bazel build's execution phase to explain, for each build step, either why it is being executed, or that it is up-to-date. The explanation is written to logfile.
+
+If you are encountering unexpected rebuilds, this option can help to understand the reason. Add it to your .bazelrc so that logging occurs for all subsequent builds, and then inspect the log when you see an execution step executed unexpectedly. This option may carry a small performance penalty, so you might want to remove it when it is no longer needed.
+
+
+* `--verbose_explanations`
+
+This option increases the verbosity of the explanations generated when the `--explain` option is enabled.
+
+In particular, if verbose explanations are enabled, and an output file is rebuilt because the command used to build it has changed, then the output in the explanation file will include the full details of the new command (at least for most commands).
+
+Using this option may significantly increase the length of the generated explanation file and the performance penalty of using `--explain`.
+
+If `--explain` is not enabled, then `--verbose_explanations` has no effect.
+
+
+* `--profile=file`
+
+This option, which takes a filename argument, causes Bazel to write profiling data into a file. The data then can be analyzed or parsed using the `bazel analyze-profile` command. The Build profile can be useful in understanding where Bazel's `build` command is spending its time.
+
+* `--show_result=n`
+
+This option controls the printing of result information at the end of a `bazel build` command. By default, if a single build target was specified, Bazel prints a message stating whether or not the target was successfully brought up-to-date, and if so, the list of output files that the target created. If multiple targets were specified, result information is not displayed.
+
+While the result information may be useful for builds of a single target or a few targets, for large builds (such as an entire top-level project tree), this information can be overwhelming and distracting; this option allows it to be controlled. `--show_result` takes an integer argument, which is the maximum number of targets for which full result information should be printed. By default, the value is 1. Above this threshold, no result information is shown for individual targets. Thus zero causes the result information to be suppressed always, and a very large value causes the result to be printed always.
+
+* `--subcommands (-s)`
+
+This option causes Bazel's execution phase to print the full command line for each command prior to executing it.
+
+`--subcommands=pretty_print` may be passed to print the arguments of the command as a list rather than as a single line. This may help make long command lines more readable.
+
+* `--verbose_failures`
+
+This option causes Bazel's execution phase to print the full command line for commands that failed. **This can be invaluable(非常有用的) for debugging a failing build**.
+
+Failing commands are printed in a Bourne shell compatible syntax, suitable for copying and pasting to a shell prompt.
+
+
+### Workspace status
+
+Use these options to "stamp" Bazel-built binaries: to embed additional information into the binaries, such as the source control revision or other workspace-related information. You can use this mechanism with rules that support the `stamp` attribute, such as `genrule`, `cc_binary`, and more.
+
+
+* `--workspace_status_command=program`
+
+This flag lets you specify a binary that Bazel runs before each build. The program can report information about the status of the workspace, such as the current source control revision.
+
+The flag's value must be a path to a native program. On Linux/macOS this may be any executable.
+
+The program should print zero or more key/value pairs to standard output, one entry on each line, then exit with zero (otherwise the build fails). The key names can be anything but they may only use upper case letters and underscores. The first space after the key name separates it from the value. The value is the rest of the line (including additional whitespaces). Neither the key nor the value may span multiple lines. Keys must not be duplicated.
+
+Bazel partitions the keys into two buckets: "stable" and "volatile". (The names "stable" and "volatile" are a bit counter-intuitive, so don't think much about them.)
+
+Bazel then writes the key-value pairs into two files:
+
+1. `bazel-out/stable-status.txt` contains all keys and values where the key's name starts with `STABLE_`
+2. `bazel-out/volatile-status.txt` contains the rest of the keys and their values
+
+> The contract is:
+
+![bazel_build3](/assets/images/202306/bazel_build3.png)
+
+
+On Linux/macOS you can pass `--workspace_status_command=/bin/true` to **disable** retrieving workspace status, because `true` does nothing, successfully (exits with zero) and prints no output.
+
+Example program on Linux using Git:
+
+``` bash
+#!/bin/bash
+echo "CURRENT_TIME $(date +%s)"
+echo "RANDOM_HASH $(cat /proc/sys/kernel/random/uuid)"
+echo "STABLE_GIT_COMMIT $(git rev-parse HEAD)"
+echo "STABLE_USER_NAME $USER"
+```
+
+Pass this program's path with `--workspace_status_command`, and the stable status file will include the STABLE lines and the volatile status file will include the rest of the lines.
+
+```
+bazel-out$ls
+_actions  k8-fastbuild  stable-status.txt  _tmp  volatile-status.txt
+bazel-out$cat stable-status.txt
+BUILD_EMBED_LABEL
+BUILD_HOST gerryyang1631112241020-0
+BUILD_USER gerryyang
+STABLE_GIT_COMMIT 1aaf03f07effdb6fb80ca3225187d64305b4230a
+STABLE_USER_NAME gerryyang
+bazel-out$cat volatile-status.txt
+BUILD_TIMESTAMP 1687319715
+CURRENT_TIME 1687319715
+RANDOM_HASH df30a1c8-ecd4-47f9-a6b7-e0f8ba640cae
+```
+
+## Cleaning build outputs
+
+
+Bazel has a `clean` command, analogous to that of Make. It deletes the output directories for all build configurations performed by this Bazel instance, or the entire working tree created by this Bazel instance, and resets internal caches. If executed without any command-line options, then the output directory for all configurations will be cleaned.
+
+Recall that each Bazel instance is associated with a single workspace, thus the `clean` command will delete all outputs from all builds you've done with that Bazel instance in that workspace.
+
+To completely remove the entire working tree created by a Bazel instance, you can specify the `--expunge` option. When executed with `--expunge`, the clean command simply removes the entire output base tree which, in addition to the build output, contains all temp files created by Bazel. It also stops the Bazel server after the clean, equivalent to the [shutdown](https://bazel.build/docs/user-manual?hl=en#shutdown) command. For example, to clean up all disk and memory traces of a Bazel instance, you could specify:
+
+```
+% bazel clean --expunge
+```
+
+Alternatively, you can expunge in the background by using `--expunge_async`. It is safe to invoke a Bazel command in the same client while the asynchronous expunge continues to run.
+
+> Note: This may introduce IO contention.
+
+The `clean` command is provided primarily as a means of reclaiming disk space for workspaces that are no longer needed. Bazel's incremental rebuilds may not be perfect so `clean` can be used to recover a consistent state when problems arise.
+
+Bazel's design is such that these problems are fixable and these bugs are a high priority to be fixed. If you ever find an incorrect incremental build, file a bug report, and report bugs in the tools rather than using `clean`.
 
 
 
+# [C++ and Bazel](https://bazel.build/docs/bazel-and-cpp?hl=en)
+
+This page contains resources that help you use Bazel with C++ projects. It links to a tutorial, build rules, and other information specific to building C++ projects with Bazel.
+
+## Working with Bazel (C++)
+
+The following resources will help you work with Bazel on C++ projects:
+
+* [Tutorial: Building a C++ project](https://bazel.build/start/cpp?hl=zh-cn)
+* [C++ common use cases](https://bazel.build/tutorials/cpp-use-cases?hl=en)
+* [C/C++ rules](https://bazel.build/reference/be/c-cpp?hl=en)
+* Essential Libraries
+  + [Abseil](https://abseil.io/docs/cpp/quickstart)
+  + [Boost](https://github.com/nelhage/rules_boost)
+  + [HTTPS Requests: CPR and libcurl](https://github.com/hedronvision/bazel-make-cc-https-easy)
+* [C++ toolchain configuration](https://bazel.build/docs/cc-toolchain-config-reference)
+* [Tutorial: Configuring C++ toolchains](https://bazel.build/tutorials/ccp-toolchain-config)
+* [Integrating with C++ rules](https://bazel.build/configure/integrate-cpp?hl=zh-cn)
 
 
+## [C/C++ rules](https://bazel.build/reference/be/c-cpp?hl=en)
 
+* [cc_binary](https://bazel.build/reference/be/c-cpp?hl=en#cc_binary)
+* [cc_import](https://bazel.build/reference/be/c-cpp?hl=en#cc_import)
+* [cc_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_library)
+* [cc_proto_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_proto_library)
+* [cc_shared_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_shared_library)
+* [fdo_prefetch_hints](https://bazel.build/reference/be/c-cpp?hl=en#fdo_prefetch_hints)
+* [fdo_profile](https://bazel.build/reference/be/c-cpp?hl=en#fdo_profile)
+* [propeller_optimize](https://bazel.build/reference/be/c-cpp?hl=en#propeller_optimize)
+* [cc_test](https://bazel.build/reference/be/c-cpp?hl=en#cc_test)
+* [cc_toolchain](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain)
+* [cc_toolchain_suite](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain_suite)
+
+
+# [Best Practices (C++)](https://bazel.build/configure/best-practices?hl=en)
+
+The overall goals are:
+
+* To use fine-grained dependencies to allow parallelism and incrementality.
+* To keep dependencies well-encapsulated.
+* To make code well-structured and testable.
+* To create a build configuration that is easy to understand and maintain.
+
+In addition to [general Bazel best practices](https://bazel.build/configure/best-practices?hl=zh-cn), below are best practices specific to C++ projects.
+
+## BUILD files
+
+Follow the guidelines below when creating your `BUILD` files:
+
+* Each `BUILD` file should contain one `cc_library` rule target per compilation unit in the directory.
+
+* You should granularize(粒度化) your C++ libraries as much as possible to maximize incrementality and parallelize the build.
+
+* If there is a single source file in `srcs`, name the library the same as that C++ file's name. This library should contain C++ file(s), any matching header file(s), and the library's direct dependencies. For example:
+
+```
+cc_library(
+    name = "mylib",
+    srcs = ["mylib.cc"],
+    hdrs = ["mylib.h"],
+    deps = [":lower-level-lib"]
+)
+```
+
+* Use one `cc_test` rule target per `cc_library` target in the file. Name the target `[library-name]_test` and the source file `[library-name]_test.cc`. For example, a test target for the mylib library target shown above would look like this:
+
+```
+cc_test(
+    name = "mylib_test",
+    srcs = ["mylib_test.cc"],
+    deps = [":mylib"]
+)
+```
+
+## Include paths
+
+Follow these guidelines for include paths:
+
+* Make all include paths relative to the workspace directory.
+
+* Use quoted includes (`#include "foo/bar/baz.h"`) for non-system headers, not angle-brackets (`#include <foo/bar/baz.h>`).
+
+* Avoid using UNIX directory shortcuts, such as `.` (current directory) or `..` (parent directory).
+
+* For legacy or third_party code that requires includes pointing outside the project repository, such as external repository includes requiring a prefix, use the [include_prefix](https://bazel.build/reference/be/c-cpp#cc_library.include_prefix) and [strip_include_prefix](https://bazel.build/reference/be/c-cpp#cc_library.strip_include_prefix) arguments on the cc_library rule target.
+
+
+# [General Rules](https://bazel.build/reference/be/general?hl=en)
+
+* [alias](https://bazel.build/reference/be/general?hl=en#alias)
+* [config_setting](https://bazel.build/reference/be/general?hl=en#config_setting)
+* [filegroup](https://bazel.build/reference/be/general?hl=en#filegroup)
+* [genquery](https://bazel.build/reference/be/general?hl=en#genquery)
+* [genrule](https://bazel.build/reference/be/general?hl=en#genrule)
+* [test_suite](https://bazel.build/reference/be/general?hl=en#test_suite)
+
+
+# [External dependencies overview](https://bazel.build/external/overview?hl=en)
+
+Bazel supports external dependencies, source files (both text and binary) used in your build that are not from your workspace. For example, they could be a ruleset hosted in a GitHub repo, a Maven artifact, or a directory on your local machine outside your current workspace.
+
+As of Bazel 6.0, there are two ways to manage external dependencies with Bazel: the traditional, repository-focused [WORKSPACE](https://bazel.build/external/overview?hl=en#workspace-system) system, and the newer module-focused [MODULE.bazel](https://bazel.build/external/overview?hl=en#bzlmod) system (codenamed Bzlmod, and enabled with the flag `--enable_bzlmod`). The two systems can be used together, but `Bzlmod` is replacing the `WORKSPACE` system in future Bazel releases.
 
 
 
 
 # Tips
+
+
+## [Sharing Variables](https://bazel.build/build/share-variables?hl=en)
+
+If it is useful to share values (for example, if values must be kept in sync), you can introduce a variable:
+
+```
+COPTS = ["-DVERSION=5"]
+
+cc_library(
+  name = "foo",
+  copts = COPTS,
+  srcs = ["foo.cc"],
+)
+
+cc_library(
+  name = "bar",
+  copts = COPTS,
+  srcs = ["bar.cc"],
+  deps = [":foo"],
+)
+```
+
+Multiple declarations now use the value `COPTS`. By convention, use uppercase letters to name global constants.
+
+## Sharing variables across multiple BUILD files
+
+If you need to share a value across multiple `BUILD` files, you have to put it in a `.bzl` file. `.bzl` files contain definitions (variables and functions) that can be used in `BUILD` files.
+
+In path/to/variables.bzl, write:
+
+```
+COPTS = ["-DVERSION=5"]
+```
+
+Then, you can update your `BUILD` files to access the variable:
+
+```
+load("//path/to:variables.bzl", "COPTS")
+
+cc_library(
+  name = "foo",
+  copts = COPTS,
+  srcs = ["foo.cc"],
+)
+
+cc_library(
+  name = "bar",
+  copts = COPTS,
+  srcs = ["bar.cc"],
+  deps = [":foo"],
+)
+```
+
+## [Recommended Rules](https://bazel.build/community/recommended-rules?hl=en)
+
+In the documentation, we provide a list of [recommended rules](https://bazel.build/rules).
+
+This is a set of high quality rules, which will provide a good experience to our users. We make a distinction between the supported rules, and the hundreds of rules you can find on the Internet.
+
+
 
 ## bazel info
 
@@ -1242,6 +1694,70 @@ bazel aquery 'deps(//path/to/package:target_name)'
 bazel aquery 'attr("srcs", ".*/file_to_search\\.cpp", deps(//path/to/package:target_name))'
 ```
 
+## bazel analyze-profile
+
+通过 `--profile=file` 进行性能分析。
+
+```
+$bazel analyze-profile bazel_profile_output.log
+WARNING: This information is intended for consumption by Bazel developers only, and may change at any time. Script against it at your own risk
+INFO: Profile created on 2023-06-21T03:22:35.541621Z, build ID: c980b6c0-af1a-46ef-a5ca-cacc3d3f7264, output base: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6
+
+=== PHASE SUMMARY INFORMATION ===
+
+Total launch phase time                              0.010 s    0.02%
+Total init phase time                                0.102 s    0.23%
+Total target pattern evaluation phase time           0.043 s    0.10%
+Total interleaved loading-and-analysis phase time    0.237 s    0.53%
+Total preparation phase time                         0.001 s    0.00%
+Total execution phase time                          44.646 s   99.12%
+Total finish phase time                              0.002 s    0.01%
+---------------------------------------------------------------------
+Total run time                                      45.043 s  100.00%
+
+Critical path (17.842 s):
+       Time Percentage   Description
+    5.12 ms    0.03%   action 'Writing script external/bazel_tools/tools/cpp/malloc.cppmap'
+   14.314 s   80.23%   action 'Compiling src/unittestsvr1/UnittestCtrl.cpp'
+    3.523 s   19.74%   action 'Linking src/unittestsvr1/unittestsvr1'
+    0.09 ms    0.00%   runfiles for //src/unittestsvr1 unittestsvr1
+```
+
+# Tools
+
+## [bazelisk](https://github.com/bazelbuild/bazelisk)
+
+`Bazelisk` is **a wrapper for Bazel** written in `Go`. It automatically picks a good version of Bazel given your current working directory, downloads it from the official server (if required) and then transparently passes through all command-line arguments to the real Bazel binary. You can call it just like you would call `Bazel`.
+
+
+
+## [bazel-gazelle](https://github.com/bazelbuild/bazel-gazelle)
+
+`Gazelle` is a build file generator for Bazel projects. It can create new BUILD.bazel files for a project that follows language conventions, and it can update existing build files to include new sources, dependencies, and options. Gazelle natively supports Go and protobuf, and it may be extended to support new languages and custom rule sets.
+
+* [How use bazel-gazelle in cpp project?](https://github.com/bazelbuild/bazel-gazelle/issues/910)
+
+
+## [bazel_rules_install](https://github.com/google/bazel_rules_install)
+
+Bazel rules for installing build results. Similar to `make install`.
+
+
+
+
+
+
+# Books
+
+
+* [Beginning Bazel: Building and Testing for Java, Go, and More](https://github.com/Apress/beginning-bazel/blob/master/README.md)
+* 下载地址：
+  + https://drive.weixin.qq.com/s?k=AJEAIQdfAAoXSWclXBAAQAmwaCACc
+  + file:///Users/gerry/Downloads/beginning-bazel-building-and-testing-for-java-go-and-more_compress.pdf
+* 对应代码：https://github.com/Apress/beginning-bazel
+
+
+
 
 # Refer
 
@@ -1249,6 +1765,7 @@ bazel aquery 'attr("srcs", ".*/file_to_search\\.cpp", deps(//path/to/package:tar
 * https://bazel.build/tutorials/cpp
 * https://bazel.build/tutorials/cpp-use-cases
 * https://bazel.build/reference?hl=zh-cn
+* [Bazel学习笔记](https://blog.gmem.cc/bazel-study-note)
 
 
 
