@@ -23,18 +23,92 @@ categories: [GCC/Clang]
 * [依赖项管理](https://bazel.build/basics/dependencies)
 
 
-# TLDR (Bazel 构建需要完成的三件事)
-
+# TL;DR (Bazel 构建需要完成的三件事)
 
 * 修改头文件的路径，以 `WORKSPACE` 所在目录为基准
-* 编写 `BUILD` (对该模块的描述)
-  + 我是谁 (name)
-  + 我有什么 (srcs / hdrs)
-  + 我依赖什么 (deps)
-  + 其他 (copts / linkopts / ...)
-* 解决链接问题 (依赖顺序导致的问题)
+* 编写 `BUILD` (对当前 `package` 软件包的描述)
+  + 我是谁 (`name`)
+  + 我有什么 (`srcs` / `hdrs`)
+  + 我依赖什么 (`deps`)
+  + 其他选项 (`copts` / `linkopts` / ...)
+* 解决链接问题 (依赖顺序)
 
-# 依赖图
+# Bazel 安装 (CentOS 环境)
+
+[Bazel 安装说明](https://bazel.build/install)，本文使用方式三。
+
+方式一：安装包
+
+```
+yum install bazel4
+```
+
+方式二：[源码编译](https://bazel.build/install/compile-source)
+
+方式三：[使用release版本](https://github.com/bazelbuild/bazel/releases)
+
+
+方式四：基于 [Bazelisk](https://github.com/bazelbuild/bazelisk/releases/) 的安装
+
+> Bazelisk is a wrapper for Bazel written in Go. It automatically picks a good version of Bazel given your current working directory, downloads it from the official server (if required) and then transparently passes through all command-line arguments to the real Bazel binary. You can call it just like you would call Bazel.
+
+
+``` bash
+sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64
+sudo chmod +x /usr/local/bin/bazel
+```
+
+
+
+# Bazel 优势
+
+Bazel offers the following advantages:
+
+* **High-level build language**. Bazel uses an abstract, human-readable language to describe the build properties of your project at a high semantical level. Unlike other tools, Bazel operates on the concepts of libraries, binaries, scripts, and data sets, shielding you from the complexity of writing individual calls to tools such as compilers and linkers.
+* **Bazel is fast and reliable**. Bazel caches all previously done work and tracks changes to both file content and build commands. This way, Bazel knows when something needs to be rebuilt, and rebuilds only that. To further speed up your builds, you can set up your project to build in a highly parallel and incremental fashion.
+* **Bazel is multi-platform**. Bazel runs on Linux, macOS, and Windows. Bazel can build binaries and deployable packages for multiple platforms, including desktop, server, and mobile, from the same project.
+* **Bazel scales**. Bazel maintains agility(敏捷) while handling builds with `100k+` source files. It works with multiple repositories and user bases in the tens of thousands.
+* **Bazel is extensible**. Many languages are supported, and you can extend Bazel to support any other language or framework.
+
+一些测试结论：
+
+* `bazel`默认会限制并发度到其估计的机器性能上限，实际使用需要通过`--local_cpu_resources=9999999`等参数绕过这一限制
+* 已知（部分版本的）bazel 在并发度过高（如`-j320`）下，bazel 自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时 bazel 自身CPU（`400~500%`）、内存（几G）占用很高。
+* 如果机器资源充足且对并发度有较高要求（几百并发），可以考虑使用其他构建系统构建。
+
+# Bazel 使用流程
+
+To build or test a project with Bazel, you typically do the following:
+
+1. **Set up Bazel**. [Download and install Bazel](https://docs.bazel.build/versions/4.2.1/install.html).
+2. **Set up a project [workspace](https://docs.bazel.build/versions/4.2.1/build-ref.html#workspaces)**, which is a directory where Bazel looks for build inputs and `BUILD` files, and where it stores build outputs.
+3. **Write a BUILD file**, which tells Bazel what to build and how to build it.
+  + You write your `BUILD` file by declaring build targets using [Starlark](https://docs.bazel.build/versions/4.2.1/skylark/language.html), a domain-specific language. (See example [here](https://github.com/bazelbuild/bazel/blob/master/examples/cpp/BUILD).)
+  + A build target specifies a set of input artifacts that Bazel will build plus their dependencies, the build rule Bazel will use to build it, and options that configure the build rule.
+  + A build rule specifies the build tools Bazel will use, such as compilers and linkers, and their configurations. Bazel ships with a number of build rules covering the most common artifact types in the supported languages on supported platforms.
+4. **Run Bazel** from the command line. Bazel places your outputs within the workspace.
+
+In addition to building, you can also use Bazel to run [tests](https://docs.bazel.build/versions/4.2.1/test-encyclopedia.html) and [query](https://docs.bazel.build/versions/4.2.1/query-how-to.html) the build to trace dependencies in your code.
+
+# Bazel 构建流程
+
+When running a build or a test, Bazel does the following:
+
+1. **Loads** the `BUILD` files relevant to the target.
+2. **Analyzes** the inputs and their dependencies, applies the specified build rules, and produces an action graph.
+3. **Executes** the build actions on the inputs until the final build outputs are produced.
+
+
+Since all previous build work is cached, Bazel can identify and reuse cached artifacts and only rebuild or retest what’s changed. To further enforce correctness, you can set up Bazel to run builds and tests hermetically through sandboxing, minimizing skew and maximizing reproducibility.
+
+
+* [C/C++ Rules](https://docs.bazel.build/versions/master/be/c-cpp.html)
+
+
+# Action Graph (依赖图)
+
+The action graph represents the build artifacts, the relationships between them, and the build actions that Bazel will perform. Thanks to this graph, Bazel can track changes to file content as well as changes to actions, such as build or test commands, and know what build work has previously been done. The graph also enables you to easily trace dependencies in your code.
+
 
 通过 `bazel query` 输出 `graphviz` 格式数据，然后在 [GraphvizOnline](https://dreampuf.github.io/GraphvizOnline) 查看依赖图。
 
@@ -148,7 +222,7 @@ Loading: 0 packages loaded
 
 # [Bazel 基础概念](https://bazel.build/concepts/build-ref?hl=en)
 
-了解源代码布局、BUILD 文件语法以及规则和依赖项类型等基本概念。
+了解源代码布局，`BUILD` 文件语法以及规则和依赖项类型等基本概念。
 
 ![bazel_build4](/assets/images/202306/bazel_build4.png)
 
@@ -244,25 +318,30 @@ In a `.bzl` file, symbols starting with `_` are not exported and cannot be loade
 You can use [load visibility](https://bazel.build/concepts/visibility#load-visibility) to restrict who may load a `.bzl` file.
 
 
-## Types of build rules
+### Types of build rules
 
 The majority of build rules come in families, grouped together by language. For example, `cc_binary`, `cc_library` and `cc_test` are the build rules for C++ `binaries`, `libraries`, and `tests`, respectively. Other languages use the same naming scheme, with a different prefix, such as `java_*` for Java. Some of these functions are documented in the [Build Encyclopedia](https://bazel.build/reference/be/overview), but it is possible for anyone to create new rules.
 
+> *_binary
 
-* `*_binary` rules build executable programs in a given language. After a build, the executable will reside in the build tool's binary output tree at the corresponding name for the rule's label, so `//my:program` would appear at (for example) `$(BINDIR)/my/program`.
+`*_binary` rules build executable programs in a given language. After a build, the executable will reside in the build tool's binary output tree at the corresponding name for the rule's label, so `//my:program` would appear at (for example) `$(BINDIR)/my/program`.
 
 In some languages, such rules also create a runfiles directory containing all the files mentioned in a `data` attribute belonging to the rule, or any rule in its transitive closure of dependencies; this set of files is gathered together in one place for ease of deployment to production.
 
-* `*_test` rules are a specialization of a `*_binary` rule, used for automated testing. Tests are simply programs that return zero on success.
+> *_test
+
+`*_test` rules are a specialization of a `*_binary` rule, used for automated testing. Tests are simply programs that return zero on success.
 
 Like binaries, tests also have runfiles trees, and the files beneath it are the only files that a test may legitimately open at runtime. For example, a program `cc_test(name='x', data=['//foo:bar'])` may open and read `$TEST_SRCDIR/workspace/foo/bar` during execution. (Each programming language has its own utility function for accessing the value of `$TEST_SRCDIR`, but they are all equivalent to using the environment variable directly.) Failure to observe the rule will cause the test to fail when it is executed on a remote testing host.
 
-* `*_library` rules specify separately-compiled modules in the given programming language. Libraries can depend on other libraries, and binaries and tests can depend on libraries, with the expected separate-compilation behavior.
+> *_library
+
+`*_library` rules specify separately-compiled modules in the given programming language. Libraries can depend on other libraries, and binaries and tests can depend on libraries, with the expected separate-compilation behavior.
 
 
 ## [Dependencies](https://bazel.build/concepts/dependencies?hl=en)
 
-A target `A` depends upon a target `B` if `B` is needed by `A` at build or execution time. The depends upon relation induces a `Directed Acyclic Graph` (**DAG**) over targets, and it is called a dependency graph.
+A target `A` depends upon a target `B` if `B` is needed by `A` at build or execution time. The depends upon relation induces a `Directed Acyclic Graph` (**DAG 有向无环图**) over targets, and it is called a dependency graph.
 
 **A target's direct dependencies (直接依赖)** are those other targets reachable by a path of length 1 in the dependency graph. **A target's transitive dependencies (间接依赖)** are those targets upon which it depends via a path of any length through the graph.
 
@@ -296,85 +375,6 @@ A build target might need some data files to run correctly. These data files are
 
 This page covers Bazel's two visibility systems: [target visibility](https://bazel.build/concepts/visibility?hl=en#target-visibility) and [load visibility](https://bazel.build/concepts/visibility?hl=en#load-visibility).
 
-
-
-
-
-# Bazel 安装 (CentOS)
-
-[Bazel 安装说明](https://bazel.build/install)，本文使用方式三。
-
-方式一：安装包
-
-```
-yum install bazel4
-```
-
-方式二：[源码编译](https://bazel.build/install/compile-source)
-
-方式三：[使用release版本](https://github.com/bazelbuild/bazel/releases)
-
-
-方式四：基于 [Bazelisk](https://github.com/bazelbuild/bazelisk/releases/) 的安装
-
-> Bazelisk is a wrapper for Bazel written in Go. It automatically picks a good version of Bazel given your current working directory, downloads it from the official server (if required) and then transparently passes through all command-line arguments to the real Bazel binary. You can call it just like you would call Bazel.
-
-
-``` bash
-sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64
-sudo chmod +x /usr/local/bin/bazel
-```
-
-
-
-# Bazel 优势
-
-Bazel offers the following advantages:
-
-* **High-level build language**. Bazel uses an abstract, human-readable language to describe the build properties of your project at a high semantical level. Unlike other tools, Bazel operates on the concepts of libraries, binaries, scripts, and data sets, shielding you from the complexity of writing individual calls to tools such as compilers and linkers.
-* **Bazel is fast and reliable**. Bazel caches all previously done work and tracks changes to both file content and build commands. This way, Bazel knows when something needs to be rebuilt, and rebuilds only that. To further speed up your builds, you can set up your project to build in a highly parallel and incremental fashion.
-* **Bazel is multi-platform**. Bazel runs on Linux, macOS, and Windows. Bazel can build binaries and deployable packages for multiple platforms, including desktop, server, and mobile, from the same project.
-* **Bazel scales**. Bazel maintains agility(敏捷) while handling builds with `100k+` source files. It works with multiple repositories and user bases in the tens of thousands.
-* **Bazel is extensible**. Many languages are supported, and you can extend Bazel to support any other language or framework.
-
-一些测试结论：
-
-* `bazel`默认会限制并发度到其估计的机器性能上限，实际使用需要通过--local_cpu_resources=9999999等参数绕过这一限制
-* 已知（部分版本的）bazel在并发度过高（如`-j320`）下，bazel自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时bazel自身CPU（`400~500%`）、内存（几G）占用很高。
-* 如果机器资源充足且对并发度有较高要求（几百并发），可以考虑使用其他构建系统构建。
-
-# Bazel 使用流程
-
-To build or test a project with Bazel, you typically do the following:
-
-1. **Set up Bazel**. [Download and install Bazel](https://docs.bazel.build/versions/4.2.1/install.html).
-2. **Set up a project [workspace](https://docs.bazel.build/versions/4.2.1/build-ref.html#workspaces)**, which is a directory where Bazel looks for build inputs and `BUILD` files, and where it stores build outputs.
-3. **Write a BUILD file**, which tells Bazel what to build and how to build it.
-  + You write your `BUILD` file by declaring build targets using [Starlark](https://docs.bazel.build/versions/4.2.1/skylark/language.html), a domain-specific language. (See example [here](https://github.com/bazelbuild/bazel/blob/master/examples/cpp/BUILD).)
-  + A build target specifies a set of input artifacts that Bazel will build plus their dependencies, the build rule Bazel will use to build it, and options that configure the build rule.
-  + A build rule specifies the build tools Bazel will use, such as compilers and linkers, and their configurations. Bazel ships with a number of build rules covering the most common artifact types in the supported languages on supported platforms.
-4. **Run Bazel** from the command line. Bazel places your outputs within the workspace.
-
-In addition to building, you can also use Bazel to run [tests](https://docs.bazel.build/versions/4.2.1/test-encyclopedia.html) and [query](https://docs.bazel.build/versions/4.2.1/query-how-to.html) the build to trace dependencies in your code.
-
-# Bazel 构建流程
-
-When running a build or a test, Bazel does the following:
-
-1. **Loads** the `BUILD` files relevant to the target.
-2. **Analyzes** the inputs and their dependencies, applies the specified build rules, and produces an action graph.
-3. **Executes** the build actions on the inputs until the final build outputs are produced.
-
-
-Since all previous build work is cached, Bazel can identify and reuse cached artifacts and only rebuild or retest what’s changed. To further enforce correctness, you can set up Bazel to run builds and tests hermetically through sandboxing, minimizing skew and maximizing reproducibility.
-
-
-* [C/C++ Rules](https://docs.bazel.build/versions/master/be/c-cpp.html)
-
-
-# Action Graph
-
-The action graph represents the build artifacts, the relationships between them, and the build actions that Bazel will perform. Thanks to this graph, Bazel can track changes to file content as well as changes to actions, such as build or test commands, and know what build work has previously been done. The graph also enables you to easily trace dependencies in your code.
 
 
 
@@ -1267,6 +1267,11 @@ This option controls where and how commands are executed.
 This option, which takes an integer argument, specifies a limit on the number of jobs that should be executed concurrently during the execution phase of the build.
 
 > Note: The number of concurrent jobs that Bazel will run is determined not only by the --jobs setting, but also by Bazel's scheduler, which tries to avoid running concurrent jobs that will use up more resources (RAM or CPU) than are available, based on some (very crude) estimates of the resource consumption of each job. The behavior of the scheduler can be controlled by the --local_ram_resources option.
+
+* `--local_{ram,cpu}_resources resources or resource expression`
+
+These options specify the amount of local resources (RAM in MB and number of CPU logical cores) that Bazel can take into consideration when scheduling build and test activities to run locally. They take an integer, or a keyword (`HOST_RAM` or `HOST_CPUS`) optionally followed by `[-|*float]` (for example, `--local_cpu_resources=2`, `--local_ram_resources=HOST_RAM*.5`, `--local_cpu_resources=HOST_CPUS-1`). The flags are independent; one or both may be set. By default, Bazel estimates the amount of RAM and number of CPU cores directly from the local system's configuration.
+
 
 
 ### Verbosity

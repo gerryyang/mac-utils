@@ -1002,6 +1002,25 @@ MESSAGE(STATUS "CMAKE_RANLIB = ${CMAKE_RANLIB}")
 ENDIF() # IF(DEFINED PRINT_HEAD_INFO)
 ```
 
+## [CMAKE_COMPILER_IS_GNUCXX](https://cmake.org/cmake/help/latest/variable/CMAKE_COMPILER_IS_GNUCXX.html)
+
+True if the C++ (CXX) compiler is GNU.
+
+This variable is deprecated. Use [CMAKE_CXX_COMPILER_ID](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID) instead.
+
+## [CMAKE_CXX_COMPILER_ID](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID)
+
+```
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  set(CC_GCC 1)
+  string(REGEX REPLACE "^([^\.]+)\..*$" \\1 GCC_MAJOR ${CMAKE_CXX_COMPILER_VERSION})
+  message("GCC Major:" ${GCC_MAJOR} " # " ${CMAKE_CXX_COMPILER_VERSION})
+else()
+  set(CC_GCC 0)
+  set(GCC_MAJOR 0)
+endif()
+```
+
 ## CMAKE_CXX_STANDARD
 
 New in version 3.1. Default value for [CXX_STANDARD](https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html#prop_tgt:CXX_STANDARD) target property if set when a target is created.

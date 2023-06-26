@@ -511,6 +511,23 @@ refer:
 
 refer: [ld(1) - Linux man page](https://linux.die.net/man/1/ld)
 
+## ld.gold (an official GNU package)
+
+The motivation for writing gold was to make a linker that is faster than the [GNU linker](https://en.wikipedia.org/wiki/GNU_linker), especially for large applications coded in C++.
+
+```
+# use ld.gold instead of ld for performance
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+
+# get link stage stats
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--stats")
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stats")
+```
+
+* [gold (linker)](https://en.wikipedia.org/wiki/Gold_%28linker%29)
+* [Replacing ld with gold - any experience?](https://stackoverflow.com/questions/3476093/replacing-ld-with-gold-any-experience)
+
+
 ## lld (The LLVM Linker)
 
 Replace `ld` to `lld`:
@@ -541,8 +558,7 @@ String dump of section '.comment':
 refer:
 
 * [LLD - The LLVM Linker](https://lld.llvm.org/#lld-the-llvm-linker)
-* [gold (linker)](https://en.wikipedia.org/wiki/Gold_%28linker%29)
-* [Replacing ld with gold - any experience?](https://stackoverflow.com/questions/3476093/replacing-ld-with-gold-any-experience)
+
 
 
 # CCache (a fast C/C++ compiler cache)
