@@ -475,6 +475,31 @@ else()              # optional block
 endif()
 ```
 
+Comparisons:
+
+```
+if(<variable|string> MATCHES <regex>)             # True if the given string or variable's value matches the given regular expression.
+
+if(<variable|string> LESS <variable|string>       #  True if the given string or variable's value is a valid number and less than that on the right.
+
+if(<variable|string> GREATER <variable|string>)   # True if the given string or variable's value is a valid number and greater than that on the right.
+
+if(<variable|string> EQUAL <variable|string>)     # True if the given string or variable's value is a valid number and equal to that on the right.
+
+if(<variable|string> STREQUAL <variable|string>)  # True if the given string or variable's value is lexicographically equal to the string or variable on the right.
+```
+
+Logic Operators:
+
+```
+if(NOT <condition>)      # True if the condition is not true.
+
+if(<cond1> AND <cond2>)  # True if both conditions would be considered true individually.
+
+if(<cond1> OR <cond2>)   # True if either condition would be considered true individually.
+```
+
+
 https://cmake.org/cmake/help/latest/command/if.html
 
 ## file

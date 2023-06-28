@@ -377,8 +377,7 @@ This page covers Bazel's two visibility systems: [target visibility](https://baz
 
 
 
-
-# [Bazel Tutorial: Build a C++ Project](https://docs.bazel.build/versions/4.2.1/tutorial/cpp.html)
+# [Bazel Tutorial: Build a C++ Project](https://bazel.build/start/cpp?hl=en)
 
 Start by [installing Bazel](https://bazel.build/install), if you haven’t already. This tutorial uses Git for source control, so for best results [install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) as well.
 
@@ -782,7 +781,7 @@ You’ve now completed your first basic build with Bazel, but this is just the s
 > Happy building!
 
 
-# Common C++ Build Use Cases
+# [Common C++ Build Use Cases](https://bazel.build/tutorials/cpp-use-cases?hl=en)
 
 Here you will find some of the most common use cases for building C++ projects with Bazel. If you have not done so already, get started with building C++ projects with Bazel by completing the tutorial [Introduction to Bazel: Build a C++ Project](https://bazel.build/tutorials/cpp).
 
@@ -800,7 +799,17 @@ cc_library(
 )
 ```
 
-With this target, Bazel will build all the `.cc` and `.h` files it finds in the same directory as the `BUILD` file that contains this target (excluding subdirectories).
+With this target, Bazel will build all the `.cc` and `.h` files it finds in the same directory as the `BUILD` file that contains this target (**excluding subdirectories**).
+
+考虑包含子目录的情况：
+
+```
+cc_library(
+    name = "build-all-the-files-include-subdirectories",
+    srcs = glob(["**/*.cc"]),
+    hdrs = glob(["**/*.h"]),
+)
+```
 
 
 ## Using transitive includes
@@ -1501,6 +1510,137 @@ Bazel supports external dependencies, source files (both text and binary) used i
 As of Bazel 6.0, there are two ways to manage external dependencies with Bazel: the traditional, repository-focused [WORKSPACE](https://bazel.build/external/overview?hl=en#workspace-system) system, and the newer module-focused [MODULE.bazel](https://bazel.build/external/overview?hl=en#bzlmod) system (codenamed Bzlmod, and enabled with the flag `--enable_bzlmod`). The two systems can be used together, but `Bzlmod` is replacing the `WORKSPACE` system in future Bazel releases.
 
 
+# [Bazel Tutorial: Configure C++ Toolchains](https://bazel.build/tutorials/ccp-toolchain-config?hl=en)
+
+This tutorial uses an example scenario to describe how to configure C++ toolchains for a project. It's based on an [example C++ project](https://github.com/bazelbuild/examples/tree/master/cpp-tutorial/stage1) that builds error-free using clang.
+
+
+# [Workspace Rules](https://bazel.build/reference/be/workspace?hl=en)
+
+Workspace rules are used to pull in [external dependencies](https://bazel.build/docs/external), typically source code located outside the main repository.
+
+> Note: besides the native workspace rules, Bazel also embeds various [Starlark workspace rules](https://bazel.build/rules/lib/repo), in particular those to deal with git repositories or archives hosted on the web.
+
+Rules:
+
+* [bind](https://bazel.build/reference/be/workspace?hl=en#bind)
+* [local_repository](https://bazel.build/reference/be/workspace?hl=en#local_repository)
+* [new_local_repository](https://bazel.build/reference/be/workspace?hl=en#new_local_repository)
+
+## local_repository
+
+Allows targets from a local directory to be bound. This means that the current repository can use targets defined in this other directory. See the [bind section](https://bazel.build/reference/be/workspace#bind_examples) for more details.
+
+Examples:
+
+Suppose the current repository is a chat client, rooted at the directory `~/chat-app`. It would like to use an SSL library which is defined in a different repository: `~/ssl`. The SSL library has a target `//src:openssl-lib`.
+
+The user can add a dependency on this target by adding the following lines to `~/chat-app/WORKSPACE`:
+
+```
+local_repository(
+    name = "my-ssl",
+    path = "/home/user/ssl",
+)
+```
+
+Targets would specify `@my-ssl//src:openssl-lib` as a dependency to depend on this library.
+
+
+## new_local_repository
+
+Allows a local directory to be turned into a Bazel repository (允许一个本地目录转换为一个 Bazel repository). This means that the current repository can define and use targets from anywhere on the filesystem.
+
+This rule creates a Bazel repository by creating a `WORKSPACE` file and subdirectory containing symlinks to the `BUILD` file and path given. The build file should create targets relative to the path. For directories that already contain a `WORKSPACE` file and a `BUILD` file, the `local_repository` rule can be used.
+
+Examples:
+
+Suppose the current repository is a chat client, rooted at the directory `~/chat-app`. It would like to use an SSL library which is defined in a different directory: `~/ssl`.
+
+The user can add a dependency by creating a `BUILD` file for the SSL library (`~/chat-app/BUILD.my-ssl`) containing:
+
+```
+java_library(
+    name = "openssl",
+    srcs = glob(['*.java'])
+    visibility = ["//visibility:public"],
+)
+```
+
+Then they can add the following lines to `~/chat-app/WORKSPACE`:
+
+```
+new_local_repository(
+    name = "my-ssl",
+    path = "/home/user/ssl",
+    build_file = "BUILD.my-ssl",
+)
+```
+
+This will create a `@my-ssl` repository that symlinks to `/home/user/ssl`. Targets can depend on this library by adding `@my-ssl//:openssl` to a target's dependencies.
+
+You can also use `new_local_repository` to include single files, not just directories. For example, suppose you had a jar file at `/home/username/Downloads/piano.jar`. You could add just that file to your build by adding the following to your `WORKSPACE` file:
+
+```
+new_local_repository(
+    name = "piano",
+    path = "/home/username/Downloads/piano.jar",
+    build_file = "BUILD.piano",
+)
+```
+
+And creating the following `BUILD.piano` file:
+
+```
+java_import(
+    name = "play-music",
+    jars = ["piano.jar"],
+    visibility = ["//visibility:public"],
+)
+```
+
+Then targets can depend on `@piano//:play-music` to use `piano.jar`.
+
+
+# [Remote Caching](https://bazel.build/remote/caching?hl=en)
+
+
+This page covers remote caching, setting up a server to host the cache, and running builds using the remote cache.
+
+A remote cache is used by a team of developers and/or a continuous integration (CI) system to share build outputs. If your build is reproducible, the outputs from one machine can be safely reused on another machine, which can make builds significantly faster.
+
+
+`--remote_cache` 是 Bazel 的一个命令行选项，允许您使用远程缓存服务来提高构建速度。当 Bazel 构建时，它将会将动作执行的结果缓存远程。在后续构建中，如果这些缓存结果仍然有效，那么它们将从远程缓存中直接提取，从而避免对已经构建过的结果进行重复计算。这意味着如果远程缓存中已经有某个操作的缓存结果，那么 Bazel 构建过程中就不需要在本地执行这个操作。
+
+为了在 Bazel 中使用远程缓存，请按照以下步骤操作：
+
+* 首先，设置一个远程缓存服务。Bazel 可以与很多 HTTP 缓存系统兼容，例如 Bazel Remote Cache、Google Cloud Storage、S3、nginx 等。根据您需要使用的缓存系统部署远程缓存，确保远程缓存可从您的构建机器进行访问。
+
+* 然后，在命令行中使用 `--remote_cache` 选项，指定远程缓存服务器的 URL。例如：
+
+```
+bazel build //:my_target --remote_cache=http://remote.cache.server.com:port
+```
+
+这里 `http://remote.cache.server.com:port` 是部署的远程缓存服务器地址。在构建目标（例如 `//:my_target`）时，Bazel 将使用指定的远程缓存服务器。
+
+还可以将这个选项加入到项目根目录下的 `.bazelrc` 文件中，这样就不需要在每次构建时手动指定选项：
+
+```
+build --remote_cache=http://remote.cache.server.com:port
+```
+
+当使用远程缓存时，请注意以下方面：
+
+* 为了在不同构建之间共享缓存，远程缓存需要与项目中的所有构建机器共享。
+* 在共享库或以构建链的方式进行构建时，多个项目可以充分利用远程缓存的好处。
+
+缓存可以提高跨越多个构建的构建速度，但请注意远程缓存可能会延迟单个构建的开始时间，因为 Bazel 需要在网络上完成远程缓存查询。不过，通常情况下，大分析缓存命中率可以弥补这些延迟，总体上实现更快的构建速度。
+
+
+
+
+
 
 
 # Tips
@@ -1746,6 +1886,15 @@ Critical path (17.842 s):
 ## [bazel_rules_install](https://github.com/google/bazel_rules_install)
 
 Bazel rules for installing build results. Similar to `make install`.
+
+
+## [bazel-skylib](https://github.com/bazelbuild/bazel-skylib)
+
+`Skylib` is a library of `Starlark` functions for manipulating collections, file paths, and various other data types in the domain of Bazel build rules.
+
+Each of the `.bzl` files in the `lib` directory defines a "module"—a `struct` that contains a set of related functions and/or other symbols that can be loaded as a single unit, for convenience.
+
+Skylib also provides build rules under the `rules` directory.
 
 
 
