@@ -22,16 +22,6 @@ categories: [GCC/Clang]
 * [分布式构建](https://bazel.build/basics/distributed-builds)
 * [依赖项管理](https://bazel.build/basics/dependencies)
 
-
-# Bazel 构建过程
-
-
-Bazel 构建分为三个阶段：`Loading`, `Analysising` and `Executing`
-
-![bazel_build6](/assets/images/202306/bazel_build6.png)
-
-
-
 # TL;DR (Bazel 构建需要完成的三件事)
 
 * 修改头文件的路径，以 `WORKSPACE` 所在目录为基准
@@ -100,6 +90,10 @@ To build or test a project with Bazel, you typically do the following:
 In addition to building, you can also use Bazel to run [tests](https://docs.bazel.build/versions/4.2.1/test-encyclopedia.html) and [query](https://docs.bazel.build/versions/4.2.1/query-how-to.html) the build to trace dependencies in your code.
 
 # Bazel 构建流程
+
+Bazel 构建分为三个阶段：`Loading`, `Analysising` and `Executing`
+
+![bazel_build6](/assets/images/202306/bazel_build6.png)
 
 When running a build or a test, Bazel does the following:
 
