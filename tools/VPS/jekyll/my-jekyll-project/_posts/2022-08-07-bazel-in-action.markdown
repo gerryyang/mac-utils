@@ -23,6 +23,15 @@ categories: [GCC/Clang]
 * [依赖项管理](https://bazel.build/basics/dependencies)
 
 
+# Bazel 构建过程
+
+
+Bazel 构建分为三个阶段：`Loading`, `Analysising` and `Executing`
+
+![bazel_build6](/assets/images/202306/bazel_build6.png)
+
+
+
 # TL;DR (Bazel 构建需要完成的三件事)
 
 * 修改头文件的路径，以 `WORKSPACE` 所在目录为基准
@@ -1602,8 +1611,9 @@ java_import(
 Then targets can depend on `@piano//:play-music` to use `piano.jar`.
 
 
-# [Remote Caching](https://bazel.build/remote/caching?hl=en)
+# [Remote Caching - RC](https://bazel.build/remote/caching?hl=en)
 
+> 之前构建过，即使本地 clean 了，也可以命中 RC 的缓存。RC 是用 IO 开销和存储开销，换取计算开销。bazel 会请求 RC 看某一个 action 是否存在缓存，存在则不再执行，通过 bazel print_action 可以查看具体某个 binary 存在哪些 action。
 
 This page covers remote caching, setting up a server to host the cache, and running builds using the remote cache.
 
@@ -1638,9 +1648,72 @@ build --remote_cache=http://remote.cache.server.com:port
 缓存可以提高跨越多个构建的构建速度，但请注意远程缓存可能会延迟单个构建的开始时间，因为 Bazel 需要在网络上完成远程缓存查询。不过，通常情况下，大分析缓存命中率可以弥补这些延迟，总体上实现更快的构建速度。
 
 
+# [Remote Execution Overview - RE](https://bazel.build/remote/rbe?hl=en)
+
+This page covers the benefits, requirements, and options for running Bazel with remote execution.
+
+By default, Bazel executes builds and tests on your local machine. Remote execution of a Bazel build allows you to distribute build and test actions across multiple machines, such as a datacenter.
+
+Remote execution provides the following benefits:
+
+* Faster build and test execution through scaling of nodes available for parallel actions
+* A consistent execution environment for a development team
+* Reuse of build outputs across a development team
+
+Bazel uses an open-source [gRPC protocol](https://github.com/bazelbuild/remote-apis) to allow for remote execution and remote caching.
+
+
+Requirements:
+
+Remote execution of Bazel builds imposes a set of mandatory configuration constraints on the build. For more information, see [Adapting Bazel Rules for Remote Execution](https://bazel.build/remote/rules?hl=en).
 
 
 
+
+
+# 如何分析构建耗时
+
+bazel 构建分为三个阶段：Loading, Analysising and Executing
+
+![bazel_build6](/assets/images/202306/bazel_build6.png)
+
+
+分析构建任务耗时，要关注完整的构建过程，不要仅关注第三阶段。通过参数 `--profile` 可以查看三个阶段各自的耗时：
+
+第一步：构建时生成 profile 数据
+
+执行 bazel 时增加 `--profile=bazel_profile.log` 相关参数，可将构建阶段耗时信息详细记录到 bazel_profile.log 文件中
+
+第二步：查看 profile 数据
+
+执行 analyze-profile 命令，查看 profile 数据
+
+```
+$bazel analyze-profile bazel_profile.log
+WARNING: This information is intended for consumption by Bazel developers only, and may change at any time. Script against it at your own risk
+INFO: Profile created on 2023-06-30T03:16:36.524737Z, build ID: 56b5d6fc-f100-43c6-8564-b5f3819ed9de, output base: /data/home/gerryyang/.cache/bazel/_bazel_gerryyang/31b5c5a4697c67885c83a7460c9628d6
+
+=== PHASE SUMMARY INFORMATION ===
+
+Total launch phase time                              0.013 s    0.08%
+Total init phase time                                0.601 s    3.79%
+Total target pattern evaluation phase time           0.203 s    1.28%
+Total interleaved loading-and-analysis phase time    1.421 s    8.97%
+Total preparation phase time                         0.013 s    0.09%
+Total execution phase time                          13.575 s   85.65%
+Total finish phase time                              0.022 s    0.14%
+---------------------------------------------------------------------
+Total run time                                      15.850 s  100.00%
+
+Critical path (13.428 s):
+       Time Percentage   Description
+    76.6 ms    0.57%   action 'Writing script frame/common/common_lib.cppmap'
+    9.996 s   74.44%   action 'Compiling src/unittestsvr/UnittestCtrl.cpp'
+    3.355 s   24.99%   action 'Linking src/unittestsvr/unittestsvr'
+    0.18 ms    0.00%   runfiles for //src/unittestsvr unittestsvr
+```
+
+通过分析上述 profiling 结果数据，可以看到 bazel 各阶段的耗时，以及 action 具体的编译耗时，根据这些信息可以大致了解构建耗时情况。
 
 
 # Tips
@@ -1868,6 +1941,16 @@ Critical path (17.842 s):
     0.09 ms    0.00%   runfiles for //src/unittestsvr1 unittestsvr1
 ```
 
+## bazel print_action (查看有哪些 action)
+
+```
+bazel print_action //src/unittestsvr:unittestsvr
+```
+
+
+
+
+
 # Tools
 
 ## [bazelisk](https://github.com/bazelbuild/bazelisk)
@@ -1897,6 +1980,23 @@ Each of the `.bzl` files in the `lib` directory defines a "module"—a `struct` 
 Skylib also provides build rules under the `rules` directory.
 
 
+# 最佳实践
+
+## 增加 bazel 并发度，提升构建效率 (--jobs)
+
+在执行 bazel 命令时设置 `--jobs` 参数，不设置时 bazel 默认为当前服务器的 CPU 核数，即 `HOST_CPUS`。
+
+下图为某测试项目在不同并发度 `HOST_CPUS * {1, 2, 3, 4}` 下的构建耗时情况：
+
+![bazel_build7](/assets/images/202306/bazel_build7.png)
+
+注意：并发度并不是越高越好，要基于服务器配置和项目实际情况进行调整，确定最佳值。
+
+
+# Bazel 源码
+
+https://cs.opensource.google/bazel/bazel;l=1336;drc=b56a2aa709dcb681cfc3faa148a702015ec631d5
+
 
 
 
@@ -1910,6 +2010,9 @@ Skylib also provides build rules under the `rules` directory.
   + file:///Users/gerry/Downloads/beginning-bazel-building-and-testing-for-java-go-and-more_compress.pdf
 * 对应代码：https://github.com/Apress/beginning-bazel
 
+# Q&A
+
+* [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
 
 
 
@@ -1923,7 +2026,8 @@ Skylib also provides build rules under the `rules` directory.
 
 
 
-
+* Remote Cache
+  * [Using Remote Cache Service for Bazel](https://dl.acm.org/doi/pdf/10.1145/3267120)
 
 
 
