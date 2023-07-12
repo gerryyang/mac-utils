@@ -245,6 +245,7 @@ Shift+Command+5
 
 | 工具 | 功能
 | -- | --
+| Adobe Reader | Adobe Reader 为免费版 PDF 阅读软件，无需授权。如需编辑 PDF 文件的内容，请申请专业版使用
 | [有数](https://apps.apple.com/cn/app/%E6%9C%89%E6%95%B0-%E9%87%8D%E6%96%B0%E5%AE%9A%E4%B9%89%E8%AE%A1%E7%AE%97%E5%99%A8/id721606556) | 补充 MacOS 计算器的功能
 | [Cleaner One](https://apps.apple.com/cn/app/apple-store/id1133028347) | 磁盘清理(免费) [refer: Mac 存储空间里面的“其他”怎么清理](https://zhuanlan.zhihu.com/p/349862578)
 | [Homebrew](https://brew.sh/) | 软件包管理，第二个AppStore
@@ -339,6 +340,9 @@ More: https://github.com/hzlzh/Best-App
 | 把光标移到上边的屏 | `Ctrl+W k`
 | 把光标移到下边的屏 | `Ctrl+W j`
 | 把光标移到下一个的屏 | `Ctrl+W w`
+
+* 查找
+  * 精确匹配：通过 `<word>` 查找，例如，精确查找 `the` 则为 `/\<the\>`
 
 
 * 粘贴功能

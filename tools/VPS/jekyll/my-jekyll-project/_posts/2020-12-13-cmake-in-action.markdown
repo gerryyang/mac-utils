@@ -1834,6 +1834,11 @@ TODO
 * https://github.com/sogou/workflow/blob/master/CMakeLists.txt
 
 
+# Issue
+
+## [Makefiles: Multiple targets not built in parallel](https://gitlab.kitware.com/cmake/cmake/-/issues/23876)
+
+
 
 # Q&A
 

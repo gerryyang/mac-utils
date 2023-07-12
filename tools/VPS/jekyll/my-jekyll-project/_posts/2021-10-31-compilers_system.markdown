@@ -609,7 +609,9 @@ $ll -lh /usr/bin/ccache
 ```
 
 * [https://ccache.dev/](https://ccache.dev/)
-* [ccache 4.5.1](https://ccache.dev/manual/4.5.1.html)
+* [ccache 4.8.2](https://ccache.dev/manual/4.8.2.html)
+* https://github.com/ccache/ccache/blob/master/README.md
+* https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
 * [ccache and clang, part 3](http://peter.eisentraut.org/blog/2014/12/01/ccache-and-clang-part-3/)
 
 

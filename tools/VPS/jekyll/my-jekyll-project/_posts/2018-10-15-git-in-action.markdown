@@ -311,6 +311,30 @@ git push origin master
 * https://git-scm.com/docs/gitignore
 * [Why is .gitignore not ignoring my files?](https://stackoverflow.com/questions/45400361/why-is-gitignore-not-ignoring-my-files)
 
+其他示例：
+
+[Make .gitignore ignore everything except a few files](https://stackoverflow.com/questions/987142/make-gitignore-ignore-everything-except-a-few-files)
+
+> An optional prefix `!` which negates the pattern; any matching file excluded by a previous pattern will become included again. If a negated pattern matches, this will override lower precedence patterns sources.
+
+```
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!script.pl
+!template.latex
+# etc...
+
+# ...even if they are in subdirectories
+!*/
+
+# if the files to be tracked are in subdirectories
+!*/a/b/file1.txt
+!*/a/b/c/*
+```
+
 
 
 # Git的协作模式

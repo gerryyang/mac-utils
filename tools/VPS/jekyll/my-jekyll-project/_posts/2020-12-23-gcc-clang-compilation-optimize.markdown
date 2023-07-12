@@ -9,6 +9,136 @@ categories: [GCC/Clang]
 {:toc}
 
 
+# DWARF
+
+https://developer.ibm.com/articles/au-dwarf-debug-format/
+
+DWARF 是一种用于表示源代码调试信息的标准格式。调试信息通常包括变量名、类型信息、行号等，用于在调试过程中帮助开发人员了解程序的运行状态。DWARF 的不同版本提供了不同的特性和优化，其中 DWARF version 5 是最新的版本，它引入了许多改进，包括更紧凑的表示形式和更高效的数据访问方式。
+
+GCC 11 将 DWARF version 5 作为默认的 debug info 版本，这意味着当使用 GCC 11 编译项目时，生成的二进制文件将包含 DWARF version 5 格式的调试信息。由于 DWARF version 5 的优化，这使得生成的二进制文件尺寸显著缩小，同时仍保留了丰富的调试信息。
+
+在实际项目中，这种尺寸缩小可以带来诸多好处，如节省磁盘空间、加快传输速度和提高加载速度等。因此，升级到 GCC 11 可以帮助开发人员更高效地处理大型项目和二进制文件。
+
+
+
+
+
+
+# [Precompiled Headers](https://clang.llvm.org/docs/PCHInternals.html)
+
+This document describes the design and implementation of Clang's precompiled headers (PCH). If you are interested in the end-user view, please see the [User's Manual](https://releases.llvm.org/3.1/tools/clang/docs/UsersManual.html#precompiledheaders).
+
+更多参考：
+
+* [Clang precompiled headers and improving C++ compile times, conclusion](http://llunak.blogspot.com/2021/04/clang-precompiled-headers-and-improving.html)
+* [Why precompiled headers do (not) improve C++ compile times](http://llunak.blogspot.com/2019/05/why-precompiled-headers-do-not-improve.html)
+* [How do I generate and use precompiled headers with Clang++?](https://stackoverflow.com/questions/55885920/how-do-i-generate-and-use-precompiled-headers-with-clang)
+
+
+## Using Precompiled Headers with clang
+
+The Clang compiler frontend, `clang -cc1`, supports two command line options for generating and using `PCH` files.
+
+To generate `PCH` files using `clang -cc1`, use the option `-emit-pch`:
+
+```
+$ clang -cc1 test.h -emit-pch -o test.h.pch
+```
+
+This option is transparently used by clang when generating `PCH` files. The resulting `PCH` file contains the serialized form of the compiler's internal representation after it has completed parsing and semantic analysis. The `PCH` file can then be used as a prefix header with the `-include-pch` option:
+
+```
+$ clang -cc1 -include-pch test.h.pch test.c -o test.s
+```
+
+> 说明：上面的 `clang -cc1` 在实际使用中应替换为 `clang++`。例如，要生成预编译头文件 `my_header.pch`，可以使用命令 `clang++ -x c++-header -std=c++11 -o my_header.pch my_header.hpp`
+
+
+## Design Philosophy
+
+Precompiled headers are meant to improve overall compile times for projects, so the design of precompiled headers is entirely driven by performance concerns. The use case for precompiled headers is relatively simple: when there is a common set of headers that is included in nearly every source file in the project, we **precompile** that bundle of headers into a single precompiled header (`PCH` file). Then, when compiling the source files in the project, we load the `PCH` file first (as a prefix header), which acts as a stand-in for that bundle of headers.
+
+A precompiled header implementation improves performance when:
+
+* Loading the PCH file is significantly faster than re-parsing the bundle of headers stored within the PCH file. Thus, a precompiled header design attempts to minimize the cost of reading the PCH file. Ideally, this cost should not vary with the size of the precompiled header file.
+
+* The cost of generating the PCH file initially is not so large that it counters the per-source-file performance improvement due to eliminating the need to parse the bundled headers in the first place. This is particularly important on multi-core systems, because PCH file generation serializes the build when all compilations require the PCH file to be up-to-date.
+
+> 预编译头文件的实现主要在以下两个方面改善性能：
+>
+> 1. 加载 PCH 文件的速度明显快于重新解析 PCH 文件中存储的头文件集合。因此，预编译头文件设计试图最小化读取 PCH 文件的成本。理想情况下，这个成本不应随预编译头文件的大小而变化。
+> 这意味着，通过使用预编译头文件，编译器可以快速地加载已经解析过的头文件内容，而不需要重新解析这些头文件。这将减少每个源文件的编译时间，从而提高整个项目的编译速度。
+>
+> 2. 生成 PCH 文件的初始成本不应过大，以免抵消由于消除解析捆绑头文件的需要而带来的每个源文件的性能改进。这在多核系统上尤为重要，因为 PCH 文件生成会在所有编译都需要最新的 PCH 文件时序列化构建。
+> 这意味着，尽管生成预编译头文件会带来一定的开销，但这个开销不应过大，以免影响预编译头文件带来的性能提升。在多核系统上，这一点尤为重要，因为生成预编译头文件可能会导致编译过程中的其他任务等待，从而降低并行编译的效果。
+>
+> 总之，预编译头文件实现通过加快加载 PCH 文件的速度和控制生成 PCH 文件的成本来提高编译性能。这使得编译器能够更快地处理头文件，从而提高整个项目的编译速度。
+
+Clang's precompiled headers are designed with a compact on-disk representation, which minimizes both PCH creation time and the time required to initially load the PCH file. The PCH file itself contains a serialized representation of Clang's abstract syntax trees and supporting data structures, stored using the same compressed bitstream as [LLVM's bitcode file format](https://llvm.org/docs/BitCodeFormat.html).
+
+Clang's precompiled headers are loaded "lazily" from disk. When a PCH file is initially loaded, Clang reads only a small amount of data from the PCH file to establish where certain important data structures are stored. The amount of data read in this initial load is independent of the size of the PCH file, such that a larger PCH file does not lead to longer PCH load times. The actual header data in the PCH file--macros, functions, variables, types, etc.--is loaded only when it is referenced from the user's code, at which point only that entity (and those entities it depends on) are deserialized from the PCH file. With this approach, the cost of using a precompiled header for a translation unit is proportional to the amount of code actually used from the header, rather than being proportional to the size of the header itself.
+
+> Clang 编译器如何以“懒加载”（lazy loading）的方式从磁盘加载预编译头文件（PCH）。懒加载意味着只有在实际需要时才加载数据，这有助于提高性能和降低内存使用。
+>
+> 当 PCH 文件最初被加载时，Clang 只从 PCH 文件中读取少量数据以确定某些重要数据结构的存储位置。这个初始加载阶段读取的数据量与 PCH 文件的大小无关，因此较大的 PCH 文件不会导致更长的加载时间。
+>
+> PCH 文件中的实际头文件数据（如宏、函数、变量、类型等）只有在用户代码中引用时才会被加载。此时，只有该实体（以及它所依赖的实体）会从 PCH 文件中被反序列化。通过这种方法，使用预编译头文件的成本与实际从头文件中使用的代码量成正比，而不是与头文件的大小成正比。
+>
+> 总之，Clang 编译器通过懒加载的方式从磁盘加载预编译头文件，从而提高了性能。这种方法使得使用预编译头文件的成本与实际使用的代码量成正比，而不是与头文件的大小成正比。这有助于在保持编译速度的同时，降低内存使用。
+
+When given the `-print-stats` option, Clang produces statistics describing how much of the precompiled header was actually loaded from disk. For a simple "Hello, World!" program that includes the Apple `Cocoa.h` header (which is built as a precompiled header), this option illustrates how little of the actual precompiled header is required:
+
+```
+*** PCH Statistics:
+  933 stat cache hits
+  4 stat cache misses
+  895/39981 source location entries read (2.238563%)
+  19/15315 types read (0.124061%)
+  20/82685 declarations read (0.024188%)
+  154/58070 identifiers read (0.265197%)
+  0/7260 selectors read (0.000000%)
+  0/30842 statements read (0.000000%)
+  4/8400 macros read (0.047619%)
+  1/4995 lexical declcontexts read (0.020020%)
+  0/4413 visible declcontexts read (0.000000%)
+  0/7230 method pool entries read (0.000000%)
+  0 method pool misses
+```
+
+For this small program, only a tiny fraction of the source locations, types, declarations, identifiers, and macros were actually deserialized from the precompiled header. These statistics can be useful to determine whether the precompiled header implementation can be improved by making more of the implementation lazy.
+
+Precompiled headers can be chained. When you create a PCH while including an existing PCH, Clang can create the new PCH by referencing the original file and only writing the new data to the new file. For example, you could create a PCH out of all the headers that are very commonly used throughout your project, and then create a PCH for every single source file in the project that includes the code that is specific to that file, so that recompiling the file itself is very fast, without duplicating the data from the common headers for every file.
+
+> 预编译头文件（PCH）可以被链接在一起。当你在创建一个新的 PCH 时包含了一个已有的 PCH，Clang 可以通过引用原始文件并只将新数据写入新文件来创建新的 PCH。这种方法允许在不重复公共头文件数据的情况下，更高效地为每个源文件创建 PCH。
+>
+> 举个例子，你可以为项目中经常使用的所有头文件创建一个 PCH，然后为项目中的每个源文件创建一个 PCH，该 PCH 包含特定于该文件的代码。这样，在重新编译文件本身时，速度会非常快，同时避免了为每个文件重复公共头文件的数据。
+>
+> 通过链接预编译头文件，可以在保持编译速度的同时，减少生成的 PCH 文件的大小。这种方法在处理大型项目时尤为有用，因为它可以有效地减少编译时间和磁盘空间占用。
+
+
+## Precompiled Header Contents
+
+Clang's precompiled headers are organized into several different blocks, each of which contains the serialized representation of a part of Clang's internal representation. Each of the blocks corresponds to either a block or a record within [LLVM's bitstream format](http://llvm.org/docs/BitCodeFormat.html). The contents of each of these logical blocks are described below.
+
+For a given precompiled header, the [llvm-bcanalyzer](http://llvm.org/cmds/llvm-bcanalyzer.html) utility can be used to examine the actual structure of the bitstream for the precompiled header. This information can be used both to help understand the structure of the precompiled header and to isolate areas where precompiled headers can still be optimized, e.g., through the introduction of abbreviations.
+
+* Metadata Block
+* Source Manager Block
+* Preprocessor Block
+* Types Block
+* Declarations Block
+* Statements and Expressions
+* Identifier Table Block
+* Method Pool Block
+
+
+## Precompiled Header Integration Points
+
+The "lazy" deserialization behavior of precompiled headers requires their integration into several completely different submodules of Clang. For example, lazily deserializing the declarations during name lookup requires that the name-lookup routines be able to query the precompiled header to find entities within the PCH file.
+
+
+
+
 # 编译加速 (统一编译)
 
 ```
@@ -709,3 +839,6 @@ So, libraries inside the group can be searched for new symbols several time, and
 PS archive means basically a static library (`*.a` files)
 
 
+# 优化调试
+
+## [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)

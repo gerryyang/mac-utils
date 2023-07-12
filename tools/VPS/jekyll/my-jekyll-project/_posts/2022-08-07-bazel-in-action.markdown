@@ -12,6 +12,8 @@ categories: [GCC/Clang]
 > [Bazel](https://bazel.build/) is an open-source build and test tool similar to `Make`, `Maven`, and `Gradle`. **It uses a human-readable, high-level build language.** `Bazel` supports projects in multiple languages and builds outputs for multiple platforms. `Bazel` supports large codebases across multiple repositories, and large numbers of users.
 
 
+
+
 # 构建基础知识
 
 观看一段简短的历史记录，了解基于工件的构建系统如何发展，以实现规模、速度和封闭性。
@@ -31,6 +33,8 @@ categories: [GCC/Clang]
   + 我依赖什么 (`deps`)
   + 其他选项 (`copts` / `linkopts` / ...)
 * 解决链接问题 (依赖顺序)
+
+
 
 # Bazel 安装 (CentOS 环境)
 
@@ -57,6 +61,46 @@ sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/release
 sudo chmod +x /usr/local/bin/bazel
 ```
 
+完整的安装脚本：先检查本地是否有，没有则下载安装
+
+``` bash
+#!/bin/bash
+
+CUR_DIR=$(dirname $(readlink -f $0))
+
+# Specify the Bazelisk version to install
+BAZELISK_VERSION="1.17.0"
+BAZELISK_DOWNLOAD_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
+LOCAL_BAZELISK_FILE="$CUR_DIR/bazelisk-linux-amd64-1.17.0/bazelisk-linux-amd64"
+
+# Check if Bazelisk is already installed
+if command -v bazel &> /dev/null; then
+    echo "Bazelisk is already installed, version: $(bazel --version)"
+else
+    echo "Installing Bazelisk version ${BAZELISK_VERSION}..."
+
+    if [[ -f "${LOCAL_BAZELISK_FILE}" ]]; then
+        echo "Using local Bazelisk file: ${LOCAL_BAZELISK_FILE}"
+        cp "${LOCAL_BAZELISK_FILE}" "bazelisk-linux-amd64"
+
+    elif wget -O "bazelisk-linux-amd64" --tries=1 "${BAZELISK_DOWNLOAD_URL}"; then
+        echo "Downloaded Bazelisk from ${BAZELISK_DOWNLOAD_URL}"
+
+    else
+        echo "Error: Could not download Bazelisk and local file not found"
+        exit 1
+    fi
+
+    # Move Bazelisk to the /usr/local/bin directory and make it executable
+    sudo mv "bazelisk-linux-amd64" /usr/local/bin/bazel
+    sudo chmod +x /usr/local/bin/bazel
+
+    echo "Bazelisk installation completed, version:"
+    echo "-----------------------------------------"
+    echo "$(bazel version)"
+    echo "-----------------------------------------"
+fi
+```
 
 
 # Bazel 优势
@@ -69,10 +113,21 @@ Bazel offers the following advantages:
 * **Bazel scales**. Bazel maintains agility(敏捷) while handling builds with `100k+` source files. It works with multiple repositories and user bases in the tens of thousands.
 * **Bazel is extensible**. Many languages are supported, and you can extend Bazel to support any other language or framework.
 
+----
+
+1. 多语言，可并行
+2. 保证构建结果准确性
+3. 支持多 CPU 架构
+4. C/S 架构，Memory / Local / Remote 三级缓存，构建速度快
+5. 全面接管编译目标间依赖关系，支持分布式远程构建
+6. 全面追踪构建详情
+
+
+
 一些测试结论：
 
-* `bazel`默认会限制并发度到其估计的机器性能上限，实际使用需要通过`--local_cpu_resources=9999999`等参数绕过这一限制
-* 已知（部分版本的）bazel 在并发度过高（如`-j320`）下，bazel 自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时 bazel 自身CPU（`400~500%`）、内存（几G）占用很高。
+* `bazel` 默认会限制并发度到其估计的机器性能上限，实际使用需要通过 `--local_cpu_resources=9999999` 等参数绕过这一限制
+* 已知（部分版本的）bazel 在并发度过高（如`-j320`）下，bazel 自身性能存在瓶颈。这具体表现为机器空闲但不会启动更多编译任务，同时 bazel 自身 CPU（`400~500%`）、内存（几G）占用很高。
 * 如果机器资源充足且对并发度有较高要求（几百并发），可以考虑使用其他构建系统构建。
 
 # Bazel 使用流程
@@ -104,8 +159,119 @@ When running a build or a test, Bazel does the following:
 
 Since all previous build work is cached, Bazel can identify and reuse cached artifacts and only rebuild or retest what’s changed. To further enforce correctness, you can set up Bazel to run builds and tests hermetically through sandboxing, minimizing skew and maximizing reproducibility.
 
+下面针对这三个过程进行详细解释。
 
-* [C/C++ Rules](https://docs.bazel.build/versions/master/be/c-cpp.html)
+> Loads
+
+Bazel 在这个阶段会加载 `WORKSPACE` 和 `BUILD`，同时会加载相关的 `.bzl` 文件。这些文件可以来自本地，也可以来自 git_repository 或者 github 上面的其他第三方包。加载完毕之后，如果有macro 的定义，会处理相关 macro，替换成真正的 rules。Bazel 加载所有需要的文件完毕之后，下次重新构建就可以复用这些文件，而无须重复加载。
+
+总结：在此阶段结束后，Bazel 已经形成了一个 target dependency 的体系，同时所有 target 所需要的文件都加载成功，target 分析成功，所有 macro 都展开成了 rules，并且都缓存到了内存中，下次重新运行规则，不需要重新加载文件、分析这些依赖关系。
+
+> Analyzes
+
+分析阶段主要为执行这些函数，生成一个静态有向图`Action Direct acyclic Graph`，这个图表示需要构建的目标、目标之间的关系，以及为了构建目标需要执行的动作。每一个函数都生成静态图中的一个结点，根据结点中定义的 label 和其他信息，构建结点之间的依赖关系。另外 Bazel 会缓存 Action Graph，对于没有变化的构建，会直接从缓存中读取，也就是增量构建。
+
+在这个过程中，主要是执行规则，生成 Action，并未真正开始执行任何读写 inputs ouputs 等操作。通过 bazel query --output graph，可以查看生成的 Action Graph 图形。
+
+总结：在此阶段结束后，所有需要用到的规则都会被执行一次，Bazel 已经形成了一个 action dependency 体系，存放在内存中。
+
+> Executes
+
+主要是根据 Analyzes 阶段生成的 Action Direct Acyclic Graph，结合它们的依赖关系进行调度执行。对于不依赖别人的对象可直接执行，而依赖其他 Action 的就等其他执行好了才可以继续。也就是在这个阶段才会开始真正 compile link 项目，输出各种文件，执行各种 IO 操作。
+
+总结：所有需要用到的 action 均执行完毕。
+
+# Bazel 语法
+
+```
+$bazel help target-syntax
+                                                           [bazel release 6.2.1]
+Target pattern syntax
+=====================
+
+The BUILD file label syntax is used to specify a single target. Target
+patterns generalize this syntax to sets of targets, and also support
+working-directory-relative forms, recursion, subtraction and filtering.
+Examples:
+
+Specifying a single target:
+
+  //foo/bar:wiz     The single target '//foo/bar:wiz'.
+  foo/bar/wiz       Equivalent to:
+                      '//foo/bar/wiz:wiz' if foo/bar/wiz is a package,
+                      '//foo/bar:wiz' if foo/bar is a package,
+                      '//foo:bar/wiz' otherwise.
+  //foo/bar         Equivalent to '//foo/bar:bar'.
+
+Specifying all rules in a package:
+
+  //foo/bar:all       Matches all rules in package 'foo/bar'.
+
+Specifying all rules recursively beneath a package:
+
+  //foo/...:all     Matches all rules in all packages beneath directory 'foo'.
+  //foo/...           (ditto)
+
+  By default, directory symlinks are followed when performing this recursive traversal, except
+  those that point to under the output base (for example, the convenience symlinks that are created
+  in the root directory of the workspace) But we understand that your workspace may intentionally
+  contain directories with weird symlink structures that you don't want consumed. As such, if a
+  directory has a file named
+  'DONT_FOLLOW_SYMLINKS_WHEN_TRAVERSING_THIS_DIRECTORY_VIA_A_RECURSIVE_TARGET_PATTERN'
+  then symlinks in that directory won't be followed when evaluating recursive
+  target patterns.
+
+Working-directory relative forms:  (assume cwd = 'workspace/foo')
+
+  Target patterns which do not begin with '//' are taken relative to
+  the working directory.  Patterns which begin with '//' are always
+  absolute.
+
+  ...:all           Equivalent to  '//foo/...:all'.
+  ...                 (ditto)
+
+  bar/...:all       Equivalent to  '//foo/bar/...:all'.
+  bar/...             (ditto)
+
+  bar:wiz           Equivalent to '//foo/bar:wiz'.
+  :foo              Equivalent to '//foo:foo'.
+
+  bar               Equivalent to '//foo/bar:bar'.
+  foo/bar           Equivalent to '//foo/foo/bar:bar'.
+
+  bar:all           Equivalent to '//foo/bar:all'.
+  :all              Equivalent to '//foo:all'.
+
+Summary of target wildcards:
+
+  :all,             Match all rules in the specified packages.
+  :*, :all-targets  Match all targets (rules and files) in the specified
+                      packages, including .par and _deploy.jar files.
+
+Subtractive patterns:
+
+  Target patterns may be preceded by '-', meaning they should be
+  subtracted from the set of targets accumulated by preceding
+  patterns. (Note that this means order matters.) For example:
+
+    % bazel build -- foo/... -foo/contrib/...
+
+  builds everything in 'foo', except 'contrib'.  In case a target not
+  under 'contrib' depends on something under 'contrib' though, in order to
+  build the former bazel has to build the latter too. As usual, the '--' is
+  required to prevent '-f' from being interpreted as an option.
+
+  When running the test command, test suite expansion is applied to each target
+  pattern in sequence as the set of targets is evaluated. This means that
+  individual tests from a test suite can be excluded by a later target pattern.
+  It also means that an exclusion target pattern which matches a test suite will
+  exclude all tests which that test suite references. (Targets that would be
+  matched by the list of target patterns without any test suite expansion are
+  also built unless --build_tests_only is set.)
+
+(Use 'help --long' for full details or --short to just enumerate options.)
+```
+
 
 
 # Action Graph (依赖图)
@@ -1385,6 +1551,15 @@ CURRENT_TIME 1687319715
 RANDOM_HASH df30a1c8-ecd4-47f9-a6b7-e0f8ba640cae
 ```
 
+
+refer:
+
+* https://github.com/envoyproxy/envoy/blob/release/v1.22/bazel/get_workspace_status
+* https://github.com/envoyproxy/envoy/blob/release/v1.22/source/common/version/generate_version_linkstamp.sh
+* https://github.com/envoyproxy/envoy/blob/release/v1.22/source/common/version/BUILD
+* https://bazel.build/docs/user-manual?hl=en#workspace-status
+
+
 ## Cleaning build outputs
 
 
@@ -1430,17 +1605,72 @@ The following resources will help you work with Bazel on C++ projects:
 
 ## [C/C++ rules](https://bazel.build/reference/be/c-cpp?hl=en)
 
-* [cc_binary](https://bazel.build/reference/be/c-cpp?hl=en#cc_binary)
-* [cc_import](https://bazel.build/reference/be/c-cpp?hl=en#cc_import)
-* [cc_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_library)
-* [cc_proto_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_proto_library)
-* [cc_shared_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_shared_library)
-* [fdo_prefetch_hints](https://bazel.build/reference/be/c-cpp?hl=en#fdo_prefetch_hints)
-* [fdo_profile](https://bazel.build/reference/be/c-cpp?hl=en#fdo_profile)
-* [propeller_optimize](https://bazel.build/reference/be/c-cpp?hl=en#propeller_optimize)
-* [cc_test](https://bazel.build/reference/be/c-cpp?hl=en#cc_test)
-* [cc_toolchain](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain)
-* [cc_toolchain_suite](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain_suite)
+### [cc_binary](https://bazel.build/reference/be/c-cpp?hl=en#cc_binary)
+
+```
+cc_binary(name, deps, srcs, data, additional_linker_inputs, args, compatible_with, copts, defines, deprecation, distribs, env, exec_compatible_with, exec_properties, features, includes, licenses, linkopts, linkshared, linkstatic, local_defines, malloc, nocopts, output_licenses, restricted_to, stamp, tags, target_compatible_with, testonly, toolchains, visibility, win_def_file)
+```
+
+### [cc_import](https://bazel.build/reference/be/c-cpp?hl=en#cc_import)
+
+```
+cc_import(name, deps, data, hdrs, alwayslink, compatible_with, deprecation, distribs, features, interface_library, licenses, restricted_to, shared_library, static_library, system_provided, tags, target_compatible_with, testonly, visibility)
+```
+
+### [cc_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_library)
+
+```
+cc_library(name, deps, srcs, data, hdrs, alwayslink, compatible_with, copts, defines, deprecation, distribs, exec_compatible_with, exec_properties, features, implementation_deps, include_prefix, includes, licenses, linkopts, linkstamp, linkstatic, local_defines, nocopts, restricted_to, strip_include_prefix, tags, target_compatible_with, testonly, textual_hdrs, toolchains, visibility, win_def_file)
+```
+
+### [cc_proto_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_proto_library)
+
+```
+cc_proto_library(name, deps, data, compatible_with, deprecation, distribs, exec_compatible_with, exec_properties, features, licenses, restricted_to, tags, target_compatible_with, testonly, visibility)
+```
+
+### [cc_shared_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_shared_library)
+
+```
+cc_shared_library(name, deps, additional_linker_inputs, dynamic_deps, exports_filter, shared_lib_name, tags, user_link_flags, win_def_file)
+```
+
+### [fdo_prefetch_hints](https://bazel.build/reference/be/c-cpp?hl=en#fdo_prefetch_hints)
+
+```
+fdo_prefetch_hints(name, compatible_with, deprecation, distribs, features, licenses, profile, restricted_to, tags, target_compatible_with, testonly, visibility)
+```
+
+### [fdo_profile](https://bazel.build/reference/be/c-cpp?hl=en#fdo_profile)
+
+```
+fdo_profile(name, absolute_path_profile, compatible_with, deprecation, distribs, features, licenses, profile, proto_profile, restricted_to, tags, target_compatible_with, testonly, visibility)
+```
+
+### [propeller_optimize](https://bazel.build/reference/be/c-cpp?hl=en#propeller_optimize)
+
+```
+propeller_optimize(name, compatible_with, deprecation, distribs, features, ld_profile, licenses, restricted_to, tags, target_compatible_with, testonly, visibility)
+```
+
+### [cc_test](https://bazel.build/reference/be/c-cpp?hl=en#cc_test)
+
+```
+cc_test(name, deps, srcs, data, additional_linker_inputs, args, compatible_with, copts, defines, deprecation, distribs, env, env_inherit, exec_compatible_with, exec_properties, features, flaky, includes, licenses, linkopts, linkstatic, local, local_defines, malloc, nocopts, restricted_to, shard_count, size, stamp, tags, target_compatible_with, testonly, timeout, toolchains, visibility, win_def_file)
+```
+
+### [cc_toolchain](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain)
+
+```
+cc_toolchain(name, all_files, ar_files, as_files, compatible_with, compiler, compiler_files, compiler_files_without_includes, coverage_files, cpu, deprecation, distribs, dwp_files, dynamic_runtime_lib, exec_transition_for_inputs, features, libc_top, licenses, linker_files, module_map, objcopy_files, restricted_to, static_runtime_lib, strip_files, supports_header_parsing, supports_param_files, tags, target_compatible_with, testonly, toolchain_config, toolchain_identifier, visibility)
+```
+
+### [cc_toolchain_suite](https://bazel.build/reference/be/c-cpp?hl=en#cc_toolchain_suite)
+
+```
+cc_toolchain_suite(name, compatible_with, deprecation, distribs, features, licenses, restricted_to, tags, target_compatible_with, testonly, toolchains, visibility)
+```
+
 
 
 # [Best Practices (C++)](https://bazel.build/configure/best-practices?hl=en)
@@ -1712,6 +1942,10 @@ Critical path (13.428 s):
 
 # Tips
 
+## .bazelignore 忽略配置
+
+在 WORKSPACE 目录下通过 `.bazelignore` 配置指定忽略的 BUILD。
+
 
 ## [Sharing Variables](https://bazel.build/build/share-variables?hl=en)
 
@@ -1951,6 +2185,32 @@ bazel print_action //src/unittestsvr:unittestsvr
 
 `Bazelisk` is **a wrapper for Bazel** written in `Go`. It automatically picks a good version of Bazel given your current working directory, downloads it from the official server (if required) and then transparently passes through all command-line arguments to the real Bazel binary. You can call it just like you would call `Bazel`.
 
+> Bazelisk 原理
+
+Bazel 版本更新的非常快，从 1.x 到 4.x 只用了 1 年多的时间。如果按照传统的安装方法，安装特定版本的话，将会面临如下的两个问题：
+
+1. 如何快速升级 Bazel，跟上 Bazel 新版本的功能将是一个比较挑战的问题。
+2. 不同仓库可能需要不同的 Bazel 版本，比如版本库 A 使用了 Bazel1.x，而版本库 B 使用了 Bazel4.x。那么这样会导致在同一台机难易同时支持构建这两个版本库。
+
+非常幸运的是，Bazel 官方提供的 `Bazelisk` 模块，能够解决我们这个问题。Bazelisk 是基于 GO 语言写的，能自动管理 Bazel 版本。其原理如下：
+
+通过安装 Bazelisk 模块，将 bazel 命令指向 bazelisk 指令集。这样，当用户在任何地方运行 Bazel 的时候，bazelisk 会检查用户指定的 Bazel 版本号。
+
+1. 如果用户有指定版本号，则 bazelisk 会判断当前机器是否已经安装了该 Bazel 版本。如果有的话，则直接启动该版本；如果不存在，则 bazelisk 会像 bazel 官方 github 网站自动下载该版本的 bazel，然后启动。
+2. 如果用户没有指定版本号，则使用当前官方最新的版本。相当于 `lastest`。
+
+bazelisk 通过以下的方式查找指定的 Bazel 版本号。
+
+1. 查找环境变量 `USE_BAZEL_VERSION`。如果该环境变量有指定版本号，则使用之
+2. 查找当前 `WORKSPACE` 是否包含 `.bazeliskrc` 文件，如果有的话取里面定义的 `USE_BAZEL_VERSION` 变量所指向的版本号
+3. 从当前目录查找 `.bazelversion` 文件，如果当前目录没有，则一级一级往其父目录查找 `.bazelversion`，直到 `WORKSPACE` 的根目录。如果存在 `.bazelversion` 文件，则直接取该文件里面指定的版本号
+4. 以上都没有的话，默认为 `lastest`，相当于官方最新的版本。
+
+> `bazelisk` 下载每个版本之后，统一存放在本地的一个目录中，根据操作系统不同，其默认的下载位置不同。其中，Unix/Linux 上的位置是 `~/.cache/bazelisk/downloads/bazelbuild`
+
+
+
+
 
 
 ## [bazel-gazelle](https://github.com/bazelbuild/bazel-gazelle)
@@ -1974,6 +2234,15 @@ Each of the `.bzl` files in the `lib` directory defines a "module"—a `struct` 
 Skylib also provides build rules under the `rules` directory.
 
 
+
+## [Aspect's Bazel helpers library](https://github.com/aspect-build/bazel-lib/tree/main)
+
+Common useful functions for writing BUILD files and Starlark macros/rules.
+
+
+
+
+
 # 最佳实践
 
 ## 增加 bazel 并发度，提升构建效率 (--jobs)
@@ -1987,11 +2256,31 @@ Skylib also provides build rules under the `rules` directory.
 注意：并发度并不是越高越好，要基于服务器配置和项目实际情况进行调整，确定最佳值。
 
 
+
+## [How do I install a project built with bazel?](https://stackoverflow.com/questions/43549923/how-do-i-install-a-project-built-with-bazel)
+
+* https://github.com/bazelbuild/bazel-skylib (可用)
+* https://github.com/google/bazel_rules_install
+* https://github.com/aspect-build/bazel-lib/blob/main/docs/copy_directory.md
+
+
+
+
+
+
 # Bazel 源码
 
 https://cs.opensource.google/bazel/bazel;l=1336;drc=b56a2aa709dcb681cfc3faa148a702015ec631d5
 
+# [Bazel Release Model](https://bazel.build/release?hl=en) (版本发布说明)
 
+As announced in [the original blog post](https://blog.bazel.build/2020/11/10/long-term-support-release.html), Bazel 4.0 and higher versions provides support for two release tracks: **rolling releases** and **long term support (LTS) releases**.
+
+Bazel uses a `major.minor.patch` Semantic Versioning scheme.
+
+* A `major` release contains features that are not backward compatible with the previous release. Each major Bazel version is an LTS release.
+* A `minor` release contains backward-compatible bug fixes and features back-ported from the main branch.
+* A `patch` release contains critical bug fixes.
 
 
 
@@ -2021,7 +2310,8 @@ https://cs.opensource.google/bazel/bazel;l=1336;drc=b56a2aa709dcb681cfc3faa148a7
 
 
 * Remote Cache
-  * [Using Remote Cache Service for Bazel](https://dl.acm.org/doi/pdf/10.1145/3267120)
+  * [Using Remote Cache Service for Bazel - pdf](https://dl.acm.org/doi/pdf/10.1145/3267120)
+  * [Using Remote Cache Service for Bazel](https://cacm.acm.org/magazines/2019/1/233524-using-remote-cache-service-for-bazel/fulltext)
 
 
 
