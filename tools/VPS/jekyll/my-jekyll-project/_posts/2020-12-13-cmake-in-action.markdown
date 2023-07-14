@@ -31,6 +31,66 @@ rm cmake-linux.sh
 $CMAKE_INSTALL_DIR/bin/cmake --version
 ```
 
+完整的安装脚本：先使用本地的，如果没有则下载。
+
+``` bash
+#!/bin/bash
+
+CUR_DIR=$(dirname $(readlink -f $0))
+source $CUR_DIR/../../scripts/helper.sh
+
+CMAKE_DATA_DIR=cmake-3.17.0-Linux-x86_64
+CMAKE_INSTALL_DIR_PREFIX=/usr/local/bin
+export CMAKE_INSTALL_DIR="$CMAKE_INSTALL_DIR_PREFIX/$CMAKE_DATA_DIR"
+export PATH="$CMAKE_INSTALL_DIR/bin":$PATH
+
+# Specify the cmake version to install
+CMAKE_VERSION="3.17.0"
+CMAKE_DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-3.17.0-Linux-x86_64.sh"
+LOCAL_CMAKE_DIR="$CUR_DIR/$CMAKE_DATA_DIR"
+
+function InstallCMake317()
+{
+    echo "Installing cmake version $CMAKE_VERSION..."
+
+    if [[ -d $LOCAL_CMAKE_DIR ]]; then
+        echo "Using local cmake dir: $LOCAL_CMAKE_DIR"
+        cp -r $LOCAL_CMAKE_DIR "$CMAKE_INSTALL_DIR_PREFIX/$CMAKE_DATA_DIR"
+
+    elif wget -q -O "cmake-linux.sh" --tries=1 "$CMAKE_DOWNLOAD_URL"; then
+        echo "Downloaded cmake from $CMAKE_DOWNLOAD_URL"
+
+        sh cmake-linux.sh -- --skip-license --prefix=$CMAKE_INSTALL_DIR_PREFIX
+        #rm cmake-linux.sh
+
+    else
+        echo "Error: Could not download cmake"
+        JobFail "$0"
+    fi
+
+    echo "cmake installation completed, version:"
+    echo "-----------------------------------------"
+    echo "$(cmake --version)"
+    echo "-----------------------------------------"
+}
+
+# Check if cmake is already installed
+if command -v bazel &> /dev/null; then
+    echo "cmake is already installed, $(cmake --version | head -n1)"
+
+    CUR_CMAKE_VERSION=`cmake --version | head -n1 | awk '{print $3}' | awk -F'.' '{printf $1$2}'`
+    if [[ "$CUR_CMAKE_VERSION" -lt 314 ]]; then
+        echo "cmake3.14 is required, please use $CUR_DIR/tools/cmake-build/cmake-install/install_cmake.sh to upgrade cmake firstly"
+
+        InstallCMake317
+    fi
+else
+    InstallCMake317
+
+    JobSuccess "$0"
+fi
+```
+
 ## 源码编译
 
 ```

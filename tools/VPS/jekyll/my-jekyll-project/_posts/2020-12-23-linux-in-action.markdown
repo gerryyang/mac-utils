@@ -2347,7 +2347,20 @@ $ echo $?
 0
 ```
 
+## command -v
 
+在Linux下，`command -v`命令用于查找并显示给定命令的路径。它可以帮助你确定一个命令是否存在于系统中，以及该命令的可执行文件的位置。`command -v`命令与`which`命令类似，但`command -v`是POSIX标准的一部分，因此在不同的Unix-like系统（如Linux、macOS、BSD等）上可用性更高。
+
+当使用`command -v`查询一个命令时，如果该命令存在于系统中，它会输出该命令的路径；如果命令不存在，它不会输出任何内容。
+
+``` bash
+# Check if Bazelisk is already installed
+if command -v bazel &> /dev/null; then
+    echo "Bazelisk is already installed, version: $(bazel --version)"
+else
+    echo "Installing Bazelisk version ${BAZELISK_VERSION}..."
+fi
+```
 
 # 第三方工具
 

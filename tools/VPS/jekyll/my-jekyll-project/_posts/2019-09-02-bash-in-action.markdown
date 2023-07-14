@@ -2364,6 +2364,118 @@ $pgrep -a unittestsvr
 4110948 /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.2 --bus-key=3233 --svr-id-mask=7.8.8.9
 ```
 
+# [Bash Builtin Commands](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#index-mapfile)
+
+## [mapfile](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#index-mapfile)
+
+通过 malloc_info 统计调用 malloc_trim 前后内存变化
+
+调用 malloc_trim 前 malloc_info 的信息如下：
+
+egrep "fast|rest" info1.txt
+
+```
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="122591" size="1770769518"/>
+<total type="fast" count="7" size="384"/>
+<total type="rest" count="4" size="130851"/>
+<total type="fast" count="24" size="1152"/>
+<total type="rest" count="59" size="361322"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3776"/>
+<total type="fast" count="8" size="512"/>
+<total type="rest" count="19" size="1007026"/>
+<total type="fast" count="20" size="1072"/>
+<total type="rest" count="5" size="916"/>
+<total type="fast" count="624" size="35072"/>
+<total type="rest" count="14409" size="146221496"/>
+<total type="fast" count="18" size="928"/>
+<total type="rest" count="10" size="841"/>
+<total type="fast" count="15" size="720"/>
+<total type="rest" count="9" size="456"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="2" size="127297"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3184"/>
+<total type="fast" count="11" size="656"/>
+<total type="rest" count="25" size="4725320"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="18" size="307265"/>
+<total type="fast" count="1726" size="55648"/>
+<total type="rest" count="1540" size="2181699"/>
+<total type="fast" count="14" size="1296"/>
+<total type="rest" count="78" size="16150669"/>
+<total type="fast" count="2467" size="97440"/>
+<total type="rest" count="138771" size="1941991636"/>
+```
+
+调用 malloc_trim 后 malloc_info 的信息如下：
+
+egrep "fast|rest" info2.txt
+
+```
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="122591" size="1770769518"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="4" size="131235"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="49" size="362464"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3776"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="24" size="1007543"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="25" size="2008"/>
+<total type="fast" count="28" size="1216"/>
+<total type="rest" count="14045" size="146172332"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="28" size="1787"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="24" size="1191"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="2" size="127297"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3184"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="32" size="4725983"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="19" size="307266"/>
+<total type="fast" count="1" size="32"/>
+<total type="rest" count="6" size="2240901"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="75" size="16151962"/>
+<total type="fast" count="29" size="1248"/>
+<total type="rest" count="136926" size="1942008447"/>
+```
+
+通过如下脚本计算前后两个 size 之合的变化：
+
+``` bash
+#!/bin/bash
+
+# 检查是否提供了文件名参数
+if [ -z "$1" ]; then
+    echo "Usage: $0 input_file"
+    exit 1
+fi
+
+input_file="$1"
+
+# 从input_file中提取size属性的值，并将它们保存到sizes数组中
+mapfile -t sizes < <(grep -oP 'size="\K\d+' "$input_file")
+
+# 计算size之和
+total_size=0
+for size in "${sizes[@]}"; do
+    total_size=$((total_size + size))
+done
+
+# 输出结果
+echo "Total size: $total_size"
+```
+
+
+
 
 
 

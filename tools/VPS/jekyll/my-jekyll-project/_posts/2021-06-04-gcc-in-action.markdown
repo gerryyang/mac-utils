@@ -965,6 +965,17 @@ all that said, using an old version of glibc is a terrible idea. it will be full
 
 ## 升级 GLIBC
 
+查看 GLIBC 版本：
+
+``` bash
+getconf GNU_LIBC_VERSION
+```
+
+``` bash
+getconf -a | grep GNU_LIBC
+GNU_LIBC_VERSION                   glibc 2.18
+```
+
 参考 [glibc升级到2.29](https://www.jianshu.com/p/f4d603967e1d) 升级 glibc 可行。
 
 例如，升级 glibc 2.18

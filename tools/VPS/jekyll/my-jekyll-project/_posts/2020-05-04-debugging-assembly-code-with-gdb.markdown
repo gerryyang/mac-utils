@@ -622,6 +622,38 @@ shell$ exit
 gdb$ you_have_returned_back_to_gdb_prompt
 ```
 
+## 调用函数 (call)
+
+在 GDB 中执行 `call (void)malloc_trim(0)` 的作用是在调试过程中手动触发内存回收。`malloc_trim` 是一个 C 库函数，它用于释放 `malloc` 分配的内存空间中未使用的内存，将其归还给操作系统。这个函数通常在程序运行过程中自动调用，但在某些情况下，可能希望手动触发内存回收以释放未使用的内存。
+
+`call (void)malloc_trim(0)` 命令在 GDB 中的含义如下：
+
+* `call`：告诉 GDB 调用一个函数。
+* `(void)`：将函数的返回值类型转换为 void，表示我们不关心函数的返回值。
+* `malloc_trim(0)`：调用 malloc_trim 函数并传递参数 0。参数 0 表示尝试释放所有未使用的内存。
+
+通过执行这个命令，可以在调试过程中手动触发内存回收，以便观察程序在回收内存后的行为。这对于分析内存泄漏或内存使用情况等问题可能很有帮助。
+
+
+## 将 GDB 的输出信息重定向到文件
+
+在 GDB 中，启用日志记录并将输出重定向到一个文件，例如 gdb_output.txt：
+
+```
+set logging file gdb_output.txt
+set logging on
+```
+
+如果想停止将 GDB 输出重定向到文件，可以使用以下命令：
+
+```
+set logging off
+```
+
+
+
+
+
 # Refer
 
 
