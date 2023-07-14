@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "C++ Memory Leak"
+title:  "CPP Memory Leak"
 date:   2023-07-13 12:30:00 +0800
 categories: [C/C++]
 ---
