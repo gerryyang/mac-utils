@@ -1625,6 +1625,8 @@ cc_library(name, deps, srcs, data, hdrs, alwayslink, compatible_with, copts, def
 
 ### [cc_proto_library](https://bazel.build/reference/be/c-cpp?hl=en#cc_proto_library)
 
+cc_proto_library 从 `.proto` 文件生成 C++ 代码。
+
 ```
 cc_proto_library(name, deps, data, compatible_with, deprecation, distribs, exec_compatible_with, exec_properties, features, licenses, restricted_to, tags, target_compatible_with, testonly, visibility)
 ```
@@ -1940,7 +1942,27 @@ Critical path (13.428 s):
 通过分析上述 profiling 结果数据，可以看到 bazel 各阶段的耗时，以及 action 具体的编译耗时，根据这些信息可以大致了解构建耗时情况。
 
 
-# Tips
+# 最佳实践
+
+## 增加 bazel 并发度，提升构建效率 (--jobs)
+
+在执行 bazel 命令时设置 `--jobs` 参数，不设置时 bazel 默认为当前服务器的 CPU 核数，即 `HOST_CPUS`。
+
+下图为某测试项目在不同并发度 `HOST_CPUS * {1, 2, 3, 4}` 下的构建耗时情况：
+
+![bazel_build7](/assets/images/202306/bazel_build7.png)
+
+注意：并发度并不是越高越好，要基于服务器配置和项目实际情况进行调整，确定最佳值。
+
+
+
+## [How do I install a project built with bazel?](https://stackoverflow.com/questions/43549923/how-do-i-install-a-project-built-with-bazel)
+
+* https://github.com/bazelbuild/bazel-skylib (可用)
+* https://github.com/google/bazel_rules_install
+* https://github.com/aspect-build/bazel-lib/blob/main/docs/copy_directory.md
+
+
 
 ## .bazelignore 忽略配置
 
@@ -2240,29 +2262,28 @@ Skylib also provides build rules under the `rules` directory.
 Common useful functions for writing BUILD files and Starlark macros/rules.
 
 
+# [Protocol Buffers in Bazel](https://blog.bazel.build/2017/02/27/protocol-buffers.html)
+
+## TL;DR - Usage example
+
+* https://github.com/cgrushko/proto_library contains a buildable example.
+* https://github.com/cgrushko/proto_library/blob/master/src/BUILD
 
 
+## Benefits
 
-# 最佳实践
+In comparison with a macro that's responsible for compiling all `.proto` files in a project.
 
-## 增加 bazel 并发度，提升构建效率 (--jobs)
+1. Caching + incrementality: changing a single `.proto` only causes the rebuilding of dependant `.proto` files. This includes not only regenerating code, but also recompiling it. For large proto graphs this could be significant.
 
-在执行 bazel 命令时设置 `--jobs` 参数，不设置时 bazel 默认为当前服务器的 CPU 核数，即 `HOST_CPUS`。
-
-下图为某测试项目在不同并发度 `HOST_CPUS * {1, 2, 3, 4}` 下的构建耗时情况：
-
-![bazel_build7](/assets/images/202306/bazel_build7.png)
-
-注意：并发度并不是越高越好，要基于服务器配置和项目实际情况进行调整，确定最佳值。
+2. Depend on pieces of a proto graph from multiple places: in the example above, one can add a `cc_proto_library` that deps on `zip_code_proto`, and including it together with `//src:person_cc_proto` in the same project. Though they both transitively depend on `zip_code_proto`, there won't be a linking error.
 
 
+## Recommended Code Organization
 
-## [How do I install a project built with bazel?](https://stackoverflow.com/questions/43549923/how-do-i-install-a-project-built-with-bazel)
-
-* https://github.com/bazelbuild/bazel-skylib (可用)
-* https://github.com/google/bazel_rules_install
-* https://github.com/aspect-build/bazel-lib/blob/main/docs/copy_directory.md
-
+1. One `proto_library` rule per `.proto` file.
+2. A file named `foo.proto` will be in a rule named `foo_proto`, which is located in the same package.
+3. A `<lang>_proto_library` that wraps a `proto_library` named `foo_proto` should be called `foo_<lang>_proto`, and be located in the same package.
 
 
 
@@ -2270,7 +2291,8 @@ Common useful functions for writing BUILD files and Starlark macros/rules.
 
 # Bazel 源码
 
-https://cs.opensource.google/bazel/bazel;l=1336;drc=b56a2aa709dcb681cfc3faa148a702015ec631d5
+源码搜索：https://cs.opensource.google/bazel
+
 
 # [Bazel Release Model](https://bazel.build/release?hl=en) (版本发布说明)
 

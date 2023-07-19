@@ -37,7 +37,6 @@ $CMAKE_INSTALL_DIR/bin/cmake --version
 #!/bin/bash
 
 CUR_DIR=$(dirname $(readlink -f $0))
-source $CUR_DIR/../../scripts/helper.sh
 
 CMAKE_DATA_DIR=cmake-3.17.0-Linux-x86_64
 CMAKE_INSTALL_DIR_PREFIX=/usr/local/bin
@@ -49,7 +48,7 @@ CMAKE_VERSION="3.17.0"
 CMAKE_DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-3.17.0-Linux-x86_64.sh"
 LOCAL_CMAKE_DIR="$CUR_DIR/$CMAKE_DATA_DIR"
 
-function InstallCMake317()
+function InstallCMake()
 {
     echo "Installing cmake version $CMAKE_VERSION..."
 
@@ -65,7 +64,7 @@ function InstallCMake317()
 
     else
         echo "Error: Could not download cmake"
-        JobFail "$0"
+        exit 1
     fi
 
     echo "cmake installation completed, version:"
@@ -82,12 +81,10 @@ if command -v bazel &> /dev/null; then
     if [[ "$CUR_CMAKE_VERSION" -lt 314 ]]; then
         echo "cmake3.14 is required, please use $CUR_DIR/tools/cmake-build/cmake-install/install_cmake.sh to upgrade cmake firstly"
 
-        InstallCMake317
+        InstallCMake
     fi
 else
-    InstallCMake317
-
-    JobSuccess "$0"
+    InstallCMake
 fi
 ```
 

@@ -9,6 +9,16 @@ categories: [GDB,]
 {:toc}
 
 
+# [GNU Debugger](https://en.wikipedia.org/wiki/GNU_Debugger) - GDB
+
+The GNU Debugger (GDB) is a portable debugger that runs on many Unix-like systems and works for many programming languages, including Ada, Assembly, C, C++, D, Fortran, Go, Objective-C, OpenCL C, Modula-2, Pascal, Rust, and partially others.
+
+GDB was first written by [Richard Stallman](https://en.wikipedia.org/wiki/Richard_Stallman) in 1986 as part of his GNU system, after his GNU Emacs was "reasonably stable". GDB is free software released under the [GNU General Public License](https://en.wikipedia.org/wiki/GNU_General_Public_License) (GPL). It was modeled after the DBX debugger, which came with Berkeley Unix distributions.
+
+From 1990 to 1993 it was maintained by [John Gilmore](https://en.wikipedia.org/wiki/John_Gilmore_(activist)). Now it is maintained by the GDB Steering Committee which is appointed by the [Free Software Foundation](https://en.wikipedia.org/wiki/Free_Software_Foundation).
+
+
+
 # What is GDB
 
 The purpose of a debugger such as GDB is to allow you to see what is going on “inside” another program while it executes—or what another program was doing at the moment it crashed. GDB can **do four main kinds of things** (plus other things in support of these) to help you catch bugs in the act:

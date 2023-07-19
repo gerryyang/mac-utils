@@ -8,33 +8,333 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# [LLVM](https://github.com/llvm/llvm-project)
+# LLVM
 
-https://llvm.org/docs/GettingStarted.html
+The LLVM Project is a collection of modular and reusable compiler and toolchain technologies. Despite its name, LLVM has little to do with traditional virtual machines. The name "LLVM" itself is not an acronym; it is the full name of the project.
 
-## Overview
+The primary sub-projects of LLVM are:
 
-The LLVM project has multiple components. The core of the project is itself called "LLVM". This contains all of the tools, libraries, and header files needed to process intermediate representations and convert them into object files. Tools include an assembler, disassembler, bitcode analyzer, and bitcode optimizer. It also contains basic regression tests.
+1. The **LLVM Core** libraries provide a modern source- and target-independent [optimizer](https://llvm.org/docs/Passes.html), along with [code generation support](https://llvm.org/docs/CodeGenerator.html) for many popular CPUs (as well as some less common ones!) These libraries are built around a [well specified](https://llvm.org/docs/LangRef.html) code representation known as the LLVM intermediate representation ("LLVM IR"). The LLVM Core libraries are [well documented](https://llvm.org/docs/), and it is particularly easy to invent your own language (or port an existing compiler) to use [LLVM as an optimizer and code generator](https://llvm.org/docs/tutorial/).
 
-C-like languages use the [Clang](http://clang.llvm.org/) frontend. This component compiles C, C++, Objective-C, and Objective-C++ code into LLVM bitcode -- and from there into object files, using LLVM.
+2. [Clang](https://clang.llvm.org/) is an "LLVM native" C/C++/Objective-C compiler, which aims to deliver amazingly fast compiles, extremely useful [error and warning messages](https://clang.llvm.org/diagnostics.html) and to provide a platform for building great source level tools. The [Clang Static Analyzer](https://clang-analyzer.llvm.org/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) are tools that automatically find bugs in your code, and are great examples of the sort of tools that can be built using the Clang frontend as a library to parse C/C++ code.
 
-Other components include: the [libc++ C++ standard library](https://libcxx.llvm.org/), the [LLD linker](https://lld.llvm.org/), and more.
+3. The [LLDB](https://lldb.llvm.org/) project builds on libraries provided by LLVM and Clang to provide a great native debugger. It uses the Clang ASTs and expression parser, LLVM JIT, LLVM disassembler, etc so that it provides an experience that "just works". It is also blazing fast and much more memory efficient than GDB at loading symbols.
 
-## Getting the Source Code and Building LLVM
+4. The [libc++](https://libcxx.llvm.org/) and [libc++ ABI](https://libcxxabi.llvm.org/) projects provide a standard conformant and high-performance implementation of the C++ Standard Library, including full support for `C++11` and `C++14`.
 
-This is an example work-flow and configuration to get and build the LLVM source:
+5. The [compiler-rt](https://compiler-rt.llvm.org/) project provides highly tuned implementations of the low-level code generator support routines like "__fixunsdfdi" and other calls generated when a target doesn't have a short sequence of native instructions to implement a core IR operation. It also provides implementations of run-time libraries for dynamic testing tools such as [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html), [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html), [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html), and [DataFlowSanitizer](https://clang.llvm.org/docs/DataFlowSanitizer.html).
 
-* Checkout LLVM (including related sub-projects like Clang): `git clone https://github.com/llvm/llvm-project.git`
-* Configure and build LLVM and Clang
+6. The [LLD](https://lld.llvm.org/) project is a new linker. That is a drop-in replacement for system linkers and runs much faster.
+
+More: https://llvm.org/
+
+
+## [Building LLVM with CMake](http://llvm.org/docs/CMake.html#building-llvm-with-cmake)
+
+[CMake](http://www.cmake.org/) is a cross-platform build-generator tool. CMake does not build the project, it generates the files needed by your build tool (GNU make, Visual Studio, Xcode, etc.) for building LLVM.
+
+编译时问题：
+
+* Host GCC version must be at least 5.1 (使用 `scl enable devtoolset-7 bash` 切换高版本的gcc)
+* `-DLLVM_ENABLE_PROJECTS`已经废弃，改为`-DLLVM_ENABLE_RUNTIMES`
+* `Could NOT find Python3`，需要安装`Python3`
+* 执行 `sudo yum groupinstall 'Development Tools'` 安装需要的依赖  refer: [Can't Install build-essential on CentOS](https://unix.stackexchange.com/questions/16422/cant-install-build-essential-on-centos)
+* 编译错误可以查看日志：`build/CMakeFiles/CMakeError.log`
+
+make.sh
+
+
+```
+#!/bin/bash
+
+export LLVM_DIR=$HOME/llvm
+export LLVM_INSTALL_DIR=$HOME/llvm/install
+
+mkdir -p $LLVM_INSTALL_DIR
+cd $LLVM_DIR
+
+git clone https://github.com/llvm/llvm-project llvm-project
+mkdir build
+cd build
+
+## -DCMAKE_BUILD_TYPE=type — Valid options for type are Debug, Release, RelWithDebInfo, and MinSizeRel. Default is Debug
+## -DCMAKE_INSTALL_PREFIX=directory — Specify for directory the full pathname of where you want the LLVM tools and libraries to be installed (default /usr/local)
+
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=On -DLLVM_TARGETS_TO_BUILD='X86' -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld" -DCMAKE_INSTALL_PREFIX=$LLVM_INSTALL_DIR ../llvm-project/llvm
+
+## The --build option tells cmake to invoke the underlying build tool (make, ninja, xcodebuild, msbuild, etc.)
+cmake --build .
+
+## After LLVM has finished building, install it from the build directory
+cmake --build . --target install
+```
+
+CMakeLists.txt
+
+```
+cmake_minimum_required(VERSION 3.13.4)
+project(SimpleProject)
+
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+# Set your project compile flags.
+# E.g. if using the C++ header files
+# you will need to enable C++11 support
+# for your compiler.
+
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+# Now build our tools
+add_executable(simple-tool tool.cpp)
+
+# Find the libraries that correspond to the LLVM components
+# that we wish to use
+llvm_map_components_to_libnames(llvm_libs support core irreader)
+
+# Link against LLVM libraries
+target_link_libraries(simple-tool ${llvm_libs})
+
+```
+
+
+refer:
+
+* [Embedding LLVM in your project](http://llvm.org/docs/CMake.html#embedding-llvm-in-your-project)
+* [LLVM Pass入门导引](https://zhuanlan.zhihu.com/p/122522485)
+
+
+## Clang (C Language Family Front-end)
+
+> LLVM is very demanding(严格的) of the host C++ compiler, and as such tends to expose bugs in the compiler. We also attempt to follow improvements and developments in the C++ language and library reasonably closely. As such, we require a modern host C++ toolchain, both compiler and standard library, in order to build LLVM. LLVM is written using the subset of C++ documented in [coding standards](https://llvm.org/docs/CodingStandards.html).
+
+`Clang` is a compiler front-end for the C family of languages(C, C++, Objective-C, and Objective-C++) which is built as part of the `LLVM` compiler infrastructure project.
+
+Unlike many other compiler frontends, `Clang` is useful for a number of things beyond just compiling code: we intend for Clang to be host to a number of different source-level tools. One example of this is the Clang Static Analyzer.
+
+If you're interested in more (including how to build Clang) it is best to read the relevant web sites. Here are some pointers:
+
+Information on Clang:             http://clang.llvm.org/
+Building and using Clang:         http://clang.llvm.org/get_started.html
+Clang Static Analyzer:            http://clang-analyzer.llvm.org/
+Information on the LLVM project:  http://llvm.org/
+
+`Clang` is released as part of regular LLVM releases. You can download the release versions from https://llvm.org/releases/. `Clang` is also provided in all major BSD or GNU/Linux distributions as part of their respective packaging systems. From Xcode 4.2, Clang is the default compiler for Mac OS X.
+
+## Install
+
+[Ubuntu安装Clang版本和切换](https://blog.csdn.net/DumpDoctorWang/article/details/84567757)
+
+```
+apt-get install clang
+apt-get install clang-3.9
+```
+
+### Building Clang and Working with the Code
+
+On Unix-like Systems
+
+If you would like to check out and build `Clang`, the current procedure is as follows:
+
+#### Get the required tools
+
+* See [Getting Started with the LLVM System - Requirements](https://llvm.org/docs/GettingStarted.html#requirements).
+* Note also that Python is needed for running the test suite. Get it at: https://www.python.org/downloads/
+* Standard build process uses `CMake`. Get it at: https://cmake.org/download/
+
+> Hardware
+
+**Note that Debug builds require a lot of time and disk space**. An LLVM-only build will need about `1-3 GB` of space. A full build of LLVM and Clang will need around `15-20 GB` of disk space. The exact space requirements will vary by system. (It is so large because of all the debugging information and the fact that the libraries are statically linked into multiple tools).
+
+If you are space-constrained, you can build only selected tools or only selected targets. The Release build requires considerably less space.
+
+The LLVM suite may compile on other platforms, but it is not guaranteed to do so. If compilation is successful, the LLVM utilities should be able to assemble, disassemble, analyze, and optimize LLVM bitcode. Code generation should work as well, although the generated native code may not work on your platform.
+
+> Software
+
+Compiling LLVM requires that you have several software packages installed. The table below lists those required packages. The Package column is the usual name for the software package that LLVM depends on. The Version column provides “known to work” versions of the package. The Notes column describes how LLVM uses the package and provides other details.
+
+
+| Package | Version | Notes
+| -- | -- | --
+| CMake | >=3.13.4 | Makefile/workspace generator
+| GCC | >=5.1.0 |	C/C++ compiler (1)
+| python | >=3.6 | Automated test suite (2)
+| zlib | >=1.2.3.4 | Compression library (3)
+| GNU Make |	3.79, 3.79.1	| Makefile/build processor (4)
+
+Note:
+
+* (1) Only the C and C++ languages are needed so there’s no need to build the other languages for LLVM’s purposes. See below for specific version info.
+* (2) Only needed if you want to run the automated test suite in the llvm/test directory.
+* (3) Optional, adds compression / uncompression capabilities to selected LLVM tools.
+* (4) Optional, you can use any other build tool supported by CMake.
+
+
+#### Check out the LLVM project
+
+* Change directory to where you want the llvm directory placed.
+* `git clone https://github.com/llvm/llvm-project.git`
+* The above command is very slow. It can be made faster by creating a shallow clone. Shallow clone saves storage and speeds up the checkout time. This is done by using the command:
+  + `git clone --depth=1 https://github.com/llvm/llvm-project.git` (using this only the latest version of llvm can be built)
+  + For normal users looking to just compile, this command works fine. But if someone later becomes a contributor, since they can't push code from a shallow clone, it needs to be converted into a full clone:
+    - `cd llvm-project`
+    - `git fetch --unshallow`
+
+#### Build LLVM and Clang
+
+* This builds both LLVM and Clang for debug mode.
+* Note: For subsequent Clang development, you can just run make clang.
+* CMake allows you to generate project files for several IDEs: Xcode, Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3. For more details see [Building LLVM with CMake](https://llvm.org/docs/CMake.html) page.
 
 ```
 cd llvm-project
-
-cmake -S llvm -B build -G <generator> [options]
-
-cmake --build build [-- [options] <target>]
+mkdir build (in-tree build is not supported)
+cd build
+cmake -DLLVM_ENABLE_PROJECTS=clang -G "Unix Makefiles" ../llvm
+make
 ```
 
+#### Others
+
+If you intend to use Clang's C++ support, you may need to tell it how to find your C++ standard library headers. In general, Clang will detect the best version of `libstdc++` headers available and use them - it will look both for system installations of libstdc++ as well as installations adjacent to Clang itself. If your configuration fits neither of these scenarios, you can use the `-DGCC_INSTALL_PREFIX` cmake option to tell Clang where the gcc containing the desired `l`ibstdc++` is installed.
+
+Try it out (assuming you add llvm/build/bin to your path):
+
+```
+clang --help
+clang file.c -fsyntax-only (check for correctness)
+clang file.c -S -emit-llvm -o - (print out unoptimized llvm code)
+clang file.c -S -emit-llvm -o - -O3
+clang file.c -S -O3 -o - (output native machine code)
+```
+
+Run the testsuite:
+
+```
+make check-clang
+```
+
+### Clang Compiler Driver (Drop-in Substitute for GCC)
+
+The `clang` tool is the compiler driver and front-end, which is designed to be a drop-in replacement for the `gcc` command. Here are some examples of how to use the high-level driver:
+
+```
+$clang -v
+clang version 3.5.2 (tags/RELEASE_352/final)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/4.4.7
+Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/4.8.2
+Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/4.8.5
+Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/4.8.5
+Candidate multilib: .;@m64
+Candidate multilib: 32;@m32
+Selected multilib: .;@m64
+```
+
+```
+$ cat t.c
+#include <stdio.h>
+int main(int argc, char **argv) { printf("hello world\n"); }
+$ clang t.c
+$ ./a.out
+hello world
+```
+
+The clang driver is designed to work as closely to GCC as possible to maximize portability. The only major difference between the two is that Clang defaults to `gnu99` mode while GCC defaults to gnu89 mode. If you see weird link-time errors relating to inline functions, try passing `-std=gnu89` to clang.
+
+``` c
+// test.c
+typedef float V __attribute__((vector_size(16)));
+V foo(V a, V b)
+{
+    return a + b * a;
+}
+```
+
+Preprocessing:
+
+``` cpp
+//$clang test.c -E
+# 1 "test.c"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 312 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "test.c" 2
+
+typedef float V __attribute__((vector_size(16)));
+
+V foo(V a, V b)
+{
+ return a + b * a;
+}
+```
+
+Type checking:
+
+```
+$clang -fsyntax-only test.c
+```
+
+GCC options:
+
+```
+$clang -fsyntax-only test.c -pedantic
+```
+
+Pretty printing from the AST:
+
+> Note, the `-cc1` argument indicates the compiler front-end, and not the driver, should be run. The compiler front-end has several additional Clang specific features which are not exposed through the GCC compatible driver interface.
+
+``` cpp
+// $clang -cc1 test.c -ast-print
+typedef __attribute__((__vector_size__(4 * sizeof(float)))) float V;
+V foo(V a, V b) {
+    return a + b * a;
+}
+```
+
+Code generation with LLVM:
+
+
+``` cpp
+// $clang test.c -S -emit-llvm -o -
+; ModuleID = 'test.c'
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+; Function Attrs: nounwind uwtable
+define <4 x float> @foo(<4 x float> %a, <4 x float> %b) #0 {
+  %1 = alloca <4 x float>, align 16
+  %2 = alloca <4 x float>, align 16
+  store <4 x float> %a, <4 x float>* %1, align 16
+  store <4 x float> %b, <4 x float>* %2, align 16
+  %3 = load <4 x float>* %1, align 16
+  %4 = load <4 x float>* %2, align 16
+  %5 = load <4 x float>* %1, align 16
+  %6 = fmul <4 x float> %4, %5
+  %7 = fadd <4 x float> %3, %6
+  ret <4 x float> %7
+}
+
+attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+
+!llvm.ident = !{!0}
+
+!0 = metadata !{metadata !"clang version 3.5.2 (tags/RELEASE_352/final)"}
+```
+
+refer:
+
+* https://github.com/llvm/llvm-project/tree/main/clang
+* [Getting Started: Building and Running Clang](https://clang.llvm.org/get_started.html)
+* [LLVM Download Page](https://releases.llvm.org/)
 
 
 # 安装 Clang
@@ -665,9 +965,200 @@ vscode 的 clangd 插件在 disk 模式下会在 /tmp 目录下产生大量的 p
 * https://manpages.debian.org/experimental/clangd/clangd.1.en.html
 
 
-# Diagnostic (诊断)
+# [LLD](https://lld.llvm.org/) (The LLVM Linker)
 
-https://clang.llvm.org/docs/DiagnosticsReference.html#diagnostic-flags
+`LLD` is a linker from the `LLVM` project that is **a drop-in replacement** for system linkers and **runs much faster than** them. It also provides features that are useful for toolchain developers.
+
+The linker supports `ELF` (Unix), `PE/COFF` (Windows), `Mach-O` (macOS) and `WebAssembly` in descending order of completeness. Internally, `LLD` consists of several different linkers.
+
+More:
+
+* [LLD - The LLVM Linker](https://lld.llvm.org/#lld-the-llvm-linker)
+* [LLD and GNU linker incompatibilities](https://maskray.me/blog/2020-12-19-lld-and-gnu-linker-incompatibilities)
+* [lld: A Fast, Simple and Portable Linker](https://llvm.org/devmtg/2017-10/slides/Ueyama-lld.pdf)
+
+## [Features](https://lld.llvm.org/#features)
+
+1. LLD is a drop-in replacement for the GNU linkers that accepts the same command line arguments and linker scripts as GNU.
+2. LLD is very fast. When you link a large program on a multicore machine, you can expect that LLD runs more than twice as fast as the GNU gold linker. Your mileage may vary, though.
+3. It supports various CPUs/ABIs.
+4. It is always a cross-linker, meaning that it always supports all the above targets however it was built.
+5. You can embed LLD in your program to eliminate dependencies on external linkers. All you have to do is to construct object files and command line arguments just like you would do to invoke an external linker and then call the linker’s main function, `lld::lldMain`, from your code.
+6. It is small. We are using LLVM libObject library to read from object files, so it is not a completely fair comparison, but as of February 2017, LLD/ELF consists only of 21k lines of C++ code while GNU gold consists of 198k lines of C++ code.
+7. Link-time optimization (`LTO`) is supported by default. Essentially, all you have to do to do `LTO` is to pass the `-flto` option to clang. Then clang creates object files not in the native object file format but in LLVM bitcode format. LLD reads bitcode object files, compile them using LLVM and emit an output file. Because in this way LLD can see the entire program, it can do the whole program optimization.
+8. Some very old features for ancient Unix systems (pre-90s or even before that) have been removed. Some default settings have been tuned for the 21st century. For example, the stack is marked as non-executable by default to tighten security.
+
+
+
+## [Build](https://lld.llvm.org/#build)
+
+If you have already checked out `LLVM` using `SVN`, you can check out `LLD` under `tools` directory just like you probably did for clang. For the details, see [Getting Started with the LLVM System](https://llvm.org/docs/GettingStarted.html).
+
+If you haven’t checked out `LLVM`, the easiest way to build `LLD` is to check out the entire LLVM projects/sub-projects from a git mirror and build that tree. You need `cmake` and of course a C++ compiler.
+
+```
+$ git clone https://github.com/llvm/llvm-project llvm-project
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS=lld -DCMAKE_INSTALL_PREFIX=/usr/local ../llvm-project/llvm
+$ make install
+```
+
+> 依赖：
+> 1. cmake 3.20
+> 2. gcc 7.1
+> 3. Python 3.8
+
+
+一些下载地址：
+
+* [LLVM Download Page](https://releases.llvm.org/download.html)
+  * https://releases.llvm.org/download.html#3.5.2
+  * https://releases.llvm.org/3.5.2/lld-3.5.2.src.tar.xz
+
+
+* https://github.com/llvm/llvm-project/releases
+* https://github.com/muttleyxd/clang-tools-static-binaries
+* https://github.com/llvm-mirror/lld
+
+
+## Two GNU linkers
+
+GNU binutils have two linkers, `bfd` and `gold`
+
+* bfd linker got ELF support in 1993
+* gold started in 2006 as a ELF-only, faster replacement for bfd
+
+`bfd` linker is written on top of the BFD library. `gold` is written to completely remove that abstraction layer, and that's why `gold` is much faster than `bfd`. `lld` is written from scratch just like `gold`, and it is significantly faster than `gold`.
+
+
+## [Performance](https://lld.llvm.org/#performance)
+
+* In general testing, `lld` ranges **from two to four** times as fast as `gold`
+* `lld` is better at large programs, which is when the link time matters most
+
+> It depends on target programs, number of available cores, and command line options
+
+
+## [Using LLD](https://lld.llvm.org/#using-lld)
+
+`LLD` is installed as `ld.lld`. On Unix, linkers are invoked by compiler drivers, so you are not expected to use that command directly. There are a few ways to tell compiler drivers to use `ld.lld` instead of the default linker.
+
+The easiest way to do that is to overwrite the default linker. After installing `LLD` to somewhere on your disk, you can create a symbolic link by doing `ln -s /path/to/ld.lld /usr/bin/ld` so that `/usr/bin/ld` is resolved to `LLD`.
+
+If you don’t want to change the system setting, you can use clang’s `-fuse-ld` option. In this way, you want to set `-fuse-ld=lld` to `LDFLAGS` when building your programs.
+
+`LLD` leaves its name and version number to a `.comment` section in an output. If you are in doubt whether you are successfully using `LLD` or not, run `readelf --string-dump .comment <output-file>` and examine the output. If the string “Linker: LLD” is included in the output, you are using `LLD`.
+
+```
+$lld --version
+lld is a generic driver.
+Invoke ld.lld (Unix), ld64.lld (macOS), lld-link (Windows), wasm-ld (WebAssembly) instead
+```
+
+```
+~$ls -lh /usr/bin/ld
+lrwxrwxrwx 1 root root 20 3月   5 2021 /usr/bin/ld -> /etc/alternatives/ld
+~$ls -lh /etc/alternatives/ld
+lrwxrwxrwx 1 root root 15 3月   5 2021 /etc/alternatives/ld -> /usr/bin/ld.bfd
+~$ls -lh /usr/bin/ld.bfd
+-rwxr-xr-x 1 root root 983K 10月 29 2019 /usr/bin/ld.bfd
+~$/usr/bin/ld.bfd --version
+GNU ld version 2.27-41.base.tl2.1
+Copyright (C) 2016 Free Software Foundation, Inc.
+这个程序是自由软件；您可以遵循GNU 通用公共授权版本 3 或
+(您自行选择的) 稍后版本以再次散布它。
+这个程序完全没有任何担保。
+```
+
+```
+~$ls -lh /usr/bin/ld.gold
+-rwxr-xr-x 1 root root 5.2M 10月 29 2019 /usr/bin/ld.gold
+~$/usr/bin/ld.gold --version
+GNU gold (version 2.27-41.base.tl2.1) 1.12
+Copyright (C) 2016 Free Software Foundation, Inc.
+这个程序是自由软件；您可以遵循GNU 通用公共授权版本 3 或
+(您自行选择的) 稍后版本以再次散布它。
+这个程序完全没有任何担保。
+```
+
+修改 ld 的软链：
+
+```
+# ls -lh /usr/bin/ld
+lrwxrwxrwx 1 root root 20 3月   5 2021 /usr/bin/ld -> /etc/alternatives/ld
+# rm /usr/bin/ld
+# which ld.lld
+/usr/local/bin/ld.lld
+# ln -s /usr/local/bin/ld.lld /usr/bin/ld
+# ls -lh /usr/bin/ld
+lrwxrwxrwx 1 root root 21 7月  19 17:46 /usr/bin/ld -> /usr/local/bin/ld.lld
+```
+
+生效后：
+
+```
+~$ld --version
+LLD 17.0.0 (compatible with GNU linkers)
+~$which ld
+/bin/ld
+~$ls -lh /bin/ld
+lrwxrwxrwx 1 root root 21 7月  19 17:46 /bin/ld -> /usr/local/bin/ld.lld
+~$/usr/local/bin/ld.lld --version
+LLD 17.0.0 (compatible with GNU linkers)
+```
+
+## ld 切换脚本
+
+``` bash
+#!/bin/bash
+
+CUR_DIR=$(dirname $(readlink -f $0))
+
+LD_BFD_PATH="/usr/bin/ld.bfd"
+LD_GOLD_PATH="/usr/bin/ld.gold"
+LD_LLD_PATH="$TOOLS_DIR/llvm/lld/lld"
+
+ORIG_LD_LINK_PATH="/usr/bin/ld"
+
+# Check input arguments
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 {bfd|gold|lld}"
+  exit 1
+fi
+
+# Choose the linker to use based on the argument
+case $1 in
+  bfd)
+    LD_PATH="$LD_BFD_PATH"
+    ;;
+  gold)
+    LD_PATH="$LD_GOLD_PATH"
+    ;;
+  lld)
+    LD_PATH="$LD_LLD_PATH"
+    ;;
+  *)
+    echo "Invalid LD type: $1. Valid options are: bfd, gold, lld"
+    exit 1
+    ;;
+esac
+
+# Check if the chosen linker exists
+if [[ ! -f "$LD_PATH" ]]; then
+  echo "Linker not found at $LD_PATH"
+  exit 1
+fi
+
+# Create a symlink to the chosen linker
+sudo ln -sf "$LD_PATH" "$ORIG_LD_LINK_PATH"
+
+echo "Successfully replaced ld with $1"
+```
+
+
+
+
 
 
 # Manual

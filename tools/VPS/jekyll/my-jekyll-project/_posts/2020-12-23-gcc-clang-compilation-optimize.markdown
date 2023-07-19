@@ -8,10 +8,41 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# [GNU Binutils](https://en.wikipedia.org/wiki/GNU_Binutils)
 
-# DWARF
+The **GNU Binary Utilities**, or **binutils**, are a set of programming tools for creating and managing binary programs, object files, libraries, profile data, and assembly source code.
 
-https://developer.ibm.com/articles/au-dwarf-debug-format/
+The GNU Binutils are typically used in conjunction with compilers such as the GNU Compiler Collection (`gcc`), build tools like `make`, and the GNU Debugger (`gdb`).
+
+The binutils include the following commands:
+
+| name | usage |
+| -- | --
+| [as](https://en.wikipedia.org/wiki/GNU_Assembler) | [assembler](https://en.wikipedia.org/wiki/Assembly_language#Assembler) popularly known as GAS (GNU Assembler)
+| [ld](https://en.wikipedia.org/wiki/GNU_linker) | [linker](https://en.wikipedia.org/wiki/Linker_(computing))
+| [gprof](https://en.wikipedia.org/wiki/Gprof) | [profiler](https://en.wikipedia.org/wiki/Profiling_(computer_programming))
+| [addr2line](https://en.wikipedia.org/w/index.php?title=Addr2line&action=edit&redlink=1) | convert address to file and line
+| [ar](https://en.wikipedia.org/wiki/Ar_(Unix)) | create, modify, and extract from [archives](https://en.wikipedia.org/wiki/Archive_file)
+| c++filt | [demangling](https://en.wikipedia.org/wiki/Name_mangling#Name_mangling_in_C++) filter for C++ symbols
+| dlltool | creation of Windows [dynamic-link libraries](https://en.wikipedia.org/wiki/Dynamic-link_library)
+| [gold](https://en.wikipedia.org/wiki/Gold_(linker)) | alternative linker for [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
+| nlmconv | object file conversion to a NetWare Loadable Module
+| [nm](https://en.wikipedia.org/wiki/Nm_(Unix)) | list symbols exported by object file
+| objcopy | copy object files, possibly making changes
+| [objdump](https://en.wikipedia.org/wiki/Objdump) | dump information about object files
+| [ranlib](https://en.wikipedia.org/wiki/Ranlib) | generate indices for archives (for compatibility; same as `ar -s`)
+| [readelf](https://en.wikipedia.org/wiki/Readelf) | display content of ELF files
+| size | list total and section sizes
+| [strings](https://en.wikipedia.org/wiki/Strings_(Unix)) | list printable strings
+| [strip](https://en.wikipedia.org/wiki/Strip_(Unix)) | remove symbols from an object file
+| windmc | generates Windows message resources
+| windres | compiler for Windows resource files
+
+
+
+# [DWARF](https://en.wikipedia.org/wiki/DWARF)
+
+`DWARF` is a widely used, standardized [debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format). `DWARF` was originally designed along with [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) (`ELF`), although it is independent of object file formats. The name is a medieval fantasy complement to "ELF" that had no official meaning, although the backronym "Debugging With Arbitrary Record Formats" has since been proposed.
 
 DWARF 是一种用于表示源代码调试信息的标准格式。调试信息通常包括变量名、类型信息、行号等，用于在调试过程中帮助开发人员了解程序的运行状态。DWARF 的不同版本提供了不同的特性和优化，其中 DWARF version 5 是最新的版本，它引入了许多改进，包括更紧凑的表示形式和更高效的数据访问方式。
 
@@ -20,8 +51,9 @@ GCC 11 将 DWARF version 5 作为默认的 debug info 版本，这意味着当�
 在实际项目中，这种尺寸缩小可以带来诸多好处，如节省磁盘空间、加快传输速度和提高加载速度等。因此，升级到 GCC 11 可以帮助开发人员更高效地处理大型项目和二进制文件。
 
 
+More:
 
-
+* https://en.wikipedia.org/wiki/DWARF
 
 
 # [Precompiled Headers](https://clang.llvm.org/docs/PCHInternals.html)

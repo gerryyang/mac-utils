@@ -8,7 +8,8 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Linux操作系统
+
+# Linux 操作系统
 
 ## /proc (process information pseudo-filesystem)
 
@@ -1813,9 +1814,11 @@ $9 = (void *) 0x55555555478a <_start+42>
 $10 = (void *) 0x0
 ```
 
-More:
+优化方案：
 
 * [C++的backtrace](https://blog.owent.net/2018/1801)
+
+
 
 ## assert
 
@@ -2468,5 +2471,18 @@ options timeout:2 attempts:3
 
 * 要修改 /etc/hosts 文件，您需要使用 root（管理员）权限。
 * 修改 /etc/hosts 文件后，更改会立即生效，无需重新启动任何服务。
+
+
+# [List of Unix commands](https://en.wikipedia.org/wiki/List_of_Unix_commands)
+
+This is a list of **Unix commands** as specified by **IEEE Std 1003.1-2008**, which is part of the [Single UNIX Specification](https://en.wikipedia.org/wiki/Single_UNIX_Specification) (SUS). These commands can be found on Unix operating systems and most Unix-like operating systems.
+
+This is not a comprehensive list of all utilities that existed in the various historic Unix and Unix-like systems, as it excludes utilities that were not mandated by the aforementioned standard.
+
+| Name | Description
+| -- | --
+| [alias](https://en.wikipedia.org/wiki/Alias_(command)) | Define or display aliases
+
+
 
 
