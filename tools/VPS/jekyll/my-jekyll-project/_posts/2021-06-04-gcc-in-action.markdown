@@ -998,6 +998,11 @@ sudo make install
 验证：
 
 ```
+$getconf -a | grep -i glibc
+GNU_LIBC_VERSION                   glibc 2.18
+```
+
+```
 $ ll /lib64/libc.so.6
 lrwxrwxrwx 1 root root 12 10月 11 21:33 /lib64/libc.so.6 -> libc-2.18.so
 $ strings /lib64/libc.so.6 | grep ^GLIBC

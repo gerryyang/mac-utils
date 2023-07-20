@@ -2069,6 +2069,33 @@ Answers:
 
 # Example
 
+## 根据大小查找文件
+
+``` bash
+#!/bin/bash
+
+# Check input arguments
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <directory> <file_size_in_kb>"
+    exit 1
+fi
+
+# Check if the specified directory exists
+if [ ! -d "$1" ]; then
+    echo "Error: Directory $1 not found"
+    exit 1
+fi
+
+# Check if the specified file size is a valid number
+if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+    echo "Error: File size must be a positive integer"
+    exit 1
+fi
+
+# Find files larger than the specified size
+find "$1" -type f -size +"$2"k
+```
+
 ## pstack
 
 ``` bash

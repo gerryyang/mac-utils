@@ -54,6 +54,11 @@ GCC 11 将 DWARF version 5 作为默认的 debug info 版本，这意味着当�
 More:
 
 * https://en.wikipedia.org/wiki/DWARF
+* [DWARF, 调试信息存储格式](https://zhuanlan.zhihu.com/p/419908664)
+
+
+
+
 
 
 # [Precompiled Headers](https://clang.llvm.org/docs/PCHInternals.html)
@@ -187,7 +192,7 @@ Whether to force C++ source files to be combined into larger files for faster co
 * https://docs.unrealengine.com/5.1/en-US/build-configuration-for-unreal-engine/
 
 
-# 编译优化
+# 编译优化级别
 
 ## gcc
 
@@ -869,6 +874,201 @@ Citing [Why does the order in which libraries are linked sometimes cause errors 
 So, libraries inside the group can be searched for new symbols several time, and you need no ugly constructs like `-llib1 -llib2 -llib1`
 
 PS archive means basically a static library (`*.a` files)
+
+# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
+
+To tell `GCC` to emit extra information for use by a debugger, in almost all cases you need only to add `-g` to your other options. Some debug formats can co-exist (like DWARF with CTF) when each of them is enabled explicitly by adding the respective command line option to your other options.
+
+GCC allows you to use `-g` with `-O`. **The shortcuts taken by optimized code may occasionally be surprising**: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops. Nevertheless it is possible to debug optimized output. This makes it reasonable to use the optimizer for programs that might have bugs.
+
+If you are not using some other optimization option, consider using `-Og` (see [Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)) with `-g`. With no `-O` option at all, some compiler passes that collect information useful for debugging do not run at all, so that `-Og` may result in a better debugging experience.
+
+
+## -g
+
+Produce debugging information in the operating system’s native format (stabs, COFF, XCOFF, or DWARF). GDB can work with this debugging information.
+
+On most systems that use stabs format, `-g` enables use of extra debugging information that only GDB can use; this extra information makes debugging work better in GDB but probably makes other debuggers crash or refuse to read the program. If you want to control for certain whether to generate the extra information, use `-gvms` (see below).
+
+## -ggdb
+
+Produce debugging information for use by GDB. This means to use the most expressive format available (DWARF, stabs, or the native format if neither of those are supported), including GDB extensions if at all possible.
+
+## -gdwarf / -gdwarf-version
+
+**Produce debugging information in DWARF format** (if that is supported). The value of version may be either 2, 3, 4 or 5; the default version for most targets is 5 (with the exception of VxWorks, TPF and Darwin/Mac OS X, which default to version 2, and AIX, which defaults to version 4).
+
+Note that with DWARF Version 2, some ports require and always use some non-conflicting DWARF 3 extensions in the unwind tables.
+
+Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit. **Version 5 requires GDB 8.0 or higher**.
+
+
+
+
+
+
+
+
+# 编译二进制大小优化
+
+
+
+## [LLVM Link Time Optimization: Design and Implementation](https://llvm.org/docs/LinkTimeOptimization.html) - LTO
+
+> 使用 LTO 通过牺牲更多的编译时间，通过跨模块的上下文信息，实现编译优化。
+
+由于编译器一次只编译优化一个编译单元，所以只是在做局部优化，而利用 LTO，利用链接时的全局视角进行操作，从而得到能够进行更加极致的优化。
+
+跨模块优化的效果，也即开启 LTO 主要有这几点好处：
+
+1. 将一些函数內联化
+2. 去除了一些无用代码
+3. 对程序有全局的优化作用
+
+比较体验不好的是，LTO 会导致编译和链接变慢，以及会使用更多的内存，所以即使到现在，也没有看到 LTO 被广泛地使用。
+
+* [代码优化利器 LTO 介绍](https://zhuanlan.zhihu.com/p/384160632)
+* [开启Link Time Optimization(LTO)后到底有什么优化？](https://www.jianshu.com/p/58fef052291a)
+* [Link Time Optimizations: New Way to Do Compiler Optimizations](https://johnysswlab.com/link-time-optimizations-new-way-to-do-compiler-optimizations/)
+* [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html)
+* [LTO with LLVM and CMake](https://stackoverflow.com/questions/35922966/lto-with-llvm-and-cmake)
+* [Clang: How to check if LTO was performed](https://stackoverflow.com/questions/51048414/clang-how-to-check-if-lto-was-performed)
+
+
+### Description
+
+LLVM features powerful intermodular optimizations which can be used at link time. **Link Time Optimization (LTO)** is another name for **intermodular optimization** when performed during the link stage. This document describes the interface and design between the LTO optimizer and the linker.
+
+### Design Philosophy
+
+**The LLVM Link Time Optimizer provides complete transparency, while doing intermodular optimization, in the compiler tool chain. Its main goal is to let the developer take advantage of intermodular optimizations without making any significant changes to the developer’s makefiles or build system**. This is achieved through tight integration with the linker. In this model, the linker treats LLVM bitcode files like native object files and allows mixing and matching among them. The linker uses [libLTO](https://llvm.org/docs/LinkTimeOptimization.html#liblto), a shared object, to handle LLVM bitcode files. This tight integration between the linker and LLVM optimizer helps to do optimizations that are not possible in other models. The linker input allows the optimizer to avoid relying on conservative escape analysis.
+
+### Example of link time optimization
+
+The following example illustrates the advantages of LTO’s integrated approach and clean interface. This example requires a system linker which supports LTO through the interface described in this document. Here, clang transparently invokes system linker.
+
+* Input source file `a.c` is compiled into LLVM bitcode form.
+* Input source file `main.c` is compiled into native object code.
+
+``` c
+--- a.h ---
+extern int foo1(void);
+extern void foo2(void);
+extern void foo4(void);
+
+--- a.c ---
+#include "a.h"
+
+static signed int i = 0;
+
+void foo2(void) {
+  i = -1;
+}
+
+static int foo3() {
+  foo4();
+  return 10;
+}
+
+int foo1(void) {
+  int data = 0;
+
+  if (i < 0)
+    data = foo3();
+
+  data = data + 42;
+  return data;
+}
+
+--- main.c ---
+#include <stdio.h>
+#include "a.h"
+
+void foo4(void) {
+  printf("Hi\n");
+}
+
+int main() {
+  return foo1();
+}
+```
+
+To compile, run:
+
+```
+% clang -flto -c a.c -o a.o        # <-- a.o is LLVM bitcode file
+% clang -c main.c -o main.o        # <-- main.o is native object file
+% clang -flto a.o main.o -o main   # <-- standard link command with -flto
+```
+
+* In this example, the linker recognizes that `foo2()` is an externally visible symbol defined in LLVM bitcode file. The linker completes its usual symbol resolution pass and finds that `foo2()` is not used anywhere. This information is used by the LLVM optimizer and it removes `foo2()`.
+* As soon as `foo2()` is removed, the optimizer recognizes that condition `i < 0` is always `false`, which means `foo3()` is never used. Hence, the optimizer also removes `foo3()`.
+* And this in turn, enables linker to remove `foo4()`.
+
+This example illustrates the advantage of tight integration with the linker. Here, the optimizer can not remove `foo3()` without the linker’s input.
+
+### Alternative Approaches
+
+* Compiler driver invokes link time optimizer separately.
+
+In this model the link time optimizer is not able to take advantage of information collected during the linker’s normal symbol resolution phase. In the above example, the optimizer can not remove `foo2()` without the linker’s input because it is externally visible. This in turn prohibits the optimizer from removing `foo3()`.
+
+* Use separate tool to collect symbol information from all object files.
+
+In this model, a new, separate, tool or library replicates the linker’s capability to collect information for link time optimization. Not only is this code duplication difficult to justify, but it also has several other disadvantages. For example, the linking semantics and the features provided by the linker on various platform are not unique. This means, this new tool needs to support all such features and platforms in one super tool or a separate tool per platform is required. This increases maintenance cost for link time optimizer significantly, which is not necessary. This approach also requires staying synchronized with linker developments on various platforms, which is not the main focus of the link time optimizer. Finally, this approach increases end user’s build time due to the duplication of work done by this separate tool and the linker itself.
+
+### Multi-phase communication between libLTO and linker
+
+The linker collects information about symbol definitions and uses in various link objects which is more accurate than any information collected by other tools during typical build cycles. The linker collects this information by looking at the definitions and uses of symbols in native .o files and using symbol visibility information. The linker also uses user-supplied information, such as a list of exported symbols. LLVM optimizer collects control flow information, data flow information and knows much more about program structure from the optimizer’s point of view. Our goal is to take advantage of tight integration between the linker and the optimizer by sharing this information during various linking phases.
+
+
+### 问题
+
+* [-Wl,--wrap not supported with LTO](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88643)
+
+
+## [-fdebug-types-section](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
+
+When using DWARF Version 4 or higher, type DIEs can be put into their own `.debug_types` section instead of making them part of the `.debug_info` section. It is more efficient to put them in a separate comdat section since the linker can then remove duplicates. But not all DWARF consumers support `.debug_types` sections yet and on some objects `.debug_types` produces larger instead of smaller debugging information.
+
+`-fdebug-types-section` 选项用于在生成 DWARF 调试信息时将类型定义（type DIEs）放入单独的 .debug_types 节中，而不是将它们作为 .debug_info 节的一部分。这个选项适用于 DWARF 版本4及更高版本。
+
+将类型定义放入单独的 .debug_types 节有以下优势：
+
+链接器效率：链接器可以通过合并重复的类型定义来减小生成的调试信息的大小。将类型定义放入单独的 .debug_types 节（通常是comdat节）可以让链接器更容易地识别和删除重复的类型定义。
+
+然而，使用 -fdebug-types-section 选项也存在一些限制和问题：
+
+DWARF 消费者的兼容性：并非所有处理 DWARF 调试信息的工具（如调试器和分析器）都支持 .debug_types 节。在这种情况下，使用 -fdebug-types-section 可能会导致兼容性问题。
+
+调试信息大小：在某些情况下，使用 .debug_types 节可能会导致生成的调试信息更大，而不是更小。这取决于具体的对象文件和类型定义。
+
+总之，-fdebug-types-section 选项用于将类型定义放入单独的 .debug_types 节，以提高链接器效率。然而，在使用此选项时，请注意兼容性和调试信息大小的潜在问题。在选择是否使用此选项时，请根据您的项目需求和目标平台进行权衡。
+
+## [--compress-debug-sections=zlib](https://sourceware.org/binutils/docs/ld/Options.html#index-compress-debug-sections-1)
+
+```
+--compress-debug-sections=none
+--compress-debug-sections=zlib
+--compress-debug-sections=zlib-gnu
+--compress-debug-sections=zlib-gabi
+--compress-debug-sections=zstd
+```
+
+On ELF platforms, these options control how DWARF debug sections are compressed using zlib.
+
+
+使用 -Wl,--compress-debug-sections=zlib 可以压缩调试信息，从而减小生成的二进制文件大小。然而，在使用此选项时，有一些注意事项和可能的问题：
+
+调试器兼容性：并非所有调试器都支持压缩后的调试信息。在使用压缩调试信息的二进制文件进行调试时，请确保您的调试器（如GDB）支持处理压缩后的调试节。较新版本的GDB通常支持这一点。
+
+解压缩开销：虽然压缩调试信息可以减小文件大小，但在调试过程中，调试器需要解压缩这些信息。这可能会导致调试过程稍微变慢。对于大型项目，解压缩时间可能会有所增加。
+
+链接器支持：并非所有链接器都支持 --compress-debug-sections 选项。在使用此选项时，请确保您的链接器支持它。通常，较新版本的GNU ld链接器支持此功能。
+
+二进制文件可移植性：如果您需要将二进制文件分发给其他用户，他们可能使用不同的调试器或操作系统。在这种情况下，使用压缩调试信息可能会导致兼容性问题。在将二进制文件分发给其他用户之前，请确保他们的环境支持处理压缩后的调试信息。
+
+总之，在使用 -Wl,--compress-debug-sections=zlib 选项时，请确保您的工具链和调试器支持处理压缩后的调试信息。同时，请注意，在某些情况下，这可能会影响调试过程的性能。
 
 
 # 优化调试
