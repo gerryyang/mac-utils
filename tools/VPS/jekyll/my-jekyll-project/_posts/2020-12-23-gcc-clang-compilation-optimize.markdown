@@ -636,8 +636,89 @@ related: [noinline attribute is not respected in -O1 and above #3409](github.com
 It sounds like you want to use the `optnone` attribute instead, to prevent the compiler from applying even the most obvious of optimizations (as this one is).
 
 
+# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
 
-# 去除Dead Codes (删除未使用的函数)
+To tell `GCC` to emit extra information for use by a debugger, in almost all cases you need only to add `-g` to your other options. Some debug formats can co-exist (like DWARF with CTF) when each of them is enabled explicitly by adding the respective command line option to your other options.
+
+GCC allows you to use `-g` with `-O`. **The shortcuts taken by optimized code may occasionally be surprising**: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops. Nevertheless it is possible to debug optimized output. This makes it reasonable to use the optimizer for programs that might have bugs.
+
+If you are not using some other optimization option, consider using `-Og` (see [Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)) with `-g`. With no `-O` option at all, some compiler passes that collect information useful for debugging do not run at all, so that `-Og` may result in a better debugging experience.
+
+
+## -g
+
+Produce debugging information in the operating system’s native format (stabs, COFF, XCOFF, or DWARF). GDB can work with this debugging information.
+
+On most systems that use stabs format, `-g` enables use of extra debugging information that only GDB can use; this extra information makes debugging work better in GDB but probably makes other debuggers crash or refuse to read the program. If you want to control for certain whether to generate the extra information, use `-gvms` (see below).
+
+## -ggdb
+
+Produce debugging information for use by GDB. This means to use the most expressive format available (DWARF, stabs, or the native format if neither of those are supported), including GDB extensions if at all possible.
+
+## -gdwarf / -gdwarf-version
+
+**Produce debugging information in DWARF format** (if that is supported). The value of version may be either 2, 3, 4 or 5; the default version for most targets is 5 (with the exception of VxWorks, TPF and Darwin/Mac OS X, which default to version 2, and AIX, which defaults to version 4).
+
+Note that with DWARF Version 2, some ports require and always use some non-conflicting DWARF 3 extensions in the unwind tables.
+
+Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit. **Version 5 requires GDB 8.0 or higher**.
+
+
+
+
+
+
+
+
+# 编译二进制大小优化
+
+
+在使用 Clang 编译器时，有多种方法可以优化生成的二进制文件大小。以下是一些建议：
+
+* 优化级别：使用 `-Os` 或 `-Oz` 优化选项。这些选项专门针对生成较小的二进制文件进行优化。
+
+```
+clang -Os -o output_file input_file.c
+
+```
+
+或者
+
+```
+clang -Oz -o output_file input_file.c
+```
+
+* 去除调试信息：如果不需要调试信息，请确保不使用 `-g` 选项。如果需要调试信息，但希望减小文件大小，可以考虑使用 `-Wl,--compress-debug-sections=zlib` 将调试信息压缩。
+
+* 链接时优化（LTO）：使用链接时优化可以在链接阶段进行更多优化，这可能有助于减小生成的二进制文件大小。要启用 LTO，请使用 `-flto` 选项.
+
+```
+clang -flto -Os -o output_file input_file.c
+```
+
+* 去除未使用的代码和数据：使用 `-ffunction-sections` 和 `-fdata-sections` 选项将函数和数据放入单独的节（section），然后使用链接器选项 `--gc-sections` 删除未使用的节：
+
+```
+clang -Os -ffunction-sections -fdata-sections -o output_file input_file.c -Wl,--gc-sections
+```
+
+* 静态链接：尽量避免静态链接，因为它会将库的整个内容包含到二进制文件中。相反，使用动态链接可以减小二进制文件大小。
+
+* 符号剥离：使用 `strip` 工具删除不必要的符号信息。这不仅可以减小二进制文件大小，还可以防止其他人轻松地逆向工程您的代码。在编译完成后，运行以下命令：
+
+```
+strip output_file
+```
+
+请注意，这将删除所有符号信息，使调试变得困难。因此，仅在不需要调试信息时执行此操作。
+
+* 代码优化：在源代码级别进行优化。例如，删除不必要的代码，减少全局变量的使用，使用更小的数据类型等。
+
+
+通过结合使用这些技巧，可以在使用 Clang 编译器时优化生成的二进制文件大小。请注意，某些优化可能会影响程序的性能和可调试性，因此在选择优化方法时要权衡利弊。
+
+
+## 删除不使用的 Dead Codes (-fdata-sections / -ffunction-sections / -Wl,--gc-sections)
 
 参考[Compilation options](https://gcc.gnu.org/onlinedocs/gnat_ugn/Compilation-options.html)通过下面两步，去除代码没有使用的函数：
 
@@ -738,7 +819,7 @@ refer:
 
 
 
-# strip
+## strip
 
 * `strip`用于删除目标文件中的符号（Discard symbols from object files），通常用于删除已生成的可执行文件和库中不需要的符号。
 * 在想要减少文件的大小，并保留对调试有用的信息时，使用`-d`选项，可以删除不使用的信息（文件名和行号等），并可以保留函数名等一般的符号，用gdb进行调试时，只要保留了函数名，即便不知道文件名和行号，也可以进行调试。
@@ -761,7 +842,7 @@ Segmentation fault (core dumped)
 ```
 
 
-# objcopy
+## objcopy (分离调试信息)
 
 * `objcopy` - copy and translate object file
 * 实际上，在`objcopy`上使用`-strip-*`选项后也能进行与`strip`同样的处理。
@@ -837,79 +918,6 @@ chmod -x "${debugdir}/${debugfile}"
 ```
 
 refer: [How to generate gcc debug symbol outside the build target?](https://stackoverflow.com/questions/866721/how-to-generate-gcc-debug-symbol-outside-the-build-target)
-
-# -fno-rtti / -frtti
-
-
-* https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
-* https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
-* https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class
-
-# -Wl,--start-group / -Wl,--end-group
-
-[What are the --start-group and --end-group command line options?](https://stackoverflow.com/questions/5651869/what-are-the-start-group-and-end-group-command-line-options)
-
-What is the purpose of those command line options? Please help to decipher the meaning of the following command line:
-
-```
--Wl,--start-group -lmy_lib -lyour_lib -lhis_lib -Wl,--end-group -ltheir_lib
-```
-
-Apparently it has something to do with linking, but the GNU manual is quiet what exactly grouping means.
-
-Answers:
-
-It is for resolving circular dependences between several libraries (listed between `-(` and `-)`).
-
-Citing [Why does the order in which libraries are linked sometimes cause errors in GCC?](https://stackoverflow.com/questions/45135/linker-order-gcc/409470#409470) or man ld http://linux.die.net/man/1/ld
-
-> `-(` archives `-)` or `--start-group` archives `--end-group`
->
-> The archives should be a list of archive files. They may be either explicit file names, or -l options.
->
-> The specified archives are searched repeatedly until no new undefined references are created. Normally, an archive is searched only once in the order that it is specified on the command line. If a symbol in that archive is needed to resolve an undefined symbol referred to by an object in an archive that appears later on the command line, the linker would not be able to resolve that reference. By grouping the archives, they all be searched repeatedly until all possible references are resolved.
->
-> Using this option has a significant performance cost. It is best to use it only when there are unavoidable circular references between two or more archives.
-
-So, libraries inside the group can be searched for new symbols several time, and you need no ugly constructs like `-llib1 -llib2 -llib1`
-
-PS archive means basically a static library (`*.a` files)
-
-# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
-
-To tell `GCC` to emit extra information for use by a debugger, in almost all cases you need only to add `-g` to your other options. Some debug formats can co-exist (like DWARF with CTF) when each of them is enabled explicitly by adding the respective command line option to your other options.
-
-GCC allows you to use `-g` with `-O`. **The shortcuts taken by optimized code may occasionally be surprising**: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops. Nevertheless it is possible to debug optimized output. This makes it reasonable to use the optimizer for programs that might have bugs.
-
-If you are not using some other optimization option, consider using `-Og` (see [Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)) with `-g`. With no `-O` option at all, some compiler passes that collect information useful for debugging do not run at all, so that `-Og` may result in a better debugging experience.
-
-
-## -g
-
-Produce debugging information in the operating system’s native format (stabs, COFF, XCOFF, or DWARF). GDB can work with this debugging information.
-
-On most systems that use stabs format, `-g` enables use of extra debugging information that only GDB can use; this extra information makes debugging work better in GDB but probably makes other debuggers crash or refuse to read the program. If you want to control for certain whether to generate the extra information, use `-gvms` (see below).
-
-## -ggdb
-
-Produce debugging information for use by GDB. This means to use the most expressive format available (DWARF, stabs, or the native format if neither of those are supported), including GDB extensions if at all possible.
-
-## -gdwarf / -gdwarf-version
-
-**Produce debugging information in DWARF format** (if that is supported). The value of version may be either 2, 3, 4 or 5; the default version for most targets is 5 (with the exception of VxWorks, TPF and Darwin/Mac OS X, which default to version 2, and AIX, which defaults to version 4).
-
-Note that with DWARF Version 2, some ports require and always use some non-conflicting DWARF 3 extensions in the unwind tables.
-
-Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit. **Version 5 requires GDB 8.0 or higher**.
-
-
-
-
-
-
-
-
-# 编译二进制大小优化
 
 
 
@@ -1069,6 +1077,75 @@ On ELF platforms, these options control how DWARF debug sections are compressed 
 二进制文件可移植性：如果您需要将二进制文件分发给其他用户，他们可能使用不同的调试器或操作系统。在这种情况下，使用压缩调试信息可能会导致兼容性问题。在将二进制文件分发给其他用户之前，请确保他们的环境支持处理压缩后的调试信息。
 
 总之，在使用 -Wl,--compress-debug-sections=zlib 选项时，请确保您的工具链和调试器支持处理压缩后的调试信息。同时，请注意，在某些情况下，这可能会影响调试过程的性能。
+
+
+
+截至目前（2022年2月），Clang编译器和GNU ld链接器尚未支持 --compress-debug-sections=zstd 选项。目前，GNU ld链接器支持的调试信息压缩方法是zlib（--compress-debug-sections=zlib）。
+
+如果您希望使用 zstd 压缩调试信息，可以考虑在编译和链接完成后手动压缩调试信息。以下是一个使用 objcopy 工具手动压缩调试信息的示例：
+
+首先，使用-g选项编译源代码以生成调试信息：
+
+```
+clang -g -o output_file input_file.c
+```
+
+使用objcopy将未压缩的调试信息从二进制文件中提取到单独的文件：
+
+```
+objcopy --only-keep-debug output_file output_file.debug
+```
+
+使用zstd手动压缩提取的调试信息：
+
+```
+zstd -o output_file.debug.zst output_file.debug
+```
+
+将压缩后的调试信息与二进制文件关联：
+
+```
+objcopy --add-gnu-debuglink=output_file.debug.zst output_file
+```
+
+请注意，这种方法可能不被所有调试器支持，因为它们可能无法识别zstd压缩的调试信息。在使用此方法之前，请确保您的调试器支持处理zstd压缩的调试信息。
+
+
+# -fno-rtti / -frtti
+
+* https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
+* https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
+* https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class
+
+# -Wl,--start-group / -Wl,--end-group
+
+[What are the --start-group and --end-group command line options?](https://stackoverflow.com/questions/5651869/what-are-the-start-group-and-end-group-command-line-options)
+
+What is the purpose of those command line options? Please help to decipher the meaning of the following command line:
+
+```
+-Wl,--start-group -lmy_lib -lyour_lib -lhis_lib -Wl,--end-group -ltheir_lib
+```
+
+Apparently it has something to do with linking, but the GNU manual is quiet what exactly grouping means.
+
+Answers:
+
+It is for resolving circular dependences between several libraries (listed between `-(` and `-)`).
+
+Citing [Why does the order in which libraries are linked sometimes cause errors in GCC?](https://stackoverflow.com/questions/45135/linker-order-gcc/409470#409470) or man ld http://linux.die.net/man/1/ld
+
+> `-(` archives `-)` or `--start-group` archives `--end-group`
+>
+> The archives should be a list of archive files. They may be either explicit file names, or -l options.
+>
+> The specified archives are searched repeatedly until no new undefined references are created. Normally, an archive is searched only once in the order that it is specified on the command line. If a symbol in that archive is needed to resolve an undefined symbol referred to by an object in an archive that appears later on the command line, the linker would not be able to resolve that reference. By grouping the archives, they all be searched repeatedly until all possible references are resolved.
+>
+> Using this option has a significant performance cost. It is best to use it only when there are unavoidable circular references between two or more archives.
+
+So, libraries inside the group can be searched for new symbols several time, and you need no ugly constructs like `-llib1 -llib2 -llib1`
+
+PS archive means basically a static library (`*.a` files)
 
 
 # 优化调试

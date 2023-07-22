@@ -8,6 +8,14 @@ categories: C/C++
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+> "Premature optimization is the root of all evil" — Donald Knuth
+>
+> "Data dominates. If you've chosen the right data structures and organized things well, the algorithms will almost always be self-evident. Data structures, not algorithms, are central to programming." — Rob Pike's 5 Rules of Programming
+
+
+
+
 # 性能调优的必要性（思考启示）
 
 * "这儿一纳秒，那儿一纳秒"。指令的处理速度惊人，浪费的指令积累也越快。

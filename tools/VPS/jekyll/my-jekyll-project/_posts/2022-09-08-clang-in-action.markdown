@@ -974,8 +974,8 @@ The linker supports `ELF` (Unix), `PE/COFF` (Windows), `Mach-O` (macOS) and `Web
 More:
 
 * [LLD - The LLVM Linker](https://lld.llvm.org/#lld-the-llvm-linker)
-* [LLD and GNU linker incompatibilities](https://maskray.me/blog/2020-12-19-lld-and-gnu-linker-incompatibilities)
-* [lld: A Fast, Simple and Portable Linker](https://llvm.org/devmtg/2017-10/slides/Ueyama-lld.pdf)
+* [LLD and GNU linker incompatibilities](https://maskray.me/blog/2020-12-19-lld-and-gnu-linker-incompatibilities) (兼容性说明)
+* [lld: A Fast, Simple and Portable Linker](https://llvm.org/devmtg/2017-10/slides/Ueyama-lld.pdf) (特别好)
 
 ## [Features](https://lld.llvm.org/#features)
 
@@ -1038,6 +1038,12 @@ GNU binutils have two linkers, `bfd` and `gold`
 * `lld` is better at large programs, which is when the link time matters most
 
 > It depends on target programs, number of available cores, and command line options
+
+参考：https://llvm.org/devmtg/2017-10/slides/Ueyama-lld.pdf
+
+![lld_performance](/assets/images/202307/lld_performance.png)
+
+
 
 
 ## [Using LLD](https://lld.llvm.org/#using-lld)
@@ -1107,6 +1113,55 @@ lrwxrwxrwx 1 root root 21 7月  19 17:46 /bin/ld -> /usr/local/bin/ld.lld
 ~$/usr/local/bin/ld.lld --version
 LLD 17.0.0 (compatible with GNU linkers)
 ```
+
+## Semantic differences between lld and GNU linkers
+
+lld's symbol resolution semantics is different from traditional Unix linkers.
+
+> How traditional Unix linkers work:
+
+* Maintains a set `S` of undefined symbols
+* Visits files **in the order** they appeared in the command line, which adds or removes (resolves) symbols to/from `S`
+* When visiting an archive, it pulls out object files to resolve as many undefined symbols as possible
+
+**File order is important in GNU linkers**. Assume that `object.o` contains undefined symbols that `archive.a` can resolve.
+
+* Works: `ld object.o archive.a`
+* Does not work: `ld archive.a object.o`
+
+> lld's semantics
+
+In lld, archive files don't have to appear before object files
+
+* Works: `ld object.o archive.a`
+* Also work: `ld archive.a object.o`
+
+This is (in my opinion) intuitive and efficient but could result in a different symbol resolution result, if two or more archives provide the same
+symbols.
+
+No need to worry too much; in FreeBSD, there were only a few programs that didn't work because of the difference, but you want to keep it in mind.
+
+
+## Other features
+
+### Link-Time Optimization
+
+lld has built-in `LTO` (link-time optimization) support
+
+* Unlike `gold`, you don't need a linker plugin
+* To use `LTO`, all you need to do is to use clang as a compiler, and add `C{,XX}FLAGS=-flto` and `LDFLAGS=-fuse=lld`
+
+### Cross-linking
+
+* It always supports all targets
+  + In fact, we do not provide a `./configure-time` option to enable/disable targets. All lld executables can handle all targets
+  + It should make it easier to use lld as part of a cross toolchain
+* It is agnostic on the host operating system
+  + There's no implicit default setting
+  + It works fine because all options we need are passed explicitly by compilers
+  + Again, it is cross toolchain-friendly
+
+
 
 ## ld 切换脚本
 
