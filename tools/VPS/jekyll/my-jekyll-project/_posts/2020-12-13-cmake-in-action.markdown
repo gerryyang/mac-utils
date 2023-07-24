@@ -1834,6 +1834,14 @@ popd
 
 # Tips
 
+## debug 编译去除 -g 选项
+
+```
+# disable -g
+string(REPLACE "-g" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+string(REPLACE "-g" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+```
+
 ## 检查 CXX 编译器是否支持某个编译选项 (CheckCXXCompilerFlag)
 
 Check whether the CXX compiler supports a given flag.

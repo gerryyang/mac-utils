@@ -2367,6 +2367,64 @@ fi
 
 # 第三方工具
 
+
+## 压缩工具
+
+### [zlib](https://www.zlib.net/)
+
+zlib is designed to be a free, general-purpose, legally unencumbered -- that is, not covered by any patents -- lossless data-compression library for use on virtually any computer hardware and operating system.
+
+
+### [zstd](https://github.com/facebook/zstd)
+
+`Zstandard`, or `zstd` as short version, is a fast lossless compression algorithm, targeting real-time compression scenarios at zlib-level and better compression ratios. It's backed by a very fast entropy stage, provided by [Huff0 and FSE library](https://github.com/Cyan4973/FiniteStateEntropy).
+
+```
+$./zstd -h
+Compress or decompress the INPUT file(s); reads from STDIN if INPUT is `-` or not provided.
+
+Usage: zstd [OPTIONS...] [INPUT... | -] [-o OUTPUT]
+
+Options:
+  -o OUTPUT                     Write output to a single file, OUTPUT.
+  -k, --keep                    Preserve INPUT file(s). [Default]
+  --rm                          Remove INPUT file(s) after successful (de)compression.
+
+  -#                            Desired compression level, where `#` is a number between 1 and 19;
+                                lower numbers provide faster compression, higher numbers yield
+                                better compression ratios. [Default: 3]
+
+  -d, --decompress              Perform decompression.
+  -D DICT                       Use DICT as the dictionary for compression or decompression.
+
+  -f, --force                   Disable input and output checks. Allows overwriting existing files,
+                                receiving input from the console, printing output to STDOUT, and
+                                operating on links, block devices, etc. Unrecognized formats will be
+                                passed-through through as-is.
+
+  -h                            Display short usage and exit.
+  -H, --help                    Display full help and exit.
+  -V, --version                 Display the program version and exit.
+```
+
+[Benchmarks](https://github.com/facebook/zstd#benchmarks)
+
+![zstd](/assets/images/202307/zstd.png)
+
+
+
+
+## [cloc](https://github.com/AlDanial/cloc) - Count Lines of Code
+
+
+* `cloc --show-lang` 显示支持的语言
+* `cloc ./ --exclude-dir=node_modules` 排除某个目录分析
+* `cloc --quiet -by-file ./ --exclude-dir=node_modules --include-lang=Go | grep ".go" | sort -rn -k 4 | head -n 10` 统计代码行数(排除注释)排名前10的go文件
+
+首先 --quiet 是把输出结果精简化了，一些总计的结果给过滤了。然后使用 -by-file 代表统计的时候按照文件统计，而不是按照默认的语言统计， --exclude-dir 表示省略  node_modules 文件夹。 --include-lang 这里直接标记将 Golang 的文件统计出来。上面这些 cloc  的命令就把 ./ 下有哪些 go 文件，每个文件的空格多少行，注释多少行，真正代码多少行都列出来了。然后使用 grep ".go" 把一些噪音输出过滤掉，只留下“文件名\t空格行数\t注释行数\t代码行数”，后面的 sort -rn -k 4 按照第四列（代码行数）倒序排列，并且 head -n 10 显示前10个文件。
+
+
+
 ## diskusage
 
 A tool for showing disk usage. (Linux, MacOS and Windows)
@@ -2381,11 +2439,15 @@ Total: 4.514M   /data/home/gerryyang/tools/diskusage
  2.7K   0.1% └─ README.md
 ```
 
-## [Dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html)
+
+
+## 域名解析
+
+### [Dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html)
 
 The DNS subsystem provides a local DNS server for the network, with forwarding of all query types to upstream recursive DNS servers and caching of common record types (A, AAAA, CNAME and PTR, also DNSKEY and DS when DNSSEC is enabled).
 
-## /etc/nsswitch.conf
+### /etc/nsswitch.conf
 
 `/etc/nsswitch.conf` 文件是一个文本配置文件，主要用于控制在 Linux 和类 Unix 系统上进行各种名称服务查找时如何处理不同的数据库。换句话说，它定义了操作系统应该按照什么顺序或源（例如：文件、DNS、LDAP 或其他目录服务）查找主机名、用户、组等信息。
 
@@ -2423,7 +2485,7 @@ netgroup:       nis
 * 修改 `/etc/nsswitch.conf` 文件后，更改会立即生效，无需重新启动任何服务。
 * 请谨慎修改 `/etc/nsswitch.conf` 文件，因为错误的设置可能导致系统无法正常解析主机名、用户或组。始终确保在进行更改之前创建备份。
 
-## /etc/resolv.conf
+### /etc/resolv.conf
 
 `/etc/resolv.conf` 是一个文本配置文件，主要用于配置在 Linux 和类 Unix 系统上进行域名解析时使用的 DNS 服务器。该文件受到 GNU C Library 的 `libc` 解析器(`getaddrinfo()` 和 `gethostbyname()` 等函数)和其他低级DNS解析库的支持。
 
@@ -2449,7 +2511,7 @@ options timeout:2 attempts:3
 * 修改 /etc/resolv.conf 文件后，更改会立即生效，无需重新启动任何服务。
 * 许多现代 Linux 发行版使用 DHCP 客户端、网络管理器或其他网络服务自动管理 /etc/resolv.conf 文件，并可以生成动态版本。要将用户自定义设置添加到由这些服务自动更新的 /etc/resolv.conf 文件，请查阅特定服务的文档。
 
-## /etc/hosts
+### /etc/hosts
 
 `/etc/hosts` 文件是一个简单的文本文件，主要用于在没有 DNS 服务器的情况下解析主机名到 IP 地址。当 Linux 系统中的一个程序在进行主机名到 IP 地址的解析时，Linux 将首先检查 /etc/hosts 文件中是否存在与该主机名匹配的条目，之后才会查询 DNS 服务器。这意味着 /etc/hosts 文件中的定义具有优先权，可以用于覆盖 DNS 中的记录。
 
@@ -2471,6 +2533,10 @@ options timeout:2 attempts:3
 
 * 要修改 /etc/hosts 文件，您需要使用 root（管理员）权限。
 * 修改 /etc/hosts 文件后，更改会立即生效，无需重新启动任何服务。
+
+
+
+
 
 
 # [List of Unix commands](https://en.wikipedia.org/wiki/List_of_Unix_commands)
