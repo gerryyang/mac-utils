@@ -1834,6 +1834,27 @@ popd
 
 # Tips
 
+## 生成中间文件
+
+```
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -save-temps")
+```
+
+参考：[保存临时文件](https://wizardforcel.gitbooks.io/100-gcc-tips/content/save-temps.html)
+
+```
+$ gcc -save-temps a/foo.c
+$ ls foo.*
+foo.c  foo.i  foo.o  foo.s
+
+$ gcc -save-temps=obj a/foo.c -o a/foo
+$ ls a
+foo  foo.c  foo.i  foo.o  foo.s
+```
+
+* [gcc with parameters "-S -save-temps" puts intermediate files in current directory](https://stackoverflow.com/questions/2165079/gcc-with-parameters-s-save-temps-puts-intermediate-files-in-current-director)
+
+
 ## debug 编译去除 -g 选项
 
 ```

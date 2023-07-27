@@ -4436,7 +4436,11 @@ The relevant online reference with further details (and very hard to read) is [h
 
 # C++ 异常
 
-https://en.cppreference.com/w/cpp/language/throw
+* https://en.cppreference.com/w/cpp/language/throw
+* https://en.cppreference.com/w/cpp/language/try_catch
+* https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR61-CPP.+Catch+exceptions+by+lvalue+reference
+
+
 
 ``` cpp
 #include <iostream>

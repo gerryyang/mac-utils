@@ -688,7 +688,7 @@ related: [noinline attribute is not respected in -O1 and above #3409](github.com
 It sounds like you want to use the `optnone` attribute instead, to prevent the compiler from applying even the most obvious of optimizations (as this one is).
 
 
-# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
+# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html) - 调试相关的编译选项
 
 To tell `GCC` to emit extra information for use by a debugger, in almost all cases you need only to add `-g` to your other options. Some debug formats can co-exist (like DWARF with CTF) when each of them is enabled explicitly by adding the respective command line option to your other options.
 
@@ -714,7 +714,6 @@ Produce debugging information for use by GDB. This means to use the most express
 Note that with DWARF Version 2, some ports require and always use some non-conflicting DWARF 3 extensions in the unwind tables.
 
 Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit. **Version 5 requires GDB 8.0 or higher**.
-
 
 
 
@@ -1216,3 +1215,9 @@ PS archive means basically a static library (`*.a` files)
 # 优化调试
 
 ## [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)
+
+
+# Refer
+
+* [C++ 服务编译耗时优化原理及实践](https://my.oschina.net/meituantech/blog/4792764) (美团)
+

@@ -1057,5 +1057,9 @@ refer:
 * https://gcc.gnu.org/gcc-5/changes.html#libstdcxx
 
 
+# Refer
+
+* [100个gcc小技巧](https://wizardforcel.gitbooks.io/100-gcc-tips/content/index.html)
+
 
 

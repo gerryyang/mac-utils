@@ -83,6 +83,170 @@ The explicitly listed fields will be initialized as specified, and others will b
 
 # LLVM Coding Standards
 
+
+## [misc-throw-by-value-catch-by-reference](https://clang.llvm.org/extra/clang-tidy/checks/misc/throw-by-value-catch-by-reference.html)
+
+Finds violations of the rule “Throw by value, catch by reference” presented for example in “C++ Coding Standards” by H. Sutter and A. Alexandrescu, as well as the CERT C++ Coding Standard rule [ERR61-CPP. Catch exceptions by lvalue reference](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR61-CPP.+Catch+exceptions+by+lvalue+reference).
+
+
+Exceptions:
+
+* Throwing string literals will not be flagged despite being a pointer. They are not susceptible to slicing and the usage of string literals is idiomatic.
+* Catching character pointers (`char`, `wchar_t`, unicode character types) will not be flagged to allow catching string literals.
+* Moved named values will not be flagged as not throwing an anonymous temporary. In this case we can be sure that the user knows that the object can’t be accessed outside catch blocks handling the error.
+* Throwing function parameters will not be flagged as not throwing an anonymous temporary. This allows helper functions for throwing.
+* Re-throwing caught exception variables will not be flagged as not throwing an anonymous temporary. Although this can usually be done by just writing throw; it happens often enough in real code.
+
+在C++编程中，为了遵循“按值抛出，按引用捕获”的规则，一些特定情况下的异常处理。这个规则出现在H. Sutter和A. Alexandrescu的《C++编程规范》以及CERT C++编程规范的ERR61-CPP条款中。
+
+以下是一些例外情况：
+
+* 抛出字符串字面量不会被标记，尽管它们是指针。字符串字面量不容易被切片，而且使用字符串字面量是惯用的写法。
+* 捕获字符指针（char、wchar_t、Unicode字符类型）不会被标记，以便捕获字符串字面量。
+* 移动已命名值不会被标记为不抛出匿名临时值。在这种情况下，我们可以确信用户知道该对象无法在处理错误的catch块之外访问。
+* 抛出函数参数不会被标记为不抛出匿名临时值。这允许用于抛出异常的辅助函数。
+* 重新抛出捕获到的异常变量不会被标记为不抛出匿名临时值。尽管这通常可以通过仅编写throw来完成，但在实际代码中经常会出现这种情况。
+
+总之，这些例外情况是为了在特定场景下更好地遵循“按值抛出，按引用捕获”的规则，以提高代码的可读性和可维护性。
+
+按照规则，应该这样抛出和捕获异常：
+
+``` cpp
+class MyException {};
+
+void foo() {
+    throw MyException(); // 按值抛出
+}
+
+int main() {
+    try {
+        foo();
+    } catch (const MyException& e) { // 按引用捕获
+        // 处理异常
+    }
+}
+```
+
+以下是一些例外情况的示例：
+
+* 抛出字符串字面量：
+
+``` cpp
+void foo() {
+    throw "An error occurred"; // 抛出字符串字面量，不会被标记
+}
+
+int main() {
+    try {
+        foo();
+    } catch (const char* e) { // 捕获字符串字面量
+        // 处理异常
+    }
+}
+```
+
+* 抛出函数参数：
+
+``` cpp
+class MyException {};
+
+// 辅助函数，用于抛出异常
+void throwError(const MyException& e) {
+    throw e; // 抛出函数参数，不会被标记为不抛出匿名临时值
+}
+
+void foo() {
+    MyException e;
+    throwError(e); // 调用辅助函数抛出异常
+}
+
+int main() {
+    try {
+        foo();
+    } catch (const MyException& e) { // 按引用捕获
+        // 处理异常
+    }
+}
+```
+
+When an exception is thrown, the value of the object in the throw expression is used to initialize an anonymous temporary object called the exception object. The type of this exception object is used to transfer control to the nearest catch handler, which contains an exception declaration with a matching type. The C++ Standard, except.handle, paragraph 16 [ISO/IEC 14882-2014](https://wiki.sei.cmu.edu/confluence/display/cplusplus/AA.+Bibliography#AA.Bibliography-ISO/IEC14882-2014), in part, states the following:
+
+> The variable declared by the exception-declaration, of type cv T or cv T&, is initialized from the exception object, of type E, as follows:
+>
+> — if T is a base class of E, the variable is copy-initialized from the corresponding base class subobject of the exception object;
+> — otherwise, the variable is copy-initialized from the exception object.
+
+Because the variable declared by the exception-declaration is copy-initialized, it is possible to [slice](https://en.wikipedia.org/wiki/Object_slicing) the exception object as part of the copy operation, losing valuable exception information and leading to incorrect error recovery. For more information about object slicing, see [OOP51-CPP. Do not slice derived objects](https://wiki.sei.cmu.edu/confluence/display/cplusplus/OOP51-CPP.+Do+not+slice+derived+objects). Further, if the copy constructor of the exception object throws an exception, the copy initialization of the exception-declaration object results in undefined behavior. (See [ERR60-CPP. Exception objects must be nothrow copy constructible](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR60-CPP.+Exception+objects+must+be+nothrow+copy+constructible) for more information.)
+
+Always catch exceptions by [lvalue](https://wiki.sei.cmu.edu/confluence/display/cplusplus/BB.+Definitions#BB.Definitions-lvalue) reference unless the **type is a trivial type**. For reference, the C++ Standard, basic.types, paragraph 9 [[ISO/IEC 14882-2014](https://wiki.sei.cmu.edu/confluence/display/cplusplus/AA.+Bibliography#AA.Bibliography-ISO/IEC14882-2014)], defines trivial types as the following:
+
+> Arithmetic types, enumeration types, pointer types, pointer to member types, std::nullptr_t, and cv-qualified versions of these types are collectively called scalar types.... Scalar types, trivial class types, arrays of such types and cv-qualified versions of these types are collectively called trivial types.
+
+The C++ Standard, class, paragraph 6, defines trivial class types as the following:
+
+> A trivially copyable class is a class that:
+>
+> — has no non-trivial copy constructors,
+> — has no non-trivial move constructors,
+> — has no non-trivial copy assignment operators,
+> — has no non-trivial move assignment operators, and
+> — has a trivial destructor.
+>
+> A trivial class is a class that has a default constructor, has no non-trivial default constructors, and is trivially copyable. [Note: In particular, a trivially copyable or trivial class does not have virtual functions or virtual base classes. — end note]
+
+Noncompliant Code Example:
+
+In this noncompliant code example, an object of type S is used to initialize the exception object that is later caught by an exception-declaration of type std::exception. The exception-declaration matches the exception object type, so the variable E is copy-initialized from the exception object, resulting in the exception object being sliced. Consequently, the output of this noncompliant code example is the implementation-defined value returned from calling std::exception::what() instead of "My custom exception".
+
+``` cpp
+#include <exception>
+#include <iostream>
+
+struct S : std::exception {
+  const char *what() const noexcept override {
+    return "My custom exception";
+  }
+};
+
+void f() {
+  try {
+    throw S();
+  } catch (std::exception e) {
+    std::cout << e.what() << std::endl;  // 输出 std::exception 而不是 My custom exception
+  }
+}
+```
+
+Compliant Solution:
+
+In this compliant solution, the variable declared by the exception-declaration is an lvalue reference. The call to what() results in executing S::what() instead of std::exception::what().
+
+``` cpp
+#include <exception>
+#include <iostream>
+
+struct S : std::exception {
+  const char *what() const noexcept override {
+    return "My custom exception";
+  }
+};
+
+void f() {
+  try {
+    throw S();
+  } catch (std::exception &e) {
+    std::cout << e.what() << std::endl;
+  }
+}
+```
+
+
+参考：[ERR61-CPP. Catch exceptions by lvalue reference](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR61-CPP.+Catch+exceptions+by+lvalue+reference)
+
+
+
+
+
 ## [misc-definitions-in-headers](https://clang.llvm.org/extra/clang-tidy/checks/misc/definitions-in-headers.html)
 
 Finds non-extern non-inline function and variable definitions in header files, which can lead to potential ODR violations in case these headers are included from multiple translation units.
