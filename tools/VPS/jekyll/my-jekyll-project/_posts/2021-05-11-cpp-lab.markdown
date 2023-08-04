@@ -1157,9 +1157,20 @@ foo and bar completed.
 
 * https://www.cplusplus.com/reference/thread/thread/
 
-## thread_local (代替 static __thread)
+## thread-local storage (线程本地存储)
 
-> [Thread-Local Storage](https://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Thread-Local.html)
+> Thread-local storage (TLS) provides a mechanism allocating distinct objects for different threads. It is the usual implementation for GCC extension `__thread`, C11 `_Thread_local`, and C++11 `thread_local`, which allow the use of the declared name to refer to the entity associated with the current thread.
+
+An example usage of thread-local storage is POSIX `errno`:
+
+> Each thread has its own thread ID, scheduling priority and policy, errno value, floating point environment, thread-specific key/value bindings, and the required system resources to support a flow of control.
+
+Different threads have different `errno` copies. `errno` is typically defined as a **function** which **returns a thread-local variable**.
+
+
+
+
+### [Thread-Local Storage](https://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Thread-Local.html)
 
 Thread-local storage (TLS) is a mechanism by which variables are allocated such that there is one instance of the variable per extant thread. The run-time model GCC uses to implement this originates in the IA-64 processor-specific ABI, but has since been migrated to other processors as well. It requires significant support from the linker (ld), dynamic linker (ld.so), and system libraries (libc.so and libpthread.so), so it is not available everywhere.
 
@@ -1174,7 +1185,7 @@ At the user level, the extension is visible with a new storage class keyword: `_
 The `__thread` specifier may be used alone, with the `extern` or `static` specifiers, but with no other storage class specifier. When used with `extern` or `static`, `__thread` must appear immediately after the other storage class specifier.
 
 
----------
+### thread_local (C++11)
 
 
 
@@ -1252,11 +1263,42 @@ all done
 */
 ```
 
+### 使用 thread_local 减少栈空间
+
+``` cpp
+#include <cstdio>
+
+void f()
+{
+    int a[5];
+    a[4] = 1;
+
+    printf("%d\n", a[4]);
+}
+
+int main()
+{
+    f();
+}
+```
+
+![thread_local_stack](/assets/images/202307/thread_local_stack.png)
+
+将栈变量改为 `thread_local` 后：
+
+![thread_local_stack2](/assets/images/202307/thread_local_stack2.png)
+
+
+
+### More
+
+* [All about thread-local storage](https://maskray.me/blog/2021-02-14-all-about-thread-local-storage)
 * [Storage class specifiers](https://en.cppreference.com/w/cpp/language/storage_duration)
 * [Can you use thread local variables inside a class or structure](https://stackoverflow.com/questions/10999131/can-you-use-thread-local-variables-inside-a-class-or-structure)
 * [Are C++11 thread_local variables automatically static?](https://stackoverflow.com/questions/22794382/are-c11-thread-local-variables-automatically-static)
 * [What does the thread_local mean in C++11?](https://stackoverflow.com/questions/11983875/what-does-the-thread-local-mean-in-c11)
 * [GDB support for thread-local storage](https://gdb.sourceware.narkive.com/zdu9KCAa/support-for-thread-local-storage)
+
 
 ## inline namespace
 

@@ -1213,19 +1213,38 @@ Splits mail messages in a mailbox into commit log message, authorship informatio
 
 Git LFS 全名 Git Large File Storage，是 Github 带头在 2015 年推出的解决方案。
 
-* 下载安装扩展：https://github.com/git-lfs/git-lfs/releases
+* 下载安装：https://github.com/git-lfs/git-lfs/releases
 
 ``` bash
-tar xf git-lfs-*.tar.gz
-cd git-lfs-*
-sudo ./install.sh
+#!/bin/bash
+
+# Download Git LFS v3.4.0
+if ! wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.0/git-lfs-linux-amd64-v3.4.0.tar.gz; then
+        echo "Error: Failed to download Git LFS"
+        exit 1
+fi
+
+# Extract the archive
+if ! tar xvf git-lfs-linux-amd64-v3.4.0.tar.gz; then
+        echo "Error: Failed to extract the tarball"
+        exit 1
+fi
+
+# Enter the extracted directory
+cd git-lfs-3.4.0 || { echo "Error: Failed to enter the extracted directory"; exit 1; }
+
+# Check if the user has root privileges before installing
+if [ "$(id -u)" != "0" ]; then
+        echo "Error: Installation requires root privileges" 1>&2
+        exit 1
+fi
+
+# Install Git LFS
+./install.sh
+
+echo "Git LFS installation successful"
 ```
 
-* 初始化 git lfs
-
-```
-git lfs install
-```
 
 * 配置想要加入 lfs 托管的文件规则
 

@@ -9,18 +9,63 @@ categories: Python
 {:toc}
 
 
-# 环境配置
-
-## 源码安装 Python3.8
+# 环境配置 (Python3.8)
 
 ``` bash
-wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz
-tar xvf Python-3.8.12.tgz
-cd Python-3.8.12
-./configure
-make -j 16
-make install
+#!/bin/bash
+
+# Download Python
+if ! wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz; then
+  echo "Error: Failed to download Python"
+  exit 1
+fi
+
+# Extract the archive
+if ! tar xvf Python-3.8.12.tgz; then
+  echo "Error: Failed to extract the tarball"
+  exit 1
+fi
+
+# Enter the extracted directory
+cd Python-3.8.12 || { echo "Error: Failed to enter the extracted directory"; exit 1; }
+
+# Configure the build
+if ! ./configure; then
+  echo "Error: Failed to configure the build"
+  exit 1
+fi
+
+# Get the number of CPU cores
+num_cores=$(nproc)
+
+# Build Python
+if ! make -j"${num_cores}"; then
+  echo "Error: Failed to build Python"
+  exit 1
+fi
+
+# Check if the user has root privileges before installing
+if [ "$(id -u)" != "0" ]; then
+  echo "Error: Installation requires root privileges" 1>&2
+  exit 1
+fi
+
+# Install Python
+if ! make install; then
+  echo "Error: Failed to install Python"
+  exit 1
+fi
+
+# Create a soft link for Python
+if ! ln -sf /usr/local/bin/python3.8 /bin/python; then
+  echo "Error: Failed to create a soft link for Python"
+  exit 1
+fi
+
+# Print the installed Python version
+python --version
 ```
+
 
 ```
 $ python --version
@@ -29,17 +74,10 @@ $ which python
 /usr/bin/python
 ```
 
-设置环境变量：
-
-```
-export Python_INCLUDE_DIRS="/usr/local/include/python3.8"
-export PATH=/usr/local/bin:$PATH
-```
-
 安装 pip：
 
 ```
-/usr/local/bin/python3.8 -m pip install --upgrade pip
+python -m pip install --upgrade pip
 ```
 
 安装 module 依赖：例如，xxhash

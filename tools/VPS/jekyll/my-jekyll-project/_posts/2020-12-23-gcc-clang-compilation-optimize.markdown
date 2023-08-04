@@ -717,6 +717,259 @@ Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit
 
 
 
+# [Include What You Use](https://github.com/include-what-you-use/include-what-you-use) (A tool for use with clang to analyze #includes in C and C++ source files)
+
+> Here, the main benefit of include-what-you-use comes from the flip side: "don't include what you don't use."
+
+
+参考：https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md
+
+1. 更快的编译。当 `cpp` 文件包含冗余头文件时，编译器会读取、预处理和解析更多的代码，如果有模板存在，则会引入更多的代码，这会加大编译构建时间。
+2. 更好的重构。假如准备重构 `foo.h`，使得它不再使用 `vector`，很可能会从 `foo.h` 文件中移除 `#include<vector>`。理论上可以这么做，但实际上不行，因为其他文件可能会通过 `foo.h` 来间接引用 `vector`，贸然移除会造成其他文件编译失败。iwyu 工具可以找到并去掉这种间接引用。
+3. 头文件自注释。通过查看必须头文件注释，可知道该功能依赖于其他哪些子功能。
+4. 使用前向声明代替 include 语句，减少依赖，减少可执行程序大小。
+
+> Since some coding standards have taken to [discourage forward declarations](https://google.github.io/styleguide/cppguide.html#Forward_Declarations), IWYU has grown a `--no_fwd_decls` mode to embrace this alternative strategy. Where IWYU's default behavior is to minimize the number of include directives, IWYU with `--no_fwd_decls` will attempt to minimize the number of times each type is redeclared. The result is that include directives will always be preferred over local forward declarations, even if it means including a header just for a name-only type declaration.
+
+
+For more in-depth documentation, see [docs](https://github.com/include-what-you-use/include-what-you-use/tree/master/docs).
+
+> **NOTE**: Include-what-you-use makes heavy use of Clang internals, and will occasionally break when Clang is updated. We build IWYU regularly against Clang mainline to detect and fix such compatibility breaks as soon as possible.
+
+## Build
+
+### How to build standalone
+
+This build mode assumes you already have compiled LLVM and Clang libraries on your system, either via packages for your platform or built from source. To set up an environment for building IWYU:
+
+
+* Create a directory for IWYU development, e.g. `iwyu`
+* Clone the IWYU Git repo:
+
+```
+iwyu$ git clone https://github.com/include-what-you-use/include-what-you-use.git
+```
+
+
+* Presumably, you'll be building IWYU with a released version of LLVM and Clang, so **check out the corresponding branch**. For example, if you have Clang 6.0 installed, use the `clang_6.0` branch. IWYU `master` tracks LLVM & Clang `main`:
+
+```
+iwyu$ cd include-what-you-use
+iwyu/include-what-you-use$ git checkout clang_6.0
+```
+
+* Create a build root and use CMake to generate a build system linked with LLVM/Clang prebuilts:
+
+```
+# This example uses the Makefile generator, but anything should work.
+iwyu/include-what-you-use$ cd ..
+iwyu$ mkdir build && cd build
+
+# For IWYU 0.10/Clang 6 and earlier
+iwyu/build$ cmake -G "Unix Makefiles" -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-6.0 ../include-what-you-use
+
+# For IWYU 0.11/Clang 7 and later
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=/usr/lib/llvm-7 ../include-what-you-use
+```
+
+(substitute the `llvm-6.0` or `llvm-7` suffixes with the actual version compatible with your IWYU branch)
+
+or, if you have a local LLVM and Clang build tree, you can specify that as `CMAKE_PREFIX_PATH` for IWYU 0.11 and later:
+
+```
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=~/llvm-project/build ../include-what-you-use
+```
+
+* Once CMake has generated a build system, you can invoke it directly from `build`, e.g.
+
+```
+iwyu/build$ make
+```
+
+### How to build as part of LLVM
+
+Instructions for building LLVM and Clang are available at https://clang.llvm.org/get_started.html.
+
+To include IWYU in the LLVM build, use the `LLVM_EXTERNAL_PROJECTS` and `LLVM_EXTERNAL_*_SOURCE_DIR` CMake variables when configuring LLVM:
+
+```
+llvm-project/build$ cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=iwyu -DLLVM_EXTERNAL_IWYU_SOURCE_DIR=/path/to/iwyu /path/to/llvm-project/llvm
+llvm-project/build$ make
+```
+
+This builds all of LLVM, Clang and IWYU in a single tree.
+
+## Usage
+
+```
+$include-what-you-use --help
+USAGE: include-what-you-use [-Xiwyu --iwyu_opt]... <clang opts> <source file>
+Here are the <iwyu_opts> you can specify (e.g. -Xiwyu --verbose=3):
+   --check_also=<glob>: tells iwyu to print iwyu-violation info
+        for all files matching the given glob pattern (in addition
+        to the default of reporting for the input .cc file and its
+        associated .h files).  This flag may be specified multiple
+        times to specify multiple glob patterns.
+   --keep=<glob>: tells iwyu to always keep these includes.
+        This flag may be specified multiple times to specify
+        multiple glob patterns.
+   --mapping_file=<filename>: gives iwyu a mapping file.
+   --no_default_mappings: do not add iwyu's default mappings.
+   --pch_in_code: mark the first include in a translation unit as a
+        precompiled header.  Use --pch_in_code to prevent IWYU from
+        removing necessary PCH includes.  Though Clang forces PCHs
+        to be listed as prefix headers, the PCH-in-code pattern can
+        be used with GCC and is standard practice on MSVC
+        (e.g. stdafx.h).
+   --prefix_header_includes=<value>: tells iwyu what to do with
+        in-source includes and forward declarations involving
+        prefix headers.  Prefix header is a file included via
+        command-line option -include.  If prefix header makes
+        include or forward declaration obsolete, presence of such
+        include can be controlled with the following values
+          add:    new lines are added
+          keep:   new lines aren't added, existing are kept intact
+          remove: new lines aren't added, existing are removed
+        Default value is 'add'.
+   --transitive_includes_only: do not suggest that a file add
+        foo.h unless foo.h is already visible in the file's
+        transitive includes.
+   --max_line_length: maximum line length for includes.
+        Note that this only affects comments and alignment thereof,
+        the maximum line length can still be exceeded with long
+        file names (default: 80).
+   --no_comments: do not add 'why' comments.
+   --no_fwd_decls: do not use forward declarations.
+   --verbose=<level>: the higher the level, the more output.
+   --quoted_includes_first: when sorting includes, place quoted
+        ones first.
+   --cxx17ns: suggests the more concise syntax introduced in C++17
+
+In addition to IWYU-specific options you can specify the following
+options without -Xiwyu prefix:
+   --help: prints this help and exits.
+   --version: prints version and exits.
+```
+
+### Running on single source file
+
+The simplest way to use IWYU is to run it against a single source file:
+
+```
+include-what-you-use $CXXFLAGS myfile.cc
+```
+
+where `$CXXFLAGS` are the flags you would normally pass to the compiler.
+
+
+### Plugging into existing build system
+
+Typically there is already a build system containing the relevant compiler flags for all source files. Replace your compiler with `include-what-you-use` to generate a large batch of IWYU advice. Depending on your build system/build tools, this can take many forms, but for a simple GNU Make system it might look like this:
+
+```
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always"
+```
+
+> The additional `-Xiwyu --error_always` switch makes `include-what-you-use` always exit with an error code, so the build system knows it didn't build a .o file. Hence the need for `-k`.
+
+In this mode `include-what-you-use` only analyzes the `.cc` (or `.cpp`) files known to your build system, along with their corresponding `.h` files. If your project has a `.h` file with no corresponding `.cc` file, IWYU will ignore it unless you use the `--check_also` switch to add it for analysis together with a `.cc` file. It is possible to run IWYU against individual header files, provided the compiler flags are carefully constructed to match all includers.
+
+### Using with CMake
+
+CMake has grown native support for IWYU as of version 3.3. See [their documentation](https://cmake.org/cmake/help/latest/prop_tgt/LANG_INCLUDE_WHAT_YOU_USE.html) for CMake-side details.
+
+
+```
+New in version 3.3.
+
+This property is implemented only when <LANG> is C or CXX.
+
+Specify a semicolon-separated list containing a command line for the include-what-you-use tool. The Makefile Generators and the Ninja generator will run this tool along with the compiler and report a warning if the tool reports any problems.
+```
+
+The `CMAKE_CXX_INCLUDE_WHAT_YOU_USE` option enables a mode where CMake first compiles a source file, and then runs IWYU on it.
+
+Use it like this:
+
+```
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use ...
+```
+
+These examples assume that `include-what-you-use` is in the `PATH`. If it isn't, consider changing the value to an absolute path. Arguments to IWYU can be added using CMake's semicolon-separated list syntax, e.g.:
+
+```
+  ... cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE="include-what-you-use;-w;-Xiwyu;--verbose=7" ...
+```
+
+The option appears to be separately supported for both C and C++, so use `CMAKE_C_INCLUDE_WHAT_YOU_USE` for C code.
+
+### Using with a compilation database
+
+The `iwyu_tool.py` script pre-dates the native CMake support, and works off the [compilation database format](https://clang.llvm.org/docs/JSONCompilationDatabase.html). For example, CMake generates such a database named `compile_commands.json` with the `CMAKE_EXPORT_COMPILE_COMMANDS` option enabled.
+
+The script's command-line syntax is designed to mimic Clang's LibTooling, but they are otherwise unrelated. It can be used like this:
+
+```
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ...
+iwyu_tool.py -p .
+```
+
+Unless a source filename is provided, all files in the project will be analyzed.
+
+See `iwyu_tool.py --help` for more options.
+
+
+### Applying fixes
+
+We also include a tool that automatically fixes up your source files based on the IWYU recommendations. This is also alpha-quality software! Here's how to use it (requires python3):
+
+```
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always" 2> /tmp/iwyu.out
+python3 fix_includes.py < /tmp/iwyu.out
+```
+
+If you don't like the way `fix_includes.py` munges your `#include` lines, you can control its behavior via flags. `fix_includes.py --help` will give a full list, but these are some common ones:
+
+* `-b`: Put blank lines between system and Google includes
+* `--nocomments`: Don't add the 'why' comments next to includes
+
+
+### [Which pragma should I use?](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
+
+Ideally, IWYU should be smart enough to understand your intentions (and intentions of the authors of libraries you use), so the first answer should always be: none.
+
+In practice, intentions are not so clear -- it might be ambiguous whether an `#include` is there by clever design or by mistake, whether an `#include` serves to export symbols from a private header through a public facade or if it's just a left-over after some clean-up. Even when intent is obvious, IWYU can make mistakes due to bugs or not-yet-implemented policies.
+
+IWYU pragmas have some overlap, so it can sometimes be hard to choose one over the other. Here's a guide based on how I understand them at the moment:
+
+* Use `IWYU pragma: keep` to force IWYU to keep any `#include` directive that would be discarded under its normal policies.
+* Use `IWYU pragma: always_keep` to force IWYU to keep a header in all includers, whether they contribute any used symbols or not.
+* Use `IWYU pragma: export` to tell IWYU that one header serves as the provider for all symbols in another, included header (e.g. facade headers). Use `IWYU pragma: begin_exports/end_exports` for a whole group of included headers.
+* Use `IWYU pragma: no_include` to tell IWYU that the file in which the pragma is defined should never `#include` a specific header (the header may already be included via some other `#include`.)
+* Use `IWYU pragma: no_forward_declare` to tell IWYU that the file in which the pragma is defined should never forward-declare a specific symbol (a forward declaration may already be available via some other `#include`.)
+* Use `IWYU pragma: private` to tell IWYU that the header in which the pragma is defined is private, and should not be included directly.
+* Use `IWYU pragma: private, include "public.h"` to tell IWYU that the header in which the pragma is defined is private, and `public.h` should always be included instead.
+* Use `IWYU pragma: friend ".*favorites.*"` to override `IWYU pragma: private` selectively, so that a set of files identified by a regex can include the file even if it's private.
+
+The pragmas come in three different classes;
+
+1. Ones that apply to a single `#include` directive (`keep`, `export`)
+2. Ones that apply to a file being included (`private`, `friend`, `always_keep`)
+3. Ones that apply to a file including other headers (`no_include`, `no_forward_declare`)
+
+Some files are both included and include others, so it can make sense to mix and match.
+
+
+### [Why include-what-you-use is difficult](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYUIsDifficult.md)
+
+This section is informational, for folks who are wondering why include-what-you-use requires so much code and yet still has so many errors.
+
+Include-what-you-use has the most problems with templates and macros. If your code doesn't use either, IWYU will probably do great. And, you're probably not actually programming in C++...
+
+
+
 
 
 
@@ -1174,14 +1427,15 @@ objcopy --add-gnu-debuglink=output_file.debug.zst output_file
 
 请注意，这种方法可能不被所有调试器支持，因为它们可能无法识别zstd压缩的调试信息。在使用此方法之前，请确保您的调试器支持处理zstd压缩的调试信息。
 
+# 其他
 
-# -fno-rtti / -frtti
+## -fno-rtti / -frtti
 
 * https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
 * https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
 * https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class
 
-# -Wl,--start-group / -Wl,--end-group
+## -Wl,--start-group / -Wl,--end-group
 
 [What are the --start-group and --end-group command line options?](https://stackoverflow.com/questions/5651869/what-are-the-start-group-and-end-group-command-line-options)
 

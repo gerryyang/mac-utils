@@ -2069,6 +2069,39 @@ Answers:
 
 # Example
 
+## 检查是否是 root 用户
+
+``` bash
+# Check if the user has root privileges
+if [ "$(id -u)" != "0" ]; then
+  echo "This script must be run as root" 1>&2
+  exit 1
+fi
+```
+
+## 获取当前 CPU 数量
+
+``` bash
+# Get the number of CPU cores
+num_cores=$(nproc)
+```
+
+```
+nproc --help
+Usage: nproc [OPTION]...
+Print the number of processing units available to the current process,
+which may be less than the number of online processors
+
+      --all      print the number of installed processors
+      --ignore=N  if possible, exclude N processing units
+      --help     display this help and exit
+      --version  output version information and exit
+
+GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+Full documentation at: <https://www.gnu.org/software/coreutils/nproc>
+or available locally via: info '(coreutils) nproc invocation'
+```
+
 ## 根据大小查找文件
 
 ``` bash
