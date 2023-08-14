@@ -1470,6 +1470,30 @@ PS archive means basically a static library (`*.a` files)
 
 ## [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)
 
+# Q&A
+
+## [Relocation overflow and code models](https://maskray.me/blog/2023-05-14-relocation-overflow-and-code-models)
+
+There are several strategies to mitigate relocation overflow issues.
+
+* Make the program smaller by reducing code and data size.
+* Partition the large monolithic executable into the main executable and a few shared objects.
+* Switch to the medium code model
+* Use compiler options such as `-Os`, `-Oz` and link-time optimization that focuses on decreasing the code size.
+* For compiler instrumentations (e.g. `-fsanitize=address`, `-fprofile-generate`), move some data to large data sections.
+* Use linker script commands `INSERT BEFORE` and `INSERT AFTER` to reorder output sections.
+
+在某些情况下，当静态链接的二进制文件超过2GB时，可能会遇到relocation overflow问题。这是因为在大型程序中，某些指针和地址可能超出了编译器为其分配的空间。为了解决这个问题，可以尝试以下方法：
+
+1. 使用大型模型或大型地址空间：在编译时，可以选择使用大型模型（例如-mcmodel=large）或大型地址空间（例如-mlarge-address-aware）。这将允许编译器和链接器使用更大的地址空间，以便处理大型程序。具体的编译选项可能因编译器而异，请参阅编译器文档以获取适当的选项。
+2. 分割程序：如果可能，将程序分割成多个较小的模块或库。这可以减小每个模块的大小，降低relocation overflow的风险。此外，使用动态链接库（DLL）或共享对象（SO）可以进一步减小二进制文件的大小。
+3. 优化代码：检查代码以查找潜在的优化点，例如删除未使用的代码、减少全局变量的使用、优化数据结构和算法等。这可以帮助减小二进制文件的大小，从而降低relocation overflow的风险。
+4. 更新编译器和链接器：确保使用的编译器和链接器是最新版本，因为它们可能包含解决relocation overflow问题的修复和改进。此外，尝试使用其他编译器，看看它们是否能更好地处理大型程序。
+5. 考虑使用动态链接：虽然静态链接可以将所有依赖项打包到单个二进制文件中，但它可能导致文件过大。如果可能，考虑改用动态链接，将依赖项链接为共享库或动态链接库。这样可以减小二进制文件的大小，并减轻relocation overflow问题。
+
+请注意，解决relocation overflow问题可能需要对代码、编译选项和链接过程进行多方面的调整。在尝试上述方法时，请根据具体情况选择合适的策略。
+
+
 
 # Refer
 

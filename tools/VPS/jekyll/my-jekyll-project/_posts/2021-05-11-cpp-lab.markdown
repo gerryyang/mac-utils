@@ -4473,7 +4473,31 @@ It's called an initializer list. But in previous versions of the standard that w
 The relevant online reference with further details (and very hard to read) is [here](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2672.htm). I also tried it using GCC and the `--std=c++0x` option and confirmed that it works indeed.
 
 
+## 空指针类型转换，执行函数
 
+``` cpp
+#include <cstdio>
+
+struct X
+{
+    void test()
+    {
+        puts("123");
+    }
+
+    virtual void test2()
+    {
+        puts("456");
+    }
+};
+
+int main()
+{
+    X* x = (X*)nullptr;
+    x->test();     // ok, print "123"
+    x->test2();   // error, Segmentation fault
+}
+```
 
 
 # C++ 异常

@@ -424,6 +424,14 @@ Examples:
 | !(!a && !b)	| a || b
 
 
+## default arguments on virtual or override methods are prohibited
+
+[Can virtual functions have default parameters?](https://stackoverflow.com/questions/3533589/can-virtual-functions-have-default-parameters)
+
+
+
+
+
 # Refer
 
 * [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)

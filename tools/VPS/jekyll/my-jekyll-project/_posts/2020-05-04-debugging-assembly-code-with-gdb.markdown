@@ -660,6 +660,206 @@ set logging on
 set logging off
 ```
 
+## 对 gdb 的输出内容自动翻页
+
+```
+(gdb) set pagination off
+```
+
+## 打印完整的字符串
+
+```
+(gdb) show print elements
+(gdb) set print elements 0
+(gdb) show print elements
+```
+
+
+
+# [《Debug Hacks》和调试技巧](https://maskray.me/blog/2013-07-25-debug-hacks)
+
+作者为吉冈弘隆、大和一洋、大岩尚宏、安部东洋、吉田俊辅，有中文版《Debug Hacks中文版—深入调试的技术和工具》。这本书涉及了很多调试技巧，对调试器使用、内核调试方法、常见错误的原因，还介绍了 systemtap、strace、ltrace 等一大堆工具，非常值得一读。
+
+
+## 记录历史
+
+先执行 `mkdir ~/.history` 把下面几行添加到 `~/.gdbinit` 中，gdb 启动时会自动读取里面的命令并执行：
+
+```
+set history save on
+set history size 10000
+set history filename ~/.history/gdb
+```
+
+在 `~/.history` 堆放各个历史文件。有了历史，使用 `readline` 的 `reverse-search-history` (`C-r`) 就能轻松唤起之前输入过的命令。
+
+## 修改任意内存地址的值
+
+```
+set {int}0x83040 = 4
+```
+
+## 显示 intel 风格的汇编指令
+
+```
+set disassembly-flavor intel
+```
+
+示例：
+
+``` cpp
+#include <iostream>
+int main()
+{
+    int a = 1;
+    std::cout << a << std::endl;
+}
+```
+
+```
+(gdb) disass
+Dump of assembler code for function main():
+   0x0000000000401156 <+0>:     push   %rbp
+   0x0000000000401157 <+1>:     mov    %rsp,%rbp
+   0x000000000040115a <+4>:     sub    $0x10,%rsp
+   0x000000000040115e <+8>:     movl   $0x1,-0x4(%rbp)
+=> 0x0000000000401165 <+15>:    mov    -0x4(%rbp),%eax
+   0x0000000000401168 <+18>:    mov    %eax,%esi
+   0x000000000040116a <+20>:    mov    $0x404040,%edi
+   0x000000000040116f <+25>:    callq  0x401050 <_ZNSolsEi@plt>
+   0x0000000000401174 <+30>:    mov    $0x0,%eax
+   0x0000000000401179 <+35>:    leaveq
+   0x000000000040117a <+36>:    retq
+End of assembler dump.
+(gdb) set disassembly-flavor intel
+(gdb) disass
+Dump of assembler code for function main():
+   0x0000000000401156 <+0>:     push   rbp
+   0x0000000000401157 <+1>:     mov    rbp,rsp
+   0x000000000040115a <+4>:     sub    rsp,0x10
+   0x000000000040115e <+8>:     mov    DWORD PTR [rbp-0x4],0x1
+=> 0x0000000000401165 <+15>:    mov    eax,DWORD PTR [rbp-0x4]
+   0x0000000000401168 <+18>:    mov    esi,eax
+   0x000000000040116a <+20>:    mov    edi,0x404040
+   0x000000000040116f <+25>:    call   0x401050 <_ZNSolsEi@plt>
+   0x0000000000401174 <+30>:    mov    eax,0x0
+   0x0000000000401179 <+35>:    leave
+   0x000000000040117a <+36>:    ret
+End of assembler dump.
+```
+
+## 断点在 function prologue (开场白，序言) 前
+
+先说一下 function prologue 吧，每个函数最前面一般有三四行指令用来保存旧的帧指针(`rbp`)，并腾出一部分栈空间(通常用于储存局部变量、为当前函数调用其他函数腾出空间存放参数，有时候还会存储字面字符串，当有`nested function`时也会用于保存当前的栈指针)。
+
+在`x86-64`环境下典型的`funcition prologue`长成这样：
+
+```
+push rbp
+mov rbp, rsp
+sub rsp, 0x10
+```
+
+可能还会有`and`指令用于对齐`rsp`。如果编译时加上`-fomit-frame-pointer` (Visual Studio 中文版似乎译作 “省略框架指针”)，那么生成的指令就会避免使用`rbp`，function prologue 就会简化成下面一行：
+
+```
+sub rsp, 0x10
+```
+
+```
+-fomit-frame-pointer 是一个编译器选项，用于告诉编译器在生成代码时省略帧指针。帧指针（通常是 ebp 寄存器，在 x86 架构上，或 rbp 寄存器，在 x86-64 架构上）用于在函数调用期间保存调用者的堆栈帧的基址。这在调试和分析函数调用栈时非常有用。
+
+然而，在许多情况下，帧指针并不是严格必需的，因为编译器可以使用其他方法来跟踪堆栈帧。通过省略帧指针，编译器可以将帧指针寄存器用于其他目的，从而提高代码的性能。这在寄存器有限的体系结构（如 x86）上尤其有益，因为它可以减少寄存器溢出并提高代码的性能。
+
+-fomit-frame-pointer 选项的主要优点是性能提升，但它也有一些缺点：
+
+1. 调试困难：省略帧指针可能会导致调试过程变得更加困难，因为调试器可能无法准确地重建函数调用栈。这可能会导致错误的堆栈跟踪和调试信息。
+
+2. 分析困难：像 gprof 这样的性能分析工具可能无法正确分析没有帧指针的代码，从而导致不准确的分析结果。
+
+总之，-fomit-frame-pointer 编译选项的作用是告诉编译器在生成代码时省略帧指针，从而提高代码性能。然而，这可能会导致调试和分析过程变得更加困难。在权衡性能和调试需求时，您可以根据实际情况决定是否使用此选项。
+```
+
+
+例如，上面的代码示例：
+
+g++ -g test.cc -fomit-frame-pointer
+
+```
+(gdb) disass
+Dump of assembler code for function main():
+=> 0x0000000000401156 <+0>:     sub    $0x18,%rsp
+   0x000000000040115a <+4>:     movl   $0x1,0xc(%rsp)
+   0x0000000000401162 <+12>:    mov    0xc(%rsp),%eax
+   0x0000000000401166 <+16>:    mov    %eax,%esi
+   0x0000000000401168 <+18>:    mov    $0x404040,%edi
+   0x000000000040116d <+23>:    callq  0x401050 <_ZNSolsEi@plt>
+   0x0000000000401172 <+28>:    mov    $0x0,%eax
+   0x0000000000401177 <+33>:    add    $0x18,%rsp
+   0x000000000040117b <+37>:    retq
+End of assembler dump.
+```
+
+设置断点时如果使用了`b *func`的格式，也就是说在函数名前加上`*`，gdb 就会在执行 function prologue **前**停下，而`b func`则是在执行 function prologue **后**停下。
+
+![gdb1](/assets/images/202308/gdb1.png)
+
+![gdb2](/assets/images/202308/gdb2.png)
+
+
+## Checkpoint
+
+gdb 可以为被调试的程序创建一个**快照**，即**保存程序运行时的状态，等待以后恢复**。这个是非常方便的一个功能，特别适合需要探测接下来会发生什么但又不想离开当前状态时使用。
+
+`ch`是创建快照，`d c ID`是删除指定编号的快照，`i ch`是查看所有快照，`restart ID`是切换到指定编号的快照，详细说明可以在 shell 里键入`info '(gdb) Checkpoint/Restart'`查看。
+
+![gdb3](/assets/images/202308/gdb3.png)
+
+
+## pstack
+
+打印指定进程的系统栈。本质是一段脚本，核心是下面这句话：
+
+``` bash
+#!/bin/zsh
+gdb -q -nx -p $1 <<< 't a a bt' 2>&- | sed -ne '/^#/p'
+```
+
+这是一个使用gdb调试器获取指定进程堆栈跟踪（stack trace）的shell命令。逐步分析这个命令：
+
+1. `gdb -q -nx -p $1`：这是调用 gdb 的命令。选项 `-q` 表示 quiet 模式，减少 gdb 的输出；`-nx` 表示不执行任何 `.gdbinit` 文件中的命令；`-p $1` 表示附加到给定进程 ID（由 `$1` 指定）。
+
+2. `<<< 't a a bt'`：这是一个 "here string"，它将字符串 `t a a bt` 作为 gdb 的输入。`t a a bt` 是 gdb 命令的缩写，表示 `thread apply all backtrace`，用于获取所有线程的堆栈跟踪。
+
+3. `2>&-`：这是一个文件描述符重定向，将标准错误（file descriptor 2）重定向到 `/dev/null`（关闭）。这样，gdb 产生的错误信息将不会显示在输出中。
+
+4. `| sed -ne '/^#/p'`：这是一个管道，将 gdb 的输出传递给 sed 命令。sed 命令使用 `-n` 选项表示只打印匹配的行，`-e` 选项表示执行后面的脚本。脚本 `'/^#/p'` 表示匹配以 `#` 开头的行并打印。这样，最终的输出将只包含堆栈跟踪中的实际帧（以 `#` 开头）。
+
+综上所述，这个命令的作用是获取指定进程 ID（由 `$1` 给出）的所有线程的堆栈跟踪，并仅显示堆栈帧。
+
+```
+$ pstack $$
+#0  0x00007f2cc5dac44c in __libc_waitpid (pid=-1, stat_loc=0x7ffddd9f59c0, options=10) at ../sysdeps/unix/sysv/linux/waitpid.c:31
+#1  0x0000000000442a64 in waitchld.isra.10 ()
+#2  0x0000000000443d1c in wait_for ()
+#3  0x00000000004347fe in execute_command_internal ()
+#4  0x0000000000434a1e in execute_command ()
+#5  0x000000000041ece5 in reader_loop ()
+#6  0x000000000041d2ae in main ()
+```
+
+在 gdb 中输入如下命令，可实现 pstack 相同的功能，并将所有线程的堆栈信息输出到文件中：
+
+```
+(gdb) set logging file threadinfo.txt   # 设置输出的文件名
+(gdb) set logging on                    # 输入这个命令后，此后的调试信息将输出到文件
+(gdb) thread apply all bt               # 打印所有线程栈信息
+(gdb) set logging off                   # 关闭到指定文件的输出
+(gdb) quit                              # 退出 gdb 调试
+```
+
+
+
 
 
 
@@ -675,4 +875,4 @@ set logging off
 * [GDB中应该知道的几个调试方法 - CoolShell](http://coolshell.cn/articles/3643.html)
 * [Introduction to GDB - Posted by adrian.ancona on February 9, 2018](https://ncona.com/2018/02/introduction-to-gdb/)
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
-
+* 以色列的 Haifa Linux club 有一次讲座讲 gdb，讲稿值得一看：http://haifux.org/lectures/210/gdb_-_customize_it.html

@@ -328,6 +328,28 @@ From [Wikipedia](http://en.wikipedia.org/wiki/YAML):
 
 > Comments begin with the number sign ( `#` ), can start anywhere on a line, and continue until the end of the line
 
+## [why --- (3 dashes/hyphen) in yaml file?](https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file)
+
+> YAML uses three dashes `---` to separate directives from document content. This also serves to signal the start of a document if no directives are present.
+
+It's not mandatory to have them if you do not begin your `YAML` with a directive. If it's the case, you should use them.
+
+Let's take a look at the documentation
+
+> 3.2.3.4. Directives
+>
+> Each document may be associated with a set of directives. A directive has a name and an optional sequence of parameters. **Directives are instructions to the YAML processor, and like all other presentation details are not reflected in the YAML serialization tree or representation graph.** This version of YAML defines a two directives, “YAML” and “TAG”. All other directives are reserved for future versions of YAML.
+
+One example of this can also be found in the [documentation](http://yaml.org/spec/1.1/#YAML%20directive/) for directive `YAML`
+
+``` yaml
+%YAML 1.2 # Attempt parsing
+           # with a warning
+---
+"foo"
+```
+
+
 
 # Tools
 
@@ -338,8 +360,9 @@ From [Wikipedia](http://en.wikipedia.org/wiki/YAML):
 
 * [YAML 语言教程 - 阮一峰](https://www.ruanyifeng.com/blog/2016/07/yaml.html)
 * [YAML - In One Video](https://www.youtube.com/watch?v=cdLNKUoMc6c)
-
-
+* [Brief YAML reference](https://camel.readthedocs.io/en/latest/yamlref.html)
+* [YAML Ain’t Markup Language (YAML) Version 1.1](https://yaml.org/spec/1.1/#YAML%20directive/)
+* [Learn X in Y minutes](https://learnxinyminutes.com/docs/yaml/)
 
 
 

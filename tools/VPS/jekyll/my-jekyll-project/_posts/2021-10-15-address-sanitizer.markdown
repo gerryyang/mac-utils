@@ -8,6 +8,118 @@ categories: [Linux Performance]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# TL;DR
+
+`AddressSanitizer` is a fast memory error detector. It consists of a compiler instrumentation module and a run-time library. The tool can detect the following types of bugs:
+
+1. Out-of-bounds accesses to heap, stack and globals
+2. Use-after-free
+3. Use-after-return (clang flag `-fsanitize-address-use-after-return=(never|runtime|always)` default: `runtime`)
+   1. Enable with: `ASAN_OPTIONS=detect_stack_use_after_return=1` (already enabled on Linux).
+   2. Disable with: `ASAN_OPTIONS=detect_stack_use_after_return=0`.
+4. Use-after-scope (clang flag `-fsanitize-address-use-after-scope`)
+5. Double-free, invalid free
+6. Memory leaks (experimental)
+
+Typical slowdown introduced by AddressSanitizer is `2x`.
+
+Simply **compile** and **link** your program with `-fsanitize=address` flag. The AddressSanitizer run-time library should be linked to the final executable, so make sure to use `clang` (not `ld`) for the final link step. When linking shared libraries, the AddressSanitizer run-time is not linked, so `-Wl,-z,defs` may cause link errors (don’t use it with AddressSanitizer). To get a reasonable performance add `-O1` or higher. To get nicer stack traces in error messages add `-fno-omit-frame-pointer`. To get perfect stack traces you may need to disable inlining (just use `-O1`) and tail call elimination (`-fno-optimize-sibling-calls`).
+
+```
+% cat example_UseAfterFree.cc
+int main(int argc, char **argv) {
+  int *array = new int[100];
+  delete [] array;
+  return array[argc];  // BOOM
+}
+
+# Compile and link
+% clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer example_UseAfterFree.cc
+```
+
+or:
+
+```
+# Compile
+% clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer -c example_UseAfterFree.cc
+# Link
+% clang++ -g -fsanitize=address example_UseAfterFree.o
+```
+
+If a bug is detected, the program will print an error message to stderr and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
+
+* If a bug is detected, the program will print an error message to stderr and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
+* **Fixing bugs becomes unavoidable**. **AddressSanitizer does not produce false alarms**. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
+
+## Symbolizing the Reports
+
+To make AddressSanitizer symbolize its output you need to set the `ASAN_SYMBOLIZER_PATH` environment variable to point to the `llvm-symbolizer` binary (or make sure `llvm-symbolizer` is in your `$PATH`):
+
+```
+% ASAN_SYMBOLIZER_PATH=/usr/local/bin/llvm-symbolizer ./a.out
+==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
+READ of size 4 at 0x7f7ddab8c084 thread T0
+    #0 0x403c8c in main example_UseAfterFree.cc:4
+    #1 0x7f7ddabcac4d in __libc_start_main ??:0
+0x7f7ddab8c084 is located 4 bytes inside of 400-byte region [0x7f7ddab8c080,0x7f7ddab8c210)
+freed by thread T0 here:
+    #0 0x404704 in operator delete[](void*) ??:0
+    #1 0x403c53 in main example_UseAfterFree.cc:4
+    #2 0x7f7ddabcac4d in __libc_start_main ??:0
+previously allocated by thread T0 here:
+    #0 0x404544 in operator new[](unsigned long) ??:0
+    #1 0x403c43 in main example_UseAfterFree.cc:2
+    #2 0x7f7ddabcac4d in __libc_start_main ??:0
+==9442== ABORTING
+```
+
+
+
+
+
+
+参考：[Clang 18.0.0 - AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
+
+# LeakSanitizer
+
+Clang and [GCC 4.9](https://gcc.gnu.org/PR59061) implemented LeakSanitizer in 2013. [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html) (`LSan`) is a memory leak detector. It intercepts memory allocation functions and by default detects memory leaks at `atexit` time. The implementation is purely in the runtime (`compiler-rt/lib/lsan`) and no instrumentation is needed.
+
+`LSan` has very little architecture-specific code and supports many 64-bit targets. Some 32-bit targets (e.g. Linux arm/x86-32) are supported as well, but there may be high false negatives because pointers with fewer bits are more easily confused with integers/floating points/other data of a similar pattern. Every supported operating system needs to provide some way to "stop the world".
+
+* LeakSanitizer 的实现不依赖于特定的硬件架构，因此它可以支持许多64位目标平台。
+* 也支持一些32位目标平台，如 Linux arm 和 x86-32
+* 在32位目标平台上，LeakSanitizer 可能会出现较高的假阴性（即未检测到实际存在的内存泄漏）。这是因为32位指针的位数较少，更容易与整数、浮点数或其他类似模式的数据混淆。
+* 每个受支持的操作系统都需要提供一种方法来“暂停世界”，即暂停所有线程以便 LeakSanitizer 可以安全地检查内存泄漏。这是因为在检查内存泄漏时，需要确保没有线程正在访问内存，以避免数据竞争和不一致的检测结果。
+
+LSan can be used in 3 ways.
+
+1. Standalone (`-fsanitize=leak`)
+2. AddressSanitizer (`-fsanitize=address`)
+3. HWAddressSanitizer (`-fsanitize=hwaddress`)
+
+The most common way to use `LSan` is `clang -fsanitize=address` (or `gcc -fsanitize=address`). For LSan-supported targets (`#define CAN_SANITIZE_LEAKS 1`), the AddressSanitizer (`ASan`) runtime enables `LSan` by default.
+
+``` cpp
+#include <stdlib.h>
+int main()
+{
+    void **p = malloc(42); // leak (categorized as "Direct leak")
+    *p = malloc(43);       // leak (categorized as "Indirect leak")
+    p = 0;
+}
+```
+
+
+![asan](/assets/images/202308/asan.png)
+
+![asan2](/assets/images/202308/asan2.png)
+
+参考：
+
+* [All about LeakSanitizer](https://maskray.me/blog/2023-02-12-all-about-leak-sanitizer)
+
+
+
 # Introduction
 
 [AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) (aka `ASan`) is a memory error detector for C/C++. It finds:
@@ -272,15 +384,30 @@ To summarize: `-fsanitize-address-use-after-return=<mode>`
 
 For more information on leak detector in AddressSanitizer, see [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html). The leak detection is turned on by default on Linux, and can be enabled using `ASAN_OPTIONS=detect_leaks=1` on macOS; however, it is not yet supported on other platforms.
 
-## Issue Suppression
+## Issue Suppression (抑制错误)
 
-AddressSanitizer is not expected to produce false positives. If you see one, look again; most likely it is a true positive!
+**AddressSanitizer is not expected to produce false positives. If you see one, look again; most likely it is a true positive!**
 
 ### Suppressing Reports in External Libraries
 
 Runtime interposition allows AddressSanitizer to find bugs in code that is not being recompiled. If you run into an issue in external libraries, we recommend immediately reporting it to the library maintainer so that it gets addressed. However, you can use the following suppression mechanism to unblock yourself and continue on with the testing.
 
-See: https://clang.llvm.org/docs/AddressSanitizer.html#id10
+This suppression mechanism should only be used for suppressing issues in external code; it does not work on code recompiled with AddressSanitizer. To suppress errors in external libraries, set the `ASAN_OPTIONS` environment variable to point to a suppression file. You can either specify the full path to the file or the path of the file relative to the location of your executable.
+
+```
+ASAN_OPTIONS=suppressions=MyASan.supp
+```
+
+Use the following format to specify the names of the functions or libraries you want to suppress. You can see these in the error report. Remember that the narrower the scope of the suppression, the more bugs you will be able to catch.
+
+```
+interceptor_via_fun:NameOfCFunctionToSuppress
+interceptor_via_fun:-[ClassName objCMethodToSuppress:]
+interceptor_via_lib:NameOfTheLibraryToSuppress
+```
+
+
+
 
 ### Conditional Compilation with __has_feature(address_sanitizer)
 
@@ -323,6 +450,83 @@ type:*BadInitClassSubstring*=init
 src:bad/init/files/*=init
 ```
 
+#### Sanitizer special case list
+
+This document describes the way to disable or alter the behavior of sanitizer tools for certain source-level entities by providing a special file at compile-time.
+
+User of sanitizer tools, such as [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html), [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html) or [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html) may want to disable or alter some checks for certain source-level entities to:
+
+* speedup hot function, which is known to be correct;
+* ignore a function that does some low-level magic (e.g. walks through the thread stack, bypassing the frame boundaries);
+* ignore a known problem.
+
+To achieve this, user may create a file listing the entities they want to ignore, and pass it to clang at compile-time using `-fsanitize-ignorelist` flag. See [Clang Compiler User’s Manual](https://clang.llvm.org/docs/UsersManual.html) for details.
+
+![asan3](/assets/images/202308/asan3.png)
+
+![asan4](/assets/images/202308/asan4.png)
+
+```
+$ cat foo.c
+#include <stdlib.h>
+void bad_foo() {
+  int *a = (int*)malloc(40);
+  a[10] = 1;
+}
+int main() { bad_foo(); }
+$ cat ignorelist.txt
+# Ignore reports from bad_foo function.
+fun:bad_foo
+$ clang -fsanitize=address foo.c ; ./a.out
+# AddressSanitizer prints an error report.
+$ clang -fsanitize=address -fsanitize-ignorelist=ignorelist.txt foo.c ; ./a.out
+# No error report here.
+```
+
+> NOTE: clang11 的选项是 -fsanitize-blacklist，可通过 clang --help | grep sanitize 查看具体的选项
+
+Format
+
+Ignorelists consist of entries, optionally grouped into sections. Empty lines and lines starting with “#” are ignored.
+
+Section names are regular expressions written in square brackets that denote which sanitizer the following entries apply to. For example, `[address]` specifies AddressSanitizer while `[cfi-vcall|cfi-icall]` specifies Control Flow Integrity virtual and indirect call checking. Entries without a section will be placed under the `[*]` section applying to all enabled sanitizers.
+
+Entries contain an entity type, followed by a colon and a regular expression, specifying the names of the entities, optionally followed by an equals sign and a tool-specific category, e.g. `fun:*ExampleFunc=example_category`. The meaning of `*` in regular expression for entity names is different - it is treated as in shell wildcarding. Two generic entity types are `src` and `fun`, which allow users to specify source files and functions, respectively. Some sanitizer tools may introduce custom entity types and categories - refer to tool-specific docs.
+
+
+``` bash
+# Lines starting with # are ignored.
+# Turn off checks for the source file (use absolute path or path relative
+# to the current working directory):
+src:/path/to/source/file.c
+# Turn off checks for this main file, including files included by it.
+# Useful when the main file instead of an included file should be ignored.
+mainfile:file.c
+# Turn off checks for a particular functions (use mangled names):
+fun:MyFooBar
+fun:_Z8MyFooBarv
+# Extended regular expressions are supported:
+fun:bad_(foo|bar)
+src:bad_source[1-9].c
+# Shell like usage of * is supported (* is treated as .*):
+src:bad/sources/*
+fun:*BadFunction*
+# Specific sanitizer tools may introduce categories.
+src:/special/path/*=special_sources
+# Sections can be used to limit ignorelist entries to specific sanitizers
+[address]
+fun:*BadASanFunc*
+# Section names are regular expressions
+[cfi-vcall|cfi-icall]
+fun:*BadCfiCall
+# Entries without sections are placed into [*] and apply to all sanitizers
+```
+
+
+
+
+
+
 ### Suppressing memory leaks
 
 Memory leak reports produced by [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html) (if it is run as a part of AddressSanitizer) can be suppressed by a separate file passed as
@@ -332,6 +536,52 @@ LSAN_OPTIONS=suppressions=MyLSan.supp
 ```
 
 which contains lines of the form `leak:<pattern>`. Memory leak will be suppressed if pattern matches any function name, source file name, or library name in the symbolized stack trace of the leak report. See [full documentation](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer#suppressions) for more details.
+
+
+You can instruct `LeakSanitizer` to ignore certain leaks by passing in **a suppressions file**. The file must contain one suppression rule per line, each rule being of the form `leak:<pattern>`. The pattern will be substring-matched against the symbolized stack trace of the leak. If either function name, source file name or binary file name matches, the leak report will be suppressed.
+
+```
+$ cat suppr.txt
+# This is a known leak.
+leak:FooBar
+$ cat lsan-suppressed.cc
+#include <stdlib.h>
+
+void FooBar() {
+  malloc(7);
+}
+
+void Baz() {
+  malloc(5);
+}
+
+int main() {
+  FooBar();
+  Baz();
+  return 0;
+}
+$ clang++ lsan-suppressed.cc -fsanitize=address
+$ ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=suppr.txt ./a.out
+
+=================================================================
+==26475==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 5 byte(s) in 1 object(s) allocated from:
+    #0 0x44f2de in malloc /usr/home/hacker/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:74
+    #1 0x464e86 in Baz() (/usr/home/hacker/a.out+0x464e86)
+    #2 0x464fb4 in main (/usr/home/hacker/a.out+0x464fb4)
+    #3 0x7f7e760b476c in __libc_start_main /build/buildd/eglibc-2.15/csu/libc-start.c:226
+
+-----------------------------------------------------
+Suppressions used:[design document](AddressSanitizerLeakSanitizerDesignDocument)
+  count      bytes template
+      1          7 FooBar
+-----------------------------------------------------
+
+SUMMARY: AddressSanitizer: 5 byte(s) leaked in 1 allocation(s).
+```
+
+The special symbols `^` and `$` match the beginning and the end of string.
 
 
 ## Code generation control
@@ -892,6 +1142,7 @@ after itself.
 * [Building better software with better tools: sanitizers versus valgrind](https://lemire.me/blog/2019/05/16/building-better-software-with-better-tools-sanitizers-versus-valgrind/)
 * [How to use gcc with fsanitize=address?](https://stackoverflow.com/questions/58262749/how-to-use-gcc-with-fsanitize-address)
 * http://gavinchou.github.io/experience/summary/syntax/gcc-address-sanitizer/
+* [All about LeakSanitizer](https://maskray.me/blog/2023-02-12-all-about-leak-sanitizer)
 
 
 

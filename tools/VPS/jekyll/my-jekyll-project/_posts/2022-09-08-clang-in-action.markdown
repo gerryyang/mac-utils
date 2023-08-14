@@ -1525,4 +1525,4 @@ This document describes the required and optional components in a complete toolc
 # Manual
 
 * http://developer.amd.com/wordpress/media/2013/12/AOCC-1.1-Clang-the-C-C-Compiler.pdf
-
+* [Clang Compiler User’s Manual](https://clang.llvm.org/docs/UsersManual.html)

@@ -180,6 +180,11 @@ alias his='history | tail -n 10'
 ```
 
 
+# dotfiles
+
+* https://github.com/MaskRay/Config
+* https://github.com/ppwwyyxx/dotfiles
+
 
 
 # Jekyll
