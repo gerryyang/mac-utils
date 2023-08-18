@@ -2365,6 +2365,20 @@ else
 fi
 ```
 
+## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
+
+```
+# 查看帮助
+LD_DEBUG=help ./bin
+
+# display library search paths
+LD_DEBUG=libs ./bin
+
+# 将信息输出到log中
+LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
+```
+
+
 # 第三方工具
 
 

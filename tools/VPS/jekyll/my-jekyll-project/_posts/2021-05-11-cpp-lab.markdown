@@ -4869,6 +4869,83 @@ Is V(lvalue V) noexcept? false
 */
 ```
 
+## setjmp / longjmp (Thread safety)
+
+setjmp, sigsetjmp, longjmp, siglongjmp  - **performing a nonlocal goto**, refer [setjmp(3) — Linux manual page](https://man7.org/linux/man-pages/man3/longjmp.3.html)
+
+
+``` c
+#include <setjmp.h>
+
+int setjmp(jmp_buf env);
+[[noreturn]] void longjmp(jmp_buf env, int val);
+```
+
+The functions described on this page are used for performing "**nonlocal gotos**": transferring execution from one function to a predetermined location in another function. The `setjmp()` function dynamically establishes the target to which control will later be transferred, and `longjmp()` performs the transfer of execution.
+
+The `setjmp()` function saves various information about the calling environment (typically, the stack pointer, the instruction pointer, possibly the values of other registers and the signal mask) in the buffer `env` for later use by `longjmp()`. In this case, `setjmp()` returns `0`.
+
+The `longjmp()` function uses the information saved in `env` to transfer control back to the point where `setjmp()` was called and to restore ("**rewind**") the stack to its state at the time of the `setjmp()` call.  In addition, and depending on the implementation (see NOTES), the values of some other registers and the process signal mask may be restored to their state at the time of the `setjmp()` call.
+
+Following a successful `longjmp()`, execution continues as if `setjmp()` had returned for a second time.  This "fake" return can be distinguished from a true `setjmp()` call because the "fake" return returns the value provided in `val`. If the programmer mistakenly passes the value `0` in `val`, the "fake" return will instead return `1`.
+
+RETURN VALUE:
+
+`setjmp()` returns `0` when called directly; on the "fake" return that occurs after `longjmp()`, the nonzero value specified in `val` is returned.
+
+NOTES:
+
+`setjmp()` and `longjmp()` can be useful for dealing with errors inside deeply nested function calls or to allow a signal handler to pass control to a specific point in the program, rather than returning to the point where the handler interrupted the main program.
+
+
+
+
+示例代码：
+
+``` c
+#include <setjmp.h>
+#include <stdio.h>
+#include <sanitizer/asan_interface.h>
+
+static jmp_buf buf;
+
+void my_exception_handler() {
+    printf("Exception occurred!\n");
+
+    // 使用__asan_unpoison_memory_region取消标记栈上的内存区域
+    //__asan_unpoison_memory_region((void *)&buf, sizeof(buf));
+
+    // 使用longjmp跳出异常处理程序
+    longjmp(buf, 1);
+}
+
+void my_function() {
+    char buffer[32];
+    if (setjmp(buf)) {
+            // 如果从longjmp返回，取消标记栈上的内存区域
+            //__asan_unpoison_memory_region((void *)buffer, sizeof(buffer));
+            printf("Returned from exception handler\n");
+    } else {
+            // 正常执行时，触发异常处理程序
+            my_exception_handler();
+    }
+}
+
+int main() {
+        my_function();
+        return 0;
+}
+```
+
+输出：
+
+```
+Exception occurred!
+Returned from exception handler
+```
+
+
+
 
 # 开发框架
 

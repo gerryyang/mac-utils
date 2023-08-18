@@ -483,7 +483,7 @@ $ clang -fsanitize=address -fsanitize-ignorelist=ignorelist.txt foo.c ; ./a.out
 # No error report here.
 ```
 
-> NOTE: clang11 的选项是 -fsanitize-blacklist，可通过 clang --help | grep sanitize 查看具体的选项
+> NOTE: clang11 的选项是 `-fsanitize-blacklist`，可通过 `clang --help | grep sanitize` 查看具体的选项
 
 Format
 
