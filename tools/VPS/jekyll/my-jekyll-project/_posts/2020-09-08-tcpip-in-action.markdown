@@ -449,6 +449,17 @@ refer:
 * https://man7.org/linux/man-pages/man2/epoll_ctl.2.html
 * https://cloud.tencent.com/developer/article/1481046
 
+# Nagle 算法
+
+Nagle 算法主要用来预防小分组的产生。在广域网上，大量 TCP 小分组极有可能造成网络的拥塞。Nagle 是针对每一个 TCP 连接的。它要求一个 TCP 连接上最多只能有一个未被确认的小分组。在该分组的确认到达之前不能发送其他小分组。TCP 会搜集这些小的分组，然后在之前小分组的确认到达后将刚才搜集的小分组合并发送出去。
+
+有时候必须要关闭 Nagle 算法，特别是在一些对时延要求较高的交互式操作环境中，所有的小分组必须尽快发送出去。可以通过编程取消 Nagle 算法，利用 `TCP_NODELAY` 选项来关闭 Nagle 算法。
+
+> Nagle 算法是时代的产物，因为当时网络带宽有限。而当前的局域网、广域网的带宽则宽裕得多，所以目前的 TCP/IP 协议栈默认将 Nagle 算法关闭。
+
+
+* https://cloud.tencent.com/developer/article/1784570
+
 
 # Tools
 

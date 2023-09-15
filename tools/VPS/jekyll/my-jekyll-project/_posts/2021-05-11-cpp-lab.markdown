@@ -2559,6 +2559,40 @@ refer:
 * https://en.cppreference.com/w/cpp/atomic/atomic/load
 
 
+## [std::is_base_of](https://en.cppreference.com/w/cpp/types/is_base_of)
+
+``` cpp
+template< class Base, class Derived >
+struct is_base_of;
+```
+
+If Derived is derived from Base or if both are the same non-union class (in both cases ignoring cv-qualification), the base characteristic is [std::true_type](https://en.cppreference.com/w/cpp/types/integral_constant). Otherwise the base characteristic is [std::false_type](https://en.cppreference.com/w/cpp/types/integral_constant).
+
+``` cpp
+#include <type_traits>
+
+class A {};
+class B : A {};
+class C : B {};
+class D {};
+union E {};
+using I = int;
+
+static_assert
+(
+    std::is_base_of_v<A, A> == true &&
+    std::is_base_of_v<A, B> == true &&
+    std::is_base_of_v<A, C> == true &&
+    std::is_base_of_v<A, D> != true &&
+    std::is_base_of_v<B, A> != true &&
+    std::is_base_of_v<E, E> != true &&
+    std::is_base_of_v<I, I> != true
+);
+
+int main() {}
+```
+
+
 
 # C++14
 

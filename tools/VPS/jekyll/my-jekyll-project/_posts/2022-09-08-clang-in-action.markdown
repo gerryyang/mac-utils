@@ -1348,6 +1348,26 @@ The default image base for `-no-pie` links is different. For example, on x86-64,
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld -Wl,--image-base=0x400000")
 ```
 
+## [Mold: A Modern Linker](https://github.com/rui314/mold)
+
+`mold` is a faster drop-in replacement for existing Unix linkers. It is several times quicker than the LLVM `lld` linker, the second-fastest open-source linker, which I initially developed a few years ago. `mold` aims to enhance developer productivity by minimizing build time, particularly in rapid debug-edit-rebuild cycles.
+
+Here is a performance comparison of GNU `gold`, LLVM `lld`, and `mold` when linking final debuginfo-enabled executables for major large programs on a simulated 8-core, 16-thread machine.
+
+![mold-comparison](/assets/images/202308/mold-comparison.png)
+
+`mold` is so fast that it is only `2x` slower than the `cp` command on the same machine. If you find that mold is not faster than other linkers, please feel free to [file a bug report](https://github.com/rui314/mold/issues).
+
+`mold` supports x86-64, i386, ARM64, ARM32, 64-bit/32-bit little/big-endian RISC-V, 32-bit PowerPC, 64-bit big-endian PowerPC ELFv1, 64-bit little-endian PowerPC ELFv2, s390x, 64-bit/32-bit LoongArch, SPARC64, m68k, SH-4, and DEC Alpha.
+
+How to Build:
+
+`mold` is written in `C++20`, so if you build `mold` yourself, you will need a recent version of a C++ compiler and a C++ standard library. We recommend `GCC 10.2` or `Clang 12.0.0` (or later) and `libstdc++ 10` or `libc++ 7` (or later).
+
+
+
+
+
 # lldb
 
 LLDB是一个高性能、可扩展的源代码级调试器，它是LLVM项目的一部分。LLDB支持C、C++、Objective-C以及其他编程语言，并且可以在多种平台上运行，如macOS、Linux、Windows等。LLDB的主要功能是帮助开发人员调试程序，找出错误和问题。

@@ -2381,6 +2381,194 @@ LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
 
 # 第三方工具
 
+## 性能监控
+
+### atop
+
+`atop` 工具是一种性能监控工具，可记录历史资源使用情况以供以后分析。该工具还可以进行实时报告。您可以检索每个进程和线程的 CPU 利用率、内存消耗和磁盘 I/O 的使用情况。atop 工具作为后台负保持活动状态，同时记录统计信息，以便进行长期的服务器分析。默认情况下，统计信息将存储 28 天。
+
+> **注意：** atop 仅在安装后才开始记录数据。在 atop 安装日期之前，无法检索有关过程的历史性能数据。
+
+atop 工具在 `/var/log/atop` 中创建日志文件。这些文件以下列格式命名：`atop_ccyymmdd`。例如，atop_20210902 是 2021 年 9 月 2 日的记录。
+
+要访问日志文件，请运行命令 `atop -r atoplogfilepath`。将 atoplogfilepath 替换为 atop 日志文件的完整路径。命令和日志文件如以下示例所示：
+
+```
+atop -r /var/log/atop/atop_20210902
+
+ATOP - ip-172-20-139-91                2021/09/02  17:03:44                ----------------                 3h33m7s elapsed
+PRC |  sys    6.51s  |  user   7.85s  |  #proc    103  |  #tslpi    81 |  #tslpu     0  |  #zombie    0  |  #exit      0  |
+CPU |  sys     0%  |  user      3%  |  irq       0%  |  idle    197% |  wait      0%  |  ipc notavail  |  curscal   ?%  |
+cpu |  sys     0%  |  user      1%  |  irq       0%  |  idle     98% |  cpu000 w  0%  |  ipc notavail  |  curscal   ?%  |
+cpu |  sys     0%  |  user      1%  |  irq       0%  |  idle     98% |  cpu001 w  0%  |  ipc notavail  |  curscal   ?%  |
+```
+
+在前面的输出示例中，第一个记录的快照是在 `2021/09/02 17:03:44`。要前进到下一个快照，请按键盘上的 `t` 键（小写）。要返回到上一个快照，请按 `T` 键（大写）。
+
+要分析特定时隙，请按 `b` 键，然后输入日期和时间。atop 工具会跳到输入新时间变量中指定的时间：
+
+```
+NET |  lo      ----  |  pcki       2  |  pcko       2  |  sp    0 Mbps |  si    0 Kbps  |  so    0 Kbps  |  erro       0  |
+Enter new time (format [YYYYMMDD]hhmm):
+  PID              TID              RDDSK              WRDSK             WCANCL              DSK             CMD        1/4
+```
+
+可以按快捷键查看不同的统计数据：
+
+| 快捷键 | 说明
+| -- | --
+| g | 通用信息（原定设置值）
+| m | 内存详细信息
+| d | 磁盘详细信息
+| n | 网络详细信息。只有在安装了 netatop 内核模块时，此密钥才有效
+| c | 每个进程的完整命令行
+
+可以使用以下快捷键对进程列表进行排序：
+
+| 快捷键 | 排序依据
+| -- | --
+| C | CPU 活动
+| M | 内存消耗量
+| D | 磁盘活动
+| N | 网络活动。只有在安装了 netatop 内核时，此密钥才有效
+| A | 最活跃的系统资源（自动模式）
+
+> 按 h 键查看帮助文档。
+
+
+
+
+```
+yum install atop
+```
+
+```
+Usage: atop [-flags] [interval [samples]]
+                or
+Usage: atop -w  file  [-S] [-a] [interval [samples]]
+       atop -r [file] [-b [YYYYMMDD]hhmm] [-e [YYYYMMDD]hhmm] [-flags]
+
+        generic flags:
+          -V  show version information
+          -a  show or log all processes (i.s.o. active processes only)
+          -R  calculate proportional set size (PSS) per process
+          -W  determine WCHAN (string) per thread
+          -P  generate parseable output for specified label(s)
+          -Z  no spaces in parseable output for command (line)
+          -L  alternate line length (default 80) in case of non-screen output
+          -f  show fixed number of lines with system statistics
+          -F  suppress sorting of system resources
+          -G  suppress exited processes in output
+          -l  show limited number of lines for certain resources
+          -y  show threads within process
+          -Y  sort threads (when combined with 'y')
+          -1  show average-per-second i.s.o. total values
+
+          -x  no colors in case of high occupation
+          -g  show general process-info (default)
+          -m  show memory-related process-info
+          -d  show disk-related process-info
+          -n  show network-related process-info
+          -s  show scheduling-related process-info
+          -v  show various process-info (ppid, user/group, date/time)
+          -c  show command line per process
+          -o  show own defined process-info
+          -u  show cumulated process-info per user
+          -p  show cumulated process-info per program (i.e. same name)
+          -j  show cumulated process-info per container
+
+          -C  sort processes in order of cpu consumption (default)
+          -M  sort processes in order of memory consumption
+          -D  sort processes in order of disk activity
+          -N  sort processes in order of network activity
+          -E  sort processes in order of GPU activity
+          -A  sort processes in order of most active resource (auto mode)
+
+        specific flags for raw logfiles:
+          -w  write raw data to   file (compressed)
+          -r  read  raw data from file (compressed)
+              symbolic file: y[y...] for yesterday (repeated)
+              file name '-': read raw data from stdin
+          -S  finish atop automatically before midnight (i.s.o. #samples)
+          -b  begin showing data from specified date/time
+          -e  finish showing data after specified date/time
+
+        interval: number of seconds   (minimum 0)
+        samples:  number of intervals (minimum 1)
+
+If the interval-value is zero, a new sample can be
+forced manually by sending signal USR1 (kill -USR1 pid_atop)
+or with the keystroke 't' in interactive mode.
+
+Please refer to the man-page of 'atop' for more details.
+```
+
+* 创建 atop 日志存储目录
+
+```
+mkdir ~/atop_data
+```
+
+* 以下是 atop 的默认配置，可以调整 atop 监控周期，默认 600s 采集一次
+
+```
+$ cat /etc/sysconfig/atop
+LOGOPTS=""
+LOGINTERVAL=600
+LOGGENERATIONS=28
+LOGPATH=/var/log/atop
+```
+
+* 使能和重启 atop
+
+```
+systemctl enable atop.serivce
+systemctl restart atop.service
+```
+
+* 查看日志方法
+
+```
+atop -r atop_20230827
+```
+
+
+refer:
+
+* [如何使用 atop 工具获取 EC2 Linux 实例上进程的历史利用率统计信息？](https://repost.aws/zh-Hans/knowledge-center/ec2-linux-monitor-stats-with-atop)
+
+
+### atopsar
+
+`atopsar` 命令的功能类似于传统的 UNIX sar 命令。您可以使用 atopsar 命令生成各种系统活动报告。
+
+atopsar 命令使用颜色编码和（根据要求）标记来突出显示资源的利用率。关键利用率用红色标记，几乎关键用青色标记。
+
+在以下示例中，使用标志 `-c` 生成有关系统当前 CPU 利用率的报告。以下示例显示了两个结果，相隔一秒钟。
+
+```
+$ atopsar -c 1 2
+
+ip-172-20-139-91  4.14.238-182.422.amzn2.x86_64  #1 SMP Tue Jul 20 20:35:54 UTC 2021  x86_64  2021/09/02
+
+-------------------------- analysis date: 2021/09/02 --------------------------
+
+18:50:16  cpu  %usr %nice %sys %irq %softirq  %steal %guest  %wait %idle  _cpu_
+18:50:17  all     0     0    0    0        0       0      0      0   200
+            0     0     0    0    0        0       0      0      0   100
+            1     0     0    0    0        0       0      0      0   100
+18:50:18  all     0     0    0    0        0       0      0      0   200
+            0     0     0    0    0        0       0      0      0   100
+            1     0     0    0    0        0       0      0      0   100
+```
+
+
+
+
+
+
+
+
 
 ## 压缩工具
 

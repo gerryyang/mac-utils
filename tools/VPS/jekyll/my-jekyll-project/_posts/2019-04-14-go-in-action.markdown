@@ -1440,6 +1440,13 @@ func main() {
 
 服务启动前加上 `GOTRACEBACK=crash`，可以生成 corefile，和 `gdb` 类似，可以用 `dlv` 进行调试。
 
+安装：
+
+```
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+https://github.com/derekparker/delve
 
 
 # Q&A
