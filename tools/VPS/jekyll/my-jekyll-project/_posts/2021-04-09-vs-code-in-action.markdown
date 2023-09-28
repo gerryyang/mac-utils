@@ -326,7 +326,7 @@ C/C++/ObjC language server supporting cross references, hierarchies, completion 
 
 * 代码层级对齐
 
-###  GitLens — Git supercharged
+##  GitLens — Git supercharged
 
 * 分支管理，代码对比
 

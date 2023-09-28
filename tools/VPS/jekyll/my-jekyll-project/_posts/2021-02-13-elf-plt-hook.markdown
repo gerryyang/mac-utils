@@ -210,9 +210,12 @@ gcc -rdynamic -o prog main.o -L. -lbar -ldl
 Hello world
 ```
 
-#### 示例2: backtrace系统调用
+#### 示例2: libgcc backtrace 调用
 
-refer: https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
+refer:
+
+* https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
+* [C++ 的 backtrace](https://owent.net/2018/1801.html)
 
 ``` cpp
 #include <execinfo.h>

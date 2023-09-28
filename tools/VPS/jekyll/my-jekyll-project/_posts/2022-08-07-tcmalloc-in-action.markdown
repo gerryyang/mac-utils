@@ -690,15 +690,175 @@ void* TCMallocImplementation::allocate_full_malloc_oom(size_t size) {
 这个函数的主要作用是在遇到内存分配失败时尝试释放一些内存，以便其他分配请求可以成功。然而，如果释放内存的尝试失败，函数会返回nullptr，表示分配失败。在实际应用中，开发人员需要确保在使用tcmalloc分配内存时检查返回的指针是否为nullptr，并在遇到分配失败时采取适当的措施。
 
 
+## [gperftools' stacktrace capturing methods and their issues](https://github.com/gperftools/gperftools/wiki/gperftools'-stacktrace-capturing-methods-and-their-issues)
+
+We capture `backtraces` in tricky scenarios, such as in the **CPU profiler case**, where we capture `backtraces` from **a signal handler**. Therefore, we cannot rely on **glibc's** `backtrace()` function. In practice today, no completely robust backtracing solution works for all use cases (but we're getting closer, thankfully). So, we offer a range of stack trace capturing methods. This page describes our options and our current (Aug 2023) experience with them.
+
+Use `TCMALLOC_STACKTRACE_METHOD` environment variable to select backtracing implementation at runtime. We also offer the `TCMALLOC_STACKTRACE_METHOD_VERBOSE` environment variable, which makes gperftools print a complete set of available options and which option is active.
+
+The simplest way to see the list of available backtracing options on your system is by running "TCMALLOC_STACKTRACE_METHOD_VERBOSE=t ./stacktrace_unittest."
+
+``` bash
+$ TCMALLOC_STACKTRACE_METHOD_VERBOSE=t ./a.out
+Chosen stacktrace method is generic_fp
+Supported methods:
+* libgcc
+* generic_fp
+* generic_fp_unsafe
+* x86
+
+backtrace() returned 4 addresses
+...
+```
+
+### Frame pointers
+
+> TLDR: Use TCMALLOC_STACKTRACE_METHOD=generic_fp when all code is compiled with frame pointers, and you'll get nearly always correct and robust backtraces.
+
+The simplest of all options is to rely on frame pointers. But this requires that all relevant code is compiled with frame pointers enabled. Most architectures default to no frame pointers configuration because maintaining frame pointers imposes a slight but significant performance penalty. So, to use frame pointers backtracing, you need to compile your code with options to enable them explicitly.
+
+### Libunwind
+
+> TLDR: This is our default. Also available via TCMALLOC_STACKTRACE_METHOD=libunwind environment variable. But it has occasionally upset people with crashes and deadlocks.
+
+**All modern architectures have ABI that defaults to not having frame pointers**. Instead, we're supposed to use various external "unwind info" metadata. It is usually using a facility originally introduced for exceptions. On ELF systems, this facility is typically utilizing the `.eh_frame` section. The data format is similar but not identical to `DWARF` unwind info (introduced to allow debuggers to show you backtraces) and is documented in gABI specs.
+
+所有现代架构的ABI默认都不包含框架指针。相反，我们应该使用各种外部的"unwind info"元数据。它通常使用最初为异常引入的功能。在ELF系统上，这个功能通常利用.eh_frame部分。数据格式与DWARF解开信息类似但不完全相同（引入以允许调试器向您显示回溯），并在gABI规范中有详细记录。
+
+
+### libgcc's _Unwind_Backtrace
+
+> TLDR: Use TCMALLOC_STACKTRACE_METHOD=libgcc and enable it by default via the "--enable-libgcc-unwinder-by-default" configure flag when running on the most recent Linux system.
+
+Another library that can produce backtraces from unwind info is "libgcc_s.so". But since its primary purpose is exceptions, it hasn't always been fully robust especially for capturing backtraces from signal handlers.
+
+However, most recent versions of this library (starting from gcc 12), running on very recent Linux distros (glibc version 2.35 and later), have been robust in our testing so far. This is thanks to glibc's dl_find_object API that solves the problem of async-signal-safe access to a set of loaded ELF modules. We recommend enabling it by default, but only on systems that use dl_find_object API. With that said, please note that we're not yet aware of this facility's "crashiness" experience when it faces incorrect unwind info.
 
 
 
 
+* [crash in generic_fp backtracer (was: SIGSEGV in libunwind) #1426](https://github.com/gperftools/gperftools/issues/1426)
+
+## [dlopen with RTLD_DEEPBIND causes crash](https://github.com/gperftools/gperftools/issues/1148)
+
+类似问题：[jemalloc integration cause crashes when libraries or plugins dlopen with RTLD_DEEPBIND](https://bugzilla.mozilla.org/show_bug.cgi?id=493541)
+
+```
+Excepts from what Ulrich Drepper says about the RTLD_DEEPBIND flag he added:
+("How To Write Shared Libraries", August 20, 2006,
+http://people.redhat.com/drepper/dsohowto.pdf)
+
+  this feature should only be used if it cannot be avoided. There are several
+  reasonse for this:
+
+    The change in the scope affects all symbols and all
+    the DSOs which are loaded. Some symbols might
+    have to be interposed by definitions in the global
+    scope which now will not happen.
+
+    Already loaded DSOs are not affected which could
+    cause unconsistent results depending on whether
+    the DSO is already loaded (it might be dynamically
+    loaded, so there is even a race condition).
+
+    ...
+
+  The RTLD_DEEPBIND flag should really only be used as
+  a last resort. Fixing the application to not depend on the
+  flag's functionality is the much better solution.
+
+The inconsistency that RTLD_DEEPBIND causes with jemalloc is that dynamic libraries opened with RTLD_DEEPBIND will use libc's malloc while libc is still using jemalloc.  A libc function may return a pointer to something that should be passed to free, and the dynamic library will call libc's free, but libc used jemalloc to allocate the memory.
+
+I raised a question on this behavior here:
+http://sourceware.org/ml/libc-alpha/2009-06/msg00168.html
+
+But it looks like we can make libc's free (and malloc, etc) use jemalloc:
+http://www.gnu.org/s/libc/manual/html_node/Hooks-for-Malloc.html
+```
+
+参考：[Inconsistencies with RTLD_DEEPBIND and dependency libraries in global scope](https://sourceware.org/legacy-ml/libc-alpha/2009-06/msg00168.html)
+
+```
+% cat libdep.c
+int duplicate = 'u';
+
+int get_duplicate() {
+  return duplicate;
+}
+% gcc -shared -fPIC libdep.c -o libdep.so
+% cat dynamic.c
+#include <stdio.h>
+
+extern int duplicate;
+
+int run() {
+  duplicate = 'd';
+  printf("dynamic sees duplicate from libdep as:  %c\n", duplicate);
+  printf("but libdep sees duplicate from main as: %c\n", get_duplicate());
+  return 0;
+}
+% gcc -shared -fPIC dynamic.c -Wl,-rpath,. -L. -ldep -o dynamic.so
+% cat main.c
+#include <dlfcn.h>
+#include <stdlib.h>
+
+extern int duplicate;
+
+int main() {
+  void *h;
+  int (*run)();
+
+  duplicate = 'm';
+
+  h = dlopen("./dynamic.so", RTLD_LAZY | RTLD_DEEPBIND);
+  if (!h)
+    abort();
+
+  run = dlsym(h, "run");
+  if (!run)
+    abort();
+
+  (*run)();
+}
+% gcc main.c -Wl,-rpath,. -L. -ldep -ldl
+% ./a.out
+dynamic sees duplicate from libdep as:  d
+but libdep sees duplicate from main as: m
+```
 
 
 
 
+# The libunwind project
 
+The primary goal of this project is to define a portable and efficient C programming interface (API) to determine the call-chain of a program. The API additionally provides the means to manipulate the preserved (callee-saved) state of each call-frame and to resume execution at any point in the call-chain (non-local goto). The API supports both local (same-process) and remote (across-process) operation. As such, the API is useful in a number of applications. Some examples include:
+
+下载地址：https://www.nongnu.org/libunwind/download.html
+
+
+# 通过 LD_PRELOAD 使用 tcmalloc
+
+使用 `LD_PRELOAD` 运行程序：在运行程序时，设置 `LD_PRELOAD` 环境变量以加载 `libtcmalloc.so`
+
+``` bash
+LD_PRELOAD=/path/to/libtcmalloc.so your_program
+```
+
+检查进程映射：在程序运行时，可以使用 `/proc `文件系统检查已加载的共享库。首先，找到程序的进程ID（PID），然后查看 `/proc/PID/maps` 文件。例如，如果程序的 PID 为 12345，则运行以下命令：
+
+```
+cat /proc/12345/maps
+```
+
+在输出的结果中，检查 `libtcmalloc.so` 的路径。如果找到了该路径，说明 `libtcmalloc.so` 已成功加载。
+
+或者：
+
+```
+lsof -p 12345 | grep libtcmalloc.so
+
+pmap 12345 | grep libtcmalloc.so
+```
 
 
 # Refer
@@ -715,6 +875,8 @@ void* TCMallocImplementation::allocate_full_malloc_oom(size_t size) {
 * [ptmalloc、tcmalloc与jemalloc对比分析](https://www.cyningsun.com/07-07-2018/memory-allocator-contrasts.html)
 * [ptmalloc,tcmalloc和jemalloc内存分配策略研究](https://cloud.tencent.com/developer/article/1173720)
 * [TCMalloc解密](https://zhuanlan.zhihu.com/p/51432385)
+* [C++的backtrace](https://owent.net/2018/1801.html)
+* https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
 
 
 

@@ -31,6 +31,10 @@ The purpose of a debugger such as GDB is to allow you to see what is going on â€
 
 You can use GDB to debug programs written in C and C++. For more information, see [Supported Languages](https://sourceware.org/gdb/current/onlinedocs/gdb/Supported-Languages.html#Supported-Languages). For more information, see [C and C++](https://sourceware.org/gdb/current/onlinedocs/gdb/C.html#C).
 
+# Install
+
+https://ftp.gnu.org/gnu/gdb/
+
 
 #  How to Use
 
