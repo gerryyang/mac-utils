@@ -14,11 +14,11 @@ categories: 基础理论
 
 * `Code Point(码点)` is the atomic unit of information. Text is a sequence of code points. Each code point is a number which is given meaning by **the Unicode standard**.
 
-* `Code Unit` is the unit of storage of a part of an encoded code point. In UTF-8 this means 8-bits, in UTF-16 this means 16-bits. A single code unit may represent a full code point, or part of a code point. 
+* `Code Unit` is the unit of storage of a part of an encoded code point. In UTF-8 this means 8-bits, in UTF-16 this means 16-bits. A single code unit may represent a full code point, or part of a code point.
 
-* `Grapheme(字素)` is a sequence of one or more code points that are displayed as a single, graphical unit that a reader recognizes as a single element of the writing system. 
+* `Grapheme(字素)` is a sequence of one or more code points that are displayed as a single, graphical unit that a reader recognizes as a single element of the writing system.
 
-* `Glyph(图象字符)` is an image, usually stored in a font (which is a collection of glyphs), used to represent graphemes or parts thereof. 
+* `Glyph(图象字符)` is an image, usually stored in a font (which is a collection of glyphs), used to represent graphemes or parts thereof.
 
 
 refer:
@@ -108,7 +108,7 @@ public class Test {
 
       System.out.print("String Length :" );
       System.out.println(Str2.length());
-      
+
       System.out.print("Str2.codePointCount(0, Str2.length()):");
       System.out.println(Str2.codePointCount(0, Str2.length()));
    }
@@ -125,12 +125,12 @@ String Length :4
 Str2.codePointCount(0, Str2.length()):3
 ```
 
-refer: 
+refer:
 
 * https://www.tutorialspoint.com/java/java_string_length.htm
 * https://www.tutorialspoint.com/java/lang/string_codepointcount.htm
 
-> Unicode 的问题？	
+> Unicode 的问题？
 
 需要注意的是，**Unicode 只是一个符号集，它只规定了符号的二进制代码，却没有规定这个二进制代码应该如何存储**。比如，汉字`严`的 Unicode 是十六进制数`4E25`，转换成二进制数足足有`15`位（`100111000100101`），也就是说，这个符号的表示至少需要2个字节。表示其他更大的符号，可能需要3个字节或者4个字节，甚至更多。
 
@@ -222,7 +222,7 @@ Unicode 规范定义，每一个文件的最前面分别加入一个**表示编�
 * Unicode big endian：编码是四个字节`FE FF 4E 25`，其中FE FF表明是大头方式存储。
 * UTF-8：编码是六个字节`EF BB BF E4 B8 A5`，前三个字节`EF BB BF`表示这是UTF-8编码，后三个`E4B8A5`就是严的具体编码，它的存储顺序与编码顺序是一致的。
 
-refer: 
+refer:
 
 * [The Absolute Minimum Every Software Developer Absolutely, Positively Must Know About Unicode and Character Sets](https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/)
 * [程序员趣味读物：谈谈Unicode编码](https://www.pconline.com.cn/pcedu/empolder/gj/other/0505/616631.html)
@@ -240,7 +240,7 @@ The term URL encoding is a bit **inexact（不准确）** because the encoding p
 
 ## Types of URI characters
 
-The characters allowed in a URI are either **reserved** or **unreserved** (or a percent character as part of a percent-encoding). 
+The characters allowed in a URI are either **reserved** or **unreserved** (or a percent character as part of a percent-encoding).
 
 > Percent-encoding reserved characters
 
@@ -250,7 +250,7 @@ The reserved character /, for example, if used in the "path" component of a URI,
 
 **Reserved characters after percent-encoding**
 
-| !	 | # |	$ |	& | ' |	( |	) | * | + | , | / | : | ; | = | ? | @ | [ | ] 
+| !	 | # |	$ |	& | ' |	( |	) | * | + | , | / | : | ; | = | ? | @ | [ | ]
 | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
 | %21 | %23 | %24 | %26 | %27 | %28 | %29 | %2A | %2B | %2C | %2F | %3A | %3B | %3D | %3F | %40 | %5B | %5D
 
@@ -271,7 +271,7 @@ When sent in an HTTP GET request, application/x-www-form-urlencoded data is incl
 
 Base64 is used to turn binary data into text (encode) or text into binary (decode). To allow binary data to be transmitted with textual data it must be encoded. An example of this is an attachment in an email. This is done via the [MIME] implementation of Base64. The MIME implementation uses the characters `A-Z`, `a-z`, and `0-9` for the initial **62 values** that it can use to encode data.
 
-For example, the text: 
+For example, the text:
 
 21个字符
 
@@ -306,6 +306,7 @@ You should use Base64 whenever you intend to transmit binary data in a textual f
 * [Base64 Encode From Dan's Tools]
 * [字符编码笔记：ASCII，Unicode 和 UTF-8]
 * [Unicode与JavaScript详解]
+* http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
 
 [Percent-encoding]: https://en.wikipedia.org/wiki/Percent-encoding
 [URL Encode and Decode From Dan's Tools]: https://www.url-encode-decode.com/

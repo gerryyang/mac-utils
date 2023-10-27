@@ -1609,7 +1609,51 @@ More: man top
 
 ## coredump
 
+`/proc/sys/kernel/core_pattern` 文件用于定义 Linux 操作系统在程序崩溃时生成 core 文件的名称和位置。它还可以用于定义一个处理程序，该处理程序在程序崩溃时被调用，用于收集和处理 core 文件。
+
+``` bash
+cat /proc/sys/kernel/core_pattern
+|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %e
 ```
+
+`|` 符号表示这是一个外部处理程序，而不是一个普通的文件名模板。在这种情况下，操作系统将调用 `/usr/lib/systemd/systemd-coredump` 处理程序，而不是直接将 core 文件写入磁盘。
+
+`systemd-coredump` 是一个由 systemd 提供的处理程序，用于收集和处理 core 文件。当一个程序崩溃时，操作系统将调用此处理程序，并传递一些参数。这些参数包括：
+
+```
+%P：崩溃进程的进程 ID。
+%u：崩溃进程的用户 ID。
+%g：崩溃进程的组 ID。
+%s：导致崩溃的信号编号。
+%t：崩溃发生时的时间戳（Unix 时间）。
+%c：核心文件的大小限制（ulimit）。
+%h：主机名。
+%e：崩溃进程的可执行文件名。
+```
+
+`systemd-coredump` 可以将 core 文件存储在文件系统中，也可以将它们存储在 systemd journal 中。此外，`systemd-coredump` 还可以自动压缩 core 文件，以减少存储空间占用。
+
+要查看由 `systemd-coredump` 收集的 core 文件，可以使用 `coredumpctl` 工具。例如，要列出所有收集到的 core 文件，可以运行：
+
+``` bash
+coredumpctl list
+```
+
+要获取特定 core 文件的详细信息，可以使用：
+
+``` bash
+coredumpctl info <PID>
+```
+
+其中 `<PID>` 是崩溃进程的进程 ID。
+
+请注意，要使用 `systemd-coredump` 和 `coredumpctl`，需要在使用 systemd 的 Linux 发行版上运行。不同的发行版可能有不同的默认配置和工具。请根据您的发行版查找适当的文档以获取更多详细信息。
+
+
+----------------------------------------------------------------
+
+
+``` bash
 ulimit -c unlimited
 
 # 自定义路径格式

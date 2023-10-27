@@ -429,6 +429,23 @@ Examples:
 [Can virtual functions have default parameters?](https://stackoverflow.com/questions/3533589/can-virtual-functions-have-default-parameters)
 
 
+## [modernize-return-braced-init-list](https://clang.llvm.org/extra/clang-tidy/checks/modernize/return-braced-init-list.html)
+
+Replaces explicit calls to the constructor in a return with a braced initializer list. This way the return type is not needlessly duplicated in the function definition and the return statement.
+
+``` cpp
+Foo bar() {
+  Baz baz;
+  return Foo(baz);
+}
+
+// transforms to:
+
+Foo bar() {
+  Baz baz;
+  return {baz};
+}
+```
 
 
 

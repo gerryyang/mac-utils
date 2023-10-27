@@ -144,9 +144,84 @@ bar's dynamic type: class B
 */
 ```
 
-## [dynamic_cast conversion](https://en.cppreference.com/w/cpp/language/dynamic_cast)
+`std::dynamic_pointer_cast` 是 C++ 标准库中的一个函数模板，用于在运行时执行类型安全的指针转换。它主要用于将 std::shared_ptr 指向的基类对象转换为派生类对象的指针。
 
-Safely converts pointers and references to classes up, down, and sideways along the inheritance hierarchy.
+当我们使用智能指针（如 std::shared_ptr）管理具有多态性的类层次结构时，可能需要在基类和派生类之间进行类型转换。std::dynamic_pointer_cast 提供了一种类型安全的方法来执行这些转换。
+
+std::dynamic_pointer_cast 的作用如下：
+
+1. 进行类型安全的指针转换：std::dynamic_pointer_cast 在运行时检查转换是否有效。如果转换失败（即指向的对象不是目标类型的实例），它将返回一个空的 std::shared_ptr。这有助于避免潜在的错误，并确保类型安全。
+2. 管理引用计数：与 std::static_pointer_cast 和 std::const_pointer_cast 类似，std::dynamic_pointer_cast 也会正确地处理 std::shared_ptr 的引用计数。这意味着在转换过程中，原始智能指针和转换后的智能指针都将共享相同的引用计数，从而确保资源的正确管理。
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class Base {
+public:
+    virtual ~Base() {}
+};
+
+class Derived : public Base {
+public:
+    void DerivedSpecificFunction() {
+        std::cout << "Derived specific function called." << std::endl;
+    }
+};
+
+int main() {
+    std::shared_ptr<Base> base_ptr = std::make_shared<Derived>();
+
+    // 使用 std::dynamic_pointer_cast 进行类型安全的转换
+    std::shared_ptr<Derived> derived_ptr = std::dynamic_pointer_cast<Derived>(base_ptr);
+
+    if (derived_ptr) {
+        derived_ptr->DerivedSpecificFunction();
+    } else {
+        std::cout << "Conversion failed." << std::endl;
+    }
+
+    return 0;
+}
+/*
+Derived specific function called.
+*/
+```
+
+## [dynamic_cast](https://en.cppreference.com/w/cpp/language/dynamic_cast)
+
+`dynamic_cast` 是面向对象语言中常被称为类似“**是某种**”的概念的 C++ 版本：
+
+``` cpp
+void do_something(Shape* p)
+{
+    if (Circle* pc = dynamic_cast<Circle*>(p)) { // p 是某种 Circle？
+        // ... 使用 pc 指向的 Circle ...
+    }
+    else {
+        // ... 不是 Circle，做其他事情 ...
+    }
+}
+```
+
+`dynamic_cast` 是一个运行期操作，依赖于存储在 `Shape` 的虚拟函数表中的数据。它通用、易用，并且与其他语言类似的功能一样高效。然而，`dynamic_cast` 变得非常不受欢迎，因为它的实现往往是复杂的，特殊情况下手动编码可能更高效（可以说这导致 `dynamic_cast` **违反了零开销原则**）。
+
+一种更简单的变种是使用引用而不是指针：
+
+``` cpp
+void do_something2(Shape& r)
+{
+    Circle& rc = dynamic_cast<Circle&>(r);  // r 是某种 Circle！
+    // ... 使用 rc 引用的 Circle ...
+}
+```
+
+这简单地断言 `r` 指代一个 `Circle`，如果不是则抛出一个异常。
+
+
+----------------------------------------------------------------
+
+Safely converts pointers and references to classes `up`, `down`, and sideways along the inheritance hierarchy.
 
 ```
 A -> V

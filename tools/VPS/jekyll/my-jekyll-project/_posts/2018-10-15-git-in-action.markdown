@@ -924,6 +924,12 @@ git push origin -d <branch-name>
 git remote show origin
 
 # 切换到某个分支
+# 确保您已经获取了远程仓库的最新信息。运行以下命令来获取远程仓库的所有分支信息
+git fetch
+# 如果您知道具体的远程分支名称，可以只获取该分支的信息
+git fetch origin branch_name
+# 确认远程分支是否存在。运行以下命令查看所有远程分支
+git branch -r
 git checkout <branch-name>
 
 # 切换到上一个分支
