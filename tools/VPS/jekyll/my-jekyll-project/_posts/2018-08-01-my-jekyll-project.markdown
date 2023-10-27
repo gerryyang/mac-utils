@@ -281,70 +281,70 @@ Shift+Command+5
 
 ### 系统
 
-| 工具 | 功能
-| -- | --
-| Adobe Reader | Adobe Reader 为免费版 PDF 阅读软件，无需授权。如需编辑 PDF 文件的内容，请申请专业版使用
-| [有数](https://apps.apple.com/cn/app/%E6%9C%89%E6%95%B0-%E9%87%8D%E6%96%B0%E5%AE%9A%E4%B9%89%E8%AE%A1%E7%AE%97%E5%99%A8/id721606556) | 补充 MacOS 计算器的功能
-| [Cleaner One](https://apps.apple.com/cn/app/apple-store/id1133028347) | 磁盘清理(免费) [refer: Mac 存储空间里面的“其他”怎么清理](https://zhuanlan.zhihu.com/p/349862578)
-| [Homebrew](https://brew.sh/) | 软件包管理，第二个AppStore
-| [Alfred 4 for Mac](https://www.alfredapp.com/) | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起，例如，`open xxx`打开一个目录或文件
-| [ITerm2](https://www.iterm2.com/) | 相比系统默认的`Terminal`提供了更多高级的功能
-| [Oh My ZSH](https://ohmyz.sh/) | 兼容bash，并集成了很多插件，使用Terminal更加高效。`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效：`$chsh -s /bin/zsh`或则`$chsh -s /bin/bash`。常用插件：`autojump`用于目录跳转（`brew install autojump`）
-| Easy New File | 添加右键新建文件
-| [Itsycal](https://www.mowglii.com/itsycal/) | 比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的
-| [Spectacle](https://www.spectacleapp.com/) | 窗口管理工具
-| Cheatsheet | 通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档
-| [Keka](https://www.keka.io/en/) | 解压缩工具
-| [IINA](https://iina.io/) | The modern media player for macOS，比苹果自带quicktime player播放器功能强大
-| Amphetamine | 可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的`节能`配置使用方便
-| [Snip](https://snip.qq.com/) | 默认mac可以通过`shift+command+5`来截图或录制屏幕。而Snip的优点是可以滚动截屏（从 Mac App Store 下载的 Snip 不支持滚动截屏）
-| [Aerial](https://github.com/JohnCoates/Aerial) | Apple TV Aerial Screensaver for Mac
-| [Dozer](https://github.com/Mortennn/Dozer) | Hide status bar icons on macOS，用于隐藏状态栏上不必要的图标，通过`command + drag`将范围内的图标隐藏
-| [LICEcap](https://github.com/justinfrankel/licecap) | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF
-| [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12) | MacOS 上右键的扩展
-| [MacVim](https://macvim-dev.github.io/macvim/) | Vim - the text editor - for macOS
-| [VS Code](https://code.visualstudio.com/) | For Windows, macOS and Linux, 扩展丰富
-| [泼辣修图](https://apps.apple.com/cn/app/po-la-xiu-tu-jing-jian-ban/id1077124956?mt=12) | Mac上的美图秀秀
+| 工具                                                                                                                                 | 功能                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Adobe Reader                                                                                                                         | Adobe Reader 为免费版 PDF 阅读软件，无需授权。如需编辑 PDF 文件的内容，请申请专业版使用                                                                                                                                          |
+| [有数](https://apps.apple.com/cn/app/%E6%9C%89%E6%95%B0-%E9%87%8D%E6%96%B0%E5%AE%9A%E4%B9%89%E8%AE%A1%E7%AE%97%E5%99%A8/id721606556) | 补充 MacOS 计算器的功能                                                                                                                                                                                                          |
+| [Cleaner One](https://apps.apple.com/cn/app/apple-store/id1133028347)                                                                | 磁盘清理(免费) [refer: Mac 存储空间里面的“其他”怎么清理](https://zhuanlan.zhihu.com/p/349862578)                                                                                                                                 |
+| [Homebrew](https://brew.sh/)                                                                                                         | 软件包管理，第二个AppStore                                                                                                                                                                                                       |
+| [Alfred 4 for Mac](https://www.alfredapp.com/)                                                                                       | 查找文件，搜索web等，默认通过快捷键`option + Space`来唤起，例如，`open xxx`打开一个目录或文件                                                                                                                                    |
+| [ITerm2](https://www.iterm2.com/)                                                                                                    | 相比系统默认的`Terminal`提供了更多高级的功能                                                                                                                                                                                     |
+| [Oh My ZSH](https://ohmyz.sh/)                                                                                                       | 兼容bash，并集成了很多插件，使用Terminal更加高效。`bash`和`zsh`之间的切换方法，通过`chsh`命令，然后重启session即可生效：`$chsh -s /bin/zsh`或则`$chsh -s /bin/bash`。常用插件：`autojump`用于目录跳转（`brew install autojump`） |
+| Easy New File                                                                                                                        | 添加右键新建文件                                                                                                                                                                                                                 |
+| [Itsycal](https://www.mowglii.com/itsycal/)                                                                                          | 比系统默认日期显示更全，同时可以添加事件通知，与系统的日历是打通的                                                                                                                                                               |
+| [Spectacle](https://www.spectacleapp.com/)                                                                                           | 窗口管理工具                                                                                                                                                                                                                     |
+| Cheatsheet                                                                                                                           | 通过长按`command键`显示当前应用的快捷键，并可将其保存为PDF文档                                                                                                                                                                   |
+| [Keka](https://www.keka.io/en/)                                                                                                      | 解压缩工具                                                                                                                                                                                                                       |
+| [IINA](https://iina.io/)                                                                                                             | The modern media player for macOS，比苹果自带quicktime player播放器功能强大                                                                                                                                                      |
+| Amphetamine                                                                                                                          | 可以保持系统一直处于awake状态，方便网络下载等不中断场景使用，点击它可以开启一个session来阻止系统进入休眠，同时可以设置这个session的生命周期，比系统默认的`节能`配置使用方便                                                      |
+| [Snip](https://snip.qq.com/)                                                                                                         | 默认mac可以通过`shift+command+5`来截图或录制屏幕。而Snip的优点是可以滚动截屏（从 Mac App Store 下载的 Snip 不支持滚动截屏）                                                                                                      |
+| [Aerial](https://github.com/JohnCoates/Aerial)                                                                                       | Apple TV Aerial Screensaver for Mac                                                                                                                                                                                              |
+| [Dozer](https://github.com/Mortennn/Dozer)                                                                                           | Hide status bar icons on macOS，用于隐藏状态栏上不必要的图标，通过`command + drag`将范围内的图标隐藏                                                                                                                             |
+| [LICEcap](https://github.com/justinfrankel/licecap)                                                                                  | LICEcap simple animated screen capture tool for Windows and OS X，用于屏幕录制并支持导出GIF                                                                                                                                      |
+| [超级右键 iRightMouse](https://apps.apple.com/cn/app/%E8%B6%85%E7%BA%A7%E5%8F%B3%E9%94%AE-irightmouse/id1497428978?mt=12)            | MacOS 上右键的扩展                                                                                                                                                                                                               |
+| [MacVim](https://macvim-dev.github.io/macvim/)                                                                                       | Vim - the text editor - for macOS                                                                                                                                                                                                |
+| [VS Code](https://code.visualstudio.com/)                                                                                            | For Windows, macOS and Linux, 扩展丰富                                                                                                                                                                                           |
+| [泼辣修图](https://apps.apple.com/cn/app/po-la-xiu-tu-jing-jian-ban/id1077124956?mt=12)                                              | Mac上的美图秀秀                                                                                                                                                                                                                  |
 
 More: https://github.com/hzlzh/Best-App
 
 
 ### 效率
 
-| 工具 | 功能
-| -- | --
-| Trello | 多终端使用，记录日常工作的TODO
-| [欧陆词典](https://www.eudic.net/v4/en/app/eudic) | 相对有道词典的优点是没有广告，支持微信账户同步
+| 工具                                              | 功能                                           |
+| ------------------------------------------------- | ---------------------------------------------- |
+| Trello                                            | 多终端使用，记录日常工作的TODO                 |
+| [欧陆词典](https://www.eudic.net/v4/en/app/eudic) | 相对有道词典的优点是没有广告，支持微信账户同步 |
 
 
 ### Google Chrome
 
 使用Google账户登录，方便同步书签信息，便于多终端使用，并且有丰富的扩展程序。
 
-| **扩展程序** | **功能**
-| -- | --
-| Tampermonkey 油猴 | https://www.zhihu.com/question/382845649
-| 印象笔记剪裁 | 保存网页
-| FeHelper | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器
-| Vimium | 可以使用Vim快捷键浏览网页
-| [Video DownloadHelper](https://chrome.google.com/webstore/detail/video-downloadhelper/lmjnegcaeklhafolokijcfjliaokphfk) | 下载页面上的多媒体资源，当检测到有可下载的资源图标会变为彩色，否则为灰色
-| Adblock Plus | 浏览器广告拦截
-| 替换字体的中文部分为雅黑 | 将页面中文显示雅黑字体
-| [类似的网站](http://bit.ly/3bqQvDW) | 发现相关网站
-| [Grammarly for Chrome](http://bit.ly/37e0jOs) | 英语写作纠正
-| [高效网页截图编辑插件](http://bit.ly/2SDgdwv) | 支持长截图
-| [CLEAN crxMouse Gestures](http://bit.ly/2uxtUVF) | 手势，支持各种设置
+| **扩展程序**                                                                                                            | **功能**                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Tampermonkey 油猴                                                                                                       | https://www.zhihu.com/question/382845649                                 |
+| 印象笔记剪裁                                                                                                            | 保存网页                                                                 |
+| FeHelper                                                                                                                | WEB前端助手。1. JSON自动格式化(或命令行工具`jq`) 2. 二维码生成器         |
+| Vimium                                                                                                                  | 可以使用Vim快捷键浏览网页                                                |
+| [Video DownloadHelper](https://chrome.google.com/webstore/detail/video-downloadhelper/lmjnegcaeklhafolokijcfjliaokphfk) | 下载页面上的多媒体资源，当检测到有可下载的资源图标会变为彩色，否则为灰色 |
+| Adblock Plus                                                                                                            | 浏览器广告拦截                                                           |
+| 替换字体的中文部分为雅黑                                                                                                | 将页面中文显示雅黑字体                                                   |
+| [类似的网站](http://bit.ly/3bqQvDW)                                                                                     | 发现相关网站                                                             |
+| [Grammarly for Chrome](http://bit.ly/37e0jOs)                                                                           | 英语写作纠正                                                             |
+| [高效网页截图编辑插件](http://bit.ly/2SDgdwv)                                                                           | 支持长截图                                                               |
+| [CLEAN crxMouse Gestures](http://bit.ly/2uxtUVF)                                                                        | 手势，支持各种设置                                                       |
 
 
 ## 开发
 
 ### 代码管理
 
-| 工具 | 功能
-| -- | --
-| [Sourcetree](https://www.sourcetreeapp.com/) | Mac Git客户端
-| [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端
-| [cloc](https://github.com/AlDanial/cloc) | Count Lines of Code
+| 工具                                               | 功能                |
+| -------------------------------------------------- | ------------------- |
+| [Sourcetree](https://www.sourcetreeapp.com/)       | Mac Git客户端       |
+| [Cornerstone 4](https://cornerstone.assembla.com/) | Mac SVN客户端       |
+| [cloc](https://github.com/AlDanial/cloc)           | Count Lines of Code |
 
 
 * `cloc --show-lang` 显示支持的语言
@@ -364,20 +364,20 @@ More: https://github.com/hzlzh/Best-App
 
 * [VIM 的分屏功能](https://coolshell.cn/articles/1679.html)
 
-| 操作 | 快捷键
-| -- | -- |
-| 使用大写的O参数来垂直分屏 | `vim -On file1 file2 ...`
-| 使用小写的o参数来水平分屏 | `vim -on file1 file2 ...`
-| 左右分割当前打开的文件 | `Ctrl+W v`
-| 上下分割当前打开的文件 | `Ctrl+W s`
-| 左右分割，并打开一个新的文件 |`:vsp filename`
-| 上下分割，并打开一个新的文件 | `:sp filename`
-| 关闭当前窗口 | `Ctrl+W c`
-| 把光标移到右边的屏 | `Ctrl+W l`
-| 把光标移到左边的屏 | `Ctrl+W h`
-| 把光标移到上边的屏 | `Ctrl+W k`
-| 把光标移到下边的屏 | `Ctrl+W j`
-| 把光标移到下一个的屏 | `Ctrl+W w`
+| 操作                         | 快捷键                    |
+| ---------------------------- | ------------------------- |
+| 使用大写的O参数来垂直分屏    | `vim -On file1 file2 ...` |
+| 使用小写的o参数来水平分屏    | `vim -on file1 file2 ...` |
+| 左右分割当前打开的文件       | `Ctrl+W v`                |
+| 上下分割当前打开的文件       | `Ctrl+W s`                |
+| 左右分割，并打开一个新的文件 | `:vsp filename`           |
+| 上下分割，并打开一个新的文件 | `:sp filename`            |
+| 关闭当前窗口                 | `Ctrl+W c`                |
+| 把光标移到右边的屏           | `Ctrl+W l`                |
+| 把光标移到左边的屏           | `Ctrl+W h`                |
+| 把光标移到上边的屏           | `Ctrl+W k`                |
+| 把光标移到下边的屏           | `Ctrl+W j`                |
+| 把光标移到下一个的屏         | `Ctrl+W w`                |
 
 * 查找
   * 精确匹配：通过 `<word>` 查找，例如，精确查找 `the` 则为 `/\<the\>`
@@ -414,15 +414,15 @@ More: https://github.com/hzlzh/Best-App
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/sublime)。
 
-| 插件名称 | 用途 | 获取地址
-| -- | -- | --
-| MarkdownPreview | Markdown文档预览 | https://packagecontrol.io/packages/MarkdownPreview https://facelessuser.github.io/MarkdownPreview/usage/
-| AlignTab | 对齐，The most flexible alignment plugin for Sublime Text 3. This plugin is inspired by the excellent VIM plugin, [tabular](https://github.com/godlygeek/tabular) | https://github.com/randy3k/AlignTab
-| Sublime​AStyle​Formatter | C/C++/C#/Java code formatter/beautifier with AStyle, For OSX, control + option + f to format current file | https://packagecontrol.io/packages/SublimeAStyleFormatter
-| GoSublime (x) | GoLang配置 | https://packagecontrol.io/packages/GoSublime
-| ConvertToUTF8 | 字符编码转换 | https://packagecontrol.io/packages/ConvertToUTF8
-| SyncedSideBar | | https://packagecontrol.io/packages/SyncedSideBar
-| URLEncode | url编解码 | https://packagecontrol.io/packages/URLEncode
+| 插件名称                 | 用途                                                                                                                                                              | 获取地址                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| MarkdownPreview          | Markdown文档预览                                                                                                                                                  | https://packagecontrol.io/packages/MarkdownPreview https://facelessuser.github.io/MarkdownPreview/usage/ |
+| AlignTab                 | 对齐，The most flexible alignment plugin for Sublime Text 3. This plugin is inspired by the excellent VIM plugin, [tabular](https://github.com/godlygeek/tabular) | https://github.com/randy3k/AlignTab                                                                      |
+| Sublime​AStyle​Formatter | C/C++/C#/Java code formatter/beautifier with AStyle, For OSX, control + option + f to format current file                                                         | https://packagecontrol.io/packages/SublimeAStyleFormatter                                                |
+| GoSublime (x)            | GoLang配置                                                                                                                                                        | https://packagecontrol.io/packages/GoSublime                                                             |
+| ConvertToUTF8            | 字符编码转换                                                                                                                                                      | https://packagecontrol.io/packages/ConvertToUTF8                                                         |
+| SyncedSideBar            |                                                                                                                                                                   | https://packagecontrol.io/packages/SyncedSideBar                                                         |
+| URLEncode                | url编解码                                                                                                                                                         | https://packagecontrol.io/packages/URLEncode                                                             |
 
 * AlignTab 使用说明
 
@@ -508,15 +508,15 @@ More: https://github.com/hzlzh/Best-App
 
 ### JetBrains全家桶
 
-| IDE | 功能
-| -- | --
-| CLion | [JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。
-| GoLand | GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。
-| IntelliJ IDEA | 2001年发布，一套智能的Java集成开发环境，特别专注与强调程序师的开发撰写效率提升。
-| PyCharm | PyCharm是一种Python IDE，可以帮助用户在使用Python语言开发时提高其效率的工具。
-| PhpStorm | PhpStorm是JetBrains公司开发的一款商业的PHP集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。
-| WebStorm | WebStorm是jetbrains公司旗下一款JavaScript 开发工具，被誉为Web前端开发神器。
-| Rider | JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。
+| IDE           | 功能                                                                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLion         | [JetBrains](https://zh.wikipedia.org/wiki/JetBrains)的CLion，是一个跨平台的C/C++ IDE开发工具，支持C++11 、C++14、libc++以及Boost。           |
+| GoLand        | GoLand是JetBrains的IDE，旨在为Go开发提供符合人体工程学的环境。                                                                               |
+| IntelliJ IDEA | 2001年发布，一套智能的Java集成开发环境，特别专注与强调程序师的开发撰写效率提升。                                                             |
+| PyCharm       | PyCharm是一种Python IDE，可以帮助用户在使用Python语言开发时提高其效率的工具。                                                                |
+| PhpStorm      | PhpStorm是JetBrains公司开发的一款商业的PHP集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。 |
+| WebStorm      | WebStorm是jetbrains公司旗下一款JavaScript 开发工具，被誉为Web前端开发神器。                                                                  |
+| Rider         | JetBrains Rider是一款快速强大的C#编辑器，用于在Windows、Mac和Linux上进行Unity开发。                                                          |
 
 
 ## 画图
@@ -594,6 +594,9 @@ More: https://github.com/hzlzh/Best-App
 * [awesome-programming-books.github.io](https://awesome-programming-books.github.io/)
 * The Art of Doing Science and Engineering (Richard Wesley Hamming)
 * Probability and Computing
+* [No Silver Bullet - Essence and Accident in Software Engineering](http://worrydream.com/refs/Brooks-NoSilverBullet.pdf)
+
+
 
 
 
