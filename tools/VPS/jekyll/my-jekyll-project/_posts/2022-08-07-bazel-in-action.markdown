@@ -273,6 +273,118 @@ Subtractive patterns:
 ```
 
 
+# [Output Directory Layout](https://bazel.build/remote/output-directories?hl=en) (输出目录布局)
+
+## Current layout (当前布局)
+
+The solution that's currently implemented:
+
+* Bazel must be invoked from a directory containing a `WORKSPACE` file (the "workspace directory"), or a subdirectory thereof. It reports an error if it is not.
+
+* The `outputRoot` directory defaults to `~/.cache/bazel` on **Linux**, `/private/var/tmp` on macOS, and on Windows it defaults to `%HOME%` if set, else `%USERPROFILE%` if set, else the result of calling `SHGetKnownFolderPath()` with the `FOLDERID_Profile` flag set. If the environment variable `$TEST_TMPDIR` is set, as in a test of Bazel itself, then that value overrides the default.
+
+* The Bazel user's build state is located beneath `outputRoot/_bazel_$USER`. This is called the **outputUserRoot** directory.
+
+* Beneath the **outputUserRoot** directory there is an `install` directory, and in it is an `installBase` directory whose name is the MD5 hash of the Bazel installation manifest.
+
+* Beneath the **outputUserRoot** directory, an **outputBase** directory is also created whose name is the MD5 hash of the path name of the workspace directory. So, for example, if Bazel is running in the workspace directory `/home/user/src/my-project` (or in a directory symlinked to that one), then an output base directory is created called: `/home/user/.cache/bazel/_bazel_user/7ffd56a6e4cb724ea575aba15733d113`. You can also run `echo -n $(pwd) | md5sum` in a Bazel workspace to get the MD5.
+
+* You can use Bazel's `--output_base` startup option to override the default output base directory. For example, `bazel --output_base=/tmp/bazel/output build x/y:z`.
+
+* You can also use Bazel's `--output_user_root` startup option to override the default install base and output base directories. For example: `bazel --output_user_root=/tmp/bazel build x/y:z`.
+
+The symlinks for "`bazel-<workspace-name>`", "`bazel-out`", "`bazel-testlogs`", and "`bazel-bin`" are put in the workspace directory; these symlinks point to some directories inside a target-specific directory inside the output directory. These symlinks are only for the user's convenience, as Bazel itself does not use them. Also, this is done only if the workspace directory is writable.
+
+```
+--output_base 和 --output_user_root 都是 Bazel 配置选项，用于设置 Bazel 缓存和输出文件的存储位置。它们之间的主要区别在于它们影响的目录结构层次。
+
+--output_base：此选项设置 Bazel 的输出基目录。Bazel 会在此目录下创建一个名为 execroot 的子目录，用于存储构建过程中的所有文件，包括缓存、构建输出、日志等。此选项允许您为所有 Bazel 项目设置一个统一的输出基目录。例如，如果您设置 --output_base=/data/cache/bazel，那么所有项目的构建输出和缓存将存储在 /data/cache/bazel/execroot 目录下。
+
+--output_user_root：此选项设置 Bazel 的用户根目录。Bazel 会在此目录下为每个工作区创建一个子目录，用于存储与特定工作区相关的缓存和输出文件。例如，如果您设置 --output_user_root=/dev/shm/bazel_cache，那么每个工作区的构建输出和缓存将存储在 /dev/shm/bazel_cache/<workspace_name> 目录下。
+
+总之，--output_base 设置了一个全局的输出基目录，适用于所有 Bazel 项目，而 --output_user_root 设置了一个用户根目录，允许为每个工作区创建单独的缓存和输出目录。在大多数情况下，设置 --output_user_root 更具灵活性，因为它允许您为不同的工作区分配不同的缓存和输出目录。然而，如果您希望为所有项目设置一个统一的缓存和输出位置，可以选择使用 --output_base。
+```
+
+## Layout diagram (布局示意图)
+
+The directories are laid out as follows:
+
+```
+<workspace-name>/                         <== The workspace directory
+  bazel-my-project => <...my-project>     <== Symlink to execRoot
+  bazel-out => <...bin>                   <== Convenience symlink to outputPath
+  bazel-bin => <...bin>                   <== Convenience symlink to most recent written bin dir $(BINDIR)
+  bazel-testlogs => <...testlogs>         <== Convenience symlink to the test logs directory
+
+/home/user/.cache/bazel/                  <== Root for all Bazel output on a machine: outputRoot
+  _bazel_$USER/                           <== Top level directory for a given user depends on the user name:
+                                              outputUserRoot
+    install/
+      fba9a2c87ee9589d72889caf082f1029/   <== Hash of the Bazel install manifest: installBase
+        _embedded_binaries/               <== Contains binaries and scripts unpacked from the data section of
+                                              the bazel executable on first run (such as helper scripts and the
+                                              main Java file BazelServer_deploy.jar)
+    7ffd56a6e4cb724ea575aba15733d113/     <== Hash of the client's workspace directory (such as
+                                              /home/user/src/my-project): outputBase
+      action_cache/                       <== Action cache directory hierarchy
+                                              This contains the persistent record of the file
+                                              metadata (timestamps, and perhaps eventually also MD5
+                                              sums) used by the FilesystemValueChecker.
+      command.log                         <== A copy of the stdout/stderr output from the most
+                                              recent bazel command.
+      external/                           <== The directory that remote repositories are
+                                              downloaded/symlinked into.
+      server/                             <== The Bazel server puts all server-related files (such
+                                              as socket file, logs, etc) here.
+        jvm.out                           <== The debugging output for the server.
+      execroot/                           <== The working directory for all actions. For special
+                                              cases such as sandboxing and remote execution, the
+                                              actions run in a directory that mimics execroot.
+                                              Implementation details, such as where the directories
+                                              are created, are intentionally hidden from the action.
+                                              Every action can access its inputs and outputs relative
+                                              to the execroot directory.
+        <workspace-name>/                 <== Working tree for the Bazel build & root of symlink forest: execRoot
+          _bin/                           <== Helper tools are linked from or copied to here.
+
+          bazel-out/                      <== All actual output of the build is under here: outputPath
+            _tmp/actions/                 <== Action output directory. This contains a file with the
+                                              stdout/stderr for every action from the most recent
+                                              bazel run that produced output.
+            local_linux-fastbuild/        <== one subdirectory per unique target BuildConfiguration instance;
+                                              this is currently encoded
+              bin/                        <== Bazel outputs binaries for target configuration here: $(BINDIR)
+                foo/bar/_objs/baz/        <== Object files for a cc_* rule named //foo/bar:baz
+                  foo/bar/baz1.o          <== Object files from source //foo/bar:baz1.cc
+                  other_package/other.o   <== Object files from source //other_package:other.cc
+                foo/bar/baz               <== foo/bar/baz might be the artifact generated by a cc_binary named
+                                              //foo/bar:baz
+                foo/bar/baz.runfiles/     <== The runfiles symlink farm for the //foo/bar:baz executable.
+                  MANIFEST
+                  <workspace-name>/
+                    ...
+              genfiles/                   <== Bazel puts generated source for the target configuration here:
+                                              $(GENDIR)
+                foo/bar.h                     such as foo/bar.h might be a headerfile generated by //foo:bargen
+              testlogs/                   <== Bazel internal test runner puts test log files here
+                foo/bartest.log               such as foo/bar.log might be an output of the //foo:bartest test with
+                foo/bartest.status            foo/bartest.status containing exit status of the test (such as
+                                              PASSED or FAILED (Exit 1), etc)
+              include/                    <== a tree with include symlinks, generated as needed. The
+                                              bazel-include symlinks point to here. This is used for
+                                              linkstamp stuff, etc.
+            host/                         <== BuildConfiguration for build host (user's workstation), for
+                                              building prerequisite tools, that will be used in later stages
+                                              of the build (ex: Protocol Compiler)
+        <packages>/                       <== Packages referenced in the build appear as if under a regular workspace
+```
+
+The layout of the `*.runfiles` directories is documented in more detail in the places pointed to by RunfilesSupport.
+
+> bazel clean
+>
+> bazel clean does an rm -rf on the outputPath and the action_cache directory. It also removes the workspace symlinks. The --expunge option will clean the entire outputBase. (bazel clean 对 outputPath 和 action_cache 目录执行 rm -rf。还会移除工作区符号链接。--expunge 选项将清理整个 outputBase。)
+
 
 # Action Graph (依赖图)
 
@@ -423,7 +535,7 @@ As external repositories are repositories themselves, they often contain a `WORK
 
 The primary unit of code organization in a repository is the **package**. A package is a collection of related files and a specification of how they can be used to produce output artifacts.
 
-A package is defined as a directory containing a `BUILD` file named either `BUILD` or `BUILD.bazel`. A package includes all files in its directory, plus all subdirectories beneath it, except those which themselves contain a `BUILD` file. From this definition, no file or directory may be a part of two different packages.
+A package is defined as a directory containing a `BUILD` file named either `BUILD` or `BUILD.bazel`. A package includes all files in its directory, plus all subdirectories beneath it, except those which themselves contain a `BUILD` file. **From this definition, no file or directory may be a part of two different packages.**
 
 For example, in the following directory tree there are two packages, `my/app`, and the subpackage `my/app/tests`. Note that `my/app/data` is not a package, but a directory belonging to package `my/app`.
 
@@ -443,7 +555,7 @@ Files are further divided into two kinds. **Source files** are usually written b
 
 The second kind of target is declared with a **rule**. Each rule instance specifies the relationship between a set of input and a set of output files. The inputs to a rule may be source files, but they also may be the outputs of other rules.
 
-Whether the input to a rule is a source file or a generated file is in most cases immaterial; what matters is only the contents of that file. This fact makes it easy to replace a complex source file with a generated file produced by a rule, such as happens when the burden of manually maintaining a highly structured file becomes too tiresome, and someone writes a program to derive it. No change is required to the consumers of that file. Conversely, a generated file may easily be replaced by a source file with only local changes.
+Whether the input to a rule is a source file or a generated file is in most cases immaterial (不重要的); what matters is only the contents of that file. This fact makes it easy to replace a complex source file with a generated file produced by a rule, such as happens when the burden of manually maintaining a highly structured file becomes too tiresome, and someone writes a program to derive it. No change is required to the consumers of that file. Conversely, a generated file may easily be replaced by a source file with only local changes.
 
 **The inputs to a rule may also include other rules**. The precise meaning of such relationships is often quite complex and language- or rule-dependent, but intuitively it is simple: **a C++ library rule A might have another C++ library rule B for an input. The effect of this dependency is that B's header files are available to A during compilation, B's symbols are available to A during linking, and B's runtime data is available to A during execution**.
 
@@ -1440,6 +1552,9 @@ This option controls where and how commands are executed.
 **remote** causes commands to be executed remotely; this is only available if a remote executor has been configured separately.
 
 
+More: [What are Bazel's strategies?](https://jmmv.dev/2019/12/bazel-strategies.html)
+
+
 * `--jobs=n (-j)`
 
 This option, which takes an integer argument, specifies a limit on the number of jobs that should be executed concurrently during the execution phase of the build.
@@ -1942,7 +2057,621 @@ Critical path (13.428 s):
 通过分析上述 profiling 结果数据，可以看到 bazel 各阶段的耗时，以及 action 具体的编译耗时，根据这些信息可以大致了解构建耗时情况。
 
 
+# [Starlark Language](https://bazel.build/rules/language?hl=en)
+
+For more information about the language, see [Starlark's GitHub repo](https://github.com/bazelbuild/starlark/).
+
+For the authoritative specification of the Starlark syntax and behavior, see the [Starlark Language Specification](https://github.com/bazelbuild/starlark/blob/master/spec.md).
+
+
+## Syntax (语法)
+
+Starlark's syntax is inspired by `Python3`. This is valid syntax in Starlark:
+
+``` python
+def fizz_buzz(n):
+  """Print Fizz Buzz numbers from 1 to n."""
+  for i in range(1, n + 1):
+    s = ""
+    if i % 3 == 0:
+      s += "Fizz"
+    if i % 5 == 0:
+      s += "Buzz"
+    print(s if s else i)
+
+fizz_buzz(20)
+```
+
+Starlark's semantics can differ from Python, but behavioral differences are rare, except for cases where Starlark raises an error. The following Python types are supported:
+
+* [None](https://bazel.build/rules/lib/globals#None)
+* [bool](https://bazel.build/rules/lib/bool)
+* [dict](https://bazel.build/rules/lib/dict)
+* [tuple](https://bazel.build/rules/lib/tuple)
+* [function](https://bazel.build/rules/lib/function)
+* [int](https://bazel.build/rules/lib/int)
+* [list](https://bazel.build/rules/lib/list)
+* [string](https://bazel.build/rules/lib/string)
+
+## Mutability (可变性)
+
+Starlark favors immutability. Two mutable data structures are available: [lists](https://bazel.build/rules/lib/list) and [dicts](https://bazel.build/rules/lib/dict). Changes to mutable data-structures, such as appending a value to a list or deleting an entry in a dictionary are valid only for objects created in the current context. After a context finishes, its values become immutable.
+
+This is because Bazel builds use parallel execution. During a build, each `.bzl` file and each `BUILD` file get their own execution context. Each rule is also analyzed in its own context.
+
+## Differences between BUILD and .bzl files
+
+`BUILD` files register targets via making calls to rules. `.bzl` files provide definitions for constants, rules, macros, and functions.
+
+[Native functions](https://bazel.build/reference/be/functions) and [native rules](https://bazel.build/reference/be/overview#language-specific-native-rules) are global symbols in `BUILD` files. `bzl` files need to load them using the [native module](https://bazel.build/rules/lib/toplevel/native).
+
+There are two syntactic restrictions in BUILD files:
+
+1. declaring functions is illegal
+2. `*args` and `**kwargs` arguments are not allowed.
+
+## Differences with Python
+
+More: https://bazel.build/rules/language?hl=en#differences_with_python
+
+
+# [Sharing Variables](https://bazel.build/build/share-variables?hl=en)
+
+## 在同一个 BUILD 文件里共享变量
+
+`BUILD` files are intended to be simple and declarative. They will typically consist of a series of a target declarations. As your code base and your `BUILD` files get larger, you will probably notice some duplication, such as:
+
+```
+cc_library(
+  name = "foo",
+  copts = ["-DVERSION=5"],
+  srcs = ["foo.cc"],
+)
+
+cc_library(
+  name = "bar",
+  copts = ["-DVERSION=5"],
+  srcs = ["bar.cc"],
+  deps = [":foo"],
+)
+```
+
+Code duplication in `BUILD` files is usually fine. This can make the file more readable: each declaration can be read and understood without any context. This is important, not only for humans, but also for external tools. For example, a tool might be able to read and update `BUILD` files to add missing dependencies. Code refactoring and code reuse might prevent this kind of automated modification.
+
+If it is useful to share values (for example, if values must be kept in sync), you can introduce a variable:
+
+```
+COPTS = ["-DVERSION=5"]
+
+cc_library(
+  name = "foo",
+  copts = COPTS,
+  srcs = ["foo.cc"],
+)
+
+cc_library(
+  name = "bar",
+  copts = COPTS,
+  srcs = ["bar.cc"],
+  deps = [":foo"],
+)
+```
+
+Multiple declarations now use the value `COPTS`. By convention, use uppercase letters to name global constants.
+
+
+## 在多个不同 BUILD 文件里共享变量
+
+If you need to share a value across multiple `BUILD` files, you have to put it in a `.bzl` file. `.bzl` files contain definitions (variables and functions) that can be used in `BUILD` files.
+
+In `path/to/variables.bzl`, write:
+
+```
+COPTS = ["-DVERSION=5"]
+```
+
+Then, you can update your `BUILD` files to access the variable:
+
+```
+load("//path/to:variables.bzl", "COPTS")
+
+cc_library(
+  name = "foo",
+  copts = COPTS,
+  srcs = ["foo.cc"],
+)
+
+cc_library(
+  name = "bar",
+  copts = COPTS,
+  srcs = ["bar.cc"],
+  deps = [":foo"],
+)
+```
+
+
+# [自定义扩展](https://bazel.build/extending/concepts?hl=en)
+
+Bazel extensions are files ending in `.bzl`. Use a [load statement](https://bazel.build/concepts/build-files#load) to import a symbol from an extension.
+
+Before learning the more advanced concepts, first:
+
+1. Read about the [Starlark language](https://bazel.build/rules/language), used in both the `BUILD` and `.bzl` files.
+2. Learn how you can [share variables](https://bazel.build/build/share-variables) between two BUILD files.
+
+## Macros and rules (宏和规则)
+
+A [macro](https://bazel.build/extending/macros) is a function that instantiates rules. It is useful when a `BUILD` file is getting too repetitive or too complex, as it allows you to reuse some code. The function is evaluated as soon as the `BUILD` file is read. After the evaluation of the `BUILD` file, Bazel has little information about macros: if your macro generates a `genrule`, Bazel will behave as if you wrote the `genrule`. As a result, bazel query will only list the generated `genrule`.
+
+宏是用于对规则进行实例化的函数。当 BUILD 文件过于重复或过于复杂时，这会很有用，因为它允许您重复使用一些代码。系统会在读取 BUILD 文件后立即评估该函数。在对 BUILD 文件求值后，Bazel 几乎没有关于宏的信息：如果您的宏生成了 genrule，Bazel 会像您编写了 genrule 一样。因此，bazel query 将仅列出生成的 genrule。
+
+A [rule](https://bazel.build/extending/rules) is more powerful than a macro. It can access Bazel internals and have full control over what is going on. It may for example pass information to other rules.
+
+规则比宏更强大。它可以访问 Bazel 内部，并完全掌控发生的情况。例如，它可以将信息传递给其他规则。
+
+If you want to reuse simple logic, start with a macro. If a macro becomes complex, it is often a good idea to make it a rule. Support for a new language is typically done with a rule. Rules are for advanced users, and most users will never have to write one; they will only load and call existing rules.
+
+如果您想重复使用简单的逻辑，请从宏着手。如果宏变得复杂，通常最好将其设为规则。通常可以使用规则来实现对新语言的支持。规则适用于高级用户，大多数用户永远无需编写规则；他们只需加载并调用现有规则。
+
+## Evaluation model (评估模型)
+
+A build consists of three phases.
+
+* **Loading phase**. First, load and evaluate all extensions and all `BUILD` files that are needed for the build. The execution of the `BUILD` files simply instantiates rules (each time a rule is called, it gets added to a graph). This is where macros are evaluated.
+
+加载阶段。首先，加载并评估 build 所需的所有扩展程序和所有 BUILD 文件。执行 BUILD 文件只是实例化规则（每次调用规则时，系统都会将其添加到图表中）。系统会对宏进行评估。
+
+* **Analysis phase**. The code of the rules is executed (their `implementation` function), and actions are instantiated. An action describes how to generate a set of outputs from a set of inputs, such as "run gcc on hello.c and get hello.o". You must list explicitly which files will be generated before executing the actual commands. In other words, the analysis phase takes the graph generated by the loading phase and generates an action graph.
+
+分析阶段。执行规则的代码（其 implementation 函数），并实例化操作。操作描述了如何根据一组输入（例如，“在 hello.c 和 hello.o 上运行 gcc”）生成一组输出。在执行实际命令之前，您必须明确列出将生成哪些文件。换言之，分析阶段会采用加载阶段生成的图并生成操作图。
+
+* **Execution phase**. Actions are executed, when at least one of their outputs is required. If a file is missing or if a command fails to generate one output, the build fails. Tests are also run during this phase.
+
+执行阶段。当需要至少一项输出时，执行操作。如果文件缺失或某个命令未能生成一项输出，构建就会失败。在此阶段还会运行测试。
+
+Bazel uses parallelism to read, parse and evaluate the `.bzl` files and `BUILD` files. A file is read at most once per build and the result of the evaluation is cached and reused. A file is evaluated only once all its dependencies (`load()` statements) have been resolved. By design, loading a `.bzl` file has no visible side-effect, it only defines values and functions.
+
+Bazel 使用并行处理来读取、解析和评估 .bzl 文件和 BUILD 文件。每个构建最多只能读取一个文件，并且会缓存和重复使用评估结果。文件只有在所有依赖项（load() 语句）都经过解析后才会进行求值。根据设计，加载 .bzl 文件不会产生明显的副作用，而是仅定义值和函数。
+
+Bazel tries to be clever: it uses dependency analysis to know which files must be loaded, which rules must be analyzed, and which actions must be executed. For example, if a rule generates actions that you don't need for the current build, they will not be executed.
+
+Bazel 非常聪明：它使用依赖项分析功能来确定必须加载哪些文件、必须分析哪些规则以及必须执行哪些操作。例如，如果规则生成当前构建不需要的操作，则不会执行这些规则。
+
+## Creating extensions (创建扩展程序)
+
+* [Create your first macro](https://bazel.build/rules/macro-tutorial) in order to reuse some code. Then [learn more about macros](https://bazel.build/extending/macros) and [using them to create "custom verbs"](https://bazel.build/rules/verbs-tutorial).
+
+* [Follow the rules tutorial](https://bazel.build/rules/rules-tutorial) to get started with rules. Next, you can read more about the [rules concepts](https://bazel.build/extending/rules).
+
+The two links below will be very useful when writing your own extensions. Keep them within reach:
+
+* The [API reference](https://bazel.build/rules/lib)
+
+* [Examples](https://github.com/bazelbuild/examples/tree/master/rules)
+
+
+## Going further
+
+https://bazel.build/extending/concepts?hl=en#going_further
+
+
+# [Creating a Macro](https://bazel.build/rules/macro-tutorial?hl=en)
+
+Imagine that you need to run a tool as part of your build. For example, you may want to generate or preprocess a source file, or compress a binary. In this tutorial, you are going to create a macro that resizes an image.
+
+假设您需要在构建过程中运行工具。例如，您可能希望生成或预处理源文件，或者压缩二进制文件。在本教程中，您将创建一个用于调整图片大小的宏。
+
+Macros are suitable for simple tasks. If you want to do anything more complicated, for example add support for a new programming language, consider creating a [rule](https://bazel.build/extending/rules). Rules give you more control and flexibility.
+
+宏适用于简单的任务。如果您想执行更复杂的操作，例如添加对新编程语言的支持，请考虑创建规则。规则可让您拥有更大的控制权和更大的灵活性。
+
+The easiest way to create a macro that resizes an image is to use a `genrule`:
+
+```
+genrule(
+    name = "logo_miniature",
+    srcs = ["logo.png"],
+    outs = ["small_logo.png"],
+    cmd = "convert $< -resize 100x100 $@",
+)
+
+cc_binary(
+    name = "my_app",
+    srcs = ["my_app.cc"],
+    data = [":logo_miniature"],
+)
+```
+
+If you need to resize more images, you may want to reuse the code. To do that, define a function in a separate `.bzl` file, and call the file `miniature.bzl`:
+
+```
+def miniature(name, src, size="100x100", **kwargs):
+  """Create a miniature of the src image.
+
+  The generated file is prefixed with 'small_'.
+  """
+  native.genrule(
+    name = name,
+    srcs = [src],
+    outs = ["small_" + src],
+    cmd = "convert $< -resize " + size + " $@",
+    **kwargs
+  )
+```
+
+注意事项：
+
+* 按照惯例，宏具有 name 参数，就像规则一样。
+* 如需记录宏的行为，请使用 Python 中的 docstring。
+* 如需调用 genrule 或任何其他原生规则，请使用 native.。
+* 使用 **kwargs 将额外参数转发到底层 genrule（其工作原理与在 Python 中类似）。这很有用，因为用户可以使用 visibility 或 tags 等标准特性。
+
+Now, use the macro from the `BUILD` file:
+
+```
+load("//path/to:miniature.bzl", "miniature")
+
+miniature(
+    name = "logo_miniature",
+    src = "image.png",
+)
+
+cc_binary(
+    name = "my_app",
+    srcs = ["my_app.cc"],
+    data = [":logo_miniature"],
+)
+```
+
+# [Rules Tutorial](https://bazel.build/rules/rules-tutorial?hl=en)
+
+[Starlark](https://github.com/bazelbuild/starlark) is a Python-like configuration language originally developed for use in Bazel and since adopted by other tools. Bazel's `BUILD` and `.bzl` files are written in a dialect of Starlark properly known as the "Build Language", though it is often simply referred to as "Starlark", especially when emphasizing that a feature is expressed in the Build Language as opposed to being a built-in or "native" part of Bazel. Bazel augments the core language with numerous build-related functions such as `glob`, `genrule`, `java_binary`, and so on.
+
+Starlark 是一种类似于 Python 的配置语言，最初是在 Bazel 中使用，之后被其他工具采用。Bazel 的 BUILD 和 .bzl 文件是用 Starlark 的方言（通常称为“build 语言”）编写的，但它通常简称为“Starlark”，尤其是在强调某项功能用 Build 语言表示而不是作为 Bazel 的内置或“原生”部分时。Bazel 使用众多与构建相关的函数（例如 glob、genrule、java_binary 等）来增强核心语言。
+
+## The empty rule (空规则)
+
+To create your first rule, create the file `foo.bzl`:
+
+```
+def _foo_binary_impl(ctx):
+    pass
+
+foo_binary = rule(
+    implementation = _foo_binary_impl,
+)
+```
+
+When you call the `rule` function, you must define a callback function. The logic will go there, but you can leave the function empty for now. The `ctx` argument provides information about the target.
+
+当您调用 rule 函数时，必须定义一个回调函数。逻辑将转到那里，但现在您可以将函数留空。ctx 参数提供有关目标的信息。
+
+You can load the rule and use it from a `BUILD` file.
+
+Create a `BUILD` file in the same directory:
+
+```
+load(":foo.bzl", "foo_binary")
+
+foo_binary(name = "bin")
+```
+
+Now, the target can be built:
+
+```
+$ bazel build bin
+INFO: Analyzed target //:bin (2 packages loaded, 17 targets configured).
+INFO: Found 1 target...
+Target //:bin up-to-date (nothing to build)
+```
+
+Even though the rule does nothing, it already behaves like other rules: it has a mandatory name, it supports common attributes like visibility, testonly, and tags.
+
+虽然该规则不执行任何操作，但它的行为与其他规则一样：它具有强制性名称，因此支持 visibility、testonly 和 tags 等常见特性。
+
+## Evaluation model (评估模型)
+
+Before going further, it's important to understand how the code is evaluated.
+
+Update `foo.bzl` with some print statements:
+
+```
+def _foo_binary_impl(ctx):
+    print("analyzing", ctx.label)
+
+foo_binary = rule(
+    implementation = _foo_binary_impl,
+)
+
+print("bzl file evaluation")
+```
+
+and `BUILD`:
+
+```
+load(":foo.bzl", "foo_binary")
+
+print("BUILD file")
+foo_binary(name = "bin1")
+foo_binary(name = "bin2")
+```
+
+`ctx.label` corresponds to the label of the target being analyzed. The `ctx` object has many useful fields and methods; you can find an exhaustive list in the [API reference](https://bazel.build/rules/lib/ctx).
+
+Query the code:
+
+```
+$ bazel query :all
+DEBUG: /usr/home/bazel-codelab/foo.bzl:8:1: bzl file evaluation
+DEBUG: /usr/home/bazel-codelab/BUILD:2:1: BUILD file
+//:bin2
+//:bin1
+```
+
+Make a few observations:
+
+* "bzl file evaluation" is printed first. Before evaluating the `BUILD` file, Bazel evaluates all the files it loads. If multiple `BUILD` files are loading `foo.bzl`, you would see only one occurrence of "bzl file evaluation" because Bazel caches the result of the evaluation.
+
+* The callback function `_foo_binary_impl` is not called. Bazel query loads `BUILD` files, but doesn't analyze targets.
+
+To analyze the targets, use the [cquery](https://bazel.build/query/cquery) ("configured query") or the `build` command:
+
+```
+$ bazel build :all
+DEBUG: /usr/home/bazel-codelab/foo.bzl:2:5: analyzing //:bin1
+DEBUG: /usr/home/bazel-codelab/foo.bzl:2:5: analyzing //:bin2
+INFO: Analyzed 2 targets (0 packages loaded, 0 targets configured).
+INFO: Found 2 targets...
+```
+
+As you can see, `_foo_binary_impl` is now called twice - once for each target.
+
+Notice that neither "bzl file evaluation" nor "BUILD file" are printed again, because the evaluation of `foo.bzl` is cached after the call to `bazel query`. Bazel only emits `print` statements when they are actually executed.
+
+## Creating a file (创建文件)
+
+To make your rule more useful, update it to generate a file. First, declare the file and give it a name. In this example, create a file with the same name as the target:
+
+为了使规则更实用，请更新规则以生成文件。首先，声明文件并为其命名。在此示例中，请创建一个与目标同名的文件：
+
+```
+ctx.actions.declare_file(ctx.label.name)
+```
+
+If you run bazel build :all now, you will get an error:
+
+```
+The following files have no generating action:
+bin2
+```
+
+Whenever you declare a file, you have to tell Bazel how to generate it by creating an action. Use [ctx.actions.write](https://bazel.build/rules/lib/actions#write), to create a file with the given content.
+
+```
+def _foo_binary_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.write(
+        output = out,
+        content = "Hello\n",
+    )
+```
+
+The code is valid, but it won't do anything:
+
+```
+$ bazel build bin1
+Target //:bin1 up-to-date (nothing to build)
+```
+
+The `ctx.actions.write` function registered an action, which taught Bazel how to generate the file. But Bazel won't create the file until it is actually requested. So the last thing to do is tell Bazel that the file is an output of the rule, and not a temporary file used within the rule implementation.
+
+```
+def _foo_binary_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.write(
+        output = out,
+        content = "Hello!\n",
+    )
+    return [DefaultInfo(files = depset([out]))]
+```
+
+Look at the `DefaultInfo` and `depset` functions later. For now, assume that the last line is the way to choose the outputs of a rule.
+
+Now, run Bazel:
+
+```
+$ bazel build bin1
+INFO: Found 1 target...
+Target //:bin1 up-to-date:
+  bazel-bin/bin1
+
+$ cat bazel-bin/bin1
+Hello!
+```
+
+You have successfully generated a file!
+
+## Attributes (属性)
+
+To make the rule more useful, add new attributes using [the attr module](https://bazel.build/rules/lib/attr) and update the rule definition.
+
+Add a string attribute called `username`:
+
+```
+foo_binary = rule(
+    implementation = _foo_binary_impl,
+    attrs = {
+        "username": attr.string(),
+    },
+)
+```
+
+Next, set it in the `BUILD` file:
+
+```
+foo_binary(
+    name = "bin",
+    username = "Alice",
+)
+```
+
+To access the value in the callback function, use `ctx.attr.username`. For example:
+
+```
+def _foo_binary_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.write(
+        output = out,
+        content = "Hello {}!\n".format(ctx.attr.username),
+    )
+    return [DefaultInfo(files = depset([out]))]
+```
+
+Note that you can make the attribute mandatory or set a default value. Look at the documentation of [attr.string](https://bazel.build/rules/lib/attr#string). You may also use other types of attributes, such as [boolean](https://bazel.build/rules/lib/attr#bool) or [list of integers](https://bazel.build/rules/lib/attr#int_list).
+
+
+## Dependencies (依赖项)
+
+Dependency attributes, such as [attr.label](https://bazel.build/rules/lib/attr#label) and [attr.label_list](https://bazel.build/rules/lib/attr#label_list), declare a dependency from the target that owns the attribute to the target whose label appears in the attribute's value. This kind of attribute forms the basis of the target graph.
+
+依赖项属性（例如 attr.label 和 attr.label_list）会声明从拥有该属性的目标到目标在标签值中显示目标的依赖项。这种特性构成了目标图的基础。
+
+In the `BUILD` file, the target label appears as a string object, such as `//pkg:name`. In the implementation function, the target will be accessible as a [Target](https://bazel.build/rules/lib/Target) object. For example, view the files returned by the target using [Target.files](https://bazel.build/rules/lib/Target#modules.Target.files).
+
+
+## Create a file with a template (使用模板创建文件)
+
+You can create a rule that generates a `.cc` file based on a **template**. Also, you can use `ctx.actions.write` to output a string constructed in the rule implementation function, but this has two problems. First, as the template gets bigger, it becomes more memory efficient to put it in a separate file and avoid constructing large strings during the analysis phase. Second, using a separate file is more convenient for the user. Instead, use [ctx.actions.expand_template](https://bazel.build/rules/lib/actions#expand_template), which performs substitutions on a template file.
+
+您可以创建基于模板生成 `.cc` 文件的规则。此外，您还可以使用 `ctx.actions.write` 输出在规则实现函数中构建的字符串，但存在两个问题。首先，随着模板越来越庞大，将内存放在一个单独的文件中，从而避免在分析阶段构建大型字符串，从而节省更多内存。其次，使用单独的文件更方便用户。而是改用 `ctx.actions.expand_template`，以替换模板文件。
+
+Create a **template** attribute to declare a dependency on the template file:
+
+```
+def _hello_world_impl(ctx):
+    out = ctx.actions.declare_file(ctx.label.name + ".cc")
+    ctx.actions.expand_template(
+        output = out,
+        template = ctx.file.template,
+        substitutions = {"{NAME}": ctx.attr.username},
+    )
+    return [DefaultInfo(files = depset([out]))]
+
+hello_world = rule(
+    implementation = _hello_world_impl,
+    attrs = {
+        "username": attr.string(default = "unknown person"),
+        "template": attr.label(
+            allow_single_file = [".cc.tpl"],
+            mandatory = True,
+        ),
+    },
+)
+```
+
+Users can use the rule like this:
+
+```
+hello_world(
+    name = "hello",
+    username = "Alice",
+    template = "file.cc.tpl",
+)
+
+cc_binary(
+    name = "hello_bin",
+    srcs = [":hello"],
+)
+```
+
+If you don't want to expose the template to the end-user and always use the same one, you can set a default value and make the attribute private:
+
+```
+    "_template": attr.label(
+        allow_single_file = True,
+        default = "file.cc.tpl",
+    ),
+```
+
+Attributes that start with an **underscore** are **private** and cannot be set in a `BUILD` file. The template is now an implicit dependency: Every `hello_world` target has a dependency on this file. Don't forget to make this file visible to other packages by updating the `BUILD` file and using [exports_files](https://bazel.build/reference/be/functions#exports_files):
+
+```
+exports_files(["file.cc.tpl"])
+```
+
+## Going further
+
+* Take a look at the [reference documentation for rules](https://bazel.build/extending/rules#contents).
+* Get familiar with [depsets](https://bazel.build/extending/depsets).
+* Check out the [examples repository](https://github.com/bazelbuild/examples/tree/master/rules) which includes additional examples of rules.
+
+
+
+
+
 # 最佳实践
+
+
+## [How to avoid 'No space left' on Bazel build?](https://stackoverflow.com/questions/54986853/how-to-avoid-no-space-left-on-bazel-build)
+
+You can use the startup option [--output_base](https://docs.bazel.build/versions/master/command-line-reference.html#flag--output_base) to point to a location where there's more available storage. This will tell Bazel where to write all its outputs.
+
+```
+$ bazel --output_base=/path/to/more/space build ...
+```
+
+To avoid specifying this for every command, add it to your project `<project>/.bazelrc` or user `~/.bazelrc`:
+
+```
+startup --output_base=/path/to/more/space
+```
+
+
+## 条件编译
+
+[config_setting](https://bazel.build/reference/be/general?hl=zh-cn#config_setting) 和 [select](https://bazel.build/reference/be/functions?hl=zh-cn#select) 可以用于在 Bazel 构建中实现条件编译，根据不同的配置选项选择性地包含不同的文件或编译选项。下面是一个使用 config_setting 和 select 的简单示例：
+
+* 在项目根目录下创建一个 BUILD 文件（如果尚未创建）。
+
+* 添加一个 config_setting 规则，用于定义一个名为 use_custom_lib 的配置标志：
+
+```
+config_setting(
+    name = "use_custom_lib",
+    values = {"define": "custom_lib=true"},
+)
+```
+
+这将创建一个名为 use_custom_lib 的配置设置，它在 `--define custom_lib=true` 传递给 Bazel 时为真。
+
+* 在 BUILD 文件中添加一个 cc_library 规则，并使用 select 语句根据 use_custom_lib 的值选择不同的源文件：
+
+```
+cc_library(
+    name = "conditional_lib",
+    srcs = select({
+        ":use_custom_lib": ["custom_lib.cc"],
+        "//conditions:default": ["default_lib.cc"],
+    }),
+    hdrs = ["lib.h"],
+)
+```
+
+在这个示例中，当 custom_lib 定义为 true 时，conditional_lib 会使用 custom_lib.cc 作为源文件，否则会使用 default_lib.cc。
+
+
+* 构建目标
+
+```
+# 使用默认库构建
+bazel build //:conditional_lib
+
+# 使用自定义库构建
+bazel build //:conditional_lib --define custom_lib=true
+```
+
+这个简单的示例展示了如何使用 config_setting 和 select 在 Bazel 构建中实现条件编译。你可以根据项目需求扩展这个示例，例如在不同的平台上使用不同的源文件或依赖项。
+
 
 ## 增加 bazel 并发度，提升构建效率 (--jobs)
 
@@ -1969,57 +2698,7 @@ Critical path (13.428 s):
 在 WORKSPACE 目录下通过 `.bazelignore` 配置指定忽略的 BUILD。
 
 
-## [Sharing Variables](https://bazel.build/build/share-variables?hl=en)
 
-If it is useful to share values (for example, if values must be kept in sync), you can introduce a variable:
-
-```
-COPTS = ["-DVERSION=5"]
-
-cc_library(
-  name = "foo",
-  copts = COPTS,
-  srcs = ["foo.cc"],
-)
-
-cc_library(
-  name = "bar",
-  copts = COPTS,
-  srcs = ["bar.cc"],
-  deps = [":foo"],
-)
-```
-
-Multiple declarations now use the value `COPTS`. By convention, use uppercase letters to name global constants.
-
-## Sharing variables across multiple BUILD files
-
-If you need to share a value across multiple `BUILD` files, you have to put it in a `.bzl` file. `.bzl` files contain definitions (variables and functions) that can be used in `BUILD` files.
-
-In path/to/variables.bzl, write:
-
-```
-COPTS = ["-DVERSION=5"]
-```
-
-Then, you can update your `BUILD` files to access the variable:
-
-```
-load("//path/to:variables.bzl", "COPTS")
-
-cc_library(
-  name = "foo",
-  copts = COPTS,
-  srcs = ["foo.cc"],
-)
-
-cc_library(
-  name = "bar",
-  copts = COPTS,
-  srcs = ["bar.cc"],
-  deps = [":foo"],
-)
-```
 
 ## [Recommended Rules](https://bazel.build/community/recommended-rules?hl=en)
 
@@ -2262,6 +2941,13 @@ Skylib also provides build rules under the `rules` directory.
 Common useful functions for writing BUILD files and Starlark macros/rules.
 
 
+## VS CODE
+
+* Bazel
+* bazel-stack-vscode
+
+
+
 # [Protocol Buffers in Bazel](https://blog.bazel.build/2017/02/27/protocol-buffers.html)
 
 ## TL;DR - Usage example
@@ -2320,6 +3006,11 @@ Bazel uses a `major.minor.patch` Semantic Versioning scheme.
 * [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
 
 
+# Examples
+
+* https://github.com/bazelbuild/examples
+
+
 
 # Refer
 
@@ -2328,6 +3019,7 @@ Bazel uses a `major.minor.patch` Semantic Versioning scheme.
 * https://bazel.build/tutorials/cpp-use-cases
 * https://bazel.build/reference?hl=zh-cn
 * [Bazel学习笔记](https://blog.gmem.cc/bazel-study-note)
+* https://github.com/abseil/abseil-cpp/blob/master/absl/base/BUILD.bazel
 
 
 

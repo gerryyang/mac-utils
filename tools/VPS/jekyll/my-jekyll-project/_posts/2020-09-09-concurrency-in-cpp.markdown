@@ -733,6 +733,55 @@ int main() {
 }
 ```
 
+# 线程安全检查工具
+
+C++ 中有多种工具可以帮助检查线程安全问题。以下是一些常见的工具：
+
+## ThreadSanitizer（TSan）
+
+安装方法：
+
+```
+sudo yum install libtsan
+```
+
+ThreadSanitizer 是一个用于检测多线程数据竞争的动态分析工具。它是 Clang 和 GCC 编译器的一部分，可以在编译时启用。要使用 ThreadSanitizer，只需在编译命令中添加 `-fsanitize=thread` 标志。例如：
+
+```
+g++ -fsanitize=thread -g -O1 -o my_program my_program.cpp
+```
+
+然后运行程序，ThreadSanitizer 会报告潜在的线程安全问题。
+
+
+ThreadSanitizer (TSan) 是一个用于检测多线程数据竞争的动态分析工具。为了实现这一目标，TSan 会在运行时检查程序的内存访问和同步操作。为了实现这一功能，TSan 需要在程序中插入额外的检查和检测代码。这些检查和检测代码通常作为动态链接的运行时库提供。
+
+当使用动态链接库时，程序需要使用位置无关代码（PIC，Position Independent Code）。位置无关代码允许在运行时将代码加载到任意内存地址，而不需要进行重定位。这使得多个程序可以共享同一个库副本，从而节省内存和磁盘空间。
+
+由于 TSan 需要使用动态链接的运行时库，因此在编译和链接程序时，需要确保所有库和源文件都使用 -fPIC 选项进行编译。这样，程序才能正确地使用 TSan 的运行时库，以检测潜在的线程安全问题。
+
+总之，TSan 依赖于使用 -fPIC，因为它需要动态链接的运行时库，而这些库需要位置无关代码。在编译和链接时确保使用 -fPIC 选项，以确保程序可以正确地使用 TSan。
+
+
+
+## Valgrind / Helgrind
+
+安装方法：
+
+```
+sudo yum install valgrind
+```
+
+Valgrind 是一个用于内存调试、内存泄漏检测和性能分析的工具。Helgrind 是 Valgrind 的一个工具，用于检测多线程程序中的同步错误。要使用 Helgrind，首先安装 Valgrind，然后使用以下命令运行程序：
+
+```
+valgrind --tool=helgrind ./my_program
+```
+
+Helgrind 会报告潜在的线程安全问题，如数据竞争、死锁等。
+
+
+
 
 # Refer
 

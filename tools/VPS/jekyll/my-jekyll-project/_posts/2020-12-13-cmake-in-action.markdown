@@ -1192,7 +1192,8 @@ Specifies the build type on single-configuration generators (e.g. **Makefile Gen
 
 ```
 IF(PROJ_BUILD_TYPE STREQUAL release)
-    SET(CMAKE_BUILD_TYPE Release)
+    #SET(CMAKE_BUILD_TYPE Release)        # -O3 -DNDEBUG
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo)  # -O2 -g -DNDEBUG
 ELSEIF(PROJ_BUILD_TYPE STREQUAL debug)
     SET(CMAKE_BUILD_TYPE Debug)
 ENDIF()
@@ -1928,8 +1929,93 @@ TODO
 
 # Q&A
 
-* [Most simple but complete CMake example](https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example)
-* [list(REMOVE_ITEM) not working in cmake](https://stackoverflow.com/questions/36134129/listremove-item-not-working-in-cmake)
+## -rdynamic
+
+`CMake 3.3` and below, for historical reasons, always linked executables on some platforms with flags like `-rdynamic` to export symbols from the executables for use by any plugins they may load via dlopen. `CMake 3.4` and above prefer to do this only for executables that are explicitly marked with the [ENABLE_EXPORTS](https://cmake.org/cmake/help/latest/prop_tgt/ENABLE_EXPORTS.html#prop_tgt:ENABLE_EXPORTS) target property.
+
+`ENABLE_EXPORTS` 是一个 CMake 属性，**用于指定可执行文件或共享库是否导出符号**。通常，可执行文件不导出任何符号，因为它是最终程序。但是，可执行文件可以导出供可加载模块使用的符号。当此属性设置为 true 时，CMake 将允许其他目标使用 `target_link_libraries()` 命令链接到可执行文件。在所有平台上，链接到可执行文件的目标都会创建一个目标级依赖关系。可加载模块对可执行文件的链接处理因平台而异。
+
+```
+# cmake 3.17 需要显示打开 --rdynamic 链接选项，@refer https://cmake.org/cmake/help/latest/policy/CMP0065.html
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic")
+```
+
+以下是一个使用 `ENABLE_EXPORTS` 的 CMake 示例：
+
+
+Step1: 创建以下目录结构
+
+```
+my_project/
+|-- CMakeLists.txt
+|-- main.cpp
+|-- my_module/
+    |-- CMakeLists.txt
+    |-- my_module.cpp
+```
+
+Step2: 在 `my_project/CMakeLists.txt` 文件中添加以下内容
+
+```
+cmake_minimum_required(VERSION 3.0)
+project(MyProject)
+
+# 设置 CMAKE_EXECUTABLE_ENABLE_EXPORTS 变量
+set(CMAKE_EXECUTABLE_ENABLE_EXPORTS ON)
+
+# 添加 main 可执行文件
+add_executable(main main.cpp)
+
+# 添加子目录以便处理 my_module 的 CMakeLists.txt
+add_subdirectory(my_module)
+
+# 链接 main 可执行文件和 my_module
+target_link_libraries(main my_module)
+```
+
+Step3: 在 `my_project/main.cpp` 文件中添加以下内容
+
+``` cpp
+#include <iostream>
+
+// 声明要从 my_module 导入的函数
+extern "C" void my_module_function();
+
+int main() {
+  std::cout << "Calling my_module_function from main:" << std::endl;
+  my_module_function();
+  return 0;
+}
+```
+
+Step4: 在 `my_project/my_module/CMakeLists.txt` 文件中添加以下内容
+
+```
+# 添加 my_module 作为共享库
+add_library(my_module SHARED my_module.cpp)
+```
+
+Step5: 在 `my_project/my_module/my_module.cpp` 文件中添加以下内容
+
+``` cpp
+#include <iostream>
+
+extern "C" void my_module_function() {
+  std::cout << "Hello from my_module_function!" << std::endl;
+}
+```
+
+在这个示例中，创建了一个名为 `main` 的可执行文件，它导出一个符号 `my_module_function`。我们还创建了一个名为 `my_module` 的共享库，它使用 `main` 可执行文件中导出的 `my_module_function`。通过在 `my_project/CMakeLists.txt` 中设置 `CMAKE_EXECUTABLE_ENABLE_EXPORTS` 变量，我们启用了 `main` 可执行文件的符号导出功能。这使得 `my_module` 能够链接到 `main` 并使用它导出的符号。
+
+> 注意：CMAKE_EXECUTABLE_ENABLE_EXPORTS 变量用于初始化目标属性 ENABLE_EXPORTS。当 ENABLE_EXPORTS 设置为 ON 时，CMake 会允许其他目标链接到可执行文件。然而，并不是所有平台都会自动添加 --export-dynamic 选项。要确保在链接时添加 --export-dynamic 选项，可以在 CMakeLists.txt 文件中显式设置此选项。
+
+
+
+## [Most simple but complete CMake example](https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example)
+
+
+## [list(REMOVE_ITEM) not working in cmake](https://stackoverflow.com/questions/36134129/listremove-item-not-working-in-cmake)
+
 
 # Refer
 

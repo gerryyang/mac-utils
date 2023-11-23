@@ -433,6 +433,11 @@ Import Public Library
 
 Check out the available libraries at libraries.excalidraw.com, and don't hesitate to contribute your own !
 
+# Bazel
+
+* Bazel
+* bazel-stack-vscode
+
 
 # 有趣的扩展
 

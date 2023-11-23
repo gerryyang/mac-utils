@@ -283,11 +283,48 @@ $ll -lh /usr/bin/ccache
 -rwxr-xr-x 1 root root 135K 2月  19 2020 /usr/bin/ccache
 ```
 
+## 禁用 ccache
+
+要禁用本地的 ccache，可以采用以下几种方法之一：
+
+* 临时禁用 ccache：
+
+在构建命令之前，将 CCACHE_DISABLE 环境变量设置为 1：
+
+``` bash
+export CCACHE_DISABLE=1
+```
+
+然后运行构建命令（例如：make）。这将在当前会话中禁用 ccache。
+
+* 永久禁用 ccache：
+
+编辑 ~/.bashrc 或 ~/.bash_profile 文件，将以下行添加到文件末尾：
+
+``` bash
+export CCACHE_DISABLE=1
+```
+
+保存文件并重新启动终端。这将在所有新的终端会话中禁用 ccache。
+
+
+* 使用原始的编译器而不是 ccache 包装器
+
+在构建命令中，直接指定原始编译器的路径，而不是使用 ccache 包装器。例如，如果您的原始 Clang 编译器位于 /usr/bin/clang，则可以在构建命令中使用此路径。
+
+``` bash
+make CC=/usr/bin/clang
+```
+
+这将确保在构建过程中不使用 ccache。
+
+
 * [https://ccache.dev/](https://ccache.dev/)
 * [ccache 4.8.2](https://ccache.dev/manual/4.8.2.html)
 * https://github.com/ccache/ccache/blob/master/README.md
 * https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
 * [ccache and clang, part 3](http://peter.eisentraut.org/blog/2014/12/01/ccache-and-clang-part-3/)
+* [How to use ccache selectively?](https://stackoverflow.com/questions/2693805/how-to-use-ccache-selectively)
 
 
 
