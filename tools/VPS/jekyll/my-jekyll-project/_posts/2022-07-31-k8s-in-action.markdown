@@ -2,7 +2,7 @@
 layout: post
 title:  "Kubernetes in Action"
 date:   2022-07-31 16:30:00 +0800
-categories: 虚拟化
+categories: 云原生
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -114,10 +114,14 @@ Node 里的 3 个组件，分别是 kubelet、kube-proxy、container-runtime
 
 
 
+# 原理介绍
+
+## Service
+
+https://jimmysong.io/kubernetes-handbook/concepts/service.html
 
 
-
-
+TODO
 
 
 
@@ -430,3 +434,5 @@ kubectl delete -n default pod <your-pod-name>
 # Refer
 
 * [Kubernetes 官网](https://kubernetes.io/zh-cn/)
+* [Kubernetes 和 Mesos 有啥区别，我该使用哪个好?](https://www.zhihu.com/question/53751176)
+* [Setting the right requests and limits in Kubernetes](https://learnk8s.io/setting-cpu-memory-limits-requests)

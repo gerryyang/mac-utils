@@ -19,7 +19,6 @@ categories: Game
 
 
 
-
 # 视野管理 (AOI - Area Of Interest)
 
 ## 背景
@@ -59,6 +58,64 @@ Refer:
 * [深入探索AOI算法](https://zhuanlan.zhihu.com/p/201588990)
 
 
+
+# ECS 架构
+
+参考 [ECS 架构简介](https://johnyoung404.github.io/2019/06/27/ECS%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/)
+
+在面向对象编程中，抽象是很重要的概念。一般地使用虚函数来实现动态绑定，从而达成运行时的多态性。这种多态性意味着，可以仅仅操作父类，而不需要关心子类中与该操作无关的部分，这其实就达成了一种解耦（外部系统只与父类耦合，但是父类和子类之间还是强耦合的）。
+
+然而正是因为继承时父类和子类的强耦合性，只有在两个类之间有 `Is-A` 关系的时候才能使用**继承**（Liskov 替换原则）。在游戏编程中（其他领域也基本如此），大多数时候 `Has-A` 可能更适合于描述两个类之间的关系，所谓**组合优于继承**，这其实就是组件的思想。在 Unity 的设计之初，组件系统在游戏引擎的设计中已经非常流行，Unity 也正是采用的组件系统，通过附加不同的组件，来描述不同的游戏对象（Transform 组件、Renderer 组件等）。Unity 的这种组件系统和将要介绍的 ECS 也不一样（实际上 Unity 也已经发布了面向数据的技术栈 DOTS，其中包含了 Unity ECS，Unity 旧的组件系统基于的还是传统的面向对象的编码方式，包含堆内存分配、GC、虚函数（Monobehaviour 的 Awake、Update 等方法）等等，这些因素从底层形成了代码的运行速率提升的瓶颈。
+
+要想突破这些瓶颈，不得不放弃面向对象，换一种从一开始就从效率角度考虑的程序设计方式。ECS 是就是这样一种以数据为主导的一种程序架构，它可以提供给开发者一种方便的写出高性能代码的方式，同时代码的逻辑架构足够清晰，模块之间的耦合性足够小。**它的基本思想是将数据与行为分离，让数据在内存中紧凑排列，提高 CPU 的缓存命中率；同时不使用引用类型，不使用继承，让多线程代码的编写更为简单，使各种 Batch 技术的应用成为可能；从程序的可维护性、可扩展性上来看，ECS 将数据和行为分离，在 Component 中仅储存数据，System 中仅储存行为，System 通过依赖注入的方式访问 Component，这可以很大程度上解耦，框架的表达能力和模块化并不会比面向对象的方式弱**。
+
+
+# SpatialOS (游戏大世界)
+
+https://improbable.io/games
+
+> SpatialOS enables game creators to build rich, large-scale multiplayer experiences where hundreds or even thousands of players can play together in new and dynamic virtual worlds.
+
+Google 正与总部位于英国伦敦的模拟现实、仿真世界初创企业 Improbable 推出联合项目，帮助游戏开发者创造和测试“虚拟世界”。
+
+这个联合项目名为 SpatialOS Games Innovation Program，将利用谷歌的 Cloud Platform 帮助开发在线游戏场景世界。谷歌和 Improbable 在新闻稿中解释称，他们将在 Improbable 的 SpatialOS 平台上资助合格的开发者。Improbable 也会借此机会为 SpatialOS 平台推出 Game Developer Open Alpha。在 Games Innovation Program 明年初全面启动前，任何游戏开发者都可以利用 SpatialOS 平台及其开发工具测试自己的游戏创意。
+
+**SpatialOS 平台可被用于创造能够同时容纳成千上万模拟玩家的虚拟世界，它可以超过常规游戏服务器的限制，这些模拟支持新游戏所带来的的复杂运算。更重要的是，SpatialOS 还可被用于模拟创建真实世界中的巨大城市、整个经济体以及生物系统，以研究它们如何运转以及如何应对变化等，比如基础设施或气候变化等**。通过在谷歌的 Cloud Platform 上运行，这些虚拟世界可以横跨巨大的计算机网络，扩展到更大规模和更复杂的水平。
+
+# Dedicated Server
+
+https://en.wikipedia.org/wiki/Game_server#Dedicated_server
+
+Dedicated servers simulate game worlds without supporting direct input or output, except that required for their administration. Players must connect to the server with separate client programs in order to see and interact with the game.
+
+The foremost advantage of dedicated servers is their suitability for hosting in professional data centers, with all of the reliability and performance benefits that entails. Remote hosting also eliminates the low-latency advantage that would otherwise be held by any player who hosts and connects to a server from the same machine or local network.
+
+
+# 游戏匹配
+
+## PSK (Player Skill Score)
+
+游戏匹配是将不同用户撮合到一个 PVP 单局的系统，常规的做法是引入一个或多个“数值”来评估用户的实力。在系统运行过程中，也会通过用户的对局结果、操作表现对“数值”进行校准，是一套复杂严谨的公式模型的动态结果。如何评价一款游戏的匹配系统好坏，在于是否可以很好地将公平性、游戏性与用户主观认知进行平衡，愿意投入更多的时间进行游戏。在游戏里，这个“数值”叫做技能分 (Player Skill Score，简称 PSK)，PSK 作为匹配机制的基础与核心要素，成为玩法调优的一个关键抓手。
+
+## AI 投放
+
+本质是希望通过投放 AI 来提升玩家的体验，进而来提升玩家的对局和留存。常见的优化方向如：AI 本身能力和难度的优化，AI 投放时机的优化，AI 投放强度的优化。
+
+## ELO 匹配算法
+
+ELO 是指由匈牙利裔美国物理学家**阿帕德·埃洛**创建的**一个衡量各类对弈活动水平的评价方法**，是当今对弈水平评估的公认的权威方法。被广泛用于国际象棋、围棋、足球、篮球等运动。埃洛排名系统是基于统计学的一个评估棋手水平的方法。美国国际象棋协会在 1960 年首先使用这种计分方法。由于它比先前的方法更公平客观，这种方法很快流行开来。1970 年国际棋联正式开始使用这个系统。网络游戏里的天梯或者是匹配等核心玩法系统，常常是以 ELO 算法作为基础。
+
+ELO 通常会包含两个公式：
+
+![elo](/assets/images/202306/elo.png)
+
+
+* RA，RB 分别是玩家 A，B 的积分
+* EA 是玩家 A 针对玩家 B 的获胜概率
+* SA 是玩家 A 的比赛结果有三种可能：SA=1 A胜，SA=0 A负，SA=0.5 平局
+* K 是变化系数，决定了单场比赛的积分变化幅度
+
+ELO 的算法本质：依据玩家的胜负概率和比赛结果来更新玩家积分，符合预期的积分变化的少，不符合预期的变化的多。
 
 
 

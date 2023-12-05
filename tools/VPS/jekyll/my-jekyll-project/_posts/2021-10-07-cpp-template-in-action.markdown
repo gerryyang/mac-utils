@@ -908,6 +908,83 @@ int main()
 }
 ```
 
+
+# 完美转发
+
+``` cpp
+#include <iostream>
+using namespace std;
+
+template<typename T>
+void func(T&& param)
+{
+	cout << param << endl;
+}
+
+int main()
+{
+	int a{100};
+
+	func(a); // ok
+	func(100); // ok
+}
+```
+
+这里的 `T&& param` 表示 `param` 是一个万能引用，如果传入的参数是左值，那么 `param` 就是左值 (比如`int&`)，外部传入的是右值，`param` 就是右值 (比如 `int&&`)。
+
+``` cpp
+template<typename T>
+void func(const T& param) {
+	vector<T> v;
+	v.emplace_back(param);
+}
+```
+
+在模版函数 `func` 内部，调用了 `v.emplace_back(param)`，`vector.emplace_back` 为左值和右值有两个不同的实现，左值会调用拷贝构造函数，而右值会调用移动构造函数，性能更好。那么按上面这个实现，因为 `func` 的参数类型是 `const T&`，一定是左值引用，那么传给 `vector.emplace_back` 的也是左值，所以即使调用 `func` 时传的参数是右值，在调用 `vector.emplace_back` 的时候也只会调用到左值的版本。
+
+有了万能引用后，可改进为：
+
+``` cpp
+template<typename T>
+void func(T&& param) {
+	vector<T> v;
+	v.emplace_back(param);
+}
+```
+
+**注意：一个右值引用变量本身是一个左值**，例如：
+
+``` cpp
+void Test(const Demo&) {
+    cout << "normal version" << endl;
+}
+void Test(Demo&&) {
+    cout << "rvalue version" << endl;
+}
+
+Demo&& s = Demo{};
+Test(s); // normal version!
+Test(Demo{});
+```
+
+这里的 `v.emplace_back(param)` 依然会调用左值的版本! 这里就需要 `std::forward` 了，和 `std::move` 类似，`std::forward` 其实也是一个类型转换，当实参是左值时候，它返回的是左值引用，也就是没做任何事；实参是右值的时候，它返回的是右值引用。所以，最终正确的版本应该是:
+
+``` cpp
+template<typename T>
+void func(T&& param) {
+	vector<T> v;
+	v.emplace_back(std::forward<T>(param));
+}
+```
+
+这就是所谓的完美转发 (perfect forwarding)。
+
+总结一下就是，函数模版参数中的 `T&&` 中的 `T` 是函数模版变量时，这代表一个万能引用，对于万能引用，当接收的是左值时，它就是左值引用，接收的是右值时，它就是右值引用。因为引用变量本身是左值，所以直接用引用变量做实参调用函数时，调用的一定是左值版本，如果需要根据引用变量本身的类型不同来调用对应版本的函数，需要使用 `std::forward` 来做类型转换。
+
+`std::forward` 和 `std::move` 的区别在于，`std::move` 是一定转换为右值，而 `std::forward` 是有条件的转换。`std::forward` 通常和万能引用一起使用。
+
+
+
 # Q&A
 
 ## 模版特化间接引用在debug和release版本行为不一致问题
@@ -977,7 +1054,7 @@ int main()
 */
 ```
 
-# Q&A
+# Refer
 
 * [error: explicit specialization of non-template struct](https://stackoverflow.com/questions/49888638/template-specialization-error-explicit-specialization-of-non-template-struct)
 

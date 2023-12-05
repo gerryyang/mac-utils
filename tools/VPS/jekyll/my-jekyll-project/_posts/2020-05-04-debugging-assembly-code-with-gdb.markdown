@@ -9,6 +9,16 @@ categories: [GDB,]
 {:toc}
 
 
+# [GNU Debugger](https://en.wikipedia.org/wiki/GNU_Debugger) - GDB
+
+The GNU Debugger (GDB) is a portable debugger that runs on many Unix-like systems and works for many programming languages, including Ada, Assembly, C, C++, D, Fortran, Go, Objective-C, OpenCL C, Modula-2, Pascal, Rust, and partially others.
+
+GDB was first written by [Richard Stallman](https://en.wikipedia.org/wiki/Richard_Stallman) in 1986 as part of his GNU system, after his GNU Emacs was "reasonably stable". GDB is free software released under the [GNU General Public License](https://en.wikipedia.org/wiki/GNU_General_Public_License) (GPL). It was modeled after the DBX debugger, which came with Berkeley Unix distributions.
+
+From 1990 to 1993 it was maintained by [John Gilmore](https://en.wikipedia.org/wiki/John_Gilmore_(activist)). Now it is maintained by the GDB Steering Committee which is appointed by the [Free Software Foundation](https://en.wikipedia.org/wiki/Free_Software_Foundation).
+
+
+
 # What is GDB
 
 The purpose of a debugger such as GDB is to allow you to see what is going on “inside” another program while it executes—or what another program was doing at the moment it crashed. GDB can **do four main kinds of things** (plus other things in support of these) to help you catch bugs in the act:
@@ -20,6 +30,10 @@ The purpose of a debugger such as GDB is to allow you to see what is going on �
 
 
 You can use GDB to debug programs written in C and C++. For more information, see [Supported Languages](https://sourceware.org/gdb/current/onlinedocs/gdb/Supported-Languages.html#Supported-Languages). For more information, see [C and C++](https://sourceware.org/gdb/current/onlinedocs/gdb/C.html#C).
+
+# Install
+
+https://ftp.gnu.org/gnu/gdb/
 
 
 #  How to Use
@@ -151,8 +165,46 @@ GDB provides these facilities for debugging multi-thread programs:
 * thread-specific breakpoints
 * `set print thread-events`, which controls printing of messages on thread start and exit.
 
-
 https://sourceware.org/gdb/current/onlinedocs/gdb/Threads.html#Threads
+
+### All-Stop Mode
+
+用 gdb 调试多线程程序时，一旦程序断住，所有的线程都处于暂停状态。此时当你调试其中一个线程时（比如执行 `step`，`next` 命令），所有的线程都会同时执行。如果想在调试一个线程时，让其它线程暂停执行，可以使用 `set scheduler-locking on` 命令。
+
+In all-stop mode, whenever your program stops under GDB for any reason, all threads of execution stop, not just the current thread. This allows you to examine the overall state of the program, including switching between threads, without worrying that things may change underfoot.
+
+Conversely, whenever you restart the program, all threads start executing. This is true even when single-stepping with commands like `step` or `next`.
+
+On some OSes, you can modify GDB’s default behavior by locking the OS scheduler to allow only a single thread to run.
+
+``` bash
+# Set the scheduler locking mode. It applies to normal execution, record mode, and replay mode. mode can be one of the following
+set scheduler-locking mode
+```
+
+* `off`
+  * There is no locking and any thread may run at any time.
+* `on`
+  * Only the current thread may run when the inferior is resumed.
+* `step`
+* `replay`
+  * Behaves like on in replay mode, and off in either record mode or during normal execution. This is the default mode.
+
+``` bash
+# Display the current scheduler locking mode.
+show scheduler-locking
+
+# 禁止线程调度切换，固定当前线程
+set scheduler-locking on
+```
+
+refer:
+
+* https://github.com/hellogcc/100-gdb-tips/blob/master/src/set-scheduler-locking-on.md
+* https://sourceware.org/gdb/onlinedocs/gdb/All_002dStop-Mode.html#All_002dStop-Mode
+* https://code.visualstudio.com/docs/cpp/cpp-debug
+
+
 
 ## Debugging Forks
 
@@ -228,6 +280,32 @@ disassemble [Address],+[Length]
 disassemble /m [...]
 disassemble /r [...]
 ```
+
+Parameters
+
+* Function
+
+Specifies the function to disassemble. If specified, the disassemble command will produce the disassembly output of the entire function.
+
+* Address
+
+Specifies the address inside a function to disassemble. Note that when only one address is specified, this command will disassemble the entire function that includes the given address, including the instructions above it.
+
+* Start/End
+
+Specifies starting and ending addresses to disassemble. If this form is used, the command won't disassemble the entire function, but only the instructions between the starting and ending addresses.
+
+* Length
+
+Specifies the amount of bytes to disassemble starting from the given address or function.
+
+* /m
+
+When this option is specified, the disassemble command will show the source lines that correspond to the disassembled instructions.
+
+* /r
+
+When this option is specified, the disassemble command will show the raw byte values of all disassembled instructions.
 
 https://visualgdb.com/gdbreference/commands/disassemble
 
@@ -348,7 +426,8 @@ Show current activation stack.
 
 To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file character (usually `Ctrl-d`). An interrupt (often `Ctrl-c`) does not exit from GDB, but rather terminates the action of any GDB command that is in progress and returns to GDB command level.
 
-# Common Use
+
+# 常用命令
 
 gdb中简写命令配合tab键使用
 
@@ -370,6 +449,9 @@ gdb中简写命令配合tab键使用
 | info break | 查看所有断点的信息
 | info threads | 查看所有线程的信息
 | info registers | 查看所有寄存器的信息
+| [info variables](http://sourceware.org/gdb/current/onlinedocs/gdb/Symbols.html#index-info-variables-918) | list "All global and static variable names" (huge list)
+| [info locals](http://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-locals-435) | list "Local variables of current stack frame" (names and values), including static variables in that function
+| [info args](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-args) | list "Arguments of the current stack frame" (names and values)
 | shell date | 在gdb中调用shell，使用完后exit重新返回到gdb中
 | set args | 可指定运行时参数（如：set args 10 20 30 40 50）
 | show args | 命令可以查看设置好的运行参数
@@ -381,8 +463,55 @@ gdb中简写命令配合tab键使用
 | set variable i = 10 | 修改变量值
 
 
+# [Information About a Frame](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html)
 
-[GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
+TODO
+
+# 常用技巧
+
+## 打印内存的值
+
+``` cpp
+#include <stdio.h>
+
+int main(void)
+{
+    int i = 0;
+    char a[100];
+
+    for (i = 0; i < sizeof(a); i++)
+    {
+        a[i] = i;
+    }
+
+    return 0;
+}
+```
+
+
+gdb 中使用 `x` 命令来打印内存的值，格式为 `x/nfu addr`。含义为以`f`格式打印从`addr`开始的`n`个长度单元为`u`的内存值。参数具体含义如下：
+
+* `n`：输出单元的个数
+* `f`：是输出格式。比如，`x`是以 16 进制形式输出，`o`是以 8 进制形式输出
+* `u`：标明一个单元的长度。`b`是一个 byte，`h`是两个`byte（halfword），`w`是四个 byte（word），`g`是八个 byte（giant word）
+
+使用示例：
+
+```
+// 打印某个地址开始的 8 字节内容
+(gdb) x /1gx 0x7fd3e1ed30b8
+0x7fd3e1ed30b8: 0x00007fd3d00019fd
+
+
+// 以 16 进制格式打印数组前 a 16 个 byte 的值
+(gdb) x/16xb a
+0x7fffffffe4a0: 0x00    0x01    0x02    0x03    0x04    0x05    0x06    0x07
+0x7fffffffe4a8: 0x08    0x09    0x0a    0x0b    0x0c    0x0d    0x0e    0x0f
+```
+
+
+
+## [GDB print to file instead of stdout](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 
 You need to enable logging:
 
@@ -402,6 +531,342 @@ And you can examine the current logging configuration:
 (gdb) show logging
 ```
 
+## 打印 STL 容器中的内容
+
+``` cpp
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main ()
+{
+  vector<int> vec(10); // 10 zero-initialized elements
+
+  for (int i = 0; i < vec.size(); i++)
+    vec[i] = i;
+
+  cout << "vec contains:";
+  for (int i = 0; i < vec.size(); i++)
+    cout << ' ' << vec[i];
+  cout << '\n';
+
+  return 0;
+}
+```
+
+https://github.com/hellogcc/100-gdb-tips/blob/master/src/print-STL-container.md
+
+
+## 命令行执行 gdb
+
+```
+gdb -q -ex "show envir" -ex "quit" your_bin your_corefile | grep your_env
+```
+
+* https://unix.stackexchange.com/questions/456294/gdb-in-one-command
+* [How to get environment of a program while debugging it in GDB](https://stackoverflow.com/questions/32917033/how-to-get-environment-of-a-program-while-debugging-it-in-gdb)
+
+
+## 从 corefile 获取环境变量
+
+```
+gdb -q -ex "p *__environ" -ex "quit" your_bin your_corefile
+
+# 环境变量基本都是在core文件的末尾，所以只需要搜索后面的内容即可
+tail -c 1048576  your_corefile | grep -a -o -P 'gerry=\K[^[:cntrl:]]*'
+```
+
+[How to get environment variable from a core dump](https://stackoverflow.com/questions/44686478/how-to-get-environment-variable-from-a-core-dump)
+
+
+
+
+## 条件断点
+
+```
+set scheduler-locking on
+b CMemoryPool::StatOnFree if uSize==112
+c
+```
+
+https://wizardforcel.gitbooks.io/100-gdb-tips/content/set-condition-break.html
+
+## 查找符号
+
+```
+(gdb) i var CCoroutineMgr
+All variables matching regular expression "CCoroutineMgr":
+
+Non-debugging symbols:
+0x00000000000000c0  JLib::IThreadSingleton<JLib::CCoroutineMgr>::GetSingletonPtr()::g_pPtr
+0x00000000000fe9b0  JLib::CCoroutineMgr::GetLogFeature() const::pInfo
+0x00000000000fe9b8  guard variable for JLib::CCoroutineMgr::GetLogFeature() const::pInfo
+...
+```
+
+```
+(gdb) p 'JLib::IThreadSingleton<JLib::CCoroutineMgr>::GetSingletonPtr()::g_pPtr'
+$1 = 74619576
+```
+
+## 调试 static 全局静态变量
+
+```
+info var _instance
+```
+
+[print static variable from member function of template class in gdb](https://stackoverflow.com/questions/39724087/print-static-variable-from-member-function-of-template-class-in-gdb)
+
+## 调试 __thead 线程变量
+
+
+[Debugging __thead variables from coredumps](https://www.technovelty.org/linux/debugging-__thead-variables-from-coredumps.html)
+
+
+## 在 gdb 中执行 shell 命令
+
+```
+gdb$ shell
+
+shell$ execute_your_commands
+
+shell$ exit
+
+gdb$ you_have_returned_back_to_gdb_prompt
+```
+
+## 调用函数 (call)
+
+在 GDB 中执行 `call (void)malloc_trim(0)` 的作用是在调试过程中手动触发内存回收。`malloc_trim` 是一个 C 库函数，它用于释放 `malloc` 分配的内存空间中未使用的内存，将其归还给操作系统。这个函数通常在程序运行过程中自动调用，但在某些情况下，可能希望手动触发内存回收以释放未使用的内存。
+
+`call (void)malloc_trim(0)` 命令在 GDB 中的含义如下：
+
+* `call`：告诉 GDB 调用一个函数。
+* `(void)`：将函数的返回值类型转换为 void，表示我们不关心函数的返回值。
+* `malloc_trim(0)`：调用 malloc_trim 函数并传递参数 0。参数 0 表示尝试释放所有未使用的内存。
+
+通过执行这个命令，可以在调试过程中手动触发内存回收，以便观察程序在回收内存后的行为。这对于分析内存泄漏或内存使用情况等问题可能很有帮助。
+
+
+## 将 GDB 的输出信息重定向到文件
+
+在 GDB 中，启用日志记录并将输出重定向到一个文件，例如 gdb_output.txt：
+
+```
+set logging file gdb_output.txt
+set logging on
+```
+
+如果想停止将 GDB 输出重定向到文件，可以使用以下命令：
+
+```
+set logging off
+```
+
+## 对 gdb 的输出内容自动翻页
+
+```
+(gdb) set pagination off
+```
+
+## 打印完整的字符串
+
+```
+(gdb) show print elements
+(gdb) set print elements 0
+(gdb) show print elements
+```
+
+
+
+# [《Debug Hacks》和调试技巧](https://maskray.me/blog/2013-07-25-debug-hacks)
+
+作者为吉冈弘隆、大和一洋、大岩尚宏、安部东洋、吉田俊辅，有中文版《Debug Hacks中文版—深入调试的技术和工具》。这本书涉及了很多调试技巧，对调试器使用、内核调试方法、常见错误的原因，还介绍了 systemtap、strace、ltrace 等一大堆工具，非常值得一读。
+
+
+## 记录历史
+
+先执行 `mkdir ~/.history` 把下面几行添加到 `~/.gdbinit` 中，gdb 启动时会自动读取里面的命令并执行：
+
+```
+set history save on
+set history size 10000
+set history filename ~/.history/gdb
+```
+
+在 `~/.history` 堆放各个历史文件。有了历史，使用 `readline` 的 `reverse-search-history` (`C-r`) 就能轻松唤起之前输入过的命令。
+
+## 修改任意内存地址的值
+
+```
+set {int}0x83040 = 4
+```
+
+## 显示 intel 风格的汇编指令
+
+```
+set disassembly-flavor intel
+```
+
+示例：
+
+``` cpp
+#include <iostream>
+int main()
+{
+    int a = 1;
+    std::cout << a << std::endl;
+}
+```
+
+```
+(gdb) disass
+Dump of assembler code for function main():
+   0x0000000000401156 <+0>:     push   %rbp
+   0x0000000000401157 <+1>:     mov    %rsp,%rbp
+   0x000000000040115a <+4>:     sub    $0x10,%rsp
+   0x000000000040115e <+8>:     movl   $0x1,-0x4(%rbp)
+=> 0x0000000000401165 <+15>:    mov    -0x4(%rbp),%eax
+   0x0000000000401168 <+18>:    mov    %eax,%esi
+   0x000000000040116a <+20>:    mov    $0x404040,%edi
+   0x000000000040116f <+25>:    callq  0x401050 <_ZNSolsEi@plt>
+   0x0000000000401174 <+30>:    mov    $0x0,%eax
+   0x0000000000401179 <+35>:    leaveq
+   0x000000000040117a <+36>:    retq
+End of assembler dump.
+(gdb) set disassembly-flavor intel
+(gdb) disass
+Dump of assembler code for function main():
+   0x0000000000401156 <+0>:     push   rbp
+   0x0000000000401157 <+1>:     mov    rbp,rsp
+   0x000000000040115a <+4>:     sub    rsp,0x10
+   0x000000000040115e <+8>:     mov    DWORD PTR [rbp-0x4],0x1
+=> 0x0000000000401165 <+15>:    mov    eax,DWORD PTR [rbp-0x4]
+   0x0000000000401168 <+18>:    mov    esi,eax
+   0x000000000040116a <+20>:    mov    edi,0x404040
+   0x000000000040116f <+25>:    call   0x401050 <_ZNSolsEi@plt>
+   0x0000000000401174 <+30>:    mov    eax,0x0
+   0x0000000000401179 <+35>:    leave
+   0x000000000040117a <+36>:    ret
+End of assembler dump.
+```
+
+## 断点在 function prologue (开场白，序言) 前
+
+先说一下 function prologue 吧，每个函数最前面一般有三四行指令用来保存旧的帧指针(`rbp`)，并腾出一部分栈空间(通常用于储存局部变量、为当前函数调用其他函数腾出空间存放参数，有时候还会存储字面字符串，当有`nested function`时也会用于保存当前的栈指针)。
+
+在`x86-64`环境下典型的`funcition prologue`长成这样：
+
+```
+push rbp
+mov rbp, rsp
+sub rsp, 0x10
+```
+
+可能还会有`and`指令用于对齐`rsp`。如果编译时加上`-fomit-frame-pointer` (Visual Studio 中文版似乎译作 “省略框架指针”)，那么生成的指令就会避免使用`rbp`，function prologue 就会简化成下面一行：
+
+```
+sub rsp, 0x10
+```
+
+```
+-fomit-frame-pointer 是一个编译器选项，用于告诉编译器在生成代码时省略帧指针。帧指针（通常是 ebp 寄存器，在 x86 架构上，或 rbp 寄存器，在 x86-64 架构上）用于在函数调用期间保存调用者的堆栈帧的基址。这在调试和分析函数调用栈时非常有用。
+
+然而，在许多情况下，帧指针并不是严格必需的，因为编译器可以使用其他方法来跟踪堆栈帧。通过省略帧指针，编译器可以将帧指针寄存器用于其他目的，从而提高代码的性能。这在寄存器有限的体系结构（如 x86）上尤其有益，因为它可以减少寄存器溢出并提高代码的性能。
+
+-fomit-frame-pointer 选项的主要优点是性能提升，但它也有一些缺点：
+
+1. 调试困难：省略帧指针可能会导致调试过程变得更加困难，因为调试器可能无法准确地重建函数调用栈。这可能会导致错误的堆栈跟踪和调试信息。
+
+2. 分析困难：像 gprof 这样的性能分析工具可能无法正确分析没有帧指针的代码，从而导致不准确的分析结果。
+
+总之，-fomit-frame-pointer 编译选项的作用是告诉编译器在生成代码时省略帧指针，从而提高代码性能。然而，这可能会导致调试和分析过程变得更加困难。在权衡性能和调试需求时，您可以根据实际情况决定是否使用此选项。
+```
+
+
+例如，上面的代码示例：
+
+g++ -g test.cc -fomit-frame-pointer
+
+```
+(gdb) disass
+Dump of assembler code for function main():
+=> 0x0000000000401156 <+0>:     sub    $0x18,%rsp
+   0x000000000040115a <+4>:     movl   $0x1,0xc(%rsp)
+   0x0000000000401162 <+12>:    mov    0xc(%rsp),%eax
+   0x0000000000401166 <+16>:    mov    %eax,%esi
+   0x0000000000401168 <+18>:    mov    $0x404040,%edi
+   0x000000000040116d <+23>:    callq  0x401050 <_ZNSolsEi@plt>
+   0x0000000000401172 <+28>:    mov    $0x0,%eax
+   0x0000000000401177 <+33>:    add    $0x18,%rsp
+   0x000000000040117b <+37>:    retq
+End of assembler dump.
+```
+
+设置断点时如果使用了`b *func`的格式，也就是说在函数名前加上`*`，gdb 就会在执行 function prologue **前**停下，而`b func`则是在执行 function prologue **后**停下。
+
+![gdb1](/assets/images/202308/gdb1.png)
+
+![gdb2](/assets/images/202308/gdb2.png)
+
+
+## Checkpoint
+
+gdb 可以为被调试的程序创建一个**快照**，即**保存程序运行时的状态，等待以后恢复**。这个是非常方便的一个功能，特别适合需要探测接下来会发生什么但又不想离开当前状态时使用。
+
+`ch`是创建快照，`d c ID`是删除指定编号的快照，`i ch`是查看所有快照，`restart ID`是切换到指定编号的快照，详细说明可以在 shell 里键入`info '(gdb) Checkpoint/Restart'`查看。
+
+![gdb3](/assets/images/202308/gdb3.png)
+
+
+## pstack
+
+打印指定进程的系统栈。本质是一段脚本，核心是下面这句话：
+
+``` bash
+#!/bin/zsh
+gdb -q -nx -p $1 <<< 't a a bt' 2>&- | sed -ne '/^#/p'
+```
+
+这是一个使用gdb调试器获取指定进程堆栈跟踪（stack trace）的shell命令。逐步分析这个命令：
+
+1. `gdb -q -nx -p $1`：这是调用 gdb 的命令。选项 `-q` 表示 quiet 模式，减少 gdb 的输出；`-nx` 表示不执行任何 `.gdbinit` 文件中的命令；`-p $1` 表示附加到给定进程 ID（由 `$1` 指定）。
+
+2. `<<< 't a a bt'`：这是一个 "here string"，它将字符串 `t a a bt` 作为 gdb 的输入。`t a a bt` 是 gdb 命令的缩写，表示 `thread apply all backtrace`，用于获取所有线程的堆栈跟踪。
+
+3. `2>&-`：这是一个文件描述符重定向，将标准错误（file descriptor 2）重定向到 `/dev/null`（关闭）。这样，gdb 产生的错误信息将不会显示在输出中。
+
+4. `| sed -ne '/^#/p'`：这是一个管道，将 gdb 的输出传递给 sed 命令。sed 命令使用 `-n` 选项表示只打印匹配的行，`-e` 选项表示执行后面的脚本。脚本 `'/^#/p'` 表示匹配以 `#` 开头的行并打印。这样，最终的输出将只包含堆栈跟踪中的实际帧（以 `#` 开头）。
+
+综上所述，这个命令的作用是获取指定进程 ID（由 `$1` 给出）的所有线程的堆栈跟踪，并仅显示堆栈帧。
+
+```
+$ pstack $$
+#0  0x00007f2cc5dac44c in __libc_waitpid (pid=-1, stat_loc=0x7ffddd9f59c0, options=10) at ../sysdeps/unix/sysv/linux/waitpid.c:31
+#1  0x0000000000442a64 in waitchld.isra.10 ()
+#2  0x0000000000443d1c in wait_for ()
+#3  0x00000000004347fe in execute_command_internal ()
+#4  0x0000000000434a1e in execute_command ()
+#5  0x000000000041ece5 in reader_loop ()
+#6  0x000000000041d2ae in main ()
+```
+
+在 gdb 中输入如下命令，可实现 pstack 相同的功能，并将所有线程的堆栈信息输出到文件中：
+
+```
+(gdb) set logging file threadinfo.txt   # 设置输出的文件名
+(gdb) set logging on                    # 输入这个命令后，此后的调试信息将输出到文件
+(gdb) thread apply all bt               # 打印所有线程栈信息
+(gdb) set logging off                   # 关闭到指定文件的输出
+(gdb) quit                              # 退出 gdb 调试
+```
+
+
+
+
+
+
 
 # Refer
 
@@ -414,4 +879,4 @@ And you can examine the current logging configuration:
 * [GDB中应该知道的几个调试方法 - CoolShell](http://coolshell.cn/articles/3643.html)
 * [Introduction to GDB - Posted by adrian.ancona on February 9, 2018](https://ncona.com/2018/02/introduction-to-gdb/)
 * [Debugging assembly with GDB - Posted by adrian.ancona on December 11, 2019](https://ncona.com/2019/12/debugging-assembly-with-gdb/)
-
+* 以色列的 Haifa Linux club 有一次讲座讲 gdb，讲稿值得一看：http://haifux.org/lectures/210/gdb_-_customize_it.html

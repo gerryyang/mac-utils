@@ -14,7 +14,7 @@ categories: [Assembly Language,]
 
 * **只读段/代码段**：只能读，不可写；可执行代码、字符串字面值、只读变量
 * **数据段**：已初始化且初值非0全局变量、静态变量的空间
-* **BSS段**：未初始化或初值为0的全局变量和静态局部变量
+* **BSS段**：未初始化或初值为0的全局变量和静态局部变量，block starting symbol (abbreviated to .bss or bss) (More: https://en.wikipedia.org/wiki/.bss)
 * **堆** ：就是平时所说的动态内存，`malloc`或`new`大部分都来源于此
 * **文件映射区域** ：如动态库、共享内存等映射物理空间的内存，一般是`mmap`函数所分配的虚拟地址空间
 * **栈**：用于维护函数调用的上下文空间；局部变量、函数参数、返回地址等
@@ -26,7 +26,6 @@ objdump -dj .bss your_binary | grep "g_"
 ```
 
 ![virtual_process_space](/assets/images/202111/virtual_process_space.png)
-
 
 # 函数调用栈
 
@@ -157,6 +156,19 @@ main:
 
 ![stack_space3](/assets/images/202111/stack_space3.png)
 
+# 函数调用约定
+
+x86-64 函数调用约定：https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI
+
+| Argument Type | Registers
+| -- | --
+| Integer/Pointer Arguments 1-6 | RDI, RSI, RDX, RCX, R8, R9
+| Floating Point Arguments 1-8 | XMM0 - XMM7
+| Excess Arguments | Stack
+| Static chain pointer | R10
+
+
+
 
 # Common Knowledge
 
@@ -234,7 +246,79 @@ pop ax ; pop the element on top of the stack, 0x006A, into AX; the stack is now 
 
 The Stack is usually used to pass arguments to functions or procedures and also to keep track of control flow when the call instruction is used. The other common use of the Stack is temporarily saving registers.
 
-# CPU Registers
+# CPU Registers (CPU 寄存器)
+
+| 寄存器 | 8 位 | 16 位 | 32 位 | 64 位
+| -- | -- | -- | -- | --
+| 通用寄存器 | 累加寄存器 | AH : AL | AX | EAX | RAX
+|           | 基址寄存器 | BH : BL | BX | EBX | RBX
+|           | 计数寄存器 | CH : CL | CX | ECX | RCX
+|           | 数据寄存器 | DH : DL | DX | EDX | RDX
+|           | 堆栈基指针 |         | BP | EBP | RBP
+|           | 堆栈指针   |         | SP | ESP | RSP
+|           | 变址寄存器 |         | SI | ESI | RSI
+|           | 指令寄存器 |         | DI | EDI | RDI
+| 指令指针寄存器 |        |         | IP | EIP | RIP
+| 新增       |          |         |    |    | r8 - r15
+
+* AX，BX，CX，DX 这些寄存器用来保存操作数和运算结果等信息，从而节省读取操作数所需占用总线和访问存储器的时间。
+* 指针寄存器(SP，BP)，用于维护和访问堆栈存储单元。SP 为堆栈指针(Stack Pointer)寄存器，用它只可访问栈顶；BP 为基指针(Base Pointer)寄存器，用它可直接存取堆栈中的数据。
+* 变址寄存器(SI，DI)，Index Register，它们主要用于存放存储单元在段内的偏移量。
+* 指令指针寄存器(IP)，Instruction Pointer，是存放下次将要执行的指令在代码段的偏移量。在具有预取指令功能的系统中，下次要执行的指令通常已被预取到指令队列中，除非发生转移情况。
+
+* AT&T 格式和 Intel 格式的指令的源操作数和目的操作数的顺序是相反的。下面指令的含义是将 rax 寄存器的值存入 rdi 寄存器中。
+
+| AT&T格式 | Intel格式
+| -- | --
+| mov %rax %rdi | mov rdi rax
+
+* 汇编中的寻址方式：立即数寻址，直接寻址，间接寻址，变址寻址；下面是AT&T指令格式示例。
+
+| 寻址方式 | 指令 | AT&T格式
+| -- | -- | --
+| 立即数寻址 | movl $0x123, %edx | 数字->寄存器
+| 直接寻址 | movl 0x123, %edx | 0x123 指向内存数据->寄存器
+| 间接寻址 | movl (%ebx), %edx | ebx 寄存器指向内存数据-> edx 寄存器
+| 变址寻址 | movl 4(%ebx), %edx | ebx+4 指向内存数据-> edx 寄存器
+
+* lea 指令，装入有效地址到寄存器
+* 跳转指令：call，ret。
+
+``` bash
+# cpu 执行 call 跳转指令时，cpu 做了如下操作：
+
+rsp = rsp – 8
+rsp = rip
+# 即跳转之前会将下一条要执行语句指令地址压入栈顶
+# call等同于以下两条语句，但call本身就一条指令
+push %rip
+jmp 标号
+```
+
+类似 ret 指令会将栈顶的内容弹出到 rip 寄存器中，继续执行：
+
+```
+rip = rsp
+rsp = rsp + 8
+# 等同于
+pop %rip
+```
+
+* GCC 关于寄存器的使用
+
+GCC 中对这些寄存器的调用规则如下：
+
+rax 作为函数返回值使用；
+rsp 栈指针寄存器，指向栈顶；
+rdi，rsi，rdx，rcx，r8，r9 用作函数参数，依次对应第1参数，第2参数等。当参数超过6个，才会通过压栈的方式传参数。
+rbx，rbp，r12，r13，r14，r15 用作数据存储，遵循被调用者保存规则，简单说就是随便用，在调用函数中如果要使用这些寄存器要先备份它，退出调用函数前进行恢复；
+r10，r11 用作数据存储，遵循调用者保存规则，简单说就是调用函数之前要先保存原值；
+
+
+
+
+
+
 
 `Registers` are a space in the CPU that can be used to hold data. In an x64 CPU, each register can hold 64 bits.
 
@@ -1264,6 +1348,58 @@ r15             | r15d          | r15w          | r15b
 * [What are the names of the new X86_64 processors registers?](https://stackoverflow.com/questions/1753602/what-are-the-names-of-the-new-x86-64-processors-registers/1753627#1753627)
 * [The MSDN documentation includes information about the x64 registers](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/x64-architecture?redirectedfrom=MSDN)
 
+
+# Q&A
+
+## test 命令
+
+From [Not sure about using test command with al in assembly](https://stackoverflow.com/questions/25021566/not-sure-about-using-test-command-with-al-in-assembly):
+
+The first command is "anding" together the constant 1 and eax. If eax is something like 10101010 and 1 is: 00000001, then "anding" them together would produce: 0. But what does testing the lowest four bits of the register have to do with anything - and why is it important? What is this entire expression doing?
+
+```
+8049ac0:       83 e0 01                and    $0x1,%eax // "and" these bits together
+8049ac3:       84 c0                   test   %al,%al  // check the last
+8049ac5:       74 05                   je     8049acc <level_4+0x60> // if it is equal, then skip down.
+```
+
+解释：
+
+The `test` instruction is actually redundant, so doesn't do anything useful. It probably comes about because the compiler that produced this code is not very good at optimizing, so included an unnecessary instruction that doesn't hurt anything.
+
+```
+and  $1,%eax    ; clear all bits of %eax except the lowest, set ZF if all bits are now zero
+test %al,%al    ; set ZF if %al (the lowest 8 bits of %eax) are all clear
+je   somewhere  ; branch if ZF is set
+```
+
+So the `and` instruction will set the `ZF` flag equal to the complement of the lowest bit of `%eax`, and the test instruction will set it again to the same thing. This probably comes from code that looks like:
+
+``` cpp
+if (var & 1) {
+    // ... do something ...
+}
+```
+
+where it loads `var` into `%eax` just before your code snip, and the branch target is just after the `}`. The code that is generated first computes `var & 1` into a temp register (the `and` instruction), then tests to see if the result is non-zero (the `test` instruction), then branches over the `...do something...` if the test was false (the `je` instruction).
+
+
+The register are named, for example:
+
+8bits lowest -> `AL`
+8bits highest of the 16bits lowest -> `AH`
+16bits -> `AX`
+32bits -> `EAX`
+64bits -> `RAX`
+
+In [x86 Wikipedia](http://en.wikipedia.org/wiki/X86) is a more detail explanation of CPU registers and pictures of then to better understand.
+
+In your case you are clearing all the bits of `EAX` (32bits register) except the lowest and testing the 8 lowest bits of `EAX` (`AL`). The test instruction will perform a Bitwise `AND` and update the cpu flags accordingly, this flags will be used by `je` (jump if equal, that test for the `Zero Flag`). In this case is checking if the lowest 8 bits of `EAX` are 0 or not, if they are, jump to the address indicate in the jump.
+
+
+
+
+
 # More
 
 * [Assembly Language Step By Step, for Linux, by Jeff Duntemann](http://www.duntemann.com/assembly.html)
@@ -1275,6 +1411,7 @@ r15             | r15d          | r15w          | r15b
 # Refer
 
 * 汇编语言（第2版），清华大学出版社，王爽
+* https://en.wikipedia.org/wiki/X86
 * [x86 instruction listings](https://en.wikipedia.org/wiki/X86_instruction_listings)
 * [Introduction to assembly - Assembling a program - Posted by adrian.ancona on January 30, 2019](https://ncona.com/2019/01/introduction-to-assembly-assembling-a-program/)
 * [Assembly - Variables, instructions and addressing modes - Posted by adrian.ancona on February 27, 2019](https://ncona.com/2019/02/assembly-variables-instructions-and-addressing-modes/)
@@ -1294,3 +1431,4 @@ r15             | r15d          | r15w          | r15b
 # TODO
 
 * [All programmers MUST learn C and Assembly](https://blog.packagecloud.io/eng/2017/04/21/deconstruct-2017-all-programmers-must-learn-c-and-assembly/)
+* [C AND ASSEMBLY](https://devarea.com/c-and-assembly/#.ZAmojOxBw0Q)

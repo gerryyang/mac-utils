@@ -2,7 +2,7 @@
 layout: post
 title:  "Git in Action"
 date:   2018-10-15 13:00:00 +0800
-categories: Git
+categories: 版本控制
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -230,7 +230,27 @@ $ git init your_project   # 会在当前路径下创建your_project目录
 $ cd your_project
 ```
 
-## 忽略文件
+# 特殊文件
+
+## .gitkeep
+
+[What is .gitkeep? How to Track and Push Empty Folders in Git](https://www.freecodecamp.org/news/what-is-gitkeep/)
+
+[git can't push empty directories](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/Git_FAQ.html#Can_I_add_empty_directories.3F). It can only track files.
+
+If you try to push a folder with nothing in it, although it will exist on your local machine, nothing will go into your branch. So if someone tries to clone your code, they won't have the same folder structure as you do on your local machine. So if it doesn't work, what do you need to do?
+
+Now we know that Git only tracks files, so we know we need to add something to the folder. You can add anything. You just need to add a really simple dummy file to make sure that the folder is tracked, and will be pushed. You could copy and paste a text file `file.txt` with nothing in it, and that would work. You could put a PNG image of a cat.
+
+**A common, standardised practice to solve this exact issue, however, is to push a file called `.gitkeep` into your empty folders.**
+
+This isn't a feature of Git! So you could name it anything. There's nothing special about the name `.gitkeep` – some developers add `.gitignore` instead, for example. `.gitignore` is a little confusing, though, as you are trying to make git not ignore your file, and actually push it into your branch. Either way, by adding this simple file to your folders, they'll get pushed when the time comes.
+
+`.gitkeep` is a common thing you will see in codebases, where an empty folder needs to be tracked via Git. The name of the dummy file may not always be .gitkeep but you'll see the actual practice over and over again as a developer.
+
+
+
+## .gitignore
 
 A [gitignore](https://git-scm.com/docs/gitignore) file specifies intentionally untracked files that Git should ignore. Files already tracked by Git are not affected.
 
@@ -291,6 +311,30 @@ git push origin master
 * https://git-scm.com/docs/gitignore
 * [Why is .gitignore not ignoring my files?](https://stackoverflow.com/questions/45400361/why-is-gitignore-not-ignoring-my-files)
 
+其他示例：
+
+[Make .gitignore ignore everything except a few files](https://stackoverflow.com/questions/987142/make-gitignore-ignore-everything-except-a-few-files)
+
+> An optional prefix `!` which negates the pattern; any matching file excluded by a previous pattern will become included again. If a negated pattern matches, this will override lower precedence patterns sources.
+
+```
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!script.pl
+!template.latex
+# etc...
+
+# ...even if they are in subdirectories
+!*/
+
+# if the files to be tracked are in subdirectories
+!*/a/b/file1.txt
+!*/a/b/c/*
+```
+
 
 
 # Git的协作模式
@@ -339,6 +383,11 @@ git push origin master
 * 生成了新的local untracked files
 ```
 git clean -fd
+```
+
+* 还原为上一次提交的状态
+```
+git restore <file>
 ```
 
 * 文件被修改了，但未执行git add操作(working tree内撤销)
@@ -567,7 +616,33 @@ $ git remote rm <主机名>
 
 # 远程主机的改名
 $ git remote rename <原主机名> <新主机名>
+
+# 更新
+git remote -v
+git remote set-url origin <新地址>
+
+# 或者在 ~/.gitconfig 里配置
+[url "新地址:"]
+    insteadOf = 老地址:
+
 ```
+
+## 远程仓库操作 - git checkout
+
+部分 checkout
+
+一些构建部署场景下为提升速度，只需要检出部分业务相关的目录，可以使用 git 的稀疏检出 (git version >= 2.27)。
+
+例如，部署更新只需要`lay1/lay2`目录即可
+
+```
+git clone git@git.woa.com:gerryyang/proj.git --sparse
+
+cd proj
+git sparse-checkout init --cone
+git sparse-checkout add lay1/lay2
+```
+
 
 ## 远程仓库操作 - git fetch
 
@@ -657,6 +732,14 @@ refer:
 
 * [git-commit - Record changes to the repository](https://git-scm.com/docs/git-commit)
 * [Git 合并多个 commit，保持历史简洁](https://cloud.tencent.com/developer/article/1690638)
+
+
+## 查看某次提交信息 - git show
+
+```
+git show <commit-id>
+```
+
 
 ## 查看文件最后一次修改信息 - git blame
 
@@ -793,6 +876,9 @@ git log --since=2.weeks
 git log --pretty=oneline
 git log --oneline -n3
 git log --oneline -n3 --graph
+
+# 指定用户
+git log --oneline -n3 --author=gerryyang
 ```
 更多: [Git-基础-查看提交历史]
 
@@ -838,6 +924,12 @@ git push origin -d <branch-name>
 git remote show origin
 
 # 切换到某个分支
+# 确保您已经获取了远程仓库的最新信息。运行以下命令来获取远程仓库的所有分支信息
+git fetch
+# 如果您知道具体的远程分支名称，可以只获取该分支的信息
+git fetch origin branch_name
+# 确认远程分支是否存在。运行以下命令查看所有远程分支
+git branch -r
 git checkout <branch-name>
 
 # 切换到上一个分支
@@ -997,24 +1089,62 @@ git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-u
 # 如果忘记了 --recurse-submodules
 git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
 
-
-# 添加子模块
+# 添加子模块 (在根目录执行)
 git submodule add https://github.com/chaconinc/DbConnector
 git clone --recursive https://github.com/chaconinc/MainProject
 
-# 清除子模块
-git submodule deinit --all
+# https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt-sync--recursive--ltpathgt82308203
+git submodule sync
 ```
+
+在 Git 中，删除子模块可以分为两个步骤：
+
+* 删除子模块的引用：在父仓库中删除子模块的引用，即删除 `.gitmodules` 文件中对应子模块的配置信息和子模块目录下的 `.git` 目录。
+
+``` bash
+git submodule deinit -f <submodule-path>
+git rm -f <submodule-path>
+rm -rf .git/modules/<submodule-path>
+```
+
+* 删除子模块的代码：在子模块目录中删除代码，并提交删除操作。
+
+``` bash
+rm -rf <submodule-path>
+git commit -m "Remove submodule <submodule-path>"
+```
+
+需要注意的是，删除子模块会删除子模块的所有历史记录，因此在删除子模块之前需要备份子模块的代码和历史记录。另外，删除子模块后，如果需要重新添加子模块，需要重新执行 `git submodule add` 命令来添加子模块。
+
+
+
 
 * [Git 工具 - 子模块](https://git-scm.com/book/zh/v2/Git-工具-子模块)
 * [How to “git clone” including submodules](https://stackoverflow.com/questions/3796927/how-to-git-clone-including-submodules)
 * [How do git submodules work?](https://matthew-brett.github.io/curious-git/git_submodules.html#how-do-git-submodules-work)
+* [Git - How to change url/path of a submodule](https://stackoverflow.com/questions/3796927/how-do-i-git-clone-a-repo-including-its-submodules)
+* [git submodule 游离分支(detached)产生原因及解决办法](https://www.jianshu.com/p/8646bddede23)
+
 
 ## 取消某次提交 git revert
 
 ``` bash
 git revert [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <commit>…​
 git revert (--continue | --skip | --abort | --quit)
+```
+
+Given one or more existing commits, revert the changes that the related patches introduce, and record some new commits that record them. This requires your working tree to be clean (no modifications from the HEAD commit).
+
+Examples:
+
+```
+git revert HEAD~3
+
+Revert the changes specified by the fourth last commit in HEAD and create a new commit with the reverted changes.
+
+git revert -n master~5..master~2
+
+Revert the changes done by commits from the fifth last commit in master (included) to the third last commit in master (included), but do not create any commit with the reverted changes. The revert only modifies the working tree and the index.
 ```
 
 * https://git-scm.com/docs/git-revert
@@ -1028,6 +1158,8 @@ git cherry-pick (--continue | --skip | --abort | --quit)
 git cherry-pick <commitHash>
 git cherry-pick <HashA> <HashB>
 git cherry-pick --continue
+
+git cherry-pick A^..B -x   # merge 从 A 到 B 的所有 commit，加不加  ^   就代表包不包括 A 这个 commit，加了就是包含 A，不加就是从 A 后面那个开始
 ```
 
 * https://git-scm.com/docs/git-cherry-pick
@@ -1087,19 +1219,38 @@ Splits mail messages in a mailbox into commit log message, authorship informatio
 
 Git LFS 全名 Git Large File Storage，是 Github 带头在 2015 年推出的解决方案。
 
-* 下载安装扩展：https://github.com/git-lfs/git-lfs/releases
+* 下载安装：https://github.com/git-lfs/git-lfs/releases
 
 ``` bash
-tar xf git-lfs-*.tar.gz
-cd git-lfs-*
-sudo ./install.sh
+#!/bin/bash
+
+# Download Git LFS v3.4.0
+if ! wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.0/git-lfs-linux-amd64-v3.4.0.tar.gz; then
+        echo "Error: Failed to download Git LFS"
+        exit 1
+fi
+
+# Extract the archive
+if ! tar xvf git-lfs-linux-amd64-v3.4.0.tar.gz; then
+        echo "Error: Failed to extract the tarball"
+        exit 1
+fi
+
+# Enter the extracted directory
+cd git-lfs-3.4.0 || { echo "Error: Failed to enter the extracted directory"; exit 1; }
+
+# Check if the user has root privileges before installing
+if [ "$(id -u)" != "0" ]; then
+        echo "Error: Installation requires root privileges" 1>&2
+        exit 1
+fi
+
+# Install Git LFS
+./install.sh
+
+echo "Git LFS installation successful"
 ```
 
-* 初始化 git lfs
-
-```
-git lfs install
-```
 
 * 配置想要加入 lfs 托管的文件规则
 
@@ -1141,6 +1292,114 @@ git lfs pull
 
 refer: https://git-lfs.github.com/
 
+
+## git bisect
+
+git bisect 是一个很有用的命令，用来查找哪一次代码提交引入了错误。它的原理很简单，就是将代码提交的历史，按照两分法不断缩小定位。所谓"两分法"，就是将代码历史一分为二，确定问题出在前半部分，还是后半部分，不断执行这个过程，直到范围缩小到某一次代码提交。
+
+* https://www.ruanyifeng.com/blog/2018/12/git-bisect.html
+
+## git ls-tree
+
+Lists the contents of a given tree object, like what "/bin/ls -a" does in the current working directory.
+
+``` bash
+# 列出 Git 仓库中所有文件的大小，并按照文件大小排序
+git ls-tree -r -t -l HEAD | sort -k 4 -n
+
+# 列出 Git 仓库中大小超过指定大小的文件
+git ls-tree -r -t -l HEAD | awk '$4 >= <file-size> {print $0}'
+```
+
+* https://git-scm.com/docs/git-ls-tree
+
+## git reflog
+
+This command manages the information recorded in the reflogs.
+
+`git reflog show `accepts any of the options accepted by `git log`.
+
+```
+git reflog show --oneline -n5
+```
+
+* https://git-scm.com/docs/git-reflog
+
+
+## git rev-list (列出 commitid 记录)
+
+Lists commit objects in reverse chronological order
+
+```
+git rev-list --all --abbrev-commit | head -n5
+```
+
+* https://git-scm.com/docs/git-rev-list
+
+## git gc
+
+Cleanup unnecessary files and optimize the local repository.
+
+```
+git gc --aggressive --prune=now
+```
+
+* https://git-scm.com/docs/git-gc
+
+
+## git filter-branch
+
+Rewrite branches
+
+* https://git-scm.com/docs/git-filter-branch
+
+
+## git rev-parse
+
+
+``` bash
+# 获取当前分支名
+git rev-parse --abbrev-ref=strict HEAD
+```
+
+* https://git-scm.com/docs/git-rev-parse
+* https://stackoverflow.com/questions/15798862/what-does-git-rev-parse-do
+
+
+## git tag
+
+
+``` bash
+# 切换到要打 tag 的分支
+git checkout <branch-name>
+
+# 创建一个 tag
+git tag <tag_name>
+git tag -a <tag_name> -m "<tag_message>"
+
+# 推送单个标签
+git push origin <tag_name>
+
+# 推送所有本地标签
+git push --tags
+
+# 列出所有 tag
+git tag
+
+# 查看远程仓库中的 tag
+git ls-remote --tags origin <tag_name>
+
+# 切换到指定的 tag
+git checkout <tag_name>
+
+# 删除本地 tag
+git tag -d <tag-name>
+
+# 删除远程仓库中的 tag
+git push <remote-name> :<tag-name>
+```
+
+* https://git-scm.com/book/zh/v2/Git-%E5%9F%BA%E7%A1%80-%E6%89%93%E6%A0%87%E7%AD%BE
 
 # Git hooks
 
@@ -1657,26 +1916,213 @@ refer:
 * [Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
 * [Autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests)
 
+# 使用技巧
+
+##  添加常用的 alias
+
+```
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.ci commit
+git config --global alias.br branch
+```
+
+
 # Git相关工具
 
-* Sourcetree
+## Sourcetree
 
 A free Git client for Windows and Mac. Sourcetree simplifies how you interact with your Git repositories so you can focus on coding. Visualize and manage your repositories through Sourcetree's simple Git GUI.
 
 https://www.sourcetreeapp.com/
 
-*  TortoiseGit
+##  TortoiseGit
 
 TortoiseGit is a Windows Shell Interface to Git and based on TortoiseSVN. It's open source and can fully be build with freely available software.
 
 https://tortoisegit.org/
 
+## Git Tools
+
+Assorted git-related scripts and tools.
+
+https://github.com/MestreLion/git-tools
+
+
+
 # Q&A
 
-* [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
+## [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
+
+```
+git config core.fileMode false
+```
+
+## Automatically closing issue from pull request
+
 * [Closing multiple issues in Github with a commit message](https://stackoverflow.com/questions/3547445/closing-multiple-issues-in-github-with-a-commit-message)
+
 * [Automatically closing issue from pull request in GitHub](https://stackoverflow.com/questions/12235620/automatically-closing-issue-from-pull-request-in-github)
 
+## [Maintain a Git repository](https://support.atlassian.com/bitbucket-cloud/docs/maintain-a-git-repository/) (对 Git 仓库瘦身)
+
+Maintenance of your Git repository typically involves reducing a repository's size.
+
+> Understanding file removal from Git history
+
+Recall that cloning a repository clones the entire history — including every version of every source code file.  If a user commits a huge file, such as a JAR, every clone thereafter includes this file. Even if a user ends up removing the file from the project with a subsequent commit, the file still exists in the repository history.  To remove this file from your repository you must:
+
+* remove the file from your project's **current file-tree**
+* remove the file from repository history - **rewriting Git history**, deleting the file from **all commits** containing it
+* remove all [reflog](http://git-scm.com/docs/git-reflog) history that refers to the old commit history
+* repack the repository, garbage-collecting the now-unused data using [git gc](http://git-scm.com/docs/git-gc)
+
+Git 'gc' (garbage collection) will remove all data from the repository that is not actually used, or in some way referenced, by any of your branches or tags. In order for that to be useful, we need to rewrite all Git repository history that contained the unwanted file, so that it no longer references it - git gc will then be able to discard the now-unused data.
+
+Rewriting repository history is a tricky business, because every commit depends on it's parents, so any small change will change the commit id of every subsequent commit. There are two automated tools for doing this:
+
+1. [the BFG Repo Cleaner](http://rtyley.github.io/bfg-repo-cleaner/) - fast, simple, easy to use. Require Java 6 or above.
+2. [git filter-branch](http://git-scm.com/docs/git-filter-branch) - powerful, tricky to configure, slow on big repositories. Part of the core Git suite.
+
+Remember, after you rewrite the history, whether you use the BFG or filter-branch, you will need to remove `reflog` entries that point to old history, and finally run the garbage collector to purge the old data.
+
+
+下面是关于使用 git filter-branch 的方法介绍：
+
+Antony Stubbs 提供了一个可以查找 git 大文件的 bash 脚本 [git_find_big.sh](https://stubbisms.wordpress.com/2009/07/10/git-script-to-show-largest-pack-objects-and-trim-your-waist-line/)
+
+``` bash
+#!/bin/bash
+#set -x
+
+# Shows you the largest objects in your repo's pack file.
+# Written for osx.
+#
+# @see http://stubbisms.wordpress.com/2009/07/10/git-script-to-show-largest-pack-objects-and-trim-your-waist-line/
+# @author Antony Stubbs
+
+# set the internal field spereator to line break, so that we can iterate easily over the verify-pack output
+IFS=$'\n';
+
+# list all objects including their size, sort by size, take top 10
+objects=`git verify-pack -v .git/objects/pack/pack-*.idx | grep -v chain | sort -k3nr | head -n10`
+
+echo "All sizes are in kB's. The pack column is the size of the object, compressed, inside the pack file."
+
+output="size,pack,SHA,location"
+for y in $objects
+do
+	# extract the size in bytes
+	size=$((`echo $y | cut -f 5 -d ' '`/1024))
+	# extract the compressed size in bytes
+	compressedSize=$((`echo $y | cut -f 6 -d ' '`/1024))
+	# extract the SHA
+	sha=`echo $y | cut -f 1 -d ' '`
+	# find the objects location in the repository tree
+	other=`git rev-list --all --objects | grep $sha`
+	#lineBreak=`echo -e "\n"`
+	output="${output}\n${size},${compressedSize},${other}"
+done
+
+echo -e $output | column -t -s ', '
+```
+
+输出：
+
+```
+All sizes are in kB's. The pack column is the size of the object, compressed, inside the pack file.
+size    pack   SHA                                       location
+132011  24488  c26f3ca0ad465e93a98aea7d6c9c697dcba05dac  JLib/libs/lib/protobuf/libprotoc.a
+128799  24669  422bd00a3ce77aaf9623d4643bdd138d19867e89  JLib/libs/lib/irpc/lib64/libtsf4g2.a
+102317  28626  f1700e3d6ed6faa2857ffb2718ebe6b081d20f83  JLib/tools/cmd/cmdtool
+101967  20128  8f2dd4caf83888e79f3eab6f03ff091c8ce0592c  JLib/libs/lib/irpc/lib64/libbase_agent_client_api.a
+86066   14985  ca911a78a4dcb60b6a53b7298e16987d11c4c8b8  JLib/libs/lib/protobuf/libprotoc.a
+82541   13534  57bfd8bd1274c5b76820ecba4ad0d3d181361837  JLib/libs/lib/tsf4g/libapolloservice.a
+80786   15872  af7db1120203eb1afb31f6090125f8e5e1c452fe  JLib/libs/lib/protobuf/libprotobuf.a
+80495   15869  93995fcad84daef208561c34b2f8a3ac32ce9872  JLib/libs/lib/irpc/lib64/thirdparty/libprotobuf.a
+77920   14125  a607eb72817c4e58494ad5b895d8f8e5e17b1425  JLib/libs/lib/irpc/lib64/submod/libmicro_service_sdk.a
+63532   19468  afb521929d9f4c38fb0a07b644b9eefa36f05874  JLib/bin/tconnd/tconnd
+```
+
+获得大文件信息后，通过 `git filter-branch` 删除大文件：
+
+``` bash
+git filter-branch --force --prune-empty --index-filter 'git rm -rf --cached --ignore-unmatch $file' --tag-name-filter cat -- --all
+```
+
+* `--index-filter` 选项可以修改仓库的索引
+* `--cached` 选项从索引中而不是磁盘来删除文件，这样会更快，因为你不需要在运行这个过滤器前检查每个修订版本
+* `--ignore-unmatch` 选项可以防止在尝试移走不存在的文件 pathname 的时候命令失败
+
+结合上面 `git_find_big.sh` 的输出 `file.txt`，将删除逻辑封装成 `git_strip.sh` 脚本
+
+``` bash
+#!/bin/bash
+
+while read -r path; do
+  git filter-branch --force --prune-empty --index-filter "git rm -rf --cached --ignore-unmatch $path" --tag-name-filter cat -- --all
+done < <(sed '1,2d' file.txt | awk '{print $NF}')
+
+echo "done"
+```
+
+* 使用 `sed` 和 `awk` 命令来删除文件的前两行，并提取每一行的最后一个字段
+* `< <()` 语法用于将命令的输出作为输入传递给 `while` 循环
+
+
+再通过 `git_gc_data.sh` 进行数据回收：
+
+``` bash
+#!/bin/bash
+
+# Prune all of the reflog references from now on back (unless you're explicitly only operating on one branch).
+git reflog expire --expire=now --all
+
+# Repack the repository by running the garbage collector and pruning old objects.
+git gc --prune=now
+
+echo "done"
+```
+
+最后推送到远端仓库：
+
+``` bash
+# Push all your changes back to the Bitbucket repository.
+git push --all --force
+
+# Make sure all your tags are current too
+git push --tags --force
+```
+
+另外一种完全清除历史记录的方案：[git-clearHistory](https://gist.github.com/stephenhardy/5470814)
+
+Steps to clear out the history of a git/github repository
+
+``` bash
+# Remove the history from
+rm -rf .git
+
+# recreate the repos from the current content only
+git init
+git add .
+git commit -m "Initial commit"
+
+# push to the github remote repos ensuring you overwrite history
+git remote add origin git@github.com:<YOUR ACCOUNT>/<YOUR REPOS>.git
+git push -u --force origin master
+```
+
+
+refer:
+
+* [Git 仓库瘦身](https://www.lixueduan.com/posts/git/04-git-reduce/)
+* [Maintain a Git repository](https://support.atlassian.com/bitbucket-cloud/docs/maintain-a-git-repository/) (好文)
+* [git-clearHistory](https://gist.github.com/stephenhardy/5470814)
+
+
+# Manual
+
+* [Git FAQ](https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/Git_FAQ.html)
 
 
 # Refer
@@ -1688,6 +2134,7 @@ https://tortoisegit.org/
 * [这才是真正的GIT - GIT原理及实用技巧 - PPT](https://www.lzane.com/slide/git-under-the-hood/index.html#/)
 * [这才是真正的 Git（freeCodeConf 2019 深圳站）- video](https://www.bilibili.com/video/av77252063)
 * [廖雪峰: Git教程](https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000)
+* [PRACTICAL GIT AND GITHUB](https://devarea.com/practical-git-and-github/#.ZAmpS-xBw0Q)
 
 
 

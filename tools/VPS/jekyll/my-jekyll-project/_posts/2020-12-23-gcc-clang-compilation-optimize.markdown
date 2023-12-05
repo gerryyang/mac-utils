@@ -8,8 +8,243 @@ categories: [GCC/Clang]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# [GNU Binutils](https://en.wikipedia.org/wiki/GNU_Binutils)
 
-# 编译优化
+The **GNU Binary Utilities**, or **binutils**, are a set of programming tools for creating and managing binary programs, object files, libraries, profile data, and assembly source code.
+
+The GNU Binutils are typically used in conjunction with compilers such as the GNU Compiler Collection (`gcc`), build tools like `make`, and the GNU Debugger (`gdb`).
+
+The binutils include the following commands:
+
+| name | usage |
+| -- | --
+| [as](https://en.wikipedia.org/wiki/GNU_Assembler) | [assembler](https://en.wikipedia.org/wiki/Assembly_language#Assembler) popularly known as GAS (GNU Assembler)
+| [ld](https://en.wikipedia.org/wiki/GNU_linker) | [linker](https://en.wikipedia.org/wiki/Linker_(computing))
+| [gprof](https://en.wikipedia.org/wiki/Gprof) | [profiler](https://en.wikipedia.org/wiki/Profiling_(computer_programming))
+| [addr2line](https://en.wikipedia.org/w/index.php?title=Addr2line&action=edit&redlink=1) | convert address to file and line
+| [ar](https://en.wikipedia.org/wiki/Ar_(Unix)) | create, modify, and extract from [archives](https://en.wikipedia.org/wiki/Archive_file)
+| c++filt | [demangling](https://en.wikipedia.org/wiki/Name_mangling#Name_mangling_in_C++) filter for C++ symbols
+| dlltool | creation of Windows [dynamic-link libraries](https://en.wikipedia.org/wiki/Dynamic-link_library)
+| [gold](https://en.wikipedia.org/wiki/Gold_(linker)) | alternative linker for [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
+| nlmconv | object file conversion to a NetWare Loadable Module
+| [nm](https://en.wikipedia.org/wiki/Nm_(Unix)) | list symbols exported by object file
+| objcopy | copy object files, possibly making changes
+| [objdump](https://en.wikipedia.org/wiki/Objdump) | dump information about object files
+| [ranlib](https://en.wikipedia.org/wiki/Ranlib) | generate indices for archives (for compatibility; same as `ar -s`)
+| [readelf](https://en.wikipedia.org/wiki/Readelf) | display content of ELF files
+| size | list total and section sizes
+| [strings](https://en.wikipedia.org/wiki/Strings_(Unix)) | list printable strings
+| [strip](https://en.wikipedia.org/wiki/Strip_(Unix)) | remove symbols from an object file
+| windmc | generates Windows message resources
+| windres | compiler for Windows resource files
+
+
+
+# [DWARF](https://en.wikipedia.org/wiki/DWARF)
+
+> The name DWARF is something of a pun, since it was developed along with the ELF object file format. The name is an acronym for “Debugging With Arbitrary Record Formats”.
+
+
+`DWARF` is a widely used, standardized [debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format). `DWARF` was originally designed along with [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) (`ELF`), although it is independent of object file formats. The name is a medieval fantasy complement to "ELF" that had no official meaning, although the backronym "Debugging With Arbitrary Record Formats" has since been proposed.
+
+DWARF 是一种用于表示源代码调试信息的标准格式。调试信息通常包括变量名、类型信息、行号等，用于在调试过程中帮助开发人员了解程序的运行状态。DWARF 的不同版本提供了不同的特性和优化，其中 DWARF version 5 是最新的版本，它引入了许多改进，包括更紧凑的表示形式和更高效的数据访问方式。
+
+GCC 11 将 DWARF version 5 作为默认的 debug info 版本，这意味着当使用 GCC 11 编译项目时，生成的二进制文件将包含 DWARF version 5 格式的调试信息。由于 DWARF version 5 的优化，这使得生成的二进制文件尺寸显著缩小，同时仍保留了丰富的调试信息。
+
+在实际项目中，这种尺寸缩小可以带来诸多好处，如节省磁盘空间、加快传输速度和提高加载速度等。因此，升级到 GCC 11 可以帮助开发人员更高效地处理大型项目和二进制文件。
+
+![dwarf2](/assets/images/202307/dwarf2.png)
+
+![dwarf3](/assets/images/202307/dwarf3.png)
+
+
+More:
+
+* https://en.wikipedia.org/wiki/DWARF
+* [DWARF, 调试信息存储格式](https://zhuanlan.zhihu.com/p/419908664)
+* Michael J. Eager (April 2012). "[Introduction to the DWARF Debugging Format](http://www.dwarfstd.org/doc/Debugging%20using%20DWARF-2012.pdf)" (PDF). Retrieved 2015-01-08.
+* https://dwarfstd.org/dwarf5-press-release.html
+
+## Debugging Formats
+
+There are several debugging formats: `stabs`, `COFF`, `PE-­COFF`, `OMF`, `IEEE-­695`, and two variants of `DWARF`, to name some common ones. I’m not going to describe these in any detail. The intent here is only to mention them to place the `DWARF` Debugging Format in context.
+
+The name `stabs` comes from symbol table strings, since the debugging data were originally saved as strings in Unix’s `a.out` object file’s symbol table. `Stabs` encodes the information about a program in text strings. Initially quite simple, `stabs` has evolved over time into a quite complex, occasionally cryptic and less-­than-­consistent debugging format. `Stabs` is not standardized nor well documented. Sun Microsystems has made a number of extensions to stabs. GCC has made other extensions, while attempting to reverse engineer the Sun extensions. Nonetheless, stabs is still widely used.
+
+## A Brief History of DWARF
+
+### DWARF 1 ─ Unix SVR4 sdb and PLSIG
+
+Dwarf was developed by Brian Russell, Ph.D., at Bell Labs in 1988 for use with the C compiler and sdb debugger in Unix System V Release 4 (SVR4). The **Programming Languages Special Interest Group** (`PLSIG`), part of Unix International (UI), documented the DWARF generated by SVR4 as DWARF Version 1 in 1992. Although the original DWARF had several clear shortcomings, most notably that it was not very compact, the PLSIG decided to standardize the SVR4 format with only minimal modification. It was widely adopted within the embedded sector where it continues to be used today, especially for small processors.
+
+### DWARF 2 ─ PLSIG
+
+The PLSIG continued to develop and document extensions to DWARF to address several issues, **the most important of which was to reduce the size of debugging data that were generated**. There were also additions to support new languages such as the up­and­coming C++ language. DWARF Version 2 was released as a draft standard in 1993.
+
+**Since Unix International had disappeared and PLSIG disbanded, several organizations independently decided to extend DWARF 1 and 2**. Some of these extensions were specific to a single architecture, but others might be applicable to any architecture. Unfortunately, the different organizations didn’t work together on these extensions. Documentation on the extensions is generally spotty or difficult to obtain. Or as a GCC developer might suggest, tongue firmly in cheek, the extensions were well documented: all you have to do is read the compiler source code. DWARF was well on its way to following COFF and becoming a collection of divergent implementations rather than being an industry standard.
+
+### DWARF 3 ─ Free Standards Group
+
+Despite several on­line discussions about DWARF on the PLSIG email list (which survived under X/Open [later Open Group] sponsorship after UI’s demise), there was little impetus to revise (or even finalize) the document until the end of 1999. At that time, there was interest in extending DWARF to have better support for the HP/Intel IA­64 architecture as well as better documentation of the ABI used by C++ programs. These two efforts separated, and the author took over as Chair for the revived DWARF Committee.
+
+### DWARF 4 ─ DWARF Debugging Format Committee
+
+After the Free Standards Group merged with Open Source Development Labs (OSDL) in 2007 to form the Linux Foundation, the DWARF Committee returned to independent status and created its own web site at  dwarfstd.org. Work began on Version 4 of the DWARF in 2007.
+
+The DWARF Version 4 Standard was released in June, 2010, following a public review.
+
+Work on DWARF Version 5 started in February, 2012. This version is expected to be completed in 2014.
+
+## Debugging Information Entry (DIE)
+
+* Tags and Attributes
+
+The basic descriptive entity in DWARF is the **Debugging Information Entry** (`DIE`). A DIE has a **tag**, which specifies what the DIE describes and a list of **attributes** which fill in details and further describes the entity.
+
+A DIE (except for the topmost) is contained in or owned by a parent DIE and may have sibling DIEs or children DIEs. Attributes may contain a variety of values: constants (such as a function name), variables (such as the start address for a function), or references to another DIE (such as for the type of a function’s return value).
+
+The following figure shows C's classic `hello.c` program with a simplified graphical representation of its DWARF description. The topmost DIE represents the compilation unit. It has two “children”, the first is the DIE describing main and the second describing the base type int which is the type of the value returned by main. The subprogram DIE is a child of the compilation unit DIE, while the base type DIE is referenced by the Type attribute in the subprogram DIE. We also talk about a DIE “owning” or “containing” the children DIEs.
+
+![dwarf](/assets/images/202307/dwarf.png)
+
+* Types of DIEs
+
+DIEs can be split into two general types. Those that describe data including data types and those that describe functions and other executable code.
+
+
+
+# [Precompiled Headers](https://clang.llvm.org/docs/PCHInternals.html)
+
+This document describes the design and implementation of Clang's precompiled headers (PCH). If you are interested in the end-user view, please see the [User's Manual](https://releases.llvm.org/3.1/tools/clang/docs/UsersManual.html#precompiledheaders).
+
+更多参考：
+
+* [Clang precompiled headers and improving C++ compile times, conclusion](http://llunak.blogspot.com/2021/04/clang-precompiled-headers-and-improving.html)
+* [Why precompiled headers do (not) improve C++ compile times](http://llunak.blogspot.com/2019/05/why-precompiled-headers-do-not-improve.html)
+* [How do I generate and use precompiled headers with Clang++?](https://stackoverflow.com/questions/55885920/how-do-i-generate-and-use-precompiled-headers-with-clang)
+
+
+## Using Precompiled Headers with clang
+
+The Clang compiler frontend, `clang -cc1`, supports two command line options for generating and using `PCH` files.
+
+To generate `PCH` files using `clang -cc1`, use the option `-emit-pch`:
+
+```
+$ clang -cc1 test.h -emit-pch -o test.h.pch
+```
+
+This option is transparently used by clang when generating `PCH` files. The resulting `PCH` file contains the serialized form of the compiler's internal representation after it has completed parsing and semantic analysis. The `PCH` file can then be used as a prefix header with the `-include-pch` option:
+
+```
+$ clang -cc1 -include-pch test.h.pch test.c -o test.s
+```
+
+> 说明：上面的 `clang -cc1` 在实际使用中应替换为 `clang++`。例如，要生成预编译头文件 `my_header.pch`，可以使用命令 `clang++ -x c++-header -std=c++11 -o my_header.pch my_header.hpp`
+
+
+## Design Philosophy
+
+Precompiled headers are meant to improve overall compile times for projects, so the design of precompiled headers is entirely driven by performance concerns. The use case for precompiled headers is relatively simple: when there is a common set of headers that is included in nearly every source file in the project, we **precompile** that bundle of headers into a single precompiled header (`PCH` file). Then, when compiling the source files in the project, we load the `PCH` file first (as a prefix header), which acts as a stand-in for that bundle of headers.
+
+A precompiled header implementation improves performance when:
+
+* Loading the PCH file is significantly faster than re-parsing the bundle of headers stored within the PCH file. Thus, a precompiled header design attempts to minimize the cost of reading the PCH file. Ideally, this cost should not vary with the size of the precompiled header file.
+
+* The cost of generating the PCH file initially is not so large that it counters the per-source-file performance improvement due to eliminating the need to parse the bundled headers in the first place. This is particularly important on multi-core systems, because PCH file generation serializes the build when all compilations require the PCH file to be up-to-date.
+
+> 预编译头文件的实现主要在以下两个方面改善性能：
+>
+> 1. 加载 PCH 文件的速度明显快于重新解析 PCH 文件中存储的头文件集合。因此，预编译头文件设计试图最小化读取 PCH 文件的成本。理想情况下，这个成本不应随预编译头文件的大小而变化。
+> 这意味着，通过使用预编译头文件，编译器可以快速地加载已经解析过的头文件内容，而不需要重新解析这些头文件。这将减少每个源文件的编译时间，从而提高整个项目的编译速度。
+>
+> 2. 生成 PCH 文件的初始成本不应过大，以免抵消由于消除解析捆绑头文件的需要而带来的每个源文件的性能改进。这在多核系统上尤为重要，因为 PCH 文件生成会在所有编译都需要最新的 PCH 文件时序列化构建。
+> 这意味着，尽管生成预编译头文件会带来一定的开销，但这个开销不应过大，以免影响预编译头文件带来的性能提升。在多核系统上，这一点尤为重要，因为生成预编译头文件可能会导致编译过程中的其他任务等待，从而降低并行编译的效果。
+>
+> 总之，预编译头文件实现通过加快加载 PCH 文件的速度和控制生成 PCH 文件的成本来提高编译性能。这使得编译器能够更快地处理头文件，从而提高整个项目的编译速度。
+
+Clang's precompiled headers are designed with a compact on-disk representation, which minimizes both PCH creation time and the time required to initially load the PCH file. The PCH file itself contains a serialized representation of Clang's abstract syntax trees and supporting data structures, stored using the same compressed bitstream as [LLVM's bitcode file format](https://llvm.org/docs/BitCodeFormat.html).
+
+Clang's precompiled headers are loaded "lazily" from disk. When a PCH file is initially loaded, Clang reads only a small amount of data from the PCH file to establish where certain important data structures are stored. The amount of data read in this initial load is independent of the size of the PCH file, such that a larger PCH file does not lead to longer PCH load times. The actual header data in the PCH file--macros, functions, variables, types, etc.--is loaded only when it is referenced from the user's code, at which point only that entity (and those entities it depends on) are deserialized from the PCH file. With this approach, the cost of using a precompiled header for a translation unit is proportional to the amount of code actually used from the header, rather than being proportional to the size of the header itself.
+
+> Clang 编译器如何以“懒加载”（lazy loading）的方式从磁盘加载预编译头文件（PCH）。懒加载意味着只有在实际需要时才加载数据，这有助于提高性能和降低内存使用。
+>
+> 当 PCH 文件最初被加载时，Clang 只从 PCH 文件中读取少量数据以确定某些重要数据结构的存储位置。这个初始加载阶段读取的数据量与 PCH 文件的大小无关，因此较大的 PCH 文件不会导致更长的加载时间。
+>
+> PCH 文件中的实际头文件数据（如宏、函数、变量、类型等）只有在用户代码中引用时才会被加载。此时，只有该实体（以及它所依赖的实体）会从 PCH 文件中被反序列化。通过这种方法，使用预编译头文件的成本与实际从头文件中使用的代码量成正比，而不是与头文件的大小成正比。
+>
+> 总之，Clang 编译器通过懒加载的方式从磁盘加载预编译头文件，从而提高了性能。这种方法使得使用预编译头文件的成本与实际使用的代码量成正比，而不是与头文件的大小成正比。这有助于在保持编译速度的同时，降低内存使用。
+
+When given the `-print-stats` option, Clang produces statistics describing how much of the precompiled header was actually loaded from disk. For a simple "Hello, World!" program that includes the Apple `Cocoa.h` header (which is built as a precompiled header), this option illustrates how little of the actual precompiled header is required:
+
+```
+*** PCH Statistics:
+  933 stat cache hits
+  4 stat cache misses
+  895/39981 source location entries read (2.238563%)
+  19/15315 types read (0.124061%)
+  20/82685 declarations read (0.024188%)
+  154/58070 identifiers read (0.265197%)
+  0/7260 selectors read (0.000000%)
+  0/30842 statements read (0.000000%)
+  4/8400 macros read (0.047619%)
+  1/4995 lexical declcontexts read (0.020020%)
+  0/4413 visible declcontexts read (0.000000%)
+  0/7230 method pool entries read (0.000000%)
+  0 method pool misses
+```
+
+For this small program, only a tiny fraction of the source locations, types, declarations, identifiers, and macros were actually deserialized from the precompiled header. These statistics can be useful to determine whether the precompiled header implementation can be improved by making more of the implementation lazy.
+
+Precompiled headers can be chained. When you create a PCH while including an existing PCH, Clang can create the new PCH by referencing the original file and only writing the new data to the new file. For example, you could create a PCH out of all the headers that are very commonly used throughout your project, and then create a PCH for every single source file in the project that includes the code that is specific to that file, so that recompiling the file itself is very fast, without duplicating the data from the common headers for every file.
+
+> 预编译头文件（PCH）可以被链接在一起。当你在创建一个新的 PCH 时包含了一个已有的 PCH，Clang 可以通过引用原始文件并只将新数据写入新文件来创建新的 PCH。这种方法允许在不重复公共头文件数据的情况下，更高效地为每个源文件创建 PCH。
+>
+> 举个例子，你可以为项目中经常使用的所有头文件创建一个 PCH，然后为项目中的每个源文件创建一个 PCH，该 PCH 包含特定于该文件的代码。这样，在重新编译文件本身时，速度会非常快，同时避免了为每个文件重复公共头文件的数据。
+>
+> 通过链接预编译头文件，可以在保持编译速度的同时，减少生成的 PCH 文件的大小。这种方法在处理大型项目时尤为有用，因为它可以有效地减少编译时间和磁盘空间占用。
+
+
+## Precompiled Header Contents
+
+Clang's precompiled headers are organized into several different blocks, each of which contains the serialized representation of a part of Clang's internal representation. Each of the blocks corresponds to either a block or a record within [LLVM's bitstream format](http://llvm.org/docs/BitCodeFormat.html). The contents of each of these logical blocks are described below.
+
+For a given precompiled header, the [llvm-bcanalyzer](http://llvm.org/cmds/llvm-bcanalyzer.html) utility can be used to examine the actual structure of the bitstream for the precompiled header. This information can be used both to help understand the structure of the precompiled header and to isolate areas where precompiled headers can still be optimized, e.g., through the introduction of abbreviations.
+
+* Metadata Block
+* Source Manager Block
+* Preprocessor Block
+* Types Block
+* Declarations Block
+* Statements and Expressions
+* Identifier Table Block
+* Method Pool Block
+
+
+## Precompiled Header Integration Points
+
+The "lazy" deserialization behavior of precompiled headers requires their integration into several completely different submodules of Clang. For example, lazily deserializing the declarations during name lookup requires that the name-lookup routines be able to query the precompiled header to find entities within the PCH file.
+
+
+
+
+# 编译加速 (统一编译)
+
+```
+bUseUnityBuild
+Whether to unify C++ code into larger files for faster compilation.
+
+bForceUnityBuild
+Whether to force C++ source files to be combined into larger files for faster compilation.
+```
+
+* https://stackoverflow.com/questions/45110783/when-do-i-need-to-include-cpp-files
+* https://accu.org/journals/overload/25/138/thomason_2360/
+* https://leegoonz.blog/2020/04/26/disable-to-buseunitybuild-even-building-to-ue4-source-code/
+* https://docs.unrealengine.com/5.1/en-US/build-configuration-for-unreal-engine/
+
+
+# 编译优化级别
 
 ## gcc
 
@@ -453,8 +688,341 @@ related: [noinline attribute is not respected in -O1 and above #3409](github.com
 It sounds like you want to use the `optnone` attribute instead, to prevent the compiler from applying even the most obvious of optimizations (as this one is).
 
 
+# [Options for Debugging Your Program - GCC](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html) - 调试相关的编译选项
 
-# 去除Dead Codes (删除未使用的函数)
+To tell `GCC` to emit extra information for use by a debugger, in almost all cases you need only to add `-g` to your other options. Some debug formats can co-exist (like DWARF with CTF) when each of them is enabled explicitly by adding the respective command line option to your other options.
+
+GCC allows you to use `-g` with `-O`. **The shortcuts taken by optimized code may occasionally be surprising**: some variables you declared may not exist at all; flow of control may briefly move where you did not expect it; some statements may not be executed because they compute constant results or their values are already at hand; some statements may execute in different places because they have been moved out of loops. Nevertheless it is possible to debug optimized output. This makes it reasonable to use the optimizer for programs that might have bugs.
+
+If you are not using some other optimization option, consider using `-Og` (see [Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)) with `-g`. With no `-O` option at all, some compiler passes that collect information useful for debugging do not run at all, so that `-Og` may result in a better debugging experience.
+
+
+## -g
+
+Produce debugging information in the operating system’s native format (stabs, COFF, XCOFF, or DWARF). GDB can work with this debugging information.
+
+On most systems that use stabs format, `-g` enables use of extra debugging information that only GDB can use; this extra information makes debugging work better in GDB but probably makes other debuggers crash or refuse to read the program. If you want to control for certain whether to generate the extra information, use `-gvms` (see below).
+
+## -ggdb
+
+Produce debugging information for use by GDB. This means to use the most expressive format available (DWARF, stabs, or the native format if neither of those are supported), including GDB extensions if at all possible.
+
+## -gdwarf / -gdwarf-version
+
+**Produce debugging information in DWARF format** (if that is supported). The value of version may be either 2, 3, 4 or 5; the default version for most targets is 5 (with the exception of VxWorks, TPF and Darwin/Mac OS X, which default to version 2, and AIX, which defaults to version 4).
+
+Note that with DWARF Version 2, some ports require and always use some non-conflicting DWARF 3 extensions in the unwind tables.
+
+Version 4 may require GDB 7.0 and -fvar-tracking-assignments for maximum benefit. **Version 5 requires GDB 8.0 or higher**.
+
+
+
+# [Include What You Use](https://github.com/include-what-you-use/include-what-you-use) (A tool for use with clang to analyze #includes in C and C++ source files)
+
+> Here, the main benefit of include-what-you-use comes from the flip side: "don't include what you don't use."
+
+
+参考：https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md
+
+1. 更快的编译。当 `cpp` 文件包含冗余头文件时，编译器会读取、预处理和解析更多的代码，如果有模板存在，则会引入更多的代码，这会加大编译构建时间。
+2. 更好的重构。假如准备重构 `foo.h`，使得它不再使用 `vector`，很可能会从 `foo.h` 文件中移除 `#include<vector>`。理论上可以这么做，但实际上不行，因为其他文件可能会通过 `foo.h` 来间接引用 `vector`，贸然移除会造成其他文件编译失败。iwyu 工具可以找到并去掉这种间接引用。
+3. 头文件自注释。通过查看必须头文件注释，可知道该功能依赖于其他哪些子功能。
+4. 使用前向声明代替 include 语句，减少依赖，减少可执行程序大小。
+
+> Since some coding standards have taken to [discourage forward declarations](https://google.github.io/styleguide/cppguide.html#Forward_Declarations), IWYU has grown a `--no_fwd_decls` mode to embrace this alternative strategy. Where IWYU's default behavior is to minimize the number of include directives, IWYU with `--no_fwd_decls` will attempt to minimize the number of times each type is redeclared. The result is that include directives will always be preferred over local forward declarations, even if it means including a header just for a name-only type declaration.
+
+
+For more in-depth documentation, see [docs](https://github.com/include-what-you-use/include-what-you-use/tree/master/docs).
+
+> **NOTE**: Include-what-you-use makes heavy use of Clang internals, and will occasionally break when Clang is updated. We build IWYU regularly against Clang mainline to detect and fix such compatibility breaks as soon as possible.
+
+## Build
+
+### How to build standalone
+
+This build mode assumes you already have compiled LLVM and Clang libraries on your system, either via packages for your platform or built from source. To set up an environment for building IWYU:
+
+
+* Create a directory for IWYU development, e.g. `iwyu`
+* Clone the IWYU Git repo:
+
+```
+iwyu$ git clone https://github.com/include-what-you-use/include-what-you-use.git
+```
+
+
+* Presumably, you'll be building IWYU with a released version of LLVM and Clang, so **check out the corresponding branch**. For example, if you have Clang 6.0 installed, use the `clang_6.0` branch. IWYU `master` tracks LLVM & Clang `main`:
+
+```
+iwyu$ cd include-what-you-use
+iwyu/include-what-you-use$ git checkout clang_6.0
+```
+
+* Create a build root and use CMake to generate a build system linked with LLVM/Clang prebuilts:
+
+```
+# This example uses the Makefile generator, but anything should work.
+iwyu/include-what-you-use$ cd ..
+iwyu$ mkdir build && cd build
+
+# For IWYU 0.10/Clang 6 and earlier
+iwyu/build$ cmake -G "Unix Makefiles" -DIWYU_LLVM_ROOT_PATH=/usr/lib/llvm-6.0 ../include-what-you-use
+
+# For IWYU 0.11/Clang 7 and later
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=/usr/lib/llvm-7 ../include-what-you-use
+```
+
+(substitute the `llvm-6.0` or `llvm-7` suffixes with the actual version compatible with your IWYU branch)
+
+or, if you have a local LLVM and Clang build tree, you can specify that as `CMAKE_PREFIX_PATH` for IWYU 0.11 and later:
+
+```
+iwyu/build$ cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=~/llvm-project/build ../include-what-you-use
+```
+
+* Once CMake has generated a build system, you can invoke it directly from `build`, e.g.
+
+```
+iwyu/build$ make
+```
+
+### How to build as part of LLVM
+
+Instructions for building LLVM and Clang are available at https://clang.llvm.org/get_started.html.
+
+To include IWYU in the LLVM build, use the `LLVM_EXTERNAL_PROJECTS` and `LLVM_EXTERNAL_*_SOURCE_DIR` CMake variables when configuring LLVM:
+
+```
+llvm-project/build$ cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=iwyu -DLLVM_EXTERNAL_IWYU_SOURCE_DIR=/path/to/iwyu /path/to/llvm-project/llvm
+llvm-project/build$ make
+```
+
+This builds all of LLVM, Clang and IWYU in a single tree.
+
+## Usage
+
+```
+$include-what-you-use --help
+USAGE: include-what-you-use [-Xiwyu --iwyu_opt]... <clang opts> <source file>
+Here are the <iwyu_opts> you can specify (e.g. -Xiwyu --verbose=3):
+   --check_also=<glob>: tells iwyu to print iwyu-violation info
+        for all files matching the given glob pattern (in addition
+        to the default of reporting for the input .cc file and its
+        associated .h files).  This flag may be specified multiple
+        times to specify multiple glob patterns.
+   --keep=<glob>: tells iwyu to always keep these includes.
+        This flag may be specified multiple times to specify
+        multiple glob patterns.
+   --mapping_file=<filename>: gives iwyu a mapping file.
+   --no_default_mappings: do not add iwyu's default mappings.
+   --pch_in_code: mark the first include in a translation unit as a
+        precompiled header.  Use --pch_in_code to prevent IWYU from
+        removing necessary PCH includes.  Though Clang forces PCHs
+        to be listed as prefix headers, the PCH-in-code pattern can
+        be used with GCC and is standard practice on MSVC
+        (e.g. stdafx.h).
+   --prefix_header_includes=<value>: tells iwyu what to do with
+        in-source includes and forward declarations involving
+        prefix headers.  Prefix header is a file included via
+        command-line option -include.  If prefix header makes
+        include or forward declaration obsolete, presence of such
+        include can be controlled with the following values
+          add:    new lines are added
+          keep:   new lines aren't added, existing are kept intact
+          remove: new lines aren't added, existing are removed
+        Default value is 'add'.
+   --transitive_includes_only: do not suggest that a file add
+        foo.h unless foo.h is already visible in the file's
+        transitive includes.
+   --max_line_length: maximum line length for includes.
+        Note that this only affects comments and alignment thereof,
+        the maximum line length can still be exceeded with long
+        file names (default: 80).
+   --no_comments: do not add 'why' comments.
+   --no_fwd_decls: do not use forward declarations.
+   --verbose=<level>: the higher the level, the more output.
+   --quoted_includes_first: when sorting includes, place quoted
+        ones first.
+   --cxx17ns: suggests the more concise syntax introduced in C++17
+
+In addition to IWYU-specific options you can specify the following
+options without -Xiwyu prefix:
+   --help: prints this help and exits.
+   --version: prints version and exits.
+```
+
+### Running on single source file
+
+The simplest way to use IWYU is to run it against a single source file:
+
+```
+include-what-you-use $CXXFLAGS myfile.cc
+```
+
+where `$CXXFLAGS` are the flags you would normally pass to the compiler.
+
+
+### Plugging into existing build system
+
+Typically there is already a build system containing the relevant compiler flags for all source files. Replace your compiler with `include-what-you-use` to generate a large batch of IWYU advice. Depending on your build system/build tools, this can take many forms, but for a simple GNU Make system it might look like this:
+
+```
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always"
+```
+
+> The additional `-Xiwyu --error_always` switch makes `include-what-you-use` always exit with an error code, so the build system knows it didn't build a .o file. Hence the need for `-k`.
+
+In this mode `include-what-you-use` only analyzes the `.cc` (or `.cpp`) files known to your build system, along with their corresponding `.h` files. If your project has a `.h` file with no corresponding `.cc` file, IWYU will ignore it unless you use the `--check_also` switch to add it for analysis together with a `.cc` file. It is possible to run IWYU against individual header files, provided the compiler flags are carefully constructed to match all includers.
+
+### Using with CMake
+
+CMake has grown native support for IWYU as of version 3.3. See [their documentation](https://cmake.org/cmake/help/latest/prop_tgt/LANG_INCLUDE_WHAT_YOU_USE.html) for CMake-side details.
+
+
+```
+New in version 3.3.
+
+This property is implemented only when <LANG> is C or CXX.
+
+Specify a semicolon-separated list containing a command line for the include-what-you-use tool. The Makefile Generators and the Ninja generator will run this tool along with the compiler and report a warning if the tool reports any problems.
+```
+
+The `CMAKE_CXX_INCLUDE_WHAT_YOU_USE` option enables a mode where CMake first compiles a source file, and then runs IWYU on it.
+
+Use it like this:
+
+```
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE=include-what-you-use ...
+```
+
+These examples assume that `include-what-you-use` is in the `PATH`. If it isn't, consider changing the value to an absolute path. Arguments to IWYU can be added using CMake's semicolon-separated list syntax, e.g.:
+
+```
+  ... cmake -DCMAKE_CXX_INCLUDE_WHAT_YOU_USE="include-what-you-use;-w;-Xiwyu;--verbose=7" ...
+```
+
+The option appears to be separately supported for both C and C++, so use `CMAKE_C_INCLUDE_WHAT_YOU_USE` for C code.
+
+### Using with a compilation database
+
+The `iwyu_tool.py` script pre-dates the native CMake support, and works off the [compilation database format](https://clang.llvm.org/docs/JSONCompilationDatabase.html). For example, CMake generates such a database named `compile_commands.json` with the `CMAKE_EXPORT_COMPILE_COMMANDS` option enabled.
+
+The script's command-line syntax is designed to mimic Clang's LibTooling, but they are otherwise unrelated. It can be used like this:
+
+```
+mkdir build && cd build
+CC="clang" CXX="clang++" cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ...
+iwyu_tool.py -p .
+```
+
+Unless a source filename is provided, all files in the project will be analyzed.
+
+See `iwyu_tool.py --help` for more options.
+
+
+### Applying fixes
+
+We also include a tool that automatically fixes up your source files based on the IWYU recommendations. This is also alpha-quality software! Here's how to use it (requires python3):
+
+```
+make -k CXX=include-what-you-use CXXFLAGS="-Xiwyu --error_always" 2> /tmp/iwyu.out
+python3 fix_includes.py < /tmp/iwyu.out
+```
+
+If you don't like the way `fix_includes.py` munges your `#include` lines, you can control its behavior via flags. `fix_includes.py --help` will give a full list, but these are some common ones:
+
+* `-b`: Put blank lines between system and Google includes
+* `--nocomments`: Don't add the 'why' comments next to includes
+
+
+### [Which pragma should I use?](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md)
+
+Ideally, IWYU should be smart enough to understand your intentions (and intentions of the authors of libraries you use), so the first answer should always be: none.
+
+In practice, intentions are not so clear -- it might be ambiguous whether an `#include` is there by clever design or by mistake, whether an `#include` serves to export symbols from a private header through a public facade or if it's just a left-over after some clean-up. Even when intent is obvious, IWYU can make mistakes due to bugs or not-yet-implemented policies.
+
+IWYU pragmas have some overlap, so it can sometimes be hard to choose one over the other. Here's a guide based on how I understand them at the moment:
+
+* Use `IWYU pragma: keep` to force IWYU to keep any `#include` directive that would be discarded under its normal policies.
+* Use `IWYU pragma: always_keep` to force IWYU to keep a header in all includers, whether they contribute any used symbols or not.
+* Use `IWYU pragma: export` to tell IWYU that one header serves as the provider for all symbols in another, included header (e.g. facade headers). Use `IWYU pragma: begin_exports/end_exports` for a whole group of included headers.
+* Use `IWYU pragma: no_include` to tell IWYU that the file in which the pragma is defined should never `#include` a specific header (the header may already be included via some other `#include`.)
+* Use `IWYU pragma: no_forward_declare` to tell IWYU that the file in which the pragma is defined should never forward-declare a specific symbol (a forward declaration may already be available via some other `#include`.)
+* Use `IWYU pragma: private` to tell IWYU that the header in which the pragma is defined is private, and should not be included directly.
+* Use `IWYU pragma: private, include "public.h"` to tell IWYU that the header in which the pragma is defined is private, and `public.h` should always be included instead.
+* Use `IWYU pragma: friend ".*favorites.*"` to override `IWYU pragma: private` selectively, so that a set of files identified by a regex can include the file even if it's private.
+
+The pragmas come in three different classes;
+
+1. Ones that apply to a single `#include` directive (`keep`, `export`)
+2. Ones that apply to a file being included (`private`, `friend`, `always_keep`)
+3. Ones that apply to a file including other headers (`no_include`, `no_forward_declare`)
+
+Some files are both included and include others, so it can make sense to mix and match.
+
+
+### [Why include-what-you-use is difficult](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYUIsDifficult.md)
+
+This section is informational, for folks who are wondering why include-what-you-use requires so much code and yet still has so many errors.
+
+Include-what-you-use has the most problems with templates and macros. If your code doesn't use either, IWYU will probably do great. And, you're probably not actually programming in C++...
+
+
+
+
+
+
+
+# 编译二进制大小优化
+
+
+在使用 Clang 编译器时，有多种方法可以优化生成的二进制文件大小。以下是一些建议：
+
+* 优化级别：使用 `-Os` 或 `-Oz` 优化选项。这些选项专门针对生成较小的二进制文件进行优化。
+
+```
+clang -Os -o output_file input_file.c
+
+```
+
+或者
+
+```
+clang -Oz -o output_file input_file.c
+```
+
+* 去除调试信息：如果不需要调试信息，请确保不使用 `-g` 选项。如果需要调试信息，但希望减小文件大小，可以考虑使用 `-Wl,--compress-debug-sections=zlib` 将调试信息压缩。
+
+* 链接时优化（LTO）：使用链接时优化可以在链接阶段进行更多优化，这可能有助于减小生成的二进制文件大小。要启用 LTO，请使用 `-flto` 选项.
+
+```
+clang -flto -Os -o output_file input_file.c
+```
+
+* 去除未使用的代码和数据：使用 `-ffunction-sections` 和 `-fdata-sections` 选项将函数和数据放入单独的节（section），然后使用链接器选项 `--gc-sections` 删除未使用的节：
+
+```
+clang -Os -ffunction-sections -fdata-sections -o output_file input_file.c -Wl,--gc-sections
+```
+
+* 静态链接：尽量避免静态链接，因为它会将库的整个内容包含到二进制文件中。相反，使用动态链接可以减小二进制文件大小。
+
+* 符号剥离：使用 `strip` 工具删除不必要的符号信息。这不仅可以减小二进制文件大小，还可以防止其他人轻松地逆向工程您的代码。在编译完成后，运行以下命令：
+
+```
+strip output_file
+```
+
+请注意，这将删除所有符号信息，使调试变得困难。因此，仅在不需要调试信息时执行此操作。
+
+* 代码优化：在源代码级别进行优化。例如，删除不必要的代码，减少全局变量的使用，使用更小的数据类型等。
+
+
+通过结合使用这些技巧，可以在使用 Clang 编译器时优化生成的二进制文件大小。请注意，某些优化可能会影响程序的性能和可调试性，因此在选择优化方法时要权衡利弊。
+
+
+## 删除不使用的 Dead Codes (-fdata-sections / -ffunction-sections / -Wl,--gc-sections)
 
 参考[Compilation options](https://gcc.gnu.org/onlinedocs/gnat_ugn/Compilation-options.html)通过下面两步，去除代码没有使用的函数：
 
@@ -555,7 +1123,7 @@ refer:
 
 
 
-# strip
+## strip
 
 * `strip`用于删除目标文件中的符号（Discard symbols from object files），通常用于删除已生成的可执行文件和库中不需要的符号。
 * 在想要减少文件的大小，并保留对调试有用的信息时，使用`-d`选项，可以删除不使用的信息（文件名和行号等），并可以保留函数名等一般的符号，用gdb进行调试时，只要保留了函数名，即便不知道文件名和行号，也可以进行调试。
@@ -578,7 +1146,7 @@ Segmentation fault (core dumped)
 ```
 
 
-# objcopy
+## objcopy (分离调试信息)
 
 * `objcopy` - copy and translate object file
 * 实际上，在`objcopy`上使用`-strip-*`选项后也能进行与`strip`同样的处理。
@@ -655,14 +1223,219 @@ chmod -x "${debugdir}/${debugfile}"
 
 refer: [How to generate gcc debug symbol outside the build target?](https://stackoverflow.com/questions/866721/how-to-generate-gcc-debug-symbol-outside-the-build-target)
 
-# -fno-rtti / -frtti
 
+
+## [LLVM Link Time Optimization: Design and Implementation](https://llvm.org/docs/LinkTimeOptimization.html) - LTO
+
+> 使用 LTO 通过牺牲更多的编译时间，通过跨模块的上下文信息，实现编译优化。
+
+由于编译器一次只编译优化一个编译单元，所以只是在做局部优化，而利用 LTO，利用链接时的全局视角进行操作，从而得到能够进行更加极致的优化。
+
+跨模块优化的效果，也即开启 LTO 主要有这几点好处：
+
+1. 将一些函数內联化
+2. 去除了一些无用代码
+3. 对程序有全局的优化作用
+
+比较体验不好的是，LTO 会导致编译和链接变慢，以及会使用更多的内存，所以即使到现在，也没有看到 LTO 被广泛地使用。
+
+* [代码优化利器 LTO 介绍](https://zhuanlan.zhihu.com/p/384160632)
+* [开启Link Time Optimization(LTO)后到底有什么优化？](https://www.jianshu.com/p/58fef052291a)
+* [Link Time Optimizations: New Way to Do Compiler Optimizations](https://johnysswlab.com/link-time-optimizations-new-way-to-do-compiler-optimizations/)
+* [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html)
+* [LTO with LLVM and CMake](https://stackoverflow.com/questions/35922966/lto-with-llvm-and-cmake)
+* [Clang: How to check if LTO was performed](https://stackoverflow.com/questions/51048414/clang-how-to-check-if-lto-was-performed)
+
+
+### Description
+
+LLVM features powerful intermodular optimizations which can be used at link time. **Link Time Optimization (LTO)** is another name for **intermodular optimization** when performed during the link stage. This document describes the interface and design between the LTO optimizer and the linker.
+
+### Design Philosophy
+
+**The LLVM Link Time Optimizer provides complete transparency, while doing intermodular optimization, in the compiler tool chain. Its main goal is to let the developer take advantage of intermodular optimizations without making any significant changes to the developer’s makefiles or build system**. This is achieved through tight integration with the linker. In this model, the linker treats LLVM bitcode files like native object files and allows mixing and matching among them. The linker uses [libLTO](https://llvm.org/docs/LinkTimeOptimization.html#liblto), a shared object, to handle LLVM bitcode files. This tight integration between the linker and LLVM optimizer helps to do optimizations that are not possible in other models. The linker input allows the optimizer to avoid relying on conservative escape analysis.
+
+### Example of link time optimization
+
+The following example illustrates the advantages of LTO’s integrated approach and clean interface. This example requires a system linker which supports LTO through the interface described in this document. Here, clang transparently invokes system linker.
+
+* Input source file `a.c` is compiled into LLVM bitcode form.
+* Input source file `main.c` is compiled into native object code.
+
+``` c
+--- a.h ---
+extern int foo1(void);
+extern void foo2(void);
+extern void foo4(void);
+
+--- a.c ---
+#include "a.h"
+
+static signed int i = 0;
+
+void foo2(void) {
+  i = -1;
+}
+
+static int foo3() {
+  foo4();
+  return 10;
+}
+
+int foo1(void) {
+  int data = 0;
+
+  if (i < 0)
+    data = foo3();
+
+  data = data + 42;
+  return data;
+}
+
+--- main.c ---
+#include <stdio.h>
+#include "a.h"
+
+void foo4(void) {
+  printf("Hi\n");
+}
+
+int main() {
+  return foo1();
+}
+```
+
+To compile, run:
+
+```
+% clang -flto -c a.c -o a.o        # <-- a.o is LLVM bitcode file
+% clang -c main.c -o main.o        # <-- main.o is native object file
+% clang -flto a.o main.o -o main   # <-- standard link command with -flto
+```
+
+* In this example, the linker recognizes that `foo2()` is an externally visible symbol defined in LLVM bitcode file. The linker completes its usual symbol resolution pass and finds that `foo2()` is not used anywhere. This information is used by the LLVM optimizer and it removes `foo2()`.
+* As soon as `foo2()` is removed, the optimizer recognizes that condition `i < 0` is always `false`, which means `foo3()` is never used. Hence, the optimizer also removes `foo3()`.
+* And this in turn, enables linker to remove `foo4()`.
+
+This example illustrates the advantage of tight integration with the linker. Here, the optimizer can not remove `foo3()` without the linker’s input.
+
+### Alternative Approaches
+
+* Compiler driver invokes link time optimizer separately.
+
+In this model the link time optimizer is not able to take advantage of information collected during the linker’s normal symbol resolution phase. In the above example, the optimizer can not remove `foo2()` without the linker’s input because it is externally visible. This in turn prohibits the optimizer from removing `foo3()`.
+
+* Use separate tool to collect symbol information from all object files.
+
+In this model, a new, separate, tool or library replicates the linker’s capability to collect information for link time optimization. Not only is this code duplication difficult to justify, but it also has several other disadvantages. For example, the linking semantics and the features provided by the linker on various platform are not unique. This means, this new tool needs to support all such features and platforms in one super tool or a separate tool per platform is required. This increases maintenance cost for link time optimizer significantly, which is not necessary. This approach also requires staying synchronized with linker developments on various platforms, which is not the main focus of the link time optimizer. Finally, this approach increases end user’s build time due to the duplication of work done by this separate tool and the linker itself.
+
+### Multi-phase communication between libLTO and linker
+
+The linker collects information about symbol definitions and uses in various link objects which is more accurate than any information collected by other tools during typical build cycles. The linker collects this information by looking at the definitions and uses of symbols in native .o files and using symbol visibility information. The linker also uses user-supplied information, such as a list of exported symbols. LLVM optimizer collects control flow information, data flow information and knows much more about program structure from the optimizer’s point of view. Our goal is to take advantage of tight integration between the linker and the optimizer by sharing this information during various linking phases.
+
+
+### 问题
+
+* [-Wl,--wrap not supported with LTO](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=88643)
+
+
+## [-fdebug-types-section](https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html)
+
+When using DWARF Version 4 or higher, type DIEs can be put into their own `.debug_types` section instead of making them part of the `.debug_info` section. It is more efficient to put them in a separate comdat section since the linker can then remove duplicates. But not all DWARF consumers support `.debug_types` sections yet and on some objects `.debug_types` produces larger instead of smaller debugging information.
+
+`-fdebug-types-section` 选项用于在生成 DWARF 调试信息时将类型定义（type DIEs）放入单独的 .debug_types 节中，而不是将它们作为 .debug_info 节的一部分。这个选项适用于 DWARF 版本4及更高版本。
+
+将类型定义放入单独的 .debug_types 节有以下优势：
+
+链接器效率：链接器可以通过合并重复的类型定义来减小生成的调试信息的大小。将类型定义放入单独的 .debug_types 节（通常是comdat节）可以让链接器更容易地识别和删除重复的类型定义。
+
+然而，使用 -fdebug-types-section 选项也存在一些限制和问题：
+
+DWARF 消费者的兼容性：并非所有处理 DWARF 调试信息的工具（如调试器和分析器）都支持 .debug_types 节。在这种情况下，使用 -fdebug-types-section 可能会导致兼容性问题。
+
+调试信息大小：在某些情况下，使用 .debug_types 节可能会导致生成的调试信息更大，而不是更小。这取决于具体的对象文件和类型定义。
+
+总之，-fdebug-types-section 选项用于将类型定义放入单独的 .debug_types 节，以提高链接器效率。然而，在使用此选项时，请注意兼容性和调试信息大小的潜在问题。在选择是否使用此选项时，请根据您的项目需求和目标平台进行权衡。
+
+## [--compress-debug-sections=zlib](https://sourceware.org/binutils/docs/ld/Options.html#index-compress-debug-sections-1)
+
+```
+--compress-debug-sections=none
+--compress-debug-sections=zlib
+--compress-debug-sections=zlib-gnu
+--compress-debug-sections=zlib-gabi
+--compress-debug-sections=zstd
+```
+
+On ELF platforms, these options control how DWARF debug sections are compressed using zlib.
+
+
+使用 -Wl,--compress-debug-sections=zlib 可以压缩调试信息，从而减小生成的二进制文件大小。然而，在使用此选项时，有一些注意事项和可能的问题：
+
+调试器兼容性：并非所有调试器都支持压缩后的调试信息。在使用压缩调试信息的二进制文件进行调试时，请确保您的调试器（如GDB）支持处理压缩后的调试节。较新版本的GDB通常支持这一点。
+
+解压缩开销：虽然压缩调试信息可以减小文件大小，但在调试过程中，调试器需要解压缩这些信息。这可能会导致调试过程稍微变慢。对于大型项目，解压缩时间可能会有所增加。
+
+链接器支持：并非所有链接器都支持 --compress-debug-sections 选项。在使用此选项时，请确保您的链接器支持它。通常，较新版本的GNU ld链接器支持此功能。
+
+二进制文件可移植性：如果您需要将二进制文件分发给其他用户，他们可能使用不同的调试器或操作系统。在这种情况下，使用压缩调试信息可能会导致兼容性问题。在将二进制文件分发给其他用户之前，请确保他们的环境支持处理压缩后的调试信息。
+
+总之，在使用 -Wl,--compress-debug-sections=zlib 选项时，请确保您的工具链和调试器支持处理压缩后的调试信息。同时，请注意，在某些情况下，这可能会影响调试过程的性能。
+
+通过 `readelf -S` 可以查看 `.debug_info` 在使用压缩后的大小变化：
+
+```
+$ls -lh unittestsvr*
+-rwxr-xr-x 1 gerryyang users 224M 7月  22 12:04 unittestsvr.nozip
+-rwxr-xr-x 1 gerryyang users 106M 7月  22 12:04 unittestsvr.zip
+$readelf -S unittestsvr.nozip | grep -A1 .debug_info
+  [34] .debug_info       PROGBITS         0000000000000000  02b55390
+       000000000442cdcd  0000000000000000           0     0     1
+$readelf -S unittestsvr.zip | grep -A1 .debug_info
+  [34] .debug_info       PROGBITS         0000000000000000  0396840d
+       0000000001e87e1a  0000000000000000   C       0     0     1
+```
+
+
+截至目前（2022年2月），Clang编译器和GNU ld链接器尚未支持 --compress-debug-sections=zstd 选项。目前，GNU ld链接器支持的调试信息压缩方法是zlib（--compress-debug-sections=zlib）。
+
+如果您希望使用 zstd 压缩调试信息，可以考虑在编译和链接完成后手动压缩调试信息。以下是一个使用 objcopy 工具手动压缩调试信息的示例：
+
+首先，使用-g选项编译源代码以生成调试信息：
+
+```
+clang -g -o output_file input_file.c
+```
+
+使用objcopy将未压缩的调试信息从二进制文件中提取到单独的文件：
+
+```
+objcopy --only-keep-debug output_file output_file.debug
+```
+
+使用zstd手动压缩提取的调试信息：
+
+```
+zstd -o output_file.debug.zst output_file.debug
+```
+
+将压缩后的调试信息与二进制文件关联：
+
+```
+objcopy --add-gnu-debuglink=output_file.debug.zst output_file
+```
+
+请注意，这种方法可能不被所有调试器支持，因为它们可能无法识别zstd压缩的调试信息。在使用此方法之前，请确保您的调试器支持处理zstd压缩的调试信息。
+
+# 其他
+
+## -fno-rtti / -frtti
 
 * https://desk.zoho.com.cn/portal/sylixos/zh/kb/articles/c-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9-fno-rtti-%E5%92%8C-frtti%E6%B5%85%E6%9E%90
 * https://stackoverflow.com/questions/23912955/disable-rtti-for-some-classes
 * https://stackoverflow.com/questions/36261573/gcc-c-override-frtti-for-single-class
 
-# -Wl,--start-group / -Wl,--end-group
+## -Wl,--start-group / -Wl,--end-group
 
 [What are the --start-group and --end-group command line options?](https://stackoverflow.com/questions/5651869/what-are-the-start-group-and-end-group-command-line-options)
 
@@ -692,4 +1465,37 @@ So, libraries inside the group can be searched for new symbols several time, and
 
 PS archive means basically a static library (`*.a` files)
 
+
+# 优化调试
+
+## [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)
+
+# Q&A
+
+## [Relocation overflow and code models](https://maskray.me/blog/2023-05-14-relocation-overflow-and-code-models)
+
+There are several strategies to mitigate relocation overflow issues.
+
+* Make the program smaller by reducing code and data size.
+* Partition the large monolithic executable into the main executable and a few shared objects.
+* Switch to the medium code model
+* Use compiler options such as `-Os`, `-Oz` and link-time optimization that focuses on decreasing the code size.
+* For compiler instrumentations (e.g. `-fsanitize=address`, `-fprofile-generate`), move some data to large data sections.
+* Use linker script commands `INSERT BEFORE` and `INSERT AFTER` to reorder output sections.
+
+在某些情况下，当静态链接的二进制文件超过2GB时，可能会遇到relocation overflow问题。这是因为在大型程序中，某些指针和地址可能超出了编译器为其分配的空间。为了解决这个问题，可以尝试以下方法：
+
+1. 使用大型模型或大型地址空间：在编译时，可以选择使用大型模型（例如-mcmodel=large）或大型地址空间（例如-mlarge-address-aware）。这将允许编译器和链接器使用更大的地址空间，以便处理大型程序。具体的编译选项可能因编译器而异，请参阅编译器文档以获取适当的选项。
+2. 分割程序：如果可能，将程序分割成多个较小的模块或库。这可以减小每个模块的大小，降低relocation overflow的风险。此外，使用动态链接库（DLL）或共享对象（SO）可以进一步减小二进制文件的大小。
+3. 优化代码：检查代码以查找潜在的优化点，例如删除未使用的代码、减少全局变量的使用、优化数据结构和算法等。这可以帮助减小二进制文件的大小，从而降低relocation overflow的风险。
+4. 更新编译器和链接器：确保使用的编译器和链接器是最新版本，因为它们可能包含解决relocation overflow问题的修复和改进。此外，尝试使用其他编译器，看看它们是否能更好地处理大型程序。
+5. 考虑使用动态链接：虽然静态链接可以将所有依赖项打包到单个二进制文件中，但它可能导致文件过大。如果可能，考虑改用动态链接，将依赖项链接为共享库或动态链接库。这样可以减小二进制文件的大小，并减轻relocation overflow问题。
+
+请注意，解决relocation overflow问题可能需要对代码、编译选项和链接过程进行多方面的调整。在尝试上述方法时，请根据具体情况选择合适的策略。
+
+
+
+# Refer
+
+* [C++ 服务编译耗时优化原理及实践](https://my.oschina.net/meituantech/blog/4792764) (美团)
 

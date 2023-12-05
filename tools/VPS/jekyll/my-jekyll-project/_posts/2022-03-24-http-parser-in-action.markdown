@@ -654,6 +654,15 @@ If the client expects to wait for the response of “100 continue”, the reques
 * [Cannot parse message without specifying Transfer-Encoding: chunked #434](https://github.com/nodejs/http-parser/issues/434)
 * [100 continue support? #406](https://github.com/nodejs/http-parser/issues/406)
 
+# Other HTTP Libs
+
+## cpp-httplib
+
+A C++ header-only HTTP/HTTPS server and client library. It's extremely easy to setup. Just include the httplib.h file in your code!
+
+NOTE: This library uses 'blocking' socket I/O. If you are looking for a library with 'non-blocking' socket I/O, this is not the one that you want.
+
+https://github.com/yhirose/cpp-httplib
 
 # Refer
 

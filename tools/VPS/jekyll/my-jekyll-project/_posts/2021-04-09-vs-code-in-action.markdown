@@ -8,6 +8,8 @@ categories: [VS Code,]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+> Tips: Whenever you want to do something in VS Code and don't know how, it's a good idea to bring up the command palette with `CTRL+SHIFT+P` on Windows(`CMD+SHIFT+P` on mac), and try typing in a keyword for you want. Oftentimes the command will show up there so you don't have to go searching the net for how to do something.
+
 
 VS Code [下载地址](https://code.visualstudio.com/)，当前版本：1.55 版本，2021-04
 
@@ -230,6 +232,7 @@ Host $ip_ssh_config
 * mac下，`command + k + 0`  折叠所有代码块；`command + k + j` 展开所有代码块。Windows下，`ctrl + k + 0` 折叠所有代码块；`ctrl + k + j` 展开所有代码块。0是代码折叠级别，同理可以换用1，2，3等
 * `command + option + [` 折叠光标所在代码块；`command + option + ]` 展开光标所在代码块
 
+More: https://code.visualstudio.com/docs/editor/codebasics
 
 # 常用配置
 
@@ -323,7 +326,7 @@ C/C++/ObjC language server supporting cross references, hierarchies, completion 
 
 * 代码层级对齐
 
-###  GitLens — Git supercharged
+##  GitLens — Git supercharged
 
 * 分支管理，代码对比
 
@@ -376,9 +379,16 @@ Protobuf 3 support for Visual Studio Code
 
 Clang-Format is a tool to format C/C++/Java/JavaScript/Objective-C/Objective-C++/Protobuf code. It can be configured with a config file within the working folder or a parent folder. Configuration see: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
-## Format Files
+## Format Files (批量格式化代码)
 
-Visual Studio code format all files.
+Visual Studio code format all files
+
+Use the extension called Format Files.
+
+Download the extension called ”Format Files” on VSCode.
+Select and open the folder with files to format on VSCode.
+Press Ctrl+Shift+P to open command palette.
+Enter "Start Format Files: Workspace" and select this option.
 
 ## Switcher
 
@@ -410,6 +420,23 @@ CMake langage support for Visual Studio Code
 ## Kubernetes
 
 Develop, deploy and debug Kubernetes applications
+
+## Excalidraw (画图，素材丰富)
+
+Draw schemas in VS Code using Excalidraw
+
+This extension integrates Excalidraw into VS Code. To use it, create an empty file with a .excalidraw, .excalidraw.json, .excalidraw.svg or excalidraw.png extension and open it in Visual Studio Code.
+
+Try the web version at : https://excalidraw.com/
+
+Import Public Library
+
+Check out the available libraries at libraries.excalidraw.com, and don't hesitate to contribute your own !
+
+# Bazel
+
+* Bazel
+* bazel-stack-vscode
 
 
 # 有趣的扩展

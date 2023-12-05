@@ -25,7 +25,7 @@ The Valgrind tool suite provides a number of debugging and profiling tools that 
 
 Compile your program with `-g` to include debugging information so that Memcheck's error messages include exact line numbers. Using `-O0` is also a good idea, if you can tolerate the slowdown. With `-O1` line numbers in error messages can be inaccurate, although generally speaking running Memcheck on code compiled at `-O1` works fairly well, and the speed improvement compared to running `-O0` is quite significant. Use of `-O2` and above is not recommended as Memcheck occasionally reports uninitialised-value errors which don't really exist.
 
-If you're running Linux and you don't have a copy already, you can get Valgrind from the [Valgrind download page](https://www.valgrind.org/downloads/current.html). 
+If you're running Linux and you don't have a copy already, you can get Valgrind from the [Valgrind download page](https://www.valgrind.org/downloads/current.html).
 
 ``` cpp
 #include <stdlib.h>
@@ -55,7 +55,7 @@ valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --log-file=valgri
 ==2726743== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
 ==2726743== Using Valgrind-3.17.0 and LibVEX; rerun with -h for copyright info
 ==2726743== Command: ./a.out
-==2726743== 
+==2726743==
 ==2726743== Invalid write of size 4
 ==2726743==    at 0x40054B: f (demo.c:6)
 ==2726743==    by 0x40055B: main (demo.c:11)
@@ -63,24 +63,24 @@ valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --log-file=valgri
 ==2726743==    at 0x4C2B067: malloc (vg_replace_malloc.c:380)
 ==2726743==    by 0x40053E: f (demo.c:5)
 ==2726743==    by 0x40055B: main (demo.c:11)
-==2726743== 
-==2726743== 
+==2726743==
+==2726743==
 ==2726743== HEAP SUMMARY:
 ==2726743==     in use at exit: 40 bytes in 1 blocks
 ==2726743==   total heap usage: 1 allocs, 0 frees, 40 bytes allocated
-==2726743== 
+==2726743==
 ==2726743== 40 bytes in 1 blocks are definitely lost in loss record 1 of 1
 ==2726743==    at 0x4C2B067: malloc (vg_replace_malloc.c:380)
 ==2726743==    by 0x40053E: f (demo.c:5)
 ==2726743==    by 0x40055B: main (demo.c:11)
-==2726743== 
+==2726743==
 ==2726743== LEAK SUMMARY:
 ==2726743==    definitely lost: 40 bytes in 1 blocks
 ==2726743==    indirectly lost: 0 bytes in 0 blocks
 ==2726743==      possibly lost: 0 bytes in 0 blocks
 ==2726743==    still reachable: 0 bytes in 0 blocks
 ==2726743==         suppressed: 0 bytes in 0 blocks
-==2726743== 
+==2726743==
 ==2726743== For lists of detected and suppressed errors, rerun with: -s
 ==2726743== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
 ```
@@ -93,6 +93,23 @@ There are several kinds of leaks; the two most important categories are:
 `Memcheck` also reports uses of uninitialised values, most commonly with the message "Conditional jump or move depends on uninitialised value(s)". It can be difficult to determine the root cause of these errors. Try using the `--track-origins=yes` to get extra information. This makes Memcheck run slower, but the extra information you get often saves a lot of time figuring out where the uninitialised values are coming from.
 
 `Memcheck` cannot detect every memory error your program has. For example, it can't detect out-of-range reads or writes to arrays that are allocated statically or on the stack. But it should detect many errors that could crash your program (eg. cause a segmentation fault).
+
+# Helgrind (a thread error detector)
+
+安装方法：
+
+```
+sudo yum install valgrind
+```
+
+Valgrind 是一个用于内存调试、内存泄漏检测和性能分析的工具。Helgrind 是 Valgrind 的一个工具，用于检测多线程程序中的同步错误。要使用 Helgrind，首先安装 Valgrind，然后使用以下命令运行程序：
+
+```
+valgrind --tool=helgrind ./my_program
+```
+
+Helgrind 会报告潜在的线程安全问题，如数据竞争、死锁等。
+
 
 
 # Refer
@@ -108,5 +125,4 @@ There are several kinds of leaks; the two most important categories are:
 * [Valgrind's Tool Suite](https://valgrind.org/info/tools.html)
 * [How to track down a "double free or corruption" error](https://stackoverflow.com/questions/2902064/how-to-track-down-a-double-free-or-corruption-error)
 
-	
-	
+

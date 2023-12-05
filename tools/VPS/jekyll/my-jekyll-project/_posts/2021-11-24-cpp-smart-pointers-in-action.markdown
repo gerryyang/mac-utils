@@ -12,10 +12,138 @@ categories: [C/C++]
 
 `std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
 
+``` cpp
+#include <iostream>
+#include <memory>
+
+class A {
+  public: A() {
+      std::cout << "A()\n";
+    }
+    ~A() {
+      std::cout << "~A()\n";
+    }
+};
+
+int main() {
+  std::shared_ptr<A> ptr1(new A, [](A * p) {
+    delete p;
+    std::cout << "over\n";
+  });
+  std::shared_ptr < A > ptr2 = ptr1;
+  std::cout << ptr1.use_count() << std::endl;
+}
+/*
+A()
+2
+~A()
+over
+*/
+```
+
 * the last remaining shared_ptr owning the object is destroyed; (**当所持对象的最后一个 shared_ptr 销毁时，才对所持的对象进行销毁**)
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class A {
+  public: A() {
+      std::cout << "A()\n";
+    }
+    ~A() {
+      std::cout << "~A()\n";
+    }
+};
+
+int main() {
+  {
+    std::shared_ptr<A> ptr1(new A, [](A * p) {
+      delete p;
+      std::cout << "over\n";
+    });
+    std::cout << ptr1.use_count() << std::endl;
+  }
+
+  std::cout << "end\n";
+}
+/*
+A()
+1
+~A()
+over
+end
+*/
+```
+
 * the last remaining shared_ptr owning the object is assigned another pointer via `operator=` or `reset()`. (**当所持对象的最后一个 shared_ptr 通过`operator=`赋值为另一个指针，或者`reset()`(replaces the managed object)替换为另一个对象时，才对所持的对象进行销毁**)
 
-The object is destroyed using `delete-expression` or a `custom deleter` that is supplied to shared_ptr during construction.
+``` cpp
+#include <iostream>
+#include <memory>
+
+class A {
+  public: A() {
+    std::cout << "A()\n";
+  }~A() {
+    std::cout << "~A()\n";
+  }
+};
+
+int main() {
+  std::shared_ptr<A> ptr1(new A, [](A * p) {
+    delete p;
+    std::cout << "over\n";
+  });
+  std::cout << ptr1.use_count() << std::endl;
+  ptr1 = nullptr;
+  std::cout << ptr1.use_count() << std::endl;
+}
+/*
+A()
+1
+~A()
+over
+0
+*/
+```
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class A {
+  public: A() {
+    std::cout << "A()\n";
+  }~A() {
+    std::cout << "~A()\n";
+  }
+};
+
+int main() {
+  std::shared_ptr<A> ptr1(new A, [](A * p) {
+    delete p;
+    std::cout << "over\n";
+  });
+  std::cout << ptr1.use_count() << std::endl;
+
+  std::cout << "before reset\n";
+  ptr1.reset(new A);
+  std::cout << "after reset\n";
+}
+/*
+A()
+1
+before reset
+A()
+~A()
+over
+after reset
+~A()
+*/
+```
+
+The object is destroyed using **delete-expression** or a **custom deleter** that is supplied to `shared_ptr` during construction.
 
 ``` cpp
 // Constructs a shared_ptr with ptr as the pointer to the managed object.
@@ -30,7 +158,7 @@ shared_ptr( Y* ptr, Deleter d, Alloc alloc );
 ```
 
 
-`shard_ptr`的存储结构：
+## shard_ptr 的存储结构
 
 In a typical implementation, `std::shared_ptr` holds **only two pointers**: ([refer std::shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr))
 
@@ -45,53 +173,50 @@ The **control block** is a dynamically-allocated object that holds:
 * the number of shared_ptrs that own the managed object;
 * the number of weak_ptrs that refer to the managed object.
 
-`shared_ptr`的两种初始化创建方式：
+## shared_ptr 的两种初始化方式
 
-方式一：一次分配
+方式一：一次分配 (推荐方式)
 
 When `shared_ptr` is created by calling `std::make_shared` or `std::allocate_shared`, the memory for **both the control block and the managed object** is created with a single allocation. The managed object is constructed in-place in a data member of the control block.
 
 方式二：两次分配
 
-When `shared_ptr` is created via one of the shared_ptr constructors, the managed object and the control block must be allocated separately. In this case, the control block stores a pointer to the managed object.
+When `shared_ptr` is created via one of the `shared_ptr` constructors, the managed object and the control block must be allocated separately. In this case, the control block stores a pointer to the managed object.
 
-`shared_ptr`的销毁方式：
+## shared_ptr 的销毁方式
 
-The destructor of shared_ptr decrements the number of shared owners of the control block. If that counter reaches zero, the control block calls the destructor of the managed object. The control block does not deallocate itself until the `std::weak_ptr` counter reaches zero as well.
+The destructor of `shared_ptr` decrements the number of shared owners of the control block. If that counter reaches zero, the control block calls the destructor of the managed object. The control block does not deallocate itself until the `std::weak_ptr` counter reaches zero as well.
 
-`shared_ptr`保证线程安全的方式：
-
-To satisfy thread safety requirements, the reference counters are typically incremented using an equivalent of `std::atomic::fetch_add` with `std::memory_order_relaxed`(**松散内存序，只用来保证对原子对象的操作是原子的**) (decrementing requires stronger ordering to safely destroy the control block).
-
-> All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of shared_ptr without additional synchronization even if these instances are copies and share ownership of the same object.
 
 ## 线程安全 (std::shared_ptr)
 
-参考[std::shared_ptr thread safety explained](https://stackoverflow.com/questions/9127816/stdshared-ptr-thread-safety-explained)：
+To satisfy thread safety requirements, the reference counters are typically incremented using an equivalent of `std::atomic::fetch_add` with `std::memory_order_relaxed`(**松散内存序，只用来保证对原子对象的操作是原子的**) (decrementing requires stronger ordering to safely destroy the control block).
+
+> All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of `shared_ptr` without additional synchronization even if these instances are copies and share ownership of the same object.
+
+参考：[std::shared_ptr thread safety explained](https://stackoverflow.com/questions/9127816/stdshared-ptr-thread-safety-explained)：
 
 * Standard guarantees that reference counting is handled thread safe and it's platform independent, right?
 
-Correct, shared_ptrs use atomic increments/decrements of a reference count value.
+Correct, `shared_ptrs` use atomic increments/decrements of a reference count value.
 
 * Similar issue - standard guarantees that only one thread (holding last reference) will call delete on shared object, right?
 
 The standard guarantees only one thread will call the delete operator on a shared object. I am not sure if it specifically specifies the last thread that deletes its copy of the shared pointer will be the one that calls delete (likely in practice this would be the case).
 
-* shared_ptr does not guarantee any thread safety for object stored in it?
+* `shared_ptr` does not guarantee any thread safety for object stored in it?
 
 No they do not, the object stored in it can be simultaneously edited by multiple threads.
 
------
+参考：[std::shared_ptr thread safety](https://stackoverflow.com/questions/14482830/stdshared-ptr-thread-safety/65615682#65615682)
 
 `std::shared_ptr` **is not thread safe**.
 
 A shared pointer is a pair of two pointers, one to the object and one to a control block (holding the ref counter, links to weak pointers ...).
 
-There can be multiple std::shared_ptr and whenever they access the control block to change the reference counter it's thread-safe **but the std::shared_ptr itself is NOT thread-safe or atomic.**
+There can be multiple `std::shared_ptr` and whenever they access the control block to change the reference counter it's thread-safe **but the `std::shared_ptr` itself is NOT thread-safe or atomic.**
 
-**If you assign a new object to a std::shared_ptr while another thread uses it, it might end up with the new object pointer but still using a pointer to the control block of the old object => CRASH**.
-
-More: [std::shared_ptr thread safety](https://stackoverflow.com/questions/14482830/stdshared-ptr-thread-safety/65615682#65615682)
+**If you assign a new object to a `std::shared_ptr` while another thread uses it, it might end up with the new object pointer but still using a pointer to the control block of the old object => CRASH**.
 
 
 ## 性能开销 (std::shared_ptr)
@@ -996,7 +1121,7 @@ void observe()
 
     // lock: creates a shared_ptr that manages the referenced object
     if (auto spt = gw.lock()) { // Has to be copied into a shared_ptr before usage
-	std::cout << *spt << "\n";
+        std::cout << *spt << "\n";
     }
     else {
         std::cout << "gw is expired\n";
@@ -1021,10 +1146,153 @@ use_count == 1: 42
 use_count == 0: gw is expired
 ```
 
+# Tips
+
+## 自定义 custom_deleter
+
+``` cpp
+#include <iostream>
+#include <memory>
+#include <set>
+
+std::set<void*> g_objects;
+
+template<typename T>
+void custom_deleter(T* ptr) {
+    g_objects.insert(ptr);
+    std::cout << "Object " << ptr << " created." << std::endl;
+    delete ptr;
+    g_objects.erase(ptr);
+    std::cout << "Object " << ptr << " destroyed." << std::endl;
+}
+
+int main() {
+    {
+        std::shared_ptr<int> p1(new int(42), custom_deleter<int>);
+        std::shared_ptr<int> p2(new int(100), custom_deleter<int>);
+        std::shared_ptr<int> p3(p2);
+        std::cout << "p1.use_count() = " << p1.use_count() << std::endl;
+        std::cout << "p2.use_count() = " << p2.use_count() << std::endl;
+        std::cout << "p3.use_count() = " << p3.use_count() << std::endl;
+    }
+    std::cout << "Objects still held: " << g_objects.size() << std::endl;
+    for (auto obj : g_objects) {
+        std::cout << "Object " << obj << " still held." << std::endl;
+    }
+    return 0;
+}
+```
+
+输出：
+
+```
+p1.use_count() = 1
+p2.use_count() = 2
+p3.use_count() = 2
+Object 0xb21f00 created.
+Object 0xb21f00 destroyed.
+Object 0xb21eb0 created.
+Object 0xb21eb0 destroyed.
+Objects still held: 0
+```
+
+## 检查 shared_ptr 对象是否被释放
+
+使用 `std::weak_ptr`，它是一种弱引用智能指针，可以用来检查 `std::shared_ptr` 对象是否已经被释放。参考：https://en.cppreference.com/w/cpp/memory/weak_ptr/lock
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+void observe(std::weak_ptr<int> weak)
+{
+    if (auto observe = weak.lock()) {
+        std::cout << "\tobserve() able to lock weak_ptr<>, value=" << *observe << "\n";
+    } else {
+        std::cout << "\tobserve() unable to lock weak_ptr<>\n";
+    }
+}
+
+int main()
+{
+    std::weak_ptr<int> weak;
+    std::cout << "weak_ptr<> not yet initialized\n";
+    observe(weak);
+
+    {
+        auto shared = std::make_shared<int>(42);
+        weak = shared;
+        std::cout << "weak_ptr<> initialized with shared_ptr.\n";
+        observe(weak);
+    }
+
+    std::cout << "shared_ptr<> has been destructed due to scope exit.\n";
+    observe(weak);
+}
+```
+
+输出：
+
+```
+weak_ptr<> not yet initialized
+        observe() unable to lock weak_ptr<>
+weak_ptr<> initialized with shared_ptr.
+        observe() able to lock weak_ptr<>, value=42
+shared_ptr<> has been destructed due to scope exit.
+        observe() unable to lock weak_ptr<>
+```
 
 
+``` cpp
+#include <iostream>
+#include <memory>
+#include <vector>
 
+std::vector<std::weak_ptr<int>> g_weak_objects;
 
+void check_objects() {
+    std::cout << "Checking objects..." << std::endl;
+    for (auto obj : g_weak_objects) {
+        if (auto p = obj.lock()) {
+            std::cout << "Object " << *p << " still held." << std::endl;
+        } else {
+            std::cout << "Object has been released." << std::endl;
+        }
+    }
+}
+
+int main() {
+    {
+        auto p1 = std::make_shared<int>(42);
+        auto p2 = std::make_shared<int>(100);
+        auto p3 = p2;
+
+        g_weak_objects.emplace_back(p1);
+        g_weak_objects.emplace_back(p2);
+        g_weak_objects.emplace_back(p3);
+
+        std::cout << "p1.use_count() = " << p1.use_count() << std::endl;
+        std::cout << "p2.use_count() = " << p2.use_count() << std::endl;
+        std::cout << "p3.use_count() = " << p3.use_count() << std::endl;
+    }
+
+    check_objects();
+
+    return 0;
+}
+```
+
+输出：
+
+```
+p1.use_count() = 1
+p2.use_count() = 2
+p3.use_count() = 2
+Checking objects...
+Object has been released.
+Object has been released.
+Object has been released.
+```
 
 
 

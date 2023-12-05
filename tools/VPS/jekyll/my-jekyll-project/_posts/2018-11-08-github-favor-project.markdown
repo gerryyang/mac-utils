@@ -2,12 +2,26 @@
 layout: post
 title:  "Github Favor Project"
 date:   2019-07-10 08:30:00 +0800
-categories: Git
+categories: 杂记
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# 性能相关
+
+## [Zstandard - Fast real-time compression algorithm](https://github.com/facebook/zstd)
+
+`Zstandard`, or `zstd` as short version, is a fast lossless compression algorithm, targeting real-time compression scenarios at zlib-level and better compression ratios. It's backed by a very fast entropy stage, provided by [Huff0 and FSE library](https://github.com/Cyan4973/FiniteStateEntropy).
+
+
+
+
+
+
+
+# TODO
 
 ## learn-regex
 
@@ -26,14 +40,14 @@ Master the command line, in one page. Fluency on the command line is a skill oft
 
 [https://github.com/v2ray/v2ray-core](https://github.com/v2ray/v2ray-core)
 
-Project V is a set of network tools that help you to build your own computer network. It secures your network connections and thus protects your privacy. 
+Project V is a set of network tools that help you to build your own computer network. It secures your network connections and thus protects your privacy.
 
 
 ## Swift (Apple)
 
 [https://github.com/apple/swift](https://github.com/apple/swift)
 
-Swift is a high-performance system programming language. It has a clean and modern syntax, offers seamless access to existing C and Objective-C code and frameworks, and is memory safe by default. 
+Swift is a high-performance system programming language. It has a clean and modern syntax, offers seamless access to existing C and Objective-C code and frameworks, and is memory safe by default.
 
 Although inspired by Objective-C and many other languages, Swift is not itself a C-derived language. As a complete and independent language, Swift packages core features like flow control, data structures, and functions, with high-level constructs like objects, protocols, closures, and generics. Swift embraces modules, eliminating the need for headers and the code duplication they entail.
 

@@ -13,16 +13,23 @@ LIBS =
 TARGET = press
 TARGET_OBJS = press.o addressbook.pb.o
 
+TARGET2 = encode_decode
+TARGET_OBJS2 = encode_decode.o addressbook.pb.o
+
 CELERO_BANCHMARK = celero_benchmark
 CELERO_BANCHMARK_OBJS = celero_benchmark.o addressbook.pb.o
 
 .PHONY: clean
 
-all: $(TARGET) $(CELERO_BANCHMARK)
+all: $(TARGET) $(TARGET2) $(CELERO_BANCHMARK)
 
 $(TARGET): $(TARGET_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) -Wl,-rpath $(PB_PATH)/lib
 	@echo "build $(TARGET) ok"
+
+$(TARGET2): $(TARGET_OBJS2)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) -Wl,-rpath $(PB_PATH)/lib
+	@echo "build $(TARGET2) ok"
 
 $(CELERO_BANCHMARK) : $(CELERO_BANCHMARK_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) -Wl,-rpath $(CELERO_PATH) -Wl,-rpath $(PB_PATH)/lib
@@ -32,7 +39,7 @@ install:
 	@echo "nothing to install"
 
 clean:
-	rm -f $(TARGET) $(CELERO_BANCHMARK) *.o
+	rm -f $(TARGET) $(TARGET2) $(CELERO_BANCHMARK) *.o
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $<

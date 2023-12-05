@@ -747,6 +747,10 @@ Challenges with flame graphs mostly involve system profilers and not flame graph
 
 * **Stack traces are incomplete**. Some system profilers truncate to a fixed stack depth (e.g., 10 frames), which must be increased to capture the full stack traces, or else frame merging can fail. A worse problem is when the software compiler reuses the frame pointer register as a compiler optimization, breaking the typical method of stack-trace collection. The fix requires either a different compiled binary (e.g., using gcc's -fno-omit-frame-pointer) or a different stack-walking technique.
 
+> [Does omitting the frame pointers really have a positive effect on performance and a negative effect on debug-ability?](https://stackoverflow.com/questions/13006371/does-omitting-the-frame-pointers-really-have-a-positive-effect-on-performance-an)
+
+
+
 * **Function names are missing**. In this case, the stack trace is complete, but many function names are missing and may be represented as hexadecimal addresses. This commonly happens with JIT (just-in-time) compiled code, which may not create a standard symbol table for profilers. Depending on the profiler and runtime, there are different fixes. For example, Linux perf_events supports supplemental symbol files, which the application can create.
 ### Usage
 
@@ -847,6 +851,31 @@ Since perf_events can record high resolution timestamps (microseconds) for event
 perf top -t $tid
 ```
 
+* [What do the perf record choices of LBR vs DWARF vs fp do?](https://stackoverflow.com/questions/57430338/what-do-the-perf-record-choices-of-lbr-vs-dwarf-vs-fp-do)
+
+When I use the perf record on my code, I find three choices for the `--call-graph` option: `lbr` (last branch record), `dwarf` and `fp`. What is difference between these?
+
+```
+perf record -h
+
+--call-graph <record_mode[,record_size]>
+                          setup and enables call-graph (stack chain/backtrace):
+
+                                record_mode:    call graph recording mode (fp|dwarf|lbr)
+                                record_size:    if record_mode is 'dwarf', max size of stack recording (<bytes>)
+                                                default: 8192 (bytes)
+
+                                Default: fp
+```
+
+
+The option `--call-graph` refers to the collection of call graphs / call chains, i.e. the function stack for a sample.
+
+The default, `fp`, uses frame pointers. This is very efficient but can be unreliable, particularly for optimized code. By explicitly using `-fno-omit-frame-pointer`, you can ensure that this is available for your code. Nevertheless, the result for libraries may vary.
+
+With `dwarf`, perf actually collects and stores a part of the stack memory itself and unwinds it with post-processing. This can be very resource consuming and may have limited stack depth. The default stack memory chunk is 8 kiB, but can be configured.
+
+`lbr` stands for last branch records. This is a hardware mechanism support by Intel CPUs. This will probably offer the best performance at the cost of portability. lbr is also limited to userspace functions.
 
 
 

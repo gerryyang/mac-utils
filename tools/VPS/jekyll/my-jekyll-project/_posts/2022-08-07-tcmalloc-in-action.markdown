@@ -64,8 +64,15 @@ To specify which C/C++ compiler the default C++ toolchain in Bazel should use se
 
 * [How to use clang++ instead g++ in Bazel](https://stackoverflow.com/questions/41356173/how-to-use-clang-instead-g-in-bazel)
 
+# tcmalloc 与 gperftools 的关系
 
-# Build
+gperftools 是从一个更早的实现中分叉出来的，这个早期实现曾经是外包的，后来独立发展。gperftools 代表了 Google 内部实现的一个较新的快照（不仅仅是一个分叉，而且是主动同步的）。
+
+参考链接：https://abseil.io/blog/20200212-tcmalloc 和 https://google.github.io/tcmalloc/overview.html
+
+
+
+# 单独构建 tcmalloc
 
 ```
 cd ~/github
@@ -100,6 +107,103 @@ INFO: Build completed successfully, 4009 total actions
 ```
 
 Congratulations! You've installed TCMalloc
+
+# 通过构建 gperftools 得到 tcmalloc
+
+实际使用 tcmalloc 可以通过安装 [gperftools](https://github.com/gperftools/gperftools/blob/master/INSTALL) 工具会包含 tcmalloc 库。
+
+
+禁用 libunwind:
+
+```
+./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485  --enable-frame-pointers
+```
+
+使用 libunwind:
+
+```
+LDFLAGS="-L/data/home/gerryyang/tools/libunwind/libunwind-1.5.0-install-gcc485/lib" CPPFLAGS="-I/data/home/gerryyang/tools/libunwind/libunwind-1.5.0-install-gcc485/include" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-libunwind
+```
+
+## 构建方法优化
+
+可能需要考虑以下几点来优化构建过程：
+
+* 优化编译选项：为了在生产环境中获得最佳性能，可以使用高优化级别编译 tcmalloc。例如，可以使用 -O3 优化级别。要设置编译选项，可以在构建命令中添加 CFLAGS 和 CXXFLAGS：
+
+```
+CFLAGS="-O3" CXXFLAGS="-O3" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-frame-pointers
+```
+
+* 禁用不必要的功能：在生产环境中，你可能不需要 tcmalloc 的一些诊断功能，如内存泄漏检测、CPU 分析器和堆分析器。确保在构建命令中不包含这些功能的启用选项。在 gperftools 的构建过程中，默认情况下是不启用 CPU 分析器、堆分析器、堆检查器和 debugalloc 的。因此，通常情况下，不需要显式地添加这些禁用选项。
+
+* 适应目标平台：确保使用与生产环境相匹配的编译器和库版本构建 tcmalloc。这有助于确保二进制文件在目标平台上的兼容性和性能。
+
+* 测试：在将 tcmalloc 部署到生产环境之前，务必在类似的测试环境中进行充分的测试。这包括性能测试、压力测试和功能测试。这有助于确保在生产环境中没有意外的问题。
+
+综上所述，可以使用以下命令进行构建：
+
+```
+CFLAGS="-O3" CXXFLAGS="-O3" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-frame-pointers --disable-cpu-profiler --disable-heap-profiler --disable-heap-checker --disable-debugalloc
+```
+
+在构建 gperftools 以用于生产环境时，除了前面提到的选项外，还可以考虑以下选项：
+
+* --enable-minimal：这个选项可以用于构建一个最小功能的 tcmalloc 库，去除了 CPU 分析器、堆分析器和内存泄漏检测器。这可以减小库的大小并提高性能。请注意，这个选项会覆盖前面提到的 --disable-cpu-profiler、--disable-heap-profiler 和 --disable-heap-checker 选项。
+
+* --enable-shared 和 --disable-static：这两个选项可以用于构建共享库（.so 文件）而不是静态库（.a 文件）。在某些情况下，使用共享库可能有助于减小可执行文件的大小并提高加载速度。但请注意，使用共享库可能会导致部署和兼容性问题。
+
+* --with-pic：这个选项用于构建位置无关代码（PIC）。如果你计划将 tcmalloc 作为共享库链接到其他程序中，这个选项可能是必需的。
+
+* --enable-libunwind：如果你想使用 libunwind 来获取更准确和更快速的堆栈回溯，可以启用此选项。但请注意，这可能会导致与其他库的冲突和兼容性问题。在启用此选项之前，请确保在你的环境中进行了充分的测试。
+
+
+综上所述，你可以根据需要组合这些选项。例如，一个用于生产环境的完整构建命令可能如下所示：
+
+动态库：
+
+```
+CFLAGS="-O3" CXXFLAGS="-O3" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-frame-pointers --disable-cpu-profiler --disable-heap-profiler --disable-heap-checker --disable-debugalloc --enable-minimal --enable-shared --disable-static --with-pic
+```
+
+静态库：
+
+```
+CFLAGS="-O3" CXXFLAGS="-O3" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-frame-pointers --disable-cpu-profiler --disable-heap-profiler --disable-heap-checker --disable-debugalloc --enable-minimal --with-pic
+```
+
+完整的功能：
+
+```
+CFLAGS="-O3" CXXFLAGS="-O3" ./configure --prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install-gcc485 --enable-frame-pointers --with-pic
+```
+
+
+
+
+## 64-BIT LINUX Issue (死锁问题)
+
+```
+NOTE FOR 64-BIT LINUX SYSTEMS
+
+The glibc built-in stack-unwinder on 64-bit systems has some problems
+with the perftools libraries.  (In particular, the cpu/heap profiler
+may be in the middle of malloc, holding some malloc-related locks when
+they invoke the stack unwinder.  The built-in stack unwinder may call
+malloc recursively, which may require the thread to acquire a lock it
+already holds: deadlock.)
+```
+
+可能的解决方法：
+
+```
+If you encounter problems, try compiling perftools with './configure
+--enable-frame-pointers'.  Note you will need to compile your
+application with frame pointers (via 'gcc -fno-omit-frame-pointer
+...') in this case.
+```
+
+参考：https://github.com/gperftools/gperftools/blob/gperftools-2.10/INSTALL 其中 NOTE FOR 64-BIT LINUX SYSTEMS 部署说明。
 
 # Running the TCMalloc Hello World
 
@@ -354,9 +458,413 @@ MALLOC:        4067336 (    3.9 MiB) Pagemap root resident bytes
 See more: https://github.com/google/tcmalloc/blob/master/docs/stats.md
 
 
+# 测试代码
+
+``` cpp
+#include <iostream>
+#include <chrono>
+#include <cstdlib>
+#include <ctime>
+#include <vector>
+
+const int kNumAllocations = 1000000;
+
+void test_memory_allocation(int allocation_size) {
+    std::vector<void*> allocated_memory;
+    allocated_memory.reserve(kNumAllocations);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < kNumAllocations; ++i) {
+            void* ptr = malloc(allocation_size);
+            if (ptr == nullptr) {
+                    std::cerr << "Memory allocation failed" << std::endl;
+                    exit(1);
+            }
+            allocated_memory.push_back(ptr);
+    }
+
+    for (void* ptr : allocated_memory) {
+            free(ptr);
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    std::cout << "Allocation size: " << allocation_size << " bytes, "
+            << "Total allocations: " << kNumAllocations << ", "
+            << "Duration: " << duration << " ms" << std::endl;
+}
+
+int main() {
+    test_memory_allocation(16);
+    test_memory_allocation(64);
+    test_memory_allocation(256);
+    test_memory_allocation(1024);
+    test_memory_allocation(4096);
+    test_memory_allocation(1572864);
+    test_memory_allocation(2044723);
+
+    return 0;
+}
+```
+
+输出结果：
+
+```
+Allocation size: 16 bytes, Total allocations: 1000000, Duration: 20 ms
+Allocation size: 64 bytes, Total allocations: 1000000, Duration: 32 ms
+Allocation size: 256 bytes, Total allocations: 1000000, Duration: 80 ms
+Allocation size: 1024 bytes, Total allocations: 1000000, Duration: 251 ms
+Allocation size: 4096 bytes, Total allocations: 1000000, Duration: 847 ms
+Allocation size: 1572864 bytes, Total allocations: 1000000, Duration: 4757 ms
+Allocation size: 2044723 bytes, Total allocations: 1000000, Duration: 2199 ms
+```
+
+
+# Q&A
+
+## tcmalloc::allocate_full_XXX
+
+参考 gperftools 2.7，src/tcmalloc.cc 中 do_allocate_full 接口注释：
+
+```
+// tcmalloc::allocate_full_XXX is called by fast-path malloc when some
+// complex handling is needed (such as fetching object from central
+// freelist or malloc sampling). It contains all 'operator new' logic,
+// as opposed to malloc_fast_path which only deals with important
+// subset of cases.
+//
+// Note that this is under tcmalloc namespace so that pprof
+// can automatically filter it out of growthz/heapz profiles.
+//
+// We have slightly fancy setup because we need to call hooks from
+// function in 'google_malloc' section and we cannot place template
+// into this section. Thus 3 separate functions 'built' by macros.
+//
+// Also note that we're carefully orchestrating for
+// MallocHook::GetCallerStackTrace to work even if compiler isn't
+// optimizing tail calls (e.g. -O0 is given). We still require
+// ATTRIBUTE_ALWAYS_INLINE to work for that case, but it was seen to
+// work for -O0 -fno-inline across both GCC and clang. I.e. in this
+// case we'll get stack frame for tc_new, followed by stack frame for
+// allocate_full_cpp_throw_oom, followed by hooks machinery and user
+// code's stack frames. So GetCallerStackTrace will find 2
+// subsequent stack frames in google_malloc section and correctly
+// 'cut' stack trace just before tc_new.
+```
+
+这段注释解释了tcmalloc库中`allocate_full_XXX`函数的用途和实现细节。这些函数在内存分配的快速路径（`fast-path`）无法处理的复杂情况下被调用。以下是对这段注释的逐句解释：
+
+1. `tcmalloc::allocate_full_XXX`在需要处理复杂情况（如从中央空闲列表获取对象或内存分配采样）时被快速路径内存分配调用。它包含了所有operator new的逻辑，而`malloc_fast_path`只处理重要的子集情况。
+
+这句话说明`allocate_full_XXX`函数在快速路径无法处理的情况下被调用，例如从中央空闲列表获取对象或进行内存分配采样。它包含了所有与C++的operator new相关的逻辑。
+
+2. 请注意，这是在tcmalloc命名空间下，以便`pprof`可以自动从growthz/heapz配置文件中过滤掉。
+
+这句话说明这些函数位于tcmalloc命名空间中，这样pprof工具可以自动地从growthz和heapz分析结果中排除这些函数。
+
+3. 我们有一个稍微复杂的设置，因为我们需要从google_malloc部分的函数中调用钩子，而我们不能将模板放入此部分。因此，由宏构建的3个独立函数。
+
+这句话说明实现这些函数的方式略有不同，因为它们需要在google_malloc部分中调用钩子函数。为了实现这一目标，代码使用了宏来构建3个独立的函数。
+
+4. 另请注意，我们正在仔细安排`MallocHook::GetCallerStackTrace`，以便即使编译器不优化尾调用（例如，给出`-O0`），它也可以正常工作。我们仍然需要`ATTRIBUTE_ALWAYS_INLINE`才能在这种情况下工作，但它在`-O0 -fno-inline`的GCC和Clang中都可以正常工作。也就是说，在这种情况下，我们将获得`tc_new`的堆栈帧，然后是`allocate_full_cpp_throw_oom`的堆栈帧，然后是钩子机制和用户代码的堆栈帧。因此，`GetCallerStackTrace`将在google_malloc部分找到两个连续的堆栈帧，并在tc_new之前正确地“切断”堆栈跟踪。
+
+这句话说明，为了让`MallocHook::GetCallerStackTrace`在不同的编译优化级别下都能正常工作，代码中采用了一些策略。这些策略确保了在不同编译器和优化设置下，`GetCallerStackTrace`都能正确地获取堆栈跟踪信息。
+
+
+## 使用 tcmalloc 分配 2044723 大内存的调用堆栈
+
+```
+#0  0x00007f368db70d04 in ?? () from /lib64/libgcc_s.so.1
+#1  0x00007f368db71ff9 in _Unwind_Backtrace () from /lib64/libgcc_s.so.1
+#2  0x000000000040bb3a in GetStackTrace_libgcc (result=<optimized out>, max_depth=<optimized out>, skip_count=<optimized out>) at src/stacktrace_libgcc-inl.h:100
+#3  0x000000000040c1e4 in GetStackTrace (result=result@entry=0x1be80345780, max_depth=max_depth@entry=30, skip_count=skip_count@entry=3) at src/stacktrace.cc:294
+#4  0x000000000040da2e in RecordGrowth (growth=2048000) at src/page_heap.cc:582
+#5  tcmalloc::PageHeap::GrowHeap (this=this@entry=0x436960 <tcmalloc::Static::pageheap_>, n=n@entry=250) at src/page_heap.cc:608
+#6  0x000000000040dcc3 in tcmalloc::PageHeap::New (this=0x436960 <tcmalloc::Static::pageheap_>, n=n@entry=250) at src/page_heap.cc:156
+#7  0x0000000000403e25 in (anonymous namespace)::do_malloc_pages (heap=heap@entry=0x68bc40, size=size@entry=2044723) at src/tcmalloc.cc:1255
+#8  0x0000000000420d0e in do_malloc (size=2044723) at src/tcmalloc.cc:1279
+#9  do_allocate_full<tcmalloc::malloc_oom> (size=2044723) at src/tcmalloc.cc:1691
+#10 tcmalloc::allocate_full_malloc_oom (size=2044723) at src/tcmalloc.cc:1707
+#11 0x00000000004049ce in test_memory_allocation (allocation_size=2044723) at test.cc:16
+#12 0x0000000000404bf3 in main () at test.cc:43
+```
+
+## tcmalloc::allocate_full_cpp_throw_oom
+
+> 通过查看机器资源物理内存使用并不高，可能是什么原因导致 tcmalloc 抛出 cpp_throw_oom 异常呢？
+
+cpp_throw_oom异常表示内存分配失败，但这并不一定意味着物理内存已用尽。以下是一些可能导致内存分配失败的原因，即使物理内存使用并不高：
+
+1. 内存碎片：内存分配器可能无法找到足够大的连续内存块来满足分配请求，即使总的可用内存看似充足。这通常是由于内存碎片导致的。
+
+2. 虚拟内存限制：操作系统可能会限制每个进程可以使用的虚拟内存数量。如果进程达到了这个限制，尝试分配更多内存可能会失败，即使物理内存仍有剩余。
+
+3. 内存分配器限制：tcmalloc等内存分配器可能会在内部维护自己的内存池和限制。如果内存分配器达到了这些限制，分配请求可能会失败，即使物理内存仍有剩余。
+
+4. 操作系统限制：操作系统可能会限制用户空间应用程序可以使用的内存数量。这可能是由于安全策略、资源配额等原因。在这种情况下，内存分配可能会失败，即使物理内存仍有剩余。
+
+要诊断`cpp_throw_oom`异常的根本原因，可以尝试以下方法：
+
+1. 检查操作系统的日志和错误消息，了解内存分配失败的原因。
+2. 使用内存分析工具（如pprof）分析应用程序的内存使用情况，检查内存碎片和内存泄漏等问题。
+3. 检查操作系统的资源限制和分配策略，确保应用程序有足够的虚拟内存和物理内存可用。
+4. 考虑使用tcmalloc或其他内存分配器的调试和分析功能，以了解内存分配失败的详细原因。
+
+------
+
+`allocate_full_cpp_throw_oom`是tcmalloc库内部使用的一个函数，它在内存分配失败时负责抛出一个C++异常。当使用tcmalloc进行内存分配，但无法找到足够的空闲内存时，它会调用这个函数。这个函数的主要目的是在遇到内存分配失败时提供一个处理策略，通过抛出C++异常来通知调用者。
+
+在tcmalloc的源代码中，`allocate_full_cpp_throw_oom`函数的实现如下：
+
+``` cpp
+void TCMallocImplementation::allocate_full_cpp_throw_oom(size_t size) {
+  if (IsCppThrowHandlerRegistered()) {
+    GetCppThrowHandler()(size);
+  } else {
+    // No C++ throw handler registered, so just call the default one.
+    DefaultCppThrowHandler(size);
+  }
+}
+```
+
+这个函数的工作方式如下：
+
+1. 首先检查是否已经注册了一个C++异常处理器。如果已经注册了一个处理器，函数会调用该处理器，并传入所请求的内存大小。
+2. 如果没有注册处理器，函数会调用默认的C++异常处理器`DefaultCppThrowHandler`。
+
+`DefaultCppThrowHandler`函数的实现如下：
+
+``` cpp
+ABSL_ATTRIBUTE_NORETURN void DefaultCppThrowHandler(size_t size) {
+  // Check if we should call the new_handler first.
+  std::new_handler nh = std::get_new_handler();
+  if (nh != nullptr) {
+    ABSL_RAW_LOG(ERROR,
+                 "TCMalloc C++ Out of Memory: Trying to call new_handler.");
+    nh();
+    ABSL_RAW_CHECK(false,
+                   "new_handler returned, but it should have thrown an "
+                   "exception or terminated the program.");
+  }
+
+  // No new_handler, or new_handler returned, so just throw bad_alloc.
+  ABSL_RAW_LOG(ERROR, "TCMalloc C++ Out of Memory: Throwing bad_alloc.");
+  throw std::bad_alloc();
+}
+```
+
+`DefaultCppThrowHandler`函数首先检查是否已经设置了C++的new_handler。如果设置了new_handler，函数会调用它。new_handler通常会尝试释放一些内存，以便分配可以成功。如果new_handler返回，说明它没有成功释放内存，函数会抛出一个std::bad_alloc异常。
+
+在实际应用中，开发人员需要确保在使用tcmalloc进行内存分配时正确处理C++异常。这通常意味着在分配内存时使用try和catch语句，并在捕获到std::bad_alloc异常时采取适当的措施。
+
+## tcmalloc::allocate_full_malloc_oom
+
+`allocate_full_malloc_oom`函数是tcmalloc库内部使用的一个函数，它用于处理内存分配失败的情况。当tcmalloc尝试分配内存，但无法找到足够的空闲内存时，它会调用这个函数。这个函数的主要目的是在遇到内存分配失败时提供一个处理策略。
+
+在tcmalloc的源代码中，`allocate_full_malloc_oom`函数的实现如下：
+
+``` cpp
+void* TCMallocImplementation::allocate_full_malloc_oom(size_t size) {
+  // If TCMalloc is not allowed to release memory to the system, we
+  // can't really do anything here.
+  if (!IsSystemReleaseAllowed()) {
+    return nullptr;
+  }
+  // Try to free up some memory from the central cache.
+  if (ReleaseAtLeastNBytesFromFreeList(size)) {
+    return nullptr;
+  }
+  // Give up and return nullptr.
+  return nullptr;
+}
+```
+
+这个函数的工作方式如下：
+
+1. 首先检查tcmalloc是否允许将内存释放回操作系统。如果不允许，函数返回nullptr，表示分配失败。
+2. 如果允许释放内存，函数尝试从中央缓存释放至少size字节的内存。如果释放成功，函数返回nullptr，表示分配失败。
+3. 如果释放内存失败，函数返回nullptr，表示分配失败。
+
+这个函数的主要作用是在遇到内存分配失败时尝试释放一些内存，以便其他分配请求可以成功。然而，如果释放内存的尝试失败，函数会返回nullptr，表示分配失败。在实际应用中，开发人员需要确保在使用tcmalloc分配内存时检查返回的指针是否为nullptr，并在遇到分配失败时采取适当的措施。
+
+
+## [gperftools' stacktrace capturing methods and their issues](https://github.com/gperftools/gperftools/wiki/gperftools'-stacktrace-capturing-methods-and-their-issues)
+
+We capture `backtraces` in tricky scenarios, such as in the **CPU profiler case**, where we capture `backtraces` from **a signal handler**. Therefore, we cannot rely on **glibc's** `backtrace()` function. In practice today, no completely robust backtracing solution works for all use cases (but we're getting closer, thankfully). So, we offer a range of stack trace capturing methods. This page describes our options and our current (Aug 2023) experience with them.
+
+Use `TCMALLOC_STACKTRACE_METHOD` environment variable to select backtracing implementation at runtime. We also offer the `TCMALLOC_STACKTRACE_METHOD_VERBOSE` environment variable, which makes gperftools print a complete set of available options and which option is active.
+
+The simplest way to see the list of available backtracing options on your system is by running "TCMALLOC_STACKTRACE_METHOD_VERBOSE=t ./stacktrace_unittest."
+
+``` bash
+$ TCMALLOC_STACKTRACE_METHOD_VERBOSE=t ./a.out
+Chosen stacktrace method is generic_fp
+Supported methods:
+* libgcc
+* generic_fp
+* generic_fp_unsafe
+* x86
+
+backtrace() returned 4 addresses
+...
+```
+
+### Frame pointers
+
+> TLDR: Use TCMALLOC_STACKTRACE_METHOD=generic_fp when all code is compiled with frame pointers, and you'll get nearly always correct and robust backtraces.
+
+The simplest of all options is to rely on frame pointers. But this requires that all relevant code is compiled with frame pointers enabled. Most architectures default to no frame pointers configuration because maintaining frame pointers imposes a slight but significant performance penalty. So, to use frame pointers backtracing, you need to compile your code with options to enable them explicitly.
+
+### Libunwind
+
+> TLDR: This is our default. Also available via TCMALLOC_STACKTRACE_METHOD=libunwind environment variable. But it has occasionally upset people with crashes and deadlocks.
+
+**All modern architectures have ABI that defaults to not having frame pointers**. Instead, we're supposed to use various external "unwind info" metadata. It is usually using a facility originally introduced for exceptions. On ELF systems, this facility is typically utilizing the `.eh_frame` section. The data format is similar but not identical to `DWARF` unwind info (introduced to allow debuggers to show you backtraces) and is documented in gABI specs.
+
+所有现代架构的ABI默认都不包含框架指针。相反，我们应该使用各种外部的"unwind info"元数据。它通常使用最初为异常引入的功能。在ELF系统上，这个功能通常利用.eh_frame部分。数据格式与DWARF解开信息类似但不完全相同（引入以允许调试器向您显示回溯），并在gABI规范中有详细记录。
+
+
+### libgcc's _Unwind_Backtrace
+
+> TLDR: Use TCMALLOC_STACKTRACE_METHOD=libgcc and enable it by default via the "--enable-libgcc-unwinder-by-default" configure flag when running on the most recent Linux system.
+
+Another library that can produce backtraces from unwind info is "libgcc_s.so". But since its primary purpose is exceptions, it hasn't always been fully robust especially for capturing backtraces from signal handlers.
+
+However, most recent versions of this library (starting from gcc 12), running on very recent Linux distros (glibc version 2.35 and later), have been robust in our testing so far. This is thanks to glibc's dl_find_object API that solves the problem of async-signal-safe access to a set of loaded ELF modules. We recommend enabling it by default, but only on systems that use dl_find_object API. With that said, please note that we're not yet aware of this facility's "crashiness" experience when it faces incorrect unwind info.
+
+
+
+
+* [crash in generic_fp backtracer (was: SIGSEGV in libunwind) #1426](https://github.com/gperftools/gperftools/issues/1426)
+
+## [dlopen with RTLD_DEEPBIND causes crash](https://github.com/gperftools/gperftools/issues/1148)
+
+类似问题：[jemalloc integration cause crashes when libraries or plugins dlopen with RTLD_DEEPBIND](https://bugzilla.mozilla.org/show_bug.cgi?id=493541)
+
+```
+Excepts from what Ulrich Drepper says about the RTLD_DEEPBIND flag he added:
+("How To Write Shared Libraries", August 20, 2006,
+http://people.redhat.com/drepper/dsohowto.pdf)
+
+  this feature should only be used if it cannot be avoided. There are several
+  reasonse for this:
+
+    The change in the scope affects all symbols and all
+    the DSOs which are loaded. Some symbols might
+    have to be interposed by definitions in the global
+    scope which now will not happen.
+
+    Already loaded DSOs are not affected which could
+    cause unconsistent results depending on whether
+    the DSO is already loaded (it might be dynamically
+    loaded, so there is even a race condition).
+
+    ...
+
+  The RTLD_DEEPBIND flag should really only be used as
+  a last resort. Fixing the application to not depend on the
+  flag's functionality is the much better solution.
+
+The inconsistency that RTLD_DEEPBIND causes with jemalloc is that dynamic libraries opened with RTLD_DEEPBIND will use libc's malloc while libc is still using jemalloc.  A libc function may return a pointer to something that should be passed to free, and the dynamic library will call libc's free, but libc used jemalloc to allocate the memory.
+
+I raised a question on this behavior here:
+http://sourceware.org/ml/libc-alpha/2009-06/msg00168.html
+
+But it looks like we can make libc's free (and malloc, etc) use jemalloc:
+http://www.gnu.org/s/libc/manual/html_node/Hooks-for-Malloc.html
+```
+
+参考：[Inconsistencies with RTLD_DEEPBIND and dependency libraries in global scope](https://sourceware.org/legacy-ml/libc-alpha/2009-06/msg00168.html)
+
+```
+% cat libdep.c
+int duplicate = 'u';
+
+int get_duplicate() {
+  return duplicate;
+}
+% gcc -shared -fPIC libdep.c -o libdep.so
+% cat dynamic.c
+#include <stdio.h>
+
+extern int duplicate;
+
+int run() {
+  duplicate = 'd';
+  printf("dynamic sees duplicate from libdep as:  %c\n", duplicate);
+  printf("but libdep sees duplicate from main as: %c\n", get_duplicate());
+  return 0;
+}
+% gcc -shared -fPIC dynamic.c -Wl,-rpath,. -L. -ldep -o dynamic.so
+% cat main.c
+#include <dlfcn.h>
+#include <stdlib.h>
+
+extern int duplicate;
+
+int main() {
+  void *h;
+  int (*run)();
+
+  duplicate = 'm';
+
+  h = dlopen("./dynamic.so", RTLD_LAZY | RTLD_DEEPBIND);
+  if (!h)
+    abort();
+
+  run = dlsym(h, "run");
+  if (!run)
+    abort();
+
+  (*run)();
+}
+% gcc main.c -Wl,-rpath,. -L. -ldep -ldl
+% ./a.out
+dynamic sees duplicate from libdep as:  d
+but libdep sees duplicate from main as: m
+```
+
+
+
+
+# The libunwind project
+
+The primary goal of this project is to define a portable and efficient C programming interface (API) to determine the call-chain of a program. The API additionally provides the means to manipulate the preserved (callee-saved) state of each call-frame and to resume execution at any point in the call-chain (non-local goto). The API supports both local (same-process) and remote (across-process) operation. As such, the API is useful in a number of applications. Some examples include:
+
+下载地址：https://www.nongnu.org/libunwind/download.html
+
+
+# 通过 LD_PRELOAD 使用 tcmalloc
+
+使用 `LD_PRELOAD` 运行程序：在运行程序时，设置 `LD_PRELOAD` 环境变量以加载 `libtcmalloc.so`
+
+``` bash
+LD_PRELOAD=/path/to/libtcmalloc.so your_program
+```
+
+检查进程映射：在程序运行时，可以使用 `/proc `文件系统检查已加载的共享库。首先，找到程序的进程ID（PID），然后查看 `/proc/PID/maps` 文件。例如，如果程序的 PID 为 12345，则运行以下命令：
+
+```
+cat /proc/12345/maps
+```
+
+在输出的结果中，检查 `libtcmalloc.so` 的路径。如果找到了该路径，说明 `libtcmalloc.so` 已成功加载。
+
+或者：
+
+```
+lsof -p 12345 | grep libtcmalloc.so
+
+pmap 12345 | grep libtcmalloc.so
+```
+
 
 # Refer
 
+* [TCMalloc Overview](https://google.github.io/tcmalloc/overview.html)
+* [Announcing TCMalloc](https://abseil.io/blog/20200212-tcmalloc)
 * https://github.com/google/tcmalloc
 * https://github.com/google/tcmalloc/tree/master/docs (官方文档)
 * https://google.github.io/tcmalloc/
@@ -364,8 +872,11 @@ See more: https://github.com/google/tcmalloc/blob/master/docs/stats.md
 * [图解 TCMalloc](https://zhuanlan.zhihu.com/p/29216091)
 * [TCMalloc 源码分析](https://dirtysalt.github.io/html/tcmalloc.html)
 * [jemalloc](https://github.com/jemalloc/jemalloc/releases)
-
-
+* [ptmalloc、tcmalloc与jemalloc对比分析](https://www.cyningsun.com/07-07-2018/memory-allocator-contrasts.html)
+* [ptmalloc,tcmalloc和jemalloc内存分配策略研究](https://cloud.tencent.com/developer/article/1173720)
+* [TCMalloc解密](https://zhuanlan.zhihu.com/p/51432385)
+* [C++的backtrace](https://owent.net/2018/1801.html)
+* https://www.gnu.org/software/libc/manual/html_node/Backtraces.html
 
 
 

@@ -714,6 +714,23 @@ echo "$VAR"
 * `-z string` - True if the string length is zero.
 * `-n string` - True if the string length is non-zero.
 
+```
+-e <file_a>: File_a exists.
+-f <file_a>: File_a exists and a regular file.
+-d <file_a>: File_a exists and is a directory.
+-r <file_a>: File_a exists with read permissions.
+-w <file_a>: File_a exists with write permissions.
+-x <file_a>: File_a exists with execute permissions.
+-s <file_a>: File_a exists and file size is greater than zero.
+-O <file_a>: File_a exists and the owner is effective user ID.
+-G <file_a>: File_a exists and the owner is effective group ID.
+-h <file_a>: File_a exists and it’s a symbolic link.
+-L <file_a>: File_a exists and it’s a symbolic link.
+-b <file_a>: File_a exists. It’s a block-special file.
+-c <file_a>: File_a exists. It’s a character-special file.
+-S <file_a>: File_a exists. It’s a socket.
+```
+
 示例：
 
 ``` bash
@@ -832,6 +849,7 @@ fi
 * [Bash test builtin command](https://www.computerhope.com/unix/bash/test.htm)
 * https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
 * [How to Compare Strings in Bash](https://linuxize.com/post/how-to-compare-strings-in-bash/)
+* https://linuxhint.com/bash-test-command/
 
 # ForceStopAll
 
@@ -851,16 +869,20 @@ PrintColor "Oops!"
 定义常用变量
 
 ``` bash
-_ColorGreenBeg="\e[1;32m"
-_ColorRedBeg="\e[1;33m"
-_ColorBlueBeg="\e[1;34m"
-_ColorEnd="\e[m"
+ColorRedBeg="\e[1;31m"
+ColorGreenBeg="\e[1;32m"
+ColorYellowBeg="\e[1;33m"
+ColorBlueBeg="\e[1;34m"
+ColorMagentaBeg="\e[1;35m"
+ColorCyanBeg="\e[1;36m"
+ColorWhiteBeg="\e[1;37m"
+ColorEnd="\e[m"
 
 function Usage()
 {
-    printf "$_ColorBlueBeg%-16s\n$_ColorEnd" "Usage: $0 [option] [value]"
+    printf "$ColorBlueBeg%-16s\n$ColorEnd" "Usage: $0 [option] [value]"
     printf "%-16s\n" "选项说明:"
-    printf "$_ColorGreenBeg%-32s %-64s\n$_ColorEnd" "-h" "查看帮助"
+    printf "$ColorGreenBeg%-32s %-64s\n$ColorEnd" "-h" "查看帮助"
 }
 ```
 
@@ -1120,7 +1142,7 @@ Total Number of Parameters : 2
 `$*` 和 `$@` 用法测试：
 
 
-```
+``` bash
 #! /bin/bash
 
 echo "\$*=" $*
@@ -1152,6 +1174,24 @@ for var in "$@"
 do
     echo "$var"
 done
+```
+
+## BASH_SOURCE 变量
+
+保存了当前脚本的路径，包括文件名。
+
+``` bash
+CUR_DIR=$(dirname $(readlink -f $BASH_SOURCE))
+PROJ_DIR=`readlink -f $CUR_DIR/../..`
+```
+
+## FUNCNAME 变量
+
+``` bash
+make()
+{
+    echo "$FUNCNAME: do nothing"
+}
 ```
 
 
@@ -1614,6 +1654,85 @@ The b.txt file contains bar and baz lines. The same output is printed to stdout.
 
 # Command
 
+
+## command
+
+Use `command` to **bypass** "normal function lookup".
+
+```
+command [-pVv] command [arg ...]
+              Run  command  with  args  suppressing  the normal shell function
+              lookup. Only builtin commands or commands found in the PATH  are
+              executed.   If the -p option is given, the search for command is
+              performed using a default value for PATH that is  guaranteed  to
+              find  all  of  the  standard  utilities.  If either the -V or -v
+              option is supplied, a description of command is printed.  The -v
+              option  causes a single word indicating the command or file name
+              used to invoke command to be displayed; the -V option produces a
+              more  verbose  description.  If the -V or -v option is supplied,
+              the exit status is 0 if command was found, and  1  if  not.   If
+              neither  option  is  supplied  and  an error occurred or command
+              cannot be found, the exit status is 127.   Otherwise,  the  exit
+              status of the command builtin is the exit status of command.
+```
+
+* https://askubuntu.com/questions/512770/what-is-the-bash-command-command
+
+## eval
+
+``` bash
+#!/bin/bash
+
+f()
+{
+    echo "abc"
+    exit 1
+}
+
+OUTPUT=`eval f`
+if [[ $? -ne 0 ]]; then
+    printf "error: %s\n" "${OUTPUT}"
+else
+    printf "ok: %s\n" "${OUTPUT}"
+fi
+```
+
+```
+$./eval.sh
+error: abc
+```
+
+
+`eval` is part of POSIX. It's an interface which can be a shell built-in.
+
+It's described in the "POSIX Programmer's Manual": http://www.unix.com/man-page/posix/1posix/eval/
+
+> eval - construct command by concatenating arguments
+
+It will take an argument and construct a command of it, which will then be executed by the shell. This is the example from the manpage:
+
+``` bash
+foo=10 x=foo
+y='$'$x
+echo $y
+$foo
+eval y='$'$x
+echo $y
+10
+
+```
+
+1. In the first line you define `$foo` with the value `'10'` and `$x` with the value `'foo'`.
+2. Now define `$y`, which consists of the string `'$foo'`. The dollar sign must be escaped with `'$'`.
+3. To check the result, `echo $y`.
+4. The result will be the string `'$foo'`
+5. Now we repeat the assignment with `eval`. It will first evaluate `$x` to the string `'foo'`. Now we have the statement `y=$foo` which will get evaluated to `y=10`.
+6. The result of echo `$y` is now the value `'10'`.
+
+
+https://unix.stackexchange.com/questions/23111/what-is-the-eval-command-in-bash
+
+
 ## set
 
 Bash 执行脚本的时候，例如，` bash script.sh` 会创建一个新的 Shell，script.sh 是在一个新的 Shell 里面执行。这个 Shell 就是脚本的执行环境，Bash 默认给定了这个环境的各种参数。set 命令用来修改 Shell 环境的运行参数，也就是可以定制环境。一共有十几个参数可以定制，[官方手册](https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html)有完整清单。如果命令行下不带任何参数，直接运行set，会显示所有的环境变量和 Shell 函数。
@@ -1706,6 +1825,19 @@ find /media/d/ -type f -size +50M ! \( -name "*deb" -o -name "*vmdk" \)
 >
 > Note that parenthesis, both opening and closing, are prefixed by a backslash (\) to prevent evaluation by the shell.
 
+删除某个目录下的 coredump 文件：
+
+``` bash
+#!/bin/bash
+
+CORE_FILES=`find /data/home/gerryyang -type f -size +50M -name "*core*"`
+if [[ -n $CORE_FILES ]]; then
+  rm $CORE_FILES
+else
+  echo "no find core files"
+fi
+```
+
 * https://unix.stackexchange.com/questions/50612/how-to-combine-2-name-conditions-in-find
 * https://pubs.opengroup.org/onlinepubs/009695399/utilities/find.html
 
@@ -1717,7 +1849,15 @@ Input shall be interpreted as a sequence of records. By default, a record is a l
 
 The awk utility shall interpret each input record as a sequence of fields where, by default, a field is a string of non- <blank> non- <newline> characters. This default <blank> and <newline> field delimiter can be changed by using the FS built-in variable or the -F sepstring option. The awk utility shall denote the first field in a record $1, the second $2, and so on. The symbol $0 shall refer to the entire record; setting any other field causes the re-evaluation of $0. Assigning to $0 shall reset the values of all other fields and the NF built-in variable.
 
+
+| 特殊变量 | 含义
+| -- | --
+| `NF` | Number Field
+| `$NF` | Last Field (最后一个字段)
+
+
 * https://www.tutorialspoint.com/awk/index.htm
+* [UNDERSTANDING AWK – PRACTICAL GUIDE](https://devarea.com/understanding-awk-practical-guide/#.ZAmnr-xBw0Q)
 
 ### Summing values of a column using awk command
 
@@ -1732,6 +1872,14 @@ https://stackoverflow.com/questions/28445020/summing-values-of-a-column-using-aw
 
 https://blog.csdn.net/delphiwcdj/category_859397.html?spm=1001.2014.3001.5482
 
+
+## cut
+
+``` bash
+cut -d "delimiter" -f (field number) file.txt
+```
+
+https://www.geeksforgeeks.org/cut-command-linux-examples/
 
 
 ## sed
@@ -1756,7 +1904,48 @@ bar
 456
 ```
 
+[UNDERSTANDING SED – PRACTICAL GUIDE](https://devarea.com/understanding-sed-practical-guide/#.ZAmnYuxBw0Q)
+
 ## declare
+
+这个脚本定义了三个测试函数 `foo`、`bar` 和 `baz`，然后使用 `declare -F` 命令和 `awk` 命令来获取所有的函数名。在执行 `declare -F` 命令时，它会列出所有已定义的函数名和函数定义的位置。使用 `awk` 命令可以提取函数名并将其输出。最后，它遍历所有的函数名并输出它们。
+
+``` bash
+#!/bin/bash
+
+# 定义几个测试函数
+function foo() {
+    echo "foo"
+}
+
+function bar() {
+    echo "bar"
+}
+
+function baz() {
+    echo "baz"
+}
+
+DUMMY=$(declare -F)
+echo $DUMMY
+
+# 获取所有的函数名
+function_names=$(declare -F | awk '{print $NF}')
+
+# 遍历所有的函数名并输出
+for name in $function_names; do
+        echo $name
+done
+```
+
+```
+$./declare.sh
+declare -f bar declare -f baz declare -f foo
+bar
+baz
+foo
+```
+
 
 ```
 $ bash -c "help declare"
@@ -1879,6 +2068,66 @@ Answers:
 
 
 # Example
+
+## 检查是否是 root 用户
+
+``` bash
+# Check if the user has root privileges
+if [ "$(id -u)" != "0" ]; then
+  echo "This script must be run as root" 1>&2
+  exit 1
+fi
+```
+
+## 获取当前 CPU 数量
+
+``` bash
+# Get the number of CPU cores
+num_cores=$(nproc)
+```
+
+```
+nproc --help
+Usage: nproc [OPTION]...
+Print the number of processing units available to the current process,
+which may be less than the number of online processors
+
+      --all      print the number of installed processors
+      --ignore=N  if possible, exclude N processing units
+      --help     display this help and exit
+      --version  output version information and exit
+
+GNU coreutils online help: <https://www.gnu.org/software/coreutils/>
+Full documentation at: <https://www.gnu.org/software/coreutils/nproc>
+or available locally via: info '(coreutils) nproc invocation'
+```
+
+## 根据大小查找文件
+
+``` bash
+#!/bin/bash
+
+# Check input arguments
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <directory> <file_size_in_kb>"
+    exit 1
+fi
+
+# Check if the specified directory exists
+if [ ! -d "$1" ]; then
+    echo "Error: Directory $1 not found"
+    exit 1
+fi
+
+# Check if the specified file size is a valid number
+if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+    echo "Error: File size must be a positive integer"
+    exit 1
+fi
+
+# Find files larger than the specified size
+find "$1" -type f -size +"$2"k
+```
 
 ## pstack
 
@@ -2023,6 +2272,25 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 
 # Q&A
 
+
+
+## i=`expr $i + 1` 执行效率问题
+
+由于创建子进程造成了 i=`expr $i + 1` 执行效率低。
+
+``` bash
+# 执行 100 万次大约需要 884 秒
+i=`expr $i + 1`
+
+# 执行 100 万次大约需要 18 秒
+i=$(($i+1))
+
+# 执行 100 万次大约需要 18 秒
+let i+=1
+```
+
+
+
 ## [Shebang](https://bash.cyberciti.biz/guide/Shebang)
 
 You will always see `#!/bin/bash` or `#!/usr/bin/env bash` as the first line when writing or reading bash scripts. **Shebang** starts with `#!` characters and the path to the bash or other interpreter of your choice. Let us see what is **Shebang** in Linux and Unix bash shell scripts.
@@ -2085,6 +2353,189 @@ $ echo $((16#ffffffffffffffff + 1))
 $ echo $((16#10000000000000000))
 0
 ```
+
+## nohup
+
+The meaning of `nohup` is ‘**no hangup**‘. Normally, when we log out from the system then all the running programs or processes are hangup or terminated. **If you want to run any program after log out or exit from Linux operating system then you have to use `nohup` command**. There are many programs that require many hours to complete. We don’t need to log in for long times to complete the task of the command. We can keep these type of programs running in the background by using `nohup` command and check the output later. Some example of using `nohup` command are memory check, server restart, synchronization etc.
+
+* Using nohup command without ‘&’
+
+When you run nohup command without ‘&’ then it returns to shell command prompt immediately after running that particular command in the background.
+
+The output of the nohup command will write in nohup.out the file if any redirecting filename is not mentioned in nohup command.
+
+``` bash
+nohup bash sleep1.sh
+cat nohup.out
+```
+
+You can execute the command in the following way to redirect the output to the output.txt file. Check the output of output.txt.
+
+``` bash
+nohup bash sleep2.sh > output.txt
+cat output.txt
+```
+
+* Using nohup command with ‘&’
+
+When nohup command use with ‘&’ then it doesn’t return to shell command prompt after running the command in the background. But if you want you can return to shell command prompt by typing ‘fg’
+
+``` bash
+nohup bash sleep1.sh &
+fg
+```
+
+* Using nohup command to run multiple commands in the background
+
+You can run multiple commands in the background by using nohup command. In the following command, mkdir and ls command are executed in the background by using nohup and bash commands. You can get the output of the commands by checking output.txt file.
+
+``` bash
+nohup bash -c 'mkdir myDir && ls'> output.txt
+cat output.txt
+```
+
+* Start any process in the background by using nohup
+
+When any process starts and the user closes the terminal before completing the task of the running process then the process stops normally. If the run the process with `nohup` then it will able to run the process in the background without any issue. For example, if you run the ping command normally then it will terminate the process when you close the terminal.
+
+Run ping command with `nohup` command. Re-open the terminal and run pgrep command again. You will get the list of the process with process id which is running.
+
+
+https://linuxhint.com/nohup_command_linux/
+
+
+## pgrep
+
+`pgrep` looks through the currently running processes and lists the process IDs which match the selection criteria to stdout. All the criteria have to match. For example,
+
+```
+pgrep -u root sshd
+```
+
+will only list the processes called `sshd` AND owned by `root`.
+
+```
+$pgrep unittestsvr
+4110947
+4110948
+
+$pgrep -a unittestsvr
+4110947 /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.1 --bus-key=3233 --svr-id-mask=7.8.8.9
+4110948 /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.2 --bus-key=3233 --svr-id-mask=7.8.8.9
+```
+
+# [Bash Builtin Commands](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#index-mapfile)
+
+## [mapfile](https://www.gnu.org/software/bash/manual/html_node/Bash-Builtins.html#index-mapfile)
+
+通过 malloc_info 统计调用 malloc_trim 前后内存变化
+
+调用 malloc_trim 前 malloc_info 的信息如下：
+
+egrep "fast|rest" info1.txt
+
+```
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="122591" size="1770769518"/>
+<total type="fast" count="7" size="384"/>
+<total type="rest" count="4" size="130851"/>
+<total type="fast" count="24" size="1152"/>
+<total type="rest" count="59" size="361322"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3776"/>
+<total type="fast" count="8" size="512"/>
+<total type="rest" count="19" size="1007026"/>
+<total type="fast" count="20" size="1072"/>
+<total type="rest" count="5" size="916"/>
+<total type="fast" count="624" size="35072"/>
+<total type="rest" count="14409" size="146221496"/>
+<total type="fast" count="18" size="928"/>
+<total type="rest" count="10" size="841"/>
+<total type="fast" count="15" size="720"/>
+<total type="rest" count="9" size="456"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="2" size="127297"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3184"/>
+<total type="fast" count="11" size="656"/>
+<total type="rest" count="25" size="4725320"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="18" size="307265"/>
+<total type="fast" count="1726" size="55648"/>
+<total type="rest" count="1540" size="2181699"/>
+<total type="fast" count="14" size="1296"/>
+<total type="rest" count="78" size="16150669"/>
+<total type="fast" count="2467" size="97440"/>
+<total type="rest" count="138771" size="1941991636"/>
+```
+
+调用 malloc_trim 后 malloc_info 的信息如下：
+
+egrep "fast|rest" info2.txt
+
+```
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="122591" size="1770769518"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="4" size="131235"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="49" size="362464"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3776"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="24" size="1007543"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="25" size="2008"/>
+<total type="fast" count="28" size="1216"/>
+<total type="rest" count="14045" size="146172332"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="28" size="1787"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="24" size="1191"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="2" size="127297"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="1" size="3184"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="32" size="4725983"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="19" size="307266"/>
+<total type="fast" count="1" size="32"/>
+<total type="rest" count="6" size="2240901"/>
+<total type="fast" count="0" size="0"/>
+<total type="rest" count="75" size="16151962"/>
+<total type="fast" count="29" size="1248"/>
+<total type="rest" count="136926" size="1942008447"/>
+```
+
+通过如下脚本计算前后两个 size 之合的变化：
+
+``` bash
+#!/bin/bash
+
+# 检查是否提供了文件名参数
+if [ -z "$1" ]; then
+    echo "Usage: $0 input_file"
+    exit 1
+fi
+
+input_file="$1"
+
+# 从input_file中提取size属性的值，并将它们保存到sizes数组中
+mapfile -t sizes < <(grep -oP 'size="\K\d+' "$input_file")
+
+# 计算size之和
+total_size=0
+for size in "${sizes[@]}"; do
+    total_size=$((total_size + size))
+done
+
+# 输出结果
+echo "Total size: $total_size"
+```
+
+
+
 
 
 

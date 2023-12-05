@@ -77,6 +77,8 @@ go version go1.17.6 linux/amd64
 
 ## 环境变量
 
+编辑 `~/.bashrc` 添加如下内容，之后执行 `source ~/.bashrc`。
+
 ``` bash
 # go的安装路径
 export GOROOT=/usr/local/go
@@ -84,15 +86,39 @@ export PATH=$GOROOT/bin:$PATH
 
 # go的目标文件安装目录
 export GOBIN=$HOME/go
+
+# @refer https://learnku.com/go/t/39086#0b3da8
+export GO111MODULE=on
 ```
 
 refer: [Compile and install the application](https://go.dev/doc/tutorial/compile-install)
+
+### GOPATH
 
 * `GOPATH`允许多个目录(Linux下用冒号分割)，当`GOPATH`指定了**多个目录时**，默认将`go get`的内容放在**第一个目录**。
 * `GOPATH`目录约定有3个子目录：
 	- `src` (源代码，例如，`.go`, `.c`, `.h`, `.s`等)
 	- `pkg` (编译后生成的文件，例如，.a)
 	- `bin` (编译后生成的可执行文件)
+
+[从 GOPATH 到 GO111MODULE](https://learnku.com/go/t/39086#0b3da8)
+
+> 关于 GOPATH
+
+当 Go 在 2009 年首次推出时，它并没有随包管理器一起提供。取而代之的是 `go get`，通过使用它们的导入路径来获取所有源并将其存储在 `$GOPATH/src` 中，没有版本控制并且 `master` 分支表示该软件包的稳定版本。
+
+> 关于 Go Modules
+
+Go 1.11 引入了 Go 模块。 `Go Modules` 不使用 `GOPATH` 存储每个软件包的单个 `git checkout`，而是存储带有 `go.mod` 的标记版本，并跟踪每个软件包的版本。
+
+> 关于 GO111MODULE 环境变量
+
+`GO111MODULE` 是一个环境变量，更改 Go 导入包的方式时进行设置。**根据 Go 版本，其语义会发生变化**。
+
+由于 `GO111MODULE=on` 允许你选择一个行为。如果不使用 `Go Modules`, `go get` 将会从模块代码的 `master` 分支拉取，而若使用 `Go Modules` 则你可以利用 `Git Tag` 手动选择一个特定版本的模块代码。
+
+
+
 
 ## 编译和执行
 
@@ -101,6 +127,21 @@ refer: [Compile and install the application](https://go.dev/doc/tutorial/compile
 ```
 $go get gopl.io/ch1/helloworld
 ```
+
+注意：从 Go 1.17 版本开始，go get 已废弃，不建议再使用。
+
+> Starting in Go 1.17, installing executables with go get is deprecated. go install may be used instead. In Go 1.18, go get will no longer build packages; it will only be used to add, update, or remove dependencies in go.mod. Specifically, go get will always act as if the -d flag were enabled.
+
+> go help get
+> The -d flag instructs get not to build or install packages. get will only update go.mod and download source code needed to build packages.
+
+```
+go get: installing executables with 'go get' in module mode is deprecated.
+        Use 'go install pkg@version' instead.
+        For more information, see https://golang.org/doc/go-get-install-deprecation
+        or run 'go help get' or 'go help install'.
+```
+
 
 源码在`$(GOBIN)/src/gopl.io/ch1/helloworld/main.go`。
 
@@ -142,6 +183,7 @@ Hello, 世界
 * 名为`main`的包用来定义一个独立的可执行程序，而不是库。
 * 必须精确地导入需要的包，在缺失导入，或存在不需要的包的情况下，编译会失败。(这种严格的要求可以防止程序演化中引用不需要的包)
 	- `goimports`工具可以按需管理导入声明的插入和移除。`go get golang.org/x/tools/cmd/goimports`
+	- 包的匿名导入，`import ( _ "fmt")` 对于没有显式用到的 package 通过匿名导入的方式忽略检查。
 * `import声明`必须跟在`package声明`之后。import导入声明后面，是组成程序的函数，变量，常量，类型声明。
 * Go不需要在语句或声明后使用`分号结尾`，除非有多个语句或声明出现在同一行。事实上，跟在特定符号后面的换行符被转换为分号。在什么地方进行换行会影响对Go代码的解析。例如，`{`符号必须和关键字`func`在同一行，不能独自成行。
 * Go对代码的`格式化`要求非常严格。`gofmt`工具将代码以标准格式重写。go工具的fmt子命令会用gofmt工具来格式化指定包里的所有文件，或者当前文件夹中的文件(默认情况下)。许多文本编辑器可以配置为在每次保存文件时自动运行gofmt，因此源文件总可以保持正确的形式。
@@ -1281,11 +1323,130 @@ refer:
 * https://lailin.xyz/post/41140.html?f=tt
 * https://pkg.go.dev/go/ast
 
+
+
+
+# Golang Runtime
+
+TODO
+
+
+# 开源代码
+
+## https://github.com/urfave/cli
+
+cli is a simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
+
+
+
+# Tools
+
+## golangci-lint
+
+[golangci-lint](https://golangci-lint.run/) is a Go linters aggregator.
+
+```
+# binary will be $(go env GOPATH)/bin/golangci-lint
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
+
+golangci-lint --version
+```
+
+
+
 # Tips
 
 ## [go -ldflags 信息注入](https://ms2008.github.io/2018/10/08/golang-build-version/)
 
+## 构建时指定 -mod=vendor 的作用
 
+在使用 Go 1.11 及以上版本的时候，Go 引入了 Go Modules 的特性，用于管理项目的依赖关系。在使用 Go Modules 的时候，可以通过在项目根目录下创建 go.mod 文件来指定项目的依赖关系。
+
+在使用 Go Modules 的时候，可以通过 go build 命令来构建项目。如果项目依赖的包已经被下载到本地缓存中，go build 命令会自动使用本地缓存中的包。如果本地缓存中没有需要的包，go build 命令会从远程仓库中下载需要的包。
+
+在使用 Go Modules 的时候，可以通过 -mod 参数来指定包的下载方式。其中，`-mod=vendor` **表示优先使用项目根目录下的 vendor 目录中的包**，如果 vendor 目录中没有需要的包，则从远程仓库中下载需要的包。
+
+使用 `-mod=vendor` 的好处是可以将项目依赖的包保存在项目根目录下的 vendor 目录中，避免了依赖包的版本冲突和不稳定性。同时，也可以避免在构建项目时从远程仓库中下载依赖包，提高了构建的速度和稳定性。
+
+需要注意的是，使用 `-mod=vendor` 的时候，需要在项目根目录下创建 vendor 目录，并将依赖的包复制到 vendor 目录中。可以使用 `go mod vendor` 命令来自动将依赖的包复制到 vendor 目录中。
+
+
+# Utils
+
+## [exec](https://pkg.go.dev/os/exec)
+
+Package `exec` runs external commands. It wraps os.StartProcess to make it easier to remap stdin and stdout, connect I/O with pipes, and do other adjustments.
+
+`exec` 包是 Go 语言中用于运行外部命令的标准库。它封装了 `os.StartProcess` 函数，使得重定向标准输入输出、使用管道连接 I/O 等操作更加方便。
+
+与其他语言中的 "system" 库调用不同，`os/exec` 包有意地不调用系统 shell，并且不会扩展任何通配符模式或处理其他扩展、管道或重定向，这通常是 shell 所做的。该包的行为更像 C 语言中的 "exec" 函数族。要扩展通配符模式，请直接调用 shell，注意转义任何危险的输入，或使用 `path/filepath` 包的 `Glob` 函数。要扩展环境变量，请使用 `os` 包的 `ExpandEnv` 函数。
+
+https://pkg.go.dev/os/exec#Cmd.Start
+
+``` golang
+package main
+
+import (
+	"log"
+	"os/exec"
+)
+
+func main() {
+	cmd := exec.Command("sleep", "5")
+	err := cmd.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Waiting for command to finish...")
+	err = cmd.Wait()
+	log.Printf("Command finished with error: %v", err)
+}
+```
+
+
+``` golang
+package main
+
+import (
+	"context"
+	"fmt"
+	"os/exec"
+	"time"
+)
+
+func main() {
+	// 创建一个上下文对象，设置超时时间为 5 秒
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 创建一个命令对象
+	cmd := exec.CommandContext(ctx, "ls", "-l")
+
+	// 执行命令，并获取输出
+	output, err := cmd.Output()
+
+	// 判断命令是否执行成功
+	if err != nil {
+		fmt.Println("Command failed:", err)
+		return
+	}
+
+	// 打印命令的输出
+	fmt.Println(string(output))
+}
+```
+
+# 问题调试
+
+服务启动前加上 `GOTRACEBACK=crash`，可以生成 corefile，和 `gdb` 类似，可以用 `dlv` 进行调试。
+
+安装：
+
+```
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+https://github.com/derekparker/delve
 
 
 # Q&A

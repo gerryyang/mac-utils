@@ -66,18 +66,18 @@ func TestHello(t *testing.T) {
 }
 ```
 
-At this point, the directory contains a package, but not a module, because there is no `go.mod` file. 
+At this point, the directory contains a package, but not a module, because there is no `go.mod` file.
 
 Let's make the current directory the root of a module by using `go mod init` and then try `go test`:
 
 ```
-$ go mod init github.com/gerryyang/goinaction/module/hello  
+$ go mod init github.com/gerryyang/goinaction/module/hello
 go: creating new go.mod: module github.com/gerryyang/goinaction/module/hello
 go: to add module requirements and sums:
         go mod tidy
 $ ls
 go.mod  hello.go  hello_test.go
-$ cat go.mod 
+$ cat go.mod
 module github.com/gerryyang/goinaction/module/hello
 
 go 1.16
@@ -122,13 +122,13 @@ $ go get rsc.io/quote
 go get: added rsc.io/quote v1.5.2
 $ ls
 go.mod  go.sum  hello.go  hello_test.go  world
-$ cat go.mod 
+$ cat go.mod
 module github.com/gerryyang/goinaction/module/hello
 
 go 1.16
 
 require rsc.io/quote v1.5.2 // indirect
-ubuntu@VM-0-16-ubuntu:~/github/goinaction/module/hello$ cat go.sum 
+ubuntu@VM-0-16-ubuntu:~/github/goinaction/module/hello$ cat go.sum
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c h1:qgOY6WgZOaTkIIMiVjBQcw93ERBE4m30iBm00nkL0i8=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 rsc.io/quote v1.5.2 h1:w5fcysjrx7yqtD/aO+QwRjYZOKnaM9Uh2b40tElTs3Y=
@@ -163,7 +163,7 @@ The `golang.org/x/text` version `v0.0.0-20170915032832-14c0d48ead0c` is an examp
 In addition to `go.mod`, the go command maintains a file named `go.sum` containing the expected [cryptographic hashes](https://golang.org/cmd/go/#hdr-Module_downloading_and_verification) of the content of specific module versions:
 
 ```
-$ cat go.sum 
+$ cat go.sum
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c h1:qgOY6WgZOaTkIIMiVjBQcw93ERBE4m30iBm00nkL0i8=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 rsc.io/quote v1.5.2 h1:w5fcysjrx7yqtD/aO+QwRjYZOKnaM9Uh2b40tElTs3Y=
@@ -248,7 +248,7 @@ rsc.io/sampler v1.3.0
 $ go get golang.org/x/text
 go: downloading golang.org/x/text v0.3.5
 go get: upgraded golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c => v0.3.5
-$ cat go.mod 
+$ cat go.mod
 module github.com/gerryyang/goinaction/module/hello
 
 go 1.16
@@ -257,7 +257,7 @@ require (
         golang.org/x/text v0.3.5 // indirect
         rsc.io/quote v1.5.2 // indirect
 )
-$ cat go.sum 
+$ cat go.sum
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c h1:qgOY6WgZOaTkIIMiVjBQcw93ERBE4m30iBm00nkL0i8=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.5 h1:i6eZZ+zk0SOf0xgBpEpPD18qWcJda6q1sxt3S0kzyUQ=
@@ -370,7 +370,7 @@ ok      github.com/gerryyang/goinaction/module/hello    0.003s
 Note that our module now depends on both `rsc.io/quote` and `rsc.io/quote/v3`:
 
 ```
-$ cat go.mod 
+$ cat go.mod
 module github.com/gerryyang/goinaction/module/hello
 
 go 1.16
@@ -472,7 +472,7 @@ golang.org/x/text v0.3.5
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e
 rsc.io/quote/v3 v3.1.0
 rsc.io/sampler v1.3.1
-$ cat go.mod 
+$ cat go.mod
 module github.com/gerryyang/goinaction/module/hello
 
 go 1.16
@@ -589,7 +589,40 @@ This post introduced these workflows using Go modules:
 * `go get` changes the required version of a dependency (or adds a new dependency).
 * `go mod tidy` removes unused dependencies.
 
-We encourage you to start using modules in your local development and to add `go.mod` and `go.sum` files to your projects. 
+We encourage you to start using modules in your local development and to add `go.mod` and `go.sum` files to your projects.
+
+## Q&A
+
+### [Go update all modules](https://stackoverflow.com/questions/67201708/go-update-all-modules)
+
+```
+go get -u
+go mod tidy
+```
+
+and to recursively update packages in any subdirectories:
+
+```
+go get -u ./...
+```
+
+More details:
+
+* `go get -u` (same as `go get -u .`) updates the package in the current directory, hence the module that provides that package, and its dependencies to the newer minor or patch releases when available. In typical projects, running this in the module root is enough, as it likely imports everything else.
+* `go get -u ./...` will expand to all packages rooted in the current directory, which effectively also updates everything (all modules that provide those packages).
+* Following from the above, `go get -u ./foo/...` will update everything that is rooted in `./foo`
+* `go get -u all` updates everything **including test dependencies**; from [Package List and Patterns](https://pkg.go.dev/cmd/go#hdr-Package_lists_and_patterns)
+
+> When using modules, `all` expands to all packages in the main module and their dependencies, including dependencies needed by tests of any of those.
+
+`go get` will also add to the `go.mod` file the `require` directives for dependencies that were just updated.
+
+* `go mod tidy` makes sure `go.mod` matches the source code in the module.
+
+* `go mod tidy` will prune `go.sum` and `go.mod` by removing the unnecessary checksums and transitive dependencies (e.g. `// indirect`), that were added to by `go get -u` due to newer semver available. It may also add missing entries to `go.sum`.
+
+> Note that starting from **Go 1.17**, newly-added `indirect` dependencies in `go.mod` are arranged in a separate `require` block.
+
 
 
 # Refer
@@ -603,7 +636,6 @@ We encourage you to start using modules in your local development and to add `go
 
 
 
-  
 
-	
-	
+
+

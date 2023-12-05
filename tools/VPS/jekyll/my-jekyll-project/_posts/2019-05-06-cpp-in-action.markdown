@@ -26,6 +26,7 @@ categories: [C/C++, 编程语言]
 # 标准参考
 
 * 编译器对标准的支持情况 [https://en.cppreference.com/w/cpp/compiler_support](https://en.cppreference.com/w/cpp/compiler_support)
+* [C++ Standards Support in GCC](https://gcc.gnu.org/projects/cxx-status.html)
 * 实例化展示工具 [https://cppinsights.io/](https://cppinsights.io/)
 * 在线多语言编译服务 [https://wandbox.org/](https://wandbox.org/)
 * [Compiler Explorer](https://gcc.godbolt.org/)
@@ -392,6 +393,8 @@ smart_ptr<shape> ptr2 = std::move(ptr1);
 | -- | -- | -- |
 | glvalue | lvalue（有标识符）| xvalue（有标识符）
 | rvalue |  | prvalue（无标识符）xvalue（有标识符）
+
+More: [Value categories](https://en.cppreference.com/w/cpp/language/value_category)
 
 
 #### 临时对象特殊的生命周期延长规则

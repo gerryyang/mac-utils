@@ -31,6 +31,63 @@ rm cmake-linux.sh
 $CMAKE_INSTALL_DIR/bin/cmake --version
 ```
 
+完整的安装脚本：先使用本地的，如果没有则下载。
+
+``` bash
+#!/bin/bash
+
+CUR_DIR=$(dirname $(readlink -f $0))
+
+CMAKE_DATA_DIR=cmake-3.17.0-Linux-x86_64
+CMAKE_INSTALL_DIR_PREFIX=/usr/local/bin
+export CMAKE_INSTALL_DIR="$CMAKE_INSTALL_DIR_PREFIX/$CMAKE_DATA_DIR"
+export PATH="$CMAKE_INSTALL_DIR/bin":$PATH
+
+# Specify the cmake version to install
+CMAKE_VERSION="3.17.0"
+CMAKE_DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-3.17.0-Linux-x86_64.sh"
+LOCAL_CMAKE_DIR="$CUR_DIR/$CMAKE_DATA_DIR"
+
+function InstallCMake()
+{
+    echo "Installing cmake version $CMAKE_VERSION..."
+
+    if [[ -d $LOCAL_CMAKE_DIR ]]; then
+        echo "Using local cmake dir: $LOCAL_CMAKE_DIR"
+        cp -r $LOCAL_CMAKE_DIR "$CMAKE_INSTALL_DIR_PREFIX/$CMAKE_DATA_DIR"
+
+    elif wget -q -O "cmake-linux.sh" --tries=1 "$CMAKE_DOWNLOAD_URL"; then
+        echo "Downloaded cmake from $CMAKE_DOWNLOAD_URL"
+
+        sh cmake-linux.sh -- --skip-license --prefix=$CMAKE_INSTALL_DIR_PREFIX
+        #rm cmake-linux.sh
+
+    else
+        echo "Error: Could not download cmake"
+        exit 1
+    fi
+
+    echo "cmake installation completed, version:"
+    echo "-----------------------------------------"
+    echo "$(cmake --version)"
+    echo "-----------------------------------------"
+}
+
+# Check if cmake is already installed
+if command -v bazel &> /dev/null; then
+    echo "cmake is already installed, $(cmake --version | head -n1)"
+
+    CUR_CMAKE_VERSION=`cmake --version | head -n1 | awk '{print $3}' | awk -F'.' '{printf $1$2}'`
+    if [[ "$CUR_CMAKE_VERSION" -lt 314 ]]; then
+        echo "cmake3.14 is required, please use $CUR_DIR/tools/cmake-build/cmake-install/install_cmake.sh to upgrade cmake firstly"
+
+        InstallCMake
+    fi
+else
+    InstallCMake
+fi
+```
+
 ## 源码编译
 
 ```
@@ -140,7 +197,7 @@ Run CMake with one of the following command signatures to specify the source and
 Uses the current working directory as the **build tree**, and `<path-to-source>` as the **source tree**. The specified path may be absolute or relative to the current working directory. The source tree must contain a `CMakeLists.txt` file and must not contain a `CMakeCache.txt` file because the latter identifies an existing build tree. For example:
 
 ```
-$ mkdir build ; cd build
+$ mkdir build; cd build
 $ cmake ../src
 ```
 
@@ -474,6 +531,31 @@ else()              # optional block
   <commands>
 endif()
 ```
+
+Comparisons:
+
+```
+if(<variable|string> MATCHES <regex>)             # True if the given string or variable's value matches the given regular expression.
+
+if(<variable|string> LESS <variable|string>       #  True if the given string or variable's value is a valid number and less than that on the right.
+
+if(<variable|string> GREATER <variable|string>)   # True if the given string or variable's value is a valid number and greater than that on the right.
+
+if(<variable|string> EQUAL <variable|string>)     # True if the given string or variable's value is a valid number and equal to that on the right.
+
+if(<variable|string> STREQUAL <variable|string>)  # True if the given string or variable's value is lexicographically equal to the string or variable on the right.
+```
+
+Logic Operators:
+
+```
+if(NOT <condition>)      # True if the condition is not true.
+
+if(<cond1> AND <cond2>)  # True if both conditions would be considered true individually.
+
+if(<cond1> OR <cond2>)   # True if either condition would be considered true individually.
+```
+
 
 https://cmake.org/cmake/help/latest/command/if.html
 
@@ -812,6 +894,7 @@ https://cmake.org/cmake/help/latest/command/string.html
 Set a named property in a given scope.
 
 ```
+# Run command and display elapsed time for global
 set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 ```
 
@@ -831,6 +914,23 @@ install(SCRIPT <file> [...])
 install(CODE <code> [...])
 install(EXPORT <export-name> [...])
 install(RUNTIME_DEPENDENCY_SET <set-name> [...])
+```
+
+单独 install 某个 target：
+
+```
+INSTALL(TARGETS ${TARGET_NAME} DESTINATION ${TARGET_INSTALL_PATH} COMPONENT ${TARGET_NAME})
+```
+
+``` bash
+#make install
+
+# install 支持单独 target
+if [[ $COMPILE_TARGET = "all" ]]; then
+    cmake --install .
+else
+    cmake --install . --component $COMPILE_TARGET
+fi
 ```
 
 https://cmake.org/cmake/help/latest/command/install.html
@@ -984,6 +1084,25 @@ MESSAGE(STATUS "CMAKE_RANLIB = ${CMAKE_RANLIB}")
 ENDIF() # IF(DEFINED PRINT_HEAD_INFO)
 ```
 
+## [CMAKE_COMPILER_IS_GNUCXX](https://cmake.org/cmake/help/latest/variable/CMAKE_COMPILER_IS_GNUCXX.html)
+
+True if the C++ (CXX) compiler is GNU.
+
+This variable is deprecated. Use [CMAKE_CXX_COMPILER_ID](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID) instead.
+
+## [CMAKE_CXX_COMPILER_ID](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID)
+
+```
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  set(CC_GCC 1)
+  string(REGEX REPLACE "^([^\.]+)\..*$" \\1 GCC_MAJOR ${CMAKE_CXX_COMPILER_VERSION})
+  message("GCC Major:" ${GCC_MAJOR} " # " ${CMAKE_CXX_COMPILER_VERSION})
+else()
+  set(CC_GCC 0)
+  set(GCC_MAJOR 0)
+endif()
+```
+
 ## CMAKE_CXX_STANDARD
 
 New in version 3.1. Default value for [CXX_STANDARD](https://cmake.org/cmake/help/latest/prop_tgt/CXX_STANDARD.html#prop_tgt:CXX_STANDARD) target property if set when a target is created.
@@ -1073,7 +1192,8 @@ Specifies the build type on single-configuration generators (e.g. **Makefile Gen
 
 ```
 IF(PROJ_BUILD_TYPE STREQUAL release)
-    SET(CMAKE_BUILD_TYPE Release)
+    #SET(CMAKE_BUILD_TYPE Release)        # -O3 -DNDEBUG
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo)  # -O2 -g -DNDEBUG
 ELSEIF(PROJ_BUILD_TYPE STREQUAL debug)
     SET(CMAKE_BUILD_TYPE Debug)
 ENDIF()
@@ -1165,6 +1285,17 @@ If enabled, generates a compile_commands.json file containing the exact compiler
 Specify a `<suffix>` to tell the `find_library()` command to search in a `lib<suffix>` directory before each lib directory that would normally be searched.
 
 * https://cmake.org/cmake/help/v3.9/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.html
+
+## CMAKE_MODULE_PATH
+
+[Semicolon-separated list](https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#cmake-language-lists) of directories specifying a search path for CMake modules to be loaded by the [include()](https://cmake.org/cmake/help/latest/command/include.html#command:include) or [find_package()](https://cmake.org/cmake/help/latest/command/find_package.html#command:find_package) commands before checking the default modules that come with CMake. By default it is empty, it is intended to be set by the project.
+
+```
+set(THIRDPARTY_PATH "${SLN_ROOT}/thirdparty")
+set(CMAKE_MODULE_PATH "${THIRDPARTY_PATH}/cmake;${CMAKE_MODULE_PATH}")
+```
+
+* https://cmake.org/cmake/help/latest/variable/CMAKE_MODULE_PATH.html
 
 
 # Module
@@ -1704,6 +1835,66 @@ popd
 
 # Tips
 
+## 生成中间文件
+
+```
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -save-temps")
+```
+
+参考：[保存临时文件](https://wizardforcel.gitbooks.io/100-gcc-tips/content/save-temps.html)
+
+```
+$ gcc -save-temps a/foo.c
+$ ls foo.*
+foo.c  foo.i  foo.o  foo.s
+
+$ gcc -save-temps=obj a/foo.c -o a/foo
+$ ls a
+foo  foo.c  foo.i  foo.o  foo.s
+```
+
+* [gcc with parameters "-S -save-temps" puts intermediate files in current directory](https://stackoverflow.com/questions/2165079/gcc-with-parameters-s-save-temps-puts-intermediate-files-in-current-director)
+
+
+## debug 编译去除 -g 选项
+
+```
+# disable -g
+string(REPLACE "-g" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+string(REPLACE "-g" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+```
+
+## 检查 CXX 编译器是否支持某个编译选项 (CheckCXXCompilerFlag)
+
+Check whether the CXX compiler supports a given flag.
+
+```
+INCLUDE(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" SUPPORT_CXX11)
+IF(NOT SUPPORT_CXX11)
+    MESSAGE(FATAL_ERROR "compiler not support c++11")
+ENDIF()
+```
+
+* https://cmake.org/cmake/help/latest/module/CheckCXXCompilerFlag.html
+
+
+## (FindPackageHandleStandardArgs)
+
+This module provides functions intended to be used in Find Modules implementing `find_package(<PackageName>`) calls.
+
+```
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Protobuf
+    REQUIRED_VARS Protobuf_PROTOC_EXECUTABLE Protobuf_LIBRARIES Protobuf_INCLUDE_DIRS
+    VERSION_VAR Protobuf_VERSION
+)
+```
+
+* https://cmake.org/cmake/help/latest/module/FindPackageHandleStandardArgs.html
+* https://stackoverflow.com/questions/52785157/what-does-findpackagehandlestandardargs-do-exactly
+
+
 ## 检查是否是 GCC 编译
 
 ```
@@ -1717,16 +1908,114 @@ else()
 endif()
 ```
 
+## [CMake - remove a compile flag for a single translation unit](https://stackoverflow.com/questions/28344564/cmake-remove-a-compile-flag-for-a-single-translation-unit)
+
+TODO
+
+
+
+
+
 # 参考示例
 
 * https://github.com/sogou/workflow/blob/master/CMakeLists.txt
 
 
+# Issue
+
+## [Makefiles: Multiple targets not built in parallel](https://gitlab.kitware.com/cmake/cmake/-/issues/23876)
+
+
 
 # Q&A
 
-* [Most simple but complete CMake example](https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example)
-* [list(REMOVE_ITEM) not working in cmake](https://stackoverflow.com/questions/36134129/listremove-item-not-working-in-cmake)
+## -rdynamic
+
+`CMake 3.3` and below, for historical reasons, always linked executables on some platforms with flags like `-rdynamic` to export symbols from the executables for use by any plugins they may load via dlopen. `CMake 3.4` and above prefer to do this only for executables that are explicitly marked with the [ENABLE_EXPORTS](https://cmake.org/cmake/help/latest/prop_tgt/ENABLE_EXPORTS.html#prop_tgt:ENABLE_EXPORTS) target property.
+
+`ENABLE_EXPORTS` 是一个 CMake 属性，**用于指定可执行文件或共享库是否导出符号**。通常，可执行文件不导出任何符号，因为它是最终程序。但是，可执行文件可以导出供可加载模块使用的符号。当此属性设置为 true 时，CMake 将允许其他目标使用 `target_link_libraries()` 命令链接到可执行文件。在所有平台上，链接到可执行文件的目标都会创建一个目标级依赖关系。可加载模块对可执行文件的链接处理因平台而异。
+
+```
+# cmake 3.17 需要显示打开 --rdynamic 链接选项，@refer https://cmake.org/cmake/help/latest/policy/CMP0065.html
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic")
+```
+
+以下是一个使用 `ENABLE_EXPORTS` 的 CMake 示例：
+
+
+Step1: 创建以下目录结构
+
+```
+my_project/
+|-- CMakeLists.txt
+|-- main.cpp
+|-- my_module/
+    |-- CMakeLists.txt
+    |-- my_module.cpp
+```
+
+Step2: 在 `my_project/CMakeLists.txt` 文件中添加以下内容
+
+```
+cmake_minimum_required(VERSION 3.0)
+project(MyProject)
+
+# 设置 CMAKE_EXECUTABLE_ENABLE_EXPORTS 变量
+set(CMAKE_EXECUTABLE_ENABLE_EXPORTS ON)
+
+# 添加 main 可执行文件
+add_executable(main main.cpp)
+
+# 添加子目录以便处理 my_module 的 CMakeLists.txt
+add_subdirectory(my_module)
+
+# 链接 main 可执行文件和 my_module
+target_link_libraries(main my_module)
+```
+
+Step3: 在 `my_project/main.cpp` 文件中添加以下内容
+
+``` cpp
+#include <iostream>
+
+// 声明要从 my_module 导入的函数
+extern "C" void my_module_function();
+
+int main() {
+  std::cout << "Calling my_module_function from main:" << std::endl;
+  my_module_function();
+  return 0;
+}
+```
+
+Step4: 在 `my_project/my_module/CMakeLists.txt` 文件中添加以下内容
+
+```
+# 添加 my_module 作为共享库
+add_library(my_module SHARED my_module.cpp)
+```
+
+Step5: 在 `my_project/my_module/my_module.cpp` 文件中添加以下内容
+
+``` cpp
+#include <iostream>
+
+extern "C" void my_module_function() {
+  std::cout << "Hello from my_module_function!" << std::endl;
+}
+```
+
+在这个示例中，创建了一个名为 `main` 的可执行文件，它导出一个符号 `my_module_function`。我们还创建了一个名为 `my_module` 的共享库，它使用 `main` 可执行文件中导出的 `my_module_function`。通过在 `my_project/CMakeLists.txt` 中设置 `CMAKE_EXECUTABLE_ENABLE_EXPORTS` 变量，我们启用了 `main` 可执行文件的符号导出功能。这使得 `my_module` 能够链接到 `main` 并使用它导出的符号。
+
+> 注意：CMAKE_EXECUTABLE_ENABLE_EXPORTS 变量用于初始化目标属性 ENABLE_EXPORTS。当 ENABLE_EXPORTS 设置为 ON 时，CMake 会允许其他目标链接到可执行文件。然而，并不是所有平台都会自动添加 --export-dynamic 选项。要确保在链接时添加 --export-dynamic 选项，可以在 CMakeLists.txt 文件中显式设置此选项。
+
+
+
+## [Most simple but complete CMake example](https://stackoverflow.com/questions/21163188/most-simple-but-complete-cmake-example)
+
+
+## [list(REMOVE_ITEM) not working in cmake](https://stackoverflow.com/questions/36134129/listremove-item-not-working-in-cmake)
+
 
 # Refer
 
@@ -1738,3 +2027,4 @@ endif()
 # Manual
 
 * [An Introduction to Modern CMake](https://cliutils.gitlab.io/modern-cmake/)
+* [MAKEFILES TUTORIAL](https://devarea.com/makefiles-tutorial/#.ZAmnUuxBw0Q)

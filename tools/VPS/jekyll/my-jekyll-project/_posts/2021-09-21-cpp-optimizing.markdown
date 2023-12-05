@@ -8,6 +8,14 @@ categories: C/C++
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+> "Premature optimization is the root of all evil" — Donald Knuth
+>
+> "Data dominates. If you've chosen the right data structures and organized things well, the algorithms will almost always be self-evident. Data structures, not algorithms, are central to programming." — Rob Pike's 5 Rules of Programming
+
+
+
+
 # 性能调优的必要性（思考启示）
 
 * "这儿一纳秒，那儿一纳秒"。指令的处理速度惊人，浪费的指令积累也越快。
@@ -1620,6 +1628,16 @@ strip example
 * Pipeline [无锁编程介绍](https://km.woa.com/group/TimiJ1group/articles/show/445557)
 
 * 利用新的硬件红利（NUMA架构的优化）
+
+
+# Memory Benchmark
+
+* [Testing Memory Allocators: ptmalloc2 vs tcmalloc vs hoard vs jemalloc While Trying to Simulate Real-World Loads](http://ithare.com/testing-memory-allocators-ptmalloc2-tcmalloc-hoard-jemalloc-while-trying-to-simulate-real-world-loads/)
+* [Mimalloc-bench](https://github.com/daanx/mimalloc-bench)
+
+# More
+
+* [2022 全球 C++ 及系统软件技术大会 - C++ 性能、工具、库](https://chenshuo.com/data/summit2022.pdf)
 
 
 # Refer

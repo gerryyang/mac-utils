@@ -71,9 +71,9 @@ for_each(v.begin(), v.end(), print<int>());// print<int>() 是一个临时对象
 {% highlight cpp %}
 // in-class static constant integer initialization
 template <typename T>
-class testClass 
+class testClass
 {
-public: 
+public:
     static const int _x = 1;
     static const long _y = 2L;
     static const char _z = 'a';
@@ -87,7 +87,7 @@ std::cout << testClass<int>::_z << std::endl;
 
 任何迭代器都必须实现`increment, operator++`和取值`dereference, operator*`的功能。前者还分为`前置式prefix`和`后置式postfix`两种，有非常规律的写法。有些迭代器具备双向移动功能，就必须再提供`decrement`，也分前置式和后置式两种。
 
-{% highlight cpp %} 
+{% highlight cpp %}
 class INT
 {
     friend std::ostream& operator<<(std::ostream& os, const INT& i);
@@ -159,7 +159,7 @@ std::cout << *i_obj;
 > 1. 这种`off by one`或者`pass the end`的标示法，带来了许多方便。
 > 2. 前闭后开区间，元素之间无需占用连续内存空间。
 
-{% highlight cpp %} 
+{% highlight cpp %}
 template<class InputIterator, class T>
 InputIterator find(InputIterator first, InputIterator last, const T& value)
 {
@@ -180,7 +180,7 @@ Function for_each(InputIterator first, InputIterator last, Function f)
 
 函数调用操作`()`也可以被重载。过去C语言时代，欲将函数当做参数传递，唯有通过`函数指针`才能达成。
 
-{% highlight cpp %} 
+{% highlight cpp %}
 int fcmp(const void* elem1, const void* elem2)
 {
     const int* i1 = (const int*)elem1;
@@ -205,10 +205,10 @@ for (int i = 0; i < 10; i++)
 
 > 所谓仿函数(functor)，就是使用起来像函数一样的东西，如果你针对某个class进行operator()重载，它就成为一个仿函数。至于要成为一个可配接的仿函数，还需要做一些额外的努力。
 
-{% highlight cpp %} 
+{% highlight cpp %}
 // 由于将operator()重载了，因此plus成了一个仿函数
 template <class T>
-struct plus 
+struct plus
 {
     T operator()(const T& x, const T& y) const { return x + y; }
 };
@@ -242,7 +242,7 @@ std::cout << minus<int>(1, 2) << std::endl;
 
 根据STL的规范，以下是`allocator`的必要接口：
 
-{% highlight cpp %} 
+{% highlight cpp %}
 allocator::value_type
 allocator::pointer
 allocator::const_pointer
@@ -267,22 +267,25 @@ void allocator::construct(pointer p, const T& x)            // 等同于 new((vo
 void allocator::destroy(pointer p)                          // 等同于 p->~T()
 {% endhighlight %}
 
-## SGI特殊的空间适配器 
+## SGI特殊的空间适配器
 
 考虑到对效率的优化，SGI默认使用特殊的空间适配器`std::alloc`。
 
 一般而言，C++内存配置和释放操作是这样的：
 
-{% highlight cpp %} 
+{% highlight cpp %}
 class Foo {...};
 Foo* pf = new Foo;    // 配置内存，然后构造对象
 delete pf;            // 将对象析构，然后释放内存
 {% endhighlight %}
 
 `new`算式内含两阶段操作：
+
 1. 调用`::operator new`配置内存
 2. 调用`Foo::Foo()`构造对象内容
+
 `delete`算式也内含两阶段操作：
+
 1. 调用`Foo::~Foo()`将对象析构
 2. 调用`::operator delete`释放内存
 
@@ -293,7 +296,7 @@ STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
 3. 对象构造操作由`::construct()`负责
 4. 对象析构操作由`::destroy()`负责
 
-考虑到小型区块所可能造成的内存碎片问题，。SGI容器使用了`两级空间适配器`的设计。
+考虑到小型区块所可能造成的内存碎片问题，SGI容器使用了`两级空间适配器`的设计。
 
 1. 第一级配置器直接使用`malloc()`和`free()`
 2. 第二级配置器则视情况采取不同的策略
@@ -311,7 +314,7 @@ STL的`allocator`为了精密分工，将这两个阶段操作区分开来：
 3. SGI第二级配置器的做法是，如果区块大于128B，就交给第一级配置器处理；如果区块小于128B，就以内存池管理。每次配置一块大内存，并维护对应的自由链表，下次若再有相同大小的内存需求，就直接从自由链表中拔出；如果客户端释放了小额区块，就由配置器回收到自由链表中。即，**配置器负责配置和回收**。
 4. 为了方便管理，第二级配置器会主动将任何小额区块的内存需求量上调至8的倍数，并维护16个自由链表，各自管理大小分别为8，16，24，32，40，48，56，64，72，80，88，96，104，112，120，128字节的小额区块。
 
-自由链表的结构如下: 
+自由链表的结构如下:
 
 使用union结构，是一种节省空间的方法(一物二用)。
 
@@ -341,7 +344,7 @@ enum {
 
 template <bool threads, int inst>
 class __default_alloc_template {
-    
+
 private：
     // 将bytes上调至8的倍数
     static size_t ROUND_UP(size_t bytes) {
@@ -563,10 +566,26 @@ char * __default_alloc_template<threads, inst>::chunk_alloc(size_t size, int& no
 {% endhighlight %}
 
 
+# [C++ named requirements: Compare](https://en.cppreference.com/w/cpp/named_req/Compare)
+
+`Compare` is a set of requirements expected by some of the standard library facilities from the user-provided function object types.
+
+The return value of the function call operation applied to an object of a type satisfying Compare, when contextually converted to bool, yields `true` if the first argument of the call appears before the second in the strict weak ordering relation induced by this type, and `false` otherwise.
+
+The following expressions must be valid and have their specified effects:
+
+| Expression | Requirements
+| -- | --
+| `comp(a, b)` | Establishes strict weak ordering relation with the following properties
+| | For all a, `comp(a, a) == false`
+| | If `comp(a, b) == true` then `comp(b, a) == false`
+| | if `comp(a, b) == true` and `comp(b, c) == true` then `comp(a, c) == true`
+
+
 
 # Refer
 
-1. [The Annotated STL Sources(using SGI STL) by 侯捷]
+1. The Annotated STL Sources(using SGI STL) by 侯捷
 
 
 

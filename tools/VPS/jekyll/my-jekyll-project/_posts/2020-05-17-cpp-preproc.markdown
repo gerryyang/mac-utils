@@ -554,6 +554,44 @@ $ g++ -E -dM - < /dev/null
 
 ```
 
+# Tips
+
+## `__PRETTY_FUNCTION__`
+
+``` cpp
+#include <iostream>
+
+template<typename T>
+void func(T&& param)
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::cout << param << std::endl;
+}
+
+void f()
+{
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    std::cout << __FUNCTION__ << std::endl;
+}
+
+int main()
+{
+    f();
+
+    int a{100};
+    func(a); // ok
+    func(100); // ok
+}
+/*
+void f()
+f
+void func(T&&) [with T = int&]
+100
+void func(T&&) [with T = int]
+100
+*/
+```
+
 
 
 # 测试代码
@@ -752,4 +790,5 @@ namespace std
 
 * [The C Preprocessor](https://gcc.gnu.org/onlinedocs/gcc-3.0.2/cpp.html#SEC_Top)
 * [C/C++ preprocessor reference](https://docs.microsoft.com/en-us/cpp/preprocessor/c-cpp-preprocessor-reference?view=msvc-160)
-
+* [C/C++ 预处理器参考](https://learn.microsoft.com/zh-cn/cpp/preprocessor/c-cpp-preprocessor-reference?view=msvc-170)
+* [THE C PREPROCESSOR](https://devarea.com/the-c-preprocessor/#.ZAmoiexBw0Q)

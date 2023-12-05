@@ -8,6 +8,203 @@ categories: [Linux Performance]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# time 获取 Unix 时间戳
+
+参考：https://man7.org/linux/man-pages/man2/time.2.html
+
+``` cpp
+#include <time.h>
+
+time_t time(time_t *tloc);
+```
+
+`time() `returns the time as the number of seconds since the **Epoch**, **1970-01-01 00:00:00 +0000 (UTC)**.
+
+If `tloc` is non-NULL, the return value is also stored in the memory pointed to by `tloc`.
+
+On success, the value of time in seconds since the Epoch is returned.  On error, (`(time_t) -1`) is returned, and [errno](https://man7.org/linux/man-pages/man3/errno.3.html) is set to indicate the error.
+
+``` cpp
+#include <cstdio>
+#include <time.h>
+
+int main()
+{
+    time_t result = time(NULL);
+    printf("time(NULL): %d\n", result);
+}
+/*
+$./a.out
+time(NULL): 1673429363
+*/
+```
+
+``` cpp
+// std::time
+// https://en.cppreference.com/w/cpp/chrono/c/time
+#include <iostream>
+#include <ctime>
+
+int main()
+{
+    std::time_t result = std::time(nullptr);
+    std::cout << std::asctime(std::localtime(&result))
+            << result << " seconds since the Epoch\n";
+}
+/*
+$./a.out
+Wed Jan 11 17:04:57 2023
+1673427897 seconds since the Epoch
+*/
+```
+
+> gettimeofday 相比 time 除了获取 seconds 还可以获取 microseconds
+
+``` cpp
+#include <cstdio>
+#include <time.h>
+#include <sys/time.h>
+
+int main()
+{
+    time_t result = time(NULL);
+    printf("time(NULL): %d\n", result);
+
+    struct timeval tv;
+    gettimeofday(&tv , NULL);
+    printf("gettimeofday: %ld.%06ld\n", tv.tv_sec, tv.tv_usec);
+}
+/*
+$./a.out
+time(NULL): 1673429363
+gettimeofday: 1673429363.980282
+*/
+```
+
+# gettimeofday 获取 Unix 时间戳
+
+参考：https://man7.org/linux/man-pages/man2/settimeofday.2.html
+
+``` cpp
+#include <sys/time.h>
+
+int gettimeofday(struct timeval *restrict tv,
+                struct timezone *restrict tz);
+int settimeofday(const struct timeval *tv,
+                const struct timezone *tz);
+```
+
+The functions `gettimeofday()` and `settimeofday()` can get and set the **time** as well as a **timezone**.
+
+The `tv` argument is a `struct timeval` (as specified in `<sys/time.h>`)
+
+``` cpp
+struct timeval {
+    time_t      tv_sec;     /* seconds */
+    suseconds_t tv_usec;    /* microseconds */
+};
+```
+
+and gives the number of **seconds** and **microseconds** since the **Epoch** (see [time(2)](https://man7.org/linux/man-pages/man2/time.2.html)).
+
+The `tz` argument is a `struct timezone`:
+
+``` cpp
+struct timezone {
+    int tz_minuteswest;     /* minutes west of Greenwich */
+    int tz_dsttime;         /* type of DST correction */
+};
+```
+
+If either `tv` or `tz` is `NULL`, the corresponding structure is not set or returned. (However, compilation warnings will result if `tv` is `NULL`.)
+
+The use of the `timezone` structure is **obsolete**; the `tz` argument should normally be specified as `NULL`.
+
+`gettimeofday()` and `settimeofday()` return 0 for success. On error, `-1` is returned and `errno` is set to indicate the error.
+
+``` cpp
+#include <cstdio>
+#include <sys/time.h>
+
+int main(void)
+{
+    struct timeval tv;
+    gettimeofday (&tv , NULL);
+    printf("%ld.%06ld\n", tv.tv_sec, tv.tv_usec);
+}
+/*
+$./a.out
+1673426536.297965
+*/
+```
+
+# 时间和时区
+
+```
+$date
+2023年 01月 11日 星期三 17:45:15 CST
+$date -R
+Wed, 11 Jan 2023 17:42:59 +0800
+```
+
+整个地球分为二十四时区，每个时区都有自己的本地时间。
+
+* UTC 时间与 GMT 时间
+
+格林威治时间和UTC时间都用秒数来计算的。
+
+* UTC 时间与本地时间
+
+UTC + 时区差 = 本地时间
+
+时区差东为正，西为负。在此，把东八区时区差记为 +0800
+
+UTC + (+0800) = 本地（北京）时间
+
+* UTC 与 Unix 时间戳
+
+在计算机中看到的 UTC 时间都是从（1970年01月01日 00:00:00) 开始计算秒数的，这个秒数就是 Unix 时间戳。
+
+测试代码：
+
+``` cpp
+// https://en.cppreference.com/w/cpp/chrono/c/localtime
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+
+int main()
+{
+    setenv("TZ", "/usr/share/zoneinfo/America/Los_Angeles", 1); // POSIX-specific
+
+    std::tm tm{};  // zero initialise
+    tm.tm_year = 2020-1900; // 2020
+    tm.tm_mon = 2-1; // February
+    tm.tm_mday = 15; // 15th
+    tm.tm_hour = 10;
+    tm.tm_min = 15;
+    tm.tm_isdst = 0; // Not daylight saving
+    std::time_t t = std::mktime(&tm);
+
+    std::cout << "UTC:   " << std::put_time(std::gmtime(&t), "%c %Z") << '\n';
+    std::cout << "local: " << std::put_time(std::localtime(&t), "%c %Z") << '\n';
+}
+/*
+UTC:   Sat Feb 15 18:15:00 2020 GMT
+local: Sat Feb 15 10:15:00 2020 PST
+*/
+```
+
+结论：
+
+1. `time`和`gettimeofday`获取的 Unix 时间戳不受时区影响都是一样的，通过修改`/etc/localtime`文件修改时区，从而根据时区转换为当前的时间。
+2. `gmtime`给出的是 GMT 标准时间，`localtime`给出的是根据时区转换过的本地时间。
+
+
+refer:
+
+* https://www.cnblogs.com/linuxbug/p/4887006.html
 
 # 时钟设备
 
@@ -22,10 +219,10 @@ total 0
 drwxr-xr-x 2 root root    0 Nov  3 10:04 power
 lrwxrwxrwx 1 root root    0 Oct 30 05:00 subsystem -> ../../../../bus/clocksource
 -rw-r--r-- 1 root root 4096 Oct 29 09:33 uevent
-$cat current_clocksource 
+$cat current_clocksource
 kvm-clock
-$cat available_clocksource 
-kvm-clock tsc acpi_pm 
+$cat available_clocksource
+kvm-clock tsc acpi_pm
 ```
 
 修改时钟设备：
@@ -377,7 +574,7 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsysca
 
 `vDSO` (**virtual dynamic shared object**) is a kernel mechanism for exporting a carefully selected set of kernel space routines to user space applications so that applications can call these kernel space routines in-process, without incurring the performance penalty of a mode switch from user mode to kernel mode that is inherent when calling these same kernel space routines by means of the system call interface.
 
-`vsyscall` is an obsolete concept and replaced by the `vDSO` or `virtual dynamic shared object`. The main difference between the `vsyscall` and `vDSO` mechanisms is that `vDSO` maps memory pages into each process in a shared object form, but `vsyscall` is static in memory and has the same address every time. For the x86_64 architecture it is called `linux-vdso.so.1`. All userspace applications linked with this shared library via the `glibc`. 
+`vsyscall` is an obsolete concept and replaced by the `vDSO` or `virtual dynamic shared object`. The main difference between the `vsyscall` and `vDSO` mechanisms is that `vDSO` maps memory pages into each process in a shared object form, but `vsyscall` is static in memory and has the same address every time. For the x86_64 architecture it is called `linux-vdso.so.1`. All userspace applications linked with this shared library via the `glibc`.
 
 ```
  $ ldd /bin/uname
@@ -608,7 +805,7 @@ int main()
 ```
 
 ```
-$ strace -c ./a.out 
+$ strace -c ./a.out
 % time     seconds  usecs/call     calls    errors syscall
 ------ ----------- ----------- --------- --------- ----------------
   0.00    0.000000           0         3           read
@@ -626,7 +823,7 @@ $ strace -c ./a.out
 ------ ----------- ----------- --------- --------- ----------------
 100.00    0.000000                    46           total
 
-$ ltrace -c ./a.out 
+$ ltrace -c ./a.out
 ^C% time     seconds  usecs/call     calls      function
 ------ ----------- ----------- --------- --------------------
  56.12    8.085410     8085410         1 __libc_start_main

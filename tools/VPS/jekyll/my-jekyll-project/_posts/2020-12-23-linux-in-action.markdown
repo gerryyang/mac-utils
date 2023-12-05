@@ -8,7 +8,243 @@ categories: Linux
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Linux操作系统
+
+# Linux 操作系统
+
+## /proc (process information pseudo-filesystem)
+
+refer: https://man7.org/linux/man-pages/man5/proc.5.html
+
+The proc filesystem is a pseudo-filesystem which provides an interface to kernel data structures.  It is commonly mounted at `/proc`. Typically, it is mounted automatically by the system, but it can also be mounted manually using a command such as:
+
+``` bash
+mount -t proc proc /proc
+```
+Most of the files in the proc filesystem are read-only, but some files are writable, allowing kernel variables to be changed.
+
+Underneath `/proc`, there are the following general groups of files and subdirectories:
+
+###  `/proc/[pid]`
+
+Each one of these subdirectories contains files and subdirectories exposing information about the **process** with the corresponding process ID.
+
+Underneath each of the `/proc/[pid]` directories, a task subdirectory contains subdirectories of the form `task/[tid]`, which contain corresponding information about each of the **threads** in the process, where tid is the kernel thread ID of the thread.
+
+### `/proc/[tid]`
+
+Each one of these subdirectories contains files and subdirectories exposing information about the **thread** with the corresponding thread ID.  The contents of these directories are the same as the corresponding `/proc/[pid]/task/[tid]` directories.
+
+## `/proc/self`
+
+When a process accesses this magic symbolic link, it resolves to the process's own `/proc/[pid]` directory.
+
+## `/proc/thread-self`
+
+When a thread accesses this magic symbolic link, it resolves to the process's own `/proc/self/task/[tid]` directory.
+
+## `/proc/[pid]/stat`
+
+Status information about the process.  This is used by `ps(1)`.  It is defined in the kernel source file `fs/proc/array.c`.
+
+```
+~$cat /proc/3100717/stat
+3100717 (unittestsvr) S 1 3100716 3100716 0 -1 4202560 1123163 0 56 0 1377525 296772 0 0 20 0 8 0 4715620677 3944722432 109878 18446744073709551615 4194304 47321236 140734650356688 140734650335168 140232066947133 0 0 3215367 18976 18446744073709551615 0 0 17 4 0 0 49 0 0 49420928 50225480 119697408 140734650366993 140734650367104 140734650367104 140734650392510 0
+```
+
+(1) **pid**  %d
+
+    The process ID.
+
+(2) **comm**  %s
+
+    The filename of the executable, in parentheses. Strings longer than `TASK_COMM_LEN (16)` characters (including the terminating null byte) are silently truncated. This is visible whether or not the executable is swapped out.
+
+(3) **state**  %c
+
+    One of the following characters, indicating process state:
+
+    `R`  Running
+
+    `S`  Sleeping in an interruptible wait
+
+    `D`  Waiting in uninterruptible disk sleep
+
+    `Z`  Zombie
+
+    `T`  Stopped (on a signal) or (before Linux 2.6.33) trace stopped
+
+    `t`  Tracing stop (Linux 2.6.33 onward)
+
+    `W`  Paging (only before Linux 2.6.0)
+
+    `X`  Dead (from Linux 2.6.0 onward)
+
+    `x`  Dead (Linux 2.6.33 to 3.13 only)
+
+    `K`  Wakekill (Linux 2.6.33 to 3.13 only)
+
+    `W`  Waking (Linux 2.6.33 to 3.13 only)
+
+    `P`  Parked (Linux 3.9 to 3.13 only)
+
+(4) **ppid**  %d
+
+    The PID of the parent of this process.
+
+(5) **pgrp**  %d
+
+    The process group ID of the process.
+
+(6) **session**  %d
+
+    The session ID of the process.
+
+(7) **tty_nr**  %d
+
+    The controlling terminal of the process.
+
+(8) **tpgid**  %d
+
+    The ID of the foreground process group of the controlling terminal of the process.
+
+(9) **flags**  %u
+
+    The kernel flags word of the process. For bit meanings, see the PF_* defines in the Linux kernel source file include/linux/sched.h. Details depend on the kernel version.
+
+(10) **minflt**  %lu
+
+    The number of minor faults the process has made which have not required loading a memory page from disk.
+
+(11) **cminflt**  %lu
+
+    The number of minor faults that the process's waited-for children have made.
+
+(12) **majflt**  %lu
+
+    The number of major faults the process has made which have required loading a memory page from disk.
+
+(13) **cmajflt**  %lu
+
+    The number of major faults that the process's waited-for children have made.
+
+(14) **utime**  %lu
+
+        Amount of time that this process has been scheduled
+        in user mode, measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).  This includes guest time,
+        guest_time (time spent running a virtual CPU, see
+        below), so that applications that are not aware of
+        the guest time field do not lose that time from
+        their calculations.
+
+(15) **stime**  %lu
+
+        Amount of time that this process has been scheduled
+        in kernel mode, measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).
+
+(16) **cutime**  %ld
+
+        Amount of time that this process's waited-for
+        children have been scheduled in user mode, measured
+        in clock ticks (divide by `sysconf(_SC_CLK_TCK)`).
+        (See also times(2).)  This includes guest time,
+        cguest_time (time spent running a virtual CPU, see
+        below).
+
+(17) **cstime**  %ld
+
+        Amount of time that this process's waited-for
+        children have been scheduled in kernel mode,
+        measured in clock ticks (divide by
+        `sysconf(_SC_CLK_TCK)`).
+
+(18) **priority**  %ld
+
+        (Explanation for Linux 2.6) For processes running a
+        real-time scheduling policy (policy below; see
+        sched_setscheduler(2)), this is the negated
+        scheduling priority, minus one; that is, a number
+        in the range -2 to -100, corresponding to real-time
+        priorities 1 to 99.  For processes running under a
+        non-real-time scheduling policy, this is the raw
+        nice value (setpriority(2)) as represented in the
+        kernel.  The kernel stores nice values as numbers
+        in the range 0 (high) to 39 (low), corresponding to
+        the user-visible nice range of -20 to 19.
+
+(19) **nice**  %ld
+
+    The nice value (see setpriority(2)), a value in the
+    range 19 (low priority) to -20 (high priority).
+
+(20) **num_threads**  %ld
+
+    Number of threads in this process (since Linux
+    2.6).  Before kernel 2.6, this field was hard coded
+    to 0 as a placeholder for an earlier removed field.
+
+(21) **itrealvalue**  %ld
+
+    The time in jiffies before the next SIGALRM is sent
+    to the process due to an interval timer.  Since
+    kernel 2.6.17, this field is no longer maintained,
+    and is hard coded as 0.
+
+(22) **starttime**  %llu
+
+    The time the process started after system boot.  In
+    kernels before Linux 2.6, this value was expressed
+    in jiffies.  Since Linux 2.6, the value is
+    expressed in clock ticks (divide by
+    sysconf(_SC_CLK_TCK)).
+
+...
+
+(52) **exit_code**  %d  (since Linux 3.5)  [PT]
+
+        The thread's exit status in the form reported by
+        waitpid(2).
+
+
+
+
+
+
+
+## `/proc/[pid]/statm`
+
+Provides information about memory usage, measured in **pages**. The columns are:
+
+```
+$getconf -a|grep -i page
+PAGESIZE                           4096
+PAGE_SIZE                          4096
+_AVPHYS_PAGES                      157508
+_PHYS_PAGES                        32857825
+```
+
+```
+$cat /proc/1457274/statm
+1079417 108417 5394 10532 0 887414 0
+```
+
+size       (1) total program size
+                             (same as `VmSize` in `/proc/[pid]/status`)
+resident   (2) resident set size
+                             (inaccurate; same as `VmRSS` in `/proc/[pid]/status`)
+shared     (3) number of resident shared pages
+                             (i.e., backed by a file)
+                             (inaccurate; same as `RssFile+RssShmem` in
+                             `/proc/[pid]/status`)
+text       (4) text (code)
+lib        (5) library (unused since Linux 2.6; always 0)
+data       (6) data + stack
+dt         (7) dirty pages (unused since Linux 2.6; always 0)
+
+Some of these values are **inaccurate** because of a kernel-internal scalability optimization.  If accurate values are required, use `/proc/[pid]/smaps` or `/proc/[pid]/smaps_rollup` instead, which are much slower but provide accurate, detailed information.
+
+
 
 ## Signal
 
@@ -50,6 +286,15 @@ How Linux programs call functions in the Linux kernel.
   * rcx, r11 被破坏（它们分别被 syscall 指令用来保存返回地址和 rflags）
   * 其他寄存器的值保留
 
+
+[x86-64 函数调用约定](https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI):
+
+| Argument Type | Registers
+| -- | --
+| Integer/Pointer Arguments 1-6 | RDI, RSI, RDX, RCX, R8, R9
+| Floating Point Arguments 1-8 | XMM0 - XMM7
+| Excess Arguments | Stack
+| Static chain pointer | R10
 
 * [The Definitive Guide to Linux System Calls](http://blog.packagecloud.io/eng/2016/04/05/the-definitive-guide-to-linux-system-calls)
 * [Searchable Linux Syscall Table for x86 and x86_64](https://filippo.io/linux-syscall-table/)
@@ -213,6 +458,9 @@ ps -C syslogd -o pid=
 
 # Print only the name of PID 42:
 ps -q 42 -o comm=
+
+# 查看进程精确的启动时间
+ps -eo pid,lstart,cmd | grep your_process_name
 ```
 
 
@@ -368,6 +616,27 @@ cpu_used2 = user + nice + system + irq + softirq
 ```
 
 采集策略：每分钟会采集4次15秒内的CPU平均使用率。为了避免漏采集CPU峰值，取这一分钟内四次采集的最大值上报。
+
+
+## CPU进程使用率采集算法
+
+```
+$cat /proc/3100717/stat
+3100717 (unittestsvr) S 1 3100716 3100716 0 -1 4202560 1123163 0 56 0 1377525 296772 0 0 20 0 8 0 4715620677 3944722432 109878 18446744073709551615 4194304 47321236 140734650356688 140734650335168 140232066947133 0 0 3215367 18976 18446744073709551615 0 0 17 4 0 0 49 0 0 49420928 50225480 119697408 140734650366993 140734650367104 140734650367104 140734650392510 0
+```
+
+参考 https://man7.org/linux/man-pages/man5/proc.5.html，其中 14 -17 四个参数中分别表示进程的 utime，stime，cutime，cstime。
+
+公式：ProcessTime = utime + stime + cutime + cstime
+
+每个进程的 CPU 利用率的计算方法如下：
+
+(1) T1 时刻读取 /proc/stat，计算 sum1，读取 /proc/pid/stat，利用公式二计算 pt1
+
+(2) T2 时刻读取 /proc/stat，计算 sum2，读取 /proc/pid/stat，利用公式二计算 pt2
+
+(3) 进程 CPU 利用率 = (pt2 - pt1) * 100 /（sum2 - sum1）
+
 
 
 # 内存
@@ -682,6 +951,8 @@ https://en.wikipedia.org/wiki/Netcat#Test_if_UDP_port_is_open:_simple_UDP_server
 
 # 磁盘IO
 
+## iostat
+
 ```
 $ iostat -x 10
 
@@ -747,6 +1018,25 @@ vdk               0.00     0.50    0.00    0.20     0.00     2.80    28.00     0
 * 如果响应时间超过了用户可以容许的范围，这时可以考虑更换更快的磁盘，调整内核elevator算法，优化应用，或者升级 CPU。
 * 如果`%util`很大，而`rkB/s`和`wkB/s`很小，一般是因为磁盘存在较多的磁盘随机读写，最好把磁盘随机读写优化成顺序读写。
 
+
+## nfsiostat
+
+使用 iostat -x 命令时没有看到 CFS 文件系统的信息，可能是因为 iostat 命令默认只显示本地设备的信息，而不包括网络文件系统（NFS）等远程文件系统。nfsiostat 是一个专门用于监视 NFS 文件系统的工具，可以显示每个 NFS 服务器的 I/O 使用率和延迟时间等信息。
+
+
+```
+# nfsiostat 5
+
+11.147.151.12:/log/121 mounted on /var/lib/kubelet/pods/eb7854e4-a01a-4a95-8f6e-ccb761ca0e4d/volumes/kubernetes.io~nfs/friendsvr-121-pv-log:
+
+   op/s         rpc bklog
+  35.93    0.00
+read:            ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.126   1.496  11.860       0 (0.0%)    2.875   2.945
+write:           ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                 11.843 434.621  36.698       0 (0.0%)   12.302  15.766
+```
+
 ## 磁盘IO采集算法
 
 通过`/proc/diskstats`文件计算得到。
@@ -785,23 +1075,512 @@ svctm的计算方式：
 delta(time spent doing I/Os) / (delta(reads completed) + delta(writes completed))
 ```
 
+
+# 信号处理
+
+Signals are very useful feature in linux to send notification from one process to another and from the kernel to the process. Signals are sent in some error cases (accessing wrong memory address, bus error, floating point error, …) and also to inform the user application (timer expired, child process finished, IO is ready, ….)
+
+## [问题：What happens to a multithreaded Linux process if it gets a signal](https://unix.stackexchange.com/questions/225687/what-happens-to-a-multithreaded-linux-process-if-it-gets-a-signal)
+
+**Question:**
+
+If a Unix (Posix) process receives a signal, a signal handler will run.
+
+What will happen to it in a multithreaded process? Which thread receives the signal?
+
+In my opinion, the signal API should be extended to handle that (i.e. the thread of the signal handler should be able to be determined), but hunting for infos on the net I only found year long flames on the linux kernel mailing list and on different forums. As I understood, Linus' concept differed from the Posix standard, and first some compat layer was built, but now the Linux follows the posix model.
+
+What is the current state?
+
+**Answer:**
+
+The entry in POSIX on "[Signal Generation and Delivery](http://pubs.opengroup.org/onlinepubs/9699919799/xrat/V4_xsh_chap02.html#tag_22_02_04_02)" in "Rationale: System Interfaces General Information" says
+
+> Signals generated for a process are delivered to only one thread. Thus, if more than one thread is eligible to receive a signal, one has to be chosen. The choice of threads is left entirely up to the implementation both to allow the widest possible range of conforming implementations and to give implementations the freedom to deliver the signal to the "easiest possible" thread should there be differences in ease of delivery between different threads.
+
+From the [signal(7)](http://man7.org/linux/man-pages/man7/signal.7.html) manual on a Linux system:
+
+> A signal may be generated (and thus pending) for a process as a whole (e.g., when sent using `kill(2)`) or for a specific thread (e.g., certain signals, such as `SIGSEGV` and `SIGFPE`, generated as a consequence of executing a specific machine-language instruction are thread directed, as are signals targeted at a specific thread using `pthread_kill(3)`). A process-directed signal may be delivered to any one of the threads that does not currently have the signal blocked. If more than one of the threads has the signal unblocked, then the kernel chooses an arbitrary thread to which to deliver the signal.
+
+And in [pthreads(7)](http://man7.org/linux/man-pages/man7/pthreads.7.html):
+
+> Threads have distinct alternate signal stack settings. However, a new thread's alternate signal stack settings are copied from the thread that created it, so that the threads initially share an alternate signal stack (fixed in kernel 2.6.16).
+
+From the [pthreads(3)](http://man.openbsd.org/pthreads.3) manual on an OpenBSD system (as an example of an alternate approach):
+
+> Signals handlers are normally run on the stack of the currently executing thread.
+
+(I'm currently not aware of how this is handled when multiple threads are executing concurrently on a multi-processor machine)
+
+The older LinuxThread implementation of POSIX threads only allowed distinct single threads to be targeted by signals. From [pthreads(7)](http://man7.org/linux/man-pages/man7/pthreads.7.html) on a Linux system:
+
+> LinuxThreads does not support the notion of process-directed signals: signals may be sent only to specific threads.
+
+
+Extending the accepted answer, there is a more practical view, what I found here - [LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
+
+The essence is the following:
+
+> Signal handlers are per-process, but signal masks are per-thread.
+
+1. Thus, if we install/uninstall a signal handler (with signal() or sigaction()) on any thread, it will affect all of them.
+
+2. If a process gets a signal, the handler will be executed only on a single thread. This thread is pseudo-randomly selected among them, whose signal mask accepts it. My experiments show that it is always the thread with the least pid. (Comment says it might by also the thread created first. Both would match the posix standard, so do not trust it in your code.)
+
+3. Signals sent to any thread are considered as signal sent to the main process. Thus, if a thread gets a signal, it is quite possible that an other thread will execute the handler. Best if we see that as if threads (identified by tids, thread ids) would be considered as masked processes (identified by pids), and signals sent to a tid would be forwarded to their pid.
+
+4. For the execution of a signal handler, in its signal mask the given signal number is automatically masked. This is to prevent stacked signal handler execution in a signal burst. This can be changed with the `SA_NODEFER` flag of the `sigaction(...)` call.
+
+5. (3) and (4) results that in the case of a signal burst, the system distributes the signal handlers possibly most parallelly.
+
+6. However, if we have set up the sigaction with `SA_NODEFER`, always the same thread will get the signal and they will stack.
+
+## [测试程序：LINUX – HANDLING SIGNALS IN A MULTITHREADED APPLICATION](https://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.Y_jJQexBw0Q)
+
+### The signal context
+
+While a signal arrives on a single threaded process, the thread complete the current instruction, jump to the signal handler and return when it finish.
+
+Signal handlers are per process, signal masks are per thread
+
+On a multithreaded application – the signal handler execute in one of the thread contexts. We can’t predict the thread that will be chosen to run the signal handler:
+
+测试程序：
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+void *threadfn1(void *p)
+{
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<10;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+Compile and run the app, you will see periodic output for each thread:
+
+```
+thread1
+thread2
+thread3
+thread1
+thread2
+thread3
+...
+```
+
+Now send a signal to the process using the kill command:
+
+```
+# kill -37 [pid]
+```
+
+The kernel choose one thread and run the signal handler in its context. In my case thread 1 selected so the output for 10 times is:
+
+```
+signal
+thread2
+thread3
+signal
+thread2
+thread3
+...
+```
+
+This behaviour can be problematic in case the selected thread is an important task.
+
+(Note that if the signal is an exception (SIGSEGV, SIGFPE, SIGBUS, SIGILL, …) the signal will be caught by the thread doing the exception)
+
+We can’t choose the selected thread but we can do a little trick to hack the system to choose the thread we want. The trick is to block the signal on all threads except one thread – the one we want  to run the signal in:
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+void mask_sig(void)
+{
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGRTMIN+3);
+
+    pthread_sigmask(SIG_BLOCK, &mask, NULL);
+
+}
+
+void *threadfn1(void *p)
+{
+	mask_sig();
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	mask_sig();
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<10;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+We block the signal on threads 1,2 so the system will deliver the signal to thread 3
+
+Run the app, send the signal with kill command. The output:
+
+```
+signal
+thread1
+thread2
+signal
+thread1
+thread2
+...
+```
+
+Another trick is to create a thread for signal handling that will be blocked using sigwait , waiting for signal.
+
+### Behind the scenes
+
+Inside the kernel, each thread has a `task_struct` object defines in `sched.h`:
+
+All the signals fields are stored per thread. Actually , there is no structure for the process , all the threads on the same process points to the same memory and files tables so the kernel need to choose a thread to deliver the signal to:
+
+``` cpp
+struct task_struct {
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	/*
+	 * For reasons of header soup (see current_thread_info()), this
+	 * must be the first element of task_struct.
+	 */
+	struct thread_info		thread_info;
+#endif
+	/* -1 unrunnable, 0 runnable, >0 stopped: */
+	volatile long			state;
+...
+...
+...
+	/* Signal handlers: */
+	struct signal_struct		*signal;
+	struct sighand_struct		*sighand;
+	sigset_t			blocked;
+	sigset_t			real_blocked;
+	/* Restored if set_restore_sigmask() was used: */
+	sigset_t			saved_sigmask;
+	struct sigpending		pending;
+	unsigned long			sas_ss_sp;
+	size_t				sas_ss_size;
+	unsigned int			sas_ss_flags;
+...
+...
+}
+```
+
+### Sending signals to a thread
+
+Another option is to use `pthread_kill(3)` to send a signal directly to a thread. This can be done only in the same process. For example:
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<pthread.h>
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+
+void *threadfn1(void *p)
+{
+	while(1){
+		printf("thread1\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn2(void *p)
+{
+	while(1){
+		printf("thread2\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+void *threadfn3(void *p)
+{
+	while(1){
+		printf("thread3\n");
+		sleep(2);
+	}
+	return 0;
+}
+
+
+void handler(int signo, siginfo_t *info, void *extra)
+{
+	int i;
+	for(i=0;i<5;i++)
+	{
+		puts("signal");
+		sleep(2);
+	}
+}
+
+void set_sig_handler(void)
+{
+    struct sigaction action;
+
+
+    action.sa_flags = SA_SIGINFO;
+    action.sa_sigaction = handler;
+
+    if (sigaction(SIGRTMIN + 3, &action, NULL) == -1) {
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+}
+
+int main()
+{
+	pthread_t t1,t2,t3;
+	set_sig_handler();
+	pthread_create(&t1,NULL,threadfn1,NULL);
+	pthread_create(&t2,NULL,threadfn2,NULL);
+	pthread_create(&t3,NULL,threadfn3,NULL);
+	sleep(3);
+	pthread_kill(t1,SIGRTMIN+3);
+	sleep(15);
+	pthread_kill(t2,SIGRTMIN+3);
+	pthread_kill(t3,SIGRTMIN+3);
+	pthread_exit(NULL);
+	return 0;
+}
+```
+
+We start with creating 3 threads, then we send a signal to thread 1, wait for the signal handler to finish then send signals both to threads 2 and 3 , they will run the signal handler at the same time so in this case we will see :
+
+```
+signal
+signal
+thread1
+...
+```
+
+
+
 # Linux/UNIX Programming Interface
 
 
-## clock_gettime
+## clock_getres/clock_gettime/clock_settime
 
-https://linux.die.net/man/3/clock_gettime
+``` cpp
+#include <time.h>
+
+int clock_getres(clockid_t clk_id, struct timespec *res);
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
+int clock_settime(clockid_t clk_id, const struct timespec *tp);
+```
+
+The function `clock_getres()` finds the resolution (precision) of the specified clock `clk_id`, and, if `res` is non-NULL, stores it in the struct `timespec` pointed to by `res`. The resolution of clocks depends on the implementation and cannot be configured by a particular process. If the time value pointed to by the argument tp of `clock_settime()` is not a multiple of `res`, then it is truncated to a multiple of `res`.
+
+The functions `clock_gettime()` and `clock_settime()` retrieve and set the time of the specified clock `clk_id`.
+
+The `res` and `tp` arguments are `timespec` structs, as specified in `<time.h>`:
+
+``` cpp
+struct timespec {
+        time_t   tv_sec;        /* seconds */
+        long     tv_nsec;       /* nanoseconds */
+};
+```
+
+The `clk_id` argument is the identifier of the particular clock on which to act. A clock may be system-wide and hence visible for all processes, or per-process if it measures time only within a single process.
+
+* https://linux.die.net/man/3/clock_gettime
 
 ## pthread_setname_np
 
-By default, all the threads created using `pthread_create()` inherit the program name.  The `pthread_setname_np()` function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.
+``` cpp
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <pthread.h>
+
+int pthread_setname_np(pthread_t thread, const char *name);
+int pthread_getname_np(pthread_t thread, char *name, size_t len);
+```
+
+By default, all the threads created using `pthread_create()` inherit the program name.  The [pthread_setname_np()](https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html) function can be used to set a unique name for a thread, which can be useful for debugging multithreaded applications.  The thread name is a meaningful C language string, whose length is restricted to `16 characters`, including the terminating null byte ('\0').  The thread argument specifies the thread whose name is to be changed; name specifies the new name.
 
 `pthread_setname_np()` internally writes to the thread-specific comm file under the /proc filesystem: `/proc/self/task/[tid]/comm`.
 
 > Note: These functions are nonstandard GNU extensions; hence the suffix "_np" (nonportable) in the names.
 
+## pthread_kill
 
-* https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
+``` cpp
+#include <signal.h>
+int pthread_kill(pthread_t thread, int sig);
+```
+
+The [pthread_kill()](https://man7.org/linux/man-pages/man3/pthread_kill.3.html) function sends the signal sig to thread, a thread in the same process as the caller. The signal is asynchronously directed to thread. If sig is 0, then no signal is sent, but error checking is still performed.
+
+POSIX.1-2008 recommends that if an implementation detects the use of a thread ID after the end of its lifetime, `pthread_kill()` should return the error **ESRCH**. The glibc implementation returns this error in the cases where an invalid thread ID can be detected.
+
+
+## malloc_trim
+
+``` cpp
+#include <malloc.h>
+int malloc_trim(size_t pad);
+```
+
+[malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html) function **attempts to release free memory from the heap** (by calling `sbrk(2)` or `madvise(2)` with suitable arguments). This function is a GNU extension.
+
+The `pad` argument specifies **the amount of free space to leave untrimmed at the top of the heap**.  If this argument is 0, only the minimum amount of memory is maintained at the top of the heap (i.e., one page or less). A nonzero argument can be used to maintain some trailing space at the top of the heap in order to allow future allocations to be made without having to extend the heap with `sbrk(2)`.
+
+## madvise
+
+``` cpp
+#include <sys/mman.h>
+int madvise(void *addr, size_t length, int advice);
+```
+
+The [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) system call is used to give advice or directions to the kernel about the address range beginning at address addr and with size length bytes In most cases, the goal of such advice is **to improve system or application performance**.
+
+
+
 
 # 问题定位
 
@@ -830,7 +1609,51 @@ More: man top
 
 ## coredump
 
+`/proc/sys/kernel/core_pattern` 文件用于定义 Linux 操作系统在程序崩溃时生成 core 文件的名称和位置。它还可以用于定义一个处理程序，该处理程序在程序崩溃时被调用，用于收集和处理 core 文件。
+
+``` bash
+cat /proc/sys/kernel/core_pattern
+|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %e
 ```
+
+`|` 符号表示这是一个外部处理程序，而不是一个普通的文件名模板。在这种情况下，操作系统将调用 `/usr/lib/systemd/systemd-coredump` 处理程序，而不是直接将 core 文件写入磁盘。
+
+`systemd-coredump` 是一个由 systemd 提供的处理程序，用于收集和处理 core 文件。当一个程序崩溃时，操作系统将调用此处理程序，并传递一些参数。这些参数包括：
+
+```
+%P：崩溃进程的进程 ID。
+%u：崩溃进程的用户 ID。
+%g：崩溃进程的组 ID。
+%s：导致崩溃的信号编号。
+%t：崩溃发生时的时间戳（Unix 时间）。
+%c：核心文件的大小限制（ulimit）。
+%h：主机名。
+%e：崩溃进程的可执行文件名。
+```
+
+`systemd-coredump` 可以将 core 文件存储在文件系统中，也可以将它们存储在 systemd journal 中。此外，`systemd-coredump` 还可以自动压缩 core 文件，以减少存储空间占用。
+
+要查看由 `systemd-coredump` 收集的 core 文件，可以使用 `coredumpctl` 工具。例如，要列出所有收集到的 core 文件，可以运行：
+
+``` bash
+coredumpctl list
+```
+
+要获取特定 core 文件的详细信息，可以使用：
+
+``` bash
+coredumpctl info <PID>
+```
+
+其中 `<PID>` 是崩溃进程的进程 ID。
+
+请注意，要使用 `systemd-coredump` 和 `coredumpctl`，需要在使用 systemd 的 Linux 发行版上运行。不同的发行版可能有不同的默认配置和工具。请根据您的发行版查找适当的文档以获取更多详细信息。
+
+
+----------------------------------------------------------------
+
+
+``` bash
 ulimit -c unlimited
 
 # 自定义路径格式
@@ -1034,6 +1857,12 @@ $9 = (void *) 0x55555555478a <_start+42>
 (gdb) p buffer[8]
 $10 = (void *) 0x0
 ```
+
+优化方案：
+
+* [C++的backtrace](https://blog.owent.net/2018/1801)
+
+
 
 ## assert
 
@@ -1367,6 +2196,21 @@ Cannot get wake-on-lan settings: Operation not permitted
         Link detected: yes
 ```
 
+## yum (CentOS)
+
+查看安装包信息：
+
+```
+rpm -qa | grep redis
+redis-3.2.10-2.el7.x86_64
+```
+
+查看安装包路径：
+
+```
+rpm -ql redis-3.2.10-2.el7.x86_64
+```
+
 ## scl
 
 Setup and run software from Software Collection environment. See: https://linux.die.net/man/1/scl
@@ -1405,6 +2249,552 @@ devtoolset-9的配置文件路径：/opt/rh/devtoolset-9/root/usr/include/c++/9/
 
 在当前会话中打开新的会话窗口使用 gcc9 开发环境 `scl enable devtoolset-9 /bin/bash`
 在编译脚本中执行时，在执行命令前通过 `source scl_source enable devtoolset-9`
+
+
+## eu-readelf
+
+```
+Usage: eu-readelf [OPTION...] FILE...
+```
+
+Print information from ELF file in human-readable form.
+
+
+## xxd
+
+make a hexdump or do the reverse.
+
+```
+$xxd --help
+Usage:
+       xxd [options] [infile [outfile]]
+    or
+       xxd -r [-s [-]offset] [-c cols] [-ps] [infile [outfile]]
+Options:
+    -a          toggle autoskip: A single '*' replaces nul-lines. Default off.
+    -b          binary digit dump (incompatible with -ps,-i,-r). Default hex.
+    -c cols     format <cols> octets per line. Default 16 (-i: 12, -ps: 30).
+    -E          show characters in EBCDIC. Default ASCII.
+    -g          number of octets per group in normal output. Default 2.
+    -h          print this summary.
+    -i          output in C include file style.
+    -l len      stop after <len> octets.
+    -ps         output in postscript plain hexdump style.
+    -r          reverse operation: convert (or patch) hexdump into binary.
+    -r -s off   revert with <off> added to file positions found in hexdump.
+    -s [+][-]seek  start at <seek> bytes abs. (or +: rel.) infile offset.
+    -u          use upper case hex letters.
+    -v          show version: "xxd V1.10 27oct98 by Juergen Weigert".
+```
+
+## nfsiostat
+
+`nfsiostat` 是一个用于监视 NFS（Network File System）I/O 性能的命令行工具。它可以显示 NFS 客户端和服务器上的 I/O 统计信息，包括读写操作的数量、传输速率和延迟等。
+
+``` bash
+sudo yum install nfs-utils
+```
+
+显示 NFS 客户端上的 I/O 统计信息，包括读写操作的数量、传输速率和延迟等。
+
+``` bash
+$nfsiostat
+
+9.134.56.11:/data1/share/tlinux mounted on /tools:
+
+   op/s         rpc bklog
+   0.65    0.00
+read:            ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.000   0.000 318.509       0 (0.0%)    4.600   5.000
+write:           ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
+                  0.000   0.000   0.000       0 (0.0%)    0.000   0.000
+```
+
+
+## netcat (nc)
+
+在本地启动一个监听 TCP 端口 `8080` 的 `netcat` 服务，并将接收到的数据输出到终端
+
+``` bash
+nc -l 8080
+```
+
+在本地计算机上启动一个监听 TCP 端口 `8080` 的 `netcat` 服务，并将接收到的数据保存到名为 `received_data.txt` 的文件
+
+``` bash
+nc -l 8080 > received_data.txt
+```
+
+连接到名为 `remote.host.com` 的远程主机上的 TCP 端口 `8080`，并向其发送字符串 `"Hello, World!"`
+
+``` bash
+echo "Hello, World!" | nc remote.host.com 8080
+```
+
+将连接到名为 `remote.host.com` 的远程主机上的 TCP 端口 `8080`，并从名为 `data_to_send.txt` 的文件中读取数据并将其发送到远程主机
+
+``` bash
+nc remote.host.com 8080 < data_to_send.txt
+```
+
+
+## ldconfig
+
+列出系统中已安装的所有动态库及其版本信息
+
+``` bash
+ldconfig -p
+```
+
+## rsync
+
+``` bash
+# 将 /a/b/file.txt 文件保持目录层级复制到 tmp 目录下
+mkdir -p tmp
+rsync -avz --relative ./a/b/file.txt tmp
+```
+
+* `-avz` 选项表示以归档模式拷贝文件，保留文件属性和权限
+* `--relative` 选项表示保持相对路径结构
+
+
+## bpftrace
+
+bpftrace is a high-level tracing language for Linux enhanced Berkeley Packet Filter (eBPF) available in recent Linux kernels (4.x).
+
+EXAMPLES
+
+```
+bpftrace -l '*sleep*'
+        List probes containing "sleep".
+
+bpftrace -e 'kprobe:do_nanosleep { printf("PID %d sleeping\n", pid); }'
+        Trace processes calling sleep.
+
+bpftrace -c 'sleep 5' -e 'kprobe:do_nanosleep { printf("PID %d sleeping\n", pid); }'
+        run "sleep 5" in a new process and then trace processes calling sleep.
+
+bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm]=count(); }'
+        Count syscalls by process name.
+```
+
+FURTHER READING
+
+The official documentation can be found here: https://github.com/iovisor/bpftrace/blob/master/docs
+
+## true
+
+true - do nothing, successfully
+
+```
+$ which true
+/bin/true
+$ true
+$ echo $?
+0
+```
+
+## command -v
+
+在Linux下，`command -v`命令用于查找并显示给定命令的路径。它可以帮助你确定一个命令是否存在于系统中，以及该命令的可执行文件的位置。`command -v`命令与`which`命令类似，但`command -v`是POSIX标准的一部分，因此在不同的Unix-like系统（如Linux、macOS、BSD等）上可用性更高。
+
+当使用`command -v`查询一个命令时，如果该命令存在于系统中，它会输出该命令的路径；如果命令不存在，它不会输出任何内容。
+
+``` bash
+# Check if Bazelisk is already installed
+if command -v bazel &> /dev/null; then
+    echo "Bazelisk is already installed, version: $(bazel --version)"
+else
+    echo "Installing Bazelisk version ${BAZELISK_VERSION}..."
+fi
+```
+
+## 使用`LD_DEBUG`环境变量查看某程序加载so的过程
+
+```
+# 查看帮助
+LD_DEBUG=help ./bin
+
+# display library search paths
+LD_DEBUG=libs ./bin
+
+# 将信息输出到log中
+LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
+```
+
+
+# 第三方工具
+
+## 性能监控
+
+### atop
+
+`atop` 工具是一种性能监控工具，可记录历史资源使用情况以供以后分析。该工具还可以进行实时报告。您可以检索每个进程和线程的 CPU 利用率、内存消耗和磁盘 I/O 的使用情况。atop 工具作为后台负保持活动状态，同时记录统计信息，以便进行长期的服务器分析。默认情况下，统计信息将存储 28 天。
+
+> **注意：** atop 仅在安装后才开始记录数据。在 atop 安装日期之前，无法检索有关过程的历史性能数据。
+
+atop 工具在 `/var/log/atop` 中创建日志文件。这些文件以下列格式命名：`atop_ccyymmdd`。例如，atop_20210902 是 2021 年 9 月 2 日的记录。
+
+要访问日志文件，请运行命令 `atop -r atoplogfilepath`。将 atoplogfilepath 替换为 atop 日志文件的完整路径。命令和日志文件如以下示例所示：
+
+```
+atop -r /var/log/atop/atop_20210902
+
+ATOP - ip-172-20-139-91                2021/09/02  17:03:44                ----------------                 3h33m7s elapsed
+PRC |  sys    6.51s  |  user   7.85s  |  #proc    103  |  #tslpi    81 |  #tslpu     0  |  #zombie    0  |  #exit      0  |
+CPU |  sys     0%  |  user      3%  |  irq       0%  |  idle    197% |  wait      0%  |  ipc notavail  |  curscal   ?%  |
+cpu |  sys     0%  |  user      1%  |  irq       0%  |  idle     98% |  cpu000 w  0%  |  ipc notavail  |  curscal   ?%  |
+cpu |  sys     0%  |  user      1%  |  irq       0%  |  idle     98% |  cpu001 w  0%  |  ipc notavail  |  curscal   ?%  |
+```
+
+在前面的输出示例中，第一个记录的快照是在 `2021/09/02 17:03:44`。要前进到下一个快照，请按键盘上的 `t` 键（小写）。要返回到上一个快照，请按 `T` 键（大写）。
+
+要分析特定时隙，请按 `b` 键，然后输入日期和时间。atop 工具会跳到输入新时间变量中指定的时间：
+
+```
+NET |  lo      ----  |  pcki       2  |  pcko       2  |  sp    0 Mbps |  si    0 Kbps  |  so    0 Kbps  |  erro       0  |
+Enter new time (format [YYYYMMDD]hhmm):
+  PID              TID              RDDSK              WRDSK             WCANCL              DSK             CMD        1/4
+```
+
+可以按快捷键查看不同的统计数据：
+
+| 快捷键 | 说明
+| -- | --
+| g | 通用信息（原定设置值）
+| m | 内存详细信息
+| d | 磁盘详细信息
+| n | 网络详细信息。只有在安装了 netatop 内核模块时，此密钥才有效
+| c | 每个进程的完整命令行
+
+可以使用以下快捷键对进程列表进行排序：
+
+| 快捷键 | 排序依据
+| -- | --
+| C | CPU 活动
+| M | 内存消耗量
+| D | 磁盘活动
+| N | 网络活动。只有在安装了 netatop 内核时，此密钥才有效
+| A | 最活跃的系统资源（自动模式）
+
+> 按 h 键查看帮助文档。
+
+
+
+
+```
+yum install atop
+```
+
+```
+Usage: atop [-flags] [interval [samples]]
+                or
+Usage: atop -w  file  [-S] [-a] [interval [samples]]
+       atop -r [file] [-b [YYYYMMDD]hhmm] [-e [YYYYMMDD]hhmm] [-flags]
+
+        generic flags:
+          -V  show version information
+          -a  show or log all processes (i.s.o. active processes only)
+          -R  calculate proportional set size (PSS) per process
+          -W  determine WCHAN (string) per thread
+          -P  generate parseable output for specified label(s)
+          -Z  no spaces in parseable output for command (line)
+          -L  alternate line length (default 80) in case of non-screen output
+          -f  show fixed number of lines with system statistics
+          -F  suppress sorting of system resources
+          -G  suppress exited processes in output
+          -l  show limited number of lines for certain resources
+          -y  show threads within process
+          -Y  sort threads (when combined with 'y')
+          -1  show average-per-second i.s.o. total values
+
+          -x  no colors in case of high occupation
+          -g  show general process-info (default)
+          -m  show memory-related process-info
+          -d  show disk-related process-info
+          -n  show network-related process-info
+          -s  show scheduling-related process-info
+          -v  show various process-info (ppid, user/group, date/time)
+          -c  show command line per process
+          -o  show own defined process-info
+          -u  show cumulated process-info per user
+          -p  show cumulated process-info per program (i.e. same name)
+          -j  show cumulated process-info per container
+
+          -C  sort processes in order of cpu consumption (default)
+          -M  sort processes in order of memory consumption
+          -D  sort processes in order of disk activity
+          -N  sort processes in order of network activity
+          -E  sort processes in order of GPU activity
+          -A  sort processes in order of most active resource (auto mode)
+
+        specific flags for raw logfiles:
+          -w  write raw data to   file (compressed)
+          -r  read  raw data from file (compressed)
+              symbolic file: y[y...] for yesterday (repeated)
+              file name '-': read raw data from stdin
+          -S  finish atop automatically before midnight (i.s.o. #samples)
+          -b  begin showing data from specified date/time
+          -e  finish showing data after specified date/time
+
+        interval: number of seconds   (minimum 0)
+        samples:  number of intervals (minimum 1)
+
+If the interval-value is zero, a new sample can be
+forced manually by sending signal USR1 (kill -USR1 pid_atop)
+or with the keystroke 't' in interactive mode.
+
+Please refer to the man-page of 'atop' for more details.
+```
+
+* 创建 atop 日志存储目录
+
+```
+mkdir ~/atop_data
+```
+
+* 以下是 atop 的默认配置，可以调整 atop 监控周期，默认 600s 采集一次
+
+```
+$ cat /etc/sysconfig/atop
+LOGOPTS=""
+LOGINTERVAL=600
+LOGGENERATIONS=28
+LOGPATH=/var/log/atop
+```
+
+* 使能和重启 atop
+
+```
+systemctl enable atop.serivce
+systemctl restart atop.service
+```
+
+* 查看日志方法
+
+```
+atop -r atop_20230827
+```
+
+
+refer:
+
+* [如何使用 atop 工具获取 EC2 Linux 实例上进程的历史利用率统计信息？](https://repost.aws/zh-Hans/knowledge-center/ec2-linux-monitor-stats-with-atop)
+
+
+### atopsar
+
+`atopsar` 命令的功能类似于传统的 UNIX sar 命令。您可以使用 atopsar 命令生成各种系统活动报告。
+
+atopsar 命令使用颜色编码和（根据要求）标记来突出显示资源的利用率。关键利用率用红色标记，几乎关键用青色标记。
+
+在以下示例中，使用标志 `-c` 生成有关系统当前 CPU 利用率的报告。以下示例显示了两个结果，相隔一秒钟。
+
+```
+$ atopsar -c 1 2
+
+ip-172-20-139-91  4.14.238-182.422.amzn2.x86_64  #1 SMP Tue Jul 20 20:35:54 UTC 2021  x86_64  2021/09/02
+
+-------------------------- analysis date: 2021/09/02 --------------------------
+
+18:50:16  cpu  %usr %nice %sys %irq %softirq  %steal %guest  %wait %idle  _cpu_
+18:50:17  all     0     0    0    0        0       0      0      0   200
+            0     0     0    0    0        0       0      0      0   100
+            1     0     0    0    0        0       0      0      0   100
+18:50:18  all     0     0    0    0        0       0      0      0   200
+            0     0     0    0    0        0       0      0      0   100
+            1     0     0    0    0        0       0      0      0   100
+```
+
+
+
+
+
+
+
+
+
+## 压缩工具
+
+### [zlib](https://www.zlib.net/)
+
+zlib is designed to be a free, general-purpose, legally unencumbered -- that is, not covered by any patents -- lossless data-compression library for use on virtually any computer hardware and operating system.
+
+
+### [zstd](https://github.com/facebook/zstd)
+
+`Zstandard`, or `zstd` as short version, is a fast lossless compression algorithm, targeting real-time compression scenarios at zlib-level and better compression ratios. It's backed by a very fast entropy stage, provided by [Huff0 and FSE library](https://github.com/Cyan4973/FiniteStateEntropy).
+
+```
+$./zstd -h
+Compress or decompress the INPUT file(s); reads from STDIN if INPUT is `-` or not provided.
+
+Usage: zstd [OPTIONS...] [INPUT... | -] [-o OUTPUT]
+
+Options:
+  -o OUTPUT                     Write output to a single file, OUTPUT.
+  -k, --keep                    Preserve INPUT file(s). [Default]
+  --rm                          Remove INPUT file(s) after successful (de)compression.
+
+  -#                            Desired compression level, where `#` is a number between 1 and 19;
+                                lower numbers provide faster compression, higher numbers yield
+                                better compression ratios. [Default: 3]
+
+  -d, --decompress              Perform decompression.
+  -D DICT                       Use DICT as the dictionary for compression or decompression.
+
+  -f, --force                   Disable input and output checks. Allows overwriting existing files,
+                                receiving input from the console, printing output to STDOUT, and
+                                operating on links, block devices, etc. Unrecognized formats will be
+                                passed-through through as-is.
+
+  -h                            Display short usage and exit.
+  -H, --help                    Display full help and exit.
+  -V, --version                 Display the program version and exit.
+```
+
+[Benchmarks](https://github.com/facebook/zstd#benchmarks)
+
+![zstd](/assets/images/202307/zstd.png)
+
+
+
+
+## [cloc](https://github.com/AlDanial/cloc) - Count Lines of Code
+
+
+* `cloc --show-lang` 显示支持的语言
+* `cloc ./ --exclude-dir=node_modules` 排除某个目录分析
+* `cloc --quiet -by-file ./ --exclude-dir=node_modules --include-lang=Go | grep ".go" | sort -rn -k 4 | head -n 10` 统计代码行数(排除注释)排名前10的go文件
+
+首先 --quiet 是把输出结果精简化了，一些总计的结果给过滤了。然后使用 -by-file 代表统计的时候按照文件统计，而不是按照默认的语言统计， --exclude-dir 表示省略  node_modules 文件夹。 --include-lang 这里直接标记将 Golang 的文件统计出来。上面这些 cloc  的命令就把 ./ 下有哪些 go 文件，每个文件的空格多少行，注释多少行，真正代码多少行都列出来了。然后使用 grep ".go" 把一些噪音输出过滤掉，只留下“文件名\t空格行数\t注释行数\t代码行数”，后面的 sort -rn -k 4 按照第四列（代码行数）倒序排列，并且 head -n 10 显示前10个文件。
+
+
+
+## diskusage
+
+A tool for showing disk usage. (Linux, MacOS and Windows)
+
+https://github.com/chenquan/diskusage
+
+```
+$diskusage .
+Total: 4.514M   /data/home/gerryyang/tools/diskusage
+-------------------------------------------------------------
+ 4.5M  99.9% ┌─ diskusage
+ 2.7K   0.1% └─ README.md
+```
+
+
+
+## 域名解析
+
+### [Dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html)
+
+The DNS subsystem provides a local DNS server for the network, with forwarding of all query types to upstream recursive DNS servers and caching of common record types (A, AAAA, CNAME and PTR, also DNSKEY and DS when DNSSEC is enabled).
+
+### /etc/nsswitch.conf
+
+`/etc/nsswitch.conf` 文件是一个文本配置文件，主要用于控制在 Linux 和类 Unix 系统上进行各种名称服务查找时如何处理不同的数据库。换句话说，它定义了操作系统应该按照什么顺序或源（例如：文件、DNS、LDAP 或其他目录服务）查找主机名、用户、组等信息。
+
+/etc/nsswitch.conf 中的配置与请求的信息类型相关。这包括主机名解析（主机）、用户和组名称解析（passwd 和 group）和其他数据库，如服务、网络和 RPC。
+
+文件格式：
+
+`/etc/nsswitch.conf` 文件以关键字和与其关联的多个服务条目组成。每行开始一个关键字，后跟一个冒号，随后是以空格分隔的一系列服务，按优先级顺序排列。
+
+用法示例：
+
+```
+passwd:         compat
+group:          compat
+shadow:         compat
+
+hosts:          files dns
+networks:       files
+
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+
+netgroup:       nis
+```
+
+* `passwd: compat`、`group: compat` 和 `shadow: compat` 字段定义了在解析用户、组和阴影密码方面使用`/etc/passwd`、`/etc/group` 和 `/etc/shadow` 文件中的兼容信息。
+* `hosts: files dns` 表示在解析主机名时，首先查看 `/etc/hosts` 文件，然后再查询 DNS 服务器。
+* `networks: files` 表示在查找网络名称时，只查询 `/etc/networks` 文件。
+* `protocols: db files`、`services: db files` 等字段表示从相应的 /etc 目录中的数据库文件中查找信息。
+
+备注：
+
+* 修改 `/etc/nsswitch.conf` 文件后，更改会立即生效，无需重新启动任何服务。
+* 请谨慎修改 `/etc/nsswitch.conf` 文件，因为错误的设置可能导致系统无法正常解析主机名、用户或组。始终确保在进行更改之前创建备份。
+
+### /etc/resolv.conf
+
+`/etc/resolv.conf` 是一个文本配置文件，主要用于配置在 Linux 和类 Unix 系统上进行域名解析时使用的 DNS 服务器。该文件受到 GNU C Library 的 `libc` 解析器(`getaddrinfo()` 和 `gethostbyname()` 等函数)和其他低级DNS解析库的支持。
+
+文件格式：
+
+`/etc/resolv.conf` 文件由一系列简单的关键字-值对行组成，每行关键字后面跟一个或多个值，值之间以空格分隔。
+
+用法示例：
+
+```
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+search example.com example.org
+options timeout:2 attempts:3
+```
+
+* 第一行和第二行定义了两个 DNS 服务器。它们分别使用了 Google 公共 DNS 服务器的 IP 地址 8.8.8.8 和 8.8.4.4。解析器将首先查询第一个服务器，在查询失败的情况下尝试第二个服务器。
+* 第三行表示非 FQDN 查询时，系统将按顺序尝试在 example.com 和 example.org 两个域中查找。
+* 第四行为高级选项，定义了查询超时时间为 2 秒，并将尝试最多 3 次。
+
+备注：
+
+* 修改 /etc/resolv.conf 文件后，更改会立即生效，无需重新启动任何服务。
+* 许多现代 Linux 发行版使用 DHCP 客户端、网络管理器或其他网络服务自动管理 /etc/resolv.conf 文件，并可以生成动态版本。要将用户自定义设置添加到由这些服务自动更新的 /etc/resolv.conf 文件，请查阅特定服务的文档。
+
+### /etc/hosts
+
+`/etc/hosts` 文件是一个简单的文本文件，主要用于在没有 DNS 服务器的情况下解析主机名到 IP 地址。当 Linux 系统中的一个程序在进行主机名到 IP 地址的解析时，Linux 将首先检查 /etc/hosts 文件中是否存在与该主机名匹配的条目，之后才会查询 DNS 服务器。这意味着 /etc/hosts 文件中的定义具有优先权，可以用于覆盖 DNS 中的记录。
+
+文件格式：
+
+`/etc/hosts` 文件的格式很简单，每行定义一个主机名到 IP 地址的映射。每行至少包含一个 IP 地址和一个主机名，它们之间用空格或制表符分隔。您还可以在同一行中提供多个主机名（绰号）以在查找某个 IP 地址时使用，每个主机名之间用空格或制表符分隔。
+
+用法示例：
+
+```
+127.0.0.1   localhost
+192.168.1.1 myserver.example.com myserver
+```
+
+* 第一行将 IP 地址 127.0.0.1 映射到主机名 localhost，它表示当前设备。
+* 第二行将 IP 地址 192.168.1.1 映射到主机名 myserver.example.com 和 myserver。在这种情况下，myserver.example.com 是完全限定域名（FQDN），而 myserver 是一个简称，可以在解析这个 IP 地址时使用。
+
+备注：
+
+* 要修改 /etc/hosts 文件，您需要使用 root（管理员）权限。
+* 修改 /etc/hosts 文件后，更改会立即生效，无需重新启动任何服务。
+
+
+
+
+
+
+# [List of Unix commands](https://en.wikipedia.org/wiki/List_of_Unix_commands)
+
+This is a list of **Unix commands** as specified by **IEEE Std 1003.1-2008**, which is part of the [Single UNIX Specification](https://en.wikipedia.org/wiki/Single_UNIX_Specification) (SUS). These commands can be found on Unix operating systems and most Unix-like operating systems.
+
+This is not a comprehensive list of all utilities that existed in the various historic Unix and Unix-like systems, as it excludes utilities that were not mandated by the aforementioned standard.
+
+| Name | Description
+| -- | --
+| [alias](https://en.wikipedia.org/wiki/Alias_(command)) | Define or display aliases
+
 
 
 

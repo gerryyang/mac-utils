@@ -2,7 +2,7 @@
 layout: post
 title:  "Docker in Action"
 date:   2019-02-22 08:00:00 +0800
-categories: 虚拟化
+categories: 云原生
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -45,14 +45,25 @@ Docker底层是基于成熟的`Linux Container(LXC)`技术实现。自Docker 0.9
 
 ![docker_dev_flow_example](/assets/images/201902/docker_dev_flow_example.jpg)
 
-## 常用命令
+# 常用命令
 
 ![docker_cmd](/assets/images/201902/docker_cmd.jpg)
 
+## docker build
 
-## 测试使用 (CentOS)
+https://docs.docker.com/engine/reference/commandline/build/
 
-## 版本信息
+``` bash
+docker build -t vieux/apache:2.0 .
+```
+
+# 容器指标
+
+[cAdvisor](https://github.com/google/cadvisor) (Container Advisor) provides container users an understanding of the resource usage and performance characteristics of their running containers. It is a running daemon that collects, aggregates, processes, and exports information about running containers. Specifically, for each container it keeps resource isolation parameters, historical resource usage, histograms of complete historical resource usage and network statistics. This data is exported by container and machine-wide.
+
+
+# 测试使用 (CentOS)
+
 
 ```
 $docker version
@@ -131,7 +142,7 @@ Live Restore Enabled: false
 Product License: Community Engine
 ```
 
-## 用户管理
+# 用户管理
 
 ```
 sudo service docker start         # 启动 docker 服务
@@ -145,8 +156,53 @@ sudo usermod -aG docker ${USER}   # 当前用户加入 docker 组
 > usermod -aG 是把当前的用户加入 Docker 的用户组。这是因为操作 Docker 必须要有 root 权限，而直接使用 root 用户不够安全，加入 Docker 用户组是一个比较好的选择，这也是 Docker 官方推荐的做法。当然，如果只是为了图省事，也可以直接切换到 root 用户来操作 Docker
 
 
+# Dockerfile
 
-## Q&A
+* https://docs.docker.com/engine/reference/builder/
+
+## [CMD](https://docs.docker.com/engine/reference/builder/#cmd)
+
+The `CMD` instruction has three forms:
+
+```
+CMD ["executable","param1","param2"] (exec form, this is the preferred form)
+CMD ["param1","param2"] (as default parameters to ENTRYPOINT)
+CMD command param1 param2 (shell form)
+```
+
+There can only be one `CMD` instruction in a Dockerfile. If you list more than one `CMD` then only the last `CMD` will take effect.
+
+**The main purpose of a `CMD` is to provide defaults for an executing container**. These defaults can include an executable, or they can omit the executable, in which case you must specify an `ENTRYPOINT` instruction as well.
+
+If `CMD` is used to provide default arguments for the `ENTRYPOINT` instruction, both the `CMD` and `ENTRYPOINT` instructions should be specified with the JSON array format.
+
+> The exec form is parsed as a JSON array, which means that you must use double-quotes (“) around words not single-quotes (‘).
+
+If you use the shell form of the `CMD`, then the `<command>` will execute in `/bin/sh -c`:
+
+```
+FROM ubuntu
+CMD echo "This is a test." | wc -
+```
+
+If you want to **run your `<command>` without a shell** then you must express the command as a JSON array and give the full path to the executable. **This array form is the preferred format of `CMD`**. Any additional parameters must be individually expressed as strings in the array:
+
+```
+FROM ubuntu
+CMD ["/usr/bin/wc","--help"]
+```
+
+If you would like your container to run the same executable every time, then you should consider using `ENTRYPOINT` in combination with `CMD`. See [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint).
+
+> If the user specifies arguments to `docker run` then they will override the default specified in `CMD`.
+
+## [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)
+
+
+
+
+
+# Q&A
 
 ## [How can I find a Docker image with a specific tag in Docker registry on the Docker command line?](https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock)
 
@@ -162,14 +218,25 @@ curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | 
 ```
 
 
-## 历史文章
+# 历史文章
 
 * [Where are Docker images stored? (杂译)]
 * [使用Docker registry镜像创建私有仓库]
 * [Docker使用桥接的通信方案]
 * [github-docker]
 
-## 官方文档
+
+# 书籍
+
+* [Docker - 从入门到实践](https://yeasy.gitbook.io/docker_practice/)
+
+
+# 优化
+
+* [三个技巧，将 Docker 镜像体积减小 90%](https://www.infoq.cn/article/3-simple-tricks-for-smaller-docker-images)
+
+
+# 官方文档
 
 * https://docs.docker.com/engine/reference/run/
 * [Docker Release Notes]
