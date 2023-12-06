@@ -8,6 +8,7 @@ LIBS = -ltesta -ltesta_hook -lplthook -ldl
 TARGET3_LIBS = -ltesta -ltesta_hook -ldl
 TARGET5_LIBS = -ltestb -ltestb_hook -lplthook -ldl
 TARGET6_LIBS = -ltestc -ltestc_hook -lplthook -ldl
+TARGET7_LIBS = -ltestc -ltestc_hook -lplthook -ldl
 
 OPTIONS = -Wl,-rpath,./
 
@@ -30,9 +31,13 @@ TARGET5_OBJS = demo5.o
 TARGET6 = demo6
 TARGET6_OBJS = demo6.o
 
+# hook cpp so function
+TARGET7 = demo7
+TARGET7_OBJS = demo7.o
+
 .PHONY: clean plthook
 
-TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) $(TARGET6)
+TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7)
 
 all: testa testa_hook testb testb_hook testc testc_hook plthook $(TARGET_LIST)
 
@@ -80,6 +85,10 @@ $(TARGET5): $(TARGET5_OBJS)
 $(TARGET6): $(TARGET6_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET6_LIBS) $(OPTIONS)
 	@echo "build $(TARGET6) ok"
+
+$(TARGET7): $(TARGET7_OBJS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET7_LIBS) $(OPTIONS)
+	@echo "build $(TARGET7) ok"
 
 install:
 	@echo "nothing to install"
