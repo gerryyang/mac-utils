@@ -4,9 +4,10 @@ CFLAGS = -Werror -Wall -g -pipe -O2 -Wno-unused-variable -Wno-unused-function
 
 INCLUDE = -I. -I./plthook
 LIBPATH = -L.
-LIBS = -ltesta -ltesta_hook -lplthook -ldl 
-TARGET3_LIBS = -ltesta -ltesta_hook -ldl 
-TARGET5_LIBS = -ltestb -ltestb_hook -lplthook -ldl 
+LIBS = -ltesta -ltesta_hook -lplthook -ldl
+TARGET3_LIBS = -ltesta -ltesta_hook -ldl
+TARGET5_LIBS = -ltestb -ltestb_hook -lplthook -ldl
+TARGET6_LIBS = -ltestc -ltestc_hook -lplthook -ldl
 
 OPTIONS = -Wl,-rpath,./
 
@@ -25,23 +26,33 @@ TARGET4_OBJS = demo4.o
 TARGET5 = demo5
 TARGET5_OBJS = demo5.o
 
+# hook cpp so function
+TARGET6 = demo6
+TARGET6_OBJS = demo6.o
+
 .PHONY: clean plthook
 
-TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5)
+TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) $(TARGET6)
 
-all: testa testa_hook testb testb_hook plthook $(TARGET_LIST)
+all: testa testa_hook testb testb_hook testc testc_hook plthook $(TARGET_LIST)
 
 testa:
-	$(CXX) $(CFLAGS) testa.c -fPIC -shared -o libtesta.so
+	$(CC) $(CFLAGS) testa.c -fPIC -shared -o libtesta.so
 
 testa_hook:
-	$(CXX) $(CFLAGS) testa_hook.c -fPIC -shared -o libtesta_hook.so
+	$(CC) $(CFLAGS) testa_hook.c -fPIC -shared -o libtesta_hook.so
 
 testb:
 	$(CXX) $(CFLAGS) testb.cc -fPIC -shared -o libtestb.so
 
 testb_hook:
 	$(CXX) $(CFLAGS) testb_hook.cc -fPIC -shared -o libtestb_hook.so
+
+testc:
+	$(CXX) $(CFLAGS) testc.cc -fPIC -shared -o libtestc.so
+
+testc_hook:
+	$(CXX) $(CFLAGS) $(INCLUDE) testc_hook.cc -fPIC -shared -o libtestc_hook.so
 
 plthook:
 	$(CXX) $(CFLAGS) plthook/plthook_elf.c -fPIC -shared -o libplthook.so
@@ -65,6 +76,10 @@ $(TARGET4): $(TARGET4_OBJS)
 $(TARGET5): $(TARGET5_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET5_LIBS) $(OPTIONS)
 	@echo "build $(TARGET5) ok"
+
+$(TARGET6): $(TARGET6_OBJS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET6_LIBS) $(OPTIONS)
+	@echo "build $(TARGET6) ok"
 
 install:
 	@echo "nothing to install"

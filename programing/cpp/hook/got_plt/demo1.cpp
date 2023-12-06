@@ -24,17 +24,20 @@ int install_hook_function()
         printf("plthook_open error: %s\n", plthook_error());
         return -1;
     }
+
     if (plthook_replace(plthook, "say_hello", (void *)my_say_hello, (void **)&say_hello_func) != 0)
     {
         printf("plthook_replace error: %s\n", plthook_error());
         plthook_close(plthook);
         return -1;
     }
+
 #ifndef WIN32
     // The address passed to the fourth argument of plthook_replace() is
     // availabe on Windows. But not on Unixes. Get the real address by dlsym().
     say_hello_func = (void (*)(void))dlsym(RTLD_DEFAULT, "say_hello");
 #endif
+
     plthook_close(plthook);
     return 0;
 }
