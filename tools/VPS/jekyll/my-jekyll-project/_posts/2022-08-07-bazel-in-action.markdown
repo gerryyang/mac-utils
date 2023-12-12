@@ -34,6 +34,16 @@ categories: [GCC/Clang]
   + 其他选项 (`copts` / `linkopts` / ...)
 * 解决链接问题 (依赖顺序)
 
+# Bazel 构建优化方案
+
+1. 使用远程缓存：Bazel 支持远程缓存，这可以显著提高构建速度
+2. 使用远程执行：Bazel 支持将构建和测试任务分发到远程执行器上
+3. 优化构建规则：优化 Bazel 的构建规则，确保没有不必要的依赖
+4. 使用增量构建：Bazel 支持增量构建，只构建发生变化的部分
+5. 使用工作空间缓存：Bazel 支持将构建结果缓存到本地磁盘
+6. 调整并行度：Bazel 支持配置并行构建的线程数
+7. 采用分层构建：将项目分解为多个模块，每个模块只依赖于其下游模块
+8. 使用 Bazel 的分析器：Bazel 提供了分析工具，可以帮助找到构建过程中的瓶颈
 
 
 # Bazel 安装 (CentOS 环境)
@@ -101,6 +111,8 @@ else
     echo "-----------------------------------------"
 fi
 ```
+
+> 参考 [How does Bazelisk know which Bazel version to run?](https://github.com/bazelbuild/bazelisk#how-does-bazelisk-know-which-bazel-version-to-run) 控制使用的 bazel 版本。
 
 
 # Bazel 优势
@@ -2611,6 +2623,263 @@ exports_files(["file.cc.tpl"])
 
 # 最佳实践
 
+## 在二进制中注入版本信息
+
+### 方案1：自定义规则
+
+在工程根目录的 BUILD 中：
+
+```python
+load("//:version_info.bzl", "generate_version_info")
+
+# 自定义规则
+generate_version_info(
+    name = "version_info",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "enable_version_info",
+    values = {"define": "enable_version_info=true"},
+)
+```
+
+version_info.bzl 内容如下：
+
+``` python
+"""
+测试命令：
+ACTION_ENV="--action_env=COMPILER_NAME=clang --action_env=OS=$(uname -r)"
+bazel build //:version_info $ACTION_ENV
+"""
+
+def _generate_version_info_impl(ctx):
+    template_path = ctx.file._template.path
+    #print("Template path:", template_path)
+
+    # create version_info.h
+    out = ctx.actions.declare_file(ctx.label.name + ".h")
+
+    ctx.actions.expand_template(
+        output = out,
+        template = ctx.file._template,
+
+        # 通过 rule 参数
+        #substitutions = {"%COMPILER_NAME%": ctx.attr.compiler},
+
+        # 通过环境变量 --action_env
+        substitutions = {
+            "%HOST%": ctx.configuration.default_shell_env["HOST"],
+            "%COMPILE_PATH%": ctx.configuration.default_shell_env["COMPILE_PATH"],
+            "%COMPILER_NAME%": ctx.configuration.default_shell_env["COMPILER_NAME"],
+            "%COMPILER_VER%": ctx.configuration.default_shell_env["COMPILER_VER"],
+            "%STL%": ctx.configuration.default_shell_env["STL"],
+            "%OS%": ctx.configuration.default_shell_env["OS"],
+            "%GIT%": ctx.configuration.default_shell_env["GIT"],
+            "%BRANCH%": ctx.configuration.default_shell_env["BRANCH"],
+            "%COMMIT%": ctx.configuration.default_shell_env["COMMIT"],
+        },
+
+    )
+    # 创建一个包含生成的头文件的 CcInfo 提供器
+    cc_info = CcInfo(compilation_context = cc_common.create_compilation_context(headers = depset([out])))
+    return [DefaultInfo(files = depset([out])), cc_info]
+
+
+generate_version_info = rule(
+    implementation = _generate_version_info_impl,
+    attrs = {
+        "_compiler": attr.string(),
+        "_version": attr.string(),
+        "_template": attr.label(
+            allow_single_file = True,
+            default = "//build/template:version_info.h.template",
+        ),
+    },
+)
+```
+
+构建使用时：
+
+``` bash
+function SetActionEnvInfo()
+{
+    # 获取环境信息
+    ACTION_ENV="--action_env=HOST=$(/sbin/ifconfig | grep -A1 '^eth' | grep inet | awk '{print $2}' | grep -v '^172\\.' | grep -v '^127\\.') \
+--action_env=COMPILE_PATH=$(pwd -P) \
+--action_env=COMPILER_NAME=clang \
+--action_env=COMPILER_VER=$(clang --version | grep version | sed "s/.*version \([0-9\.]*\).*/\1/") \
+--action_env=STL=$(ls /lib64/libstdc++.so.6 -l | awk '{print $NF}') \
+--action_env=OS=$(uname -r) \
+--action_env=GIT=$(git remote -v | grep git | head -1 | awk '{print $2}') \
+--action_env=BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+--action_env=COMMIT=$(git rev-parse --short HEAD)"
+}
+
+function SetVersionInfoTarget()
+{
+    EnableVersionInfoDefault=$(GetProjectOption $ProjectCfg VersionInfo.Enable)
+    EnableVersionInfo="${EnableVersionInfoVar:=${EnableVersionInfoDefault}}"
+
+    if [[ $EnableVersionInfo == "1" ]]; then
+
+        SetActionEnvInfo
+        ALL_TARGET+=" //:version_info"
+
+        CONDITION_OPTION+=" --define enable_version_info=true"
+        COMMON_OPTION+=" --copt=-D_ENABLE_VERSION_INFO_"
+
+        #USE_RBS="" # 如果注入二进制版本信息带有时间戳会导致远程缓存失效，建议不使用 RC
+    fi
+}
+```
+
+在构建依赖的 BUILD 中根据条件编译选择是否依赖 version_info 目标：
+
+```python
+select({
+          "//:enable_version_info": ["//:version_info"], # 版本信息
+          "//conditions:default": [],
+})
+```
+
+### 方案2：通过 genrule
+
+https://github.com/envoyproxy/envoy/blob/release/v1.22/source/common/version/BUILD
+
+示例：
+
+``` python
+genrule(
+    name = "generate_version_number",
+    srcs = ["//:VERSION.txt"],
+    outs = ["version_number.h"],
+    cmd = """echo "#define BUILD_VERSION_NUMBER \\"$$(cat $<)\\"" >$@""",
+    visibility = ["//visibility:private"],
+)
+```
+
+
+
+## [.bazelrc flags you should enable](https://blog.aspect.dev/bazelrc-flags)
+
+
+* `build --incompatible_strict_action_env`: don't let environment variables like $PATH sneak into the build, which can cause massive cache misses when they change.
+
+* `build --modify_execution_info=PackageTar=+no-remote`: Some actions are always IO-intensive but require little compute. It's wasteful to put the output in the remote cache, it just saturates the network and fills the cache storage causing earlier evictions. It's also not worth sending them for remote execution. For actions like PackageTar it's faster to just re-run the work locally every time. You'll have to look at an execution log to figure out which action mnemonics you care about.
+* `--bes_upload_mode=fully_async`: Don't make the user wait for uploads, instead allow the bazel command to complete and exit.
+
+
+
+
+
+refer:
+
+* https://docs.aspect.build/guides/bazelrc/
+* https://github.com/aspect-build/bazel-examples/blob/main/bazelrc/.bazelrc
+
+
+
+## [Fixing Bazel out-of-memory problems](https://blog.aspect.dev/bazel-oom)
+
+There are two potential problems:
+
+* The Bazel server runs in a JVM, and it internally tries to allocate more objects than the max heap size its allowed.
+* Bazel spawns subprocesses (called "actions", including test actions) and they collectively exhaust the memory in the machine or VM that Bazel runs in.
+
+```
+$ bazel info | grep heap
+committed-heap-size: 826MB
+max-heap-size: 32178MB
+used-heap-size: 193MB
+```
+
+
+## 生成 compile_commands.json 文件
+
+生成方案：https://github.com/grailbio/bazel-compilation-database
+
+`compile_commands.json` 是一个 JSON 格式的文件，通常由构建系统（如 CMake、Bazel 等）生成。它包含了在构建项目时用于编译每个源文件的完整命令行。这个文件对于代码编辑器和其他工具（如静态分析器、代码格式化工具等）非常有用，因为它们可以通过解析 `compile_commands.json` 文件来获取源文件的编译选项、包含路径、宏定义等信息，从而提供更准确的代码提示、错误检查和自动补全功能。
+
+`compile_commands.json` 文件的格式如下：
+
+``` json
+[
+  {
+    "directory": "path/to/build/directory",
+    "command": "full/compilation/command",
+    "file": "path/to/source/file"
+  },
+  ...
+]
+```
+
+* `directory`：构建目录的绝对路径。这是执行编译命令的工作目录。
+* `command`：用于编译源文件的完整命令行。这通常包括编译器（如 gcc 或 clang）、编译选项（如 -O2、-g 等）、包含路径（如 -I/path/to/include）、宏定义（如 -DDEBUG）以及源文件和目标文件的路径。
+* `file`：源文件的绝对路径。
+
+`compile_commands.json` 文件包含一个 JSON 数组，数组中的每个元素都是一个 JSON 对象，表示一个源文件的编译信息。以下是一个简单的示例：
+
+``` json
+[
+  {
+    "directory": "/home/user/my_project/build",
+    "command": "/usr/bin/gcc -I/home/user/my_project/include -O2 -g -c /home/user/my_project/src/main.c -o /home/user/my_project/build/main.o",
+    "file": "/home/user/my_project/src/main.c"
+  },
+  {
+    "directory": "/home/user/my_project/build",
+    "command": "/usr/bin/gcc -I/home/user/my_project/include -O2 -g -c /home/user/my_project/src/utils.c -o /home/user/my_project/build/utils.o",
+    "file": "/home/user/my_project/src/utils.c"
+  }
+]
+```
+
+这个示例中的 `compile_commands.json` 文件包含了两个源文件（`main.c` 和 `utils.c`）的编译信息。通过解析这个文件，代码编辑器和其他工具可以获取这些源文件的编译选项和包含路径，从而提供更准确的代码提示和错误检查功能。
+
+
+
+## 对 cc_binary 禁止使用远程缓存
+
+bazel 是一个构建和测试工具，用于管理项目的源代码、依赖和构建过程。在 bazel 的构建文件（如 BUILD 或 BUILD.bazel 文件）中，可以为目标（如 cc_binary、cc_library、py_binary 等）指定一组标签（tags），用于对目标进行分类和筛选。
+
+tags 是一个字符串列表，其中的每个元素都是一个标签。no-cache 是一个预定义的标签，它的作用是告诉 bazel 不要在远程缓存中存储或查找该目标的构建结果。当你为一个目标添加 `tags = ["no-cache"]` 时，bazel 将在每次构建时重新构建该目标，而不是尝试从远程缓存中获取已构建的结果。这对于那些不适合缓存或具有不确定性的构建目标（如生成时间戳或随机数的目标）特别有用。
+
+以下是一个简单的 BUILD.bazel 文件示例，其中定义了一个带有 no-cache 标签的 cc_binary 目标：
+
+```python
+cc_binary(
+    name = "example_binary",
+    srcs = ["example.cc"],
+    tags = ["no-cache"],
+)
+```
+
+在这个例子中，每次使用 `bazel build //:example_binary` 构建 example_binary 目标时，bazel 都会重新构建它，而不是尝试从远程缓存中查找已构建的结果。
+
+> 建议改成 `--modify_execution_info=^(CppLink|CppArchive)=+no-remote-cache` 的方式，对 CppLink 和 CppArchive 禁止上传 rc。
+
+``` bash
+# 控制只有 CppCompile 上传 rc
+build --modify_execution_info=^(CppLink|CppArchive)=+no-remote-cache
+```
+
+
+## 如何对使用远程缓存文件上传进行优化
+
+bazel 使用 remote cache 远程缓存编译后，编译完成的目标文件需要上传到 remote cache 服务，对于大文件可能会比较慢，如何提高上传的效率
+
+使用 Bazel 远程缓存时，确实可能会遇到大文件上传速度较慢的问题。以下是一些建议，可以帮助提高上传效率：
+
+1. 使用高速网络连接：确保构建机器和远程缓存服务之间的网络连接具有高带宽和低延迟。如果可能的话，将构建机器和远程缓存服务部署在相同的局域网或云服务提供商内。
+2. 选择合适的远程缓存服务：选择一款性能良好的远程缓存服务，如 Google Cloud Storage、Amazon S3 或其他支持 HTTP/REST 或 gRPC 协议的缓存服务。这些服务通常具有大规模数据传输的优化和高可用性。
+3. 并发上传：Bazel 支持并发上传。可以通过设置 --remote_max_connections 选项来调整并发上传的连接数，如 `--remote_max_connections=50`。
+4. 限制需要缓存的目标：对于一些不适合缓存的目标（如生成时间戳或随机数的目标），可以使用 `tags = ["no-cache"]` 来避免将它们上传到远程缓存。这有助于减少不必要的上传开销。
+5. 优化构建规则：尽量减小构建产物的大小，例如，避免将不必要的大型文件包含在目标中。这将减少上传到远程缓存所需的时间。
+
+结合这些建议，可以通过调整 Bazel 配置和优化构建规则来提高上传到远程缓存的效率。
+
+
 
 ## [How to avoid 'No space left' on Bazel build?](https://stackoverflow.com/questions/54986853/how-to-avoid-no-space-left-on-bazel-build)
 
@@ -2693,10 +2962,11 @@ bazel build //:conditional_lib --define custom_lib=true
 
 
 
-## .bazelignore 忽略配置
+## [.bazelignore 忽略配置](https://bazel.build/run/bazelrc?hl=zh-cn#bazelignore)
 
-在 WORKSPACE 目录下通过 `.bazelignore` 配置指定忽略的 BUILD。
+在 `WORKSPACE` 目录下通过 `.bazelignore` 配置指定忽略的 BUILD。
 
+可以在工作区中指定想让 Bazel 忽略的目录，如使用其他构建系统的相关项目。将名为 `.bazelignore` 的文件放在工作区的根目录，然后添加您希望 Bazel 忽略的目录（每行一个）。相应条目是相对于工作区根目录而言的。
 
 
 
@@ -2878,6 +3148,329 @@ bazel print_action //src/unittestsvr:unittestsvr
 
 
 
+# 构建性能
+
+## [提取构建性能指标](https://bazel.build/advanced/performance/build-performance-metrics?hl=zh-cn)
+
+
+提高构建性能的重要步骤是了解资源的使用位置。[细分构建性能](https://bazel.build/configure/build-performance-breakdown?hl=zh-cn)一文说明了如何使用这些指标检测和修复构建性能问题。
+
+从 Bazel 构建中提取指标的主要方法有以下几种：
+
+### Build Event Protocol (BEP)
+
+Bazel outputs a variety of protocol buffers `build_event_stream.proto` through the [Build Event Protocol (BEP)](https://bazel.build/remote/bep), which can be aggregated by a backend specified by you. Depending on your use cases, you might decide to aggregate the metrics in various ways, but here we will go over some concepts and proto fields that would be useful in general to consider.
+
+
+### Bazel’s query / cquery / aquery commands
+
+Bazel provides 3 different query modes ([query](https://bazel.build/query/quickstart), [cquery](https://bazel.build/query/cquery) and [aquery](https://bazel.build/query/aquery)) that allow users to query the target graph（目标图）, configured target graph（配置的目标图） and action graph（操作图） respectively. The query language provides a [suite of functions](https://bazel.build/query/language#functions) usable across the different query modes, that allows you to customize your queries according to your needs.
+
+
+### JSON Trace Profiles
+
+For every build-like Bazel invocation, Bazel writes a trace profile in JSON format. The [JSON trace profile](https://bazel.build/advanced/performance/json-trace-profile) can be very useful to quickly understand what Bazel spent time on during the invocation.
+
+
+### Execution Log
+
+The [execution log](https://bazel.build/remote/cache-remote) can help you to troubleshoot and fix missing remote cache hits due to machine and environment differences or non-deterministic actions. If you pass the flag `--experimental_execution_log_spawn_metrics` (available from Bazel 5.2) it will also contain detailed spawn metrics, both for locally and remotely executed actions. You can use these metrics for example to make comparisons between local and remote machine performance or to find out which part of the spawn execution is consistently slower than expected (for example due to queuing).
+
+
+### Execution Graph Log
+
+While the JSON trace profile contains the critical path information, sometimes you need additional information on the dependency graph of the executed actions. Starting with Bazel 6.0, you can pass the flags `--experimental_execution_graph_log` and `--experimental_execution_graph_log_dep_type=all` to write out a log about the executed actions and their inter-dependencies.
+
+This information can be used to understand the drag that is added by a node on the critical path. The drag is the amount of time that can potentially be saved by removing a particular node from the execution graph.
+
+The data helps you predict the impact of changes to the build and action graph before you actually do them.
+
+
+### Benchmarking with bazel-bench
+
+[Bazel bench](https://github.com/bazelbuild/bazel-bench) is a benchmarking tool for Git projects to benchmark build performance in the following cases:
+
+* **Project benchmark**: Benchmarking two git commits against each other at a single Bazel version. Used to detect regressions in your build (often through the addition of dependencies).
+
+* **Bazel benchmark**: Benchmarking two versions of Bazel against each other at a single git commit. Used to detect regressions within Bazel itself (if you happen to maintain / fork Bazel).
+
+Benchmarks monitor wall time, CPU time and system time and Bazel’s retained heap size.
+
+It is also recommended to run Bazel bench on dedicated, physical machines that are not running other processes so as to reduce sources of variability.
+
+
+## [细分构建性能](https://bazel.build/advanced/performance/build-performance-breakdown?hl=zh-cn)
+
+Bazel is complex and does a lot of different things over the course of a build, some of which can have an impact on build performance. This page attempts to map some of these Bazel concepts to their implications on build performance. While not extensive, we have included some examples of how to detect build performance issues through [extracting metrics](https://bazel.build/configure/build-performance-metrics) and what you can do to fix them. With this, we hope you can apply these concepts when investigating build performance regressions.
+
+
+### Clean vs Incremental builds（干净构建与增量构建）
+
+A clean build is one that builds everything from scratch, while an incremental build reuses some already completed work.（干净构建是指从头开始构建所有内容，而增量构建会重复使用一些已完成的工作。）
+
+We suggest looking at clean and incremental builds separately, especially when you are collecting / aggregating metrics that are dependent on the state of Bazel’s caches (for example [build request size metrics](https://bazel.build/advanced/performance/build-performance-breakdown?hl=en#deterministic-build-metrics-as-a-proxy-for-build-performance) ). **They also represent two different user experiences. As compared to starting a clean build from scratch (which takes longer due to a cold cache), incremental builds happen far more frequently as developers iterate on code (typically faster since the cache is usually already warm)**.（与从头开始启动整洁构建（由于冷缓存而需要更长的时间）相比，随着开发者迭代代码（增量通常更快，因为缓存通常已经很热），增量构建的频率会高得多。）
+
+### Deterministic build metrics as a proxy for build performance（确定性构建指标，以提升构建性能）
+
+Measuring build performance can be difficult due to the non-deterministic nature of certain metrics (for example Bazel’s CPU time or queue times on a remote cluster). As such, it can be useful to use deterministic metrics as a proxy for the amount of work done by Bazel, which in turn affects its performance.（由于某些指标（例如 Bazel 的 CPU 时间或远程集群上的队列时间）具有不确定性，因此衡量构建性能可能很困难。因此，使用确定性指标作为 Bazel 完成的工作量的代理会很有帮助，后者会影响其性能。）
+
+The size of a build request can have a significant implication on build performance. A larger build could represent more work in analyzing and constructing the build graphs. Organic growth of builds comes naturally with development, as more dependencies are added/created, and thus grow in complexity and become more expensive to build.（构建请求的大小可能会对构建性能产生重大影响。大型 build 可能意味着分析和构建 build 图方面的工作量更大。随着 build 的自然增多，自然而然地会伴随着开发，因为添加/创建的依赖项会更多，因此复杂性也会增加，构建成本也会更高。）
+
+We can slice this problem into the various build phases, and use the following metrics as proxy metrics for work done at each phase:（我们可以将此问题划分到各个构建阶段，并使用以下指标作为每个阶段完成的指标：）
+
+* `PackageMetrics.packages_loaded`: the number of packages successfully loaded. A regression here represents more work that needs to be done to read and parse each additional BUILD file in the loading phase.
+  + This is often due to the addition of dependencies and having to load their transitive closure.
+  + Use [query](https://bazel.build/query/quickstart) / [cquery](https://bazel.build/query/cquery) to find where new dependencies might have been added.
+
+* `TargetMetrics.targets_configured`: representing the number of targets and aspects configured in the build. A regression represents more work in constructing and traversing the configured target graph.
+  + This is often due to the addition of dependencies and having to construct the graph of their transitive closure.
+  + Use [cquery](https://bazel.build/query/cquery) to find where new dependencies might have been added.
+
+* `ActionSummary.actions_created`: represents the actions created in the build, and a regression represents more work in constructing the action graph. Note that this also includes unused actions that might not have been executed.
+  + Use [aquery](https://bazel.build/query/aquery) for debugging regressions; we suggest starting with [--output=summary](https://bazel.build/reference/command-line-reference#flag--output) before further drilling down with [--skyframe_state](https://bazel.build/reference/command-line-reference#flag--skyframe_state).
+
+* `ActionSummary.actions_executed`: the number of actions executed, a regression directly represents more work in executing these actions.
+  + The [BEP](https://bazel.build/remote/bep) writes out the action statistics `ActionData` that shows the most executed action types. By default, it collects the top 20 action types, but you can pass in the `--experimental_record_metrics_for_all_mnemonics` to collect this data for all action types that were executed.
+  + This should help you to figure out what kind of actions were executed (additionally).
+
+* `BuildGraphSummary.outputArtifactCount`: the number of artifacts created by the executed actions.
+  + If the number of actions executed did not increase, then it is likely that a rule implementation was changed.
+
+
+These metrics are all affected by the state of the local cache, hence you will want to ensure that the builds you extract these metrics from are clean builds.（这些指标都受本地缓存状态的影响，因此需要确保从中提取指标的 build 是干净 build）
+
+We have noted that a regression in any of these metrics can be accompanied by regressions in wall time, cpu time and memory usage.
+
+
+### Usage of local resources（使用本地资源）
+
+Bazel consumes a variety of resources on your local machine (both for analyzing the build graph and driving the execution, and for running local actions), this can affect the performance / availability of your machine in performing the build, and also other tasks.（Bazel 会消耗本地机器上的各种资源（包括用于分析构建图和驱动执行情况以及运行本地操作），这可能会影响机器在执行构建时的性能 / 可用性以及其他任务。）
+
+
+#### Time spent（所用时间）
+
+Perhaps the metrics most susceptible to noise (and can vary greatly from build to build) is time; in particular - wall time, cpu time and system time. You can use [bazel-bench](https://github.com/bazelbuild/bazel-bench) to get a benchmark for these metrics, and with a sufficient number of `--runs`, you can increase the statistical significance of your measurement.（或许，最容易受噪声影响的指标（可能因构建而异）是时间；尤其是实际用时、CPU 时间和系统时间。可以使用 bazel-bench 来获取这些指标的基准，只要有足够的 --runs，就可以提高衡量的统计显著性。）
+
+* **Wall time** is the real world time elapsed.
+  + If only wall time regresses, we suggest collecting a JSON trace profile and looking for differences. Otherwise, it would likely be more efficient to investigate other regressed metrics as they could have affected the wall time.
+
+* **CPU time** is the time spent by the CPU executing user code.
+  + If the CPU time regresses across two project commits, we suggest collecting a Starlark CPU profile. You should probably also use --nobuild to restrict the build to the analysis phase since that is where most of the CPU heavy work is done.
+
+* **System time** is the time spent by the CPU in the kernel.
+  + If system time regresses, it is mostly correlated with I/O when Bazel reads files from your file system.
+
+#### System-wide load profiling（系统级负载分析）
+
+Using the `--experimental_collect_load_average_in_profiler` flag introduced in Bazel 6.0, the [JSON trace profiler](https://bazel.build/advanced/performance/json-trace-profile) collects the system load average during the invocation.
+
+A high load during a Bazel invocation can be an indication that Bazel schedules too many local actions in parallel for your machine. You might want to look into adjusting `--local_cpu_resources` and `--local_ram_resources`, especially in container environments (at least until `#16512` is merged).
+
+
+#### Monitoring Bazel memory usage（监控 Bazel 内存用量）
+
+There are two main sources to get Bazel’s memory usage, Bazel `info` and the [BEP](https://bazel.build/remote/bep).
+
+* `bazel info used-heap-size-after-gc`: The amount of used memory in bytes after a call to `System.gc()`.
+  + [Bazel bench](https://github.com/bazelbuild/bazel-bench) provides benchmarks for this metric as well.
+  + Additionally, there are `peak-heap-size`, `max-heap-size`, `used-heap-size` and `committed-heap-size` (see [documentation](https://bazel.build/docs/user-manual#configuration-independent-data)), but are less relevant.
+
+* BEP’s `MemoryMetrics.peak_post_gc_heap_size`: Size of the peak JVM heap size in bytes post GC (requires setting [--memory_profile](https://bazel.build/reference/command-line-reference#flag--memory_profile) that attempts to force a full GC).
+
+A regression in memory usage is usually a result of a regression in [build request size metrics](https://bazel.build/advanced/performance/build-performance-breakdown?hl=en#deterministic_build_metrics_as_a_proxy_for_build_performance), which are often due to addition of dependencies or a change in the rule implementation.（内存用量的下降通常是由构建请求大小指标回归引起的，这通常是由于添加了依赖项或规则实现发生了变化）
+
+To analyze Bazel’s memory footprint on a more granular level, we recommend using the [built-in memory profiler](https://bazel.build/rules/performance#memory-profiling) for rules.（如需更精细地分析 Bazel 的内存占用情况，我们建议您使用内置内存分析器进行规则分析）
+
+#### Memory profiling of persistent workers（持久性工作器的内存性能分析）
+
+While [persistent workers](https://bazel.build/remote/persistent) can help to speed up builds significantly (especially for interpreted languages) their memory footprint can be problematic. Bazel collects metrics on its workers, in particular, the `WorkerMetrics.WorkerStats.worker_memory_in_kb` field tells how much memory workers use (by mnemonic).（虽然持久性工作器有助于显著加快构建速度（尤其是对于解释型语言），但其内存占用量可能有问题。Bazel 会收集有关其工作器的指标，尤其是 WorkerMetrics.WorkerStats.worker_memory_in_kb 字段，这表明工作器使用的内存量）
+
+### Monitoring network traffic for remote builds（监控远程构建的网络流量）
+
+In remote execution, Bazel downloads artifacts that were built as a result of executing actions. As such, your network bandwidth can affect the performance of your build.（在远程执行中，Bazel 会下载因执行操作而构建的工件。因此，网络带宽可能会影响构建的性能）
+
+If you are using remote execution for your builds, you might want to consider monitoring the network traffic during the invocation using the `NetworkMetrics.SystemNetworkStats` proto from the [BEP](https://bazel.build/remote/bep) (requires passing `--experimental_collect_system_network_usage`).
+
+Furthermore, [JSON trace profiles](https://bazel.build/advanced/performance/json-trace-profile) allow you to view system-wide network usage throughout the course of the build by passing the `--experimental_collect_system_network_usage` flag (new in Bazel 6.0).
+
+A high but rather flat network usage when using remote execution might indicate that network is the bottleneck in your build; if you are not using it already, consider turning on Build without the Bytes by passing [--remote_download_minimal](https://bazel.build/reference/command-line-reference#flag--remote_download_minimal). This will speed up your builds by avoiding the download of unnecessary intermediate artifacts.
+
+Another option is to configure a local [disk cache](https://bazel.build/reference/command-line-reference#flag--disk_cache) to save on download bandwidth.
+
+## [JSON 跟踪配置文件](https://bazel.build/advanced/performance/json-trace-profile?hl=zh-cn)
+
+The JSON trace profile can be very useful to quickly understand what Bazel spent time on during the invocation.（JSON 跟踪记录配置文件非常有助于快速了解 Bazel 在调用期间花费的时间）
+
+By default, for all build-like commands and query Bazel writes such a profile to `command.profile.gz`. You can configure whether a profile is written with the [--generate_json_trace_profile](https://bazel.build/reference/command-line-reference?hl=zh-cn#flag--generate_json_trace_profile) flag, and the location it is written to with the [--profile](https://bazel.build/docs/user-manual?hl=zh-cn#profile) flag. Locations ending with `.gz` are compressed with GZIP. Use the flag [--experimental_announce_profile_path](https://bazel.build/reference/command-line-reference?hl=zh-cn#flag--experimental_announce_profile_path) to print the path to this file to the log.
+
+
+### Tools
+
+You can load this profile into `chrome://tracing` or analyze and post-process it with other tools.
+
+#### chrome://tracing
+
+To visualize the profile, open `chrome://tracing` in a Chrome browser tab, click "Load" and pick the (potentially compressed) profile file. For more detailed results, click the boxes in the lower left corner.
+
+
+#### bazel analyze-profile
+
+The Bazel subcommand [analyze-profile](https://bazel.build/docs/user-manual#analyze-profile) consumes a profile format and prints cumulative statistics for different task types for each build phase and an analysis of the critical path.
+
+For example, the commands
+
+```
+$ bazel build --profile=/tmp/profile.gz //path/to:target
+...
+$ bazel analyze-profile /tmp/profile.gz
+```
+
+may yield output of this form:
+
+```
+INFO: Profile created on Tue Jun 16 08:59:40 CEST 2020, build ID: 0589419c-738b-4676-a374-18f7bbc7ac23, output base: /home/johndoe/.cache/bazel/_bazel_johndoe/d8eb7a85967b22409442664d380222c0
+
+=== PHASE SUMMARY INFORMATION ===
+
+Total launch phase time         1.070 s   12.95%
+Total init phase time           0.299 s    3.62%
+Total loading phase time        0.878 s   10.64%
+Total analysis phase time       1.319 s   15.98%
+Total preparation phase time    0.047 s    0.57%
+Total execution phase time      4.629 s   56.05%
+Total finish phase time         0.014 s    0.18%
+------------------------------------------------
+Total run time                  8.260 s  100.00%
+
+Critical path (4.245 s):
+       Time Percentage   Description
+    8.85 ms    0.21%   _Ccompiler_Udeps for @local_config_cc// compiler_deps
+    3.839 s   90.44%   action 'Compiling external/com_google_protobuf/src/google/protobuf/compiler/php/php_generator.cc [for host]'
+     270 ms    6.36%   action 'Linking external/com_google_protobuf/protoc [for host]'
+    0.25 ms    0.01%   runfiles for @com_google_protobuf// protoc
+     126 ms    2.97%   action 'ProtoCompile external/com_google_protobuf/python/google/protobuf/compiler/plugin_pb2.py'
+    0.96 ms    0.02%   runfiles for //tools/aquery_differ aquery_differ
+```
+
+#### Bazel Invocation Analyzer
+
+The open-source [Bazel Invocation Analyzer](https://github.com/EngFlow/bazel_invocation_analyzer) consumes a profile format and prints suggestions on how to improve the build’s performance. This analysis can be performed using its CLI or on https://analyzer.engflow.com.
+
+#### jq
+
+`jq` is like `sed` for JSON data. An example usage of `jq` to extract all durations of the sandbox creation step in local action execution:（使用 jq 提取本地操作执行中沙盒创建步骤的所有时长的示例）
+
+```
+$ zcat $(../bazel-6.0.0rc1-linux-x86_64 info output_base)/command.profile.gz | jq '.traceEvents | .[] | select(.name == "sandbox.createFileSystem") | .dur'
+6378
+7247
+11850
+13756
+6555
+7445
+8487
+15520
+[...]
+```
+
+### Profile information
+
+The profile contains multiple rows. Usually the bulk of rows represent Bazel threads and their corresponding events, but some special rows are also included.
+
+
+### Common performance issues
+
+When analyzing performance profiles, look for:
+
+* Slower than expected analysis phase (`runAnalysisPhase`), especially on incremental builds. This can be a sign of a poor rule implementation, for example one that flattens depsets. Package loading can be slow by an excessive amount of targets, complex macros or recursive globs.
+
+分析阶段 (runAnalysisPhase) 低于预期，尤其是在增量构建中。这可能表明规则实现不合理，例如，会使实现扁平化的依赖项。软件包加载可能会因目标数量、复杂的宏或递归 glob 而导致速度缓慢
+
+* Individual slow actions, especially those on the critical path. It might be possible to split large actions into multiple smaller actions or reduce the set of (transitive) dependencies to speed them up. Also check for an unusual high non-PROCESS_TIME (such as `REMOTE_SETUP` or `FETCH`).
+
+单个缓慢操作，尤其是关键路径上的操作。可以将大型操作拆分为多个较小的操作，也可以减少（传递）依赖项集以提高速度。此外，还要检查是否存在异常的非 PROCESS_TIME（例如 REMOTE_SETUP 或 FETCH）
+
+* Bottlenecks, that is a small number of threads is busy while all others are idling / waiting for the result (see around 22s and 29s in Figure 1). Optimizing this will most likely require touching the rule implementations or Bazel itself to introduce more parallelism. This can also happen when there is an unusual amount of GC.
+
+瓶颈（即少量线程处于忙碌状态），而其他所有线程都处于空闲 / 等待结果（参见图 1 中的大约 22 秒和 29 秒）。对此进行优化很可能需要您触摸规则实现或 Bazel 本身，以引入更多并行性。如果 GC 数量异常，也可能发生这种情况
+
+## [优化内存](https://bazel.build/advanced/performance/memory?hl=zh-cn)
+
+### Running Bazel with Limited RAM（使用有限 RAM 运行 Bazel）
+
+In certain situations, you may want Bazel to use minimal memory. You can set the maximum heap via the startup flag [--host_jvm_args](https://bazel.build/docs/user-manual#host-jvm-args), like `--host_jvm_args=-Xmx2g`.
+
+However, if your builds are big enough, Bazel may throw an `OutOfMemoryError` (OOM) when it doesn't have enough memory. You can make Bazel use less memory, at the cost of slower incremental builds, by passing the following command flags: [--discard_analysis_cache](https://bazel.build/docs/user-manual#discard-analysis-cache), [--nokeep_state_after_build](https://bazel.build/reference/command-line-reference#flag--keep_state_after_build), and [--notrack_incremental_state](https://bazel.build/reference/command-line-reference#flag--track_incremental_state).
+
+These flags will minimize the memory that Bazel uses in a build, at the cost of making future builds slower than a standard incremental build would be.（这些标志可最大限度减少 Bazel 在构建中使用的内存，代价是未来的构建速度会低于标准增量构建）
+
+
+## [优化迭代速度](https://bazel.build/advanced/performance/iteration-speed?hl=zh-cn)
+
+### Bazel's Runtime State（Bazel 的运行时状态）
+
+A Bazel invocation involves several interacting parts.
+
+* The `bazel` command line interface (CLI) is the user-facing front-end tool and receives commands from the user.（bazel 命令行界面 (CLI) 是面向用户的前端工具，用于接收来自用户的命令）
+
+* The CLI tool starts a [Bazel server](https://bazel.build/run/client-server) for each distinct [output base](https://bazel.build/remote/output-directories). The Bazel server is generally persistent, but will shut down after some idle time so as to not waste resources.（CLI 工具会为每个不同的输出基准启动一个 Bazel 服务器。Bazel 服务器通常是永久性的，但会在闲置一段时间后关闭，以免浪费资源）
+
+* The Bazel server performs the loading and analysis steps for a given command (build, run, cquery, etc.), in which it constructs the necessary parts of the build graph in memory. The resulting data structures are retained in the Bazel server as part of the analysis cache.（Bazel 服务器会针对给定命令（build、run、cquery 等）执行加载和分析步骤，在此过程中，它会在内存中构造构建图的必要部分。生成的数据结构将作为分析缓存的一部分保留在 Bazel 服务器中）
+
+* The Bazel server can also perform the action execution, or it can send actions off for remote execution if it is set up to do so. The results of action executions are also cached, namely in the action cache (or execution cache, which may be either local or remote, and it may be shared among Bazel servers).（Bazel 服务器也可以执行操作，或者发送相关操作以便远程执行（如果已设置）。操作执行的结果也会缓存，即缓存在操作缓存（或执行缓存，可以是本地或远程的，并且可在 Bazel 服务器之间共享））
+
+* The result of the Bazel invocation is made available in the output tree.（Bazel 调用的结果将在输出树中提供）
+
+### Running Bazel Iteratively（以迭代方式运行 Bazel）
+
+In a typical developer workflow, it is common to build (or run) a piece of code repeatedly, often at a very high frequency (e.g. to resolve some compilation error or investigate a failing test). In this situation, it is important that repeated invocations of `bazel` have as little overhead as possible relative to the underlying, repeated action (e.g. invoking a compiler, or executing a test).（在典型的开发者工作流中，开发者常常会重复构建（或运行）一段代码，而且频率通常非常高（例如，为了解决某些编译错误或调查失败的测试）。在这种情况下，对于 bazel 的重复调用，相对于底层的重复操作（例如调用编译器或执行测试）而言，其开销必须尽可能低）
+
+With this in mind, we take another look at Bazel's runtime state:
+
+The analysis cache is a critical piece of data. A significant amount of time can be spent just on the loading and analysis phases of a cold run (i.e. a run just after the Bazel server was started or when the analysis cache was discarded). For a single, successful cold build (e.g. for a production release) this cost is bearable, but for repeatedly building the same target it is important that this cost be amortized and not repeated on each invocation.
+
+分析缓存是关键数据。大量的时间只会花在冷运行的加载和分析阶段（即 Bazel 服务器启动之后的运行或分析缓存被舍弃时）。对于单次成功的冷构建（例如，生产版本），可承担这笔费用，但对于重复构建同一目标，必须摊销这笔费用，而不是在每次调用时重复
+
+The analysis cache is rather volatile. First off, it is part of the in-process state of the Bazel server, so losing the server loses the cache. But the cache is also invalidated very easily: for example, many bazel command line flags cause the cache to be discarded. This is because many flags affect the build graph (e.g. because of [configurable attributes](https://bazel.build/configure/attributes)). Some flag changes can also cause the Bazel server to be restarted (e.g. changing [startup options](https://bazel.build/docs/user-manual#startup-options)).
+
+分析缓存相当易失。首先，它是 Bazel 服务器的进程中状态的一部分，因此丢失服务器会使缓存丢失。不过，缓存也很容易失效：例如，许多 bazel 命令行标志都会导致缓存被舍弃。这是因为很多标志都会影响构建图（例如，由于可配置属性）。某些标志更改还可能会导致 Bazel 服务器重启（例如，更改启动选项）
+
+A good execution cache is also valuable for build performance. An execution cache can be kept locally [on disk](https://bazel.build/remote/caching#disk-cache), or [remotely](https://bazel.build/remote/caching). The cache can be shared among Bazel servers, and indeed among developers.
+
+良好的执行缓存对构建性能也很重要。执行缓存可以保存在本地磁盘上，也可以远程保留。缓存可以共享给 Bazel 服务器，甚至可以在开发者之间共享。
+
+### Avoid discarding the analysis cache（避免舍弃分析缓存）
+
+Bazel will print a warning if either the analysis cache was discarded or the server was restarted. Either of these should be avoided during iterative use:（如果分析缓存被舍弃或服务器重启，Bazel 会输出一条警告。在迭代使用过程中应避免以下两种情况）
+
+* Be mindful of changing `bazel` flags in the middle of an iterative workflow. For example, mixing a `bazel build -c opt` with a `bazel cquery` causes each command to discard the analysis cache of the other. In general, try to use a fixed set of flags for the duration of a particular workflow.
+
+请注意在迭代工作流过程中更改 bazel 标志。例如，将 bazel build -c opt 与 bazel cquery 混用会导致每个命令舍弃彼此的分析缓存。通常，应尝试在特定工作流期间使用一组固定的标志
+
+
+* Losing the Bazel server loses the analysis cache. The Bazel server has a [configurable](https://bazel.build/docs/user-manual#max-idle-secs) idle time, after which it shuts down. You can configure this time via your bazelrc file to suit your needs. The server also restarted when startup flags change, so, again, avoid changing those flags if possible.
+
+丢失 Bazel 服务器会导致分析缓存丢失。Bazel 服务器具有可配置的空闲时间，超过此时间后就会关闭。您可以通过 bazelrc 文件来配置此时间，以满足自己的需求。启动标志更改时，服务器也会重启，因此同样，请尽可能避免更改这些标志
+
+* Beware that the Bazel server is killed if you press Ctrl-C repeatedly while Bazel is running. It is tempting to try to save time by interrupting a running build that is no longer needed, but only press Ctrl-C once to request a graceful end of the current invocation.
+
+请注意，如果在 Bazel 运行期间反复按 Ctrl-C，Bazel 服务器会终止。人们往往想尝试通过中断不再需要的正在运行的构建来节省时间，但只需按一次 Ctrl-C 即可请求顺利结束当前调用
+
+* If you want to use multiple sets of flags from the same workspace, you can use multiple, distinct output bases, switched with the `--output_base` flag. Each output base gets its own Bazel server.
+
+如果要使用同一工作区中的多组标志，您可以使用通过 --output_base 标志切换的多个不同输出基准。每个输出库都有自己的 Bazel 服务器
+
+To make this condition an error rather than a warning, you can use the `--noallow_analysis_cache_discard` flag (introduced in Bazel 6.4.0)
+
+
+
+
+
+
+
+
+
+
 
 
 # Tools
@@ -2992,9 +3585,10 @@ Bazel uses a `major.minor.patch` Semantic Versioning scheme.
 
 
 
-# Books
+# Tutorial
 
 
+* [Bazel Training](https://docs.aspect.build/tutorial/)
 * [Beginning Bazel: Building and Testing for Java, Go, and More](https://github.com/Apress/beginning-bazel/blob/master/README.md)
 * 下载地址：
   + https://drive.weixin.qq.com/s?k=AJEAIQdfAAoXSWclXBAAQAmwaCACc
@@ -3003,12 +3597,51 @@ Bazel uses a `major.minor.patch` Semantic Versioning scheme.
 
 # Q&A
 
-* [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
+## 使用 bazel 构建出的二进制程序功能缺失 (cc_library.alwayslink)
+
+问题描述：使用下面的构建规则出现生成的二进制文件中缺失功能。
+
+``` python
+package(default_visibility = ["//visibility:public"])
+
+cc_binary(
+    name = "gamesvr",
+    deps = ["//src/gamesvr:gamesvr_inner"],
+    tags = ["no-cache"],
+)
+
+cc_library(
+    name = "gamesvr_inner",
+    srcs = glob(
+        [
+            "**/*.cpp",
+            "**/*.cc",
+            "**/*.c",
+            "**/*.h",
+        ],
+    ),
+    includes = ["."],
+    copts = ["-Ilibs"],
+    deps = [
+        "//libs/common:common_lib",
+        "//libs/business:business_hdrs",
+    ],
+    linkstatic = True,
+)
+```
+
+解决方法：参考 https://bazel.build/reference/be/c-cpp?hl=zh-cn#cc_library.alwayslink，需要在 cc_library 中添加一个 `alwayslink = True` 保证 gamesvr_inner 所有符号链接到 gamesvr 这个目标。
+
+
+
+
+## [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
 
 
 # Examples
 
 * https://github.com/bazelbuild/examples
+* https://github.com/abseil/abseil-cpp/blob/master/absl/base/BUILD.bazel
 
 
 

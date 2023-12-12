@@ -1251,6 +1251,12 @@ fi
 echo "Git LFS installation successful"
 ```
 
+* 初始化设置
+
+```
+git lfs install
+```
+
 
 * 配置想要加入 lfs 托管的文件规则
 

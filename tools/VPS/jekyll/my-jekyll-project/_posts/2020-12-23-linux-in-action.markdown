@@ -2348,6 +2348,29 @@ ldconfig -p
 
 ## rsync
 
+### 原理
+
+rsync works like this:
+
+```
+1. Build a file-list of the source location.
+
+2. For all files in the source location:
+
+  a. Get the size and the mtime (modification timestamp)
+  b. Compare it with the size and mtime of the copy in the destination location
+  c. If they differ, copy the file from the source to the destination
+
+Done.
+```
+
+* https://stackoverflow.com/questions/38293783/why-is-rsync-so-slow
+* https://docs.oracle.com/en-us/iaas/Content/File/Troubleshooting/rsync_is_slow_copying_files.htm
+
+
+
+### 按文件层级拷贝文件
+
 ``` bash
 # 将 /a/b/file.txt 文件保持目录层级复制到 tmp 目录下
 mkdir -p tmp
@@ -2356,6 +2379,35 @@ rsync -avz --relative ./a/b/file.txt tmp
 
 * `-avz` 选项表示以归档模式拷贝文件，保留文件属性和权限
 * `--relative` 选项表示保持相对路径结构
+
+### 可以根据文件的修改时间和内容来决定是否拷贝
+
+存在这样的需求，在 linux 环境下，需要将一些文件拷贝到指定目录，如果指定目录已经存在这些文件且内容没有变化则不再拷贝，只有在内容或者文件时间发生改变时才允许拷贝，请用 bash 脚本实现这样的逻辑。
+
+可以使用 rsync 命令来实现这个需求。rsync 是一个在本地和远程之间进行文件和目录同步的工具，可以根据文件的修改时间和内容来决定是否拷贝。
+
+``` bash
+#!/bin/bash
+
+# 源目录
+src_dir="/path/to/source/"
+# 目标目录
+dst_dir="/path/to/destination/"
+
+# 使用rsync命令进行同步
+rsync -av --update "${src_dir}" "${dst_dir}"
+```
+
+在这个脚本中，使用了以下 rsync 选项：
+
+`-a`：归档模式，保留文件属性（如时间戳、权限等）
+`-v`：详细输出模式，显示同步过程中的文件信息
+`--update`：仅在源文件较新或内容发生变化时才拷贝
+将上述脚本保存为 `sync_files.sh`，然后通过 `chmod +x sync_files.sh` 赋予执行权限。执行脚本 `./sync_files.sh` 即可实现所需功能。
+
+> 注意：如果需要更严格的文件内容检查，需要使用 rsync 的 -c 或 --checksum 选项，但这会增加同步过程中的计算开销
+
+
 
 
 ## bpftrace
