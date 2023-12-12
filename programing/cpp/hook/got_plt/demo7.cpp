@@ -3,41 +3,44 @@
 #endif
 #include <dlfcn.h>
 #include <stdio.h>
-#include "testa.h"
 #include "plthook.h"
+#include "testc.h"
 
-static void (*say_hello_func)();
-
-// This function is called instead of say_hello() called by libatest.so
-static void my_say_hello()
+struct FunctionPointerHelper
 {
-    printf("say_hello, hooked\n");
-    (*say_hello_func)();  // call real say_hello
+    void (TestC::*say_hello_func)(int);
+};
+
+FunctionPointerHelper helper;
+
+void my_say_hello(TestC *obj, int a)
+{
+    printf("Hooked: TestC::say_hello\n");
+    (obj->*helper.say_hello_func)(a);  // call real TestC::say_hello
 }
 
 int install_hook_function()
 {
     plthook_t *plthook;
 
-    if (plthook_open_by_address(&plthook, &say_hello_func) != 0)
+    if (plthook_open_by_address(&plthook, &helper.say_hello_func) != 0)
     {
         printf("plthook_open error: %s\n", plthook_error());
         return -1;
     }
-
-    if (plthook_replace(plthook, "say_hello", (void *)my_say_hello, (void **)&say_hello_func) != 0)
+    // Use the mangled name of TestC::say_hello
+    if (plthook_replace(plthook, "_ZN5TestC9say_helloEi", (void *)&my_say_hello, (void **)&helper.say_hello_func) != 0)
     {
         printf("plthook_replace error: %s\n", plthook_error());
         plthook_close(plthook);
         return -1;
     }
-
 #ifndef WIN32
     // The address passed to the fourth argument of plthook_replace() is
     // availabe on Windows. But not on Unixes. Get the real address by dlsym().
-    say_hello_func = (void (*)(void))dlsym(RTLD_DEFAULT, "say_hello");
+    void *func_addr = dlsym(RTLD_DEFAULT, "_ZN5TestC9say_helloEi");
+    helper.say_hello_func = *((void(TestC::**)(int)) & func_addr);
 #endif
-
     plthook_close(plthook);
     return 0;
 }
@@ -45,6 +48,8 @@ int install_hook_function()
 int main()
 {
     install_hook_function();
-    say_hello();
+    TestC obj;
+    obj.say_hello(123);
+
     return 0;
 }
