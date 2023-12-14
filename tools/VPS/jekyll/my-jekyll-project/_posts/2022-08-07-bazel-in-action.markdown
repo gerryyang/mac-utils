@@ -2623,6 +2623,16 @@ exports_files(["file.cc.tpl"])
 
 # 最佳实践
 
+## 修改 bazel 输出目录使用 SSD 磁盘存储
+
+``` bash
+# .bazelrc
+startup --output_user_root=/data_ssd/home/gerryyang/bazel
+
+# 命令行
+bazel --output_user_root=/data1/home/bazel_build/.bazel build //...
+```
+
 ## 在二进制中注入版本信息
 
 ### 方案1：自定义规则
