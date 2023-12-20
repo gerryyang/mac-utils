@@ -238,7 +238,9 @@ fio -name=read -direct=1 -iodepth=64 -rw=read -ioengine=libaio -bs=4k -size=1G -
 fio -name=write -direct=1 -iodepth=64 -rw=write -ioengine=libaio -bs=4k -size=1G -numjobs=1 -runtime=1000 -group_reporting -filename=/dev/sdb
 ```
 
-磁盘benchmark参考: https://cloud.tencent.com/document/product/362/2353
+> 对于性能指标，最大 IOPS 在 4KiB IO 大小下可得出测试结果，最大吞吐量在 256KiB IO 大小下可得出测试结果。具体测试方法请参见：[如何衡量云硬盘的性能](https://cloud.tencent.com/document/product/362/6741)。
+
+
 
 * 网络I/O模型优化（I/O多路复用），Linux 3.9以上使用`SO_REUSEPORT`选项监听相同端口的多进程模型。
 C10K -> C1000K，硬件的支持（万兆网卡，多队列网卡，CPU绑定）-> C10M，跳过内核协议栈的冗长路径，把网络包直接送到要处理的应用程序那里去。DPDK，是用户态网络的标准，它跳过内核协议栈，直接由用户态进程通过轮询的方式来处理网络接收。

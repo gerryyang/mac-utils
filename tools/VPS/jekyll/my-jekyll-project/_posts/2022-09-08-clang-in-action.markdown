@@ -503,6 +503,61 @@ Polly：Polly是一个LLVM的子项目，提供了高级循环优化和数据局
 这些项目共同构成了LLVM工具链的核心部分，覆盖了编译、链接、运行时库、调试等方面。它们可以满足C/C++项目的各种需求，从编译和链接到调试和性能优化。
 ```
 
+完整的 clang 安装，包括安装一些辅助工具，例如 lld, lldb, clang-tools-extra 等：
+
+``` bash
+#!/bin/bash
+
+# Download the LLVM project
+if ! wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/llvm-project-11.0.0.tar.xz; then
+        echo "Error: Failed to download LLVM project"
+        exit 1
+fi
+
+# Extract the archive
+if ! tar xvfJ llvm-project-11.0.0.tar.xz; then
+        echo "Error: Failed to extract the tarball"
+        exit 1
+fi
+
+# Enter the extracted directory
+cd llvm-project-11.0.0 || { echo "Error: Failed to enter the extracted directory"; exit 1; }
+
+# Create a build directory
+mkdir build
+cd build || { echo "Error: Failed to enter the build directory"; exit 1; }
+
+# Configure the build with CMake
+if ! cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly" -G "Unix Makefiles" ../llvm; then
+        echo "Error: Failed to configure the build with CMake"
+        exit 1
+fi
+
+# Get the number of CPU cores
+num_cores=$(nproc)
+
+# Build Clang and other tools
+if ! make -j"${num_cores}"; then
+        echo "Error: Failed to build Clang and other tools"
+        exit 1
+fi
+
+# Check if the user has root privileges before installing
+if [ "$(id -u)" != "0" ]; then
+        echo "Error: Installation requires root privileges" 1>&2
+        exit 1
+fi
+
+# Install Clang and other tools
+if ! make install; then
+        echo "Error: Failed to install Clang and other tools"
+        exit 1
+fi
+
+# Print the installed Clang version
+clang --version
+```
+
 
 # 升级 GLIBC
 
@@ -1540,6 +1595,9 @@ Clang is only one component in a complete tool chain for C family programming la
 
 This document describes the required and optional components in a complete toolchain, where to find them, and the supported versions and limitations of each option.
 
+# Example
+
+* https://github.com/remysys/llvm-example
 
 
 # Manual

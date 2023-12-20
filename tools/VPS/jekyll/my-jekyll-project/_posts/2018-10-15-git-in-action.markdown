@@ -1255,7 +1255,6 @@ echo "Git LFS installation successful"
 
 ```
 git lfs install
-git lfs pull
 ```
 
 
