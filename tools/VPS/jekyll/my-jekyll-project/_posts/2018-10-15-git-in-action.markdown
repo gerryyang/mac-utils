@@ -489,25 +489,25 @@ $ git filter-branch --commit-filter '
 
 # Git的常用命令
 
-| 操作 | Git | Subversion |
-| -- | -- | --
-|复制数据库|	git clone|	svn checkout
-|提交|	git commit|	svn commit
-|查看提交的详细记录|	git show|	svn cat
-|确认状态|	git status|	svn status
-|确认差异|	git diff|	svn diff
-|确认记录|	git log / git reflog|	svn log
-|添加|	git add|	svn add
-|移动|	git mv|	svn mv
-|删除|	git rm|	svn rm
-|取消修改|	git checkout / git reset|	svn revert
-|创建分支|	git branch|	svn copy
-|切换分支|	git checkout|	svn switch
-|合并|	git merge|	svn merge
-|创建标签|	git tag|	svn copy
-|更新|	git pull / git fetch|	svn update
-|反映到远端|	git push|	svn commit
-|忽略档案目录|	.gitignore|	.svnignore
+| 操作               | Git                      | Subversion   |
+| ------------------ | ------------------------ | ------------ |
+| 复制数据库         | git clone                | svn checkout |
+| 提交               | git commit               | svn commit   |
+| 查看提交的详细记录 | git show                 | svn cat      |
+| 确认状态           | git status               | svn status   |
+| 确认差异           | git diff                 | svn diff     |
+| 确认记录           | git log / git reflog     | svn log      |
+| 添加               | git add                  | svn add      |
+| 移动               | git mv                   | svn mv       |
+| 删除               | git rm                   | svn rm       |
+| 取消修改           | git checkout / git reset | svn revert   |
+| 创建分支           | git branch               | svn copy     |
+| 切换分支           | git checkout             | svn switch   |
+| 合并               | git merge                | svn merge    |
+| 创建标签           | git tag                  | svn copy     |
+| 更新               | git pull / git fetch     | svn update   |
+| 反映到远端         | git push                 | svn commit   |
+| 忽略档案目录       | .gitignore               | .svnignore   |
 
 ## 查看和设置Git配置
 
@@ -1251,6 +1251,13 @@ fi
 echo "Git LFS installation successful"
 ```
 
+* 初始化仓库
+
+```
+git lfs install
+git lfs pull
+```
+
 
 * 配置想要加入 lfs 托管的文件规则
 
@@ -1738,29 +1745,29 @@ refer:
 
 # GitHub 常用缩写
 
-| 缩写 | 全称 | 含义
-| -- | -- | --
-| PR | Pull Request | 拉取请求，给其他项目提交代码
-| MR | Merge Request | 合并请求
-| LGTM | Looks Good To Me | 可以合并，没有问题
-| SGTM | Sounds Good to Me | 可以合并
-| WIP | Work In Progress | 开发中
-| PTAL | Please Take A Look | 请求维护者review
-| TBR | To Be Reviewed | 请求维护者review
-| TL;DR | Too Long; Didn't Read | 太长懒得看
-| TBD | To Be Done/Defined/Discussed/Decided/Determined | 待定
-| AFAIK | As far as I know | 据我所知
-| IIRC | If I recall correctly | 如果我没记错的话
-| CC | Carbon Copy | 抄送
-| ACK | Acknowledgement | 同意
-| NACK/NAK | Negative Acknowledgement | 不同意
-| TYPO | | 拼写错误
-| WFM | Works For Me | 测试结果对我有效
-| MUST | | 必须修改
-| Duplicate of #123 | | 关闭重复的issue
-| close/closes/closed #issue | | 关闭issue
-| fix/fixes/fixed #issue | | 修复issue
-| resolve/resolves/resolved | | 解决issue
+| 缩写                       | 全称                                            | 含义                         |
+| -------------------------- | ----------------------------------------------- | ---------------------------- |
+| PR                         | Pull Request                                    | 拉取请求，给其他项目提交代码 |
+| MR                         | Merge Request                                   | 合并请求                     |
+| LGTM                       | Looks Good To Me                                | 可以合并，没有问题           |
+| SGTM                       | Sounds Good to Me                               | 可以合并                     |
+| WIP                        | Work In Progress                                | 开发中                       |
+| PTAL                       | Please Take A Look                              | 请求维护者review             |
+| TBR                        | To Be Reviewed                                  | 请求维护者review             |
+| TL;DR                      | Too Long; Didn't Read                           | 太长懒得看                   |
+| TBD                        | To Be Done/Defined/Discussed/Decided/Determined | 待定                         |
+| AFAIK                      | As far as I know                                | 据我所知                     |
+| IIRC                       | If I recall correctly                           | 如果我没记错的话             |
+| CC                         | Carbon Copy                                     | 抄送                         |
+| ACK                        | Acknowledgement                                 | 同意                         |
+| NACK/NAK                   | Negative Acknowledgement                        | 不同意                       |
+| TYPO                       |                                                 | 拼写错误                     |
+| WFM                        | Works For Me                                    | 测试结果对我有效             |
+| MUST                       |                                                 | 必须修改                     |
+| Duplicate of #123          |                                                 | 关闭重复的issue              |
+| close/closes/closed #issue |                                                 | 关闭issue                    |
+| fix/fixes/fixed #issue     |                                                 | 修复issue                    |
+| resolve/resolves/resolved  |                                                 | 解决issue                    |
 
 # Issue 规范
 
