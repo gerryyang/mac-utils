@@ -1,5 +1,5 @@
 
-CXXFLAGS = -Werror -Wall -g -pipe -O2 -Wno-unused-variable -Wno-unused-function
+CXXFLAGS = -std=c++11 -Werror -Wall -g -pipe -O2 -pg -Wno-unused-variable -Wno-unused-function
 CFLAGS = -Werror -Wall -g -pipe -O2 -Wno-unused-variable -Wno-unused-function
 
 INCLUDE = -I. -I./plthook
@@ -9,6 +9,7 @@ TARGET3_LIBS = -ltesta -ltesta_hook -ldl
 TARGET5_LIBS = -ltestb -ltestb_hook -lplthook -ldl
 TARGET6_LIBS = -ltestc -ltestc_hook -lplthook -ldl
 TARGET7_LIBS = -ltestc -ltestc_hook -lplthook -ldl
+TARGET8_LIBS = -ltestd -ltestd_hook -lplthook -ldl
 
 OPTIONS = -Wl,-rpath,./
 
@@ -35,11 +36,15 @@ TARGET6_OBJS = demo6.o
 TARGET7 = demo7
 TARGET7_OBJS = demo7.o
 
+# hook cpp so function
+TARGET8 = demo8
+TARGET8_OBJS = demo8.o
+
 .PHONY: clean plthook
 
-TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7)
+TARGET_LIST = $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8)
 
-all: testa testa_hook testb testb_hook testc testc_hook plthook $(TARGET_LIST)
+all: testa testa_hook testb testb_hook testc testc_hook testd testd_hook plthook plthook_static $(TARGET_LIST)
 
 testa:
 	$(CC) $(CFLAGS) testa.c -fPIC -shared -o libtesta.so
@@ -48,19 +53,29 @@ testa_hook:
 	$(CC) $(CFLAGS) testa_hook.c -fPIC -shared -o libtesta_hook.so
 
 testb:
-	$(CXX) $(CFLAGS) testb.cc -fPIC -shared -o libtestb.so
+	$(CXX) $(CXXFLAGS) testb.cc -fPIC -shared -o libtestb.so
 
 testb_hook:
-	$(CXX) $(CFLAGS) testb_hook.cc -fPIC -shared -o libtestb_hook.so
+	$(CXX) $(CXXFLAGS) testb_hook.cc -fPIC -shared -o libtestb_hook.so
 
 testc:
-	$(CXX) $(CFLAGS) testc.cc -fPIC -shared -o libtestc.so
+	$(CXX) $(CXXFLAGS) testc.cc -fPIC -shared -o libtestc.so
 
 testc_hook:
-	$(CXX) $(CFLAGS) $(INCLUDE) testc_hook.cc -fPIC -shared -o libtestc_hook.so
+	$(CXX) $(CXXFLAGS) $(INCLUDE) testc_hook.cc -fPIC -shared -o libtestc_hook.so
+
+testd:
+	$(CXX) $(CXXFLAGS) testd.cc -fPIC -shared -o libtestd.so
+
+testd_hook:
+	$(CXX) $(CXXFLAGS) $(INCLUDE) testd_hook.cc -fPIC -shared -o libtestd_hook.so
 
 plthook:
-	$(CXX) $(CFLAGS) plthook/plthook_elf.c -fPIC -shared -o libplthook.so
+	$(CC) $(CFLAGS) plthook/plthook_elf.c -fPIC -shared -o libplthook.so
+
+plthook_static:
+	$(CC) $(CFLAGS) -c plthook/plthook_elf.c -fPIC -o plthook_elf.o
+	ar rcs libplthook.a plthook_elf.o
 
 $(TARGET1): $(TARGET1_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(LIBS) $(OPTIONS)
@@ -90,11 +105,15 @@ $(TARGET7): $(TARGET7_OBJS)
 	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET7_LIBS) $(OPTIONS)
 	@echo "build $(TARGET7) ok"
 
+$(TARGET8): $(TARGET8_OBJS)
+	$(CXX) -o $@ $^ $(INCLUDE) $(LIBPATH) $(TARGET8_LIBS) $(OPTIONS)
+	@echo "build $(TARGET8) ok"
+
 install:
 	@echo "nothing to install"
 
 clean:
-	rm -f *.o *.so $(TARGET_LIST)
+	rm -f *.o *.so *.a $(TARGET_LIST)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $<
