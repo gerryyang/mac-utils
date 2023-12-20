@@ -1490,8 +1490,10 @@ https://github.com/derekparker/delve
 
 https://github.com/gopherchina/conference
 
+# Manual
 
-
+* [Go语言圣经 《The Go Programming Language》 中文版本](https://books.studygolang.com/gopl-zh/)
+* [Go 语言设计与实现](https://draveness.me/golang/)
 
 # Refer
 

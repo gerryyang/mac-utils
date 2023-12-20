@@ -1486,6 +1486,38 @@ The two system calls listed cannot use the vDSO as they normally would on any ot
 
 * `gcc 4.8`版本在调用`std::chrono::system_clock::now`会bypass vdso走system call，优化方法：升级到gcc 7或者改换其他用法。bug参考可见：[Bug 59177 - steady_clock::now() and system_clock::now do not use the vdso (and are therefore very slow)](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59177)
 
+## 编译器优化
+
+### -pg
+
+在 GCC 编译器中，`-pg` 选项用于启用生成的可执行文件的 `gprof` 性能分析。当使用 `-pg` 选项编译和链接程序时，编译器会在程序的每个函数入口和出口处插入额外的代码。这些插入的代码用于收集函数调用的计数和执行时间信息。
+
+当程序运行完成后，它会生成一个名为 `gmon.out` 的分析数据文件。然后，可以使用 `gprof` 工具分析此文件以获取程序的性能概况。**这有助于识别程序中的瓶颈和优化代码**。
+
+要使用 `-pg` 选项，请在编译和链接时都加上 `-pg`，例如：
+
+``` bash
+gcc -pg -o my_program my_program.c
+```
+
+然后运行程序：
+
+``` bash
+./my_program
+```
+
+这将生成 `gmon.out` 文件。接下来，使用 `gprof` 分析性能数据：
+
+``` bash
+gprof my_program gmon.out > analysis.txt
+```
+
+现在，可以查看 `analysis.txt` 文件以获取程序的性能概况。
+
+
+
+
+
 # 关于优化的其他思考
 
 ## 性能和易用性（Trade-off）
