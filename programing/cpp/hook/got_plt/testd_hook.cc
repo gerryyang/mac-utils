@@ -51,3 +51,9 @@ void TestD::say_hello_hotpatch_impl(int a)
     }
 }
 }
+
+void HotPatch::TestD::call_hotpatch_function_from_another_file(int a)
+{
+    ::TestD t;
+    t.say_hello_impl(a);
+}

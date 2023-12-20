@@ -212,6 +212,39 @@ void test4()
     printf("%s done\n", __PRETTY_FUNCTION__);
 }
 
+/*
+orignal: void TestD::say_hello_impl(int) m_a(1) a(123)
+plthook_open so((null)) ok
+plthook_replace func(_ZN5TestD14say_hello_implEi) ok
+HotPatch: static void HotPatch::TestD::say_hello_hotpatch(HotPatch::TestD*, int) a(123)
+HotPatch: void HotPatch::TestD::say_hello_hotpatch_impl(int) m_a(1) a(123)
+dlsym ok, func addr(0x7f578eb05d60)
+orignal: void TestD::say_hello_impl(int) m_a(1) a(456)
+orignal: void TestD::say_hello_impl(int) m_a(1) a(789)
+void test5() done
+*/
+void test5()
+{
+    // 测试用例：修改可执行程序的 plt 函数跳转地址 (C++ 非虚函数)，测试多个 plt 表是否相互影响
+
+    TestD Obj;
+    Obj.say_hello_impl(123);
+
+    const char *filename = NULL;                                // 表示修改可执行程序的 plt 表
+    const char *hotpatch_func = "_ZN5TestD14say_hello_implEi";  // TestD::say_hello_impl(int)
+    install_hook_function(filename, hotpatch_func);
+
+    // 由于修改了可执行程序的 plt 函数跳转地址，此时函数调用会跳转到 libtestd_hook.so 中的替换函数
+    // 因为没有修改 libtestd_hook.so 中的 plt 表，因此可以在 libtestd_hook.so 中的替换函数中直接调用被替换的原始函数
+    Obj.say_hello_impl(123);
+
+    // 在 libtestd_hook.so 中调用 TestD::say_hello_impl 不会被替换
+    HotPatch::TestD Obj2;
+    Obj2.call_hotpatch_function_from_another_file(789);
+
+    printf("%s done\n", __PRETTY_FUNCTION__);
+}
+
 int main()
 {
     //print_plt_entries(NULL);
@@ -226,7 +259,10 @@ int main()
     //test3();
 
     // 测试用例：修改 libtestd.so 中的 plt 函数跳转地址，使用 install_hook_function_with_oldfunc
-    test4();
+    //test4();
+
+    // 测试用例：修改可执行程序的 plt 函数跳转地址 (C++ 非虚函数)，测试多个 plt 表是否相互影响
+    test5();
 
     return 0;
 }

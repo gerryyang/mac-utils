@@ -1,5 +1,4 @@
 #pragma once
-#include <stdio.h>
 
 class Base
 {
@@ -15,7 +14,7 @@ public:
     void say_hello(int a) override;
 
 public:
-    void say_hello_impl(int a);  // hotpatch function
+    void say_hello_impl(int a);  // replaced function
 
 public:
     int m_a;
