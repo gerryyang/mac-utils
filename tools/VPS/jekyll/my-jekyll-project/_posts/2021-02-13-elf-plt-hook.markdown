@@ -52,6 +52,8 @@ On systems with recent GNU assembler and C library, the C++ compiler uses the `S
 
 But this causes dlclose to be ignored for affected DSOs; if your program relies on reinitialization of a DSO via dlclose and dlopen, you can use -fno-gnu-unique.
 
+
+
 # Tips
 
 ## 安装和使用动态库
@@ -1554,6 +1556,8 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 [https://github.com/kubo/plthook](https://github.com/kubo/plthook)
 
+### 一个函数调用外部函数时如何寻址？
+
 * What is PLTHook.
 * A utility library to hook library function calls issued by specified object files (executable and libraries). This modifies PLT (Procedure Linkage Table) entries in ELF format used on most Unixes or IAT (Import Address Table) entries in PE format used on Windows.
 * Note that built-in functions cannot be hooked. For example the C compiler in macOS Sierra compiles ceil() as inline assembly code, not as function call of ceil in the system library.
@@ -1567,21 +1571,46 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 ![figure1](/assets/images/202102/plthook/figure1.png)
 
+当一个函数（比如，some_func()）调用同一文件中的另一个函数（比如，foo_func()）时，由于它们在同一个文件中，所以在编译时就可以知道被调用函数的相对地址，无论在运行时的绝对地址是什么。这就是所谓的相对寻址。然而，当一个函数需要调用另一个文件中的函数时，就无法在编译时知道被调用函数的地址。为了解决这个问题，每个文件都有一个从外部函数名到地址的映射。这个映射就存储在过程链接表（PLT）中。当需要调用一个外部函数时，调用者会直接查看 PLT 中对应的条目，获取被调用函数的地址，然后跳转到这个地址去执行函数。
+
+PLT 中的地址可以在两个时机被解析：
+
+1. 在进程启动时。在这种情况下，动态链接器会在程序开始运行之前解析所有的 PLT 条目。这被称为预绑定。
+2. 在第一次函数调用时。在这种情况下，动态链接器会在第一次调用一个函数时才解析对应的 PLT 条目。这被称为懒绑定。
+
+具体使用哪种方式，取决于操作系统或者程序的设置。预绑定可以减少函数第一次调用时的延迟，但会增加程序启动时的延迟。懒绑定则相反，可以减少程序启动时的延迟，但会增加函数第一次调用时的延迟。
+
+### 如何在不修改原始代码的情况下，运行时动态地替换函数？
+
 * What plthook does.
 * Plthook changes the address in PLT entries as above. When foo_func() is called from program, hook_foo_func() is called instead. It doesn't change function calls from libfoo.so and libbar.so.
 
 ![figure2](/assets/images/202102/plthook/figure2.png)
 
-* How to call original functions from hook functions.
-* When hook functions are outside of modified files
+通过替换 PLT 中的函数地址就可以实现函数替换。PLT 是每个可执行文件或动态链接库自身维护的一张表，用于存储外部函数（即那些定义在其他文件中的函数）的地址。
+
+当程序调用 foo_func() 时，将 PLT 中 foo_func() 的地址替换为 hook_foo_func() 的地址。这样，当程序尝试调用 foo_func() 时，实际上会调用 hook_foo_func()。注意，对可执行文件 PLT表的修改仅影响来自主程序的函数调用。在上述例子中，只会影响主程序对 foo_func() 的调用，而 libfoo.so 和 libbar.so 中的函数调用不受影响，它们仍然会正常调用原始的 foo_func() 函数。
+
+### 如何在被替换的函数中调用被替换的原始函数？
+
+How to call original functions from hook functions.
+
+存在两种情况：
+
+* When hook functions are outside of modified files (当替换的函数在未修改的文件中)
   + When the hook function hook_foo_func() is in libbar.so, just call the original function foo_func(). It looks the PLT entry in libbar.so and jumps to the original.
 
 ![figure3](/assets/images/202102/plthook/figure3.png)
 
-* When hook functions are inside of modified files
+例如，hook_foo_func() 位于 libbar.so 中，可以直接调用原始函数 foo_func()。这时，程序会查找 libbar.so 的 PLT 表条目并跳转到原始函数。因为 libbar.so 的 PLT 没有被修改，所以调用 foo_func() 时会正确地执行原始函数。
+
+
+* When hook functions are inside of modified files (当替换的函数在修改的文件中)
   + When the hook function hook_foo_func() is in program, do not call the original function foo_func() because it jumps to hook_foo_func() repeatedly and crashes the process after memory for stack is exhausted. You need to get the address of the original function and set it to the function pointer variable foo_func_addr. Use the fourth argument of plthook_replace() to get the address on Windows. Use the return value of dlsym(RTLD_DEFAULT, "foo_func") on Unixes. The fourth argument of plthook_replace() isn't available on Unixes because it doesn't set the address of the original before the address in the PLT entry is resolved.
 
 ![figure4](/assets/images/202102/plthook/figure4.png)
+
+例如，hook_foo_func() 位于主程序中，直接调用原始函数 foo_func() 会导致无限递归，最终导致栈内存耗尽并使进程崩溃。在这种情况下，需要先获取原始函数的地址，并将其设置为函数指针变量 foo_func_addr。在 Unix 系统上，可以使用 dlsym(RTLD_DEFAULT, "foo_func") 的返回值来获取原始函数的地址。需要注意的是，plthook_replace() 的第四个参数在 Unix 系统上不可用，因为在 PLT 条目的地址被解析之前，它不会设置原始函数的地址。
 
 
 ## 测试代码
@@ -1706,3 +1735,4 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
 * [Control over symbol exports in GCC](https://anadoxin.org/blog/control-over-symbol-exports-in-gcc.html/) (推荐)
 * [Weak dynamic symbols](https://www.humprog.org/~stephen//blog/2011/12/01/)
 * [Get all the thread_id created with pthread_created within an process (using LD_PRELOAD)](https://stackoverflow.com/questions/3707358/get-all-the-thread-id-created-with-pthread-created-within-an-process/3709027#3709027)
+* https://en.wikipedia.org/wiki/Hooking#Virtual_method_table_hooking

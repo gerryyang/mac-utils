@@ -331,6 +331,40 @@ yum install libatomic -y
 yum install readline-devel
 ```
 
+## protobuf
+
+``` bash
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release  -DCMAKE_INSTALL_PREFIX=/data/home/gerryyang/jlib_proj/deps_src/protobuf-3.7.1/install -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF ../cmake
+```
+
+# 反汇编
+
+* 使用 objdump
+
+``` bash
+objdump -d -M intel /path/to/your/binary > disassembly.txt
+objdump -d -M intel -j .text /path/to/your/binary > disassembly.txt
+grep -A10 "<your_function>:" disassembly.txt
+```
+
+
+* 使用 gdb
+
+``` bash
+disas /r your_function
+```
 
 
 
+
+# [Simon Racz](https://www.youtube.com/@simonracz)
+
+## [Self-modifying code](https://en.wikipedia.org/wiki/Self-modifying_code)
+
+在计算机科学中，自修改代码（Self-modifying code，简称 SMC 或 SMoC）是指在执行过程中更改其自身指令的代码。这通常是为了减少指令路径长度、提高性能，或者简化维护，降低重复性类似代码。这个术语通常只用于自修改是有意为之的情况，而不是因为错误（如缓冲区溢出）而意外修改自身的情况。
+
+自修改代码可以涉及覆盖现有指令，或在运行时生成新代码并将控制权转移到该代码。
+
+## [Dynamic Loading](https://www.youtube.com/watch?v=VO6gMLtQOKM)
+
+Let's Explore the Dynamic Loading APIs and Their Many Use Cases.
