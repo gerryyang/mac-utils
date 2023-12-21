@@ -20,4 +20,6 @@ private:
     int m_a;
 };
 
+void say_hello_hotpatch_impl(void* thisptr, int a);
+
 }

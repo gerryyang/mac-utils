@@ -62,3 +62,9 @@ void HotPatch::TestD::call_hotpatch_function_from_another_file(int a)
     ::TestD t;
     t.say_hello_impl(a);
 }
+
+void HotPatch::say_hello_hotpatch_impl(void *thisptr, int a)
+{
+    printf("HotPatch: %s a(%d)\n", __PRETTY_FUNCTION__, a);
+    ((::TestD *)thisptr)->say_hello_impl(a);
+}
