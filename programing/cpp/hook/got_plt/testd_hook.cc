@@ -26,6 +26,11 @@ void TestD::say_hello_hotpatch_impl(int a)
     //obj->say_hello(a);
 
     // 方法 2
+    // 通过新的对象调用，证明修改可执行文件的 plt 表或者 libtestd.so 的 plt 表都不会影响 libtestd_hook.so 里对原始函数的调用
+    ::TestD Obj;
+    Obj.say_hello_impl(123);
+
+    // 方法 3
     // 通过函数指针访问
     {
         typedef void (TestD::*say_hello_impl_func)(int);
