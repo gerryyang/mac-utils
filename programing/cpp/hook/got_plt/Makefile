@@ -1,6 +1,9 @@
 
-CXXFLAGS = -std=c++11 -Werror -Wall -g -pipe -O2 -pg -Wno-unused-variable -Wno-unused-function
-CFLAGS = -Werror -Wall -g -pipe -O2 -Wno-unused-variable -Wno-unused-function
+NOWARN = -Wno-unused-variable -Wno-unused-function
+COMMON_FLAGS = -Werror -Wall -g -pipe -fno-omit-frame-pointer
+
+CXXFLAGS = -std=c++11 $(COMMON_FLAGS) $(NOWARN)
+CFLAGS = $(COMMON_FLAGS) $(NOWARN)
 
 INCLUDE = -I. -I./plthook
 LIBPATH = -L.
