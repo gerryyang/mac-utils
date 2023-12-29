@@ -1551,10 +1551,17 @@ GOT表位于数据段，当外部函数第一次被调用时，GOT表保存的�
 
 # PLT Hook
 
+## 方案介绍
 
-## 参考代码
+* 参考方案：[https://github.com/kubo/plthook](https://github.com/kubo/plthook)
+* 只能对外部函数进行替换，因此要求对业务代码编译为动态库，依赖的第三方库静态库需要使用 -fPIC 编译
+* C++ 虚函数的调用是通过 vtable 实现的寻址而不是通过 PLT 表，不能使用 PLT 替换方案，代替方案可参考：[Virtual method table hooking](https://en.wikipedia.org/wiki/Hooking#Virtual_method_table_hooking)
+* 动态库中只能对 cpp 中的函数进行替换，在头文件中的函数默认会被 inline 内联，也不能使用 PLT 方案
+* 通过 plthook_enum 函数可以遍历共享库中的程序链接表 PLT 条目，查找需要替换的函数
+* 此方案修改的是可执行程序或者动态库的 PLT 表的内存数据，因此服务重启后需要重新修改
+* 由于 PLT 表存在多份，如果存在多个不同地方调用某个需要替换的外部函数，则需要对多个调用的地方进行 replace 操作
 
-[https://github.com/kubo/plthook](https://github.com/kubo/plthook)
+
 
 ### 一个函数调用外部函数时如何寻址？
 
@@ -1721,6 +1728,10 @@ int plthook_replace(plthook_t *plthook, const char *funcname, void *funcaddr, vo
     return rv;
 }
 ```
+
+# DLL Hell
+
+https://en.wikipedia.org/wiki/DLL_Hell
 
 # Refer
 

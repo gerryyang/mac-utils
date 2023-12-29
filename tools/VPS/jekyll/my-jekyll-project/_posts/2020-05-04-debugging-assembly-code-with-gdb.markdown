@@ -469,6 +469,45 @@ TODO
 
 # 常用技巧
 
+## 通过地址查找符号 info symbol $address
+
+```
+(gdb) bt
+#0  0x00007fb44dc8f820 in __nanosleep_nocancel () at ../sysdeps/unix/syscall-template.S:81
+#1  0x00007fb44dc8f6d4 in __sleep (seconds=0) at ../sysdeps/unix/sysv/linux/sleep.c:137
+#2  0x0000000000400690 in allocate_memory () at test.cc:13
+#3  0x000000000040069b in main () at test.cc:17
+(gdb) f 2
+#2  0x0000000000400690 in allocate_memory () at test.cc:13
+13              sleep(-1);  // 让程序暂停一段时间，以便我们可以检查 /proc/[pid]/smaps
+(gdb) l
+8               int *data = (int *)malloc(100000 * sizeof(int));
+9               for (int i = 0; i < 100000; i++) {
+10                      data[i] = 1;
+11              }
+12              static int a = 1;
+13              sleep(-1);  // 让程序暂停一段时间，以便我们可以检查 /proc/[pid]/smaps
+14      }
+15
+16      int main() {
+17              allocate_memory();
+(gdb) i locals
+data = 0x7fb44ea45010
+a = 1
+(gdb) p &a
+$1 = (int *) 0x402028 <allocate_memory()::a>
+(gdb) info symbol 0x7fb44ea45010
+No symbol matches 0x7fb44ea45010.
+(gdb) info symbol 0x402028
+allocate_memory()::a in section .data of /data/home/gerryyang/test/perf/a.out
+(gdb) p g_a
+$2 = 1
+(gdb) p &g_a
+$3 = (int *) 0x402024 <g_a>
+(gdb) info symbol 0x402024
+g_a in section .data of /data/home/gerryyang/test/perf/a.out
+```
+
 ## 打印内存的值
 
 ``` cpp
@@ -627,13 +666,7 @@ info var _instance
 ## 在 gdb 中执行 shell 命令
 
 ```
-gdb$ shell
-
-shell$ execute_your_commands
-
-shell$ exit
-
-gdb$ you_have_returned_back_to_gdb_prompt
+(gdb) !date
 ```
 
 ## 调用函数 (call)

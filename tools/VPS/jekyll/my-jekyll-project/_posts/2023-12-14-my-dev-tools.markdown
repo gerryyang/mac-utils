@@ -368,3 +368,7 @@ disas /r your_function
 ## [Dynamic Loading](https://www.youtube.com/watch?v=VO6gMLtQOKM)
 
 Let's Explore the Dynamic Loading APIs and Their Many Use Cases.
+
+# TODO
+
+* https://github.com/TartanLlama/expected

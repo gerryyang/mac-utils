@@ -2848,5 +2848,17 @@ This is not a comprehensive list of all utilities that existed in the various hi
 | [alias](https://en.wikipedia.org/wiki/Alias_(command)) | Define or display aliases
 
 
+## ls 根据文件大小倒序排序
+
+``` bash
+ls -lSh
+```
+
+ls 命令用于列出目录内容。
+-l 选项表示以长格式输出文件信息。
+-S 选项表示按文件大小排序。
+-h 选项表示以人类可读的格式显示文件大小（例如，1K、234M、2G 等）。
+
+这个命令会按照文件大小倒序输出当前目录的文件信息。
 
 
