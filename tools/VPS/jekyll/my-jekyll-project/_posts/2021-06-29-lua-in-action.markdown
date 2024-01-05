@@ -159,7 +159,161 @@ hi
 ```
 
 
+# 相关用法
 
+## [lua_call](https://www.lua.org/manual/5.3/manual.html#lua_call)
+
+``` cpp
+void lua_call (lua_State *L, int nargs, int nresults);
+```
+
+Calls a function.
+
+
+To call a function you must use the following protocol:
+
+* first, the function to be called is pushed onto the stack;
+* then, the arguments to the function are pushed in direct order; that is, the first argument is pushed first.
+* Finally you call lua_call;
+* nargs is the number of arguments that you pushed onto the stack.
+* All arguments and the function value are popped from the stack when the function is called.
+* The function results are pushed onto the stack when the function returns.
+* The number of results is adjusted to nresults, unless nresults is LUA_MULTRET. In this case, all results from the function are pushed;
+* Lua takes care that the returned values fit into the stack space, but it does not ensure any extra space in the stack. The function results are pushed onto the stack in direct order (the first result is pushed first), so that after the call the last result is on the top of the stack.
+
+Any error inside the called function is propagated upwards (with a `longjmp`).
+
+The following example shows how the host program can do the equivalent to this Lua code:
+
+``` lua
+a = f("how", t.x, 14)
+```
+
+Here it is in C:
+
+``` c
+lua_getglobal(L, "f");                  /* function to be called */
+lua_pushliteral(L, "how");                       /* 1st argument */
+lua_getglobal(L, "t");                    /* table to be indexed */
+lua_getfield(L, -1, "x");        /* push result of t.x (2nd arg) */
+lua_remove(L, -2);                  /* remove 't' from the stack */
+lua_pushinteger(L, 14);                          /* 3rd argument */
+lua_call(L, 3, 1);     /* call 'f' with 3 arguments and 1 result */
+lua_setglobal(L, "a");                         /* set global 'a' */
+```
+
+Note that the code above is balanced: at its end, the stack is back to its original configuration. This is considered good programming practice.
+
+
+
+## [lua_pcall](https://www.lua.org/manual/5.3/manual.html#lua_pcall)
+
+``` cpp
+int lua_pcall (lua_State *L, int nargs, int nresults, int msgh);
+```
+
+Calls a function in protected mode.
+
+Both `nargs` and `nresults` have the same meaning as in `lua_call`. If there are no errors during the call, `lua_pcall` behaves exactly like `lua_call`. However, if there is any error, `lua_pcall` catches it, pushes a single value on the stack (the error object), and returns an error code. Like `lua_call`, `lua_pcall` always removes the function and its arguments from the stack.
+
+If `msgh` is 0, then the error object returned on the stack is exactly the original error object. Otherwise, `msgh` is the stack index of a message handler. (This index cannot be a pseudo-index.) In case of runtime errors, this function will be called with the error object and its return value will be the object returned on the stack by `lua_pcall`.
+
+Typically, the message handler is used to add more debug information to the error object, such as a stack traceback. Such information cannot be gathered after the return of `lua_pcall`, since by then the stack has unwound.
+
+The `lua_pcall` function returns one of the following constants (defined in `lua.h`):
+
+* LUA_OK (0): success.
+* LUA_ERRRUN: a runtime error.
+* LUA_ERRMEM: memory allocation error. For such errors, Lua does not call the message handler.
+* LUA_ERRERR: error while running the message handler.
+* LUA_ERRGCMM: error while running a __gc metamethod. For such errors, Lua does not call the message handler (as this kind of error typically has no relation with the function being called).
+
+
+测试代码：
+
+``` lua
+function printmsg()
+        -- ok
+        --print("hello world")
+
+        -- mock err
+        print_not_exist("hello world")
+end
+
+function errorhandle(str)
+        return string.upper(str)
+end
+```
+
+``` cpp
+#include<iostream>
+#include<string>
+
+extern "C" {
+#include<lua.h>
+#include<lualib.h>
+#include<lauxlib.h>
+}
+
+int main()
+{
+        lua_State *L = luaL_newstate();
+        luaL_openlibs(L);
+
+        if (luaL_loadfile(L, "test.lua"))
+        {
+                std::cout << "open file error" << std::endl;
+                return 1;
+        }
+
+        // run test.lua
+        int ret = lua_pcall(L, 0, 0, 0);
+        if (ret)
+        {
+                std::cout << "1 function call error: " << ret << std::endl;
+        }
+
+        // function to be called
+        lua_getglobal(L, "errorhandle");
+        lua_getglobal(L, "printmsg");
+
+        // run test.lua and call printmsg but no errfunc
+        ret = lua_pcall(L, 0, 0, 0);
+        if (ret)
+        {
+                std::cout << "2 function call error: " << ret << std::endl;
+                std::cout << lua_tostring(L, -1) << std::endl;
+        }
+
+        // run test.lua and call printmsg and set errfunc
+        ret = lua_pcall(L, 0, 0, -2);
+        if (ret)
+        {
+                std::cout << "3 function call error: " << ret << std::endl;
+                std::cout << lua_tostring(L, -1) << std::endl;
+        }
+
+        lua_close(L);
+
+        return 0;
+}
+
+/*
+$ ./a.out
+2 function call error: 2
+test.lua:7: attempt to call a nil value (global 'print_not_exist')
+3 function call error: 2
+ATTEMPT TO CALL A STRING VALUE
+*/
+```
+
+``` bash
+#!/bin/bash
+
+# lua 5.3.5
+g++ -g -I../lua_5.3.5/include -L../lua_5.3.5/lib lua_pcall.cc -llua  -ldl
+echo "done"
+```
 
 
 
@@ -272,4 +426,5 @@ sudo yum install readline-devel
 # Refer
 
 * https://lua.org/manual/5.3/manual.html
+* https://www.lua.org/manual/5.3/
 * [Lua 5.3 参考手册](https://www.runoob.com/manual/lua53doc/contents.html)

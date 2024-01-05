@@ -2080,6 +2080,54 @@ Answers:
 * http://www.tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_07.html
 
 
+## split
+
+将一个文件按指定行数拆分成多个文件。
+
+``` bash
+#!/bin/bash
+
+input_file="CSMsg.pb.cc"
+output_prefix="split_file_CSMsg.pb."
+max_lines_per_file=10000
+
+line_count=$(wc -l < "$input_file")
+total_files=$(( (line_count + max_lines_per_file - 1) / max_lines_per_file ))
+
+split -l $max_lines_per_file --numeric-suffixes=1 --suffix-length=$(echo -n $total_files | wc -c) "$input_file" "$output_prefix"
+
+for file in "$output_prefix"*; do
+  mv "$file" "$file.cc"
+done
+```
+
+```
+$ ls -lSh
+总用量 3.5M
+-rw-r--r-- 1 gerryyang users 1.4M 1月   2 16:55 CSMsg.pb.cc
+-rw-r--r-- 1 gerryyang users 761K 1月   2 16:55 CSMsg.pb.h
+-rw-r--r-- 1 gerryyang users 403K 1月   2 17:09 split_file_CSMsg.pb.3.cc
+-rw-r--r-- 1 gerryyang users 397K 1月   2 17:09 split_file_CSMsg.pb.1.cc
+-rw-r--r-- 1 gerryyang users 363K 1月   2 17:09 split_file_CSMsg.pb.2.cc
+-rw-r--r-- 1 gerryyang users 219K 1月   2 17:09 split_file_CSMsg.pb.4.cc
+-rwxr-xr-x 1 gerryyang users  409 1月   2 17:01 test.sh
+```
+
+* `input_file="CSMsg.pb.cc"`：指定要拆分的输入文件名。
+* `output_prefix="split_file_CSMsg.pb."`：指定拆分后的输出文件的前缀。
+* `max_lines_per_file=10000`：指定每个拆分文件的最大行数。
+* `line_count=$(wc -l < "$input_file")`：计算输入文件的总行数。
+* `total_files=$(( (line_count + max_lines_per_file - 1) / max_lines_per_file ))`：计算需要创建的拆分文件的总数。
+* `split -l $max_lines_per_file --numeric-suffixes=1 --suffix-length=$(echo -n $total_files | wc -c) "$input_file" "$output_prefix"`
+  + 使用 `split` 命令按行数拆分输入文件
+  + `--numeric-suffixes=1` 选项表示使用数字后缀（从 1 开始）为拆分文件命名
+  + `--suffix-length` 选项用于设置后缀的长度，以便在文件名中使用前导零（例如，split_file001.cc、split_file002.cc 等）
+* `for file in "$output_prefix"*; do mv "$file" "$file.cc"; done`：遍历所有拆分文件，并将它们重命名为 .cc 扩展名
+
+运行此脚本后将得到多个拆分文件，每个文件包含原始输入文件的一部分内容。这有助于将较大的源文件拆分成更易于管理和阅读的较小文件。
+
+
+
 
 # Example
 

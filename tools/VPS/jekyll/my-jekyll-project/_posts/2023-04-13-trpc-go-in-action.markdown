@@ -26,7 +26,6 @@ option go_package="git.woa.com/trpcprotocol/test/helloworld";
 
 service Greeter {
     rpc SayHello (HelloRequest) returns (HelloReply) {}
-    rpc SayHi (HelloRequest) returns (HelloReply) {}
 }
 
 message HelloRequest {
@@ -38,7 +37,16 @@ message HelloReply {
 }
 ```
 
-* 通过命令行生成服务模型：`trpc create --protofile=helloworld.proto`（首先需要先[安装 trpc 工具](https://git.woa.com/trpc-go/trpc-go-cmdline)）, 可以在 `trpc_go.yaml` 的 server service 中额外添加 HTTP RPC 服务:
+* 通过命令行生成服务模型：`trpc create --protofile=helloworld.proto`（首先需要先[安装 trpc 工具](https://git.woa.com/trpc-go/trpc-go-cmdline)）
+
+``` bash
+#!/bin/bash
+
+# 只生成协议代码
+trpc create --protofile=qqchatsvr.proto --rpconly
+```
+
+* 可以在 `trpc_go.yaml` 的 server service 中额外添加 HTTP RPC 服务:
 
 ``` yaml
     - name: trpc.test.helloworld.Greeter  # service 的名字服务路由名称
@@ -56,6 +64,13 @@ message HelloReply {
 * 自测 trpc 协议：`trpc-cli -func "/trpc.test.helloworld.Greeter/SayHello" -target "ip://127.0.0.1:8000" -body '{"msg":"hello"}' -v`
 * 自测 http 协议：`curl -X POST -d '{"msg":"hello"}' -H "Content-Type:application/json" http://127.0.0.1:8080/trpc.test.helloworld.Greeter/SayHello`
 
+> 注意：trpc-cli 工具支持很多参数，使用时注意指定。
+>
+> 1. func 为 pb 协议定义的 /package.service/method，如上面的 helloworld.proto，则为 /trpc.test.helloworld.Greeter/SayHello，千万注意：不是 yaml 里面配置的 service。
+>
+> 2. target 为被调服务的目标地址，格式为 selectorname://servicename，这里只是本地自测，没有接入名字服务，直接指定 ip:port 寻址，使用 ip selector 就可以了，格式是 ip://${ip}:${port}，如 ip://127.0.0.1:8000。
+>
+> 3. body 为请求包体数据的 json 结构字符串，内部 json 字段要跟 pb 定义的字段完全一致，注意大小写不要写错。
 
 
 # tRPC-Go 拦截器功能及实现 (filter 过滤器)

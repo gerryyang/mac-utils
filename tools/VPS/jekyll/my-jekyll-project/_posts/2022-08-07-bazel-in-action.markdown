@@ -3645,7 +3645,12 @@ cc_library(
 
 
 
-## [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
+## bazel 使用动态库
+
+* [bazel c++ create and link with shared library](https://stackoverflow.com/questions/53514630/bazel-c-create-and-link-with-shared-library?rq=3)
+* [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
+
+
 
 
 # Examples

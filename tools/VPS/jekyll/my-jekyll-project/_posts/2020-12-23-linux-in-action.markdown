@@ -2325,6 +2325,22 @@ nc -l 8080
 nc -l 8080 > received_data.txt
 ```
 
+返回指定的应答内容
+
+``` bash
+#!/bin/bash
+nc -l 8080 < response.txt
+```
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 29
+
+{"rsp": {"switch_status": 2}}
+```
+
+
 连接到名为 `remote.host.com` 的远程主机上的 TCP 端口 `8080`，并向其发送字符串 `"Hello, World!"`
 
 ``` bash
