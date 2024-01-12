@@ -516,8 +516,8 @@ $ git filter-branch --commit-filter '
 git config --list
 
 # 设置用户名和邮箱
-git config --global user.name "Your Name Here"
-git config --global user.email "your_email@example.com"
+git config --local user.name "your_name"
+git config --local user.email "your_email@example.com"
 ```
 
 ## 创建代码仓库

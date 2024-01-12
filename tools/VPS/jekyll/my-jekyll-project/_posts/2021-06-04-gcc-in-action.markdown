@@ -1057,6 +1057,154 @@ refer:
 * https://gcc.gnu.org/gcc-5/changes.html#libstdcxx
 
 
+# Program Instrumentation Options (程序插桩选项)
+
+GCC supports a number of command-line options that control adding run-time instrumentation to the code it normally generates.
+
+For example, one purpose of instrumentation is collect profiling statistics for use in finding program hot spots, code coverage analysis, or profile-guided optimizations. Another class of program instrumentation is adding run-time checking to detect programming errors like invalid pointer dereferences or out-of-bounds array accesses, as well as deliberately hostile attacks such as stack smashing or C++ vtable hijacking. There is also a general hook which can be used to implement other forms of tracing or function-level instrumentation for debug or program analysis purposes.
+
+## -p
+
+Generate extra code to write profile information suitable for the analysis program `prof`. You must use this option when compiling the source files you want data about, and you must also use it when linking.
+
+## -pg
+
+Generate extra code to write profile information suitable for the analysis program `gprof`. You must use this option when compiling the source files you want data about, and you must also use it when linking.
+
+## --coverage (代码覆盖率分析)
+
+This option is used to compile and link code instrumented for coverage analysis. The option is a synonym for `-fprofile-arcs` `-ftest-coverage` (when compiling) and `-lgcov` (when linking).
+
+
+## -fsanitize=address
+
+Enable `AddressSanitizer`, **a fast memory error detector**. Memory access instructions are instrumented to detect **out-of-bounds** and **use-after-free bugs**. The option enables `-fsanitize-address-use-after-scope`. See https://github.com/google/sanitizers/wiki/AddressSanitizer for more details.
+
+The run-time behavior can be influenced using the `ASAN_OPTIONS` environment variable. When set to `help=1`, the available options are shown at startup of the instrumented program. See https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags for a list of supported options. The option cannot be combined with `-fsanitize=thread` and/or `-fcheck-pointer-bounds`.
+
+## -fsanitize=leak
+
+Enable `LeakSanitizer`, **a memory leak detector**. This option only matters for linking of executables and the executable is linked against a library that overrides malloc and other allocator functions. See https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer for more details. The run-time behavior can be influenced using the `LSAN_OPTIONS` environment variable. The option cannot be combined with `-fsanitize=thread`.
+
+
+## -fsanitize=thread
+
+Enable `ThreadSanitizer`, **a fast data race detector**. Memory access instructions are instrumented to detect data race bugs. See https://github.com/google/sanitizers/wiki#threadsanitizer for more details. The run-time behavior can be influenced using the `TSAN_OPTIONS` environment variable; see https://github.com/google/sanitizers/wiki/ThreadSanitizerFlags for a list of supported options. The option cannot be combined with `-fsanitize=address`, `-fsanitize=leak` and/or `-fcheck-pointer-bounds`.
+
+Note that sanitized atomic builtins cannot throw exceptions when operating on invalid memory addresses with non-call exceptions (`-fnon-call-exceptions`).
+
+## -fsanitize=undefined
+
+Enable `UndefinedBehaviorSanitizer`, **a fast undefined behavior detector**. Various computations are instrumented to detect undefined behavior at runtime.
+
+
+
+
+## -finstrument-functions (函数插桩)
+
+
+Generate instrumentation calls for entry and exit to functions. Just after function entry and just before function exit, the following profiling functions are called with the address of the current function and its call site. (On some platforms, __builtin_return_address does not work beyond the current function, so the call site information may not be available to the profiling functions otherwise.)
+
+``` cpp
+void __cyg_profile_func_enter (void *this_fn,
+                               void *call_site);
+void __cyg_profile_func_exit  (void *this_fn,
+                               void *call_site);
+```
+
+The first argument is the address of the start of the current function, which may be looked up exactly in the symbol table.
+
+This instrumentation is also done for functions expanded inline in other functions. The profiling calls indicate where, conceptually, the inline function is entered and exited. This means that addressable versions of such functions must be available. If all your uses of a function are expanded inline, this may mean an additional expansion of code size. If you use extern inline in your C code, an addressable version of such functions must be provided. (This is normally the case anyway, but if you get lucky and the optimizer always expands the functions inline, you might have gotten away without providing static copies.)
+
+A function may be given the attribute no_instrument_function, in which case this instrumentation is not done. This can be used, for example, for the profiling functions listed above, high-priority interrupt routines, and any functions from which the profiling functions cannot safely be called (perhaps signal handlers, if the profiling routines generate output or allocate memory).
+
+## -finstrument-functions-exclude-file-list=file,file,…
+
+Set the list of functions that are excluded from instrumentation (see the description of -finstrument-functions). If the file that contains a function definition matches with one of file, then that function is not instrumented. The match is done on substrings: if the file parameter is a substring of the file name, it is considered to be a match.
+
+For example:
+
+```
+-finstrument-functions-exclude-file-list=/bits/stl,include/sys
+```
+
+excludes any inline function defined in files whose pathnames contain `/bits/stl` or `include/sys`.
+
+## -finstrument-functions-exclude-function-list=sym,sym,…
+
+This is similar to -finstrument-functions-exclude-file-list, but this option sets the list of function names to be excluded from instrumentation. The function name to be matched is its user-visible name, such as vector<int> blah(const vector<int> &), not the internal mangled name (e.g., _Z4blahRSt6vectorIiSaIiEE). The match is done on substrings: if the sym parameter is a substring of the function name, it is considered to be a match. For C99 and C++ extended identifiers, the function name must be given in UTF-8, not using universal character names.
+
+
+测试代码：
+
+``` c
+#include <stdio.h>
+
+#define DUMP(func, call) printf("%s: func = %p, called by = %p\n", __FUNCTION__, func, call)
+
+void __attribute__((no_instrument_function))
+__cyg_profile_func_enter(void *this_func, void *call_site)
+{
+    DUMP(this_func, call_site);
+}
+
+void __attribute__((no_instrument_function))
+__cyg_profile_func_exit(void *this_func, void *call_site)
+{
+    DUMP(this_func, call_site);
+}
+
+int do_multi(int a, int b)
+{
+    return a * b;
+}
+
+int do_calc(int a, int b)
+{
+    return do_multi(a, b);
+}
+
+int main()
+{
+    int a = 4, b = 5;
+    printf("result: %d\n", do_calc(a, b));
+    return 0;
+}
+```
+
+编译：
+
+```
+gcc -finstrument-functions test.c
+
+```
+
+输出：
+
+```
+__cyg_profile_func_enter: func = 0x400733, called by = 0x7f11bf64bac5
+__cyg_profile_func_enter: func = 0x4006e8, called by = 0x40076a
+__cyg_profile_func_enter: func = 0x4006a5, called by = 0x400717
+__cyg_profile_func_exit: func = 0x4006a5, called by = 0x400717
+__cyg_profile_func_exit: func = 0x4006e8, called by = 0x40076a
+result: 20
+__cyg_profile_func_exit: func = 0x400733, called by = 0x7f11bf64bac5
+```
+
+
+* https://gcc.gnu.org/onlinedocs/gcc-8.1.0/gcc/Instrumentation-Options.html
+* [使用gcc的-finstrument-functions选项进行函数跟踪](https://blog.csdn.net/jasonchen_gbd/article/details/44044899)
+* https://web.archive.org/web/20130528172555/http://www.ibm.com/developerworks/library/l-graphvis/
+
+## `-fpatchable-function-entry=N[,M]`
+
+Generate `N` NOPs right at the beginning of each function, with the function entry point before the `M`th NOP. If `M` is omitted, it defaults to 0 so the function entry points to the address just at the first NOP. The NOP instructions reserve extra space which can be used to patch in any desired instrumentation at run time, provided that the code segment is writable. The amount of space is controllable indirectly via the number of NOPs; the NOP instruction used corresponds to the instruction emitted by the internal GCC back-end interface `gen_nop`. This behavior is target-specific and may also depend on the architecture variant and/or other compilation options.
+
+
+
+
+
+
 # Refer
 
 * [100个gcc小技巧](https://wizardforcel.gitbooks.io/100-gcc-tips/content/index.html)

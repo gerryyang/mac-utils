@@ -8,6 +8,49 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# STAR 原则
+
+* Situation，你为什么做这件事
+* Task，你负责哪部分
+* Action，你主要做了什么
+* Result，最终有什么成果
+
+Situation 项目背景目标（项目产生的原因及存在的冲突）-> Task 项目角色任务（基于项目目标确定任务及个人角色定位）-> Action 项目重要行动（围绕项目任务所产生的主要行动）-> Result 项目成果（项目最终产出的成果以及影响力）
+
+# SCQA 原则
+
+* Situation，现状是什么样的（目前处于什么状态，遇到什么情况）
+* Complication，现状和目标有差距（实际情况往往和我们的要求有冲突）
+* Question，要解决什么问题（这些冲突导致了什么问题，怎么办）
+* Answer，怎么解决问题（我们的解决方案是什么）
+
+# 职级答辩模版
+
+1. 个人经历概述。简要介绍个人信息和工作简历。
+2. 主要工作成果。讲述最成功最能体现个人专业能力要求的项目或成果（包括项目背景价值，过程中的调整，数据分析，逻辑推演，重要决策）。
+3. 专业影响和贡献。包括方法论积累和传承，专业课程开发或讲授，人才培养，其他贡献等。
+4. 专业领域特长与不足。根据能力标准，总结个人能力的优势与不足。
+
+
+
+# 莱斯定理
+
+In computability theory, Rice's theorem states that all non-trivial semantic properties of programs are undecidable. A semantic property is one about the program's behavior (for instance, does the program terminate for all inputs), unlike a syntactic property (for instance, does the program contain an if-then-else statement). A property is non-trivial if it is neither true for every program, nor false for every program.
+
+In other terms, it tells us that it's impossible to create a computer program that can reliably decide certain interesting things about other programs. Specifically, when it comes to aspects like how a program behaves during its execution, there's no universal method to determine if a program has a particular, more intricate trait. If you have a property that applies to formal languages, and there's at least one example of a language with that property and one without, determining if a given Turing machine has that property becomes an undecidable problem.
+
+Rice 定理是计算理论中的一个重要定理，它阐述了程序的所有非平凡语义属性都是不可判定的。这里的语义属性是指程序的行为特性，比如程序是否对所有输入都会终止，而非语法属性，比如程序是否包含 if-then-else 语句。非平凡属性是指既不对所有程序都为真，也不对所有程序都为假的属性。
+
+换句话说，Rice 定理告诉我们，我们无法创建一个计算机程序，可以可靠地判断其他程序的某些有趣的事情。具体来说，当涉及到程序在执行过程中的行为时，没有通用的方法可以确定一个程序是否具有特定的，更复杂的特性。如果你有一个适用于形式语言的属性，并且至少有一个语言具有该属性和一个没有，那么确定一个给定的图灵机是否具有该属性就成为一个不可判定的问题。
+
+这个定理大致的意思就是：对于有意义的程序属性，我们都无法判定。
+
+
+refer:
+
+https://en.wikipedia.org/wiki/Rice%27s_theorem
+
+
 
 # ACGI
 

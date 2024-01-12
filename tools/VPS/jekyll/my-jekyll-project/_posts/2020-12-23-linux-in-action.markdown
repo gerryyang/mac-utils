@@ -13,8 +13,6 @@ categories: Linux
 
 ## /proc (process information pseudo-filesystem)
 
-refer: https://man7.org/linux/man-pages/man5/proc.5.html
-
 The proc filesystem is a pseudo-filesystem which provides an interface to kernel data structures.  It is commonly mounted at `/proc`. Typically, it is mounted automatically by the system, but it can also be mounted manually using a command such as:
 
 ``` bash
@@ -23,6 +21,13 @@ mount -t proc proc /proc
 Most of the files in the proc filesystem are read-only, but some files are writable, allowing kernel variables to be changed.
 
 Underneath `/proc`, there are the following general groups of files and subdirectories:
+
+refer:
+
+* https://man7.org/linux/man-pages/man5/proc.5.html
+* https://www.kernel.org/doc/html/latest/filesystems/proc.html
+
+
 
 ###  `/proc/[pid]`
 

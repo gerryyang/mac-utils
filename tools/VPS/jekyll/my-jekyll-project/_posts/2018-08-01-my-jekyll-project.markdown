@@ -591,6 +591,16 @@ More: https://github.com/hzlzh/Best-App
 
 # Books
 
+## 技术书籍
+
+* 编程知识：《重构-改善既有代码的设计》
+* 软件工程：《Google软件工程》《持续交付2.0》
+* 沟通表达：《金字塔原理》《一本小小的红色写作书》
+* 时间管理：《高效能人士的七个习惯》《卓有成效的管理者》
+* 元知识：《程序员修炼之道：通向务实的最高境界》《程序员的职业素养》《黑客与画家》
+
+## 其他
+
 * [awesome-programming-books.github.io](https://awesome-programming-books.github.io/)
 * The Art of Doing Science and Engineering (Richard Wesley Hamming)
 * Probability and Computing
