@@ -39,6 +39,147 @@ Position-independent code requires special support, and therefore works only on 
 When this flag is set, the macros `__pic__` and `__PIC__` are defined to 2.
 
 
+代码示例：
+
+``` cpp
+// calculate.c
+int add(int a, int b)
+{
+    return (a + b);
+}
+
+int sub(int a, int b)
+{
+    return (a - b);
+}
+
+int mul(int a, int b)
+{
+    return (a * b);
+}
+
+int div(int a, int b)
+{
+    return (a / b);
+}
+```
+
+编译为动态库：
+
+```
+gcc -fPIC -shared calculate.c -o libcalculate.so
+```
+
+`-fPIC`表示`Position Independent Code`，作用于编译阶段，告诉编译器产生与位置无关的代码，即全部使用相对地址没有绝对地址，因此代码可以被加载到内存的任意位置都可以被正确执行。
+
+```
+nm libcalculate.so | grep -w T
+0000000000000628 T _fini
+00000000000004c0 T _init
+00000000000005da T add
+0000000000000613 T div
+0000000000000600 T mul
+00000000000005ee T sub
+```
+
+可以看到函数方法使用的都是相对地址，且顺序与在`calculate.c`中的定义顺序相同。
+
+``` cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <dlfcn.h>
+
+// 动态链接库路径
+#define LIB_CALCULATE_PATH "./libcalculate.so"
+
+// 函数指针
+typedef int (*CAC_FUNC)(int, int);
+
+int main()
+{
+    void *handle;
+    char *error;
+    CAC_FUNC cac_func = NULL;
+
+    // 打开动态链接库
+    handle = dlopen(LIB_CALCULATE_PATH, RTLD_LAZY);
+    if (!handle)
+    {
+        fprintf(stderr, "%s\n", dlerror());
+        exit(EXIT_FAILURE);
+    }
+
+    // 清除之前存在的错误
+    dlerror();
+
+    // 获取函数 add()
+    cac_func = dlsym(handle, "add");
+    if ((error = dlerror()) != NULL)
+    {
+        fprintf(stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
+    printf("func add() address: %p\n", cac_func);
+    printf("add(24, 7): %d\n", (*cac_func)(24, 7));
+
+    // 获取函数 sub()
+    cac_func = dlsym(handle, "sub");
+    if ((error = dlerror()) != NULL)
+    {
+        fprintf(stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
+    printf("func sub() address: %p\n", cac_func);
+    printf("sub(24, 7): %d\n", (*cac_func)(24, 7));
+
+    // 获取函数 mul()
+    cac_func = dlsym(handle, "mul");
+    if ((error = dlerror()) != NULL)
+    {
+        fprintf(stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
+    printf("func mul() address: %p\n", cac_func);
+    printf("mul(24, 7): %d\n", (*cac_func)(24, 7));
+
+    // 获取函数 div()
+    cac_func = dlsym(handle, "div");
+    if ((error = dlerror()) != NULL)
+    {
+        fprintf(stderr, "%s\n", error);
+        exit(EXIT_FAILURE);
+    }
+    printf("func div() address: %p\n", cac_func);
+    printf("div(24, 7): %d\n", (*cac_func)(24, 7));
+
+    // 关闭动态链接库
+    dlclose(handle);
+    exit(EXIT_SUCCESS);
+}
+```
+
+生成可执行文件：
+
+```
+gcc -rdynamic -o main main.c -ldl
+```
+
+输出：
+
+```
+./main
+func add() address: 0x7fa1d37e05da
+add(24, 7): 31
+func sub() address: 0x7fa1d37e05ee
+sub(24, 7): 17
+func mul() address: 0x7fa1d37e0600
+mul(24, 7): 168
+func div() address: 0x7fa1d37e0613
+div(24, 7): 3
+```
+
+可以看到`libcalculate.so`中的函数已经被动态加载到`main`当前的地址空间，且偏移量与`libcalculate.so`中的相对偏移量保持一致。
+
 
 ## -fpie/-fPIE
 

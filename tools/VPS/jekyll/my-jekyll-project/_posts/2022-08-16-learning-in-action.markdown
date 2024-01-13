@@ -8,6 +8,13 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# 手游安全测试 SR (Security Radar)
+
+手游安全测试（Security Radar）为企业提供私密安全测试服务，通过主动挖掘游戏业务安全漏洞（诸如钻石盗刷、服务器宕机、无敌秒杀等40多种漏洞），提前暴露游戏潜在安全风险，提供解决方案及时修复，最大程度降低事后外挂危害与外挂打击成本。该服务为腾讯游戏开放的独家手游安全漏洞挖掘技术，杜绝游戏外挂损失。
+
+http://www.baiemai.com/product/sr-idx=1.htm
+
 # STAR 原则
 
 * Situation，你为什么做这件事

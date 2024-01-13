@@ -606,7 +606,11 @@ More: https://github.com/hzlzh/Best-App
 * Probability and Computing
 * [No Silver Bullet - Essence and Accident in Software Engineering](http://worrydream.com/refs/Brooks-NoSilverBullet.pdf)
 
+* [Life after Capitalism: The Meaning of Wealth, the Future of the Economy, and the Time Theory of Money -  George Gilder](https://book.douban.com/subject/36403216/)
 
+> 财富就是知识，增长就是学习，信息就是意外，⾦钱就是时间
+>
+> 推动增长的不是人们更努力地工作，更不是剥削工人或者压榨地球，而是人们更聪明地工作，是总有人创造新的突破，引入新的知识，才让增长延续
 
 
 
