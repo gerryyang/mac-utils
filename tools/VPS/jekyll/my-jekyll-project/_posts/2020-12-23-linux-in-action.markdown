@@ -1614,6 +1614,8 @@ More: man top
 
 ## coredump
 
+### systemd-coredump
+
 `/proc/sys/kernel/core_pattern` 文件用于定义 Linux 操作系统在程序崩溃时生成 core 文件的名称和位置。它还可以用于定义一个处理程序，该处理程序在程序崩溃时被调用，用于收集和处理 core 文件。
 
 ``` bash
@@ -1644,6 +1646,14 @@ cat /proc/sys/kernel/core_pattern
 coredumpctl list
 ```
 
+```
+$ coredumpctl list
+TIME                            PID   UID   GID SIG COREFILE  EXE
+Tue 2024-01-16 15:04:27 CST  2453004 67527   100  11 missing   /usr/local/bin/clangd
+Tue 2024-01-16 15:04:49 CST  3679801 67527   100  11 truncated /usr/local/bin/clangd
+Tue 2024-01-16 15:49:27 CST  3739324 67527   100   6 present   /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr
+```
+
 要获取特定 core 文件的详细信息，可以使用：
 
 ``` bash
@@ -1652,10 +1662,94 @@ coredumpctl info <PID>
 
 其中 `<PID>` 是崩溃进程的进程 ID。
 
+```
+$ coredumpctl info 3739324
+           PID: 3739324 (unittestsvr)
+           UID: 67527 (gerryyang)
+           GID: 100 (users)
+        Signal: 6 (ABRT)
+     Timestamp: Tue 2024-01-16 15:49:26 CST (17h ago)
+  Command Line: /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr --id=60.59.59.1 --bus-key=3233 --svr-id-mask=7.8.8.9
+    Executable: /data/home/gerryyang/JLib_Run/bin/unittestsvr/unittestsvr
+ Control Group: /system.slice/sshd.service
+          Unit: sshd.service
+         Slice: system.slice
+       Boot ID: 494e5800c825458abbffdb97b481e3e0
+    Machine ID: 303d92818bb640cf87e60905bf621929
+      Hostname: VM-129-173-tencentos
+       Storage: /var/lib/systemd/coredump/core.unittestsvr.67527.494e5800c825458abbffdb97b481e3e0.3739324.1705391366000000.lz4
+       Message: Process 3739324 (unittestsvr) of user 67527 dumped core.
+
+                Stack trace of thread 3739324:
+                #0  0x00007f27b54f6e7f raise (libc.so.6)
+                #1  0x00007f27b54e18b5 abort (libc.so.6)
+                #2  0x0000000001a0befb _ZN11__sanitizer5AbortEv (unittestsvr)
+                #3  0x0000000001a0a888 _ZN11__sanitizer3DieEv (unittestsvr)
+                #4  0x0000000001a09517 _ZN11__sanitizer18SuppressionContext13ParseFromFileEPKc (unittestsvr)
+                #5  0x0000000001a1616a _ZN6__lsan22InitializeSuppressionsEv (unittestsvr)
+                #6  0x00000000019fa20f AsanInitInternal (unittestsvr)
+                #7  0x00007f27b6743b0e _dl_init (ld-linux-x86-64.so.2)
+                #8  0x00007f27b67350ca _dl_start_user (ld-linux-x86-64.so.2)
+```
+
 请注意，要使用 `systemd-coredump` 和 `coredumpctl`，需要在使用 systemd 的 Linux 发行版上运行。不同的发行版可能有不同的默认配置和工具。请根据您的发行版查找适当的文档以获取更多详细信息。
 
+`systemd-coredump` 处理的 coredump 文件默认存储在 `/var/lib/systemd/coredump` 目录中。
 
-----------------------------------------------------------------
+```
+[root /var/lib/systemd/coredump 09:12:16]$ ls -rtlh
+total 3.3G
+-rw-r-----+ 1 root root 788M Jan 16 15:04 'core.clangd\x2emain.67527.494e5800c825458abbffdb97b481e3e0.3679801.1705388677000000.lz4'
+-rw-r-----+ 1 root root 1.4M Jan 16 15:49  core.unittestsvr.67527.494e5800c825458abbffdb97b481e3e0.3739324.1705391366000000.lz4
+```
+
+如果想更改 coredump 文件的存储位置，可以编辑 `/etc/systemd/coredump.conf` 文件。
+
+```
+$ cat /etc/systemd/coredump.conf
+#  This file is part of systemd.
+#
+#  systemd is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See coredump.conf(5) for details.
+
+[Coredump]
+#Storage=external
+#Compress=yes
+#ProcessSizeMax=2G
+#ExternalSizeMax=2G
+#JournalSizeMax=767M
+#MaxUse=
+#KeepFree=
+```
+
+在这个文件中，可以设置 Storage 选项为 external，并通过 ExternalLocation 选项指定一个新的存储目录。例如：
+
+```
+[Coredump]
+Storage=external
+ExternalLocation=/path/to/your/directory
+```
+
+更改配置后，需要重启 systemd 服务以使更改生效：
+
+```
+sudo systemctl daemon-reload
+```
+
+请注意，需要确保新的存储目录存在并具有适当的权限，以便 systemd-coredump 可以在其中创建和写入文件。
+
+
+
+
+### 自定义 coredump 生成格式
 
 
 ``` bash

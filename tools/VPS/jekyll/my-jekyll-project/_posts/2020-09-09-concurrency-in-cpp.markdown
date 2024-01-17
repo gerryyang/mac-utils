@@ -500,6 +500,52 @@ $ for i in {1..1000}; do ./a.out; done | sort | uniq -c
 */
 ```
 
+This example shows how a mutex can be used to protect an std::map shared between two threads.
+
+``` cpp
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <mutex>
+#include <string>
+#include <thread>
+
+std::map<std::string, std::string> g_pages;
+std::mutex g_pages_mutex;
+
+void save_page(const std::string& url)
+{
+    // simulate a long page fetch
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::string result = "fake content";
+
+    std::lock_guard<std::mutex> guard(g_pages_mutex);
+    g_pages[url] = result;
+}
+
+int main()
+{
+    std::thread t1(save_page, "http://foo");
+    std::thread t2(save_page, "http://bar");
+    t1.join();
+    t2.join();
+
+    // safe to access g_pages without lock now, as the threads are joined
+    for (const auto& pair : g_pages)
+        std::cout << pair.first << " => " << pair.second << '\n';
+}
+```
+
+Output:
+
+```
+http://bar => fake content
+http://foo => fake content
+```
+
+
+
+
 # Atomic
 
 C++11 提供了一种更好的抽象方式解决这个问题，通过[std::atomic](https://en.cppreference.com/w/cpp/atomic/atomic)模版定义定义操作数为原子类型，从而保证在多线程情况下为原子操作。
