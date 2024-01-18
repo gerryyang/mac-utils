@@ -1253,7 +1253,7 @@ echo "Git LFS installation successful"
 
 * 初始化仓库
 
-```
+``` bash
 git lfs install
 ```
 
@@ -1262,7 +1262,7 @@ git lfs install
 
 例如，添加目录下所有的.psd 和.a 文件，使其被 LFS 托管
 
-```
+``` bash
 git lfs track "*.psd"
 git lfs track "*.a"
 ```
@@ -1275,8 +1275,9 @@ git lfs track "*.a"
 
 如果自己的相关工作不涉及到被 Git LFS 所管理的文件的话，可以选择只获取 Git 仓库自身的内容，而完全跳过 LFS 对象的获取。
 
-```
+``` bash
 GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/gerryyang/mac-utils.git
+
 # 或
 git -c filter.lfs.smudge= -c filter.lfs.required=false clone https://github.com/gerryyang/mac-utils.git
 ```
@@ -1287,14 +1288,21 @@ git -c filter.lfs.smudge= -c filter.lfs.required=false clone https://github.com/
 
 如果起初获取代码时，没有一并获取 LFS 对象，而随后又需要这些被 LFS 管理的文件时，可以单独执行 LFS 命令来获取并签出 LFS 对象：
 
-```
+``` bash
 git lfs fetch
 git lfs checkout
+
 # 或
 git lfs pull
 ```
 
 经过以上几步，psd 和 a 类型的大文件就会在 push 时自动向 LFS 服务器提交了。
+
+* 查看已跟踪的 lfs 对象
+
+``` bash
+git lfs ls-files
+```
 
 refer: https://git-lfs.github.com/
 

@@ -343,6 +343,476 @@ systemctl start telegraf
 
 [Plugin directory](https://docs.influxdata.com/telegraf/v1/plugins/)
 
+#### input
+
+```
+$ ./telegraf --input-list
+DEPRECATED: use telegraf plugins inputs
+Available Input Plugins:
+  KNXListener
+  activemq
+  aerospike
+  aliyuncms
+  amd_rocm_smi
+  amqp_consumer
+  apache
+  apcupsd
+  aurora
+  azure_monitor
+  azure_storage_queue
+  bcache
+  beanstalkd
+  beat
+  bind
+  bond
+  burrow
+  cassandra
+  ceph
+  cgroup
+  chrony
+  cisco_telemetry_gnmi
+  cisco_telemetry_mdt
+  clickhouse
+  cloud_pubsub
+  cloud_pubsub_push
+  cloudwatch
+  cloudwatch_metric_streams
+  conntrack
+  consul
+  consul_agent
+  couchbase
+  couchdb
+  cpu
+  csgo
+  ctrlx_datalayer
+  dcos
+  directory_monitor
+  disk
+  diskio
+  disque
+  dmcache
+  dns_query
+  docker
+  docker_log
+  dovecot
+  dpdk
+  ecs
+  elasticsearch
+  elasticsearch_query
+  ethtool
+  eventhub_consumer
+  exec
+  execd
+  fail2ban
+  fibaro
+  file
+  filecount
+  filestat
+  fireboard
+  fluentd
+  github
+  gnmi
+  google_cloud_storage
+  graylog
+  haproxy
+  hddtemp
+  http
+  http_listener
+  http_listener_v2
+  http_response
+  httpjson
+  hugepages
+  icinga2
+  infiniband
+  influxdb
+  influxdb_listener
+  influxdb_v2_listener
+  intel_baseband
+  intel_dlb
+  intel_pmt
+  intel_pmu
+  intel_powerstat
+  intel_rdt
+  internal
+  internet_speed
+  interrupts
+  io
+  ipmi_sensor
+  ipset
+  iptables
+  ipvs
+  jenkins
+  jolokia
+  jolokia2_agent
+  jolokia2_proxy
+  jti_openconfig_telemetry
+  kafka_consumer
+  kafka_consumer_legacy
+  kapacitor
+  kernel
+  kernel_vmstat
+  kibana
+  kinesis_consumer
+  knx_listener
+  kube_inventory
+  kubernetes
+  lanz
+  ldap
+  leofs
+  libvirt
+  linux_cpu
+  linux_sysctl_fs
+  logparser
+  logstash
+  lustre2
+  lvm
+  mailchimp
+  marklogic
+  mcrouter
+  mdstat
+  mem
+  memcached
+  mesos
+  minecraft
+  mock
+  modbus
+  mongodb
+  monit
+  mqtt_consumer
+  multifile
+  mysql
+  nats
+  nats_consumer
+  neptune_apex
+  net
+  net_response
+  netflow
+  netstat
+  nfsclient
+  nginx
+  nginx_plus
+  nginx_plus_api
+  nginx_sts
+  nginx_upstream_check
+  nginx_vts
+  nomad
+  nsd
+  nsq
+  nsq_consumer
+  nstat
+  ntpq
+  nvidia_smi
+  opcua
+  opcua_listener
+  openldap
+  openntpd
+  opensearch_query
+  opensmtpd
+  openstack
+  opentelemetry
+  openweathermap
+  p4runtime
+  passenger
+  pf
+  pgbouncer
+  phpfpm
+  ping
+  postfix
+  postgresql
+  postgresql_extensible
+  powerdns
+  powerdns_recursor
+  processes
+  procstat
+  prometheus
+  proxmox
+  puppetagent
+  rabbitmq
+  radius
+  raindrops
+  ras
+  ravendb
+  redfish
+  redis
+  redis_sentinel
+  rethinkdb
+  riak
+  riemann_listener
+  s7comm
+  salesforce
+  sensors
+  sflow
+  slab
+  smart
+  snmp
+  snmp_legacy
+  snmp_trap
+  socket_listener
+  socketstat
+  solr
+  sql
+  sqlserver
+  stackdriver
+  statsd
+  supervisor
+  suricata
+  swap
+  synproxy
+  syslog
+  sysstat
+  system
+  systemd_units
+  tacacs
+  tail
+  tcp_listener
+  teamspeak
+  temp
+  tengine
+  tomcat
+  trig
+  twemproxy
+  udp_listener
+  unbound
+  upsd
+  uwsgi
+  varnish
+  vault
+  vsphere
+  webhooks
+  win_eventlog
+  win_perf_counters
+  win_services
+  win_wmi
+  wireguard
+  wireless
+  x509_cert
+  xtremio
+  zfs
+  zipkin
+  zookeeper
+```
+
+#### output
+
+
+```
+$ ./telegraf --output-list
+DEPRECATED: use telegraf plugins outputs
+Available Output Plugins:
+  amon
+  amqp
+  application_insights
+  azure_data_explorer
+  azure_monitor
+  bigquery
+  clarify
+  cloud_pubsub
+  cloudwatch
+  cloudwatch_logs
+  cratedb
+  datadog
+  discard
+  dynatrace
+  elasticsearch
+  event_hubs
+  exec
+  execd
+  file
+  graphite
+  graylog
+  groundwork
+  health
+  http
+  influxdb
+  influxdb_v2
+  instrumental
+  iotdb
+  kafka
+  kinesis
+  librato
+  logzio
+  loki
+  mongodb
+  mqtt
+  nats
+  nebius_cloud_monitoring
+  newrelic
+  nsq
+  opensearch
+  opentelemetry
+  opentsdb
+  postgresql
+  prometheus_client
+  redistimeseries
+  riemann
+  riemann_legacy
+  sensu
+  signalfx
+  socket_writer
+  sql
+  stackdriver
+  stomp
+  sumologic
+  syslog
+  timestream
+  warp10
+  wavefront
+  websocket
+  yandex_cloud_monitoring
+```
+
+#### Input Data Formats
+
+https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md
+
+Telegraf contains many general purpose plugins that support parsing input data using a configurable parser into [metrics](https://github.com/influxdata/telegraf/blob/master/docs/METRICS.md). This allows, for example, the `kafka_consumer` input plugin to process messages in any of InfluxDB Line Protocol, JSON format, or Apache Avro format.
+
+Any input plugin containing the `data_format` option can use it to select the desired parser:
+
+``` bash
+[[inputs.exec]]
+  ## Commands array
+  commands = ["/tmp/test.sh", "/usr/bin/mycollector --foo=bar"]
+
+  ## measurement name suffix (for separating different commands)
+  name_suffix = "_mycollector"
+
+  ## Data format to consume.
+  data_format = "json"
+```
+
+
+
+#### file (input / output)
+
+```
+$ ./telegraf --usage file
+
+# Parse a complete file each interval
+[[inputs.file]]
+  ## Files to parse each interval.  Accept standard unix glob matching rules,
+  ## as well as ** to match recursive files and directories.
+  files = ["/tmp/metrics.out"]
+
+  ## Character encoding to use when interpreting the file contents.  Invalid
+  ## characters are replaced using the unicode replacement character.  When set
+  ## to the empty string the data is not decoded to text.
+  ##   ex: character_encoding = "utf-8"
+  ##       character_encoding = "utf-16le"
+  ##       character_encoding = "utf-16be"
+  ##       character_encoding = ""
+  # character_encoding = ""
+
+  ## Data format to consume.
+  ## Each data format has its own unique set of configuration options, read
+  ## more about them here:
+  ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md
+  data_format = "influx"
+
+
+  ## Name a tag containing the name of the file the data was parsed from.  Leave empty
+  ## to disable. Cautious when file name variation is high, this can increase the cardinality
+  ## significantly. Read more about cardinality here:
+  ## https://docs.influxdata.com/influxdb/cloud/reference/glossary/#series-cardinality
+  # file_tag = ""
+
+
+# Send telegraf metrics to file(s)
+[[outputs.file]]
+  ## Files to write to, "stdout" is a specially handled file.
+  files = ["stdout", "/tmp/metrics.out"]
+
+  ## Use batch serialization format instead of line based delimiting.  The
+  ## batch format allows for the production of non line based output formats and
+  ## may more efficiently encode and write metrics.
+  # use_batch_format = false
+
+  ## The file will be rotated after the time interval specified.  When set
+  ## to 0 no time based rotation is performed.
+  # rotation_interval = "0h"
+
+  ## The logfile will be rotated when it becomes larger than the specified
+  ## size.  When set to 0 no size based rotation is performed.
+  # rotation_max_size = "0MB"
+
+  ## Maximum number of rotated archives to keep, any older logs are deleted.
+  ## If set to -1, no archives are removed.
+  # rotation_max_archives = 5
+
+  ## Data format to output.
+  ## Each data format has its own unique set of configuration options, read
+  ## more about them here:
+  ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_OUTPUT.md
+  data_format = "influx"
+
+  ## Compress output data with the specified algorithm.
+  ## If empty, compression will be disabled and files will be plain text.
+  ## Supported algorithms are "zstd", "gzip" and "zlib".
+  # compression_algorithm = ""
+
+  ## Compression level for the algorithm above.
+  ## Please note that different algorithms support different levels:
+  ##   zstd  -- supports levels 1, 3, 7 and 11.
+  ##   gzip -- supports levels 0, 1 and 9.
+  ##   zlib -- supports levels 0, 1, and 9.
+  ## By default the default compression level for each algorithm is used.
+  # compression_level = -1
+```
+
+这是 Telegraf 的一个配置示例，用于从文件中读取度量值（metrics）并将结果输出到另一个文件。配置分为两部分：inputs.file 和 outputs.file。
+
+* inputs.file 插件用于从文件中解析度量值。以下是主要配置选项：
+  + files：要解析的文件列表。可以使用标准的 Unix glob 匹配规则，以及 ** 用于匹配递归文件和目录。在此示例中，Telegraf 将解析 /tmp/metrics.out 文件。
+  + character_encoding：用于解释文件内容的字符编码。无效字符将使用 Unicode 替换字符进行替换。当设置为空字符串时，数据不会解码为文本。默认为空。
+  + data_format：要使用的数据格式。每种数据格式都有其独特的配置选项。在此示例中，使用的数据格式为 "influx"。有关不同数据格式的详细信息，请参阅 Telegraf 数据格式文档。
+  + file_tag：包含从中解析数据的文件名的标签名称。留空以禁用。当文件名变化较大时要谨慎，这可能会显著增加基数。关于基数的更多信息，请参阅 InfluxDB 基数文档。
+
+
+* outputs.file 插件用于将度量值写入文件。以下是主要配置选项：
+  + files：要写入的文件列表。"stdout" 是一个特殊处理的文件。在此示例中，Telegraf 将将度量值写入 "stdout" 和 /tmp/metrics.out。
+  + use_batch_format：使用批处理序列化格式而不是基于行的分隔。批处理格式允许生成非基于行的输出格式，并可能更有效地编码和写入度量值。
+  + rotation_interval 和 rotation_max_size：用于配置日志文件轮换的时间间隔和最大大小。当达到指定的时间间隔或大小时，日志文件将被轮换。
+  + rotation_max_archives：要保留的最大轮换存档数量。任何较旧的日志将被删除。如果设置为 -1，则不会删除任何存档。
+  + data_format：输出的数据格式。在此示例中，使用的数据格式为 "influx"。有关不同数据格式的详细信息，请参阅 Telegraf 数据格式文档。
+  + compression_algorithm 和 compression_level：用于压缩输出数据的算法和级别。支持的算法有 "zstd"、"gzip" 和 "zlib"。默认情况下，将使用各个算法的默认压缩级别。
+
+通过运行 `./telegraf --usage file` 命令，可以查看 Telegraf 的 file 输入插件和输出插件的用法和配置选项。
+
+
+#### tail (input) + file (output)
+
+
+``` bash
+# Stream a log file, like the tail -F command
+[[inputs.tail]]
+  ## files to tail.
+  ## These accept standard unix glob matching rules, but with the addition of
+  ## ** as a "super asterisk". ie:
+  ##   "/var/log/**.log"  -> recursively find all .log files in /var/log
+  ##   "/var/log/*/*.log" -> find all .log files with a parent dir in /var/log
+  ##   "/var/log/apache.log" -> just tail the apache log file
+  ##
+  ## See https://github.com/gobwas/glob for more examples
+  ##
+  files = ["/var/log/apache/access.log"]
+  ## Read file from beginning.
+  from_beginning = false
+  ## Whether file is a named pipe
+  pipe = false
+  ## Method used to watch for file updates.  Can be either "inotify" or "poll".
+  watch_method = "inotify"
+  ## Maximum lines of the file to process that have not yet be written by the
+  ## output.  For best throughput set based on the number of metrics and the size of the output's metric_batch_size.
+  max_undelivered_lines = 1000
+  data_format = "influx"
+```
+
+Telegraf 的 inputs.file 插件默认行为是每次收集间隔都会读取并解析指定的文件。如果文件内容在两次收集间隔之间没有变化，那么 Telegraf 将会重复收集相同的数据。
+
+要解决这个问题，你可以使用 tail 插件代替 file 插件。tail 插件的工作方式类似于 Unix/Linux 中的 tail -F 命令，它会持续追踪并读取指定文件的新内容。这意味着，只有当文件有新的数据添加时，tail 插件才会收集数据，从而避免了重复收集的问题。
+
+在这个配置中，tail 插件将会追踪并读取 /var/log/apache/access.log 文件的新内容。from_beginning 设置为 false，这意味着 Telegraf 将从文件的末尾开始读取，忽略已经存在的内容。data_format 设置为 "influx"，表示数据格式为 InfluxDB 数据格式。
+
 
 
 ## Usage
@@ -532,6 +1002,8 @@ precision 选项用于设置 Telegraf 收集和存储度量值时使用的时间
 对于服务输入，precision 选项将不起作用。每个服务输入需要自行设置适当的时间戳精度。
 
 在示例中，precision = "0s" 表示 Telegraf 将根据收集间隔自动设置时间精度。如果需要更高或更低的时间精度，可以将 precision 设置为所需的值，例如 "1ms"、"10us" 等。
+
+
 
 
 
