@@ -51,73 +51,6 @@ If a bug is detected, the program will print an error message to stderr and exit
 * If a bug is detected, the program will print an error message to stderr and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
 * **Fixing bugs becomes unavoidable**. **AddressSanitizer does not produce false alarms**. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
 
-## Symbolizing the Reports
-
-To make AddressSanitizer symbolize its output you need to set the `ASAN_SYMBOLIZER_PATH` environment variable to point to the `llvm-symbolizer` binary (or make sure `llvm-symbolizer` is in your `$PATH`):
-
-```
-% ASAN_SYMBOLIZER_PATH=/usr/local/bin/llvm-symbolizer ./a.out
-==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
-READ of size 4 at 0x7f7ddab8c084 thread T0
-    #0 0x403c8c in main example_UseAfterFree.cc:4
-    #1 0x7f7ddabcac4d in __libc_start_main ??:0
-0x7f7ddab8c084 is located 4 bytes inside of 400-byte region [0x7f7ddab8c080,0x7f7ddab8c210)
-freed by thread T0 here:
-    #0 0x404704 in operator delete[](void*) ??:0
-    #1 0x403c53 in main example_UseAfterFree.cc:4
-    #2 0x7f7ddabcac4d in __libc_start_main ??:0
-previously allocated by thread T0 here:
-    #0 0x404544 in operator new[](unsigned long) ??:0
-    #1 0x403c43 in main example_UseAfterFree.cc:2
-    #2 0x7f7ddabcac4d in __libc_start_main ??:0
-==9442== ABORTING
-```
-
-
-
-
-
-
-参考：[Clang 18.0.0 - AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
-
-# LeakSanitizer
-
-Clang and [GCC 4.9](https://gcc.gnu.org/PR59061) implemented LeakSanitizer in 2013. [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html) (`LSan`) is a memory leak detector. It intercepts memory allocation functions and by default detects memory leaks at `atexit` time. The implementation is purely in the runtime (`compiler-rt/lib/lsan`) and no instrumentation is needed.
-
-`LSan` has very little architecture-specific code and supports many 64-bit targets. Some 32-bit targets (e.g. Linux arm/x86-32) are supported as well, but there may be high false negatives because pointers with fewer bits are more easily confused with integers/floating points/other data of a similar pattern. Every supported operating system needs to provide some way to "stop the world".
-
-* LeakSanitizer 的实现不依赖于特定的硬件架构，因此它可以支持许多64位目标平台。
-* 也支持一些32位目标平台，如 Linux arm 和 x86-32
-* 在32位目标平台上，LeakSanitizer 可能会出现较高的假阴性（即未检测到实际存在的内存泄漏）。这是因为32位指针的位数较少，更容易与整数、浮点数或其他类似模式的数据混淆。
-* 每个受支持的操作系统都需要提供一种方法来“暂停世界”，即暂停所有线程以便 LeakSanitizer 可以安全地检查内存泄漏。这是因为在检查内存泄漏时，需要确保没有线程正在访问内存，以避免数据竞争和不一致的检测结果。
-
-LSan can be used in 3 ways.
-
-1. Standalone (`-fsanitize=leak`)
-2. AddressSanitizer (`-fsanitize=address`)
-3. HWAddressSanitizer (`-fsanitize=hwaddress`)
-
-The most common way to use `LSan` is `clang -fsanitize=address` (or `gcc -fsanitize=address`). For LSan-supported targets (`#define CAN_SANITIZE_LEAKS 1`), the AddressSanitizer (`ASan`) runtime enables `LSan` by default.
-
-``` cpp
-#include <stdlib.h>
-int main()
-{
-    void **p = malloc(42); // leak (categorized as "Direct leak")
-    *p = malloc(43);       // leak (categorized as "Indirect leak")
-    p = 0;
-}
-```
-
-
-![asan](/assets/images/202308/asan.png)
-
-![asan2](/assets/images/202308/asan2.png)
-
-参考：
-
-* [All about LeakSanitizer](https://maskray.me/blog/2023-02-12-all-about-leak-sanitizer)
-
 
 
 # Introduction
@@ -188,6 +121,32 @@ If a bug is detected, the program will print an error message to `stderr` and ex
 
 * This approach allows AddressSanitizer to produce faster and smaller generated code (both by ~5%).
 * Fixing bugs becomes unavoidable. AddressSanitizer does not produce false alarms. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
+
+
+## Symbolizing the Reports
+
+To make AddressSanitizer symbolize its output you need to set the `ASAN_SYMBOLIZER_PATH` environment variable to point to the `llvm-symbolizer` binary (or make sure `llvm-symbolizer` is in your `$PATH`):
+
+```
+% ASAN_SYMBOLIZER_PATH=/usr/local/bin/llvm-symbolizer ./a.out
+==9442== ERROR: AddressSanitizer heap-use-after-free on address 0x7f7ddab8c084 at pc 0x403c8c bp 0x7fff87fb82d0 sp 0x7fff87fb82c8
+READ of size 4 at 0x7f7ddab8c084 thread T0
+    #0 0x403c8c in main example_UseAfterFree.cc:4
+    #1 0x7f7ddabcac4d in __libc_start_main ??:0
+0x7f7ddab8c084 is located 4 bytes inside of 400-byte region [0x7f7ddab8c080,0x7f7ddab8c210)
+freed by thread T0 here:
+    #0 0x404704 in operator delete[](void*) ??:0
+    #1 0x403c53 in main example_UseAfterFree.cc:4
+    #2 0x7f7ddabcac4d in __libc_start_main ??:0
+previously allocated by thread T0 here:
+    #0 0x404544 in operator new[](unsigned long) ??:0
+    #1 0x403c43 in main example_UseAfterFree.cc:2
+    #2 0x7f7ddabcac4d in __libc_start_main ??:0
+==9442== ABORTING
+```
+
+
+参考：[Clang 18.0.0 - AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
 
 
 ## Interaction with other tools
@@ -723,6 +682,46 @@ Suppressions used:[design document](AddressSanitizerLeakSanitizerDesignDocument)
 SUMMARY: AddressSanitizer: 5 byte(s) leaked in 1 allocation(s).
 ```
 
+## 总结
+
+Clang and [GCC 4.9](https://gcc.gnu.org/PR59061) implemented LeakSanitizer in 2013. [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html) (`LSan`) is a memory leak detector. It intercepts memory allocation functions and by default detects memory leaks at `atexit` time. The implementation is purely in the runtime (`compiler-rt/lib/lsan`) and no instrumentation is needed.
+
+`LSan` has very little architecture-specific code and supports many 64-bit targets. Some 32-bit targets (e.g. Linux arm/x86-32) are supported as well, but there may be high false negatives because pointers with fewer bits are more easily confused with integers/floating points/other data of a similar pattern. Every supported operating system needs to provide some way to "stop the world".
+
+* LeakSanitizer 的实现不依赖于特定的硬件架构，因此它可以支持许多64位目标平台。
+* 也支持一些32位目标平台，如 Linux arm 和 x86-32
+* 在32位目标平台上，LeakSanitizer 可能会出现较高的假阴性（即未检测到实际存在的内存泄漏）。这是因为32位指针的位数较少，更容易与整数、浮点数或其他类似模式的数据混淆。
+* 每个受支持的操作系统都需要提供一种方法来“暂停世界”，即暂停所有线程以便 LeakSanitizer 可以安全地检查内存泄漏。这是因为在检查内存泄漏时，需要确保没有线程正在访问内存，以避免数据竞争和不一致的检测结果。
+
+LSan can be used in 3 ways.
+
+1. Standalone (`-fsanitize=leak`)
+2. AddressSanitizer (`-fsanitize=address`)
+3. HWAddressSanitizer (`-fsanitize=hwaddress`)
+
+The most common way to use `LSan` is `clang -fsanitize=address` (or `gcc -fsanitize=address`). For LSan-supported targets (`#define CAN_SANITIZE_LEAKS 1`), the AddressSanitizer (`ASan`) runtime enables `LSan` by default.
+
+``` cpp
+#include <stdlib.h>
+int main()
+{
+    void **p = malloc(42); // leak (categorized as "Direct leak")
+    *p = malloc(43);       // leak (categorized as "Indirect leak")
+    p = 0;
+}
+```
+
+
+![asan](/assets/images/202308/asan.png)
+
+![asan2](/assets/images/202308/asan2.png)
+
+参考：
+
+* [All about LeakSanitizer](https://maskray.me/blog/2023-02-12-all-about-leak-sanitizer)
+
+
+
 
 
 # AddressSanitizer Algorithm
@@ -1029,8 +1028,25 @@ ENDIF()
 
 启动选项：
 
-```
-ASAN_OPTIONS=debug=true:verbosity=2:print_stats=true:print_suppressions=false:halt_on_error=false:log_exe_name=true:log_path=asan.log ./your_program
+``` bash
+#!/bin/bash
+
+# ASAN_OPTIONS=detect_odr_violation=0 不检查 ODR 错误
+
+ASAN_SYMBOLIZER_PATH=../../tools/llvm/llvm-symbolizer \
+LSAN_OPTIONS=suppressions=../../suppressions.lsan \
+ASAN_OPTIONS=debug=true:\
+verbosity=2:\
+check_initialization_order=1:\
+detect_odr_violation=0:\
+print_stats=true:\
+disable_coredump=false:\
+print_suppressions=true:\
+abort_on_error=true:\
+halt_on_error=false:\
+log_exe_name=true:\
+log_path=asan.log \
+./your_program
 ```
 
 
