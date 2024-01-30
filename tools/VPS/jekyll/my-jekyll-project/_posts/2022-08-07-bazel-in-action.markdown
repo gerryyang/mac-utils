@@ -3651,6 +3651,44 @@ cc_library(
 * [Link archive to shared library with Bazel](https://stackoverflow.com/questions/61487115/link-archive-to-shared-library-with-bazel)
 
 
+## -c opt and -fPIC (release 版本构建仍然会生成 non PIC 的目标文件)
+
+问题描述：
+
+业务构建有指定 `build --copt=-fPIC` ，但是在使用 `opt` 模式编译时，会分别生成 pic 和 non-pic 两个版本的目标文件；但是在 `dbg` 模式下只会生成 pic 版本的目标文件。
+
+参考 https://groups.google.com/g/bazel-discuss/c/agycffdH0R0 发现：
+
+bazel 在使用 `-c opt and -fPIC` 构建时，会同时构建 pic 和 non-pic 两个版本。然而 release 版本链接可执行文件时只会用到非 pic 版本，链接动态库时会使用 pic 版本。这就解释了为什么构建 release 版本会构建两次，分别有 pic 和 non-pic 两个版本的构建。
+
+
+> We are building ffmpeg inside of bazel, and it needs to be compiled with -fPIC. We've discovered two potential bugs:
+>
+> 1. Even when specifying '-fPIC' in the copts, bazel tries to do a non PIC build. So we end up building each source file twice, but they are in fact the same. Once bazel includes it's own '-fPIC', and once it doesn't, but since it's included as part of the copts, it is always passed to the compiler.
+>
+> ...
+
+相关的解释：
+
+> Building non-PIC code for binaries is intentional, although I'm somewhat surprised that binaries are built *twice*. Are you by any chance building dynamic libraries and binaries on the same command line?
+>
+> This behavior is indeed surprising. Marcel opined that it was trading startup time for faster code, which makes sense, at least on the surface.
+>
+> You can use the --force_pic command line option to build binaries in PIC mode, too. We should give you more control over picness, but in the meantime, I hope this'll do.
+
+
+> This behavior is indeed surprising. Marcel opined that it was trading startup time for faster code, which makes sense, at least on the surface.
+>
+> Yes, it's an expensive trade-off, but it would be worth it at Google scale probably.
+
+解决方法：
+
+在构建 release 版本时添加 `--force_pic` 选项强制使用 pic 版本且在链接可执行文件时指定 `build --linkopt="-no-pie"` 不生成 pie 的可执行程序。这样可以保证 release 版本构建时只会构建一次 pic 的目标文件，而不会构建两次。
+
+https://bazel.build/reference/command-line-reference?hl=zh-cn#flag--force_pic
+
+
+
 
 
 # Examples

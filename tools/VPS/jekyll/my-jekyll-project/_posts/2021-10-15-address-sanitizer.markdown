@@ -25,31 +25,156 @@ Typical slowdown introduced by AddressSanitizer is `2x`.
 
 Simply **compile** and **link** your program with `-fsanitize=address` flag. The AddressSanitizer run-time library should be linked to the final executable, so make sure to use `clang` (not `ld`) for the final link step. When linking shared libraries, the AddressSanitizer run-time is not linked, so `-Wl,-z,defs` may cause link errors (don’t use it with AddressSanitizer). To get a reasonable performance add `-O1` or higher. To get nicer stack traces in error messages add `-fno-omit-frame-pointer`. To get perfect stack traces you may need to disable inlining (just use `-O1`) and tail call elimination (`-fno-optimize-sibling-calls`).
 
-```
-% cat example_UseAfterFree.cc
+``` cpp
+// cat example_UseAfterFree.cc
 int main(int argc, char **argv) {
   int *array = new int[100];
   delete [] array;
   return array[argc];  // BOOM
 }
 
-# Compile and link
-% clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer example_UseAfterFree.cc
+// Compile and link
+// clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer example_UseAfterFree.cc
 ```
 
 or:
 
-```
+``` bash
 # Compile
 % clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer -c example_UseAfterFree.cc
 # Link
 % clang++ -g -fsanitize=address example_UseAfterFree.o
 ```
 
-If a bug is detected, the program will print an error message to stderr and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
+If a bug is detected, the program will print an error message to **stderr** and exit with a non-zero exit code. **AddressSanitizer exits on the first detected error. This is by design**:
 
-* If a bug is detected, the program will print an error message to stderr and exit with a non-zero exit code. AddressSanitizer exits on the first detected error. This is by design:
+* This approach allows AddressSanitizer to produce faster and smaller generated code (both by ~5%).
+
 * **Fixing bugs becomes unavoidable**. **AddressSanitizer does not produce false alarms**. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
+
+一个 asan 检测的结果示例：
+
+```
+==gamesvr==5351==ERROR: AddressSanitizer: heap-use-after-free on address 0x6070036e1908 at pc 0x00000c8c1e57 bp 0x7fa142aae220 sp 0x7fa142aae218
+READ of size 4 at 0x6070036e1908 thread T0 (gamesvr)
+    #0 0xc8c1e56 in TestFunc() const /data/home/src/test.h:123:10
+    #1
+    ...
+
+0x6070036e1908 is located 40 bytes inside of 72-byte region [0x6070036e18e0,0x6070036e1928)
+freed by thread T0 (gamesvr) here:
+    #0 0xc1be4e0 in free /data/home/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_malloc_linux.cpp:123:3
+
+previously allocated by thread T0 (gamesvr) here:
+    #0 0xc1be7e8 in malloc /data/home/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+
+SUMMARY: AddressSanitizer: heap-use-after-free /data/home/src/test.h:123:10 in TestFunc() const
+Shadow bytes around the buggy address:
+  0x0c0e806d42d0: 02 fa fa fa fa fa 00 00 00 00 00 00 00 00 02 fa
+  0x0c0e806d42e0: fa fa fa fa 00 00 00 00 00 00 00 00 05 fa fa fa
+  0x0c0e806d42f0: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
+  0x0c0e806d4300: 00 00 00 00 00 00 00 00 00 01 fa fa fa fa 00 00
+  0x0c0e806d4310: 00 00 00 00 00 00 02 fa fa fa fa fa fd fd fd fd
+=>0x0c0e806d4320: fd[fd]fd fd fd fa fa fa fa fa 00 00 00 00 00 00
+  0x0c0e806d4330: 00 00 02 fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c0e806d4340: 00 01 fa fa fa fa 00 00 00 00 00 00 00 00 01 fa
+  0x0c0e806d4350: fa fa fa fa 00 00 00 00 00 00 00 00 04 fa fa fa
+  0x0c0e806d4360: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
+  0x0c0e806d4370: 00 00 00 00 00 00 00 00 03 fa fa fa fa fa 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+```
+
+上述错误表示在堆上发生了使用已释放内存的情况（heap-use-after-free）。
+
+* heap-use-after-free: 表示在释放堆内存后仍然尝试访问该内存。
+* address 0x6070036e1908: 发生错误的内存地址。
+* pc 0x00000c8c1e57: 错误发生时程序计数器（Program Counter）的值，即发生错误的代码位置。
+* bp 0x7fa142aae220 sp 0x7fa142aae218: 发生错误时栈基指针（Base Pointer）和栈顶指针（Stack Pointer）的值。
+* READ of size 4: 表示在错误地址上执行了一个4字节的读操作。
+* thread T0 (gamesvr): 发生错误的线程名（T0）和线程ID（gamesvr）。
+
+AddressSanitizer（ASan）使用 shadow memory 来跟踪和检测内存错误。shadow memory 是一块辅助内存区域，用于存储与应用程序内存相关的元数据。在 ASan 中，每8个应用程序字节由1个 shadow 字节表示。shadow 字节的值表示对应的应用程序内存的状态和属性。
+
+在提供的 ASan 报告中，有关 shadow memory 的信息如下：
+
+```
+Shadow bytes around the buggy address:
+  0x0c0e806d42d0: 02 fa fa fa fa fa 00 00 00 00 00 00 00 00 02 fa
+  0x0c0e806d42e0: fa fa fa fa 00 00 00 00 00 00 00 00 05 fa fa fa
+  0x0c0e806d42f0: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
+  0x0c0e806d4300: 00 00 00 00 00 00 00 00 00 01 fa fa fa fa 00 00
+  0x0c0e806d4310: 00 00 00 00 00 00 02 fa fa fa fa fa fd fd fd fd
+=>0x0c0e806d4320: fd[fd]fd fd fd fa fa fa fa fa 00 00 00 00 00 00
+  0x0c0e806d4330: 00 00 02 fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c0e806d4340: 00 01 fa fa fa fa 00 00 00 00 00 00 00 00 01 fa
+  0x0c0e806d4350: fa fa fa fa 00 00 00 00 00 00 00 00 04 fa fa fa
+  0x0c0e806d4360: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
+  0x0c0e806d4370: 00 00 00 00 00 00 00 00 03 fa fa fa fa fa 00 00
+```
+
+这些行显示了发生错误的地址周围的 shadow 字节。每个 shadow 字节表示8个应用程序字节的状态。在报告末尾，有一个图例来解释每个shadow字节值的含义：
+
+```
+Addressable:           00
+Partially addressable: 01 02 03 04 05 06 07
+Heap left redzone:       fa
+Freed heap region:       fd
+Stack left redzone:      f1
+Stack mid redzone:       f2
+Stack right redzone:     f3
+Stack after return:      f5
+Stack use after scope:   f8
+Global redzone:          f9
+Global init order:       f6
+Poisoned by user:        f7
+Container overflow:      fc
+Array cookie:            ac
+Intra object redzone:    bb
+ASan internal:           fe
+Left alloca redzone:     ca
+Right alloca redzone:    cb
+Shadow gap:              cc
+```
+
+* Addressable (00): 表示对应的应用程序内存是可访问的。
+* Partially addressable (01-07): 表示对应的应用程序内存部分可访问，值表示可访问字节数。
+* Heap left redzone (fa): 表示堆分配的内存区域的左侧保护区，用于检测堆内存下溢。
+* Freed heap region (fd): 表示已释放的堆内存区域。
+* Stack left redzone (f1): 表示栈内存的左侧保护区，用于检测栈内存下溢。
+* Stack mid redzone (f2): 表示栈内存的中间保护区，用于检测大的栈内存溢出。
+* Stack right redzone (f3): 表示栈内存的右侧保护区，用于检测栈内存上溢。
+* Stack after return (f5): 表示函数返回后的栈内存区域，用于检测返回后使用的错误。
+* Stack use after scope (f8): 表示作用域结束后的栈内存区域，用于检测作用域后使用的错误。
+* Global redzone (f9): 表示全局变量的保护区，用于检测全局变量的内存错误。
+* Global init order (f6): 表示全局变量的初始化顺序。
+* Poisoned by user (f7): 表示用户显式标记为不可访问的内存区域。
+* Container overflow (fc): 表示容器（如 C++ 的 std::vector）的溢出。
+* Array cookie (ac): 表示数组的元数据（如元素数量）。
+* Intra object redzone (bb): 表示对象内部的保护区，用于检测对象内部的内存错误。
+* ASan internal (fe): 表示ASan内部使用的内存。
+* Left alloca redzone (ca): 表示栈上分配的内存的左侧保护区。
+* Right alloca redzone (cb): 表示栈上分配的内存的右侧保护区。
+* Shadow gap (cc): 表示shadow memory和应用程序内存之间的间隙。
+
 
 
 
@@ -365,6 +490,43 @@ interceptor_via_fun:-[ClassName objCMethodToSuppress:]
 interceptor_via_lib:NameOfTheLibraryToSuppress
 ```
 
+例子：
+
+``` bash
+-----------------------------------------------------
+Suppressions used:
+  count      bytes template
+     63       2168 instance
+     29        928 JLib::CCfgAgent::SetAutoSync
+   8984    8932728 Update
+     16        440 PrintMsg
+    737      45352 GetMsgStat
+      8        192 GetMsgMemMgr
+      1        104 GetCfg
+     16        568 GetLevelStat
+      4         64 STThreadData
+    291      14184 Allocate
+     28        448 JLib::CJLibMonitor::InitMetrics
+     52   17034728 tss_sdk_init_with_proc
+   3152     136233 tss_sdk_get_busi_interf
+      9    2223532 tdr_load_metalib_fp
+    349      22336 pbL_DescriptorProto
+    118       6777 call_init.part.0
+ 326637   70005062 start_thread
+-----------------------------------------------------
+```
+
+ASan（AddressSanitizer）输出的 "Suppressions" 部分提供了有关在程序运行过程中使用的内存泄漏抑制的信息。抑制是一种机制，用于告诉 ASan 忽略特定类型的内存泄漏。这在某些情况下可能是有用的，例如当知道某些内存泄漏是由第三方库引起的，而无法修复它们时。
+
+"Suppressions used" 部分列出了在程序运行过程中应用的抑制。每一行包含以下信息：
+
+* `count`：使用该抑制的次数。
+* `bytes`：由该抑制隐藏的总字节数。
+* `template`：抑制的名称或模板。
+*
+在提供的输出中，例如，有 63 个 "instance" 抑制，共隐藏了 2168 字节的内存泄漏。另一个例子是 "Update" 抑制，共有 8984 个，隐藏了 8932728 字节的内存泄漏。
+
+需要注意的是，抑制不应该用于隐藏程序中的实际内存泄漏。它们应该谨慎使用，以避免误导开发人员。在大多数情况下，建议修复导致内存泄漏的代码，而不是使用抑制。
 
 
 
