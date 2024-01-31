@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Graylog in Action"
+title:  "Elasticsearch in Action"
 date:   2024-01-16 20:22:00 +0800
 categories: 云原生
 ---

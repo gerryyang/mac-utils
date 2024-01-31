@@ -938,6 +938,41 @@ Non-authoritative answer:
 Authoritative answers can be found from:
 ```
 
+```
+$ nslookup gerryyang.com
+Server:         10.85.61.21
+Address:        10.85.61.21#53
+
+Non-authoritative answer:
+Name:   gerryyang.com
+Address: 119.28.41.102
+```
+
+### dig
+
+```
+$ dig gerryyang.com
+
+; <<>> DiG 9.11.26-RedHat-9.11.26-4.tl3 <<>> gerryyang.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27567
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4000
+;; QUESTION SECTION:
+;gerryyang.com.                 IN      A
+
+;; ANSWER SECTION:
+gerryyang.com.          598     IN      A       119.28.41.102
+
+;; Query time: 271 msec
+;; SERVER: 10.85.61.21#53(10.85.61.21)
+;; WHEN: Wed Jan 31 20:05:05 CST 2024
+;; MSG SIZE  rcvd: 58
+```
+
 ### nc
 
 ```
