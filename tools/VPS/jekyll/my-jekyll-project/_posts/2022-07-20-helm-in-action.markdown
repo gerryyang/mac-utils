@@ -60,6 +60,7 @@ mychart
 # Refer
 
 * https://github.com/helm/helm
+* https://helm.sh/zh/docs/chart_template_guide/getting_started/
 * [是时候使用Helm了：Helm, Kubernetes的包管理工具](https://www.kubernetes.org.cn/3435.html)
 
 

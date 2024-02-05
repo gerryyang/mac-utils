@@ -10,7 +10,7 @@ categories: [Linux Performance]
 
 
 > gperftools (originally Google Performance Tools)
-> 
+>
 > The fastest malloc we’ve seen; works particularly well with threads and STL. Also: thread-friendly heap-checker, heap-profiler, and cpu-profiler.
 
 * wiki介绍：https://github.com/gperftools/gperftools/wiki
@@ -20,7 +20,7 @@ categories: [Linux Performance]
 * 安装依赖
   + yum install graphviz
   + yum install ghostscript  (安装 ps2pdf)
-  + yum install kcachegrind 
+  + yum install kcachegrind
     - http://kcachegrind.sourceforge.net/html/Download.html
   + brew install qcachegrind (MacOS)
     - https://stackoverflow.com/questions/4473185/need-kcachegrind-like-profiling-tools-for-mac
@@ -53,7 +53,7 @@ void f1() {
         }
 }
 
-void f2()  { 
+void f2()  {
         int i;
         for (i = 0; i < 1024 * 1024; ++i) {
                 int* p = new int;
@@ -61,7 +61,7 @@ void f2()  {
         }
 }
 
-int main() { 
+int main() {
         f1();
         f2();
         return 0;
@@ -75,7 +75,7 @@ $ g++ c.cc -L$HOME/tools/gperftools-2.9.1_install/lib -ltcmalloc -lprofiler
 $ HEAPPROFILE=heapprofile.out ./a.out
 Starting tracking the heap
 Dumping heap profile to heapprofile.out.0001.heap (Exiting, 6 MB in use)
-$ pprof --text a.out heapprofile.out.0001.heap 
+$ pprof --text a.out heapprofile.out.0001.heap
 Using local file a.out.
 Using local file heapprofile.out.0001.heap.
 Total: 6.0 MB
@@ -114,7 +114,7 @@ See [heap_checker](https://gperftools.github.io/gperftools/heap_checker.html) fo
 Link your executable with `-ltcmalloc` or add in the profiler at run-time using `env LD_PRELOAD="/usr/lib/libtcmalloc.so"`
 
 ```
-This does not turn on heap checking; it just inserts the code. For that reason, it's practical to just always link -ltcmalloc into a binary while developing; that's what we do at Google. (However, since any user can turn on the profiler by setting an environment variable, it's not necessarily recommended to install heapchecker-linked binaries into a production, running system.) 
+This does not turn on heap checking; it just inserts the code. For that reason, it's practical to just always link -ltcmalloc into a binary while developing; that's what we do at Google. (However, since any user can turn on the profiler by setting an environment variable, it's not necessarily recommended to install heapchecker-linked binaries into a production, running system.)
 ```
 
 * Running the Code
@@ -149,7 +149,7 @@ In addition, there are two other possible modes:
 * as-is
 * local
 
-`as-is` is the most flexible mode; it allows you to specify the various [knobs](https://gperftools.github.io/gperftools/heap_checker.html#options) of the heap checker explicitly. 
+`as-is` is the most flexible mode; it allows you to specify the various [knobs](https://gperftools.github.io/gperftools/heap_checker.html#options) of the heap checker explicitly.
 
 `local` activates the [explicit heap-check instrumentation](https://gperftools.github.io/gperftools/heap_checker.html#explicit), but does not turn on any whole-program leak checking.
 
@@ -201,7 +201,7 @@ void f1() {
         }
 }
 
-void f2()  { 
+void f2()  {
         int i;
         for (i = 0; i < 1024 * 1024; ++i) {
                 int* p = new int;
@@ -209,7 +209,7 @@ void f2()  {
         }
 }
 
-int main() { 
+int main() {
         f1();
         f2();
         return 0;
@@ -220,7 +220,7 @@ int main() {
 
 ```
 $ g++ c.cc -L$HOME/tools/gperftools-2.9.1_install/lib -ltcmalloc -lprofiler
-$ $ env HEAPCHECK=normal ./a.out 
+$ $ env HEAPCHECK=normal ./a.out
 WARNING: Perftools heap leak checker is active -- Performance may suffer
 Have memory regions w/o callers: might report false leaks
 Leak check _main_ detected leaks of 4194304 bytes in 1048576 objects
@@ -229,10 +229,10 @@ The 1 largest leaks:
 *** Reason: Cannot find 'pprof' (is PPROF_PATH set correctly?)
 *** If you cannot fix this, try running pprof directly.
 Leak of 4194304 bytes in 1048576 objects allocated from:
-        @ 4011c8 
-        @ 4011e3 
-        @ 7f876b3926a3 
-        @ 4010ae 
+        @ 4011c8
+        @ 4011e3
+        @ 7f876b3926a3
+        @ 4010ae
 
 
 If the preceding stack traces are not enough to find the leaks, try running THIS shell command:
@@ -310,9 +310,9 @@ int main() {
 
 ```
 $ g++ a.cc -L$HOME/tools/gperftools-2.9.1_install/lib -ltcmalloc -lprofiler
-$ CPUPROFILE=cpuprofile.out ./a.out 
+$ CPUPROFILE=cpuprofile.out ./a.out
 PROFILE: interrupts/evictions/bytes = 65/1/344
-$ pprof --text a.out cpuprofile.out 
+$ pprof --text a.out cpuprofile.out
 Using local file a.out.
 Using local file cpuprofile.out.
 Total: 65 samples
@@ -338,6 +338,93 @@ pprof --svg a.out cpuprofile.out > cpuprofile.svg
 
 
 # Q&A
+
+## heap.prof.0001.heap 文件的生成规则
+
+gperftools 的 heap profiler 生成的 `heap.prof.*` 文件是堆分配的采样文件。**每个文件表示一个时间点的内存分配情况**。文件名中的数字（例如 heap.prof.0001.heap 中的 0001）表示 heap profiler 生成的文件序号。序号从 0001 开始，每次生成新的采样文件时递增。
+
+在以下情况下，heap profiler 会生成新的采样文件：
+
+1. 当分配的内存达到预先设定的阈值时。这个阈值可以通过 `HEAP_PROFILE_ALLOCATION_INTERVAL` 环境变量设置。默认情况下，每分配 1GB 内存，heap profiler 就会生成一个新的采样文件。
+2. 当程序显式调用 `HeapProfilerDump()` 函数时。这个函数允许程序在运行过程中手动触发 heap profiler 生成采样文件。这可以用于在关键点（例如程序的不同阶段或操作完成后）获取内存分配的详细信息。
+
+多个 `heap.prof.*` 文件表示程序在不同时间点的内存分配情况。通过比较这些文件，可以了解程序在运行过程中内存分配的变化情况，从而找到可能的内存泄漏或者优化程序的内存使用。
+
+例如，如果在 `heap.prof.0001.heap` 文件中看到一个大量内存分配，而在 `heap.prof.0002.heap` 文件中看到相同的内存分配仍然存在且没有显著减少，那么这可能意味着程序在这段时间内没有正确地释放内存。这可以帮助找到程序中的内存泄漏或其他内存管理问题。
+
+
+## pprof 在生成 svg 文件时输出 addr2line: DWARF error: could not find variable specification at offset xxx
+
+这个错误表明 addr2line 在尝试解析程序的 DWARF 调试信息时遇到了问题。DWARF 是一种用于在可执行文件中存储源代码和行号信息的调试格式。pprof 使用 addr2line 工具来将堆栈跟踪中的内存地址转换为源代码中的文件名和行号。
+
+## pprof 在生成 svg 文件时输出 Dropping nodes with <= 0.5 MB; edges with <= 0.1 abs(MB)
+
+这个消息来自于 pprof，它在生成内存分析报告时，为了简化图形的复杂性，会自动过滤掉一些较小的内存分配。
+
+具体来说，pprof 会过滤掉以下两类信息：
+
+1. "Dropping nodes with <= 0.5 MB"：这表示 pprof 过滤掉了那些内存分配总量小于或等于 0.5 MB 的节点。这里的 "节点" 指的是堆栈跟踪中的一个函数。如果一个函数分配的内存总量小于或等于 0.5 MB，那么这个函数在 pprof 的报告中就不会出现。
+
+2. "Dropping edges with <= 0.1 abs(MB)"：这表示 pprof 过滤掉了那些内存分配总量小于或等于 0.1 MB 的边。这里的 "边" 指的是堆栈跟踪中的一个函数调用。如果一个函数调用分配的内存总量小于或等于 0.1 MB，那么这个函数调用在 pprof 的报告中就不会出现。
+
+这两个过滤条件可以帮助 pprof 减少报告的复杂性，让你更容易关注那些分配了大量内存的函数和函数调用。如果你希望看到所有的内存分配，你可以在运行 pprof 时使用 `--nodecount` 和 `--edgecount` 选项来调整这两个过滤条件。例如：
+
+``` bash
+pprof --svg --nodecount=10000 --edgecount=10000 a.out heapprofile.out.0001.heap > heapprofile.svg
+```
+
+这个命令将会显示最多 10000 个节点和边，无论它们分配了多少内存。
+
+## pprof 在生成 svg 文件时输出 Dropping nodes with <= 247 samples; edges with <= 49 abs(samples)
+
+这个消息来自于 pprof，它在生成性能分析报告时，为了简化图形的复杂性，会自动过滤掉一些较少的采样。
+
+具体来说，pprof 会过滤掉以下两类信息：
+
+1. "Dropping nodes with <= 247 samples"：这表示 pprof 过滤掉了那些采样数小于或等于 247 的节点。这里的 "节点" 指的是堆栈跟踪中的一个函数。如果一个函数的采样数小于或等于 247，那么这个函数在 pprof 的报告中就不会出现。
+
+2. "Dropping edges with <= 49 abs(samples)"：这表示 pprof 过滤掉了那些采样数小于或等于 49 的边。这里的 "边" 指的是堆栈跟踪中的一个函数调用。如果一个函数调用的采样数小于或等于 49，那么这个函数调用在 pprof 的报告中就不会出现。
+
+这两个过滤条件可以帮助 pprof 减少报告的复杂性，让你更容易关注那些采样数较多的函数和函数调用。如果你希望看到所有的采样，你可以在运行 pprof 时使用 `--nodecount` 和 `--edgecount` 选项来调整这两个过滤条件。例如：
+
+```
+pprof --svg --nodecount=10000 --edgecount=10000 a.out profile.out > profile.svg
+```
+
+这个命令将会显示最多 10000 个节点和边，无论它们的采样数是多少。
+
+
+
+## gperf 输出 heap.prof.0001.heap 文件的内容含义
+
+```
+heap profile: 139930: 105204024 [305381: 114365828] @ heapprofile
+     1: 20367388 [     1: 20367388] @ 0x0e0eac44 0x00000000 0x00000000
+     1: 10240000 [     1: 10240000] @ 0x0e0e9a27 0x00000000 0x00000000
+     1:  8388744 [     1:  8388744] @ 0x08b2ebf1 0x08b300a2 0x08b42e2f 0x08b42f57 0x08b42ea7 0x086b0b11 0x086b0a2c 0x08ad5e84 0x08ad5e28 0x7f06c2d9b4aa 0x08b3008c 0x08b42e2f
+     1:  8388744 [     1:  8388744] @ 0x08b2ebf1 0x08b300a2 0x08b42e2f 0x08b42f57 0x08b42ea7 0x087c6c33 0x08795a84 0x087908fe 0x08897879 0x086e514a 0x086e3c81 0x7f06c2a3bf93 0x08b42f57 0x08b42ea7
+     1:  8388712 [     1:  8388712] @ 0x086ad229 0x0886c9d7 0x08aaba0e 0x08ae23b9 0x08ada093 0x08ad9f89 0x7f06c2d9b4aa 0x086b4a95 0x086bd9be
+     1:  8388712 [     1:  8388712] @ 0x086ad229 0x08758fd1 0x08add728 0x08acf20c 0x08acf06b 0x08adba18 0x08647c19 0x0872cff6 0x0872ccc9 0x7f06c2d9b4aa 0x12fd9340 0x0872ccc9
+     1:  8388712 [     1:  8388712] @ 0x086ad229 0x086b0aaf 0x086b0a2c 0x08ad5e84 0x08ad5e28 0x7f06c2d9b4aa 0xb0963b1d7f458d34 0x7f06c04f56d0
+     1:  8388712 [     1:  8388712] @ 0x086ad229 0x08758fd1 0x08add728 0x08acf20c 0x08acf06b 0x08adba18 0x08647c19 0x088972ae 0x086e514a 0x086e3c81 0x7f06c2a3bf93 0x086e514a 0x086e3c81
+     1:  4608280 [     1:  4608280] @ 0x0e0eac2a 0x08a99ef3 0x0872b8fb 0x0872f94f 0x0872d22b 0x0872ccc9 0x7f06c2d9b4aa 0x00000000 0x00000000
+```
+
+gperf 的 heap profiler 输出的每一行表示一个内存分配的样本。每个样本表示一个或多个相同的内存分配。每行的格式如下：
+
+```
+n: t [k: s] @ stack_trace
+```
+
+下面是每个字段的含义：
+
+* `n`：这个数字表示在当前采样中，有多少个相同的内存分配。在例子中，每个样本都只有一个内存分配，所以这个数字都是 1。
+* `t`：这个数字表示这些内存分配总共分配了多少字节。
+* `[k: s]`：这个方括号中的数字表示在程序启动后，有多少个相同的内存分配（k），以及这些内存分配总共分配了多少字节（s）。这可以帮助你了解这个内存分配在程序的生命周期中的行为。
+* `@ stack_trace`：这个部分表示内存分配发生的堆栈跟踪。这个堆栈跟踪是从分配内存的函数开始，到 main 函数结束。每个数字都是一个函数的地址。
+
+在例子中，最大的内存分配是在地址 `0x0e0eac44` 的函数中发生的，它分配了 `20367388` 字节的内存。可以使用 `addr2line` 或其他工具，将这个地址转换为源代码中的文件名和行号，以帮助找到这个内存分配发生的位置。
+
 
 ## EVERYTHING IN ONE (同时支持CPU和Heap分析)
 
@@ -503,7 +590,6 @@ Either way, I believe this is expected behavior.
 * https://github.com/gperftools/gperftools
 * [C++Profile的大杀器_gperftools的使用](https://xusenqi.github.io/2020/12/06/C++Profile%E7%9A%84%E5%A4%A7%E6%9D%80%E5%99%A8_gperftools%E7%9A%84%E4%BD%BF%E7%94%A8/)
 * [用gperftools对C/C++程序进行profile](https://airekans.github.io/cpp/2014/07/04/gperftools-profile)
-* [Work with Google performance tools](http://alexott.net/en/writings/prog-checking/GooglePT.html)  
+* [Work with Google performance tools](http://alexott.net/en/writings/prog-checking/GooglePT.html)
 
-	
-	
+

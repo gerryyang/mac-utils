@@ -1799,6 +1799,76 @@ https://docs.buf.build/best-practices/style-guide
 
 # Q&A
 
+## 计算 Protobuf 对象的大小
+
+If you want to know how large the serialized protobuf message returned by [MessageLite::SerializeToString(](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message_lite#MessageLite.SerializeToString.details)) is going to be you can use [Message::ByteSizeLong](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.ByteSizeLong.details)().
+
+``` cpp
+virtual size_t Message::ByteSizeLong() const
+```
+
+Computes the serialized size of the message.
+
+This recursively calls ByteSizeLong() on all embedded messages.
+
+ByteSizeLong() is generally linear in the number of fields defined for the proto.
+
+``` cpp
+ExampleMessage msg;
+msg.set_example(12);
+
+std::size_t expectedSize = msg.ByteSizeLong();
+
+std::string result;
+msg.SerializeToString(&result);
+
+assert(expectedSize == result.size());
+```
+
+This is also the way SerializeToString() [calculates the size of the message internally](https://github.com/protocolbuffers/protobuf/blob/520c601c99012101c816b6ccc89e8d6fc28fdbb8/src/google/protobuf/message_lite.cc#L445-L459) to resize the std::string to have enough space for the entire message.
+
+On the other hand if you want to know how much memory the message currently requires in unserialized form you can use [Message::SpaceUsedLong()](https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.message#Message.SpaceUsedLong.details) - which will give you an estimate of that size.
+
+``` cpp
+ExampleMessage msg;
+msg.set_example(12);
+
+std::size_t approximateInMemorySize = msg.SpaceUsedLong();
+```
+
+https://stackoverflow.com/questions/72619077/how-to-get-the-actual-size-of-a-protocol-buffer-message-before-serialization
+
+## 估算 Protobuf 对象的动态内存使用
+
+通过 [SpaceUsedLong](https://protobuf.dev/reference/cpp/api-docs/google.protobuf.message/#Message.SpaceUsedLong.details) 接口
+
+``` cpp
+virtual size_t Message::SpaceUsedLong() const
+```
+
+Computes (an estimate of) the total number of bytes currently used for storing the message in memory.
+
+The default implementation calls the Reflection object's SpaceUsed() method.
+
+SpaceUsed() is noticeably slower than ByteSize(), as it is implemented using reflection (rather than the generated code implementation for ByteSize()). Like ByteSize(), its CPU time is linear in the number of fields defined for the proto.
+
+
+``` cpp
+#include <iostream>
+#include "example.pb.h"
+
+int main() {
+    Person person;
+    person.set_name("John Doe");
+    person.set_age(30);
+    person.add_hobbies("Reading");
+    person.add_hobbies("Traveling");
+
+    std::cout << "Dynamic memory usage of Person: " << person.SpaceUsedLong() << " bytes" << std::endl;
+    return 0;
+}
+```
+
 ## string 类型会检查 UTF-8 编码，编码提示错误而解码失败
 
 测试代码：

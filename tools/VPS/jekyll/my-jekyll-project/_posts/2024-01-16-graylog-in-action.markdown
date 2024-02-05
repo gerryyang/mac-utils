@@ -74,6 +74,119 @@ Graylog 作为一种灵活的工具，具有许多增强其实用性的功能。
 12. Graylog 的[处理管道](https://go2docs.graylog.org/5-0/making_sense_of_your_log_data/pipelines.html)使用户能够针对特定类型的事件运行一个规则或一系列规则。与流绑定，管道允许在消息流经 Graylog 时进行路由、拒绝列表、修改和丰富。
 
 
+
+# [Getting Started](https://gettingstarted.graylog.org/assets/v1/index.html)
+
+## Send in first log messages
+
+Graylog is pretty useless without some log data in it. Let's start by sending in some messages.
+
+### Select a source
+
+> Your own applications
+
+A very common use case is to write logs directly from your applications and services into Graylog. We have developed the Graylog Extended Log Format (GELF) to help you with exactly that. GELF is a structured log format supported by almost a hundred libraries out there. Want to send GELF directly from Java, Ruby, PHP, node.js, Erlang or anything else? No problem.
+
+> Local log files
+
+Sometimes you only have a local log file that you want to send into Graylog. Luckily there are many ways to tail a logfile and reliably forward new log lines over the network:
+
+* The Graylog Collector
+
+The Graylog Collector is a lightweight Java application that allows you to forward data from log files to a Graylog cluster. The collector can read local log files and also Windows Events natively, it then can forward the log messages over the network using the GELF format.
+
+* Logstash, NXLog, Fluentd
+
+There are other forwarders that we have seen used successfully in user and customer environments. [Logstash](https://www.elastic.co/products/logstash), [NXLog](http://nxlog.org/products/nxlog-community-edition) and [fluentd](http://www.fluentd.org/) are all worth a look.
+
+### Starting a message input in Graylog
+
+By now you have selected a device or software that you want to send log messages from into Graylog. The next thing to do is to start a message input that your source can send its log messages to.
+
+> Good to know
+
+There are a few general things to know:
+
+* Ports lower than 1024
+
+Most Linux distributions systems will not allow a non-root user to start a message input listening on a port lower than `1024`. There are workaround to allow this, but our advice is to just use a higher port number. The standard syslog port is `514`, so you could just launch it on `5140`.
+
+* Inputs that could not be launched
+
+If an input could not be launched (for example because of the <1024 problem mentioned above or because something else is already listening on the same port) you will get a notification in System -> Overview that usually also gives a hint about what went wrong. The graylog-server log file can help with debugging, too.
+
+> How to debug if messages arrived
+
+We of course hope that everything works on the first attempt and you can immediately find messages you sent into Graylog by executing a search. This is however sometimes not the case. Here are two things that help with debugging:
+
+* Look at the input metrics to see if any data arrived
+
+The inputs overview page shows you metrics of established connections and how many bytes were transferred since the graylog-server process started. This can help you identify if your sources are connected to Graylog at all, or if there are connectivity problems or firewalls in between.
+
+* Find all messages ever received by a specific input
+
+Sometimes your devices send a wrong timestamp which will lead to many time range searches not returning the messages you expect. Hit the Show received messages button to execute a search for everything that ever came in through this input and you should see them.
+
+> Launching an input
+
+Launching an input is easy. Navigate to System -> Inputs, select an input type from the drop down box, and hit Launch new input. A dialog will open, and ask you for some configuration parameters.
+
+You can now point the source you decided to start with towards your newly created input. Hitting the Show received messages button on the inputs overview page should show you messages that were received right away.
+
+## Do something with your data
+
+### Basic searches
+
+Hit Search in the main Graylog navigation, and you should be presented with an analysis of all data that was received in the last 5 minutes. Let's look at the elements of that page:
+
+![search_results](/assets/images/202401/search_results.png)
+
+1. **Time range selector**: Select the time range you want to search in. Hit the blue button to select a time range type. Note that for best performance you should always choose the shortest reasonable time range.
+2. **Search query**: Enter your search query here. If you want to find all messages in the selected timerange, you can just press enter without typing anything or alternatively use `*` as query.
+3. **Timeline histogram**: The timeline histogram chart shows you how many messages were found per minute/hour/day/week/month/quarter/year in the selected time range. It is a great way to quickly see when how many messages were received.
+4. **Messages**: The messages that your search returned. Click on a message to expand it.
+5. **Message fields**: A list of all fields that are part of the messages that your search returned. Click on a checkbox next to a field to include the field and its values in the search results table. Click on the blue arrow to expand field drilldown options.
+6. **Field drilldown**: The field drilldown analysis methods allow you to dig deeper into a fields value (computed over the selected time range).
+
+### Example
+
+Let's start with a search over everything that was received in the last 15 minutes, and try to find out which sources sent the most data.
+
+![search_results2](/assets/images/202401/search_results2.png)
+
+Hit the blue arrow next to the source field and then the Quick values button. This will load the quick value analysis result on top of the search results. You can see that (in the last 15 minutes) the source example.org sent 64.31% of all data and 16,815 messages in total.
+
+The source sundaysister (a hostname of a syslog enabled device) sent 35.66% of the data. Let's dig deeper into that source and find out what kind of data was sent.
+
+![search_results3](/assets/images/202401/search_results3.png)
+
+Search for all messages from that specific source (`source:sundaysister`) and run a quick values analysis on the facility field. You can see that 94.58% of the messages from this source in the last 15 minutes came from the system daemon subsystems (facility).
+
+Let's look at a second example and try to figure out the response time of a specific part of a web application. (Those structure messages can be achieved using GELF or extractors.)
+
+![search_results4](/assets/images/202401/search_results4.png)
+
+The took_ms field includes a number that represents the milliseconds it took to handle the HTTP request that was logged. The field statistics show you statistical information about the field value (in the last 2 hours in this case - look at the time range selector).
+
+The Generate chart button will create a chart representing the field value over time. You can see that the response time of this specific part of your application (`controller:PostsController`) did not change much in the last 2 hours. You can also see that the field statistics are accurate: Standard deviation is around 305ms and the mean value is 119ms.
+
+
+## Create a dashboard
+
+Dashboards are a great way to organize information that you look at often. Learn how to create them and how to add widgets with interesting information.
+
+This guide assumes that you have successfully completed and understood the sections before it. By now, you have log messages flowing into Graylog, and are familiar with the basic search and analysis functionality.
+
+
+## Be alerted
+
+Immediately receive alerts and trigger actions when something interesting or unusual happens.
+
+An alert is always based on a stream. Set up streams that categorize and group messages so you can later alert on aggregated metrics. Streams could be Failed SSH logins, HTTP 500's, blocked ICMP packages or All HTTP requests (to measure response time).
+
+
+
+
 # The Graylog Extended Log Format (GELF)
 
 Graylog also introduces the Graylog Extended Log Format (GELF), which improves on the limitations of standard syslog, such as:
@@ -306,6 +419,131 @@ The search page serves as the central hub of Graylog, where you can execute sear
 ![how_to_search_your_log_data](/assets/images/202401/how_to_search_your_log_data.png)
 
 
+# [Writing Search Queries](https://go2docs.graylog.org/5-2/making_sense_of_your_log_data/writing_search_queries.html)
+
+## Syntax
+
+The search syntax is very close to the Lucene syntax. By default all message fields are included in the search if you don’t specify a message field to search in.
+
+* Messages that include the term `ssh` :
+
+```
+ssh
+```
+
+* Messages that include the term `ssh` or `login` :
+
+```
+ssh login
+```
+
+* Messages that include the exact phrase `ssh login` :
+
+```
+"ssh login"
+```
+
+* Messages where the field `type` includes `ssh` :
+
+```
+type:ssh
+```
+
+* Messages where the field `type` includes `ssh` or `login` :
+
+```
+type:(ssh OR login)
+```
+
+> **Hint**: Elasticsearch 2.x and 5.x split queries on whitespace, so the query `type:(ssh login)` was equivalent to `type:(ssh OR login)`. This is no longer the case in Elasticsearch 6.0 and you must now include an `OR` operator between each term.
+
+* Messages where the field `type` includes the exact phrase `ssh login` :
+
+```
+type:"ssh login"
+```
+
+* Messages that have the field `type` :
+
+```
+_exists_:type
+```
+
+* Messages that do not have the field type :
+
+```
+NOT _exists_:type
+```
+
+> **Hint**: Elasticsearch 2.x allows to use `_missing_:type` instead of `NOT _exists_:type`. This query syntax has been removed in Elasticsearch 5.0 .
+
+* Messages that match regular expression `ethernet[0-9]+`:
+
+```
+/ethernet[0-9]+/
+```
+
+> **Hint**: Please refer to the Elasticsearch documentation about the [Regular expression syntax](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-regexp-query.html#regexp-syntax) for details about the supported regular expression dialect.
+
+
+*  By default all terms or phrases are `OR` connected so all messages that have at least one hit are returned. You can use **Boolean operators and groups** for control over this:
+
+```
+"ssh login" AND source:example.org
+("ssh login" AND (source:example.org OR source:another.example.org)) OR _exists_:always_find_me
+```
+
+* You can also use the `NOT` operator:
+
+```
+"ssh login" AND NOT source:example.org
+NOT example.org
+```
+
+> **Note that AND, OR, and NOT are case sensitive and must be typed in all upper-case.**
+
+* Wildcards: Use `?` to replace a single character or `*` to replace zero or more characters:
+
+```
+source:*.org
+source:exam?le.org
+source:exam?le.*
+```
+
+* **Note that leading wildcards are disabled to avoid excessive memory consumption!** You can enable them in your Graylog configuration file:
+
+```
+allow_leading_wildcard_searches = true 
+
+```
+
+
+## Escaping
+
+The following characters must be escaped with a backslash:
+
+```
+& | : \ / + - ! ( ) { } [ ] ^ " ~ * ?
+```
+
+Example:
+
+```
+resource:\/posts\/45326
+```
+
+## Error Types
+
+When entering your queries be sure to look out for warning and exceptions. If you enter a query Graylog won't understand, an icon with a yellow exclamation mark appears along with a message with the warning or exception. They include:
+
+* **Parse exception** - This exception is thrown when a parsing errors occurs. This appears when you make an error in the syntax of your search query. The error message should contain more information about the position of the syntax error.
+
+* **Invalid operator** - This occurs when the operator is misspelled. For example, AND is a valid operator but and is not. In most cases, operators are uppercase.
+
+* **Unknown field** - This warning occurs when you include a field in your search query that does not exist in the involved index sets. This is determined by the relationship between streams and [index sets](https://go2docs.graylog.org/5-0/making_sense_of_your_log_data/streams.html#index-sets).
+
+* **Parameter error** - This error occurs when you are using an undeclared parameter in your search query.
+[Parameters](https://go2docs.graylog.org/5-0/interacting_with_your_log_data/parameters.html) need to be defined before you can include them in your search.
 
 
 
