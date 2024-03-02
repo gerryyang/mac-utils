@@ -108,3 +108,8 @@ If the URL is too long, the web server fails with the [414 Request-URI Too Long]
 The common workaround for these problems is to use [POST](https://en.wikipedia.org/wiki/POST_(HTTP)) instead of [GET](https://en.wikipedia.org/wiki/GET_(HTTP)) and store the parameters in the request body. The length limits on request bodies are typically much higher than those on URL length. For example, the limit on POST size, by default, is 2 MB on IIS 4.0 and 128 KB on IIS 5.0. The limit is configurable on Apache2 using the `LimitRequestBody` directive, which specifies the number of bytes from 0 (meaning unlimited) to 2147483647 (2 GB) that are allowed in a request body.
 
 **There are times when HTTP GET is less suitable even for data retrieval**. An example of this is when a great deal of data would need to be specified in the URL. Browsers and web servers can have limits on the length of the URL that they will handle without truncation or error. **Percent-encoding of reserved characters in URLs and query strings can significantly increase their length, and while Apache HTTP Server can handle up to 4,000 characters in a URL, Microsoft Internet Explorer is limited to 2,048 characters in any URL.** Equally, **HTTP GET should not be used where sensitive information**, such as usernames and passwords, have to be submitted along with other data for the request to complete. Even if **HTTPS** is used, preventing the data from being intercepted in transit, the browser history and the web server's logs will likely contain the full URL in plaintext, which may be exposed if either system is hacked. **In these cases, HTTP POST should be used**.
+
+# Refer
+
+* https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+

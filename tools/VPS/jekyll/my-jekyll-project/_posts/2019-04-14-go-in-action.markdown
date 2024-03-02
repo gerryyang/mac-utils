@@ -1436,17 +1436,50 @@ func main() {
 }
 ```
 
-# 问题调试
+# 问题调试 (delve)
+
+生成 coredump 文件后，可以使用 [delve](https://github.com/derekparker/delve) 来调试 coredump 文件，delve 是一款专门为 Go 语言开发的调试器，它能够提供丰富的调试功能。源码地址 https://github.com/go-delve/delve/tree/master/Documentation/installation
 
 服务启动前加上 `GOTRACEBACK=crash`，可以生成 corefile，和 `gdb` 类似，可以用 `dlv` 进行调试。
 
+``` bash
+ulimit -c unlimited
+export GOTRACEBACK=crash
+```
+
 安装：
 
-```
+``` bash
 go install github.com/go-delve/delve/cmd/dlv@latest
 ```
 
-https://github.com/derekparker/delve
+`GOTRACEBACK` 是一个环境变量，用于控制当 Go 程序崩溃时，运行时系统生成的调试信息的详细程度。这些调试信息通常包括堆栈跟踪（stack trace），帮助开发者定位问题。
+
+GOTRACEBACK 的可选参数如下：
+
+* none：不产生任何调试信息。
+* single：只显示当前 goroutine的堆栈跟踪，如果没有设置 GOTRACEBACK 环境变量，将默认使用此选项。
+* all：显示所有 goroutine 的堆栈跟踪。
+* system：显示所有 goroutine 的堆栈跟踪，包括运行时系统的 goroutine。
+* crash：与 system 类似，但在生成堆栈跟踪后，程序会通过调用操作系统的 crash 功能来终止，这对于生成核心转储文件（core dump）以便进一步分析非常有用。
+
+调试 coredump 文件执行指令：
+
+``` bash
+dlv core your_program your_corefile --check-go-version=false
+```
+
+`--check-go-version=false` 是忽略 go 版本和 dlv 版本的区别，不然会报错。
+
+* 执行 `goroutines` 或 `grs` 指令，查看执行的协程
+* 使用命令 `goroutine $协程ID` 对当前的 goroutine 进行切换，然后 `bt` 查看堆栈信息
+* 如果希望查看更多的堆栈帧，可以使用 `bt -full` ，它将显示完整的堆栈跟踪，包括函数参数和局部变量
+* 如果只想查看特定堆栈帧的详细信息，可以使用 `frame` 命令，后跟堆栈帧的编号
+* 使用 `grs` 或 `bt` 命令时如果需要翻页，可以使用 `les` 进行翻页操作
+
+
+![dlv_debug](/assets/images/202403/dlv_debug.png)
+
 
 
 # Q&A

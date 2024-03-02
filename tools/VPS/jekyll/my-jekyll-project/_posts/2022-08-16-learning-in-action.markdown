@@ -9,6 +9,49 @@ categories: 杂记
 {:toc}
 
 
+# Lighthouse (轻量应用服务器)
+
+> 轻量应用服务器（TencentCloud Lighthouse）是新一代开箱即用、面向轻量应用场景的云服务器产品，助力中小企业和开发者便捷高效的在云端构建网站、Web应用、小程序/小游戏、游戏服、电商应用、云盘/图床和开发测试环境，相比普通云服务器更加简单易用且更贴近应用，以套餐形式整体售卖云资源并提供高带宽流量包，将热门开源软件打包实现一键构建应用，提供极简上云体验。
+
+> Lighthouse = 云服务器 + 独立IP及流量包 + 开箱即用的应用镜像 - CVM中对于中小客户的过多细节
+
+* https://cloud.tencent.com/product/lighthouse
+* [【3秒极速开服】幻兽帕鲁服务器全自动部署保姆教程（含进阶指南）](https://cloud.tencent.com/developer/article/2382000)
+* 降低云的使用门槛
+  + VPC / 云硬盘 / 弹性网卡 / 对象存储 / 安全组 / 镜像 / DNS / ...
+* 贴近应用，贴近开发者
+
+应用场景：
+
+* 网站搭建（预置常用建站软件，快速创建博客，论坛，企业官网等）
+* Web 应用（提供常用 Web 开发平台，如 LAMP, Node.js 等的镜像）
+* 云端开发测试（帮助开发者随时随地在云端构建即开即用的开发测试环境）
+* 云端学习环境（提供 Ubuntu, CentOS, Debian 等环境）
+* 小程序后端服务
+* 云盘
+* 电商
+* 中小型游戏后台（云端搭建我的世界，CSGO等游戏服务）
+
+
+# 微信的 access_token 和 refresh_token
+
+在微信开发中，access_token 和 refresh_token 是两种不同类型的票据，它们在微信认证和授权过程中起到不同的作用。
+
+access_token 是一个短期有效的票据，用于访问微信 API 以获取用户数据或执行其他操作。它通常在用户授权后立即生成，并具有较短的有效期（通常为 2 小时）。当 access_token 过期时，需要使用 refresh_token 获取一个新的 access_token。
+
+access_token 的主要作用是充当 API 请求的凭证。在调用微信 API 时，需要在请求中携带有效的 access_token，以证明你有权限访问相应的资源或执行操作。
+
+refresh_token 是一个长期有效的票据，用于在 access_token 过期后获取一个新的 access_token。refresh_token 的有效期通常比 access_token 长得多（通常为 30 天或更长）。
+
+当 access_token 过期时，可以使用 refresh_token 向微信服务器请求一个新的 access_token，而无需再次让用户进行授权。这样可以避免频繁地请求用户授权，提高用户体验。
+
+总结一下，access_token 和 refresh_token 的区别如下：
+
+* access_token 是短期有效的票据，用于访问微信 API；而 refresh_token 是长期有效的票据，用于在 access_token 过期后获取新的 access_token。
+* access_token 的有效期较短，通常为 2 小时；而 refresh_token 的有效期较长，通常为 30 天或更长。
+* 使用 refresh_token 可以在 access_token 过期后获取新的 access_token，而无需再次让用户进行授权。
+
+
 # MTBF、MTTR、MTTA 和 MTTF
 
 了解一些最常见的事件指标
