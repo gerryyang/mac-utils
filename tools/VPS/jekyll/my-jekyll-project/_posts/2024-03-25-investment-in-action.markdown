@@ -1,13 +1,12 @@
 ---
 layout: post
-title:  "HAProxy in Action"
-date:   2018-11-08 20:22:00 +0800
-categories: https
+title:  "投资理财的那些事"
+date:   2024-03-30 18:00:00 +0800
+categories: 杂记
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
-
 
 
 从 2005 年算起，我学习投资已经有 17 年了。
