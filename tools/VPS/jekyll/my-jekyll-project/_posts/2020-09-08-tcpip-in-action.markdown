@@ -491,6 +491,15 @@ inet_ntop(AF_INET, &(sa.sin_addr), str, INET_ADDRSTRLEN);
 printf("%s\n", str); // prints "192.0.2.33"
 ```
 
+## [When is TCP option SO_LINGER (0) required?](https://stackoverflow.com/questions/3757289/when-is-tcp-option-so-linger-0-required?newreg=6f6d760f75ec40cfa3b813ee7731b14e)
+
+The typical reason to set a `SO_LINGER` timeout of zero is to avoid large numbers of connections sitting in the `TIME_WAIT` state, tying up all the available resources on a server.
+
+When a TCP connection is closed cleanly, the end that initiated the close ("active close") ends up with the connection sitting in `TIME_WAIT` for several minutes. So if your protocol is one where the server initiates the connection close, and involves very large numbers of short-lived connections, then it might be susceptible to this problem.
+
+This isn't a good idea, though - `TIME_WAIT` exists for a reason (to ensure that stray packets from old connections don't interfere with new connections). It's a better idea to redesign your protocol to one where the client initiates the connection close, if possible.
+
+
 # Refer
 
 * [TCP/IP 概述 by 陈硕](https://b23.tv/lBAsi98)

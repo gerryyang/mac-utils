@@ -1330,6 +1330,277 @@ refer:
 
 TODO
 
+# 各种函数的用法
+
+https://blog.csdn.net/delphiwcdj/article/details/17611699
+
+常用的几种函数用法，主要包括：
+
+* 首先main是一个没有返回值的函数
+* 普通函数
+* 函数返回多个值
+* 不定参函数
+* 闭包函数
+* 递归函数
+* 类型方法, 类似C++中类的成员函数
+* 接口和多态
+* Defer 接口
+* 错误处理, Panic/Recover
+
+``` go
+package main
+
+import (
+	"fmt"
+	"math"
+	"errors"
+	"os"
+	"io"
+)
+
+
+///
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func multi_ret(key string) (int, bool) {
+	m := map[string]int{"one":1, "two":2, "three":3}
+	var err bool
+	var val int
+	val, err = m[key]
+	return val, err
+}
+
+func sum(nums ...int) {
+	fmt.Print(nums, " ")
+	total := 0
+	for _, num := range nums {
+		total += num
+	}
+	fmt.Println(total)
+}
+
+func nextNum() func() int {
+	i, j := 0, 1
+	return func() int {
+		var tmp = i + j
+		i, j = j, tmp
+		return tmp
+	}
+}
+
+func fact(n int) int {
+	if n == 0 {
+		return 1
+	}
+	return n * fact(n-1)
+}
+
+// 长方形
+type rect struct {
+	width, height float64
+}
+
+func (r *rect) area() float64 {
+	return r.width * r.height
+}
+
+func (r *rect) perimeter() float64 {
+	return 2 * (r.width + r.height)
+}
+
+// 圆形
+type circle struct {
+	radius float64
+}
+
+func (c *circle) area() float64 {
+	return math.Pi * c.radius * c.radius
+}
+
+func (c *circle) perimeter() float64 {
+	return 2 * math.Pi * c.radius
+}
+
+// 接口
+type shape interface {
+	area() float64
+	perimeter() float64
+}
+
+func interface_test() {
+	r := rect{width: 2, height: 4}
+	c := circle{radius: 4.3}
+
+	// 通过指针实现
+	s := []shape{&r, &c}
+
+	for _, sh := range s {
+		fmt.Println(sh)
+		fmt.Println(sh.area())
+		fmt.Println(sh.perimeter())
+	}
+}
+
+type myError struct {
+	arg int
+	errMsg string
+}
+
+// 实现error的Error()接口
+func (e *myError) Error() string {
+	return fmt.Sprintf("%d - %s", e.arg, e.errMsg)
+}
+
+func error_test(arg int) (int, error) {
+	if arg < 0 {
+		return -1, errors.New("Bad Arguments, negtive")
+	} else if arg > 256 {
+		return -1, &myError{arg, "Bad Arguments, too large"}
+	}
+	return arg * arg, nil
+}
+
+func CopyFile(dstName, srcName string) (written int64, err error) {
+	src, err := os.Open(srcName)
+	if err != nil {
+		fmt.Println("Open failed")
+		return
+	}
+	defer src.Close()
+
+	dst, err := os.Create(dstName)
+	if err != nil {
+		fmt.Println("Create failed")
+		return
+	}
+	defer dst.Close()
+
+	// 注意dst在前面
+	return io.Copy(dst, src)
+}
+
+
+//
+func main() {
+
+	// [0] 首先main是一个没有返回值的函数
+
+	// [1] 普通函数
+	fmt.Println(max(1, 100))
+
+	// [2] 函数返回多个值
+	v, e := multi_ret("one")
+	fmt.Println(v, e)
+	v, e = multi_ret("four")
+	fmt.Println(v, e)
+	// 典型的判断方法
+	if v, e = multi_ret("five"); e {
+		fmt.Println("OK")
+	} else {
+		fmt.Println("Error")
+	}
+
+	// [3] 不定参函数
+	sum(1, 2)
+	sum(2, 4, 5)
+	nums := []int{1, 2, 3, 4, 5}
+	sum(nums...)
+
+	// [4] 闭包函数
+	nextNumFunc := nextNum()
+	for i := 0; i < 10; i++ {
+		fmt.Println(nextNumFunc())
+	}
+
+	// [5] 递归函数
+	fmt.Println(fact(4))
+
+	// [6] 类型方法, 类似C++中类的成员函数
+	r := rect{width: 10, height: 15}
+	fmt.Println("area: ", r.area())
+	fmt.Println("perimeter: ", r.perimeter())
+
+	rp := &r
+	fmt.Println("area: ", rp.area())
+	fmt.Println("perimeter: ", rp.perimeter())
+
+	// [7] 接口和多态
+	interface_test()
+
+	// [8] 错误处理, Error接口
+	for _, val := range []int{-1, 4, 1000} {
+		if r, e := error_test(val); e != nil {
+			fmt.Printf("failed: %d:%s\n", r, e)
+		} else {
+			fmt.Println("success: ", r, e)
+		}
+	}
+
+	// [9] 错误处理, Defer接口
+	if w, err := CopyFile("/data/home/gerryyang/dst_data.tmp", "/data/home/gerryyang/src_data.tmp"); err != nil {
+		fmt.Println("CopyFile failed: ", e)
+	} else {
+		fmt.Println("CopyFile success: ", w)
+	}
+
+	// 你猜下面会打印什么内容
+	fmt.Println("beg ------------")
+	for i := 0; i < 5; i++ {
+		defer fmt.Printf("%d ", i)
+	}
+	fmt.Println("end ------------")
+
+	// [10] 错误处理, Panic/Recover
+	// 可参考相关资料, 此处省略
+
+}
+/*
+output:
+100
+1 true
+0 false
+Error
+[1 2] 3
+[2 4 5] 11
+[1 2 3 4 5] 15
+1
+2
+3
+5
+8
+13
+21
+34
+55
+89
+24
+area:  150
+perimeter:  50
+area:  150
+perimeter:  50
+&{2 4}
+8
+12
+&{4.3}
+58.088048164875275
+27.01769682087222
+failed: -1:Bad Arguments, negtive
+success:  16 <nil>
+failed: -1:1000 - Bad Arguments, too large
+CopyFile success:  8
+------------
+------------
+4 3 2 1 0
+*/
+```
+
+
+
 
 # 开源代码
 
@@ -1511,13 +1782,59 @@ dlv core your_program your_corefile --check-go-version=false
 
 # Tools
 
-* golang百科全书: https://awesome-go.com/
-* golang developer roadmap: https://github.com/Alikhll/golang-developer-roadmap
-* sql2go工具: http://stming.cn/tool/sql2go.html
-* toml2go工具: https://xuri.me/toml-to-go/
-* curl2go工具: https://mholt.github.io/curl-to-go/
-* json2go工具: https://mholt.github.io/json-to-go/
-* 泛型工具: https://github.com/cheekybits/genny
+## golang百科全书
+
+https://awesome-go.com/
+
+## golang developer roadmap
+
+https://github.com/Alikhll/golang-developer-roadmap
+
+## sql2go 工具
+
+http://stming.cn/tool/sql2go.html
+
+## toml2go 工具
+
+https://xuri.me/toml-to-go/
+
+## curl2go 工具
+
+https://mholt.github.io/curl-to-go/
+
+## json2go 工具
+
+https://mholt.github.io/json-to-go/
+
+## 泛型工具
+
+https://github.com/cheekybits/genny
+
+## QR Code encoder (二维码生成工具)
+
+* 通过第三方服务生成。qrserver 提供的二维码生成服务，参考[API 文档](https://goqr.me/api/doc/create-qr-code/)
+
+* 通过 https://github.com/skip2/go-qrcode 或 https://github.com/yeqown/go-qrcode 方案自己生成。
+
+``` go
+package main
+
+import (
+	"github.com/skip2/go-qrcode"
+)
+
+func main() {
+	var url = "http://gerryyang.com"
+	err := qrcode.WriteFile(url, qrcode.Medium, 256, "qr.png")
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+
+
+
 
 # Go Conference
 
@@ -1545,6 +1862,8 @@ https://github.com/gopherchina/conference
 * [learn-go-with-tests]
 * [How To Install and Set Up a Local Programming Environment for Go](https://www.digitalocean.com/community/tutorial_series/how-to-install-and-set-up-a-local-programming-environment-for-go)
 * [How To Write Packages in Go](https://www.digitalocean.com/community/tutorials/how-to-write-packages-in-go)
+* [Go 语言简介（上）— 语法](http://coolshell.cn/articles/8460.html)
+* [Go 语言简介（下）— 特性](http://coolshell.cn/articles/8489.html)
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org

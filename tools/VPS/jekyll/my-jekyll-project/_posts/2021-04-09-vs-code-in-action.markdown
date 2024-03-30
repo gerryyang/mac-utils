@@ -470,6 +470,13 @@ Solve LeetCode problems in VS Code.
 
 * [How can I customize the tab-to-space conversion factor?](https://stackoverflow.com/questions/29972396/how-can-i-customize-the-tab-to-space-conversion-factor)
 
+## [Can I run VS Code Server on older Linux distributions?](https://code.visualstudio.com/docs/remote/faq#_can-i-run-vs-code-server-on-older-linux-distributions)
+
+Starting with VS Code release 1.86.1 (January 2024), the minimum requirements for the build toolchain of the remote server were raised. The prebuilt servers distributed by VS Code are compatible with Linux distributions based on glibc 2.28 or later, for example, Debian 10, RHEL 8, or Ubuntu 20.04. VS Code will still allow users to connect to an OS that is not supported by VS Code (OS that does not provide glibc >= 2.28 and libstdc++ >= 3.4.25) until February 2025. This allows time for you and your companies to migrate to newer Linux distributions. VS Code will show a dialog and banner message when you connect to an OS version that is not supported by VS Code.
+
+
+
+
 # Refer
 
 * https://code.visualstudio.com/docs/editor/codebasics
