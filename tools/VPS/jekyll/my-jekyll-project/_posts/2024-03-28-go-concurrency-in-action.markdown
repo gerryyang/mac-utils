@@ -9,6 +9,881 @@ categories: GoLang
 {:toc}
 
 
+# Go 异步编程
+
+## 使用 go 关键字
+
+``` go
+func main() {
+	go func() {
+		fmt.Println("hello world1")
+	}()
+	go func() {
+		fmt.Println("hello world2")
+	}()
+}
+```
+
+``` go
+func main() {
+	go Announce("hello world1")
+	go Announce("hello world2")
+}
+func Announce(message string) {
+	fmt.Println(message)
+}
+```
+
+``` go
+// 使用匿名函数传递参数
+data := "Hello, World!"
+go func(msg string) {
+      // 使用msg进行异步任务逻辑处理
+      fmt.Println(msg)
+}(data)
+```
+
+以下是完整的代码：
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	data := "Hello, World!"
+	go func(msg string) {
+		// 使用msg进行异步任务逻辑处理
+		fmt.Println(msg)
+	}(data)
+
+	// 等待协程完成（通常情况下，你应该使用 sync.WaitGroup 或 channel 等待协程完成，这里我们只是为了简单演示）
+	time.Sleep(1 * time.Second)
+}
+
+```
+
+`(data)` 的作用是将 `data` 作为参数传递给匿名函数（也称为闭包）。go 关键字会启动一个新的 goroutine 并在该 goroutine 中异步执行该匿名函数。这样，函数可以并发地运行，而不会阻塞主程序的执行。`go func(msg string) { ... }(data)`：定义一个匿名函数，接受一个字符串参数 `msg`。然后使用 go 关键字在新的 goroutine 中异步执行该函数，并将 `data` 作为参数传递给它。
+
+## 通过 channel 获取返回值
+
+创建一个无缓冲的 channel。请注意，当使用无缓冲的 channel 时，发送操作将阻塞，直到有协程准备好接收值。这意味着在这种情况下，发送和接收操作将同步进行。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	ch := make(chan int) // 创建一个无缓冲的 channel
+
+	go func() {
+		// 异步任务逻辑
+		time.Sleep(2 * time.Second)
+		result := 42
+		ch <- result // 将结果发送到 channel
+
+		// 异步任务逻辑
+		// 注意：在这个示例中，我们不需要关闭 channel，因为我们只关心一个值。
+		// 如果你需要发送多个值，那么在发送完所有值后关闭 channel 是一个好的做法。
+	}()
+
+	// 在需要的时候从 channel 接收结果
+	result := <-ch
+	fmt.Println("Received result:", result)
+}
+```
+
+创建一个带缓冲的 channel。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	ch := make(chan int, 1)    // 创建一个带缓冲的 channel
+
+	go func() {
+		// 异步任务逻辑
+		time.Sleep(2 * time.Second)
+		result := 42
+		ch <- result // 将结果发送到 channel
+
+		// 异步任务逻辑
+		close(ch) // 关闭 channel，表示任务完成
+	}()
+
+	// 在需要的时候从 channel 接收结果
+	result := <-ch
+	fmt.Println("Received result:", result)
+}
+```
+
+## 使用 sync.WaitGroup 等待一组协程完成其任务
+
+通过 `Add()` 方法增加等待的协程数量，`Done()` 方法标记协程完成，`Wait()` 方法阻塞直到所有协程完成。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	var wg sync.WaitGroup
+
+	// 启动多个协程
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+
+		go func(index int) {
+			defer wg.Done()
+
+			// 异步任务逻辑
+			fmt.Printf("Starting goroutine %d\n", index)
+			time.Sleep(2 * time.Second)
+			fmt.Printf("Finishing goroutine %d\n", index)
+		}(i)
+	}
+
+	// 等待所有协程完成
+	wg.Wait()
+	fmt.Println("All goroutines completed")
+}
+```
+
+## 使用 errgroup 实现协程组的错误处理
+
+如果想简单获取协程返回的错误，`errgroup` 包很适合，`errgroup` 包是 Go 语言标准库中的一个实用工具，用于管理一组协程并处理它们的错误。可以使用 `errgroup.Group` 结构来跟踪和处理协程组的错误。
+
+``` go
+package main
+
+import (
+	"errors"
+	"fmt"
+	"golang.org/x/sync/errgroup"
+)
+
+func main() {
+	var eg errgroup.Group
+
+	for i := 0; i < 5; i++ {
+		eg.Go(func() error {
+			return errors.New("error")
+		})
+
+		eg.Go(func() error {
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		fmt.Println("Received an error:", err)
+	} else {
+		fmt.Println("All goroutines finished successfully")
+	}
+}
+```
+
+创建了一个 `errgroup.Group`，然后在该组中启动了一些协程。每个协程都有一个返回错误的函数。使用 `eg.Go` 方法来启动这些协程。
+
+然后调用 `eg.Wait` 方法来等待所有的协程完成。如果任何协程返回错误，`eg.Wait` 将返回该错误。在这个例子中，由于有一个协程总是返回一个错误，所以 `eg.Wait` 将返回该错误，在控制台上打印出 "Received an error: error"。如果所有协程都成功完成（即它们的函数都返回 nil），那么 `eg.Wait` 将返回 `nil`，将在控制台上打印出 "All goroutines finished successfully"。
+
+
+## 使用 channel 的 range 和 close 操作
+
+`range` 操作可以在接收通道上迭代值，直到通道关闭。可以使用 `close` 函数关闭通道，以向接收方指示没有更多的值。
+
+``` go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	ch := make(chan int)
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			ch <- i // 发送值到通道
+		}
+		close(ch) // 关闭通道
+	}()
+
+	// 使用 range 迭代接收通道的值
+	for val := range ch {
+		fmt.Println("Received:", val)
+	}
+}
+```
+
+## 使用 select 语句实现多个异步操作的等待
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	ch1 := make(chan int)
+	ch2 := make(chan string)
+
+	go func() {
+		// 异步任务 1 逻辑
+		time.Sleep(1 * time.Second)
+		result1 := 42
+		ch1 <- result1
+	}()
+
+	go func() {
+		// 异步任务 2 逻辑
+		time.Sleep(2 * time.Second)
+		result2 := "hello"
+		ch2 <- result2
+	}()
+
+	// 在主 goroutine 中等待多个异步任务完成
+	select {
+	case res1 := <-ch1:
+		fmt.Println("Received result 1:", res1)
+	case res2 := <-ch2:
+		fmt.Println("Received result 2:", res2)
+	}
+}
+```
+
+## 使用 select 和 time.After() 实现超时控制
+
+如果需要在异步操作中设置超时，可以使用 select 语句结合 time.After() 函数实现。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	ch := make(chan int)
+
+	go func() {
+		// 异步任务逻辑
+		time.Sleep(2 * time.Second)
+		result := 42
+		ch <- result
+	}()
+
+	// 设置超时时间
+	select {
+	case res := <-ch:
+		fmt.Println("Received result:", res)
+	case <-time.After(3 * time.Second):
+		fmt.Println("Timeout: operation took too long")
+	}
+}
+```
+
+## 使用 time.Tick() 和 time.After() 进行定时操作
+
+`time.Tick()` 函数返回一个通道，定期发送时间值，可以用于执行定时操作。`time.After()` 函数返回一个通道，在指定的时间后发送一个时间值。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	tick := time.Tick(1 * time.Second) // 每秒执行一次操作
+
+	go func() {
+		for {
+			select {
+			case <-tick:
+				fmt.Println("Tick: executing per-second operation")
+			}
+		}
+	}()
+
+	select {
+	case <-time.After(5 * time.Second):
+		fmt.Println("After 5 seconds: executing operation")
+	}
+}
+```
+
+## 使用 sync.Mutex 或 sync.RWMutex 进行并发安全访问
+
+当多个协程并发访问共享数据时，需要确保数据访问的安全性。`sync.Mutex` 和 `sync.RWMutex` 提供了**互斥锁**和**读写锁**，用于在访问共享资源之前进行锁定，以避免数据竞争。 `sync.RWMutex` 是一种读写锁，可以在多个协程之间提供对共享资源的并发访问控制。多个协程可以同时获取读锁，但只有一个协程可以获取写锁。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+var mutex sync.Mutex
+var data int
+
+func writeData(value int) {
+	mutex.Lock()
+	data = value
+	mutex.Unlock()
+}
+
+func readData() int {
+	mutex.Lock()
+	value := data
+	mutex.Unlock()
+	return value
+}
+
+var rwMutex sync.RWMutex
+var sharedData = make(map[string]string)
+
+func readSharedData(key string) string {
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	return sharedData[key]
+}
+
+func writeSharedData(key, value string) {
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
+	sharedData[key] = value
+}
+
+func main() {
+	go writeData(123)
+	fmt.Println("Data after writing:", readData())
+
+	go writeSharedData("hello", "world")
+	fmt.Println("Shared data after writing:", readSharedData("hello"))
+
+	// 等待协程完成（通常情况下，你应该使用 sync.WaitGroup 或 channel 等待协程完成，这里我们只是为了简单演示）
+	time.Sleep(1 * time.Second)
+}
+```
+
+> sync.Mutex 和 sync.RWMutex 的锁嵌套使用规则如下：
+
+* **sync.Mutex 的锁不可以嵌套使用**：这意味着如果你在已经获取了 sync.Mutex 锁的情况下再次尝试获取锁，将会导致死锁。在这种情况下，协程将被阻塞，无法继续执行。
+
+``` go
+var mu sync.Mutex
+mu.Lock()
+mu.Lock() // 这将导致死锁
+```
+
+* **sync.RWMutex 的 RLock() 可以嵌套使用**：这意味着你可以在同一个协程中多次获取读锁，但是你必须释放相同数量的读锁，才能最终释放锁。
+
+``` go
+var mu sync.RWMutex
+mu.RLock()
+mu.RLock() // 这是允许的
+mu.RUnlock()
+mu.RUnlock() // 必须释放相同数量的读锁
+```
+
+* **sync.RWMutex 的 Lock() 不可以嵌套**：这与 sync.Mutex 的行为相同，尝试在已经获取了写锁的情况下再次获取写锁，将会导致死锁。
+
+``` go
+var mu sync.RWMutex
+mu.Lock()
+mu.Lock() // 这将导致死锁
+```
+
+* `sync.RWMutex` 的 `Lock()` 中不可以嵌套 `RLock()`：尝试在已经获取了写锁的情况下获取读锁，将会导致死锁。
+
+``` go
+var mu sync.RWMutex
+mu.Lock()
+mu.RLock() // 这将导致死锁
+```
+
+总的来说，你应该避免在同一个协程中嵌套使用锁，除非你完全理解这样做的后果，并且确保正确地释放了所有的锁，以避免死锁。在大多数情况下，你应该尽量简化你的并发控制逻辑，避免复杂的锁嵌套使用。
+
+## 使用 sync.Cond 进行条件变量控制
+
+`sync.Cond` 是一个条件变量，用于在协程之间进行通信和同步。它可以在指定的条件满足之前阻塞等待，并在条件满足时唤醒等待的协程。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	var cond = sync.NewCond(&sync.Mutex{})
+	var ready bool
+
+	go func() {
+		// 模拟异步任务逻辑
+		time.Sleep(2 * time.Second)
+		cond.L.Lock()
+		ready = true
+		cond.L.Unlock()
+
+		// 通知等待的协程条件已满足
+		cond.Broadcast()
+	}()
+
+	// 在某个地方等待条件满足
+	cond.L.Lock()
+	for !ready {
+		cond.Wait()
+	}
+	cond.L.Unlock()
+	fmt.Println("Condition is satisfied")
+}
+```
+
+## 使用 sync.Pool 管理对象池
+
+`sync.Pool` 是一个对象池，用于缓存和复用临时对象，可以提高对象的分配和回收效率。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+type MyObject struct {
+	// 对象结构
+	ID int
+}
+
+var objectPool = sync.Pool{
+	New: func() interface{} {
+		// 创建新对象
+		return &MyObject{}
+	},
+}
+
+func main() {
+	// 从对象池获取对象
+	obj := objectPool.Get().(*MyObject)
+
+	// 使用对象
+	obj.ID = 42
+	fmt.Println("Object ID:", obj.ID)
+
+	// 将对象放回对象池
+	objectPool.Put(obj)
+
+	// 再次从对象池获取对象
+	newObj := objectPool.Get().(*MyObject)
+	fmt.Println("New object ID:", newObj.ID) // 输出：New object ID: 42
+}
+```
+
+请注意，sync.Pool 的主要用途是提高临时对象的分配和回收效率，以减少垃圾收集的开销。当你从 sync.Pool 中 Get 一个对象时，如果对象池为空，sync.Pool 会调用你提供的 New 函数来创建一个新对象。当你 Put 一个对象回 sync.Pool 时，该对象将被保存在对象池中，以便后续的 Get 操作复用。
+
+此外，需要注意的是，sync.Pool 中的对象在每次垃圾收集后可能会被清除，所以它主要适用于临时对象的缓存和复用。
+
+## 使用 sync.Once 实现只执行一次的操作
+
+`sync.Once` 用于确保某个操作只执行一次，无论有多少个协程尝试执行它，常用于初始化或加载资源等场景。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+type Resource struct {
+	// 资源结构
+	ID int
+}
+
+var once sync.Once
+var resource *Resource
+
+func initResource() *Resource {
+	fmt.Println("Initializing resource")
+	time.Sleep(2 * time.Second)
+	return &Resource{ID: 42}
+}
+
+func getResource() *Resource {
+	once.Do(func() {
+		// 执行初始化资源的操作，仅执行一次
+		resource = initResource()
+	})
+	return resource
+}
+
+func main() {
+	// 在多个协程中获取资源
+	go func() {
+		res := getResource()
+		// 使用资源
+		fmt.Println("Resource ID in goroutine 1:", res.ID)
+	}()
+
+	go func() {
+		res := getResource()
+		// 使用资源
+		fmt.Println("Resource ID in goroutine 2:", res.ID)
+	}()
+
+	// 等待协程完成（通常情况下，你应该使用 sync.WaitGroup 或 channel 等待协程完成，这里我们只是为了简单演示）
+	time.Sleep(3 * time.Second)
+}
+```
+
+首先定义一个 Resource 结构体和一个 sync.Once。然后，我们定义了一个 getResource 函数，该函数使用 once.Do 确保 initResource 函数只执行一次。initResource 函数模拟了资源的初始化过程。
+
+在 main 函数中，在两个协程中调用 getResource 函数。由于 sync.Once 的保证，无论有多少协程调用 getResource，initResource 函数都只会执行一次，所以资源只会被初始化一次。
+
+
+## 使用 sync.Once 和 context.Context 实现资源清理
+
+可以结合使用 sync.Once 和 context.Context 来确保在多个协程之间只执行一次资源清理操作，并在取消或超时时进行清理。
+
+``` go
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+var once sync.Once
+
+func cleanup() {
+	// 执行资源清理操作
+	fmt.Println("Cleaning up resources")
+}
+
+func doTask(ctx context.Context) {
+	go func() {
+		select {
+		case <-ctx.Done():
+			once.Do(cleanup) // 只执行一次资源清理
+		}
+	}()
+
+	// 异步任务逻辑
+	fmt.Println("Doing task")
+	time.Sleep(1 * time.Second)
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// 在多个协程中执行任务
+	go doTask(ctx)
+	go doTask(ctx)
+
+	// 等待任务完成或超时
+	<-ctx.Done()
+	fmt.Println("Main function done")
+}
+```
+
+## 使用 sync.Map 实现并发安全的映射
+
+`sync.Map` 是 Go 语言标准库中提供的并发安全的映射类型，可在多个协程之间安全地进行读写操作。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func main() {
+	var m sync.Map
+
+	// 存储键值对
+	m.Store("key", "value")
+
+	// 获取值
+	if val, ok := m.Load("key"); ok {
+		fmt.Println("Value before goroutines:", val)
+	}
+
+	// 在多个协程中操作 sync.Map
+	go func() {
+		m.Store("key", "value1")
+	}()
+
+	go func() {
+		m.Store("key", "value2")
+	}()
+
+	// 等待协程完成（通常情况下，你应该使用 sync.WaitGroup 或 channel 等待协程完成，这里我们只是为了简单演示）
+	time.Sleep(1 * time.Second)
+
+	// 获取值
+	if val, ok := m.Load("key"); ok {
+		fmt.Println("Value after goroutines:", val)
+	}
+
+	// 删除键
+	m.Delete("key")
+}
+```
+
+首先创建一个 sync.Map。然后，我们存储一个键值对，并在主协程中获取该值。接下来在两个协程中操作 sync.Map，并确保映射的读写操作是并发安全的。最后，在主协程中再次获取值并删除键。
+
+## 使用 context.Context 进行协程管理和取消
+
+`context.Context` 用于在协程之间传递上下文信息，并可用于**取消**或**超时控制**。可以使用 `context.WithCancel()` 创建一个可取消的上下文，并使用 `context.WithTimeout()` 创建一个带有超时的上下文。
+
+``` go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func main() {
+	// 使用 context.WithTimeout 创建一个带有超时的上下文
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	go func() {
+		// 异步任务逻辑
+		for i := 0; i < 5; i++ {
+			fmt.Println("Doing task", i)
+			time.Sleep(1 * time.Second)
+			if i == 3 {
+				cancel() // 取消任务
+				break
+			}
+		}
+	}()
+
+	// 等待任务完成或取消
+	select {
+	case <-ctx.Done():
+		// 通过检查 ctx.Err() 来区分任务是被取消还是超时
+		if ctx.Err() == context.Canceled {
+			fmt.Println("Task is cancelled")
+		} else if ctx.Err() == context.DeadlineExceeded {
+			fmt.Println("Task is timeout")
+		}
+	}
+
+	// 等待协程完成（通常情况下，你应该使用 sync.WaitGroup 或 channel 等待协程完成，这里我们只是为了简单演示）
+	time.Sleep(1 * time.Second)
+}
+```
+
+1. 创建一个带有超时的上下文：使用 `context.WithTimeout(context.Background(), 5*time.Second)` 创建了一个带有 5 秒超时的上下文。`ctx` 是一个 `context.Context` 类型的变量，它包含了一个超时时间。`cancel` 是一个函数，当调用它时，会取消与 `ctx` 关联的所有操作。
+2. 当任务被取消或超时时，可以通过检查 `ctx.Err()` 的返回值来区分任务是被取消还是超时。如果返回值是 `context.Canceled`，则表示任务被取消；如果返回值是 `context.DeadlineExceeded`，则表示任务超时。
+
+
+## 使用 context.WithDeadline() 和 context.WithTimeout() 设置截止时间
+
+`context.WithDeadline()` 和 `context.WithTimeout()` 函数可以用于创建带有截止时间的上下文，以限制异步任务的执行时间。
+
+``` go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func doTask(ctx context.Context) {
+	// 异步任务逻辑
+	for i := 0; i < 5; i++ {
+		select {
+		case <-time.After(5 * time.Second):
+			// 超时处理
+			fmt.Println("Task timeout")
+			return
+		case <-ctx.Done():
+			// 上下文取消处理
+			fmt.Println("Task cancelled")
+			return
+		default:
+			fmt.Println("Doing task", i)
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func main() {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	go doTask(ctx)
+
+	// 继续其他操作
+	time.Sleep(6 * time.Second)
+}
+```
+
+首先定义了一个 `doTask` 函数，它接受一个 `context.Context` 参数。在函数中，使用 `select` 语句同时监听任务超时（通过 `time.After()`）和上下文取消（通过 `ctx.Done()`）。当任务超时或上下文被取消时，执行相应的处理操作。
+
+在 main 函数中，使用 `context.WithTimeout()` 创建一个带有 3 秒超时的上下文。然后，将这个上下文传递给 `doTask` 函数，并在一个新的协程中执行该函数。这样，可以在异步任务中处理任务超时和上下文取消事件。
+
+``` go
+package main
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func doTask(ctx context.Context) {
+	// 异步任务逻辑
+	for i := 0; i < 5; i++ {
+		select {
+		case <-ctx.Done():
+			// 上下文截止日期到达或取消处理
+			if ctx.Err() == context.DeadlineExceeded {
+				fmt.Println("Task deadline exceeded")
+			} else {
+				fmt.Println("Task cancelled")
+			}
+			return
+		default:
+			fmt.Println("Doing task", i)
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
+func main() {
+	ctx := context.Background()
+	// 设置一个 3 秒后的截止时间
+	deadline := time.Now().Add(3 * time.Second)
+	ctx, cancel := context.WithDeadline(ctx, deadline)
+	defer cancel()
+
+	go doTask(ctx)
+
+	// 继续其他操作
+	time.Sleep(6 * time.Second)
+}
+```
+
+使用 `context.WithDeadline()` 创建一个带有截止时间的上下文。设置了一个 3 秒后的截止时间，然后将这个上下文传递给 doTask 函数，并在一个新的协程中执行该函数。当截止时间到达或上下文被取消时，可以检测到这一事件并执行相应的处理操作。
+
+与 `context.WithTimeout()` 类似，`context.WithDeadline()` 也可以用于限制异步任务的执行时间。不同之处在于，`context.WithTimeout()` 使用一个持续时间作为参数，而 `context.WithDeadline()` 使用一个具体的截止时间作为参数。
+
+
+
+## 使用 context.WithValue() 传递上下文值
+
+`context.WithValue()` 函数可用于在上下文中传递键值对，以在协程之间共享和传递上下文相关的值。
+
+``` go
+package main
+
+import (
+	"context"
+	"fmt"
+)
+
+type keyContextValue string
+
+func doTask(ctx context.Context) {
+	if val := ctx.Value(keyContextValue("key")); val != nil {
+		// 使用上下文值
+		fmt.Println("Context value:", val)
+	}
+}
+
+func main() {
+	ctx := context.WithValue(context.Background(), keyContextValue("key"), "value")
+	go doTask(ctx)
+
+	// 继续其他操作
+	time.Sleep(1 * time.Second)
+}
+```
+
+首先定义了一个 `keyContextValue` 类型，它用作上下文值的键。然后，定义了一个 doTask 函数，它接受一个 context.Context 参数。在函数中，使用 `ctx.Value()` 函数获取上下文值，并在找到值时使用它。
+
+在 main 函数中，使用 `context.WithValue()` 创建一个带有键值对的上下文。然后，将这个上下文传递给 doTask 函数，并在一个新的协程中执行该函数。这样，可以在异步任务中使用上下文值。
+
+## 使用 atomic 包进行原子操作
+
+atomic 包提供了一组函数，用于实现原子操作，以确保在并发环境中对共享变量的读写操作是原子的。
+
+``` go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+)
+
+var counter int64
+
+func increment() {
+	atomic.AddInt64(&counter, 1)
+}
+
+func main() {
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			increment()
+		}()
+	}
+
+	wg.Wait()
+	fmt.Println("Counter:", counter)
+}
+```
+
+首先定义了一个名为 `counter` 的全局变量，它将在多个协程中共享。然后，定义了一个 `increment` 函数，它使用 atomic.AddInt64() 函数对 `counter` 变量进行原子递增操作。在 main 函数中，使用 `sync.WaitGroup` 来等待所有协程完成。启动 100 个协程，每个协程都调用 `increment` 函数。由于使用了原子操作，所以即使在并发环境中，对 `counter` 变量的递增操作也是安全的。最后，在所有协程完成后，打印 counter 变量的值将始终是 100。
+
+
+
 
 # 线程模型
 
@@ -115,6 +990,41 @@ Go 调度器工作时会维护两种用来保存 G 的任务队列：一种是**
 ![go_scheduler_issue](/assets/images/202403/go_scheduler_issue.png)
 
 
+# 调度器状态的查看方法
+
+Go 提供了调度器当前状态的查看方法：使用 Go 运行时环境变量 `GODEBUG`。
+
+```
+$GODEBUG=schedtrace=1000 godoc -http=:6060
+SCHED 0ms: gomaxprocs=4 idleprocs=3 threads=3 spinningthreads=0 idlethreads=0 runqueue=0 [0 0 0 0]
+SCHED 1001ms: gomaxprocs=4 idleprocs=0 threads=9 spinningthreads=0 idlethreads=3 runqueue=2 [8 14 5 2]
+SCHED 2006ms: gomaxprocs=4 idleprocs=0 threads=25 spinningthreads=0 idlethreads=19 runqueue=12 [0 0 4 0]
+SCHED 3006ms: gomaxprocs=4 idleprocs=0 threads=26 spinningthreads=0 idlethreads=8 runqueue=2 [0 1 1 0]
+SCHED 4010ms: gomaxprocs=4 idleprocs=0 threads=26 spinningthreads=0 idlethreads=20 runqueue=12 [6 3 1 0]
+SCHED 5010ms: gomaxprocs=4 idleprocs=0 threads=26 spinningthreads=1 idlethreads=20 runqueue=17 [0 0 0 0]
+SCHED 6016ms: gomaxprocs=4 idleprocs=0 threads=26 spinningthreads=0 idlethreads=20 runqueue=1 [3 4 0 10]
+```
+
+GODEBUG 这个 Go 运行时环境变量很是强大，通过给其传入不同的 key1=value1,key2=value2 组合，Go 的 runtime 会输出不同的调试信息，比如在这里给GODEBUG传入了 `schedtrace=1000`，其含义就是每 1000ms 打印输出一次 goroutine scheduler 的状态，每次一行。每一行各字段含义如下：
+
+以上面例子中最后一行为例：
+
+```
+SCHED 6016ms: gomaxprocs=4 idleprocs=0 threads=26 spinningthreads=0 idlethreads=20 runqueue=1 [3 4 0 10]
+```
+
+* SCHED：调试信息输出标志字符串，代表本行是 goroutine scheduler 的输出；
+* 6016ms：即从程序启动到输出这行日志的时间；
+* gomaxprocs: P的数量；
+* idleprocs: 处于 idle 状态的 P 的数量；通过 gomaxprocs 和 idleprocs 的差值，我们就可知道执行 go 代码的 P 的数量；
+* threads: os threads 的数量，包含 scheduler 使用的 m 数量，加上 runtime 自用的类似 sysmon 这样的 thread 的数量；
+* spinningthreads: 处于自旋状态的 os thread 数量；
+* idlethread: 处于 idle 状态 的os thread 的数量；
+* runqueue=1： go scheduler 全局队列中 G 的数量；
+* [3 4 0 10]: 分别为 4 个 P 的 local queue 中的 G 的数量。
+
+关于 go scheduler 调试信息输出的详细信息，可以参考 Dmitry Vyukov 的大作：[《Debugging performance issues in Go programs》](https://software.intel.com/en-us/blogs/2014/05/10/debugging-performance-issues-in-go-programs)。这也应该是每个 gopher 必读的经典文章。当然更详尽的代码可参考 `$GOROOT/src/runtime/proc.go` 中的 `schedtrace` 函数。
+
 # 大规模 Goroutine 的瓶颈
 
 既然 Go 调度器已经这么优秀了，是否需要去实现一个 golang 的 Goroutine Pool 呢？事实上，优秀不代表完美，任何不考虑具体应用场景的编程模式都是耍流氓！有基于 G-P-M 的 Go 调度器背书，go 程序的并发编程中，可以任性地起大规模的 goroutine 来执行任务，官方也宣称**用 golang 写并发程序的时候随便起个成千上万的 goroutine 毫无压力**。
@@ -177,6 +1087,8 @@ func (srv *Server) Serve(l net.Listener) error {
 # 实现一个 Goroutine Pool - ants (协程池)
 
 > ants is a high-performance and low-cost goroutine pool in Go.
+>
+> ants是一个高性能的 goroutine 池，实现了对大规模 goroutine 的调度管理、goroutine 复用，允许使用者在开发并发程序的时候限制 goroutine 数量，复用资源，达到更高效执行任务的效果。
 
 因为上述陈列的一些由于 goroutine 规模过大而可能引发的问题，需要有方案来解决这些问题，上文已经分析过，把 goroutine 池化是一种行之有效的方案，基于此，可以实现一个 Goroutine Pool，复用 goroutine，减轻 runtime 的调度压力以及缓解内存压力，依托这些优化，在大规模 goroutine 并发的场景下可以极大地提高并发性能。
 
@@ -1481,8 +2393,6 @@ consumer 为协程的具体代码，里面是只有一个不断轮询 channel �
 事实上，通过 channel 控制子 goroutine 的方法可以总结为：循环监听一个 channel，一般来说是 for 循环里放一个 select 监听 channel 以达到通知子 goroutine 的效果。再借助 Waitgroup，主进程可以等待所有协程优雅退出后再结束自己的运行，这就通过 channel 实现了优雅控制 goroutine 并发的开始和结束。
 
 channel 通信控制基于 CSP 模型，相比于传统的线程与锁并发模型，避免了大量的加锁解锁的性能消耗，而又比 Actor 模型更加灵活，使用 Actor 模型时，负责通讯的媒介与执行单元是紧耦合的。每个Actor 都有一个信箱。而使用 CSP 模型，channel 是第一对象，可以被独立地创建，写入和读出数据，更容易进行扩展。
-
-
 
 
 # Go scheduler

@@ -114,14 +114,27 @@ Node 里的 3 个组件，分别是 kubelet、kube-proxy、container-runtime
 
 
 
-# 原理介绍
+# Service
 
-## Service
+Service 是 k8s 的一种抽象：一个 Pod 的逻辑分组，一种可以访问它们的策略，通常称为微服务。这一组 Pod 能够被 Service 访问到，通常是通过 Label Selector 实现。
+
+## Service 类型
+
+* `ClusterIP`: 提供一个集群内部的虚拟 IP 以供 Pod 访问 (Service 默认类型)
+
+* `NodePort`: Pod 在调度到的 Node 上打开一个端口以供外部访问
+
+* `LoadBalancer`: 在 NodePort 的基础上，借助 cloud provider 创建一个外部负载均衡器，并将请求转发到 NodePort
+
+* `ExternalName`: 把集群外部的服务引入到集群内部来，在集群内部直接使用
+
+
+
 
 https://jimmysong.io/kubernetes-handbook/concepts/service.html
 
 
-TODO
+
 
 
 
