@@ -135,6 +135,18 @@ https://jimmysong.io/kubernetes-handbook/concepts/service.html
 
 
 
+# 关键概念
+
+## [调度、抢占和驱逐](https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/)
+
+在 Kubernetes 中：
+
+* **调度**（`Scheduling`）确保 Pod 匹配到合适的节点，以便 kubelet 能够运行它们。
+* **抢占**（`Preemption`）终止低优先级的 Pod 以便高优先级的 Pod 可以调度运行的过程。
+* **驱逐**（`Eviction`）是在资源匮乏的节点上，主动让一个或多个 Pod 失效的过程。
+
+
+
 
 
 
@@ -447,5 +459,6 @@ kubectl delete -n default pod <your-pod-name>
 # Refer
 
 * [Kubernetes 官网](https://kubernetes.io/zh-cn/)
+* https://kubernetes.io/zh-cn/docs/concepts/
 * [Kubernetes 和 Mesos 有啥区别，我该使用哪个好?](https://www.zhihu.com/question/53751176)
 * [Setting the right requests and limits in Kubernetes](https://learnk8s.io/setting-cpu-memory-limits-requests)

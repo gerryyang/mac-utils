@@ -3688,13 +3688,41 @@ bazel 在使用 `-c opt and -fPIC` 构建时，会同时构建 pic 和 non-pic �
 https://bazel.build/reference/command-line-reference?hl=zh-cn#flag--force_pic
 
 
+## [bazel: why do targets keep increasing if build graph is known](https://stackoverflow.com/questions/51484140/bazel-why-do-targets-keep-increasing-if-build-graph-is-known)
+
+Q:
+
+Per [this doc](https://docs.bazel.build/versions/master/user-manual.html#phases), the analysis and execution phases handle building out the dependency tree (among other things) and going and doing the work if needed, respectively. If that's true, I'm curious why the total number of targets keeps increasing as the build progresses (i.e., when I start a large build, bazel may report that it's built 5 out of 100 targets, but later will say it's built 20 out of 300 targets, and so forth, with the denominator increasing for a while until it levels off).
+
+A:
+
+The number you're seeing in the progress bar refers to **actions** and not **targets** (e.g. //my:target). [I wrote a blog post](https://jin.crypt.sg/articles/bazel-action-graph.html) about the action graph, and here's the relevant description about it:
+
+> The action graph contains a different set of information: file-level dependencies, full command lines, and other information Bazel needs to execute the build. If you are familiar with Bazel's build phases, the action graph is the output of the loading and analysis phase and used during the execution phase.
+>
+> However, Bazel does not necessarily execute every action in the graph. It only executes if it has to, that is, the action graph is the super set of what is actually executed.
+
+As to why the denominator is ever-increasing, it's because the actions-to-execute discovery within the action graph is lazy. Here's a better explanation from the Bazel TL, Ulf Adams:
+
+> The problem is that Skyframe does not eagerly walk the action graph, but it does it lazily. The reason for that is performance, since the action graph can be rather large and this was previously a blocking operation (where Bazel would just hang for some time). The downside is that all threads that walk the action graph block on actions that they execute, which delays discovery of remaining actions. That's why the number keeps going up during the build.
+
+Source: https://github.com/bazelbuild/bazel/issues/3582#issuecomment-329405311
+
+refer: [Grok Your Bazel Build: The Action Graph](https://jin.crypt.sg/articles/bazel-action-graph.html)
+
 
 
 
 # Examples
 
+* [5 minute guide to Bazel, Part 1: C & C++](https://jin.crypt.sg/articles/bazel-in-5-minutes-c.html)
+* [5 minute guide to Bazel, Part 2: Command lines and tools](https://jin.crypt.sg/articles/bazel-in-5-minutes-genrule.html)
+* [Grok Your Bazel Build: The Action Graph](https://jin.crypt.sg/articles/bazel-action-graph.html)
+* [Questions to Ask Before Writing A Bazel Rule](https://jin.crypt.sg/articles/bazel-rules-questions.html)
+* [Generating pretty-printed sources with Bazel](https://jin.crypt.sg/articles/bazel-pretty-print.html)
 * https://github.com/bazelbuild/examples
 * https://github.com/abseil/abseil-cpp/blob/master/absl/base/BUILD.bazel
+
 
 
 

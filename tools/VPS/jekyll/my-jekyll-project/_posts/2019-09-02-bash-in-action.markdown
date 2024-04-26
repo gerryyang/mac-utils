@@ -2332,6 +2332,12 @@ $ ps -eo pid,lstart,etime | grep `pidof friendsvr`
 17697 Tue Dec  7 12:17:52 2021    08:07:21
 ```
 
+## 计算某个目录下所有文件（包括子目录中的文件）的哈希值
+
+``` bash
+find your_dir -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum
+```
+
 # Q&A
 
 

@@ -1372,6 +1372,9 @@ Rewrite branches
 
 
 ``` bash
+# 获取当前 HEAD 提交的哈希值
+git rev-parse HEAD
+
 # 获取当前分支名
 git rev-parse --abbrev-ref=strict HEAD
 ```

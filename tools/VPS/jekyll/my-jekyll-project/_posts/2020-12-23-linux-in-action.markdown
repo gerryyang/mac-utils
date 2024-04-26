@@ -382,6 +382,20 @@ kill -9 `pgrep firefox`
 ps ax | grep <snippet> | grep -v grep | awk '{print $1}' | xargs kill
 ```
 
+`kill -STOP` 命令用于发送一个 STOP 信号给指定的进程。STOP 信号（也称为 SIGSTOP）会导致进程暂停执行，即进程会被挂起（suspended）并停止运行。在收到 STOP 信号后，进程不会继续执行任何操作，直到收到一个 CONT（继续）信号（即 SIGCONT）。
+
+``` bash
+kill -STOP <process_id>
+```
+
+发送 STOP 信号的一个常见用途是暂停一个正在运行的进程，以便在稍后恢复其执行。例如，可能希望暂停一个 CPU 密集型任务，以便在系统负载较低时继续运行。为了恢复暂停的进程，可以使用 `kill -CONT` 命令发送一个 CONT 信号：
+
+``` bash
+kill -CONT <process_id>
+```
+
+
+
 ## Process State (ps/top)
 
 
@@ -2631,7 +2645,7 @@ LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
 
 ### atop
 
-`atop` 工具是一种性能监控工具，可记录历史资源使用情况以供以后分析。该工具还可以进行实时报告。您可以检索每个进程和线程的 CPU 利用率、内存消耗和磁盘 I/O 的使用情况。atop 工具作为后台负保持活动状态，同时记录统计信息，以便进行长期的服务器分析。默认情况下，统计信息将存储 28 天。
+`atop` 工具是一种性能监控工具，可记录历史资源使用情况以供以后分析。该工具还可以进行实时报告。可以检索每个进程和线程的 CPU 利用率、内存消耗和磁盘 I/O 的使用情况。atop 工具作为后台负保持活动状态，同时记录统计信息，以便进行长期的服务器分析。默认情况下，统计信息将存储 28 天。
 
 > **注意：** atop 仅在安装后才开始记录数据。在 atop 安装日期之前，无法检索有关过程的历史性能数据。
 
@@ -2778,9 +2792,28 @@ systemctl restart atop.service
 atop -r atop_20230827
 ```
 
+* 如何防止 atop.acct 文件过大
+
+方法1: 调整 atop 配置。如果可能，可以调整 atop 的配置，减少采样频率或者采样的信息量，以减少进程记账文件的大小。
+方法2: 监控文件大小。可以创建一个简单的脚本，定期检查 atop.acct 文件的大小。如果文件大小超过预设的阈值，可以清空文件。例如：实现下面的脚本 check_atop_acct.sh，并通过 cron 定时执行此脚本。
+
+``` bash
+#!/bin/bash
+FILE="/var/cache/atop.d/atop.acct"
+MAX_SIZE=$((200 * 1024 * 1024)) # 设定最大文件大小为 200 MiB
+
+file_size=$(stat -c%s "$FILE")
+
+if ((file_size > MAX_SIZE)); then
+    echo "atop.acct 文件过大，清空文件"
+    echo -n > "$FILE"
+fi
+```
+
 
 refer:
 
+* https://manpages.debian.org/testing/atop/atop.1.en.html
 * [如何使用 atop 工具获取 EC2 Linux 实例上进程的历史利用率统计信息？](https://repost.aws/zh-Hans/knowledge-center/ec2-linux-monitor-stats-with-atop)
 
 
