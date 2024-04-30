@@ -1600,56 +1600,6 @@ CopyFile success:  8
 ```
 
 
-
-
-# 开源代码
-
-## https://github.com/urfave/cli
-
-cli is a simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
-
-## https://github.com/gammazero/deque
-
-Fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation. For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
-
-
-# [Staticcheck](https://staticcheck.io/docs/)
-
-Staticcheck is a state of the art linter for the Go programming language. Using static analysis, it finds bugs and performance issues, offers simplifications, and enforces style rules.
-
-Each of the [150+](https://staticcheck.io/docs/checks/) checks has been designed to be fast, precise and useful. When Staticcheck flags code, you can be sure that it isn't wasting your time with unactionable warnings. Unlike many other linters, Staticcheck focuses on checks that produce few to no false positives. It's the ideal candidate for running in CI without risking spurious failures.
-
-Staticcheck aims to be trivial to adopt. It behaves just like the official `go` tool and requires no learning to get started with. Just run `staticcheck ./...` on your code in addition to `go vet ./...` .
-
-While checks have been designed to be useful out of the box, they still provide [configuration](https://staticcheck.io/docs/configuration/) where necessary, to fine-tune to your needs, without overwhelming you with hundreds of options.
-
-Staticcheck can be used from the command line, in CI, and even [directly from your editor](https://github.com/golang/tools/blob/master/gopls/doc/settings.md#staticcheck-bool).
-
-
-## [Ignoring problems with linter directives](https://staticcheck.io/docs/configuration/#ignoring-problems)
-
-* https://stackoverflow.com/questions/70208440/how-to-disable-golang-unused-function-error
-
-``` go
-//lint:ignore U1000 Ignore unused function temporarily for debugging
-```
-
-
-# Tools
-
-## golangci-lint
-
-[golangci-lint](https://golangci-lint.run/) is a Go linters aggregator.
-
-```
-# binary will be $(go env GOPATH)/bin/golangci-lint
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
-
-golangci-lint --version
-```
-
-
-
 # Tips
 
 ## [go -ldflags 信息注入](https://ms2008.github.io/2018/10/08/golang-build-version/)
@@ -1667,7 +1617,7 @@ golangci-lint --version
 需要注意的是，使用 `-mod=vendor` 的时候，需要在项目根目录下创建 vendor 目录，并将依赖的包复制到 vendor 目录中。可以使用 `go mod vendor` 命令来自动将依赖的包复制到 vendor 目录中。
 
 
-# Utils
+# 标准库
 
 ## [exec](https://pkg.go.dev/os/exec)
 
@@ -1732,6 +1682,106 @@ func main() {
 }
 ```
 
+# 代码检查
+
+## golangci-lint
+
+[golangci-lint](https://golangci-lint.run/) is a Go linters aggregator.
+
+```
+# binary will be $(go env GOPATH)/bin/golangci-lint
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
+
+golangci-lint --version
+```
+
+## [静态代码分析 Staticcheck](https://staticcheck.io/docs/)
+
+Staticcheck is a state of the art linter for the Go programming language. Using static analysis, it finds bugs and performance issues, offers simplifications, and enforces style rules.
+
+Each of the [150+](https://staticcheck.io/docs/checks/) checks has been designed to be fast, precise and useful. When Staticcheck flags code, you can be sure that it isn't wasting your time with unactionable warnings. Unlike many other linters, Staticcheck focuses on checks that produce few to no false positives. It's the ideal candidate for running in CI without risking spurious failures.
+
+Staticcheck aims to be trivial to adopt. It behaves just like the official `go` tool and requires no learning to get started with. Just run `staticcheck ./...` on your code in addition to `go vet ./...` .
+
+While checks have been designed to be useful out of the box, they still provide [configuration](https://staticcheck.io/docs/configuration/) where necessary, to fine-tune to your needs, without overwhelming you with hundreds of options.
+
+Staticcheck can be used from the command line, in CI, and even [directly from your editor](https://github.com/golang/tools/blob/master/gopls/doc/settings.md#staticcheck-bool).
+
+
+[Ignoring problems with linter directives](https://staticcheck.io/docs/configuration/#ignoring-problems)
+
+* https://stackoverflow.com/questions/70208440/how-to-disable-golang-unused-function-error
+
+``` go
+//lint:ignore U1000 Ignore unused function temporarily for debugging
+```
+
+
+## 数据竞争检查 (go build -race)
+
+go build -race 命令是 Go 语言工具链中的一个选项，用于启用数据竞争检测器。数据竞争是指两个或多个并发执行的线程访问同一个内存位置，其中至少一个线程执行写操作，而这些线程的执行顺序是不确定的。数据竞争可能导致程序行为不稳定和不可预测。
+
+-race 选项在编译和链接阶段启用数据竞争检测器，它会在运行时检测数据竞争。当你使用 -race 选项构建 Go 程序时，程序会在运行时检测潜在的数据竞争问题。如果检测到数据竞争，程序会报告竞争条件并退出，同时返回非零退出状态。
+
+> 请注意，启用数据竞争检测器会增加程序的运行时开销。因此，通常在开发和测试阶段使用 -race 选项来识别和修复数据竞争问题，而在生产环境中，不建议使用 -race 选项。
+
+测试代码：
+
+``` go
+package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+var counter int
+
+func main() {
+    var wg sync.WaitGroup
+
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            counter++
+            wg.Done()
+        }()
+    }
+
+    wg.Wait()
+    fmt.Println("Counter:", counter)
+}
+```
+
+go build -race main.go
+
+测试输出：
+
+```
+./main
+==================
+WARNING: DATA RACE
+Read at 0x000001216848 by goroutine 9:
+  main.main.func1()
+      /Users/gerry/Proj/github/goinaction/src/race_check/main.go:16 +0x32
+
+Previous write at 0x000001216848 by goroutine 6:
+  main.main.func1()
+      /Users/gerry/Proj/github/goinaction/src/race_check/main.go:16 +0x4a
+
+Goroutine 9 (running) created at:
+  main.main()
+      /Users/gerry/Proj/github/goinaction/src/race_check/main.go:15 +0x64
+
+Goroutine 6 (running) created at:
+  main.main()
+      /Users/gerry/Proj/github/goinaction/src/race_check/main.go:15 +0x64
+==================
+Counter: 990
+Found 1 data race(s)
+```
+
+
 # 问题调试 (delve)
 
 生成 coredump 文件后，可以使用 [delve](https://github.com/derekparker/delve) 来调试 coredump 文件，delve 是一款专门为 Go 语言开发的调试器，它能够提供丰富的调试功能。源码地址 https://github.com/go-delve/delve/tree/master/Documentation/installation
@@ -1778,36 +1828,9 @@ dlv core your_program your_corefile --check-go-version=false
 
 
 
-# Q&A
-
-## go_package
-
-* https://developers.google.com/protocol-buffers/docs/reference/go-generated#package
-* [Correct format of protoc go_package?](https://stackoverflow.com/questions/61666805/correct-format-of-protoc-go-package)
-
-# Others
-
-* [DigitalOcean的How to code in go系列](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
-* [Concurrency limiting goroutine pool](https://github.com/gammazero/workerpool)
-* [High performance, minimalist Go web framework](https://github.com/labstack/echo)
-* [Running periodic background tasks in Golang](https://medium.com/@mkfeuhrer/running-periodic-background-tasks-in-golang-8baa1af9a1f6)
-* [Go: Goroutine, OS Thread and CPU Management](https://medium.com/a-journey-with-go/go-goroutine-os-thread-and-cpu-management-2f5a5eaf518a)
-* [Beating C with 70 Lines of Go](https://ajeetdsouza.github.io/blog/posts/beating-c-with-70-lines-of-go/)
-* [The Value in Go's Simplicity](https://benjamincongdon.me/blog/2019/11/11/The-Value-in-Gos-Simplicity/)
-* [Go 号称几行代码开启一个 HTTP Server，底层都做了什么？](https://mp.weixin.qq.com/s/n7mSUB6pxoYmr5u575Nqqg)
-* [Interrupt handling in Go](https://embeddedgo.github.io/2019/11/29/interrupt_handling_in_go.html)
-* [Go Composition vs Inheritance](http://jim-mcbeath.blogspot.com/2019/11/go-composition-vs-inheritance.html)
-* [fasthttp-协程池](https://github.com/valyala/fasthttp/blob/master/workerpool.go)
-
-
-# 博客
-
-* [Dave Cheney的golang博客]
-
-
 # Tools
 
-## golang百科全书
+## golang 百科全书
 
 https://awesome-go.com/
 
@@ -1857,7 +1880,10 @@ func main() {
 }
 ```
 
+## Protocol Buffers go_package
 
+* https://developers.google.com/protocol-buffers/docs/reference/go-generated#package
+* [Correct format of protoc go_package?](https://stackoverflow.com/questions/61666805/correct-format-of-protoc-go-package)
 
 
 
@@ -1869,6 +1895,34 @@ https://github.com/gopherchina/conference
 
 * [Go语言圣经 《The Go Programming Language》 中文版本](https://books.studygolang.com/gopl-zh/)
 * [Go 语言设计与实现](https://draveness.me/golang/)
+* [Dave Cheney的golang博客]
+
+# 开源代码
+
+## https://github.com/urfave/cli
+
+cli is a simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
+
+## https://github.com/gammazero/deque
+
+Fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Double-ended_queue)) implementation. For a pictorial description, see the [Deque diagram](https://github.com/gammazero/deque/wiki)
+
+
+
+# Q&A
+
+* [DigitalOcean的How to code in go系列](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
+* [Concurrency limiting goroutine pool](https://github.com/gammazero/workerpool)
+* [High performance, minimalist Go web framework](https://github.com/labstack/echo)
+* [Running periodic background tasks in Golang](https://medium.com/@mkfeuhrer/running-periodic-background-tasks-in-golang-8baa1af9a1f6)
+* [Go: Goroutine, OS Thread and CPU Management](https://medium.com/a-journey-with-go/go-goroutine-os-thread-and-cpu-management-2f5a5eaf518a)
+* [Beating C with 70 Lines of Go](https://ajeetdsouza.github.io/blog/posts/beating-c-with-70-lines-of-go/)
+* [The Value in Go's Simplicity](https://benjamincongdon.me/blog/2019/11/11/The-Value-in-Gos-Simplicity/)
+* [Go 号称几行代码开启一个 HTTP Server，底层都做了什么？](https://mp.weixin.qq.com/s/n7mSUB6pxoYmr5u575Nqqg)
+* [Interrupt handling in Go](https://embeddedgo.github.io/2019/11/29/interrupt_handling_in_go.html)
+* [Go Composition vs Inheritance](http://jim-mcbeath.blogspot.com/2019/11/go-composition-vs-inheritance.html)
+* [fasthttp-协程池](https://github.com/valyala/fasthttp/blob/master/workerpool.go)
+
 
 # Refer
 
