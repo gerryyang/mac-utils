@@ -10,7 +10,7 @@ public:
 
 int main()
 {
-    Basic temp;
-    temp.a = 10;
+    Basic tmp;
+    tmp.a = 1;
     return 0;
 }
