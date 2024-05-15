@@ -1259,6 +1259,17 @@ int main(int argc, char** argv)
 }
 ```
 
+``` cpp
+  // Check for leaks now. Returns zero if no leaks have been found or if leak
+  // detection is disabled, non-zero otherwise.
+  // This function may be called repeatedly, e.g. to periodically check a
+  // long-running process. It prints a leak report if appropriate, but does not
+  // terminate the process. It does not affect the behavior of
+  // __lsan_do_leak_check() or the end-of-process leak check, and is not
+  // affected by them.
+  int __lsan_do_recoverable_leak_check(void);
+```
+
 
 ## Q: Why didn't ASan report an obviously invalid memory access in my code?
 

@@ -1682,6 +1682,26 @@ func main() {
 }
 ```
 
+## time.Duration
+
+在 Go 语言中，`time.Duration` 类型表示两个时间点之间的时间差，单位为**纳秒**。`time.Duration` 的初始化可以通过以下几种方式完成：
+
+``` go
+// 直接使用整数，单位为纳秒
+var duration time.Duration = 1000 // 1000纳秒
+
+
+// 使用 time 包中的常量进行初始化
+var duration time.Duration = 5 * time.Second // 5秒
+
+// 使用 time.ParseDuration 函数解析一个时间段字符串
+duration, err := time.ParseDuration("1h30m") // 1小时30分钟
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+
 # 代码检查
 
 ## golangci-lint

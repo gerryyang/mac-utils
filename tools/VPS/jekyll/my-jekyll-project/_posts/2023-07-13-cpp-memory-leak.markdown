@@ -15,5 +15,5 @@ categories: [C/C++]
 
 # Refer
 
-* [剖析 stl + glibc “内存泄漏” 原因](https://wenfh2020.com/2021/04/08/glibc-memory-leak/)
+* [剖析 stl + glibc 内存泄漏原因](https://wenfh2020.com/2021/04/08/glibc-memory-leak/)
 
