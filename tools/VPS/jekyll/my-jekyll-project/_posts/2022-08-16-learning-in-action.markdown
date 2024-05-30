@@ -8,6 +8,57 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# Site Reliability Engineering (SRE)
+
+**Site reliability engineering** (`SRE`) is a set of principles and practices that applies aspects of software engineering to IT infrastructure and operations. SRE claims to create highly reliable and scalable software systems. Although they are closely related, SRE is slightly different from [DevOps](https://en.wikipedia.org/wiki/DevOps).
+
+> **History**:
+>
+> The field of site reliability engineering originated at Google with Ben Treynor Sloss, who founded a site reliability team after joining the company in 2003. In 2016, Google employed more than 1,000 site reliability engineers. After originating at Google in 2003, the concept spread into the broader software development industry, and other companies subsequently began to employ site reliability engineers. The position is more common at larger web companies, as small companies often do not operate at a scale that would require dedicated SREs.
+
+> **Definition**:
+>
+> Site reliability engineering, as a job role, may be performed by individual contributors or organized in teams, responsible for a combination of the following within a broader engineering organization: System [availability](https://en.wikipedia.org/wiki/Availability), [latency](https://en.wikipedia.org/wiki/Latency_(engineering)), [performance](https://en.wikipedia.org/wiki/Computer_performance), efficiency, [change management](https://en.wikipedia.org/wiki/Change_management_(engineering)), [monitoring](https://en.wikipedia.org/wiki/Website_monitoring), [emergency response](https://en.wikipedia.org/wiki/Incident_management), and [capacity planning](https://en.wikipedia.org/wiki/Capacity_planning). Site reliability engineers often have backgrounds in [software engineering](https://en.wikipedia.org/wiki/Software_engineering), [system engineering](https://en.wikipedia.org/wiki/Systems_engineering), or [system administration](https://en.wikipedia.org/wiki/System_administrator). Focuses of SRE include automation, [system design](https://en.wikipedia.org/wiki/Systems_design), and improvements to [system resilience](https://en.wikipedia.org/wiki/Robustness_(computer_science)).
+>
+> Site reliability engineering, as a set of principles and practices, can be performed by anyone. Though everyone should contribute to good practices, as occurs in [security engineering](https://en.wikipedia.org/wiki/Security_engineering), a company may eventually hire specialists and engineers for the job.
+>
+> **Site reliability engineering has also been described as a specific implementation of [DevOps](https://en.wikipedia.org/wiki/DevOps), although they differ slightly. SRE focuses specifically on building reliable systems, whereas DevOps focuses more broadly**. Although they have different focuses, some companies have rebranded their operations teams to SRE teams with little meaningful change.
+
+
+`DevOps vs. SRE`
+
+[DevOps](https://www.redhat.com/en/topics/devops) is an approach to culture, automation, and platform design intended to deliver increased business value and responsiveness through rapid, high-quality service delivery. **SRE can be considered an implementation of DevOps**.
+
+Like DevOps, SRE is about team culture and relationships. Both SRE and DevOps work to bridge the gap between development and operations teams to deliver services faster.
+
+Faster application development life cycles, improved service quality and reliability, and reduced IT time per application developed are benefits that can be achieved by both DevOps and SRE practices.
+
+
+refer:
+
+* https://en.wikipedia.org/wiki/Site_reliability_engineering
+* https://www.redhat.com/en/topics/devops/what-is-sre
+
+# Large Language Model (LLM)
+
+A [large language model](https://en.wikipedia.org/wiki/Large_language_model) (`LLM`) is a computational model notable for its ability to achieve general-purpose language generation and other natural language processing tasks such as classification. Based on language models, `LLMs` acquire these abilities by learning statistical relationships from text documents during a computationally intensive self-supervised and semi-supervised training process. `LLMs` can be used for text generation, a form of generative AI, by taking an input text and repeatedly predicting the next token or word.
+
+LLMs are artificial neural networks. The largest and most capable, as of March 2024, are built with a decoder-only transformer-based architecture.
+
+Up to 2020, fine tuning was the only way a model could be adapted to be able to accomplish specific tasks. Larger sized models, such as GPT-3, however, can be prompt-engineered to achieve similar results. They are thought to acquire knowledge about syntax, semantics and "ontology" inherent in human language corpora, but also inaccuracies and biases present in the corpora.
+
+Some notable LLMs are OpenAI's GPT series of models (e.g., GPT-3.5 and GPT-4, used in ChatGPT and Microsoft Copilot), Google's Gemini (the latter of which is currently used in the chatbot of the same name), Meta's LLaMA family of models, Anthropic's Claude models, and Mistral AI's models.
+
+大型语言模型（Large Language Model，LLM）是一种计算模型，以其在一般性语言生成和其他自然语言处理任务（如分类）上的能力而著名。基于语言模型，LLM通过在计算密集型的自监督和半监督训练过程中从文本文档中学习统计关系，从而获得这些能力。LLM可以用于文本生成，这是一种生成型AI，通过接收输入文本并反复预测下一个标记或词。
+
+LLM是人工神经网络。截至2024年3月，最大且最有能力的模型是使用仅解码器的基于Transformer的架构构建的。
+
+到2020年，微调是模型适应特定任务的唯一方式。然而，像GPT-3这样的大型模型可以通过提示工程来实现类似的结果。它们被认为能获取人类语言语料中固有的语法、语义和"本体论"知识，但也会获取语料中存在的不准确性和偏见。
+
+一些著名的LLM包括OpenAI的GPT系列模型（例如，用于ChatGPT和Microsoft Copilot的GPT-3.5和GPT-4）、Google的Gemini（后者目前用于同名聊天机器人）、Meta的LLaMA系列模型、Anthropic的Claude模型，以及Mistral AI的模型。
+
+
 # 迈尔斯-布里格斯类型指标 (Myers-Briggs Type Indicator，MBTI)
 
 是人格类型学中一种内省的自我报告问卷，它表明人们天生在感知和决策的方式上存在不同心理偏好。其理论最浅显的部分是四组相反的先天偏好：**内向**与**外向**（Introversion-Extraversion）、**实感**与**直觉**（Sensing-iNtuition）、**思考**与**情感**（Thinking-Feeling）、**判断**与**感知**（Judging-Perceiving），四项偏好可组成 16 种稳定的人格类型。该指标旨在让健康个体理解自己和彼此的认知与决策倾向，并不反映能力或品格。
@@ -444,10 +495,36 @@ KISS (Keep It Simple, Stupid) 是一种归纳过的经验原则。KISS 原则是
 * `timer` 是根据一个操作的开始时间，结束时间，**统计某个操作的耗时情况**。
 * `histogram` 是根据预先划分好的 buckets，将收集到的样本点放入到对应的 bucket 中，这样可以方便查看不同区间（bucket 的上下界）的样本数量，平均值，最大值，最小值等，各个区间的具体值由统计策略决定。 histogram（直方图）用于统一某类指标的分布情况，如最大，最小，平均值，标准差，以及各种分位数，例如 90%，95% 的数据分布在某个范围内。
 
+直方图输出示例说明：
+
+```
+msg_step1_ms:histogram #0:ZERO
+msg_step1_ms:histogram #1: 230/0.871 0/0.000 0/0.000 0/0.000 0/0.000 34/0.129
+msg_step1_ms:num=2 vals(avg,max,min)=(0,0,0) (8440,65535,0)
+msg_step1_ms:histogram border: (-INF,10,100,500,1000,5000,+INF)
+msg_step1_ms:histogram total(para_num=2): 230/0.871 0/0.000 0/0.000 0/0.000 0/0.000 34/0.129
+```
+
+```
+这是一个监控信息的输出，使用了直方图（histogram）来表示数据的分布。直方图是一种统计工具，用于可视化数据的频率分布。
+
+msg_step1_ms:histogram #0:ZERO：这表示在第一个区间（负无穷到10毫秒）内，没有任何数据点。
+
+msg_step1_ms:histogram #1: 230/0.871 0/0.000 0/0.000 0/0.000 0/0.000 34/0.129：这表示在第二个区间（10毫秒到100毫秒）内，有230个数据点，占总数据点的87.1%。在后续的区间（100毫秒到500毫秒，500毫秒到1000毫秒，1000毫秒到5000毫秒）内，没有任何数据点。在最后一个区间（5000毫秒到正无穷）内，有34个数据点，占总数据点的12.9%。
+
+msg_step1_ms:num=2 vals(avg,max,min)=(0,0,0) (8440,65535,0)：这表示在两个区间内，平均数（avg）、最大值（max）和最小值（min）分别为0、0、0和8440、65535、0。
+
+msg_step1_ms:histogram border: (-INF,10,100,500,1000,5000,+INF)：这表示直方图的边界值。数据被分成了几个区间，边界值为负无穷、10毫秒、100毫秒、500毫秒、1000毫秒、5000毫秒和正无穷。
+
+msg_step1_ms:histogram total(para_num=2): 230/0.871 0/0.000 0/0.000 0/0.000 0/0.000 34/0.129：这是对所有区间的总结。总共有2个参数，第一个区间有230个数据点，占总数据点的87.1%；后续的几个区间没有数据点；最后一个区间有34个数据点，占总数据点的12.9%。
+
+这个监控信息提供了 msg_step1_ms 这个指标的详细统计信息，包括数据的分布、平均值、最大值和最小值等。
+```
 
 主调监控：指的是当前服务调用下游服务请求的 client 端的监控，从发起请求到收到下游回包的监控
 
 被调监控：指的是当前服务接收上游服务请求的 server 端的监控，从收到请求到业务逻辑结束的监控
+
 
 
 # 暗网

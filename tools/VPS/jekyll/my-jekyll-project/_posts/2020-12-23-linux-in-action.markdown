@@ -650,9 +650,9 @@ $cat /proc/3100717/stat
 
 每个进程的 CPU 利用率的计算方法如下：
 
-(1) T1 时刻读取 /proc/stat，计算 sum1，读取 /proc/pid/stat，利用公式二计算 pt1
+(1) T1 时刻读取 /proc/stat，计算 sum1，读取 /proc/pid/stat，利用公式计算 pt1
 
-(2) T2 时刻读取 /proc/stat，计算 sum2，读取 /proc/pid/stat，利用公式二计算 pt2
+(2) T2 时刻读取 /proc/stat，计算 sum2，读取 /proc/pid/stat，利用公式计算 pt2
 
 (3) 进程 CPU 利用率 = (pt2 - pt1) * 100 /（sum2 - sum1）
 

@@ -42,6 +42,7 @@ or:
 ``` bash
 # Compile
 % clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer -c example_UseAfterFree.cc
+
 # Link
 % clang++ -g -fsanitize=address example_UseAfterFree.o
 ```
@@ -52,108 +53,32 @@ If a bug is detected, the program will print an error message to **stderr** and 
 
 * **Fixing bugs becomes unavoidable**. **AddressSanitizer does not produce false alarms**. Once a memory corruption occurs, the program is in an inconsistent state, which could lead to confusing results and potentially misleading subsequent reports.
 
-一个 asan 检测的结果示例：
+编译完成后执行上面示例代码的程序，ASan 会检测出内存问题并在终端输出如下信息：
 
-```
-==gamesvr==5351==ERROR: AddressSanitizer: heap-use-after-free on address 0x6070036e1908 at pc 0x00000c8c1e57 bp 0x7fa142aae220 sp 0x7fa142aae218
-READ of size 4 at 0x6070036e1908 thread T0 (gamesvr)
-    #0 0xc8c1e56 in TestFunc() const /data/home/src/test.h:123:10
-    #1
-    ...
+![asan-check](/assets/images/202405/asan-check.png)
 
-0x6070036e1908 is located 40 bytes inside of 72-byte region [0x6070036e18e0,0x6070036e1928)
-freed by thread T0 (gamesvr) here:
-    #0 0xc1be4e0 in free /data/home/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_malloc_linux.cpp:123:3
+ASan 的输出报告了一个 `heap-use-after-free` 错误，即在释放堆内存后继续使用它。下面是 ASan 输出的详细解释：
 
-previously allocated by thread T0 (gamesvr) here:
-    #0 0xc1be7e8 in malloc /data/home/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+* 错误类型：heap-use-after-free，表示在释放堆内存后继续使用它。
+* 错误发生的地址：0x614000000044
+* 错误发生时执行的操作：READ of size 4，表示在错误地址上进行了一个 4 字节的读操作。
+* 错误发生的线程：thread T0，表示错误发生在主线程中。
+* 错误发生的位置：在源代码文件 `test.cc` 的第 6 行（`return array[argc];`）。
+* 调用栈信息：ASan 提供了错误发生时的调用栈信息，包括 main 函数、C 库函数 __libc_start_main 和程序入口点 _start。
+* 内存区域信息：0x614000000044 位于一个 400 字节的内存区域 `[0x614000000040,0x6140000001d0)` 内，距离区域起始地址有 4 字节。
+* 内存释放信息：这个内存区域是由主线程释放的，在 `test.cc` 的第 5 行（`delete[] array;`）。
+* 内存分配信息：这个内存区域是由主线程分配的，在 `test.cc` 的第 4 行（`int *array = new int[100];`）。
+* `Shadow bytes` 信息：ASan 使用 shadow memory（影子内存）来记录内存状态。输出中的 `Shadow bytes` 提供了错误地址周围的内存状态信息。例如，`fa` 表示 heap left redzone（堆左保护区），`fd` 表示 freed heap region（已释放的堆区域）。
 
-SUMMARY: AddressSanitizer: heap-use-after-free /data/home/src/test.h:123:10 in TestFunc() const
-Shadow bytes around the buggy address:
-  0x0c0e806d42d0: 02 fa fa fa fa fa 00 00 00 00 00 00 00 00 02 fa
-  0x0c0e806d42e0: fa fa fa fa 00 00 00 00 00 00 00 00 05 fa fa fa
-  0x0c0e806d42f0: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
-  0x0c0e806d4300: 00 00 00 00 00 00 00 00 00 01 fa fa fa fa 00 00
-  0x0c0e806d4310: 00 00 00 00 00 00 02 fa fa fa fa fa fd fd fd fd
-=>0x0c0e806d4320: fd[fd]fd fd fd fa fa fa fa fa 00 00 00 00 00 00
-  0x0c0e806d4330: 00 00 02 fa fa fa fa fa 00 00 00 00 00 00 00 00
-  0x0c0e806d4340: 00 01 fa fa fa fa 00 00 00 00 00 00 00 00 01 fa
-  0x0c0e806d4350: fa fa fa fa 00 00 00 00 00 00 00 00 04 fa fa fa
-  0x0c0e806d4360: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
-  0x0c0e806d4370: 00 00 00 00 00 00 00 00 03 fa fa fa fa fa 00 00
-Shadow byte legend (one shadow byte represents 8 application bytes):
-  Addressable:           00
-  Partially addressable: 01 02 03 04 05 06 07
-  Heap left redzone:       fa
-  Freed heap region:       fd
-  Stack left redzone:      f1
-  Stack mid redzone:       f2
-  Stack right redzone:     f3
-  Stack after return:      f5
-  Stack use after scope:   f8
-  Global redzone:          f9
-  Global init order:       f6
-  Poisoned by user:        f7
-  Container overflow:      fc
-  Array cookie:            ac
-  Intra object redzone:    bb
-  ASan internal:           fe
-  Left alloca redzone:     ca
-  Right alloca redzone:    cb
-  Shadow gap:              cc
-```
+综上，ASan 的输出表明，在 `test.cc` 的第 6 行，程序试图访问一个已经释放的堆内存区域，导致 heap-use-after-free 错误。为了解决这个问题，需要确保在释放内存后不再使用它。
 
-上述错误表示在堆上发生了使用已释放内存的情况（heap-use-after-free）。
+AddressSanitizer (ASan) 使用一种称为 "Shadow Memory" 的技术来追踪程序的内存访问。
 
-* heap-use-after-free: 表示在释放堆内存后仍然尝试访问该内存。
-* address 0x6070036e1908: 发生错误的内存地址。
-* pc 0x00000c8c1e57: 错误发生时程序计数器（Program Counter）的值，即发生错误的代码位置。
-* bp 0x7fa142aae220 sp 0x7fa142aae218: 发生错误时栈基指针（Base Pointer）和栈顶指针（Stack Pointer）的值。
-* READ of size 4: 表示在错误地址上执行了一个4字节的读操作。
-* thread T0 (gamesvr): 发生错误的线程名（T0）和线程ID（gamesvr）。
+* Shadow Memory 是原始内存的一个映射，它用来存储关于原始内存的额外信息。每个 Shadow 字节表示 8 个应用程序字节的状态。这意味着 Shadow Memory 的大小是原始内存大小的 1/8。
+* 这个 Shadow Memory 字节用来存储原始字节的状态，例如它是否是可寻址的、是否已经被释放等。
+* ASan 使用 Shadow Memory 来检测各种内存错误。当程序访问一个内存字节时，ASan 会首先查看该字节的 Shadow Memory 字节，以确定这个访问是否合法。如果 Shadow Memory 字节表示这个访问是非法的（例如，访问了已经被释放的内存），ASan 就会报告一个错误。Shadow Memory 是 ASan 能够高效地检测内存错误的关键。它使得 ASan 能够在每个内存访问时快速地检查内存状态，而无需进行昂贵的查找或者遍历操作。
 
-AddressSanitizer（ASan）使用 shadow memory 来跟踪和检测内存错误。shadow memory 是一块辅助内存区域，用于存储与应用程序内存相关的元数据。在 ASan 中，每8个应用程序字节由1个 shadow 字节表示。shadow 字节的值表示对应的应用程序内存的状态和属性。
-
-在提供的 ASan 报告中，有关 shadow memory 的信息如下：
-
-```
-Shadow bytes around the buggy address:
-  0x0c0e806d42d0: 02 fa fa fa fa fa 00 00 00 00 00 00 00 00 02 fa
-  0x0c0e806d42e0: fa fa fa fa 00 00 00 00 00 00 00 00 05 fa fa fa
-  0x0c0e806d42f0: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
-  0x0c0e806d4300: 00 00 00 00 00 00 00 00 00 01 fa fa fa fa 00 00
-  0x0c0e806d4310: 00 00 00 00 00 00 02 fa fa fa fa fa fd fd fd fd
-=>0x0c0e806d4320: fd[fd]fd fd fd fa fa fa fa fa 00 00 00 00 00 00
-  0x0c0e806d4330: 00 00 02 fa fa fa fa fa 00 00 00 00 00 00 00 00
-  0x0c0e806d4340: 00 01 fa fa fa fa 00 00 00 00 00 00 00 00 01 fa
-  0x0c0e806d4350: fa fa fa fa 00 00 00 00 00 00 00 00 04 fa fa fa
-  0x0c0e806d4360: fa fa 00 00 00 00 00 00 00 00 01 fa fa fa fa fa
-  0x0c0e806d4370: 00 00 00 00 00 00 00 00 03 fa fa fa fa fa 00 00
-```
-
-这些行显示了发生错误的地址周围的 shadow 字节。每个 shadow 字节表示8个应用程序字节的状态。在报告末尾，有一个图例来解释每个shadow字节值的含义：
-
-```
-Addressable:           00
-Partially addressable: 01 02 03 04 05 06 07
-Heap left redzone:       fa
-Freed heap region:       fd
-Stack left redzone:      f1
-Stack mid redzone:       f2
-Stack right redzone:     f3
-Stack after return:      f5
-Stack use after scope:   f8
-Global redzone:          f9
-Global init order:       f6
-Poisoned by user:        f7
-Container overflow:      fc
-Array cookie:            ac
-Intra object redzone:    bb
-ASan internal:           fe
-Left alloca redzone:     ca
-Right alloca redzone:    cb
-Shadow gap:              cc
-```
+在报告末尾，有一个图例来解释每个 Shadow 字节值的含义：
 
 * Addressable (00): 表示对应的应用程序内存是可访问的。
 * Partially addressable (01-07): 表示对应的应用程序内存部分可访问，值表示可访问字节数。
@@ -843,6 +768,115 @@ Suppressions used:[design document](AddressSanitizerLeakSanitizerDesignDocument)
 
 SUMMARY: AddressSanitizer: 5 byte(s) leaked in 1 allocation(s).
 ```
+
+
+## 测试示例
+
+### stl 容器添加内容
+
+``` cpp
+#include <vector>
+#include <iostream>
+
+int main(int argc, char **argv)
+{
+    std::vector<int> vec;
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+
+    for (auto i : vec)
+    {
+        std::cout << i << std::endl;
+    }
+}
+// ASan 检查不出来
+```
+
+### shared_ptr 循环引用
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class B;
+
+class A
+{
+public:
+    std::shared_ptr<B> b_ptr;
+    ~A()
+    {
+        std::cout << "A destructor called" << std::endl;
+    }
+};
+
+class B
+{
+public:
+    std::shared_ptr<A> a_ptr;
+    ~B()
+    {
+        std::cout << "B destructor called" << std::endl;
+    }
+};
+
+int main()
+{
+    {
+        std::shared_ptr<A> a = std::make_shared<A>();
+        std::shared_ptr<B> b = std::make_shared<B>();
+
+        std::cout << "sizeof(A): " << sizeof(a) << std::endl;
+
+        a->b_ptr = b;
+        b->a_ptr = a;
+    }  // a 和 b 的析构函数在这里应该被调用，但由于循环引用，它们不会被调用
+
+    std::cout << "Main function ends" << std::endl;
+    return 0;
+}
+```
+
+clang++ -O1 -g -fsanitize=address -fno-omit-frame-pointer test3.cc -o test3
+
+```
+$ ./test3
+sizeof(A): 16
+Main function ends
+
+=================================================================
+==4167602==ERROR: LeakSanitizer: detected memory leaks
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x4f2c18 in operator new(unsigned long) /data/home/gerryyang/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x4f763e in __gnu_cxx::new_allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> >::allocate(unsigned long, void const*) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/ext/new_allocator.h:111:27
+    #2 0x4f75ba in std::allocator_traits<std::allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> > >::allocate(std::allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> >&, unsigned long) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/alloc_traits.h:436:20
+    #3 0x4f72e9 in std::__allocated_ptr<std::allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> > > std::__allocate_guarded<std::allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> > >(std::allocator<std::_Sp_counted_ptr_inplace<B, std::allocator<B>, (__gnu_cxx::_Lock_policy)2> >&) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/allocated_ptr.h:97:21
+    #4 0x4f7122 in std::__shared_count<(__gnu_cxx::_Lock_policy)2>::__shared_count<B, std::allocator<B> >(B*&, std::_Sp_alloc_shared_tag<std::allocator<B> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr_base.h:675:19
+    #5 0x4f7020 in std::__shared_ptr<B, (__gnu_cxx::_Lock_policy)2>::__shared_ptr<std::allocator<B> >(std::_Sp_alloc_shared_tag<std::allocator<B> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr_base.h:1342:14
+    #6 0x4f6fe8 in std::shared_ptr<B>::shared_ptr<std::allocator<B> >(std::_Sp_alloc_shared_tag<std::allocator<B> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:359:4
+    #7 0x4f6fbd in std::shared_ptr<B> std::allocate_shared<B, std::allocator<B> >(std::allocator<B> const&) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:705:14
+    #8 0x4f5ed0 in std::shared_ptr<B> std::make_shared<B>() /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:721:14
+    #9 0x4f59f3 in main /data/home/gerryyang/github/mac-utils/programing/cpp/asan/test3.cc:30:32
+    #10 0x7f8ac3206f92 in __libc_start_main (/lib64/libc.so.6+0x26f92)
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x4f2c18 in operator new(unsigned long) /data/home/gerryyang/tools/clang/llvm-project-11.0.0/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x4f69fe in __gnu_cxx::new_allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> >::allocate(unsigned long, void const*) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/ext/new_allocator.h:111:27
+    #2 0x4f697a in std::allocator_traits<std::allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> > >::allocate(std::allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> >&, unsigned long) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/alloc_traits.h:436:20
+    #3 0x4f66a9 in std::__allocated_ptr<std::allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> > > std::__allocate_guarded<std::allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> > >(std::allocator<std::_Sp_counted_ptr_inplace<A, std::allocator<A>, (__gnu_cxx::_Lock_policy)2> >&) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/allocated_ptr.h:97:21
+    #4 0x4f64e2 in std::__shared_count<(__gnu_cxx::_Lock_policy)2>::__shared_count<A, std::allocator<A> >(A*&, std::_Sp_alloc_shared_tag<std::allocator<A> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr_base.h:675:19
+    #5 0x4f63e0 in std::__shared_ptr<A, (__gnu_cxx::_Lock_policy)2>::__shared_ptr<std::allocator<A> >(std::_Sp_alloc_shared_tag<std::allocator<A> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr_base.h:1342:14
+    #6 0x4f63a8 in std::shared_ptr<A>::shared_ptr<std::allocator<A> >(std::_Sp_alloc_shared_tag<std::allocator<A> >) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:359:4
+    #7 0x4f636d in std::shared_ptr<A> std::allocate_shared<A, std::allocator<A> >(std::allocator<A> const&) /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:705:14
+    #8 0x4f5d80 in std::shared_ptr<A> std::make_shared<A>() /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/bits/shared_ptr.h:721:14
+    #9 0x4f59e1 in main /data/home/gerryyang/github/mac-utils/programing/cpp/asan/test3.cc:29:32
+    #10 0x7f8ac3206f92 in __libc_start_main (/lib64/libc.so.6+0x26f92)
+
+SUMMARY: AddressSanitizer: 64 byte(s) leaked in 2 allocation(s).
+```
+
 
 ## 总结
 
