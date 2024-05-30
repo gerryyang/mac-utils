@@ -21,7 +21,7 @@ One such type of system, distributed caches(分布式缓存) that power many hig
 
 In computer science, **consistent hashing** is a special kind of [hashing technique](https://en.wikipedia.org/wiki/Hash_function) such that when a hash table is resized, only `n/m` keys need to be remapped on average where `n` is the number of **keys** and `m` is the number of **slots**. **In contrast, in most traditional hash tables, a change in the number of array slots causes nearly all keys to be remapped because the mapping between the keys and the slots is defined by a modular operation**.
 
-Consistent hashing evenly distributes cache keys across shards, even if some of the shards crash or become unavailable [3].
+Consistent hashing evenly distributes cache keys across shards, even if some of the shards crash or become unavailable.
 
 > Consistent hashing 是一种特殊的哈希技术，主要用于解决分布式系统中的数据分配问题。其主要优点是能够在节点数量变化时，最小化需要重新分配的数据数量。这对于缓存系统特别重要，因为在节点增加或减少时，我们希望尽可能减少因为重新哈希带来的缓存失效。
 >
