@@ -236,7 +236,7 @@ TCMalloc 还有一套高效的机制回收这些空闲的内存。当一个线�
 # ptmalloc (glibc 默认内存分配器)
 
 
-# 背景介绍
+## 背景介绍
 
 Linux 中 malloc 的早期版本是由 Doug Lea 实现的，它有一个重要问题就是在并行处理时多个线程共享进程的内存空间，各线程可能并发请求内存，在这种情况下应该如何保证分配和回收的正确和高效。
 
@@ -266,7 +266,54 @@ ptmalloc 在设计时折中了高效率，高空间利用率，高可用性等�
 
 [glibc 2.12.1 内存管理 ptmalloc2 源代码分析](https://paper.seebug.org/papers/Archive/refs/heap/glibc%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86ptmalloc%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90.pdf)
 
+# mimalloc (microsoft)
 
+* https://github.com/microsoft/mimalloc
+* https://github.com/daanx/mimalloc-bench
+
+**mimalloc** (pronounced "me-malloc") is a general purpose allocator with excellent [performance](https://github.com/microsoft/mimalloc?tab=readme-ov-file#performance) characteristics. Initially developed by Daan Leijen for the runtime systems of the [Koka](https://koka-lang.github.io/) and [Lean](https://github.com/leanprover/lean) languages.
+
+**mimalloc** is a drop-in replacement for `malloc` and can be used in other programs without code changes, for example, on dynamically linked ELF-based systems (Linux, BSD, etc.) you can use it as:
+
+```
+> LD_PRELOAD=/usr/lib/libmimalloc.so  myprogram
+```
+
+It also includes a robust way to override the default allocator in [Windows](https://github.com/microsoft/mimalloc?tab=readme-ov-file#override_on_windows). Notable aspects of the design include:
+
+mimalloc 的特性可以归纳为以下几点：
+
+* 小巧且一致：库的代码行数约为8k，使用的是简单且一致的数据结构。这使得它非常适合在其他项目中集成和适应。对于运行时系统，它提供了单调心跳和延迟释放的钩子（用于参考计数的有界最坏情况时间）。由于其简单性，mimalloc已经移植到许多系统（Windows, macOS, Linux, WASM, 各种BSD's, Haiku, MUSL等）并且对动态覆盖有极好的支持。同时，它是一个工业级的分配器，可以在数千台机器上运行（非常）大规模的分布式服务，并具有出色的最坏情况延迟。
+* 自由列表分片：我们有许多小的自由列表，每个"mimalloc页面"一个，而不是每个大小类一个大的自由列表。这减少了碎片化并增加了局部性 -- 那些在时间上接近的事物在内存中也会被分配得接近。（一个mimalloc页面包含一个大小类的块，通常在64位系统上为64KiB）。
+* 自由列表多分片：这是一个大的创新！我们不仅将自由列表按mimalloc页面进行分片，而且每个页面我们都有多个自由列表。特别地，有一个列表用于线程局部的释放操作，另一个用于并发的释放操作。从另一个线程释放现在可以是一个单一的CAS，而不需要复杂的线程之间的协调。由于将有数千个单独的自由列表，竞争自然地分布在堆上，单个位置的竞争机会将会低 -- 这与随机算法（如跳跃列表）非常相似，其中添加一个随机预言机可以消除对更复杂算法的需求。
+* 热切的页面清理：当一个"页面"变为空（由于自由列表分片的机会增加）时，内存被标记为对操作系统未使用（重置或取消提交），减少了（实际的）内存压力和碎片化，特别是在长时间运行的程序中。
+* 安全：mimalloc可以在安全模式下构建，添加保护页，随机分配，加密自由列表等，以防止各种堆漏洞。性能损失通常在我们的基准测试中平均约为10%。
+* 一流的堆：有效地创建和使用多个堆，以便在不同的区域进行分配。堆可以一次性销毁，而不是单独释放每个对象。
+* 有界：它不会遭受爆炸性增长，有有界的最坏情况分配时间（取决于操作系统原语），有界的空间开销（约0.2%的元数据，内部碎片化低），并且只使用原子操作，没有内部竞争点。
+* 快速：在我们的基准测试中（见下文），mimalloc的性能优于其他领先的分配器（jemalloc，tcmalloc，Hoard等），并且通常使用更少的内存。一个好的特性是它在广泛的基准测试中表现始终良好。对于较大的服务器程序，还有很好的巨页操作系统支持。
+
+
+
+
+# minimalloc (google)
+
+https://github.com/google/minimalloc
+
+Source code for our [ASPLOS 2023](https://www.asplos-conference.org/asplos2023/) paper, "[MiniMalloc: A Lightweight Memory Allocator for Hardware-Accelerated Machine Learning.](https://doi.org/10.1145/3623278.3624752)"
+
+An increasing number of deep learning workloads are being supported by hardware acceleration. In order to unlock the maximum performance of a hardware accelerator, a machine learning model must first be carefully mapped onto its various internal components by way of a compiler. One especially important problem faced by a production-class compiler is that of memory allocation, whereby a set of buffers with predefined lifespans are mapped onto offsets in global memory. Since this allocation is performed statically, the compiler has the freedom to place buffers strategically, but must nevertheless wrestle with a combinatorial explosion in the number of assignment possibilities.
+
+**MiniMalloc** is a state-of-the-art algorithm designed specifically for static memory allocation that uses several novel search techiques in order to solve such problems efficiently and effectively.
+
+静态内存分配问题主要指在编译期间为数据结构或变量分配内存的过程。在这种情况下，内存分配的大小和位置在程序运行之前就已经确定，因此在程序运行期间不会发生变化。静态内存分配与动态内存分配相对，后者是在程序运行时根据需要动态地分配和释放内存。
+
+静态内存分配问题涉及以下方面：
+
+* 内存布局：编译器需要确定如何在内存中布局数据结构和变量，以便在运行时可以高效地访问它们。这可能涉及到对齐、填充和数据结构的顺序等方面的考虑。
+* 内存使用优化：编译器需要在有限的内存空间中尽可能有效地分配内存。这可能涉及到合并具有不重叠生命周期的变量、消除冗余填充以及选择合适的内存分配策略等。
+* 生命周期分析：编译器需要确定数据结构和变量的生命周期，以便知道何时可以重用其内存。这可以通过静态分析技术来实现，例如数据流分析、活跃变量分析等。
+
+MiniMalloc 算法，主要关注于解决静态内存分配过程中的内存布局和内存使用优化问题。通过利用 canonical solutions、空间推理技术和支配解的检测与消除等技术，MiniMalloc 能够高效地找到合适的内存分配方案，从而提高硬件加速器在运行深度学习工作负载时的性能。
 
 
 

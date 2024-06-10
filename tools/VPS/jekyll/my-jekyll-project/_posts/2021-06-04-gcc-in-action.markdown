@@ -5,10 +5,10 @@ date:   2021-06-04 08:00:00 +0800
 categories: [GCC/Clang]
 ---
 
-# GCC (GNU project C and C++ compiler)
-
 * Do not remove this line (it will not be displayed)
 {:toc}
+
+# GCC (GNU project C and C++ compiler)
 
 When you invoke `GCC`, it normally does preprocessing, compilation, assembly and linking. The "overall options" allow you to stop this process at an intermediate stage. For example, the `-c` option says not to run the linker. Then the output consists of object files output by the assembler.
 
@@ -23,6 +23,12 @@ You can mix options and other arguments. For the most part, the order you use do
 Many options have long names starting with `-f` or with `-W---for` example, `-fmove-loop-invariants`, `-Wformat` and so on. Most of these have both positive and negative forms; the negative form of `-ffoo` is `-fno-foo`. This manual documents only one of these two forms, whichever one is not the default.
 
 More: man gcc
+
+
+# C++ Compiler Support
+
+https://en.cppreference.com/w/cpp/compiler_support
+
 
 # [C++ Standards Support in GCC](https://gcc.gnu.org/projects/cxx-status.html)
 

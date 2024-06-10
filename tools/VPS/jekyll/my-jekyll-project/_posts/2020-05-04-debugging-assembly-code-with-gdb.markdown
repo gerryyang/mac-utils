@@ -532,13 +532,13 @@ gdb 中使用 `x` 命令来打印内存的值，格式为 `x/nfu addr`。含义�
 
 * `n`：输出单元的个数
 * `f`：是输出格式。比如，`x`是以 16 进制形式输出，`o`是以 8 进制形式输出
-* `u`：标明一个单元的长度。`b`是一个 byte，`h`是两个`byte（halfword），`w`是四个 byte（word），`g`是八个 byte（giant word）
+* `u`：标明一个单元的长度。`b`是一个 byte，`h`是两个byte（halfword），`w`是四个 byte（word），`g`是八个 byte（giant word）
 
 使用示例：
 
 ```
 // 打印某个地址开始的 8 字节内容
-(gdb) x /1gx 0x7fd3e1ed30b8
+(gdb) x/1xg 0x7fd3e1ed30b8
 0x7fd3e1ed30b8: 0x00007fd3d00019fd
 
 

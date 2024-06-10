@@ -1515,7 +1515,25 @@ gprof my_program gmon.out > analysis.txt
 现在，可以查看 `analysis.txt` 文件以获取程序的性能概况。
 
 
+# 可能带来性能问题的场景
 
+## C++ Exceptions
+
+These days, C++ exceptions are said to be zero-cost until thrown. Whether it is really zero – is still not 100% clear (IMO it is even unclear whether such a question can be asked at all), but it is certainly very close.
+
+However, these “zero-cost until thrown” implementations come at the cost of a huge pile of work which needs to be done whenever an exception is thrown. Everybody agrees that the cost of exception thrown is huge, however (as usual) experimental data is scarce. Still, an experiment by [[Ongaro]](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/#rabbitref-Ongaro) gives us a ballpark number of around 5000 CPU cycles (sic!). Moreover, in more complicated cases, I would expect it to take even more.
+
+在现代 C++ 编译器中，异常处理通常被称为“零开销，直到抛出异常”。这意味着在正常执行程序时，异常处理机制几乎不会对性能产生影响。虽然这里提到“零开销”这个说法可能并不是 100% 准确，但在没有抛出异常的情况下，异常处理对性能的影响确实非常小。
+
+然而，这种“零开销，直到抛出异常”的实现方式在异常实际抛出时需要做大量的工作，这会导致性能开销变得很大。尽管关于异常抛出的具体开销的实验数据很少，但根据 Ongaro 的实验，抛出异常的开销大约为 5000 个 CPU 周期。在更复杂的情况下，这个开销可能会更大。
+
+C++ 异常处理机制在没有抛出异常时对性能的影响非常小，但在异常实际发生时，处理异常可能会导致较大的性能开销。在设计程序时，可以将异常处理用于处理真正的异常情况，而不是作为常规的程序控制流程。
+
+
+refer:
+
+* [Infographics: Operation Costs in CPU Clock Cycles](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/)
+* [C++异常机制的实现方式和开销分析](https://blog.csdn.net/cqu20093154/article/details/44020043)
 
 
 # 关于优化的其他思考

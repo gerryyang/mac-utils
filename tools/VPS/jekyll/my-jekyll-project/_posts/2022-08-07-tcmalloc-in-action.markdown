@@ -723,7 +723,7 @@ The simplest of all options is to rely on frame pointers. But this requires that
 
 **All modern architectures have ABI that defaults to not having frame pointers**. Instead, we're supposed to use various external "unwind info" metadata. It is usually using a facility originally introduced for exceptions. On ELF systems, this facility is typically utilizing the `.eh_frame` section. The data format is similar but not identical to `DWARF` unwind info (introduced to allow debuggers to show you backtraces) and is documented in gABI specs.
 
-所有现代架构的ABI默认都不包含框架指针。相反，我们应该使用各种外部的"unwind info"元数据。它通常使用最初为异常引入的功能。在ELF系统上，这个功能通常利用.eh_frame部分。数据格式与DWARF解开信息类似但不完全相同（引入以允许调试器向您显示回溯），并在gABI规范中有详细记录。
+所有现代架构的ABI默认都不包含**栈帧**。相反，我们应该使用各种外部的"unwind info"元数据。它通常使用最初为异常引入的功能。在ELF系统上，这个功能通常利用`.eh_frame`部分。数据格式与`DWARF`解开信息类似但不完全相同（引入以允许调试器向您显示回溯），并在`gABI`规范中有详细记录。
 
 
 ### libgcc's _Unwind_Backtrace
