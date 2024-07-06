@@ -2862,6 +2862,25 @@ Hello world!
 * https://github.com/fmtlib/fmt
 
 
+# C++23
+
+## std::flat_map
+
+flat_map 是一种关联容器适配器，它提供了包含唯一键的键值对的关联容器功能。键使用比较函数 Compare 进行排序。
+
+flat_map 类模板作为两个底层容器（分别为类型 KeyContainer 和 MappedContainer）的包装器。第一个容器是有序的，对于每个键，其对应的值在第二个容器中具有相同的索引（偏移量）。两个容器中的元素数量相同。
+
+flat_map 的使用场景：
+
+* 数据量较小：由于 flat_map 底层使用两个连续存储的容器（通常为 vector）存储键和值，因此在数据量较小的情况下，其插入、删除和查找性能相对较好。但是，当数据量较大时，插入和删除操作的性能可能会降低，因为需要移动大量元素以保持容器的有序性。
+* 高缓存局部性：由于 flat_map 使用连续存储的容器，其缓存局部性较好，这有助于提高查找性能。在需要频繁查找的场景中，flat_map 可能比其他关联容器（如 std::map）更高效。
+* 空间效率：flat_map 通常比其他关联容器（如 std::map）更节省空间，因为它不需要为每个节点分配额外的内存以维护树结构。
+
+需要注意的是，flat_map 通常不适用于需要频繁插入和删除操作的场景，特别是当数据量较大时。在这种情况下，可以考虑使用其他关联容器，如 std::map 或 std::unordered_map。
+
+https://en.cppreference.com/w/cpp/container/flat_map
+
+
 # Algorithm
 
 ## std::find / std::find_if / std::find_if_not
@@ -5357,6 +5376,64 @@ int main()
     std::cout << b.a << " " << b.b << std::endl;
 }
 ```
+
+## 拷贝构造在继承场景下的使用问题 (子类禁止拷贝，父类没有禁止拷贝，导致父类仍然可以拷贝)
+
+https://gcc.godbolt.org/z/4Y5G1vxvn
+
+``` cpp
+#include <iostream>
+#include <map>
+#include <string>
+
+
+class CNonCopyable
+{
+public:
+    CNonCopyable() = default;
+    //CNonCopyable(CNonCopyable&&) noexcept = default;
+    //CNonCopyable& operator=(CNonCopyable&&) noexcept = default;
+
+    // forbidden methods
+    CNonCopyable(const CNonCopyable&) = delete;
+    CNonCopyable& operator=(const CNonCopyable&) = delete;
+};
+
+class A : public CNonCopyable
+{
+public:
+    A() : CNonCopyable()  {
+        std::cout << "A()\n";
+    }
+
+    // Oops, A 类自己提供了拷贝构造函数，覆盖了禁止拷贝的限制
+    A(const A& a) {
+
+    }
+};
+
+A g_a;
+A Get()
+{
+    return g_a;
+}
+
+int main()
+{
+    A a;
+    A b = Get();
+    std::cout << __clang_major__;
+}
+```
+
+输出：
+
+```
+A()
+A()
+12
+```
+
 
 ## static 单例线程安全
 

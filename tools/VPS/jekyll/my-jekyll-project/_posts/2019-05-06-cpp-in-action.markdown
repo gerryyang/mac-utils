@@ -420,6 +420,7 @@ string f() { return "abc"; }
 void g() {
     string& s = f();       // still legal? No
     cout << s << endl;
+}
 ```
 
 另一个例子，当引用生命周期结束时，对象是如何析构的？

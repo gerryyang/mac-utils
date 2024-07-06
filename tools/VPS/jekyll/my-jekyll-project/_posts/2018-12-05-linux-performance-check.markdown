@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Linux Performance诊断"
+title:  "Linux Performance 诊断"
 date:   2018-12-05 20:00:00 +0800
 categories: [Linux Performance]
 ---

@@ -1812,6 +1812,37 @@ echo "1" > /proc/sys/kernel/core_uses_pid
 echo "core" > /proc/sys/kernel/core_pattern
 ```
 
+### dd 方案
+
+之前某项目组 ds 产生 core 的时候，机器因为 IO 被卡住了 10s(不限服务进程)。因为底层母机上对虚拟机的 IO 限制，当 coredump 产生时直接产生了大量的写，pagecache 中大量的脏页由虚拟机的系统触发回写，导致虚拟机大量 IO 刷盘时整个虚拟机的 IO 都被卡住了。
+
+当时的规避方案：通过将 coredump 落盘转为通过 pipe 交给其它程序处理，例如：通过 dd 来将 core 直接通过 direct_io 写，这样 dd 直接操作磁盘被母机限制，但是虚拟机系统的 pagecache 不会触发 flush 导致整个虚拟机受到影响。
+
+``` bash
+echo "|/usr/bin/dd bs=1M of=/data/corefile/core_%e_%t.%p oflag=direct,noatime" > /proc/sys/kernel/core_pattern
+```
+
+
+### Breakpad 方案 (Google)
+
+
+* https://github.com/google/breakpad?tab=readme-ov-file
+* https://chromium.googlesource.com/breakpad/breakpad
+
+![breakpad](/assets/images/202406/breakpad.png)
+
+
+
+
+### Minimal core dump (stack trace + current frame only)
+
+
+https://stackoverflow.com/questions/8836459/minimal-core-dump-stack-trace-current-frame-only
+
+### Selective core dump in Linux - How can I select the dumped sections?
+
+https://stackoverflow.com/questions/4817867/selective-core-dump-in-linux-how-can-i-select-the-dumped-sections/4818523#4818523
+
 ## dmesg
 
 dmesg is used to examine or control the kernel ring buffer. The default action is to display all messages from the kernel ring buffer.
@@ -3124,3 +3155,93 @@ ls 命令用于列出目录内容。
 这个命令会按照文件大小倒序输出当前目录的文件信息。
 
 
+# Q&A
+
+## 业务进程 crash 在 SIGTRAP 信号
+
+* [When can a running process in Unix receive a SIGTRAP (value 5) signal?](https://stackoverflow.com/questions/32612310/when-can-a-running-process-in-unix-receive-a-sigtrap-value-5-signal)
+
+Any time, that's how signals work. Normally `SIGTRAP` is a debugging signal - trace/breakpoint. So likely someone tried to attach a process debugger to it.
+
+--------------------------------
+
+As said in the comments, it is a signal so can be triggered at any time. `SIGTRAP` signal is handled by **the debugger**; **in the absence of a debugger it is quite natural for the process to be terminated**. If you are using static libraries in your project then you are not linking them appropriately. Without further information in your question, I suggest you to check your linking with libraries. ([Does getting random SIGTRAP signals (in MinGW-gdb) is a sign of memory corruption?](https://stackoverflow.com/questions/2307621/does-getting-random-sigtrap-signals-in-mingw-gdb-is-a-sign-of-memory-corruptio))
+
+
+* [What causes a Sigtrap in a Debug Session](https://stackoverflow.com/questions/3475262/what-causes-a-sigtrap-in-a-debug-session/3475444#3475444)
+
+**With processors that support instruction breakpoints or data watchpoints**, the debugger will ask the CPU to watch for instruction accesses to a specific address, or data reads/writes to a specific address, and then run full-speed.
+
+**When the processor detects the event, it will trap into the kernel, and the kernel will send SIGTRAP to the process being debugged**. Normally, `SIGTRAP` would kill the process, but because it is being debugged, the debugger will be notified of the signal and handle it, mostly by letting you inspect the state of the process before continuing execution.
+
+**With processors that don't support breakpoints or watchpoints**, the entire debugging environment is probably done through code interpretation and memory emulation, which is immensely slower. (I imagine clever tricks could be done by setting pagetable flags to forbid reading or writing, whichever needs to be trapped, and letting the kernel fix up the pagetables, signaling the debugger, and then restricting the page flags again. This could probably support near-arbitrary number of watchpoints and breakpoints, and run only marginally slower for cases when the watchpoint or breakpoint aren't frequently accessed.)
+
+The question I placed into the comment field looks apropos(恰好，适当的) here, only because Windows isn't actually sending a `SIGTRAP`, but rather signaling a breakpoint in its own native way. I assume when you're debugging programs, that debug versions of system libraries are used, and ensure that memory accesses appear to make sense. You might have a bug in your program that is papered-over at runtime, but may in fact be causing further problems elsewhere.
+
+I haven't done development on Windows, but perhaps you could get further details by looking through your Windows Event Log?
+
+--------------------------------
+
+I received a `SIGTRAP` from my debugger and found out that the cause was due to a missing return value.
+
+``` cpp
+string getName() { printf("Name!");};
+```
+
+* [How can I find out the root cause of SIGTRAP core dump of GDB](https://stackoverflow.com/questions/60387440/how-can-i-find-out-the-root-cause-of-sigtrap-core-dump-of-gdb)
+
+My app is randomly (once a day) crashed and I have tried several ways to find out the reason but no luck. With other core dump or segmentation fault cases, I can locate where does it happen by gdb, but for this case, gdb don't give me too much hint. I need some advice for my continuous debugging, please help.
+
+GDB output when my app crashed
+
+```
+[Thread debugging using libthread_db enabled]
+    Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+    Core was generated by `/home/greystone/myapp/myapp'.
+    Program terminated with signal SIGTRAP, Trace/breakpoint trap.
+    #0  0x00007f5d3a435afb in g_logv () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+    [Current thread is 1 (Thread 0x7f5cea3d4700 (LWP 14353))]
+    (gdb) bt full
+    #0  0x00007f5d3a435afb in g_logv () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+    No symbol table info available.
+    #1  0x00007f5d3a435c6f in g_log () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+    No symbol table info available.
+    #2  0x00007f5d3a472742 in ?? () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+    No symbol table info available.
+    #3  0x00007f5d3a42cab3 in g_main_context_new () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+    No symbol table info available.
+    #4  0x00007f5d3f4894c9 in QEventDispatcherGlibPrivate::QEventDispatcherGlibPrivate(_GMainContext*) () from /opt/Qt5.9.2/5.9.2/gcc_64/lib/libQt5Core.so.5
+```
+
+Solutions I have tried
+
++ Search topic related with SIGTRAP
+  - People said it is in **debug mode and there are somewhere in the code set break point**. However, my app is compiled in **release mode without break point**.
++ Catch signal handler and ignore `SIGTRAP`
+  - No success, **I can only ignore SIGTRAP sent by "kill -5 pid". With the SIGTRAP occurs randomly in runtime, my app is still crashed**
++ Fix memory leak in code
+  - Initialize pointer with nullptr
+  - Double check mysql C API race conditions
+  - Double check delete array action and double check assign value for the index out of array boundaries
++ Check signals and slots
+  - My app is built on Qt frameworks as a GUI application, there are many signals and slots I have checked but no ideas how are they related to `SIGTRAP` core dump.
++ Check exceptions for opencv
+  - I use opencv for image processing tasks. I have checked for exception cases
++ Shared memory
+  - Memory shared between main process and sub processes were carefully checked
+
+GDB tells you exactly what happened, you just didn't understand it.
+
+What's happening is that some code in `libglib` called `g_logv(..., G_LOG_FLAG_FATAL, ...)`, which eventually calls `_g_log_abort()`, which executes `int3` (debug breakpoint) instruction.
+
+You should be able to `(gdb) x/i 0x00007f5d3a435afb` and see that instruction.
+
+It looks like `g_main_context_new()` may have failed to allocate memory.
+
+In any case, you should look in the application `stderr` logs for the reason `libglib` is terminating your program (effectively, `libglib` calls an equivalent of `abort`, because some precondition has failed).
+
+* [Trapflag-Tracing I: Observing the Execution of a Program from Within Itself](http://ant6n.ca/2017-01-11-trapflag-tracing/)
+
+* [How debuggers work: Part 1 - Basics](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
+
+* https://man7.org/linux/man-pages/man2/ptrace.2.html

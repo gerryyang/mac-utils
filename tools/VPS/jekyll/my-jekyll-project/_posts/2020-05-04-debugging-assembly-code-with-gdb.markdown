@@ -2,7 +2,7 @@
 layout: post
 title:  "Debugging Assembly Code with GDB"
 date:   2020-05-04 08:00:00 +0800
-categories: [GDB,]
+categories: [Debuggers]
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -903,7 +903,7 @@ $ pstack $$
 
 # Refer
 
-
+* [How debuggers work: Part 1 - Basics](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
 * [Debugging with GDB - Tenth Edition](http://sourceware.org/gdb/current/onlinedocs/gdb/)
 	+ [A Sample GDB Session](https://sourceware.org/gdb/current/onlinedocs/gdb/Sample-Session.html#Sample-Session)
 * [Debugging Assembly Code with gdb](http://web.cecs.pdx.edu/~apt/cs491/gdb.pdf)

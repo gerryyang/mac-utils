@@ -1148,6 +1148,40 @@ use_count == 0: gw is expired
 
 # Tips
 
+## std::shared_ptr 循环引用问题
+
+循环引用是 `std::shared_ptr` 的一个常见问题，当两个或更多的 `std::shared_ptr` 对象相互引用时，就会形成一个循环，导致内存泄漏。A 和 B 互相持有对方的 `std::shared_ptr`，形成了一个循环引用。当 main 函数中的作用域结束时，a 和 b 的析构函数不会被调用，因为它们的引用计数不为零，这就导致了内存泄漏。
+
+要检测 `std::shared_ptr` 的循环引用，可以使用内存分析工具，如 Valgrind 或 AddressSanitizer。但是，最好的方法是设计良好的程序结构以避免循环引用。例如，可以使用 std::weak_ptr 来打破循环。`std::weak_ptr` 是一种弱引用，不会增加引用计数，因此不会导致循环引用。在上面的例子中，可以将 B 中的 `std::shared_ptr<A>` 替换为 `std::weak_ptr<A>`，这样就可以避免循环引用。
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+struct B;
+
+struct A {
+    std::shared_ptr<B> b_ptr;
+    ~A() { std::cout << "A destructor called!\n"; }
+};
+
+struct B {
+    std::shared_ptr<A> a_ptr;
+    ~B() { std::cout << "B destructor called!\n"; }
+};
+
+int main() {
+    {
+        std::shared_ptr<A> a = std::make_shared<A>();
+        std::shared_ptr<B> b = std::make_shared<B>();
+        a->b_ptr = b;
+        b->a_ptr = a;
+    }  // a 和 b 的析构函数在这里不会被调用，因为存在循环引用
+
+    return 0;
+}
+```
+
 ## 自定义 custom_deleter
 
 ``` cpp

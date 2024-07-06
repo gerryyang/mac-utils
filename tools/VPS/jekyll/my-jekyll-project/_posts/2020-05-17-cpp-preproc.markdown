@@ -556,7 +556,35 @@ $ g++ -E -dM - < /dev/null
 
 # Tips
 
-## `__PRETTY_FUNCTION__`
+## `__FUNCTION__ / __func__ / __PRETTY_FUNCTION__` (predefined identifiers, not macros)
+
+[__func__ or __FUNCTION__ or manual const char* id?](https://stackoverflow.com/questions/7008485/func-or-function-or-manual-const-char-id)
+
+The predefined identifier `__func__` was added to the 1999 ISO C standard; the older 1990 C standard doesn't have it.
+
+Support for `__func__` in pre-C99 compilers will depend on which compiler you're using.
+
+Modern versions of gcc support `__func__` even in C90 mode (-ansi or -std=c89).
+
+Before `__func__` was added to the standard, gcc implemented its own equivalent extension, but with the name `__FUNCTION__`. (gcc also supports `__PRETTY_FUNCTION__`, which is identical to `__func__` and `__FUNCTION__` for C, **but provides more information in C++**.)
+
+The [gcc manual](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Function-Names.html) gives some advice:
+
+> `__FUNCTION__` is another name for `__func__`. Older versions of GCC recognize only this name. However, it is not standardized. For maximum portability, we recommend you use `__func__`, but provide a fallback definition with the preprocessor:
+
+Note that since `__func__` and `__FUNCTION__` **are predefined identifiers, not macros**, you only need the `#define` once, not in each function. On the other hand, you **can't use** `#ifdef __func__` or `#ifdef __FUNCTION__` to detect the level of support.
+
+``` cpp
+ #if __STDC_VERSION__ < 199901L
+ # if __GNUC__ >= 2
+ #  define __func__ __FUNCTION__
+ # else
+ #  define __func__ "<unknown>"
+ # endif
+ #endif
+```
+
+测试代码
 
 ``` cpp
 #include <iostream>

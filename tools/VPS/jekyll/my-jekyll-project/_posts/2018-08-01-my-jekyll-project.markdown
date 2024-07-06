@@ -193,13 +193,26 @@ alias his='history | tail -n 10'
 
 ## Usage
 
-* 目录索引(TOC)
+[kramdown Syntax](https://kramdown.gettalong.org/syntax.html#footnotes)
+
+
+### 目录索引(TOC)
 
 [How I Add a Table of Contents to my Jekyll Blog Written in Markdown](http://www.seanbuscay.com/blog/jekyll-toc-markdown/)
 
 [kramdown](https://kramdown.gettalong.org/)
 
-* 主题
+### 脚注
+
+```
+这是我的博客文章。这里有一个带有脚注的句子[^1]。
+
+[^1]: 这是脚注的内容。
+```
+
+https://kramdown.gettalong.org/syntax.html#footnotes
+
+### 主题
 
 参考[Overriding theme defaultsPermalink](https://jekyllrb.com/docs/themes/#overriding-theme-defaults)实现如何修改主题。
 

@@ -9,7 +9,16 @@ categories: Python
 {:toc}
 
 
-# 环境配置 (Python3.8)
+# Mac OS X 环境安装 Python 3
+
+``` bash
+brew install python
+```
+
+https://pythonguidecn.readthedocs.io/zh/latest/starting/install3/osx.html
+
+
+# Linux 环境安装 Python 3.8
 
 ``` bash
 #!/bin/bash
@@ -74,20 +83,24 @@ $ which python
 /usr/bin/python
 ```
 
-安装 pip：
+安装 pip
 
-```
+``` bash
 python -m pip install --upgrade pip
 ```
 
-安装 module 依赖：例如，xxhash
+# module 依赖
 
-```
+## xxhash
+
+``` bash
 /usr/local/bin/pip install xxhash
 
 # or
 python3 -m pip install xxhash
 ```
+
+
 
 
 # Tips
