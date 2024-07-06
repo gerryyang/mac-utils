@@ -1,0 +1,13 @@
+prefix=/data/home/gerryyang/tools/gperf/gperftools-2.10-install
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: gperftools
+Version: 2.10
+Description: Performance tools for C++
+URL: http://code.google.com/p/gperftools/
+Requires:
+Libs: -L${libdir} -ltcmalloc_minimal_debug
+Libs.private: -pthread -lpthread
+Cflags: -I${includedir}
