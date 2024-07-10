@@ -1,0 +1,126 @@
+3668452 Sat Jun 29 16:48:54 CST 2024
+3668452 (gamesvr)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668454 (100_Config)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668480 (100_LogDispatch)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668481 (100_Monitor)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668486 (100_Log)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668487 (100_Log)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3668642 (100_L5)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670475 (100_Tcaplus)
+[<0>] ep_poll+0x42d/0x450
+[<0>] do_epoll_wait+0xb5/0xf0
+[<0>] __x64_sys_epoll_wait+0x1e/0x30
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670832 (100_OfflineRend)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670833 (100_Tcaplus)
+[<0>] ep_poll+0x42d/0x450
+[<0>] do_epoll_wait+0xb5/0xf0
+[<0>] __x64_sys_epoll_wait+0x1e/0x30
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670875 (100_TLog)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670876 (100_TLog)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670877 (100_JaegerRepor)
+[<0>] futex_wait_queue_me+0xbf/0x120
+[<0>] futex_wait+0x151/0x270
+[<0>] do_futex+0x185/0x480
+[<0>] __x64_sys_futex+0x145/0x1e0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670882 (gamesvr)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670883 (gamesvr)
+[<0>] ep_poll+0x42d/0x450
+[<0>] do_epoll_wait+0xb5/0xf0
+[<0>] __x64_sys_epoll_wait+0x1e/0x30
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670886 (100_NetMsg)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670887 (100_HealthThrea)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670888 (100_LuaCfgThrea)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670889 (100_StatThread)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+3670892 (100_msgtrace)
+[<0>] hrtimer_nanosleep+0x90/0x140
+[<0>] __x64_sys_nanosleep+0x99/0xd0
+[<0>] do_syscall_64+0x47/0x140
+[<0>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
