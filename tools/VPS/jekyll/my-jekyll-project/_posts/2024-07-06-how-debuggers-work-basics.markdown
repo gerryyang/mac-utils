@@ -268,7 +268,7 @@ The correspondence between this and our tracing output is easily observed.
 
 The complete C source-code of the simple tracer presented in this article (the more advanced, instruction-printing version) is available [here](https://github.com/eliben/code-for-blog/blob/main/2011/simple_tracer.c). It compiles cleanly with `-Wall -pedantic --std=c99` on version 4.4 of `gcc`.
 
-``` c
+``` cpp
 /* Code sample: using ptrace for simple tracing of a child process.
 **
 ** Note: this was originally developed for a 32-bit x86 Linux system; some
@@ -290,9 +290,8 @@ The complete C source-code of the simple tracer presented in this article (the m
 #include <unistd.h>
 #include <errno.h>
 
-
 /* Print a message to stdout, prefixed by the process ID
-*/
+ */
 void procmsg(const char* format, ...)
 {
     va_list ap;
@@ -302,13 +301,13 @@ void procmsg(const char* format, ...)
     va_end(ap);
 }
 
-
 void run_target(const char* programname)
 {
     procmsg("target started. will run '%s'\n", programname);
 
     /* Allow tracing of this process */
-    if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
+    if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
+    {
         perror("ptrace");
         return;
     }
@@ -316,7 +315,6 @@ void run_target(const char* programname)
     /* Replace this process's image with the given program */
     execl(programname, programname, 0);
 }
-
 
 void run_debugger(pid_t child_pid)
 {
@@ -327,17 +325,18 @@ void run_debugger(pid_t child_pid)
     /* Wait for child to stop on its first instruction */
     wait(&wait_status);
 
-    while (WIFSTOPPED(wait_status)) {
+    while (WIFSTOPPED(wait_status))
+    {
         icounter++;
         struct user_regs_struct regs;
         ptrace(PTRACE_GETREGS, child_pid, 0, &regs);
-        unsigned instr = ptrace(PTRACE_PEEKTEXT, child_pid, regs.eip, 0);
+        unsigned instr = ptrace(PTRACE_PEEKTEXT, child_pid, regs.rip, 0);
 
-        procmsg("icounter = %u.  EIP = 0x%08x.  instr = 0x%08x\n",
-                    icounter, regs.eip, instr);
+        procmsg("icounter = %u.  RIP = 0x%08x.  instr = 0x%08x\n", icounter, regs.rip, instr);
 
         /* Make the child execute another instruction */
-        if (ptrace(PTRACE_SINGLESTEP, child_pid, 0, 0) < 0) {
+        if (ptrace(PTRACE_SINGLESTEP, child_pid, 0, 0) < 0)
+        {
             perror("ptrace");
             return;
         }
@@ -349,12 +348,12 @@ void run_debugger(pid_t child_pid)
     procmsg("the child executed %u instructions\n", icounter);
 }
 
-
 int main(int argc, char** argv)
 {
     pid_t child_pid;
 
-    if (argc < 2) {
+    if (argc < 2)
+    {
         fprintf(stderr, "Expected a program name as argument\n");
         return -1;
     }
@@ -364,13 +363,40 @@ int main(int argc, char** argv)
         run_target(argv[1]);
     else if (child_pid > 0)
         run_debugger(child_pid);
-    else {
+    else
+    {
         perror("fork");
         return -1;
     }
 
     return 0;
 }
+/*
+构建环境：x86-64
+gcc -g test.c
+
+[3136473] debugger started
+[3136473] icounter = 1.  RIP = 0x9a413090.  instr = 0xe8e78948
+[3136473] icounter = 2.  RIP = 0x9a413093.  instr = 0x000d58e8
+[3136473] icounter = 3.  RIP = 0x9a413df0.  instr = 0xfa1e0ff3
+[3136473] icounter = 4.  RIP = 0x9a413df4.  instr = 0xe5894855
+[3136473] icounter = 5.  RIP = 0x9a413df5.  instr = 0x41e58948
+[3136473] icounter = 6.  RIP = 0x9a413df8.  instr = 0x56415741
+[3136473] icounter = 7.  RIP = 0x9a413dfa.  instr = 0x55415641
+[3136473] icounter = 8.  RIP = 0x9a413dfc.  instr = 0x54415541
+[3136473] icounter = 9.  RIP = 0x9a413dfe.  instr = 0x89495441
+...
+[3136473] icounter = 195941.  RIP = 0x9a100af0.  instr = 0xfa1e0ff3
+[3136473] icounter = 195942.  RIP = 0x9a100af4.  instr = 0xb841fa89
+[3136473] icounter = 195943.  RIP = 0x9a100af6.  instr = 0x00e7b841
+[3136473] icounter = 195944.  RIP = 0x9a100afc.  instr = 0x00003cbe
+[3136473] icounter = 195945.  RIP = 0x9a100b01.  instr = 0x780d8b4c
+[3136473] icounter = 195946.  RIP = 0x9a100b08.  instr = 0x0f6615eb
+[3136473] icounter = 195947.  RIP = 0x9a100b1f.  instr = 0x8944d789
+[3136473] icounter = 195948.  RIP = 0x9a100b21.  instr = 0x0fc08944
+[3136473] icounter = 195949.  RIP = 0x9a100b24.  instr = 0x3d48050f
+[3136473] the child executed 195949 instructions
+*/
 ```
 
 # Conclusion and next steps
@@ -388,29 +414,31 @@ I've found the following resources and articles useful in the preparation of thi
 
 
 
-# Footnotes
-
-
-[^1] I didn't check but I'm sure the LOC count of `gdb` is at least in the six-figures range.
-[^2] Run `man 2 ptrace` for complete enlightment.
-[^3] Peek and poke are well-known system programming [jargon](http://www.jargon.net/jargonfile/p/peek.html) for directly reading and writing memory contents.
-[^4] This article assumes some basic level of Unix/Linux programming experience. I assume you know (at least conceptually) about `fork`, the `exec` family of functions and Unix signals.
-[^5] At least if you're as obsessed with low-level details as I am
-[^6] A word of warning here: as I noted above, a lot of this is highly platform specific. I'm making some simplifying assumptions - for example, x86 instructions don't have to fit into 4 bytes (the size of `unsigned` on my 32-bit Ubuntu machine). In fact, many won't. Peeking at instructions meaningfully requires us to have a complete disassembler at hand. We don't have one here, but real debuggers do.
-
-
-
 
 
 # Refer
 
+* [Trapflag-Tracing I: Observing the Execution of a Program from Within Itself](http://ant6n.ca/2017-01-11-trapflag-tracing/)
 * [How debuggers work: Part 1 - Basics](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
 * https://eli.thegreenplace.net/tag/debuggers
 
 
 
 
+# Footnotes
 
+
+[^1]: I didn't check but I'm sure the LOC count of `gdb` is at least in the six-figures range.
+
+[^2]: Run `man 2 ptrace` for complete enlightment.
+
+[^3]: Peek and poke are well-known system programming [jargon](http://www.jargon.net/jargonfile/p/peek.html) for directly reading and writing memory contents.
+
+[^4]: This article assumes some basic level of Unix/Linux programming experience. I assume you know (at least conceptually) about `fork`, the `exec` family of functions and Unix signals.
+
+[^5]: At least if you're as obsessed with low-level details as I am
+
+[^6]: A word of warning here: as I noted above, a lot of this is highly platform specific. I'm making some simplifying assumptions - for example, x86 instructions don't have to fit into 4 bytes (the size of `unsigned` on my 32-bit Ubuntu machine). In fact, many won't. Peeking at instructions meaningfully requires us to have a complete disassembler at hand. We don't have one here, but real debuggers do.
 
 
 

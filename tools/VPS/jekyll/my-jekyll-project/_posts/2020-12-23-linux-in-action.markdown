@@ -1661,6 +1661,60 @@ The [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) system cal
 
 More: man top
 
+### 循环记录某个进程的 CPU 使用率符合某个条件时，输出这个进程所有线程的堆栈信息
+
+``` bash
+#!/bin/bash
+
+# @brief 循环记录某个进程的 cpu 使用率符合某个条件时，输出这个进程所有线程的堆栈信息
+# @note 需要 root 执行权限
+
+process_name="gamesvr"
+cpu_usage=60
+
+# 循环执行任务，直到程序停止
+while :; do
+    # 通过 top 命令获取当前正在运行的进程，并通过 pgrep 命令过滤出 process_name 进程
+    for pid in $(top -p $(pgrep -f $process_name) -d 1 -bn2 | tail -1 | awk '$9 < $cpu_usage { print $1 }'); do
+        # 获取进程的启动时间
+        echo "${pid} `date`"
+
+        # 遍历该进程的子进程
+        for dir in /proc/$pid/task/*; do
+            # 获取进程的详细信息，包括进程名称和进程 ID
+            echo "${dir##*/} ($(cat $dir/comm))"
+
+            # 打印进程的栈信息
+            cat $dir/stack
+
+            # 打印当前进程的详细信息
+            echo
+        done
+    done
+
+    # 等待一段时间再继续检测
+    sleep 10
+done
+```
+
+### 监控某个进程每隔 N 秒刷新一次，共刷新 M 次，并将输出重定向到 top.log 文件中
+
+``` bash
+#!/bin/bash
+
+top -Hp 3668452 -d 0.5 -n 3 -b > top.log
+```
+
+* `-Hp 3668452`：-H 参数表示以线程模式运行，-p 参数表示只显示指定进程的信息。在这里，3668452 是进程ID，所以这个命令将只显示进程ID为 3668452 的进程的线程信息。
+* `-d 0.5`：-d 参数表示刷新间隔。在这里，0.5 表示每隔 0.5 秒刷新一次。
+* `-n 3`：-n 参数表示刷新次数。在这里，3 表示刷新 3 次。
+* `-b`：-b 参数表示批处理模式。在这种模式下，top 将不会进入交互模式，而是在完成指定次数的刷新后退出。
+* `> top.log`：将 top 命令的输出重定向到名为 top.log 的文件中。
+
+这个命令的作用是：以线程模式查看进程ID为 3668452 的进程信息，每隔 0.5 秒刷新一次，共刷新 3 次，并将输出重定向到 top.log 文件中。
+
+
+
 ## coredump
 
 ### systemd-coredump
@@ -2748,6 +2802,61 @@ LD_DEBUG=libs ./bin
 LD_DEBUG=libs LD_DEBUG_OUTPUT=log ./bin
 ```
 
+## trap
+
+`trap` 是一个 shell 命令，用于在接收到指定信号时执行特定操作。它的语法如下：
+
+``` bash
+trap COMMAND SIGNALS
+```
+
+其中 COMMAND 是在接收到指定信号时要执行的命令，SIGNALS 是一个或多个要捕获的信号。
+
+在 `trap "" TRAP` 的示例中，设置了一个空命令（""）作为 SIGTRAP 信号的处理程序。当脚本接收到 SIGTRAP 信号时，它将执行空命令，即什么也不做，从而实际上忽略了该信号。
+
+以下是使用 trap 命令的更多示例：
+
+* 捕获 SIGINT 信号（通常由 Ctrl+C 产生）并执行自定义操作：
+
+``` bash
+#!/bin/bash
+
+trap "echo 'Caught SIGINT signal. Exiting...'; exit 1" INT
+
+echo "Press Ctrl+C to exit..."
+while true; do
+    sleep 1
+done
+```
+
+在这个示例中，当脚本接收到 SIGINT 信号时，它将打印一条消息并退出。
+
+* 在脚本退出时执行清理操作：
+
+``` bash
+#!/bin/bash
+
+function cleanup {
+    echo "Cleaning up temporary files..."
+    rm -f /tmp/some_temp_file
+}
+
+trap cleanup EXIT
+
+echo "Creating temporary file..."
+touch /tmp/some_temp_file
+
+echo "Press Ctrl+C to exit or wait for 10 seconds..."
+sleep 10
+```
+
+在这个示例中，定义了一个名为 `cleanup` 的函数，用于在脚本退出时删除临时文件。使用 `trap cleanup EXIT` 在脚本退出时调用 `cleanup` 函数。
+
+
+
+
+
+
 
 # 第三方工具
 
@@ -3217,7 +3326,7 @@ Solutions I have tried
 
 + Search topic related with SIGTRAP
   - People said it is in **debug mode and there are somewhere in the code set break point**. However, my app is compiled in **release mode without break point**.
-+ Catch signal handler and ignore `SIGTRAP`
++ Catch signal handler and ignore `SIGTRAP` (**补充说明：经测试，在程序中忽略 SIGTRAP 信号后，是不会出现 crash 的**)
   - No success, **I can only ignore SIGTRAP sent by "kill -5 pid". With the SIGTRAP occurs randomly in runtime, my app is still crashed**
 + Fix memory leak in code
   - Initialize pointer with nullptr
