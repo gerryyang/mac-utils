@@ -1,0 +1,83 @@
+top - 17:03:14 up 16 days,  8:03,  6 users,  load average: 1.35, 1.23, 1.05
+Threads:  20 total,   0 running,  20 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  3.6 us,  3.3 sy,  0.0 ni, 93.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 128402.3 total,  16040.1 free,  32326.0 used,  80036.3 buff/cache
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.  94603.1 avail Mem
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+3668452 gerryya+  20   0 5506756   1.6g 164728 S   6.2   1.3   3:23.10 gamesvr
+3670883 gerryya+  20   0 5506756   1.6g 164728 S   6.2   1.3   0:48.22 gamesvr
+3668454 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:28.02 100_Config
+3668480 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:00.33 100_LogDispatch
+3668481 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:58.92 100_Monitor
+3668486 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:07.03 100_Log
+3668487 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:11.83 100_Log
+3668642 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.06 100_L5
+3670475 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:09.72 100_Tcaplus
+3670832 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:40.96 100_OfflineRend
+3670833 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:09.36 100_Tcaplus
+3670875 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.97 100_TLog
+3670876 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:01.03 100_TLog
+3670877 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.30 100_JaegerRepor
+3670882 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.40 gamesvr
+3670886 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   2:37.17 100_NetMsg
+3670887 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:25.25 100_HealthThrea
+3670888 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:27.67 100_LuaCfgThrea
+3670889 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:30.98 100_StatThread
+3670892 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:43.07 100_msgtrace
+
+top - 17:03:14 up 16 days,  8:03,  6 users,  load average: 1.48, 1.26, 1.06
+Threads:  20 total,   1 running,  19 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  3.0 us,  1.8 sy,  0.0 ni, 95.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 128402.3 total,  16040.1 free,  32326.0 used,  80036.3 buff/cache
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.  94603.1 avail Mem
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+3670886 gerryya+  20   0 5506756   1.6g 164728 S   4.0   1.3   2:37.19 100_NetMsg
+3668452 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   3:23.11 gamesvr
+3668486 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:07.04 100_Log
+3670888 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:27.68 100_LuaCfgThrea
+3670889 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:30.99 100_StatThread
+3670892 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   0:43.08 100_msgtrace
+3668454 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:28.02 100_Config
+3668480 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:00.33 100_LogDispatch
+3668481 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:58.92 100_Monitor
+3668487 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:11.83 100_Log
+3668642 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.06 100_L5
+3670475 gerryya+  20   0 5506756   1.6g 164728 R   0.0   1.3   0:09.72 100_Tcaplus
+3670832 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:40.96 100_OfflineRend
+3670833 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:09.36 100_Tcaplus
+3670875 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.97 100_TLog
+3670876 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:01.03 100_TLog
+3670877 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.30 100_JaegerRepor
+3670882 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.40 gamesvr
+3670883 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:48.22 gamesvr
+3670887 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:25.25 100_HealthThrea
+
+top - 17:03:15 up 16 days,  8:03,  6 users,  load average: 1.48, 1.26, 1.06
+Threads:  20 total,   0 running,  20 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  3.0 us,  1.3 sy,  0.0 ni, 95.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 128402.3 total,  16040.1 free,  32326.0 used,  80036.3 buff/cache
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.  94603.1 avail Mem
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+3668452 gerryya+  20   0 5506756   1.6g 164728 S   4.0   1.3   3:23.13 gamesvr
+3668480 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:00.34 100_LogDispatch
+3668487 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:11.84 100_Log
+3670832 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   0:40.97 100_OfflineRend
+3670883 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   0:48.23 gamesvr
+3670886 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   2:37.20 100_NetMsg
+3670887 gerryya+  20   0 5506756   1.6g 164728 S   2.0   1.3   1:25.26 100_HealthThrea
+3668454 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:28.02 100_Config
+3668481 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:58.92 100_Monitor
+3668486 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:07.04 100_Log
+3668642 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.06 100_L5
+3670475 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:09.72 100_Tcaplus
+3670833 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:09.36 100_Tcaplus
+3670875 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.97 100_TLog
+3670876 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:01.03 100_TLog
+3670877 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.30 100_JaegerRepor
+3670882 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:00.40 gamesvr
+3670888 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:27.68 100_LuaCfgThrea
+3670889 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   1:30.99 100_StatThread
+3670892 gerryya+  20   0 5506756   1.6g 164728 S   0.0   1.3   0:43.08 100_msgtrace
