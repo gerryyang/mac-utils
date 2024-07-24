@@ -562,6 +562,8 @@ UpdateMgr:
 
 go template 配置：
 
+{% raw %}
+
 ``` xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <UpdateMgr>
@@ -570,6 +572,8 @@ go template 配置：
 {{- end }}
 </UpdateMgr>
 ```
+
+{% endraw %}
 
 生成的格式：
 
