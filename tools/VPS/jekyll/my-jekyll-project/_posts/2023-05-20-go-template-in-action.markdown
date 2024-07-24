@@ -548,6 +548,39 @@ coalesce .name .parent.name "Matt"
 
 The above will first check to see if `.name` is empty. If it is not, it will return that value. If it is empty, coalesce will evaluate `.parent.name` for emptiness. Finally, if both `.name` and `.parent.name` are empty, it will return `Matt`.
 
+# 使用示例
+
+## 示例1
+
+yaml 配置：
+
+``` yaml
+UpdateMgr:
+  EpollMgr: {Type: "BY_MICROSECOND", Interval: "1000"}
+  LibEventMgr: {Type: "BY_MICROSECOND", Interval: "1000"}
+```
+
+go template 配置：
+
+``` xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<UpdateMgr>
+{{- range $name,$attr := $.UpdateMgr }}
+    <Update Name="{{ $name }}" {{ range $key,$val := $attr }} {{ $key }}="{{ $val }}" {{- end }} />
+{{- end }}
+</UpdateMgr>
+```
+
+生成的格式：
+
+``` xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<UpdateMgr>
+    <Update Name="EpollMgr" Type="BY_MICROSECOND" Interval="1000" />
+    <Update Name="LibEventMgr" Type="BY_MICROSECOND" Interval="1000" />
+</UpdateMgr>
+```
+
 
 # Refer
 

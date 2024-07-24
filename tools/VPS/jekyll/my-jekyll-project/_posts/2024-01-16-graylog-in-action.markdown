@@ -608,12 +608,166 @@ Currently you can't. We only recommend another database if you want it for secon
 A common reason for this issue is that the timestamp in the message is wrong. First, confirm that the message was received by selecting `all messages` as the time range for your search. Then identify and fix the source that is sending the wrong timestamp.
 
 
+# Elasticsearch REST APIs
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-apis.html
+
+## 检查 es 状态
+
+```
+curl domain-endpoint:9200/_cluster/health?pretty=true
+```
+
+输出：
+
+```
+{
+  "cluster_name" : "smges-sh",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 5,
+  "number_of_data_nodes" : 2,
+  "active_primary_shards" : 30,
+  "active_shards" : 44,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+```
+
+## 查询 es 的索引
+
+```
+curl domain-endpoint:9200/_cat/indices?v
+```
+
+输出
+
+```
+health status index                            uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   .apm-agent-configuration         Q5E3ideATBqXmvgW7DE4CA   1   1          0            0       416b           208b
+green  open   gl-events_0                      hYyhOftdQG6Bfy9Ijewcsw   4   0          0            0       832b           832b
+green  open   .opendistro_security             AKJSa1BzRkqaGnLtyi3bEw   1   1          9            0    117.8kb         58.9kb
+green  open   .kibana_1                        wXujvxi_Ta2Hzg7_zl2ZGg   1   1        105           12      4.2mb          2.1mb
+green  open   .apm-custom-link                 l6kb6uWGSAOvwlN4KQDD8w   1   1          0            0       416b           208b
+green  open   jlib_log_index_prefix_20240716_1 _0MqNl8lRSeQ4TnjkYFm1g   4   0          0            0       832b           832b
+green  open   jlib_log_index_prefix_20240716_0 8mNp1ZQPQbWJE6QszuGrag   4   0          0            0       832b           832b
+green  open   .kibana_task_manager_1           mWqmJbsiT1qijTj2w1x4XQ   1   1          5       755163    118.6mb         59.2mb
+green  open   .kibana-event-log-7.10.2-000004  wBTekoeIS06C_BZlA5gwEw   1   1          0            0       416b           208b
+green  open   gl-system-events_0               f3-ypVVCR_yIioh2WDzalg   4   0          0            0       832b           832b
+green  open   graylog_deflector                x1i1_aMQR12wgjm_hd0CbQ   1   1  120903091            0     48.4gb         24.2gb
+green  open   .kibana-event-log-7.10.2-000001  ZnV__tPvQ_2CSDJcgyS18A   1   1          1            0     11.2kb          5.6kb
+green  open   .kibana-event-log-7.10.2-000002  SCp4U_CwQ0GeHjoIiUhDBg   1   1          0            0       416b           208b
+green  open   .kibana-event-log-7.10.2-000003  6_S_kUt1QOyAnNqEtANTKA   1   1          0            0       416b           208b
+```
+
+## 删除 es 的索引
+
+```
+curl -XDELETE domain-endpoint:9200/graylog_deflector
+```
+
+## 查询 es 的存储空间
+
+```
+curl domain-endpoint:9200/_cat/allocation?v
+```
+
+输出
+
+```
+shards     disk.indices disk.used disk.avail disk.total       disk.percent   host         ip           node
+    21       74.4mb     7.1gb     41.9gb       49gb           14             9.143.87.196 9.143.87.196 dn-9.143.87.196
+    21       75.2mb     9.9gb     39.1gb       49gb           20             11.147.239.2 11.147.239.2 dn-11.147.239.2
+```
+
+
+## 列出 es 未分配的分片
+
+```
+$ curl -XGET 'domain-endpoint/_cat/shards?h=index,shard,prirep,state,unassigned.reason' | grep UNASSIGNED
+```
+
+输出
+
+```
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    12  100    12    0     0    531      0 --:--:-- --:--:-- --:--:--   545
+```
+
+## 修改 es 的配置
+
+```
+curl -X PUT "smges:smges_dAqlkS@smges-sh.physic-sh.es.svr.ehk.db:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "action.auto_create_index": "false"
+  }
+}'
+```
+
+## 查询 es 的配置
+
+
+```
+curl -XGET "smges:smges_dAqlkS@smges-sh.physic-sh.es.svr.ehk.db:9200/_cluster/settings"
+```
+
+
+# Graylog 问题定位
+
+
+## [How do I fix the "Deflector exists as an index and is not an alias" error message?](https://go2docs.graylog.org/4-3/planning_your_deployment/faq.html)
+
+Graylog is using **an Elasticsearch index alias** per index set pointing to the active write index, the so-called **deflector**, to write messages into Elasticsearch such as `graylog_deflector` in the default index set.
+
+Please refer to [Index model](https://go2docs.graylog.org/4-x/setting_up_graylog/index_model.html) for a more in-depth explanation of the Elasticsearch index model used by Graylog.
+
+In some rare situations, there might be an Elasticsearch index with a name which has been reserved for the deflector of an index set managed by Graylog, so that Graylog is unable to create the proper Elasticsearch index alias.
+
+修复方法：
+
+1. Stop all Graylog nodes
+2. (OPTIONAL ) If you want to keep the already ingested messages, reindex them into the Elasticsearch index with the greatest number, e.g. `graylog_23` if you want to fix the deflector `graylog_deflector`, via the [Elasticsearch Reindex API](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docs-reindex.html).
+3. Delete the `graylog_deflector` index via the [Elasticsearch Delete Index API](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/indices-delete-index.html).
+4. Add `action.auto_create_index: false` to the configuration files of all Elasticsearch nodes in your cluster and restart these Elasticsearch nodes, see [Elasticsearch Index API - Automatic Index Creation](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docs-index_.html#index-creation) and [Creating an Index](https://www.elastic.co/guide/en/elasticsearch/2.x/_creating_an_index.html) for details. (实际验证，不需要重启 es，可以通过 Restful 的方式更新 es 配置)
+5. Start the Graylog leader node.
+Manually **rotate the active write index** of the index set on the System / Indices / Index Set page in the `Maintenance` drop down menu.
+6. (OPTIONAL ) Start all remaining Graylog follower nodes.
+
+```
+curl -X PUT "smges:smges_dAqlkS@smges-sh.physic-sh.es.svr.ehk.db:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "action.auto_create_index": "false"
+  }
+}'
+```
+
+
+其他参考：
+
+* [How to fix "Deflector exists as an index and is not an alias" warning?](https://community.graylog.org/t/how-to-fix-deflector-exists-as-an-index-and-is-not-an-alias-warning/2826)
+* [Deflector exists as an index and is not an alias. #4355](https://github.com/Graylog2/graylog2-server/issues/4355)
+* [graylog deflector is used before elasticsearch report back success #4167](https://github.com/Graylog2/graylog2-server/issues/4167)
+* [graylog es 故障问题相关问题解决](https://www.cnblogs.com/rongfengliang/p/13184573.html)
 
 
 # Refer
 
+* graylog 4.3
+  + https://go2docs.graylog.org/4-3/home.htm (技术文档)
+  + https://go2docs.graylog.org/4-3/planning_your_deployment/faq.html
+
 * https://go2docs.graylog.org/5-2/what_is_graylog/what_is_graylog.htm
 * https://github.com/Graylog2/graylog2-server
+* https://go2docs.graylog.org/current/making_sense_of_your_log_data/writing_search_queries.html
 
 
 
