@@ -620,6 +620,54 @@ void func(T&&) [with T = int]
 */
 ```
 
+``` cpp
+#include <iostream>
+
+void myFunction(int a, double b)
+{
+    std::cout << "Function name: " << __func__ << std::endl;
+}
+
+int main()
+{
+    myFunction(42, 3.14);
+    return 0;
+}
+// Function name: myFunction
+```
+
+## 通过编译期提取类名和函数名
+
+``` cpp
+#include <iostream>
+#include <string_view>
+
+constexpr std::string_view extractClassNameAndFunctionName(std::string_view prettyFunction)
+{
+    auto start = prettyFunction.find(" ");
+    auto end = prettyFunction.find("(");
+    return prettyFunction.substr(start + 1, end - start - 1);
+}
+
+class A
+{
+public:
+    void myFunction(int a, double b)
+    {
+            constexpr std::string_view funcName = extractClassNameAndFunctionName(__PRETTY_FUNCTION__);
+            std::cout << "Function name: " << funcName << std::endl;
+    }
+};
+
+int main()
+{
+    A a;
+    a.myFunction(1, 2.0);
+}
+/*
+Function name: A::myFunction
+*/
+```
 
 
 # 测试代码

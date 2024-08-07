@@ -705,12 +705,31 @@ set logging off
 
 ## 打印完整的字符串
 
+Specifies the maximum amount of array elements (or string characters) displayed by the print comand.
+
 ```
-(gdb) show print elements
-(gdb) set print elements 0
-(gdb) show print elements
+set print elements [Elements]
+set print elements 0
+show print elements
 ```
 
+* Parameters
+
+Elements
+
+Specifies the maximum amount of array elements (or string characters) that the print command will display when displaying array/string contents. **If this parameter is 0, GDB will have no limit on the amount of elements/characters to display**.
+
+* Default mode
+
+The default value for the print elements setting is 200.
+
+* Remarks
+
+**It is not recommended to remove the element limit completely, to avoid delays when evaluating null-terminated strings that were not null-terminated properly.**
+
+
+
+https://visualgdb.com/gdbreference/commands/set_print_elements
 
 
 # [《Debug Hacks》和调试技巧](https://maskray.me/blog/2013-07-25-debug-hacks)

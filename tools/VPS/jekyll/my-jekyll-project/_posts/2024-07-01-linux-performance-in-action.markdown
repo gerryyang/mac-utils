@@ -26,6 +26,7 @@ categories: [Linux Performance]
 ## 优化性能示例 1：`google::dense_hash_map` 的性能可以比 `std::unordered_map` 快好几倍
 
 * [Benchmark of major hash maps implementations](https://tessil.github.io/2016/08/29/benchmark-hopscotch-map.html)
+* [Boost.Unordered](https://www.boost.org/doc/libs/develop/libs/unordered/doc/html/unordered.html)
 
 ## 优化性能示例 2：通过使用 GCC 的 `__builtin_prefetch` 指令来预先提取关键指令，从而降低缓存的缺失比例，提高 CPU 的使用效率
 
