@@ -278,6 +278,7 @@ Get started with the [Quick Start guide](https://helm.sh/docs/intro/quickstart/)
 
 # Refer
 
+* https://helm.sh/docs/glossary/
 * https://github.com/helm/helm
 * https://helm.sh/zh/docs/chart_template_guide/getting_started/
 * [是时候使用Helm了：Helm, Kubernetes的包管理工具](https://www.kubernetes.org.cn/3435.html)
