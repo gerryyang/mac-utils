@@ -23,7 +23,7 @@ categories: [Linux Performance]
 
 性能好的代码，可以用四个字来概括："**多快好省**"
 
-![performance](/assets/images/202407/performance.png)
+![performance](/assets/images/202408/performance.png)
 
 
 ## 优化性能思路: 硬件优化 (软硬结合)
