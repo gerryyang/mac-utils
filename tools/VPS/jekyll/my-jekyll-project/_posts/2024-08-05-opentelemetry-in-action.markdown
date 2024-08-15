@@ -559,3 +559,4 @@ The OpenTelemetry project uses terminology you might not be familiar with. In ad
 # Refer
 
 * https://opentelemetry.io/docs/
+* https://opentelemetry.io/docs/what-is-opentelemetry/

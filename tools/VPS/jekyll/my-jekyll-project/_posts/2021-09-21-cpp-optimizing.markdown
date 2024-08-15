@@ -252,7 +252,8 @@ More:
 1. [Introduction to DPDK: Architecture and Principles](https://blog.selectel.com/introduction-dpdk-architecture-principles/)
 2. [The Secret To 10 Million Concurrent Connections -The Kernel Is The Problem, Not The Solution](http://highscalability.com/blog/2013/5/13/the-secret-to-10-million-concurrent-connections-the-kernel-i.html)
 
-# 性能优化方案案例
+# 性能优化案例
+
 ## 编译期计算
 
 使用`enum hack`
@@ -1515,7 +1516,75 @@ gprof my_program gmon.out > analysis.txt
 现在，可以查看 `analysis.txt` 文件以获取程序的性能概况。
 
 
-# 可能带来性能问题的场景
+# 优化代码案例
+
+## 字节序反转
+
+因为 [ntohl](https://linux.die.net/man/3/ntohl) 不支持 64位，而 [be64toh](https://linux.die.net/man/3/be64toh) 支持 64位。
+
+``` cpp
+// htonl, htons, ntohl, ntohs - convert values between host and network byte order
+
+#include <arpa/inet.h>
+uint32_t htonl(uint32_t hostlong);
+uint16_t htons(uint16_t hostshort);
+uint32_t ntohl(uint32_t netlong);
+uint16_t ntohs(uint16_t netshort);
+```
+
+``` cpp
+// htobe16, htole16, be16toh, le16toh, htobe32, htole32, be32toh, le32toh, htobe64, htole64, be64toh, le64toh - convert values between host and big-/little-endian byte order
+
+#define _BSD_SOURCE             /* See feature_test_macros(7) */
+#include <endian.h>
+
+uint16_t htobe16(uint16_t host_16bits);
+uint16_t htole16(uint16_t host_16bits);
+uint16_t be16toh(uint16_t big_endian_16bits);
+uint16_t le16toh(uint16_t little_endian_16bits);
+
+uint32_t htobe32(uint32_t host_32bits);
+uint32_t htole32(uint32_t host_32bits);
+uint32_t be32toh(uint32_t big_endian_32bits);
+uint32_t le32toh(uint32_t little_endian_32bits);
+
+uint64_t htobe64(uint64_t host_64bits);
+uint64_t htole64(uint64_t host_64bits);
+uint64_t be64toh(uint64_t big_endian_64bits);
+uint64_t le64toh(uint64_t little_endian_64bits);
+```
+
+下面的 `ByteOrderSwap64` 是造轮子的实现方式。
+
+``` cpp
+inline uint64 ByteOrderSwap64(uint64 x)
+{
+    return ((((x)&0xff00000000000000ull) >> 56) | (((x)&0x00ff000000000000ull) >> 40) | (((x)&0x0000ff0000000000ull) >> 24) |
+            (((x)&0x000000ff00000000ull) >> 8) | (((x)&0x00000000ff000000ull) << 8) | (((x)&0x0000000000ff0000ull) << 24) |
+            (((x)&0x000000000000ff00ull) << 40) | (((x)&0x00000000000000ffull) << 56));
+}
+
+#if !defined(__BYTE_ORDER) || !defined(__BIG_ENDIAN) || !defined(__LITTLE_ENDIAN)
+#    error "No define __BYTE_ORDER or __BIG_ENDIAN or __LITTLE_ENDIAN"
+#endif
+
+#if __BYTE_ORDER == __BIG_ENDIAN
+#    define ntoh64(x) (x)
+#    define hton64(x) (x)
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#    define ntoh64(x) ByteOrderSwap64(x)
+#    define hton64(x) ByteOrderSwap64(x)
+#else
+#    error "__BYTE_ORDER != __BIG_ENDIAN && __BYTE_ORDER != __LITTLE_ENDIAN"
+#endif
+```
+
+这段代码定义了一个名为 ByteOrderSwap64 的内联函数，用于将一个 64 位无符号整数（uint64 类型）的字节顺序进行反转。这个函数在处理不同字节序的数据时非常有用，例如在网络编程或文件 I/O 中，不同系统可能使用不同的字节序来表示数据。通过使用这个函数，我们可以确保数据在不同系统之间正确地传输和解析。
+
+
+
+
+# 影响性能的案例
 
 ## C++ Exceptions
 
@@ -1534,6 +1603,8 @@ refer:
 
 * [Infographics: Operation Costs in CPU Clock Cycles](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/)
 * [C++异常机制的实现方式和开销分析](https://blog.csdn.net/cqu20093154/article/details/44020043)
+
+
 
 
 # 关于优化的其他思考
