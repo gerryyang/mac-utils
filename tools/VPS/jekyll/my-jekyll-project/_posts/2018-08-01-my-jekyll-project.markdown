@@ -373,6 +373,9 @@ More: https://github.com/hzlzh/Best-App
 
 一些总结和用法，[另见](https://github.com/gerryyang/mac-utils/tree/master/tools/software_documentation_tools/vim)。
 
+![vim_cheat_sheet_for_programmers](/assets/images/202408/vim_cheat_sheet_for_programmers.png)
+
+
 #### 常用操作
 
 * [VIM 的分屏功能](https://coolshell.cn/articles/1679.html)
