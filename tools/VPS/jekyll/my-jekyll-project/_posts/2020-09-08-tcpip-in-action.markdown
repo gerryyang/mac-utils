@@ -8,6 +8,40 @@ categories: [TCP/IP]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# TCP 状态变化
+
+![tcp_state](/assets/images/202408/tcp_state.png)
+
+TCP关闭连接如上图下半部分的四次握手实现。发起终止的一方称主动关闭（client），响应的一方为被动关闭（server）。
+
+1. 当 client 要关闭时，发出一个 TCP 的 **FIN** 包， 此时 socket 状态改为 `FIN_WAIT_1`。
+2. 接收方收到 **FIN** 包，返回一个带确认序号的 **ACK**，同时向自己对应的进程发送一个文件结束符 EOF，此时 server 端 socket 状态变为 `CLOSE_WAIT`，发起方接到 **ACK** 后状态更改为 `FIN_WAIT_2`；
+3. server 端应用层侦测到 socket 需关闭，即调用 close，向对端发出一个 TCP 的 **FIN** 包，同时其 socket 状态更改为 `LAST_ACK`；
+4. 发起方接到 **FIN** 包后即发 **ACK** 确认包，同时 socket 状态更改为 `TIME_WAIT`。此时 server 端 socket 正常变为 `CLOSED`， 但客户端需等待 **2MSL**（Maximum Segment Lifetime 报文最大生存时间）后状态方变为 `CLOSED`。
+
+> `TIME_WAIT` 状态的目的是为了防止最后发出 **ACK** 丢失，接收方处于 `LAST_ACK` 超时重发 **FIN**。所以，主动发起关闭连接的一方会进入 `TIME_WAIT` 状态，在进行压力测试的时候，这种状态大量存在，进程所占用的端口号不能被释放，导致后来的连接建立失败。
+
+在内核协议层通过设置以下两个参数来解决 `TIME_WAIT` 问题：
+
+1. `TIME_WAIT` 状态可以重用，这样即使 `TIME_WAIT` 占满了所有端口，也不会拒绝新的请求
+
+```
+echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
+```
+
+2. `TIME_WAIT` 尽快回收
+
+```
+echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle
+```
+
+> tcp_tw_recycle 打开后能在很短的时间能将 `TIME_WAIT` 的端口回收（但是具体时间并未找到相应的资料，测试观察在1秒左右）。同时，打开加速回收或者允许重用，存在一定的问题，例如，发起方(client) 在发出最后一个 **ACK** 后立即被回收，而 **ACK** 丢失，接受方超时重发 **FIN**，恰好此时发起方使用刚才的端口建立起新的连接，那它将收到一个 **FIN**，从而可能引发异常被动关闭。
+
+与 `TIME_WAIT` 相对应的是 `CLOSE_WAIT` 问题，被动关闭的情况下，已经接收到 **FIN**，但是还没有发送自己的 **FIN** 的时刻，连接处于 `CLOSE_WAIT` 状态。正常情况下 `CLOSE_WAIT` 状态时间很短。如果出现大量的 `CLOSE_WAIT`，是某种情况下对方关闭了连接，但是接收方忙于读或者写，没有关闭连接导致。在代码实现的时候需要判断 socket，一旦 read 返回 0，断开连接，read 返回负，检查一下 errno，如果不是 AGAIN，也断开连接。
+
+
+
+
 # TCP 核心思想：带重传的累积正向应答
 
 1. Cumulative positive acknowledgement with retransmission

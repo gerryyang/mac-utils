@@ -367,7 +367,52 @@ More: https://github.com/hzlzh/Best-App
 > 首先 --quiet 是把输出结果精简化了，一些总计的结果给过滤了。然后使用 -by-file 代表统计的时候按照文件统计，而不是按照默认的语言统计， --exclude-dir 表示省略  node_modules 文件夹。 --include-lang 这里直接标记将 Golang 的文件统计出来。上面这些 cloc  的命令就把 ./ 下有哪些 go 文件，每个文件的空格多少行，注释多少行，真正代码多少行都列出来了。然后使用 grep ".go" 把一些噪音输出过滤掉，只留下“文件名\t空格行数\t注释行数\t代码行数”，后面的 sort -rn -k 4 按照第四列（代码行数）倒序排列，并且 head -n 10 显示前10个文件。
 
 
+### [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh)
 
+Oh My Zsh is an open source, community-driven framework for managing your zsh configuration.
+
+A delightful community-driven (with 2,300+ contributors) framework for managing your zsh configuration. Includes 300+ optional plugins (rails, git, macOS, hub, docker, homebrew, node, php, python, etc), 140+ themes to spice up your morning, and an auto-update tool so that makes it easy to keep up with the latest updates from the community.
+
+
+
+``` bash
+#!/usr/bin/zsh
+
+# Powerlevel10k
+if [ -d ~/tools/zsh/powerlevel10k ]; then
+  rm -rf ~/tools/zsh/powerlevel10k
+fi
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/tools/zsh/powerlevel10k
+echo 'source ~/tools/zsh/powerlevel10k/powerlevel10k.zsh-theme' >~/.zshrc
+
+# zsh-z
+if [ -d ~/.zsh/zsh-z ]; then
+  rm -rf ~/.zsh/zsh-z
+fi
+git clone https://github.com/agkozak/zsh-z.git ~/.zsh/zsh-z
+echo 'source ~/.zsh/zsh-z/zsh-z.plugin.zsh' >>~/.zshrc
+
+# zsh-autosuggestions
+if [ -d ~/.zsh/zsh-autosuggestions ]; then
+  rm -rf ~/.zsh/zsh-autosuggestions
+fi
+git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+echo 'source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh' >>~/.zshrc
+
+# zsh-syntax-highlighting
+if [ -d ~/.zsh/zsh-syntax-highlighting ]; then
+  rm -rf ~/.zsh/zsh-syntax-highlighting
+fi
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
+echo 'source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >>~/.zshrc
+
+# switch bash to zsh
+zsh
+
+source ~/.zshrc
+```
+
+> 通过 chsh -s $(which zsh) 可以将默认 shell 更改为 zsh
 
 ### Vim
 
