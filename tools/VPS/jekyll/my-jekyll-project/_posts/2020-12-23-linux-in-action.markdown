@@ -1909,13 +1909,457 @@ $dmesg -T
 [Sun Dec 13 23:41:22 2020] Killed process 15395 (cc1plus) total-vm:168940kB, anon-rss:119492kB, file-rss:0kB
 ```
 
-## strace(relies on ptrace system call)
+## strace (relies on ptrace system call)
 
+* [使用strace, ltrace寻找故障原因的线索](https://blog.csdn.net/delphiwcdj/article/details/7387325)
 * [How does strace work?](https://blog.packagecloud.io/eng/2016/02/29/how-does-strace-work/)
+
+> strace is a common tool upon many GNU/Linux systems. Put simply strace is a "system call tracer" - which is where it gets its name from. Using strace, as root, you can monitor the system calls made by any process upon your system. This can be enormously beneficial when you have a misbehaving program.
+
+strace（strace - trace system calls and signals）能够跟踪进程使用的系统调用，并显示其内容。因此，当遇到调试不明的故障时，首先使用 strace 找出系统调用中出错的地方，通常能得到故障发生的线索，特别是与文件有关的错误、参数错误等。
+
+> 注意：使用 strace 能够有效地发现系统调用失败有关的故障，但无法发现用户写出的程序或共享库中发生的错误。
+
+strace/ltrace 是一类不错的工具，在工作中经常会用到，其主要可以用于：
+
+1. 了解一个程序的工作原理（可以了解 Linux 下很多常用的命令实现的原理）
+2. 帮助定位程序中的问题（在开发工作时帮助定位问题）
+
+strace 和 ltrace 的区别：
+
+```
+strace —— Trace system calls and signals （跟踪一个进程的系统调用或信号产生的情况）
+ltrace —— A library call tracer （跟踪进程调用库函数的情况）
+```
+
+* strace 最初是为 SunOS 系统编写的，ltrace 最早出现在 GUN/Debian Linux 中，这两个工具现在已被移植到了大部分 Unix 系统中（可以通过 which 命令查找系统中是否存在此命令），大多数 Linux 发行版都自带了 strace 和 ltrace，没有的话也可以尝试手动安装它们。
+* 关于系统调用和库函数的区别，APUE 第一章有详细的介绍。
+* strace 和 ltrace 的使用方法基本相同。其中它们共同最常用的三个命令行参数是：
+
+| 选项 | 功能 |
+| -- | -- |
+| -f | 除了跟踪当前进程外，还跟踪其子进程
+| -o file | 将输出信息写到文件 file 中，而不是显示到标准错误输出（stderr）
+| -p PID | 绑定到一个由 PID 对应的正在运行的进程，此参数常用来调试后台进程（守护进程）
+
+* strace 和 ltrace 的输出结果格式基本相似。以 strace 为例，每一行都是一条系统调用（ltrace 为库函数），等号左边是系统调用的函数名及其参数，右边是该调用的返回值。
+* 此类工具的原理是也大同小异，都是使用 ptrace 系统调用跟踪调试运行中的进程。
+* 用调试工具实时跟踪程序的运行情况，不仅是诊断软件“疑难杂症”的有效手段，也可以帮助我们理清程序的“脉络”，即快速掌握软件的运行流程和工作原理，不失为一种学习源代码的辅助方法。
+
+使用示例：
+
+``` cpp
+#include<stdio.h>
+#include<stdlib.h>
+
+int main()
+{
+    FILE *fp;
+    fp = fopen("/etc/shadow", "r");
+    if (fp == NULL)
+    {
+        printf("Error!\n");
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+/*
+gcc -Wall -g -o st1 st1.c
+$ ./st1
+Error!
+*/
+```
+
+执行该程序报错是因为程序试图打开一般用户没有读权限的 /etc/shadow 文件，但是通过错误消息无法得知这一点。真实的程序也会有错误信息内容不明确、所有地方都显示同样的错误信息的情况，甚至可能什么都不显示。这种情况下，就很难确定错误发生在源代码的什么地方（通过日志信息可以知道最上层调用出错的地方），因此也无法用 GDB 设置断点，此时可以使用 strace 来进一步定位错误。
+
+``` bash
+$ strace ./st1
+
+execve("./st1", ["./st1"], [/* 59 vars */]) = 0
+brk(0)                                  = 0x804a000
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fc4000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=37293, ...}) = 0
+mmap2(NULL, 37293, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7fba000
+close(3)                                = 0
+open("/lib/libc.so.6", O_RDONLY)        = 3							// (1)
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\340Y\1"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=1548470, ...}) = 0
+mmap2(NULL, 1312188, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xb7e79000
+madvise(0xb7e79000, 1312188, MADV_SEQUENTIAL|0x1) = 0
+mmap2(0xb7fb3000, 16384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x139) = 0xb7fb3000
+mmap2(0xb7fb7000, 9660, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7fb7000
+close(3)                                = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7e78000
+set_thread_area({entry_number:-1 -> 6, base_addr:0xb7e786b0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+mprotect(0xb7fb3000, 8192, PROT_READ)   = 0
+munmap(0xb7fba000, 37293)               = 0
+brk(0)                                  = 0x804a000
+brk(0x806b000)                          = 0x806b000
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)	// (2)
+fstat64(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fc3000
+write(1, "Error!\n", 7Error!										// (3)
+)                 = 7
+exit_group(1)                           = ?
+Process 22259 detached
+```
+
+出错并结束的话，从后往前看 strace 的输出结果是解决问题的捷径。从标注的位置可以发现，最后即为在界面上显示错误信息的系统调用，再往前看，系统调用 open() 失败，而且立即可以得知程序在试图打开 /etc/shadow 时发生了 Permission denied错误（EACCES）。
+
+> 上面 strace 显示的信息有很多，但开头的信息都是关于启动进程时的处理。尽管这一部分有很多错误，但这些错误是进程在试图从各种路径中加载共享库而导致的。从 open("/lib/libc.so.6",O_RDONLY) = 3 处开始的十几行，程序成功地将所有的库链接到了进程，附近都是运行时加载器（runtime loader）的处理，可以忽略。
+
+### 使用 strace 的各种选项 —— 进一步帮助定位问题
+
+#### -i 找到地址方便 GDB 详细调试
+
+Print the instruction pointer at the time of the system call. 给 strace 添加 -i 选项即可显示程序在哪个地址进行了系统调用，可以将该地址作为断点使用，然后使用 GDB 进一步定位问题。各行开头 `[]` 中的数字就是执行系统调用的代码的地址。在 GDB 中可以指定该地址并显示 `backstrace`，例如：`b *0xb7e44d2a`
+
+``` bash
+$ strace -i ./st1
+
+[b7e44d2a] execve("./st1", ["./st1"], [/* 59 vars */]) = 0
+[b7fdf6bb] brk(0)                       = 0x804a000
+[b7fe04c3] mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fcb000
+[b7fe0041] access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+[b7fdff04] open("/etc/ld.so.cache", O_RDONLY) = 3
+[b7fdfece] fstat64(3, {st_mode=S_IFREG|0644, st_size=37293, ...}) = 0
+[b7fe04c3] mmap2(NULL, 37293, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7fc1000
+[b7fdff3d] close(3)                     = 0
+[b7fdff04] open("/lib/libc.so.6", O_RDONLY) = 3
+[b7fdff84] read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\340Y\1"..., 512) = 512
+[b7fdfece] fstat64(3, {st_mode=S_IFREG|0755, st_size=1548470, ...}) = 0
+[b7fe04c3] mmap2(NULL, 1312188, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xb7e80000
+[b7fe0584] madvise(0xb7e80000, 1312188, MADV_SEQUENTIAL|0x1) = 0
+[b7fe04c3] mmap2(0xb7fba000, 16384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x139) = 0xb7fba000
+[b7fe04c3] mmap2(0xb7fbe000, 9660, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7fbe000
+[b7fdff3d] close(3)                     = 0
+[b7fe04c3] mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7e7f000
+[b7fcdce0] set_thread_area({entry_number:-1 -> 6, base_addr:0xb7e7f6b0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+[b7fe0544] mprotect(0xb7fba000, 8192, PROT_READ) = 0
+[b7fe0501] munmap(0xb7fc1000, 37293)    = 0
+[b7f3855b] brk(0)                       = 0x804a000
+[b7f3855b] brk(0x806b000)               = 0x806b000
+[b7f304be] open("/etc/shadow", O_RDONLY) = -1 EACCES (Permission denied)
+[b7f2f57e] fstat64(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+[b7f3c5f3] mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fca000
+[b7f30b8e] write(1, "Error!\n", 7Error!
+)      = 7
+[b7f0bcf3] exit_group(1)                = ?
+Process 17355 detached
+```
+
+#### -p PID (或 -p `pidof ProcName`) attach 到进程上调试后台程序
+
+Attach to the process with the process ID pid and begin tracing. The trace may be terminated at any time by a keyboardinterrupt signal (CTRL-C). strace will respond by detaching itself from the traced process(es) leaving it (them) to continue running. Multiple -p optionscan be used to attach to up to 32 processes in addition to command (which is optional if at least one -p option is given).
+
+此选项主要用于查看运行中的进程（如守护进程）的行为。将上面的程序做一下修改：
+
+``` cpp
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+
+int main()
+{
+    while(1)
+    {
+        FILE *fp;
+        fp = fopen("/etc/shadow", "r");
+        if (fp == NULL)
+        {
+            printf("Error!\n");
+            //return EXIT_FAILURE;
+        }
+        else
+        {
+            fclose(fp);
+        }
+
+        sleep(3);// sleep 3 seconds
+    }
+
+    return EXIT_SUCCESS;
+}
+/*
+   gcc -Wall -g -o st1 st1_p260.c
+*/
+```
+
+```
+ps ux | grep st1
+1006    17673  0.0  0.0   1640  348 pts/0    S+   10:21  0:00 ./st1
+```
+
+使用 -p 选项跟踪当前正在运行的程序，按 Ctrl-C 键来结束程序。
+
+``` bash
+$ strace -p 17673
+
+Process 17673 attached - interrupt to quit
+restart_syscall(<... resuming interrupted call ...>) = 0
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+write(1, "Error!\n", 7)                 = 7
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGCHLD, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+nanosleep({3, 0}, {3, 0})               = 0
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+write(1, "Error!\n", 7)                 = 7
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGCHLD, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+nanosleep({3, 0}, {3, 0})               = 0
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+write(1, "Error!\n", 7)                 = 7
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGCHLD, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+nanosleep({3, 0},  <unfinished ...>
+Process 17673 detached
+
+// 或者使用
+
+$ strace -p `pidof st1`
+
+Process 17673 attached - interrupt to quit
+restart_syscall(<... resuming interrupted call ...>) = 0
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+write(1, "Error!\n", 7)                 = 7
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGCHLD, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+nanosleep({3, 0}, {3, 0})               = 0
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+write(1, "Error!\n", 7)                 = 7
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+rt_sigaction(SIGCHLD, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+nanosleep({3, 0},  <unfinished ...>
+Process 17673 detached
+```
+
+#### -o output.log 将 strace 信息输出到文件方便进一步查找
+
+Write the trace output to the file filename rather than to **stderr**. Use filename.pid if `-ff` is used. If the argument begins with '|' or with '!' then the rest of the argument is treated as a command and all output is piped to it. This is convenient for piping the debugging output to a program without affecting the redirections of executed programs.
+
+`-ff`: If the `-o` filename option is in effect, each processes trace is written to filename.pid where pid is the numeric process id of each process.
+
+``` bash
+$ strace -o output.log ./st1
+$ cat output.log
+execve("./st1", ["./st1"], [/* 59 vars */]) = 0
+brk(0)                                  = 0x804a000
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7f2e000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+```
+
+> 注意：strace 的输出为标准错误输出，因此可以像下面这样将显示内容输出到标准输出上，通过管道再传给 grep、less 等。
+
+``` bash
+$ strace ./st1 2>&1 | grep open
+
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 3
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+```
+
+```
+2>&1   将标准出错重定向到标准输出
+2>     代表错误重定向
+&1     代表标准输出
+```
+
+#### -f 跟踪 fork 之后的子进程
+
+Trace child processes as they are created by currently traced processes as a result of the fork(2) system call. The new process is attached to as soon as its pid is known (through the return value of fork(2) in the parent process).This means that such children may run uncontrolled for a while (especially in the case of a vfork(2)), until the parent is scheduled again to complete its (v)fork(2) call. If the parent process decides to wait(2) for achild that is currently being traced, it is suspended until an appropriate child process either terminates or incurs a signal that would cause it to terminate (as determined from the child's current signal disposition).
+
+
+#### -t / -tt 显示系统调用的执行时刻
+
+```
+-t    以秒为单位
+-tt   以微秒为单位
+-T    显示系统调用的耗时
+
+-t         Prefix each line of the trace with the time of day.
+-tt        If given twice, the time printedwill include the microseconds.
+-ttt       If given thrice, the time printed will include the microseconds and the leading portion will be printed as the number of seconds since the epoch.
+-T         Show the time spent in system calls. This records the time difference between the beginning and the end of each system call.
+```
+
+#### -e 显示指定跟踪的系统调用
+
+```
+-e expr
+
+A qualifying expression which modifies which events to trace or how to trace them. The format of the expression is:
+
+[qualifier=][!]value1[,value2]...
+
+where qualifier is one of trace, abbrev, verbose, raw, signal, read, or write and value is  a qualifier-dependent symbol or number. **The default qualifier is trace**. Using an exclamation mark negates the set of values. For example, `-e open` means literally `-etrace=open` which in turn means trace only the `open` system call. By contrast, `-etrace=!open` means to trace every system call except open. In addition, the special values all and none have the obvious meanings.
+
+Note that some shells use the exclamation point for history expansion even inside quoted arguments. If so, you must escape the exclamation point with a backslash.
+```
+
+* -e trace=all        跟踪进程的所有系统调用
+* -e trace=network    只记录和网络 api 相关的系统调用
+* -e trace=file       只记录涉及到文件名的系统调用
+* -e trace=desc       只记录涉及到文件句柄的系统调用
+* 其他的还包括：process, ipc, signal 等
+
+
+只记录 open 的系统调用：
+
+``` cpp
+$ strace -e trace=open ./st1
+
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 3
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+Error!
+open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied)
+Error!
+```
+
+
+#### -s 指定系统调用参数的长度
+
+显示系统调用参数时，对于字符串显示的长度， 默认是 32，如果字符串参数很长，很多信息显示不出来。
+
+`-s strsize`: Specify the maximum string size to print(the default is 32). Note that filenames are not considered strings and arealways printed in full.
+
+例如：
+
+``` bash
+strace -s 1024 ./st1
+```
+
+#### 用 strace 了解程序的工作原理
+
+问题：在进程内打开一个文件，都有唯一一个文件描述符（fd: file descriptor）与这个文件对应。如果已知一个 fd，如何获取这个 fd 所对应文件的完整路径？不管是 Linux、FreeBSD 或其他 Unix 系统都没有提供这样的 API，那怎么办呢？
+
+我们换个角度思考：Unix 下有没有什么命令可以获取进程打开了哪些文件？使用 lsof 命令即可以知道程序打开了哪些文件，也可以了解一个文件被哪个进程打开。（平时工作中很常用，例如，使用 lsof -p PID 来查找某个进程存放的位置）
+
+``` cpp
+#include<stdio.h>
+#include<unistd.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
+
+int main()
+{
+    open("wcdj", O_CREAT|O_RDONLY);// open file foo
+    sleep(1200);// sleep 20 mins 方便调试
+
+    return 0;
+}
+/*
+gcc -Wall -g -o testlsof testlsof.c
+./testlsof &
+*/
+```
+
+```
+$ gcc -Wall -g -o testlsof testlsof.c
+$ ./testlsof &
+[1] 12371
+$ strace -o lsof.strace lsof -p 12371
+COMMAND    PID      USER   FD   TYPE DEVICE    SIZE    NODE NAME
+testlsof 12371 gerryyang  cwd    DIR    8,4    4096 2359314 /data/home/gerryyang/test/HACK
+testlsof 12371 gerryyang  rtd    DIR    8,1    4096       2 /
+testlsof 12371 gerryyang  txt    REG    8,4    7739 2359364 /data/home/gerryyang/test/HACK/testlsof
+testlsof 12371 gerryyang  mem    REG    8,1 1548470 1117263 /lib/libc-2.4.so
+testlsof 12371 gerryyang  mem    REG    8,1  129040 1117255 /lib/ld-2.4.so
+testlsof 12371 gerryyang  mem    REG    0,0               0 [stack] (stat: No such file or directory)
+testlsof 12371 gerryyang    0u   CHR  136,0               2 /dev/pts/0
+testlsof 12371 gerryyang    1u   CHR  136,0               2 /dev/pts/0
+testlsof 12371 gerryyang    2u   CHR  136,0               2 /dev/pts/0
+testlsof 12371 gerryyang    3r   REG    8,4       0 2359367 /data/home/gerryyang/test/HACK/wcdj
+$ grep "wcdj" lsof.strace
+readlink("/proc/12371/fd/3", "/data/home/gerryyang/test/HACK/wcdj", 4096) = 35
+$ cd /proc/12371/fd
+$ ls -l
+总计 4
+lrwx------ 1 gerryyang users 64 2012-03-23 14:14 0 -> /dev/pts/0
+lrwx------ 1 gerryyang users 64 2012-03-23 14:14 1 -> /dev/pts/0
+lrwx------ 1 gerryyang users 64 2012-03-23 14:14 2 -> /dev/pts/0
+lr-x------ 1 gerryyang users 64 2012-03-23 14:14 3 -> /data/home/gerryyang/test/HACK/wcdj
+```
+
+用 strace 跟踪 lsof 的运行，输出结果保存在 lsof.strace 中。然后通过对 lsof.strace 内容的分析，从而了解到其实现原理是：lsof 利用了 /proc/pid/fd 目录。Linux 内核会为每一个进程在 /proc 建立一个以其 pid 为名的目录用来保存进程的相关信息，而其子目录 fd 保存的是该进程打开的所有文件的 fd。进入 /proc/pid/fd 目录下，发现每一个 fd 文件都是符号链接，而此链接就指向被该进程打开的一个文件。只要用 readlink() 系统调用就可以获取某个 fd 对应的文件了。
+
+``` cpp
+#include<stdio.h>
+#include<string.h>
+#include<sys/types.h>
+#include<unistd.h>// readlink
+#include<fcntl.h>
+#include<sys/stat.h>
+
+int get_pathname_from_fd(int fd, char pathname[], int n)
+{
+    char buf[1024];
+    pid_t pid;
+    bzero(buf, 1024);
+    pid = getpid();
+    snprintf(buf, 1024, "/proc/%i/fd/%i", pid, fd);// %i == %d
+
+    return readlink(buf, pathname, n);
+}
+
+int main()
+{
+    int fd;
+    char pathname[4096] = {0};
+    bzero(pathname, 4096);
+    fd = open("wcdj", O_RDONLY);
+
+    get_pathname_from_fd(fd, pathname, 4096);
+
+    printf("fd=%d; pathname=%s\n", fd, pathname);
+
+    return 0;
+}
+/*
+gcc -Wall -g -o GetPathByFd GetPathByFd.c
+*/
+```
+
 
 ## ltrace
 
 * [How does ltrace work?](https://blog.packagecloud.io/eng/2016/03/14/how-does-ltrace-work/)
+
+ltrace - A library call tracer
+
+``` bash
+$ ltrace ./st1
+
+__libc_start_main(0x8048494, 1, 0xbfe4a204, 0x8048500, 0x80484f0 <unfinished ...>
+fopen("r", "r")                                                                                 = 0
+puts("r"Error!
+)                                                                                       = 7
+sleep(3)                                                                                        = 0
+fopen("r", "r")                                                                                 = 0
+puts("r"Error!
+)                                                                                       = 7
+sleep(3)                                                                                        = 0
+fopen("r", "r")                                                                                 = 0
+puts("r"Error!
+)                                                                                       = 7
+sleep(3 <unfinished ...>
+--- SIGINT (Interrupt) ---
++++ killed by SIGINT +++
+```
+
+
+
 
 ## gdb
 
@@ -2621,6 +3065,116 @@ read:            ops/s             kB/s           kB/op         retrans         
 write:           ops/s             kB/s           kB/op         retrans         avg RTT (ms)    avg exe (ms)
                   0.000   0.000   0.000       0 (0.0%)    0.000   0.000
 ```
+
+
+## tcpdump
+
+tcpdump - dump traffic on a network
+
+使用 tcpdump 命令的前提：具有 root 权限。使用此命令需要注意的几个关键字：
+
+1. **类型的关键字**。主要包括：host, net, port
+2. **确定传输方向的关键字**。主要包括：src, dst, dst or src, dst and src
+3. **协议的关键字**。主要包括：fddi, ip, arp, rarp, tcp, udp等，如果没有指定任何协议，则tcpdump会捕获所有协议的数据包
+4. **三种逻辑运算**。包括：not, and, or
+
+> 常用选项
+
+```
+-i     指定监听的网络接口，可以指定为: lo, any, eth0, eth1 等，（`-i lo` 表示只监控网卡 lo 设备，默认是监控第一个网络设备。）
+-n     使用数字形式的 IP 名字，不使用域名
+-s     指定抓包的长度，`-s0` 抓整个数据包
+-X     以 hex 和 ASCII 的形式打印每一个包
+-c     在抓到指定个数的包后退出
+-w     直接将包写入文件中并不分析和打印出来（后续可以用 `tcpdump -r file` 进行分析）
+-r     从指定的文件中读取抓包的信息（文件里的数据通过 `-w` 选项产生）
+-e     在输出行打印出数据链路层的头部信息
+-t     打印时每行不显示时间戳
+-tt    打印时每行显示 UNIX 时间戳
+-v     详细显示指令执行过程
+-vv    更详细显示指令执行过程
+```
+
+> 常用的组合命令
+
+(1) 捕获指定源地址和目的地址及端口
+
+``` bash
+tcpdump -Xns0 -i eth1 src 172.27.198.179 and dst 10.130.73.95 and dst port 30007 -c10
+```
+
+(2) 捕获不区分源地址和目的地址
+
+``` bash
+tcpdump -Xns0 -i eth1 host 172.27.198.179 and 10.130.73.95 and  port 30007 -c10
+```
+
+(3) 只捕获本机指定端口的数据包
+
+``` bash
+tcpdump -Xns0 -i eth1 port 30007
+```
+
+(4) 捕获所有172.27.198.179的主机收到的和发出的所有的数据包
+
+``` bash
+tcpdump host 172.27.198.179
+```
+
+(5) 捕获（在任意网卡）指定地址和端口的数据包
+
+``` bash
+tcpdump -i any -Xns0  host 172.27.198.179 and port 30007 -c 10
+```
+
+(6) 捕获主机172.27.198.179和主机172.27.198.169或10.130.73.95的数据包，注意在命令行中适用括号时，一定要转义
+
+``` bash
+tcpdump host 172.27.198.179 and \ (172.27.198.169 or 10.130.73.95\) and port 30007 -c10
+```
+
+(7) 捕获主机172.27.198.179除了和主机10.130.73.95之外所有主机通信的IP数据包，注意!后面要有一个空格
+
+``` bash
+tcpdump ip host 172.27.198.179 and ! 10.130.73.95
+```
+
+(8) 捕获主机172.27.198.179接收或发出的telnet数据包
+
+``` bash
+tcpdump tcp port 23 and host 172.27.198.179
+```
+
+(9) 将捕获的数据包保存在文件中，进行后续分析
+
+``` bash
+tcpdump -Xns0 host 172.27.198.179 -w 179.cap
+tcpdump -r 179.cap
+```
+
+(10) 只显示具体的协议，不显示包体内容
+
+``` bash
+# -S 打印 TCP 数据包的顺序号时，使用绝对的顺序号，而不是相对的顺序号
+# -nn 表示不进行端口到名称的转换
+# -vvv 表示产生尽可能详细的协议输出
+# -i lo表示只监控网卡 lo 设备，默认是监控第一个网络设备
+# port 6888 表示只监控端口 6888 的相关监控数据，包括从 6888 端口接收和从 6888 端口发送的报文
+
+tcpdump -S -nn -vvv -i lo port 6888
+```
+
+> 相关工具
+
+* `tcpreplay`：回放 tcpdump 的数据包，能够限速、修改发送地址等。
+* `tcprewrite`：能够修改 tcpdump 的数据包中的源目的 mac 地址及 ip 地址等。
+
+参考
+
+* http://www.tcpdump.org/
+* http://tcpreplay.synfin.net/
+* 更多帮助 man tcpdump
+
 
 
 ## netcat (nc)
