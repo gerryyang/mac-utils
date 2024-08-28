@@ -2142,7 +2142,7 @@ Process 17673 detached
 
 #### -o output.log 将 strace 信息输出到文件方便进一步查找
 
-Write the trace output to the file filename rather than to **stderr**. Use filename.pid if `-ff` is used. If the argument begins with '|' or with '!' then the rest of the argument is treated as a command and all output is piped to it. This is convenient for piping the debugging output to a program without affecting the redirections of executed programs.
+Write the trace output to the file filename rather than to **stderr**. Use filename.pid if `-ff` is used. If the argument begins with `|` or with `!` then the rest of the argument is treated as a command and all output is piped to it. This is convenient for piping the debugging output to a program without affecting the redirections of executed programs.
 
 `-ff`: If the `-o` filename option is in effect, each processes trace is written to filename.pid where pid is the numeric process id of each process.
 
