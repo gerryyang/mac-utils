@@ -74,7 +74,7 @@ else
 fi
 ```
 
-# Bazel (Bazelisk 1.17.0)
+## Bazel (Bazelisk 1.17.0)
 
 ``` bash
 #!/bin/bash
@@ -335,11 +335,40 @@ yum install readline-devel
 
 ``` bash
 cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release  -DCMAKE_INSTALL_PREFIX=/data/home/gerryyang/jlib_proj/deps_src/protobuf-3.7.1/install -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF ../cmake
+
+make -j16 && make install
 ```
+
+或者
+
+``` bash
+./autogen.sh -i
+./configure --with-pic --disable-shared --prefix=/thirdparty/protobuf
+```
+
+## openssl
+
+https://github.com/openssl/openssl/blob/master/INSTALL.md#building-openssl
+
+https://github.com/openssl/openssl/releases/tag/OpenSSL_1_1_1k
+
+``` bash
+./Configure linux-x86_64-clang --prefix=/data/home/gerryyang/tools/openssl/openssl-OpenSSL_1_1_1k-install -fPIC
+make -j16 && make install
+```
+
+## curl
+
+https://github.com/curl/curl
+
+``` bash
+./configure --prefix=/data/home/gerryyang/tools/curl/curl-7.81.0-install --with-ssl=/data/home/gerryyang/jlib_proj/JLib/thirdparty/openssl --enable-static=yes --enable-shared=no
+```
+
 
 # 反汇编
 
-* 使用 objdump
+## objdump
 
 ``` bash
 objdump -d -M intel /path/to/your/binary > disassembly.txt
@@ -348,7 +377,7 @@ grep -A10 "<your_function>:" disassembly.txt
 ```
 
 
-* 使用 gdb
+## gdb
 
 ``` bash
 disas /r your_function
