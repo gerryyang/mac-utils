@@ -8,12 +8,86 @@ categories: 云原生
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+> 故障定位，本质是一个信息检索的问题。
+
 
 **OpenTelemetry**, also known as **OTel**, is a vendor-neutral open source [Observability](https://opentelemetry.io/docs/concepts/observability-primer/#what-is-observability) framework for instrumenting, generating, collecting, and exporting telemetry data such as [traces](https://opentelemetry.io/docs/concepts/signals/traces/), [metrics](https://opentelemetry.io/docs/concepts/signals/metrics/), and [logs](https://opentelemetry.io/docs/concepts/signals/logs/).
 
 As an industry-standard, OpenTelemetry is [supported by more than 40 observability vendors](https://opentelemetry.io/ecosystem/vendors/), integrated by many [libraries, services, and apps](https://opentelemetry.io/ecosystem/integrations/), and adopted by [numerous end users](https://opentelemetry.io/ecosystem/adopters/).
 
 ![otel-diagram](/assets/images/202408/otel-diagram.svg)
+
+
+# 术语
+
+## 指标和维度
+
+* **指标**（`Metrics`） 是用于衡量事物发展程度的单位或方法。它们通常是**数值型数据**，可以通过加和、平均等汇总计算方式得到。指标需要在一定的前提条件进行汇总计算，如时间、地点、范围，这些前提条件也称为统计口径与范围。一般是坐标系中的纵坐标，比如 CPU 使用率、在线人数等。 指标也有不同的类型区别，具体可查看[指标类型](https://iwiki.woa.com/p/4009274568)
+
+* **维度**（`Dimensions`） 是事物或现象的某种特征，如性别、地区、时间等都是维度。根据维度所对应的数据类型不同，维度可以分为定性维度和定量维度。维度的值一般都是可枚举的字符串，维度的组合不宜过多，影响数据的存储和查询使用。
+
+* **P50**（**平均耗时**）、P95 耗时、P99 耗时：统计学概念，将所有数值从小到大排序后，有 x% 的值是小于 Px 的值。例如：比如 99% 的数据，都小于 P99 这个值
+
+
+## 维度基数
+
+在指标领域，**维度基数**指的是**所有维度组合的个数**，也叫**时间线个数**。更多介绍：[基数：时间序列和标签](https://cloud.google.com/monitoring/api/v3/metric-model?hl=zh-cn#cardinality)
+
+假如：某服务，服务名叫 apiserver，其对外提供 2 个接口，分别为 read 和 write，服务部署在 3 台机器上，IP 分别为 10.123.1.1, 10.123.1.2, 10.123.1.3。假如要统计该服务的请求量指标 requests，且需要分接口和机器的请求量数据。则对应的维度基数 (时间线个数) 为：**服务名个数 * 接口个数 * 机器个数** = 1 * 2 * 3 = 6。**所以，如果关注 IP 维度的数据，服务在未变更的情况下，扩容操作会导致数据量大幅增长**。
+
+| 服务名 | 接口名 | IP
+| -- | -- | --
+| apiserver | read | 10.123.1.1
+| apiserver | read | 10.123.1.2
+| apiserver | read | 10.123.1.3
+| apiserver | write | 10.123.1.1
+| apiserver | write | 10.123.1.2
+| apiserver | write | 10.123.1.3
+
+
+## 采样点
+
+维度基数（时间线个数）和采样点的关系：
+
+![datapoint](/assets/images/202409/datapoint.png)
+
+## Trace & Span
+
+* `Trace`：记录经过分布式系统的请求活动，一个 Trace 是 Spans 的**有向无环图** (`DAG`)。
+* `Span` ：Span 嵌套形成 Trace 树。每个 Trace 包含一个根 Span，描述了端到端的延迟，其子操作也可能拥有一个或多个子 Span。
+
+![trace](/assets/images/202409/trace.png)
+
+
+
+## 常用指标类型
+
+### Counter
+
+Counter 就是个计数器，一般用于统计累积量，累积一定时间后，SDK 会把累加的数据值一次性上报，上报完以后计数器清零，重新再累加。Counter 对应 Sum 聚合方式。使用场景：统计调用量，成功量，失败量等。
+
+![counter](/assets/images/202409/counter.png)
+
+
+### Gauge (测量仪器 /ɡeɪdʒ/)
+
+Gauge 就是一个瞬时值，一般用于统计时刻量。Gauge 对应 Set 聚合方式。使用场景：CPU 使用率，内存使用率等。
+
+![gauge](/assets/images/202409/gauge.png)
+
+### Timer
+
+Timer 是根据一个操作的开始时间、结束时间，统计某个操作的耗时情况。单位是秒。
+
+### Histogram (柱状图 /ˈhɪstəɡræm/)
+
+Histogram 是根据预先划分好的 buckets (桶)，将收集到的样本点放入到对应的 bucket 中，这样就方便查看不同区间（bucket 的上下界）的样本数量、平均值、最大值、最小值等。
+
+> 请根据数据分布情况合理配置分桶，一般参考平均值，分桶覆盖均线上下，合理的分桶会使分位置计算更准确。
+
+![histogram](/assets/images/202409/histogram.png)
+
+
 
 # History
 
@@ -554,9 +628,16 @@ Finally, consider your overall budget. If you have limited budget for observabil
 
 The OpenTelemetry project uses terminology you might not be familiar with. In addition, the project defines the terminology in a different way than others. This page captures terminology used in the project and what it means.
 
+# The OpenTelemetry C++ Client
+
+* https://github.com/open-telemetry/opentelemetry-cpp
+* https://github.com/jupp0r/prometheus-cpp
+
+
 
 
 # Refer
 
 * https://opentelemetry.io/docs/
 * https://opentelemetry.io/docs/what-is-opentelemetry/
+* [Google Cloud 中的可观测性](https://cloud.google.com/stackdriver/docs?hl=zh-cn)

@@ -11,6 +11,24 @@ categories: Linux
 
 # Linux 操作系统
 
+## 对 *nix 中 inode 的几点理解
+
+在 *nix 系统中，`inode` 和 `filename` 是分离的，`filename` 只是 `inode` 的一个 readable 的绰号，directory 文件通过一系列 dirent 记录了 `filename` 和 `inode` 的对应关系，用户读取一个文件通过 `filename->inode->data` 的 `3+n (n>=0)` 层索引找到要读取的 `block`。
+
+需要注意的几点：
+
+* *nix 允许多个文件名指向同一个 inode 号码 (`stat file` 可查看连接数)，即 hard-link；相反 soft-link 不会增加 Links 数目，只会增加新的 inode。
+* 当 filename 包含特殊字符，无法正常 rm 时，可以通过先找到文件的 inode 号码再对其进行 delete。例如：
+
+``` bash
+rm -rfi `find -inum 1805121`
+```
+
+* mv 重命名文件不影响 inode 号码，因此在对现网配置进行更新时不会导致程序 crash。
+
+![inode](/assets/images/202409/inode.png)
+
+
 ## /proc (process information pseudo-filesystem)
 
 The proc filesystem is a pseudo-filesystem which provides an interface to kernel data structures.  It is commonly mounted at `/proc`. Typically, it is mounted automatically by the system, but it can also be mounted manually using a command such as:

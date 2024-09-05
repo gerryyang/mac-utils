@@ -8,6 +8,42 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# TL;DR
+
+`std::shared_ptr` 是 C++11 引入的智能指针类型，用于自动管理对象的生命周期。当 `std::shared_ptr` 变量被赋值为 `nullptr`（C++11 中引入的空指针字面值）时，它表示该智能指针不指向任何对象。当一个 `std::shared_ptr` 变量被赋值为 nullptr 时，它会自动释放与之前关联的对象的引用。**如果这是指向该对象的最后一个 `std::shared_ptr`，则对象将被自动删除**。
+
+``` cpp
+#include <iostream>
+#include <memory>
+
+class MyClass {
+public:
+    MyClass() { std::cout << "MyClass constructed" << std::endl; }
+    ~MyClass() { std::cout << "MyClass destroyed" << std::endl; }
+};
+
+int main() {
+    std::shared_ptr<MyClass> ptr1 = std::make_shared<MyClass>();
+    std::shared_ptr<MyClass> ptr2 = ptr1; // ptr1和ptr2共享同一个对象
+    std::cout << "Initial use_count: " << ptr1.use_count() << std::endl;
+
+    ptr1 = nullptr; // ptr1不再引用对象，但ptr2仍然引用它
+    std::cout << "after ptr1 = nullptr, use_count: " << ptr2.use_count() << std::endl;
+
+    ptr2 = nullptr; // ptr2不再引用对象，因为没有其他shared_ptr引用它，所以对象被删除
+    std::cout << "after ptr2 = nullptr\n";
+    return 0;
+}
+/*
+MyClass constructed
+Initial use_count: 2
+after ptr1 = nullptr, use_count: 1
+MyClass destroyed
+after ptr2 = nullptr
+*/
+```
+
+
 # Implementation (std::shared_ptr)
 
 `std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
