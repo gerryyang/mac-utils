@@ -631,6 +631,12 @@ source ~/.zshrc
 * [微云](https://www.weiyun.com/download.html)，文件备份。
 
 
+## AI 工具
+
+* [秘塔AI搜索](https://metaso.cn/)
+
+
+
 # 数学
 
 * [WolframAlpha](http://www27.wolframalpha.com/)，一个在线数学工具。

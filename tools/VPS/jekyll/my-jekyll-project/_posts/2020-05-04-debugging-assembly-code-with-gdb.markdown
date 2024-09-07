@@ -429,38 +429,38 @@ To exit GDB, use the `quit` command (abbreviated `q`), or type an end-of-file ch
 
 # 常用命令
 
-gdb中简写命令配合tab键使用
+gdb 中简写命令配合 **tab** 键使用
 
-| 命令 | 作用
-| -- | --
-| dir path | 切换目录
-| gdb -p PID; b xxx; c | PID方式调试（或 gdb program pid）
-| gdb bin; b xxx; r 参数 | bin方式调试
-| break filename:lineno | 在文件某行设置断点
-| list filename:lineno | 选择显示文件的哪一行
-| list | 显示当前文件的默认行数代码信息
-| run para | 调试带参数的程序
-| print VarName | 显示变量当前的值
-| ptype VarName | 显示变量的类型
-| frame 0 | 显示栈顶的信息
-| frame 1 | 显示堆栈栈顶下一层信息
-| up n | 表示向栈的上面移动n层，可以不打n，表示向上移动一层
-| down n | 表示向栈的下面移动n层，可以不打n，表示向下移动一层
-| info break | 查看所有断点的信息
-| info threads | 查看所有线程的信息
-| info registers | 查看所有寄存器的信息
-| [info variables](http://sourceware.org/gdb/current/onlinedocs/gdb/Symbols.html#index-info-variables-918) | list "All global and static variable names" (huge list)
-| [info locals](http://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-locals-435) | list "Local variables of current stack frame" (names and values), including static variables in that function
-| [info args](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-args) | list "Arguments of the current stack frame" (names and values)
-| shell date | 在gdb中调用shell，使用完后exit重新返回到gdb中
-| set args | 可指定运行时参数（如：set args 10 20 30 40 50）
-| show args | 命令可以查看设置好的运行参数
-| next | Continue to the next source line in the current (innermost) stack frame. This is similar to step, but function calls that appear within the line of code are executed without stopping.
-| nexti | Execute one machine instruction, but if it is a function call, proceed until the function returns
-| step | Continue running your program until control reaches a different source line, then stop it and return control to GDB
-| stepi | Execute one machine instruction, then stop and return to the debugger
-| finish/fin | 跳出当前函数栈
-| set variable i = 10 | 修改变量值
+| 命令                                                                                                     | 作用                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| dir path                                                                                                 | 切换目录                                                                                                                                                                                |
+| gdb -p PID; b xxx; c                                                                                     | PID方式调试（或 gdb program pid）                                                                                                                                                       |
+| gdb bin; b xxx; r 参数                                                                                   | bin方式调试                                                                                                                                                                             |
+| break filename:lineno                                                                                    | 在文件某行设置断点                                                                                                                                                                      |
+| list filename:lineno                                                                                     | 选择显示文件的哪一行                                                                                                                                                                    |
+| list                                                                                                     | 显示当前文件的默认行数代码信息                                                                                                                                                          |
+| run para                                                                                                 | 调试带参数的程序                                                                                                                                                                        |
+| print VarName                                                                                            | 显示变量当前的值                                                                                                                                                                        |
+| ptype VarName                                                                                            | 显示变量的类型                                                                                                                                                                          |
+| frame 0                                                                                                  | 显示栈顶的信息                                                                                                                                                                          |
+| frame 1                                                                                                  | 显示堆栈栈顶下一层信息                                                                                                                                                                  |
+| up n                                                                                                     | 表示向栈的上面移动n层，可以不打n，表示向上移动一层                                                                                                                                      |
+| down n                                                                                                   | 表示向栈的下面移动n层，可以不打n，表示向下移动一层                                                                                                                                      |
+| info break                                                                                               | 查看所有断点的信息                                                                                                                                                                      |
+| info threads                                                                                             | 查看所有线程的信息                                                                                                                                                                      |
+| info registers                                                                                           | 查看所有寄存器的信息                                                                                                                                                                    |
+| [info variables](http://sourceware.org/gdb/current/onlinedocs/gdb/Symbols.html#index-info-variables-918) | list "All global and static variable names" (huge list)                                                                                                                                 |
+| [info locals](http://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-locals-435)    | list "Local variables of current stack frame" (names and values), including static variables in that function                                                                           |
+| [info args](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html#index-info-args)           | list "Arguments of the current stack frame" (names and values)                                                                                                                          |
+| shell date                                                                                               | 在gdb中调用shell，使用完后exit重新返回到gdb中                                                                                                                                           |
+| set args                                                                                                 | 可指定运行时参数（如：set args 10 20 30 40 50）                                                                                                                                         |
+| show args                                                                                                | 命令可以查看设置好的运行参数                                                                                                                                                            |
+| next                                                                                                     | Continue to the next source line in the current (innermost) stack frame. This is similar to step, but function calls that appear within the line of code are executed without stopping. |
+| nexti                                                                                                    | Execute one machine instruction, but if it is a function call, proceed until the function returns                                                                                       |
+| step                                                                                                     | Continue running your program until control reaches a different source line, then stop it and return control to GDB                                                                     |
+| stepi                                                                                                    | Execute one machine instruction, then stop and return to the debugger                                                                                                                   |
+| finish/fin                                                                                               | 跳出当前函数栈                                                                                                                                                                          |
+| set variable i = 10                                                                                      | 修改变量值                                                                                                                                                                              |
 
 
 # [Information About a Frame](https://sourceware.org/gdb/current/onlinedocs/gdb/Frame-Info.html)
@@ -468,6 +468,32 @@ gdb中简写命令配合tab键使用
 TODO
 
 # 常用技巧
+
+## Launch 调试
+
+工具脚本示例：
+
+``` bash
+#!/bin/bash
+
+CUR_DIR=$(dirname $(readlink -f $0))
+source `readlink -f $CUR_DIR/../../tools/scripts/helper.sh`
+
+export LD_LIBRARY_PATH="$CUR_DIR:$LD_LIBRARY_PATH"
+
+SVR_NAME="unittestsvr"
+PROC_ID="60.59.59.1"
+BUS_KEY="3233"
+SVR_ID_MASK="9.7.7.9"
+
+gdb -q -ex "set args --id=$PROC_ID --bus-key=$BUS_KEY --svr-id-mask=$SVR_ID_MASK" \
+    -ex "set follow-fork-mode child" \
+    -ex "catch throw" \
+    -ex "run" \
+    --args ./$SVR_NAME
+
+echo "done"
+```
 
 ## 通过地址查找符号 info symbol $address
 
@@ -914,10 +940,88 @@ $ pstack $$
 (gdb) quit                              # 退出 gdb 调试
 ```
 
+# Tools
+
+## [stack-inspector](https://github.com/sharkdp/stack-inspector)
+
+A gdb command to inspect the size of objects on the stack.
+
+Use `gdb` to navigate to a certain stack frame (run until your stack overflows or set a breakpoint somewhere). Then, simply run:
+
+``` bash
+source stack-inspector.py
+stack-inspector
+```
+
+用法示例：
+
+``` cpp
+#include <iostream>
+#include <array>
+
+void func1()
+{
+    std::cout << __func__ << std::endl;
+    std::array<int, 100> arr1;
+}
+
+void func2()
+{
+    std::cout << __func__ << std::endl;
+    std::array<int, 200> arr2;
+    func1();
+}
+
+void func3()
+{
+    std::cout << __func__ << std::endl;
+    std::array<int, 300> arr3;
+    func2();
+}
+
+int main()
+{
+    std::cout << __func__ << std::endl;
+    func3();
+    return 0;
+}
+```
+
+``` bash
+$ ./gdb.sh
+Reading symbols from ./test...
+Breakpoint 1 at 0x401181: file test.cc, line 6.
+Starting program: /data/home/gerryyang/jlib_proj/JLib/tools/gdb/stack-inspector/test
+main
+func3
+func2
+
+Breakpoint 1, func1 () at test.cc:6
+6           std::cout << __func__ << std::endl;
+#0  func1 () at test.cc:6
+#1  0x00000000004011cc in func2 () at test.cc:14
+#2  0x00000000004011fb in func3 () at test.cc:21
+#3  0x0000000000401223 in main () at test.cc:27
+
+  #0   func1() @ test.cc:6
+
+               400   arr1 (std::array<int, 100>)
+
+  #1   func2() @ test.cc:14
+
+               800   arr2 (std::array<int, 200>)
+
+  #2   func3() @ test.cc:21
+
+             1,200   arr3 (std::array<int, 300>)
+
+  #3   main() @ test.cc:27
 
 
-
-
+Total size: 2,400
+Missing separate debuginfos, use: dnf debuginfo-install bash-4.4.20-1.tl3.2.x86_64 glibc-2.28-164.tl3.x86_64 libgcc-8.4.1-1.tl3.x86_64 libstdc++-8.4.1-1.tl3.x86_64
+(gdb)
+```
 
 
 # Refer
