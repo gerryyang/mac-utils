@@ -44,21 +44,21 @@ categories: C/C++
 
 数据指标：
 
-| Operation | CPU clocks cycles
-| -- | --
-| ADD/MOV/OR/… | 1
-| FADD/FSUB | 2-5
-| MUL/IMUL | 1-7
-| FMUL | 2-5
-| DIV/IDIV | 12-44
-| FDIV | 37-39
-| L1/L2/L3 | 4/12/44
-| LOCK CMPXCHG (CAS) | 15-30
-| C/C++ Function Calls | 25-250
-| Allocations | 200-500
-| Kernel Calls | 1000-1500
-| C++ Exceptions | 5000
-| Thread Context Switches | 10000
+| Operation               | CPU clocks cycles |
+| ----------------------- | ----------------- |
+| ADD/MOV/OR/…            | 1                 |
+| FADD/FSUB               | 2-5               |
+| MUL/IMUL                | 1-7               |
+| FMUL                    | 2-5               |
+| DIV/IDIV                | 12-44             |
+| FDIV                    | 37-39             |
+| L1/L2/L3                | 4/12/44           |
+| LOCK CMPXCHG (CAS)      | 15-30             |
+| C/C++ Function Calls    | 25-250            |
+| Allocations             | 200-500           |
+| Kernel Calls            | 1000-1500         |
+| C++ Exceptions          | 5000              |
+| Thread Context Switches | 10000             |
 
 > A CPU with a clock speed of 2.4 GHz executes 2.4 billion cycles per second. Sometimes, multiple instructions are completed in a single clock cycle; in other cases, one instruction might be handled over multiple clock cycles.
 
@@ -153,13 +153,13 @@ BENCHMARK(test3);
  $ ./celero_benchmark
 Celero
 Timer resolution: 0.001000 us
-|     Group      |   Experiment    |   Prob. Space   |     Samples     |   Iterations    |    Baseline     |  us/Iteration   | Iterations/sec  |   RAM (bytes)   |
-|:--------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-|find            | vector          |            Null |               1 |               1 |         1.00000 |       172.00000 |         5813.95 |        51277824 |
-|find            | pb_repeated     |            Null |               1 |               1 |        73.59302 |     12658.00000 |           79.00 |        51777536 |
-|find            | set             |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
-|find            | unordered_set   |            Null |              10 |              20 |         0.00029 |         0.05000 |     20000000.00 |        51777536 |
-|find            | flat_set        |            Null |              10 |              20 |         0.00058 |         0.10000 |     10000000.00 |        51777536 |
+| Group |  Experiment   | Prob. Space | Samples | Iterations | Baseline | us/Iteration | Iterations/sec | RAM (bytes) |
+| :---: | :-----------: | :---------: | :-----: | :--------: | :------: | :----------: | :------------: | :---------: |
+| find  |    vector     |    Null     |    1    |     1      | 1.00000  |  172.00000   |    5813.95     |  51277824   |
+| find  |  pb_repeated  |    Null     |    1    |     1      | 73.59302 | 12658.00000  |     79.00      |  51777536   |
+| find  |      set      |    Null     |   10    |     20     | 0.00058  |   0.10000    |  10000000.00   |  51777536   |
+| find  | unordered_set |    Null     |   10    |     20     | 0.00029  |   0.05000    |  20000000.00   |  51777536   |
+| find  |   flat_set    |    Null     |   10    |     20     | 0.00058  |   0.10000    |  10000000.00   |  51777536   |
 Completed in 00:00:00.028138
 ```
 
@@ -217,10 +217,10 @@ stress: info: [15180] successful run completed in 601s
 
 * 磁盘I/O的IOPS和吞吐量。换用性能更好的磁盘，比如，用SSD替代HDD。在顺序读比较多的场景中，可以增大磁盘的预读数据。用追加写代替随机写，减少寻址开销，加快I/O写的速度。借助缓存I/O，充分利用系统缓存，降低实际I/O的次数。使用`fio`（Flexible I/O Tester），通过设置跳过缓存，I/O模式等来测试磁盘的IOPS，吞吐量，以及响应时间等核心指标。通常针对不同I/O大小（512B至1MB）分别在随机读，顺序读，随机写，顺序写等各种场景下的性能情况。
 
-| 存储类型 | 单盘最大 IOPS（4KB随机读写） | 单盘最大吞吐量（MB/s）
-| -- | -- | --
-| SSD (SATA -> PCIe -> NVMe，命令队列数量和深度不同) | 2w - 100w | 260 - 4000
-| HDD | 55 - 180 | 60 - 150
+| 存储类型                                           | 单盘最大 IOPS（4KB随机读写） | 单盘最大吞吐量（MB/s） |
+| -------------------------------------------------- | ---------------------------- | ---------------------- |
+| SSD (SATA -> PCIe -> NVMe，命令队列数量和深度不同) | 2w - 100w                    | 260 - 4000             |
+| HDD                                                | 55 - 180                     | 60 - 150               |
 
 `fio`的测试方法：
 
@@ -436,12 +436,12 @@ int main()
 
 性能测试对比：(10000000 * 10000 B = 100 GB)
 
-| Case | Time (s) | Memory bandwidth (GB)
-| -- | -- | --
-| 1字节对齐 (memcpy) | 9.32968 | 10.7
-| 32字节对齐 (memcpy) | 8.15827 | 12.3
-| 1字节对齐 (rep movsb) | 2.45423 | 40.7
-| 32字节对齐 (rep movsb) | 1.27497 | 78.4
+| Case                   | Time (s) | Memory bandwidth (GB) |
+| ---------------------- | -------- | --------------------- |
+| 1字节对齐 (memcpy)     | 9.32968  | 10.7                  |
+| 32字节对齐 (memcpy)    | 8.15827  | 12.3                  |
+| 1字节对齐 (rep movsb)  | 2.45423  | 40.7                  |
+| 32字节对齐 (rep movsb) | 1.27497  | 78.4                  |
 
 > REP MOVSD/MOVSQ is the universal solution that works relatively well on all Intel processors for large memory blocks of at least 4KB (no ERMSB required) if the destination is aligned by at least 64 bytes. REP MOVSD/MOVSQ works even better on newer processors, starting from Skylake. And, for Ice Lake or newer microarchitectures, it works perfectly for even very small strings of at least 64 bytes. refer: https://stackoverflow.com/questions/43343231/enhanced-rep-movsb-for-memcpy
 
@@ -956,15 +956,15 @@ int main()
 | Method                | Time (ns) | Speedup |
 | --------------------- | --------- | ------- |
 | std::stringstream     | 8389529   | 1x      |
-| sprintf               | 1609070    | 4.2x    |
-| std::to_string(C++11) | 195945     | 41.8x   |
-| std::to_chars(C++17)  | 238524     | 34.1x   |
+| sprintf               | 1609070   | 4.2x    |
+| std::to_string(C++11) | 195945    | 41.8x   |
+| std::to_chars(C++17)  | 238524    | 34.1x   |
 | fmt::format           | 355638    | 22.5x   |
-| fmt::format_int       | 256275     | 31.7x  |
+| fmt::format_int       | 256275    | 31.7x   |
 | std::format(C++20)    | N/A       | N/A     |
-| table_string          | 182740      | 44.9x |
-| compilea_string       | 144676       | 56.9x |
-| compileb_string       | 133585       | 61.8x  |
+| table_string          | 182740    | 44.9x   |
+| compilea_string       | 144676    | 56.9x   |
+| compileb_string       | 133585    | 61.8x   |
 
 
 更详细的测试结果:
@@ -1604,6 +1604,132 @@ refer:
 * [Infographics: Operation Costs in CPU Clock Cycles](http://ithare.com/infographics-operation-costs-in-cpu-clock-cycles/)
 * [C++异常机制的实现方式和开销分析](https://blog.csdn.net/cqu20093154/article/details/44020043)
 
+
+## io_uring (异步 IO)
+
+> io_uring 不是线程安全的。
+
+From [Efficient IO with io_uring](https://kernel.dk/io_uring.pdf):
+
+![io_uring0](/assets/images/202409/io_uring0.png)
+
+
+io_uring 作为 Linux 内核 v5.1 推出的新功能，一开始就被寄予厚望。在设计之初，开发者就希望 io_uring 至少有这些特质：
+
+1. 用法简单。一切用户层可见的接口都应以此为主要目标。
+2. 可扩展。虽然作者的背景主要是与存储相关的，但希望这套接口不仅仅是面向块设备能用。
+3. 功能丰富。Linux AIO 只满足了一部分应用程序的需要。不想再造一套只覆盖部分功能，或者需要应用重复造轮子（比如 IO 线程池）的接口。
+4. 高效。尽管存储 IO 大多都是基于块的，因而大小多在 512 或 4096 字节，但这些大小时候的效率还是对某些应用至关重要的。此外，一些请求甚至可能不携带数据有效载荷。新接口得在每次请求的开销上精打细算。
+5. 可伸缩。 尽管效率和低时延很重要，但在峰值端提供最佳性能也很关键。特别是在存储方面，我们一直在努力提供一个可扩展的基础设施。新接口应该允许我们将这种可扩展性一直暴露在应用程序中。
+
+![io_uring](/assets/images/202409/io_uring.png)
+
+io_uring 正如名字中提到的 ring，其主要结构就是两个循环队列 **Send Queue** 和 **Complete Queue**。这两个队列由用户态和内核态共同管理。除此之外，还有一个用来保存 Send Queue Entry 的数组，即上图中的 **SQ Array**。SQ 中保存的都是 SQ Array 的小表，表示一个 **SQ Entry**。而 CQ 中直接保存的就是 **CQ Entry**。
+
+应用和 io_uring 的交互流程如下：
+
+1. 获取一个 **SQ Entry**
+2. 向 **SQ Entry** 中填充所需的数据
+3. 提交 **SQ Entry** 到内核
+4. 等待内核执行对应操作
+5. 从 CQ 中取出 **CQ Entry**
+
+这里 SQ 使用索引而不直接使用 SQ Entry 是考虑到应用可能会有批量提交，或者前后依赖（IOSQE_IO_LINK）的情况，在填写 SQE 后可能不会立即提交到内核，同时又为了避免产生一次 SQ Entry 的拷贝，所以避免应用在队列中直接拿到 SQ Entry，而是从一旁的数组中获取。
+
+**SQ Entry** 作为保存提交操作的类型，其结构如下：
+
+``` cpp
+// tkernel4 version
+/*
+ * IO submission data structure (Submission Queue Entry)
+ */
+struct io_uring_sqe {
+    __u8    opcode;     /* type of operation for this sqe */
+    __u8    flags;      /* IOSQE_ flags */
+    __u16   ioprio;     /* ioprio for the request */
+    __s32   fd;         /* file descriptor to do IO on */
+    __u64   off;        /* offset into file */
+    __u64   addr;       /* pointer to buffer or iovecs */
+    __u32   len;        /* buffer size or number of iovecs */
+    union {
+        __kernel_rwf_t  rw_flags;
+        __u32       fsync_flags;
+        __u16       poll_events;
+        __u32       sync_range_flags;
+        __u32       msg_flags;
+        __u32       timeout_flags;
+    };
+    __u64   user_data;  /* data to be passed back at completion time */
+    union {
+        __u16   buf_index;  /* index into fixed buffers, if used */
+        __u64   __pad2[3];
+    };
+};
+```
+
+在最新的 kernel v5.18 中，`opcode` 已经多达 41 种，**包括了磁盘，网络，事件循环，超时控制，文件系统五大方面**，而且还在不断演进中。
+
+![io_uring2](/assets/images/202409/io_uring2.png)
+
+**CQ Entry** 则相对简单，只有三个字段：
+
+``` cpp
+// tkernel4 version
+/*
+ * IO completion data structure (Completion Queue Entry)
+ */
+struct io_uring_cqe {
+    __u64   user_data;  /* sqe->data submission passed back */
+    __s32   res;        /* result code for this event */
+    __u32   flags;
+};
+```
+
+![io_uring3](/assets/images/202409/io_uring3.png)
+
+io_uring 原生提供了 3 个系统调用：
+
+``` cpp
+int io_uring_setup(unsigned entries, struct io_uring_params *params);
+int io_uring_enter(unsigned int fd, unsigned int to_submit,
+                   unsigned int min_complete, unsigned int flags,
+                   sigset_t sig);
+int io_uring_register(int fd, unsigned int opcode, const void *arg,
+                      unsigned int nr_args);
+```
+
+![io_uring4](/assets/images/202409/io_uring4.png)
+
+
+* `io_uring_setup` 负责参数初始化，`enteries` 表示 SQ 的大小，而 CQ 则默认是 SQ 的两倍大小。而 params 主要是为了传递 io_uring 的配置开关以及接收来自内核返回的用于初始化 io_uring 的参数。成功的话，返回值则是 io_uring 的文件描述符，否则返回 -1。初始化成功后，用户还需要根据内核返回的参数初始化 SQ/CQ/SQ Array 的内存空间。
+
+* `io_uring_enter` 则是 io_uring 的核心操作入口，它同时肩负着提交任务和等待结果两种功能。fd 为 io_uring 对应的文件描述符。to_submit 则告诉内核有多达该数量的 sqe 准备好使用和提交，min_complete 要求内核等待该数量的请求完成。具有可用于提交和等待完成的单个调用意味着应用程序可以通过单个系统调用提交和等待请求完成。flags 包含修改调用行为的标志。
+
+* `io_uring_register` 一般都用于一些高级功能。opcode 会指定对应的操作类型，比如 IORING_REGISTER_EVENTFD/IORING_UNREGISTER_EVENTFD：注册/解注册一个 eventfd，当 io_uring 产生完成时间时会通过这个 fd 通知应用。
+
+但是系统调用都非常的精炼，直接使用起来都不太方便，比如还需要主动申请内存空间以及原子操作等。所以 io_uring 作者开发了相关的运行库 [liburing](https://github.com/axboe/liburing)，这个库将 io_uring 的系统调用进行封装，使用起来更加方便。这个 liburing 和 kernel 版本并不强绑定，建议使用尽可能高的 liburing 版本避免出现未修复的问题。
+
+
+
+
+
+**方案对比：**
+
+| 优点      | 缺点                           |
+| --------- | ------------------------------ |
+| IO 线程池 | 实现简单                       | 线程过多，上下文切换频繁      |
+| Linux AIO | 异步IO                         | 可扩展性差，仅允许 DirectIO   |
+| SPDK      | 无系统调用                     | 需要单独主动轮询，仅限于 nvme |
+| io_uring  | 允许不使用系统调用，可扩展性强 | 内核版本要求高                |
+
+Linux AIO 的优势在于内核版本要求低，SPDK 则是性能高。这两个方案的缺点都在于有明显的限制条件：一个是仅允许 DirectIO，在读取未对齐的地址或者长度时会有读放大，而且也不支持内存文件系统；另一个则是仅限于 nvme，不支持 HDD 和内存文件系统，同时主动轮询的模式也不方便和当前基于 epoll 的事件循环相结合。
+
+io_uring 虽然内核版本要求高，但是 kernel5.4 已经支持了 io_uring 的基本功能。io_uring 同时支持主动轮询和事件触发两种模式，可以很好地和框架结合在一起。甚至可以考虑在更高的内核版本下，将网络和定时器也交由 io_uring 管理，从而将基于 epoll 的事件轮询改为基于 io_uring 的主动轮询模式，这样延时可能会进一步降低。
+
+refer:
+
+* [Efficient IO with io_uring](https://kernel.dk/io_uring.pdf)
+* [Welcome to Lord of the io_uring](https://unixism.net/loti/index.html)
 
 
 

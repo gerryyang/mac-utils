@@ -68,9 +68,25 @@ If the Trump administration's latest step represents a deliberate attempt to bri
 > transparency 透明度。
 
 
+# X Employee Satisfaction Survey (2024 X 公司满意度调查)
+
+You are Invited to Take the 2024 `X` Employee Satisfaction Survey (This email is exclusively for you, please do not forward it to others)
+
+Dear colleague,
+
+This year marks the 26th anniversary of `X`. Looking back, we took decisive actions in response to a rapidly changing environment two years ago, and we are now seeing the fruits of those efforts. Our businesses and teams have gained **momentum** (/məˈmentəm/ n. 冲力), and we've seen an improvement in the company's performance, quarter by quarter. **We have shown that we can not only capitalize on favorable circumstances, but also manage to emerge from difficult times**.
+
+`X` has conducted the Employee Satisfaction Survey for 20 years and we've gained many valuable insights from employees' feedback. For example, we came to realize that we had lost some of our passion and ambition under the weight of **cumbersome** (/ˈkʌmbəsəm/ adj. 笨重的；繁琐的，复杂的) rules, processes, and ways of doing things. And there had been a **widespread** (adj. 普遍的，广泛的) feeling that many good ideas had been wasted, many talented individuals were unrecognized, and numerous internal obstacles **had hindered** (阻碍) our progress toward our goals. Therefore, we call on everyone to voice your thoughts, opinions, and even **criticisms** (n. 批评). We also believe that your honest feedback will help us continuously improve as a company and foster organizational **vitality** (/vaɪˈtæləti/ n. 活力，热情；生机，生命力).
+
+We are looking forward to seeing your responses to the 2024 `X` Employee Satisfaction Survey.
 
 
+`X` 的小伙伴：
 
+今年是 `X` 成立的第26年，近两年面对各种环境气候变化时，我们果断行动，也收获了成效：业务和团队的状态稳步回暖，公司业绩每个季度都在提升。这让所有人看到，腾讯不只能在顺流中抓住机会，也能在疾风巨浪中逆流而上。
 
+满意度调查到今年已经是第20个年头，在大家通过各种渠道反馈的问题和建议中，我们看到、感受到，我们的激情与锐气正被一些繁琐的规则、流程、套路框住，导致很多好的想法跑不出来，不少优秀的人才不能被看到，做成一件事有时有重重阻碍。我们鼓励每一位员工真实地表达自己的想法看法，即使是批评。我们也相信，你真实的表达，一定能帮助组织不断进步，激发活力。
+
+在此，公司期望通过“2024年员工满意度调查”来继续了解你对于公司各维度的真实的想法，期待各位诚挚的发声，助推公司历久弥新，与时俱进。
 
 
