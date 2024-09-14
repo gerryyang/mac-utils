@@ -2730,6 +2730,31 @@ apt-get install binutils
 
 https://linux.die.net/man/1/addr2line
 
+``` bash
+$ addr2line -h
+Usage: addr2line [option(s)] [addr(s)]
+ Convert addresses into line number/file name pairs.
+ If no addresses are specified on the command line, they will be read from stdin
+ The options are:
+  @<file>                Read options from <file>
+  -a --addresses         Show addresses
+  -b --target=<bfdname>  Set the binary file format
+  -e --exe=<executable>  Set the input file name (default is a.out)
+  -i --inlines           Unwind inlined functions
+  -j --section=<name>    Read section-relative offsets instead of addresses
+  -p --pretty-print      Make the output easier to read for humans
+  -s --basenames         Strip directory names
+  -f --functions         Show function names
+  -C --demangle[=style]  Demangle function names
+  -R --recurse-limit     Enable a limit on recursion whilst demangling.  [Default]
+  -r --no-recurse-limit  Disable a limit on recursion whilst demangling
+  -h --help              Display this information
+  -v --version           Display the program's version
+
+addr2line: supported targets: elf64-x86-64 elf32-i386 elf32-iamcu elf32-x86-64 pei-i386 pei-x86-64 elf64-l1om elf64-k1om elf64-little elf64-big elf32-little elf32-big pe-x86-64 pe-bigobj-x86-64 pe-i386 srec symbolsrec verilog tekhex binary ihex plugin
+Report bugs to <http://bugzilla.redhat.com/bugzilla/>
+```
+
 
 测试代码：
 

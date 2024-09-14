@@ -319,6 +319,18 @@ yum install atop -y
 
 # 第三方库
 
+可选编译选项：
+
+``` bash
+# 指定 ABI 编译版本
+ADD_DEFINITIONS(-D_GLIBCXX_USE_CXX11_ABI=0)
+```
+
+``` bash
+# 位置无关代码
+SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
+```
+
 ## libatomic
 
 ``` bash

@@ -469,6 +469,23 @@ TODO
 
 # 常用技巧
 
+## 设置源文件查找路径
+
+Executable programs sometimes do not record the directories of the source files from which they were compiled, just the names. Even when they do, the directories could be moved between the compilation and your debugging session. GDB has a list of directories to search for source files; this is called the **source path**. Each time GDB wants a source file, it tries all the directories in the list, in the order they are present in the list, until it finds a file with the desired name.
+
+```
+(gdb) directory /search/code/some
+```
+
+使用 `directory` 或 `dir` 命令设置源文件的查找目录后，gdb 就可以正常地解析源代码了。如果希望在 gdb 启动时加载 code 的位置，避免每次在 gdb 中再次输入命令，可以使用 gdb 的 `-d` 参数。
+
+```
+gdb -q a.out -d /search/code/some
+```
+
+refer: [Specifying Source Directories](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Source-Path.html)
+
+
 ## Launch 调试
 
 工具脚本示例：
@@ -896,7 +913,6 @@ gdb 可以为被调试的程序创建一个**快照**，即**保存程序运行�
 `ch`是创建快照，`d c ID`是删除指定编号的快照，`i ch`是查看所有快照，`restart ID`是切换到指定编号的快照，详细说明可以在 shell 里键入`info '(gdb) Checkpoint/Restart'`查看。
 
 ![gdb3](/assets/images/202308/gdb3.png)
-
 
 ## pstack
 

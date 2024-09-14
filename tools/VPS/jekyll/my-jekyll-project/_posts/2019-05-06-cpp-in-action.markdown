@@ -6391,4 +6391,6 @@ Larry Wall 认为程序员该有的三大美德：懒惰，急切，傲慢（laz
 # Refer
 
 
+* https://www.learncpp.com/
+* https://zhjwpku.com/assets/pdf/books/C++.Primer.5th.Edition_2013.pdf
 * [What are Aggregates and PODs and how/why are they special?](https://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special)

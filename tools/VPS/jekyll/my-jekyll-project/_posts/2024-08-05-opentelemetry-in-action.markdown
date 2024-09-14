@@ -8,14 +8,31 @@ categories: 云原生
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-> 故障定位，本质是一个信息检索的问题。
+![OpenTelemetry-Deep-Dive](/assets/images/202409/OpenTelemetry-Deep-Dive.png)
 
+> **Observability** has come a long way from the days of juggling a mix of proprietary tools and dealing with vendor lock-in.
+>
+> Today, the **OpenTelemetry Protocol** (**OTLP**) is leading the charge with its unified, vendor-neutral approach. If you’re looking to make sense of how OTLP fits into the modern observability landscape, you’re in the right place.
+>
+> Let’s break down what makes OTLP important and how it can simplify your monitoring and tracing efforts.
+
+
+> 故障定位，本质是一个信息检索的问题。
 
 **OpenTelemetry**, also known as **OTel**, is a vendor-neutral open source [Observability](https://opentelemetry.io/docs/concepts/observability-primer/#what-is-observability) framework for instrumenting, generating, collecting, and exporting telemetry data such as [traces](https://opentelemetry.io/docs/concepts/signals/traces/), [metrics](https://opentelemetry.io/docs/concepts/signals/metrics/), and [logs](https://opentelemetry.io/docs/concepts/signals/logs/).
 
 As an industry-standard, OpenTelemetry is [supported by more than 40 observability vendors](https://opentelemetry.io/ecosystem/vendors/), integrated by many [libraries, services, and apps](https://opentelemetry.io/ecosystem/integrations/), and adopted by [numerous end users](https://opentelemetry.io/ecosystem/adopters/).
 
 ![otel-diagram](/assets/images/202408/otel-diagram.svg)
+
+
+# What is OTLP?
+
+`OTLP` is the standardized protocol for transmitting telemetry data in OpenTelemetry. It defines how **traces**, **metrics**, and **logs** are serialized and transported from your applications to backends or other components in your observability pipeline.
+
+![OTLP](/assets/images/202409/OTLP.svg)
+
+![OTLP2](/assets/images/202409/OTLP2.svg)
 
 
 # 术语
@@ -641,3 +658,5 @@ The OpenTelemetry project uses terminology you might not be familiar with. In ad
 * https://opentelemetry.io/docs/
 * https://opentelemetry.io/docs/what-is-opentelemetry/
 * [Google Cloud 中的可观测性](https://cloud.google.com/stackdriver/docs?hl=zh-cn)
+* [OpenTelemetry Protocol (OTLP): A Deep Dive into Observability](https://last9.io/blog/opentelemetry-protocol-otlp/)
+* https://last9.io/blog/opentelemetry-protocol-otlp/

@@ -6329,3 +6329,10 @@ This is a really nasty C++ issue and I am amazed there isn't reliable tooling fo
 * https://en.cppreference.com/w/cpp/language/initialization
 
 * Argument-dependent lookup   https://en.cppreference.com/w/cpp/language/adl
+
+
+# Refer
+
+* https://www.learncpp.com/
+* https://zhjwpku.com/assets/pdf/books/C++.Primer.5th.Edition_2013.pdf
+

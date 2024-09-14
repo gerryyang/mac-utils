@@ -2,7 +2,7 @@
 layout: post
 title:  "Prometheus in Action"
 date:   2023-1-30 20:00:00 +0800
-categories: Prometheus
+categories: 云原生
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -101,6 +101,48 @@ The features that distinguish Prometheus from other metrics and monitoring syste
 > Note:
 >
 > 标签（Label）的作用：Prometheus 中存储的数据为时间序列，是由指标名和一系列的标签（键值对）唯一标识的，不同的标签代表不同的时间序列，即通过指定标签查询指定数据。添加的标签越多，查询的维度越细。
+
+
+# 存储模型
+
+Prometheus 内置的时序数据库 TSDB。
+
+Prometheus 读写的是**时序数据**，与一般的数据对象相比，时序数据有其特殊性，TSDB 对此进行了大量针对性的设计与优化。因此理解时序数据是理解 Prometheus 存储模型的第一步。通常它由如下所示的**标识**和**采样数据**两部组成：
+
+```
+标识 -> {(t0, v0), (t1, v1), (t2, v2), ...}
+```
+
+**标识**，用于**区分各个不同的监控指标**。在 Prometheus 中通常用**指标名 + 一系列的 label** 唯一地标识**一个时间序列**。如下为 Prometheus 抓取的一条时间序列，其中 `http_request_tota` l为**指标名**，表示 HTTP 请求的总数，它有 `path` 和 `method` 两个 **label**，用于表示各种请求的路径和方法。
+
+```
+http_request_total{path="/", method="GET"} -> {(t0, v1), (t1, v1), ...}
+```
+
+事实上，**指标名**最后也是作为一个特殊的 **label** 被存储的，它的 key 为 `__name__`，如下所示。最终 Prometheus 存储在数据库中的时间序列标识就是一堆 **label**。我们将这堆 **label** 称为 `series`。
+
+```
+{__name__="http_request_total", path="/", method="GET"}
+```
+
+采样数据则由诸多的**采样点**（Prometheus 中称为 `sample`）构成。`t0, t1, t2, ...` 表示**样本采集的时间**，`v0, v1, v2, ...` 则表示**指标在采集时刻的值**。**采样时间**一般是单调递增的并且相邻 sample 的时间间隔往往相同，Prometheus 中默认为 15s。而且一般相邻 sample 的指标值 v 并不会相差太多。基于采样数据的上述特性，对它进行高效地压缩存储是完全可能的。Prometheus 对于采样数据压缩算法的实现，参考了 Facebook 的时序数据库 `Gorilla` 中的做法，**通过该算法，16 字节的 sample 平均只需要 1.37 个字节的存储空间**。
+
+
+**监控数据**是一种**时效性非常强的数据类型**，它被查询的热度会随着时间的流逝而不断降低，而且对于监控指标的访问通常会指定一个时间段，例如，最近十五分钟，最近一小时，最近一天等等。**一般来说，最近一个小时采集到的数据被访问地是最为频繁的，过去一天的数据也经常会被访问用来了解某个指标整体的波动情况，而一个月乃至一年之前的数据被访问的意义就不是很大了**。
+
+基于监控数据的上述特性，TSDB 的设计就非常容易理解了，其整体架构如下：
+
+对于最新采集到的数据，Prometheus 会直接将它们存放在**内存**中，从而加快数据的读写。但是内存的空间是有限的，而且随着时间的推移，内存中较老的那部分数据被访问的概率也逐渐降低。因此，默认情况下，每隔两小时 Prometheus 就会将部分“老”数据持久化到磁盘，每一次持久化的数据都独立存放在磁盘的一个 Block 中。例如上图中的 block0 就存放了 `[t0, t1]` 时间段内 Prometheus 采集的所有监控数据。这样做的好处很明显，如果我们想要访问某个指标在 `[t0, t2]` 范围内的数据，那么只需要加载 block0 和 block1 中的数据并进行查找即可，这样一来大大缩小了查找的范围，从而提高了查询的速度。
+
+虽然最近采集的数据存放在内存中能够提高读写效率，但是由于内存的易失性，一旦 Prometheus 崩溃（如果系统内存不足，Prometheus 被 OOM 的概率并不算低）那么这部分数据就彻底丢失了。因此 Prometheus 在将采集到的数据真正写入内存之前，会首先存入 `WAL`（`Write Ahead Log`）中。因为 `WAL` 是存放在磁盘中的，相当于对内存中的监控数据做了一个完全的备份，即使 Prometheus 崩溃这部分的数据也不至于丢失。当 Prometheus 重启之后，它首先会将WAL的内容加载到内存中，从而完美恢复到崩溃之前的状态，接着再开始新数据的抓取。
+
+![tsdb](/assets/images/202409/tsdb.png)
+
+refer:
+
+* https://www.cnblogs.com/YaoDD/p/11391335.html
+
+
 
 
 # 存储容灾
@@ -627,6 +669,7 @@ topk(1, count ({__name__=~"msgame_P.*"}) by(__name__))
 
 * [Prometheus 实战](https://songjiayang.gitbooks.io/prometheus/content/promql/summary.html)
 * [腾讯云 Prometheus 介绍](https://cloud.tencent.com/document/product/1416/55770)
+* [PromQL Cheat Sheet: Must-Know PromQL Queries](https://last9.io/blog/promql-cheat-sheet/)
 
 
 
