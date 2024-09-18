@@ -678,7 +678,16 @@ $cat /proc/3100717/stat
 
 # 内存
 
-通过`free`命令，可以看到服务器内存的使用情况。 (数值都默认以字节为单位，`-m` 表示Display the amount of memory in megabytes)
+通过`free`命令，可以看到服务器内存的使用情况。
+
+* 数值都默认以字节为单位
+* `-h` 表示 show human-readable output
+* `-m` 表示 Display the amount of memory in megabytes
+* Mem 含义
+  + `total`: 总内存
+  + `used`: 已经使用的内存
+  + `free`: 空闲内存
+* Swap 含义：交换分区
 
 ```
 # free
@@ -687,13 +696,6 @@ Mem:       1017796     819720     198076      16784      46240     468880
 -/+ buffers/cache:     304600     713196
 Swap:            0          0          0
 ```
-
-Mem含义：
-* `total`: 总内存
-* `used`: 已经使用的内存
-* `free`: 空闲内存
-
-Swap含义：交换分区。
 
 > 在很多Linux服务器上运行free命令，会发现剩余内存（Mem:行的free列）很少，但实际服务器上的进程并没有占用很大的内存。这是因为Linux特殊的内存管理机制。Linux内核会把空闲的内存用作buffer/cached，用于提高文件读取性能。当应用程序需要用到内存时，buffer/cached内存是可以马上回收的。所以，对应用程序来说，buffer/cached是可用的，可用内存应该是free+buffers+cached。因为这个原因，free命令也才有第三行的-/+ buffers/cache。
 
@@ -770,6 +772,11 @@ cat /proc/`pidof friendsvr`/smaps > smaps.out
 
 ### pmap
 
+
+* [Actual memory usage of a process](https://unix.stackexchange.com/questions/164653/actual-memory-usage-of-a-process)
+* [Getting information about a process' memory usage from /proc/pid/smaps](https://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
+
+
 ```
 $pmap -x `pidof gamesvr`
 ...
@@ -783,6 +790,29 @@ Address           Kbytes     RSS   Dirty Mode  Mapping
 ...
 ---------------- ------- ------- -------
 total kB         1372708  402092  367472
+```
+
+## smem
+
+smem 需要单独安装。
+
+* USS (Unique Set Size)，独占内存 = `anno_rss`
+* PSS (Proportional Set Size)，按比例分配内存 = `anno_rss + file_rss/m + shmem_rss/n`
+* RSS (Resident Set Size)，映射的物理内存 = `anno_rss + file_rss + shmem_rss`
+
+
+![mem_diff](/assets/images/202409/mem_diff.png)
+
+
+```
+  PID User     Command                         Swap      USS      PSS      RSS
+    1 root     /pause                             0       36       57      412
+  939 root     crond -s -P                        0      892     1271     3128
+17880 root     bash                               0     3160     3581     5420
+ 2234 root     /usr/libexec/platform-pytho        0    10760    11307    13324
+  284 root     /deploysidecar/bin/xxxxxxx1        0    15792    30939    47592
+ 1295 root     /data/home/user00/xxxxxxxx2        0    40396    40540    41740
+ 3138 root     /data/home/user00/xxxxxxxx3        0  5242696  5254234  5267336
 ```
 
 ## dump memory (gdb)
@@ -801,6 +831,7 @@ gdb --batch --pid {PID} -ex "dump memory native_memory.dump 0x66c2000 0x66d2000"
 
 ## refer
 
+* [Linux中进程内存及cgroup内存统计差异](https://goframe.org/pages/viewpage.action?pageId=157646868)
 * https://techtalk.intersec.com/2013/07/memory-part-1-memory-types/
 * https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/
 * https://techtalk.intersec.com/2013/08/memory-part-3-managing-memory/
