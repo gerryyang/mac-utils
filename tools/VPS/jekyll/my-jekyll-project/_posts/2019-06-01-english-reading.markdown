@@ -90,3 +90,41 @@ We are looking forward to seeing your responses to the 2024 `X` Employee Satisfa
 在此，公司期望通过“2024年员工满意度调查”来继续了解你对于公司各维度的真实的想法，期待各位诚挚的发声，助推公司历久弥新，与时俱进。
 
 
+# Happy Teachers' Day: Each of Us Has the Potential to Empower Others (September 10th, 2024)
+
+Dear colleagues,
+
+Today is Teachers' Day in China, a day in which we celebrate and show appreciation towards our educators. I'd like to wish all of our **lecturers**(讲师), **mentors**(导师), and every `T`er who is passionate about sharing knowledge a wonderful Teachers' Day!
+
+There's an old saying in China that goes, "**In a group of three, there is always at least one person you can learn from.(三人行，必有我师焉)**" This **adage**(n. 名言) echoes strongly with `T`'s inspiring journey of growth. From its humble beginning as a startup about 26 years ago, `T` has risen to become a global leader in the Internet industry, thanks to the tireless efforts and collective wisdom of every `T`er. Each individual brings a unique set of skills, experiences, and perspectives to the table, and is thus a valuable asset to `T`'s success.
+
+At `T`, we're committed to building a culture of openness, inclusion, and sharing. Regardless of your level of experience or expertise, we value your unique perspective and encourage you to share your knowledge with others. In honor of this commitment, we offer an abundance of learning resources and exchange opportunities that enable every `T`er to grow and thrive.
+
+Over the past year, we have redoubled our efforts in knowledge management and sharing. Through the collaborative efforts of `T` Academy, our career development committees, the KM platform (the internal online knowledge management community), and the Corporate Culture Department, we launched our first internal professional publication - `T` Profession. Released on July 15, 2014, `T` Profession features 31 carefully curated articles from thousands of submissions by our talented employees. To date, it has been viewed by an impressive 60%+ of `T`ers. We have increased incentives for high-quality courses and sharing, and upgraded the Q-Learning platform to make knowledge production more efficient and the learning experience better. These efforts have significantly enhanced the convenience and efficiency of learning for our employees.
+
+In addition, we also launched the Excellent Knowledge Management Award across the company. This Award aims to recognize those teams that have made outstanding contributions to knowledge management and sharing, and to inspire more teams to join this effort. Through these initiatives, we seek to build a comprehensive knowledge transfer mechanism and make `T` a better organization for learning.
+
+At `T`, everyone can be a "teacher" who empowers others and also a "student" who learns from peers. We exchange our insights and experiences throughout our work to drive each other's growth. This spirit of mutual mentorship not only promotes the advancement of each individual but also brings continuous **momentum**(n. 动力) to the company's innovation and development.
+
+On this special day, I would like to extend my gratitude to everyone who has contributed to the growth and development of `T`ers. More importantly, we hope more and more people can join us in helping and influencing others with our knowledge and wisdom. Let's **unleash**(v. 释放出) our passion for learning and knowledge at `T`, and propel the company to new heights.
+
+亲爱的`T`小伙伴们，大家好！
+
+今天是一年一度的教师节，祝我们身边的每一位讲师、导师以及热爱分享的`T`人教师节快乐！
+
+“三人行，必有我师焉。”这句古人的名言，在`T`得到了生动的体现。在过去的26年里，`T`从一个小小的创业公司成长为全球领先的互联网企业，这离不开每一位`T`人的努力和智慧。我们每一个人都是`T`这个宝库中的宝贵财富，都有着自己的专长和经验。
+
+ 在`T`，我们鼓励开放、包容和分享的文化。无论是资深的大咖大神，还是初出茅庐的新人小白，每个人都有机会展示自己的才华和智慧。我们为大家提供了丰富的学习资源和交流机会。
+
+过去一年，我们加大了对知识沉淀和分享的投入力度。`T`学堂、各专业通道、KM及企业文化部联合推出首本公司级的专业刊物——《`T`知点》年刊，从上千篇员工投稿中严格评选出31篇最具代表性的专业文章，于2024年7月15日正式发布，目前已有超过六成小伙伴阅读了年刊文章。与此同时，我们加大了内部精品课程和分享的激励力度，升级了QLearning学习平台，提升了知识生产效率和学习体验，让学习变得更加便捷和高效。
+
+此外，我们还首次开展了`T`知识沉淀优秀团队评选活动，旨在表彰那些在知识沉淀和分享方面做出突出贡献的团队，激励更多团队加入到这一行列中来。通过这些举措，我们希望能够构建一个更加完善的知识传承体系，让`T`成为一个更好的学习型组织。
+
+在`T`，每一个人都是老师，也是学生。我们在工作中相互学习、共同进步，分享着彼此的经验和见解。这种互为师长的精神不仅促进了个人的成长和发展，也为公司的持续创新和发展带来了源源不断的动力。
+
+最后，感谢每一位为`T`人的成长和发展做出贡献的老师！同时，也期待更多的小伙伴能够加入到“老师”的行列中来，用自己的知识和智慧去影响和帮助更多的人。让我们一起庆祝这个属于我们大家的节日，互勉互助、一起迈入next level！
+
+
+
+
+

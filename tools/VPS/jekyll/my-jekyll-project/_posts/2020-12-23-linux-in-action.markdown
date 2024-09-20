@@ -710,7 +710,7 @@ PID USER    PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+  COMMAND
 ```
 
 * VIRT，进程虚拟内存的大小，虚拟内存并不会全部分配物理内存
-* RES，常驻内存的大小，是进程实际使用的物理内存大小，但不包括Swap和共享内存
+* RES，常驻内存的大小，是进程实际使用的物理内存大小，**但不包括Swap和共享内存**
 * SHR，共享内存大小，比如，与其他进程共同使用的共享内存，加载的动态链接库以及程序的代码段等
 * %MEM，进程使用物理内存占系统总内存的百分比
 
@@ -724,58 +724,75 @@ refer:
 
 ## 整个内存采集算法
 
-采集`free`命令的这几个结果（跟free命令一样，都是通过读取`/proc/meminfo`来得到的），然后每4分钟上报一次：
+问题：[Actual memory usage of a process](https://unix.stackexchange.com/questions/164653/actual-memory-usage-of-a-process)
 
-* MEM使用量：Mem：的`total - free`
-* MEM总大小：Mem：的`total`
+采集`free`命令的这几个结果（实际是通过读取`/proc/meminfo`来得到的），然后每4分钟上报一次：
+
+* MEM 使用量：Mem：的`total - free`
+* MEM 总大小：Mem：的`total`
 * 应用程序使用内存：-/+ buffers/cache：的`used`
 
 ## 某进程内存采集算法
 
-从进程的角度来判断服务器的内存占用。Linux内核2.6.14及以上版本增加了`/proc/(进程ID)/smaps`文件，通过smaps文件可以分析进程具体占用的每一段内存。
+从进程的角度来判断服务器的内存占用。Linux 内核 2.6.14 及以上版本增加了`/proc/(进程ID)/smaps`文件，通过 `smaps` 文件**可以分析进程具体占用的每一段内存**。
 
-```
-cat /proc/`pidof friendsvr`/smaps > smaps.out
+![smaps](/assets/images/202409/smaps.png)
 
-00400000-02afb000 r-xp 00000000 fc:20 3934363                            /data/home/gerryyang/speedgame/bin/friendsvr/friendsvr (deleted)
-   2 Size:              39916 kB
-   3 Rss:               10232 kB
-   4 Pss:               10232 kB
-   5 Shared_Clean:          0 kB
-   6 Shared_Dirty:          0 kB
-   7 Private_Clean:     10232 kB
-   8 Private_Dirty:         0 kB
-   9 Referenced:        10232 kB
-  10 Anonymous:             0 kB
-  11 AnonHugePages:         0 kB
-  12 Swap:                  0 kB
-  13 KernelPageSize:        4 kB
-  14 MMUPageSize:           4 kB
-  15 Locked:                0 kB
-  16 VmFlags: rd ex mr mw me dw
-```
 
-通过smaps文件，可以计算出两个指标：
+通过 `smaps` 文件，可以计算出两个指标：
 
-* 进程Virtual内存：通过把smaps文件所有的`Size`的大小加起来得到
-* 进程Private内存：通过把smaps 文件所有的`Private_Clean`、`Private_Dirty`大小加起来得到
+* 进程 Virtual 内存：通过把 smaps 文件所有的 `Size` 的大小加起来得到
+* 进程 Private 内存：通过把 smaps 文件所有的 `Private_Clean`、`Private_Dirty` 大小加起来得到
 
 通过此方法，也可以计算所有进程的内存使用：
 
-通过smaps文件计算所有进程的Virtual内存总和、Private内存总和，并计算共享内存总和，得到下面3个指标并上报。每4分钟上报一次。
+通过 smaps 文件计算所有进程的 Virtual 内存总和、Private 内存总和，并计算共享内存总和，得到下面3个指标并上报。每4分钟上报一次。
 
-* Virtual内存占用：通过计算所有进程的Virtual内存总和得到。可以用来判断进程是否存在内存泄漏。如果一台机器Virtual内存占用持续上涨，便很有可能发生了内存泄漏。
-* Private内存占用：通过计算所有进程的Private内存总和得到。Private内存都是映射在物理内存中的，因此通过总Private内存，我们可以知道机器至少需要多少物理内存。
-* Private内存+共享内存占用：通过Private内存占用，再加上机器上的共享内存，得到的指标。可以用来粗略衡量机器实际的内存占用。
+* Virtual 内存占用：通过计算所有进程的 Virtual 内存总和得到。可以用来判断进程是否存在内存泄漏。如果一台机器 Virtual 内存占用持续上涨，便很有可能发生了内存泄漏。
+* Private 内存占用：通过计算所有进程的 Private 内存总和得到。Private 内存都是映射在物理内存中的，因此通过总 Private 内存，我们可以知道机器至少需要多少物理内存。
+* Private 内存 + 共享内存占用：通过 Private 内存占用，再加上机器上的共享内存，得到的指标。可以用来粗略衡量机器实际的内存占用。
+
+参考：[Getting information about a process' memory usage from /proc/pid/smaps](https://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
+
+Clean pages are pages that have not been modified since they were mapped (typically, text sections from shared libraries are only read from disk (when necessary), never modified, so they'll be in shared, clean pages).
+Dirty pages are pages that are not clean (i.e. have been modified).
+
+Private pages are available only to that process, shared pages are mapped by other processes*.
+
+**RSS** is the total number of pages, shared or not, currently mapped into the process. So Shared_Clean + Shared_Dirty would be the shared part of the RSS (i.e. the part of RSS that is also mapped into other processes), and Private_Clean + Private_Dirty the private part of RSS (i.e. only mapped in this process).
+
+**PSS** (proportional share size) is as you describe. Private pages are summed up as is, and each shared mapping's size is divided by the number of processes that share it.
+So if a process had 100k private pages, 500k pages shared with one other process, and 500k shared with four other processes, the PSS would be:
+
+> 100k + (500k / 2) + (500k / 5) = 450k
+
+Further readings:
+
+* [ELC: How much memory are applications really using?](http://lwn.net/Articles/230975/)
+* [Documentation/filesystems/proc.txt](http://www.kernel.org/doc/Documentation/filesystems/proc.txt) in the kernel source
+* [man proc(5)](http://www.kernel.org/doc/man-pages/online/pages/man5/proc.5.html)
+* [Linux Memory Management Overview](http://tldp.org/LDP/khg/HyperNews/get/memory/linuxmm.html)
+* [Memory Management](http://tldp.org/LDP/tlk/mm/memory.html) at TLDP.org
+* [LinuxMM](http://linux-mm.org/)
+
+Regarding process-wide sums:
+
+* **RSS** can be (approximately) obtained by summing the `Rss`: entries in smaps
+
+``` bash
+# 单位 kB
+awk '/Rss:/{ sum += $2 } END { print sum }' /proc/$pid/smaps
+```
+
+* You can sum up `Pss`: values the same way, to get process-global **PSS**.
+
+* **USS** isn't reported in smaps, but indeed, it is the sum of private mappings, so you can obtain it the same way too
+
+
 
 ## 常用命令
 
 ### pmap
-
-
-* [Actual memory usage of a process](https://unix.stackexchange.com/questions/164653/actual-memory-usage-of-a-process)
-* [Getting information about a process' memory usage from /proc/pid/smaps](https://unix.stackexchange.com/questions/33381/getting-information-about-a-process-memory-usage-from-proc-pid-smaps)
-
 
 ```
 $pmap -x `pidof gamesvr`
@@ -3237,6 +3254,45 @@ tcpdump -r 179.cap
 
 tcpdump -S -nn -vvv -i lo port 6888
 ```
+
+(11) 将 tcpdump 的输出保存到文件，记录 3 分钟的数据
+
+``` bash
+tcpdump -Xns0 -iany port 4318 -w output.pcap &
+sleep 30
+
+# $!是一个特殊的shell变量，表示最后一个后台进程的PID
+kill $!
+```
+
+(12) 查看 output.pcap 的二进制内容
+
+方法1: 使用 tcpdump 查看
+
+``` bash
+# -r file
+#    Read packets from file (which was created with the -w option or by other tools that write pcap or pcap-ng files).  Standard input is used if file is ``-''.
+tcpdump -r output.pcap
+```
+
+方法2: 使用 Wireshark 查看
+
+Wireshark 是一个功能强大的网络协议分析器，它可以图形化地展示数据包内容。
+
+方法3: 使用 termshark 查看（命令行工具）
+
+A terminal UI for tshark, inspired by Wireshark
+
+https://github.com/gcla/termshark
+
+``` bash
+# 安装依赖
+yum install wireshark
+```
+
+![termshark](/assets/images/202409/termshark.png)
+
+
 
 > 相关工具
 
