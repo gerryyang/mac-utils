@@ -9,6 +9,29 @@ categories: 机器学习
 {:toc}
 
 
+# [Stable Diffusion](https://en.wikipedia.org/wiki/Stable_Diffusion)
+
+Stable Diffusion 是一种基于潜在扩散模型（Latent Diffusion Models, LDMs）的文图生成（text-to-image）模型，由 CompVis、Stability AI 和 LAION 研究人员实现并开源。该模型的核心思想是通过前向扩散过程和反向扩散过程来生成图像，其中前向扩散过程将高斯噪声加入到初始图像中，逐步增强噪声以达到所需的分布状态；反向扩散过程则是在这个过程中去除噪声，从而生成与文本描述相符的图像。
+
+Stable Diffusion is a [deep learning](https://en.wikipedia.org/wiki/Deep_learning), [text-to-image model](https://en.wikipedia.org/wiki/Text-to-image_model) released in 2022 based on [diffusion](https://en.wikipedia.org/wiki/Diffusion_model) techniques. The [generative artificial intelligence](https://en.wikipedia.org/wiki/Generative_artificial_intelligence) technology is the premier product of [Stability AI](https://en.wikipedia.org/wiki/Stability_AI) and is considered to be a part of the ongoing [artificial intelligence boom](https://en.wikipedia.org/wiki/AI_boom).
+
+It is primarily used to generate detailed images conditioned on text descriptions, though it can also be applied to other tasks such as [inpainting](https://en.wikipedia.org/wiki/Inpainting), outpainting, and generating image-to-image translations guided by a [text prompt](https://en.wikipedia.org/wiki/Prompt_engineering). Its development involved researchers from the CompVis Group at Ludwig Maximilian University of Munich and Runway with a computational donation from Stability and training data from non-profit organizations.
+
+Stable Diffusion is a latent [diffusion model](https://en.wikipedia.org/wiki/Diffusion_model), a kind of deep generative artificial [neural network](https://en.wikipedia.org/wiki/Neural_network). Its code and model weights have been released publicly, and it can run on most consumer hardware equipped with a modest GPU with at least 4 GB VRAM. This marked a departure from previous proprietary text-to-image models such as DALL-E and Midjourney which were accessible only via cloud services.
+
+## 相关工具
+
+### [stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
+
+A web interface for Stable Diffusion, implemented using Gradio library.
+
+### [sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet)
+
+The WebUI extension for ControlNet and other injection-based SD controls.
+
+https://github.com/AUTOMATIC1111/stable-diffusion-webui
+
+
 
 # 了解如何避免过拟合，进而能够准确泛化模型外部的数据
 
