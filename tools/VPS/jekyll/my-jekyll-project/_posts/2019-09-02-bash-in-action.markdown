@@ -714,23 +714,6 @@ echo "$VAR"
 * `-z string` - True if the string length is zero.
 * `-n string` - True if the string length is non-zero.
 
-```
--e <file_a>: File_a exists.
--f <file_a>: File_a exists and a regular file.
--d <file_a>: File_a exists and is a directory.
--r <file_a>: File_a exists with read permissions.
--w <file_a>: File_a exists with write permissions.
--x <file_a>: File_a exists with execute permissions.
--s <file_a>: File_a exists and file size is greater than zero.
--O <file_a>: File_a exists and the owner is effective user ID.
--G <file_a>: File_a exists and the owner is effective group ID.
--h <file_a>: File_a exists and it’s a symbolic link.
--L <file_a>: File_a exists and it’s a symbolic link.
--b <file_a>: File_a exists. It’s a block-special file.
--c <file_a>: File_a exists. It’s a character-special file.
--S <file_a>: File_a exists. It’s a socket.
-```
-
 示例：
 
 ``` bash
@@ -1810,8 +1793,25 @@ cp --parents `find . -name "*.gcno"` test
 
 [How to copy file preserving directory path in Linux?](https://serverfault.com/questions/180853/how-to-copy-file-preserving-directory-path-in-linux)
 
-
 ## find
+
+### 根据文件名查找文件
+
+1. 使用 `find` 命令查找当前目录及其子目录中的所有文件，文件名以 "test" 开头，后跟一个数字。
+2. 使用 `! -name "*.cpp"` 参数，排除以 ".cpp" 结尾的文件。
+3. 对于找到的每个符合条件的文件，使用 `-exec rm {} \;` 参数执行 `rm` 命令以删除文件。
+
+``` bash
+find . -type f -name "test[0-9]*" ! -name "*.cpp" -exec rm {} \;
+```
+
+在删除文件之前，可以先检查哪些文件将被删除，只需将 `rm` 命令替换为 `echo` 命令：
+
+``` bash
+find . -type f -name "test[0-9]*" ! -name "*.cpp" -exec echo {} \;
+```
+
+### 根据大小查找文件
 
 ``` bash
 find /media/d/ -type f -size +50M ! \( -name "*deb" -o -name "*vmdk" \)
@@ -1840,6 +1840,7 @@ fi
 
 * https://unix.stackexchange.com/questions/50612/how-to-combine-2-name-conditions-in-find
 * https://pubs.opengroup.org/onlinepubs/009695399/utilities/find.html
+
 
 ## awk
 
@@ -2137,21 +2138,6 @@ ls -l *.o | sort -k5,5 -n -r | head
 
 `sort -k 5,5 -n -r`：使用 sort 命令按照第 5 列（即文件大小）进行逆序排序。`-k 5,5` 表示按照第 5 列排序，`-n` 表示按照数值排序，`-r` 表示逆序排序。这里的两个数字 `5,5` 分别表示键的开始位置和结束位置，也就是说，只关注第 5 列。如果写的是 `5,6`，那就表示关注第 5 列和第 6 列，这两列的内容会被拼接在一起作为排序的关键字。
 
-## find
-
-1. 使用 `find` 命令查找当前目录及其子目录中的所有文件，文件名以 "test" 开头，后跟一个数字。
-2. 使用 `! -name "*.cpp"` 参数，排除以 ".cpp" 结尾的文件。
-3. 对于找到的每个符合条件的文件，使用 `-exec rm {} \;` 参数执行 `rm` 命令以删除文件。
-
-``` bash
-find . -type f -name "test[0-9]*" ! -name "*.cpp" -exec rm {} \;
-```
-
-在删除文件之前，可以先检查哪些文件将被删除，只需将 `rm` 命令替换为 `echo` 命令：
-
-``` bash
-find . -type f -name "test[0-9]*" ! -name "*.cpp" -exec echo {} \;
-```
 
 
 # Example

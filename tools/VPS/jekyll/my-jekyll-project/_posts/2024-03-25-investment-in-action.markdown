@@ -189,7 +189,15 @@ categories: 杂记
 
 ![raydalio](/assets/images/202409/raydalio.png)
 
+![raydalio2](/assets/images/202409/raydalio2.png)
+
 This video explains how the economy works like a simple machine, made up of basic transactions, and three economic dynamics: productivity gains, short-term debt cycle, and long-term debt cycle. It emphasizes the importance of understanding transactions, credit, and the role of governments and central banks.
+
+> **三条经验法则**
+>
+> 1. 不要让债务的增长速度超过收入，因为债务负担最重将把你压垮。
+> 2. 不要让收入的增长速度超过生产率，因为这最终将使你失去竞争力。
+> 3. 尽一切努力提高生产率，因为生产率在长期内起着最关键的作用。
 
 
 
