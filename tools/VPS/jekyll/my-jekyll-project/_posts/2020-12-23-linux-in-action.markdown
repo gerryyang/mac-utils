@@ -680,7 +680,6 @@ $cat /proc/3100717/stat
 
 通过`free`命令，可以看到服务器内存的使用情况。
 
-* 数值都默认以字节为单位
 * `-h` 表示 show human-readable output
 * `-m` 表示 Display the amount of memory in megabytes
 * Mem 含义
@@ -787,7 +786,6 @@ awk '/Rss:/{ sum += $2 } END { print sum }' /proc/$pid/smaps
 * You can sum up `Pss`: values the same way, to get process-global **PSS**.
 
 * **USS** isn't reported in smaps, but indeed, it is the sum of private mappings, so you can obtain it the same way too
-
 
 
 ## 常用命令
