@@ -105,6 +105,10 @@ pprof --callgrind a.out heapprofile.out.0001.heap > heapprofile.callgrind
 
 ![qcachegrind_heap_prof](/assets/images/202106/qcachegrind_heap_prof.png)
 
+
+> 计算差异数据：pprof --base=heap.prof.0001.heap --svg your_bin heap.prof.0020.heap > 1-20.diff.svg
+
+
 # HEAP CHECKER
 
 See [heap_checker](https://gperftools.github.io/gperftools/heap_checker.html) for information about how to detect memory leaks in C++ programs.

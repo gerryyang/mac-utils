@@ -2,7 +2,7 @@
 layout: post
 title:  "Game in Action"
 date:   2022-10-19 08:00:00 +0800
-categories: Game
+categories: 游戏开发
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -109,13 +109,21 @@ The foremost advantage of dedicated servers is their suitability for hosting in 
 
 # 游戏匹配
 
+## 数据驱动的匹配系统优化框架
+
+![match](/assets/images/202409/match.png)
+
+![match2](/assets/images/202409/match2.png)
+
 ## PSK (Player Skill Score)
 
 游戏匹配是将不同用户撮合到一个 PVP 单局的系统，常规的做法是引入一个或多个“数值”来评估用户的实力。在系统运行过程中，也会通过用户的对局结果、操作表现对“数值”进行校准，是一套复杂严谨的公式模型的动态结果。如何评价一款游戏的匹配系统好坏，在于是否可以很好地将公平性、游戏性与用户主观认知进行平衡，愿意投入更多的时间进行游戏。在游戏里，这个“数值”叫做技能分 (Player Skill Score，简称 PSK)，PSK 作为匹配机制的基础与核心要素，成为玩法调优的一个关键抓手。
 
+
 ## AI 投放
 
 本质是希望通过投放 AI 来提升玩家的体验，进而来提升玩家的对局和留存。常见的优化方向如：AI 本身能力和难度的优化，AI 投放时机的优化，AI 投放强度的优化。
+
 
 ## ELO 匹配算法
 
