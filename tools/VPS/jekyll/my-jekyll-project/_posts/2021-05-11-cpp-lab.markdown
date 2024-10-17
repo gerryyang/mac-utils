@@ -3384,7 +3384,7 @@ size of a[]: 12
 
 https://en.cppreference.com/w/cpp/iterator/size
 
-## std::basic_string_view
+## std::string_view
 
 A typical implementation holds only two members: a pointer to constant CharT and a size. Several typedefs for common character types are provided:
 
@@ -3427,14 +3427,134 @@ int main()
     // constexpr basic_string_view( const CharT* s )
     std::string_view cppstr_v(cppstr);
     std::cout << "cppstr_v: " << std::quoted( cppstr_v ) << '\n';
+
+    const char* s = "hello";
+    std::string_view s_v(s);
+    std::cout << "s_v: " << std::quoted( s_v ) << '\n';
 }
 /*
 array_v: "Bar"
 cppstr_v: "Foo"
+s_v: "hello"
 */
 ```
 
 * https://en.cppreference.com/w/cpp/string/basic_string_view
+
+
+## std::variant_alternative_t
+
+Provides compile-time indexed access to the types of the alternatives of the possibly cv-qualified variant, combining cv-qualifications of the variant (if any) with the cv-qualifications of the alternative.
+
+``` cpp
+// Helper template alias
+template <size_t I, class T>
+using variant_alternative_t = typename variant_alternative<I, T>::type;
+```
+
+``` cpp
+#include <variant>
+#include <iostream>
+
+using my_variant = std::variant<int, float>;
+
+static_assert(std::is_same_v<int,   std::variant_alternative_t<0, my_variant>>);
+
+static_assert(std::is_same_v<float, std::variant_alternative_t<1, my_variant>>);
+
+// cv-qualification on the variant type propagates to the extracted alternative type.
+static_assert(std::is_same_v<const int, std::variant_alternative_t<0, const my_variant>>);
+
+int main()
+{
+    std::cout << "All static assertions passed.\n";
+}
+/*
+All static assertions passed.
+*/
+```
+
+* https://en.cppreference.com/w/cpp/utility/variant/variant_alternative
+
+## std::visit
+
+Applies the visitor `vis` (a Callable that can be called with any combination of types from variants) to the variants `vars`.
+
+``` cpp
+// gcc 14.2
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <type_traits>
+#include <variant>
+#include <vector>
+
+// the variant to visit
+using var_t = std::variant<int, long, double, std::string>;
+
+// helper type for the visitor #4
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+// explicit deduction guide (not needed as of C++20)
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
+int main()
+{
+    std::vector<var_t> vec = {10, 15l, 1.5, "hello"};
+
+    for (auto& v: vec)
+    {
+        // 1. void visitor, only called for side-effects (here, for I/O)
+        std::visit([](auto&& arg){ std::cout << arg; }, v);
+
+        // 2. value-returning visitor, demonstrates the idiom of returning another variant
+        var_t w = std::visit([](auto&& arg) -> var_t { return arg + arg; }, v);
+
+        // 3. type-matching visitor: a lambda that handles each type differently
+        std::cout << ". After doubling, variant holds ";
+        std::visit([](auto&& arg)
+        {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, int>)
+                std::cout << "int with value " << arg << '\n';
+            else if constexpr (std::is_same_v<T, long>)
+                std::cout << "long with value " << arg << '\n';
+            else if constexpr (std::is_same_v<T, double>)
+                std::cout << "double with value " << arg << '\n';
+            else if constexpr (std::is_same_v<T, std::string>)
+                std::cout << "std::string with value " << std::quoted(arg) << '\n';
+            else
+                static_assert(false, "non-exhaustive visitor!");
+        }, w);
+    }
+
+    for (auto& v: vec)
+    {
+        // 4. another type-matching visitor: a class with 3 overloaded operator()'s
+        // Note: The `(auto arg)` template operator() will bind to `int` and `long`
+        //       in this case, but in its absence the `(double arg)` operator()
+        //       *will also* bind to `int` and `long` because both are implicitly
+        //       convertible to double. When using this form, care has to be taken
+        //       that implicit conversions are handled correctly.
+        std::visit(overloaded{
+            [](auto arg) { std::cout << arg << ' '; },
+            [](double arg) { std::cout << std::fixed << arg << ' '; },
+            [](const std::string& arg) { std::cout << std::quoted(arg) << ' '; }
+        }, v);
+    }
+}
+/*
+10. After doubling, variant holds int with value 20
+15. After doubling, variant holds long with value 30
+1.5. After doubling, variant holds double with value 3
+hello. After doubling, variant holds std::string with value "hellohello"
+10 15 1.500000 "hello"
+*/
+```
+
+* https://en.cppreference.com/w/cpp/utility/variant/visit
+
 
 ## maybe_unused
 

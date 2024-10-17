@@ -8,36 +8,6 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-
-# [复利](https://zh.wikipedia.org/wiki/%E5%A4%8D%E5%88%A9)
-
-复利率法（compound interest），是一种计算利息的方法。按照这种方法，利息除了会根据本金计算外，新得到的利息同样可以生息，因此俗称“利滚利”、“驴打滚”或“利叠利”。只要计算利息的周期越密，财富增长越快，而随着年期越长，复利效应亦会越为明显。
-
-复利是现代理财一个重要概念，由此产生的财富增长，称作“复利效应”，对财富可以带来深远的影响。假设投资每年的回报率是100%，本金10万，如果只按照普通利息计算，每年回报只有10万元，10年亦只有100万元，整体财富增长只是10倍，但按照复利方法计算，首年回报是10万元，令个人整体财富变成20万，第二年20万会变成40万，第三年40万再变80万元，10年累计增长将高达1024倍（2的10次方），亦即指10万元的本金，最后会变成1.024亿元。
-
-> 10 * (1 + 1)^10 = 10240 (万) = 1.024 (亿)
-
-人类历史中，要长期达到每年100%回报是几近不可能，以华人首富李嘉诚为例，1950年以7,000美元成立长江塑胶厂，在2006年拥有约188亿美元身家计算，撇开其他因素，他的财富在57年增长268.6万倍，其每年的复利回报亦仅为26.68%((188亿/7000)开57次方=1.2966)。
-
-现时世界各国普遍都有对放债人所收取的利息有最高限制，一般都以30%年息为上限（香港法律容许的上限为48%），在此以上的都被视为进行高利贷活动而加以取缔。而现时信用卡欠账的年息往往高于20%甚至30%。
-
-最简单的复利公式如下：
-
-> FutureValue = PresentValue * (1 + interest)^n
-
-* `FutureValue`: 未来的价值
-* `PresentValue`: 现在的价值
-* `interest`: 周期内的固定利率或固定回报率
-* `n`: 累计的周期
-
-假设每年（即周期是1年）的回报是100%，1万元是在30年后（累计有30个周期）变成107,374.2亿元，公式如下：
-
-> FutureValue = 10000 * (1 + 100%) ^ 30 = 1.073741824 × 10^13 = 107,374.2 (亿)
-
-
-
-
-
 # Site Reliability Engineering (SRE 站点可靠性工程)
 
 **Site reliability engineering** (`SRE`) is a set of principles and practices that applies aspects of software engineering to IT infrastructure and operations. SRE claims to create highly reliable and scalable software systems. Although they are closely related, SRE is slightly different from [DevOps](https://en.wikipedia.org/wiki/DevOps).
@@ -564,6 +534,9 @@ msg_step1_ms:histogram total(para_num=2): 230/0.871 0/0.000 0/0.000 0/0.000 0/0.
 
 需要注意的是，暗网并不等同于黑客或犯罪行为，但由于其匿名性和难以追踪性，暗网中的内容往往容易被用于非法活动和犯罪行为。因此，访问暗网需要谨慎，并遵守当地法律法规。
 
+# 什么是 UPF
+
+UPF 是防紫外线伞重要指标，目前国内外的标准对纺织品的防紫外线性能一般都使用 UPF 值表示，即紫外线防护系数值进行评定。UPF 值是紫外线对未防护的皮肤的平均辐射量的比值，UPF 值越大，表明防紫外线性能越好。国家质检总局颁布的《纺织品防紫外线性能的评定》规定，只有 UPF (紫外线防护系数值) 大于 40，并且 UVA (长波紫外线) 透过率小于 5% 时，才能称为防紫外线产品，防护等级标准为 UPF40+。当 UPF 大于 50 时，表明产品紫外线防护性能极佳，防护等级标识为 UPF50+。
 
 
 # Refer

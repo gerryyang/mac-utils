@@ -1906,6 +1906,86 @@ func main() {
 * [Correct format of protoc go_package?](https://stackoverflow.com/questions/61666805/correct-format-of-protoc-go-package)
 
 
+# [Go Wiki: Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+
+This page collects common comments made during reviews of Go code, so that a single detailed explanation can be referred to by shorthands. This is a laundry list of common style issues, not a comprehensive style guide.
+
+## Gofmt
+
+Run [gofmt](https://pkg.go.dev/cmd/gofmt/) on your code to automatically fix the majority of mechanical style issues. Almost all Go code in the wild uses gofmt. The rest of this document addresses non-mechanical style points.
+
+An alternative is to use [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports), a superset of gofmt which additionally adds (and removes) import lines as necessary.
+
+## Comment Sentences
+
+See https://go.dev/doc/effective_go#commentary. Comments documenting declarations should be full sentences, even if that seems a little redundant. This approach makes them format well when extracted into godoc documentation. Comments should begin with the name of the thing being described and end in a period:
+
+``` golang
+// Request represents a request to run a command.
+type Request struct { ...
+
+// Encode writes the JSON encoding of req to w.
+func Encode(w io.Writer, req *Request) { ...
+```
+
+and so on.
+
+## Contexts
+
+Values of the context.Context type carry security credentials, tracing information, deadlines, and cancellation signals across API and process boundaries. Go programs pass Contexts explicitly along the entire function call chain from incoming RPCs and HTTP requests to outgoing requests.
+
+Most functions that use a Context should accept it as their first parameter:
+
+``` golang
+func F(ctx context.Context, /* other arguments */) {}
+```
+
+A function that is never request-specific may use context.Background(), but err on the side of passing a Context even if you think you don’t need to. The default case is to pass a Context; only use context.Background() directly if you have a good reason why the alternative is a mistake.
+
+Don’t add a Context member to a struct type; instead add a ctx parameter to each method on that type that needs to pass it along. The one exception is for methods whose signature must match an interface in the standard library or in a third party library.
+
+Don’t create custom Context types or use interfaces other than Context in function signatures.
+
+If you have application data to pass around, put it in a parameter, in the receiver, in globals, or, if it truly belongs there, in a Context value.
+
+Contexts are immutable, so it’s fine to pass the same ctx to multiple calls that share the same deadline, cancellation signal, credentials, parent trace, etc.
+
+## Copying
+
+To avoid unexpected aliasing, be careful when copying a struct from another package. For example, the bytes.Buffer type contains a []byte slice. If you copy a Buffer, the slice in the copy may alias the array in the original, causing subsequent method calls to have surprising effects.
+
+In general, do not copy a value of type T if its methods are associated with the pointer type, *T.
+
+## Declaring Empty Slices
+
+When declaring an empty slice, prefer
+
+``` golang
+var t []string
+```
+
+over
+
+``` golang
+t := []string{}
+```
+
+**The former declares a nil slice value, while the latter is non-nil but zero-length**. They are functionally equivalent—their len and cap are both zero—but the nil slice is the preferred style.
+
+Note that there are limited circumstances where a non-nil but zero-length slice is preferred, such as when encoding JSON objects (a nil slice encodes to null, while []string{} encodes to the JSON array []).
+
+When designing interfaces, avoid making a distinction between a nil slice and a non-nil, zero-length slice, as this can lead to subtle programming errors.
+
+For more discussion about nil in Go see Francesc Campoy’s talk [Understanding Nil](https://www.youtube.com/watch?v=ynoY2xz-F8s).
+
+-------
+
+
+TODO
+
+
+
+
 
 # Go Conference
 
@@ -1963,6 +2043,8 @@ Fast ring-buffer deque ([double-ended queue](https://en.wikipedia.org/wiki/Doubl
 * [How To Write Packages in Go](https://www.digitalocean.com/community/tutorials/how-to-write-packages-in-go)
 * [Go 语言简介（上）— 语法](http://coolshell.cn/articles/8460.html)
 * [Go 语言简介（下）— 特性](http://coolshell.cn/articles/8489.html)
+* [Go Wiki: Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+
 
 [Go官网]: https://golang.org
 [Go博客]: https://blog.golang.org
