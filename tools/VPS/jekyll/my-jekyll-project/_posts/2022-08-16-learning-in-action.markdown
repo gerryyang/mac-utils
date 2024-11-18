@@ -8,6 +8,14 @@ categories: 杂记
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# 编程语言
+
+## [Kotlin](https://zh.wikipedia.org/wiki/Kotlin)
+
+`Kotlin` 是一种在 **Java 虚拟机**上执行的**静态类型编程语言**，它也可以被编译成为 `JavaScript` 源代码。它主要是由 JetBrains 在俄罗斯圣彼得堡的开发团队所发展出来的编程语言，其名称来自于圣彼得堡附近的**科特林岛**。2012年1月，著名期刊《Dr. Dobb's Journal》中 Kotlin 被认定为该月的最佳语言。**虽然与 Java 语法并不兼容，但在 JVM 环境中 Kotlin 被设计成可以和 Java 代码相互运作，并可以重复使用如 Java 集合框架等的现有 Java 引用的函数库**。Hathibelagal 写道，“如果你正在为 Android 开发寻找一种替代编程语言，那么应该试下 Kotlin。它很容易在 Android 项目中替代 Java 或者同 Java 一起使用。”
+
+
+
 # Site Reliability Engineering (SRE 站点可靠性工程)
 
 **Site reliability engineering** (`SRE`) is a set of principles and practices that applies aspects of software engineering to IT infrastructure and operations. SRE claims to create highly reliable and scalable software systems. Although they are closely related, SRE is slightly different from [DevOps](https://en.wikipedia.org/wiki/DevOps).
