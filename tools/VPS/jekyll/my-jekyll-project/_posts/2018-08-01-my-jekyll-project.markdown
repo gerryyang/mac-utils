@@ -636,6 +636,25 @@ source ~/.zshrc
 * [秘塔AI搜索](https://metaso.cn/)
 
 
+## Kindle 电子书
+
+如何从 Kindle 电子内容中删除 DRM，以方便将 Kindle 的电子书放在其他设备上查看？参考方案：[删除亚马逊 Kindle 电子书的 DRM，将 AZW 转为 PDF 格式文档](https://blog.csdn.net/qq_31331027/article/details/84933542)，主要步骤如下：
+
+* 下载并安装 [Calibre e-book management](https://calibre-ebook.com/) 软件。Calibre 是一个免费的开源软件，主要用于对电子书、电子文档进行管理，支持各种辅助插件的安装，是一款功能十分强大的管理软件。
+
+> calibre is a powerful and easy to use e-book manager. Users say it’s outstanding and a must-have. It’ll allow you to do nearly everything and it takes things a step beyond normal e-book software. It’s also completely free and open source and great for both casual users and computer experts.
+
+* 下载 [DRM 解除插件](http://apprenticealf.wordpress.com/2012/09/10/drm-removal-tools-for-ebooks/)。下载下来之后是一个 zip 压缩包，解压找到 DeDRM_calibre_plugin 即可，其中的 DeDRM_plugin.zip 文件作为安装插件，不用进行解压缩。
+
+> DRM Removal Tools for eBooks. This blog is intended to help anyone looking for free and simple software for removing DRM from their Kindle ebooks, stripping DRM from their Adobe Digital Editions ebooks, getting rid of DRM from their Barnes and Noble ebooks, freeing their Kobo ebooks of DRM, or decrypting their Fictionwise eReader ebooks. If you want to find out more about ebooks, DRM and why you will probably want to remove the DRM from your ebooks, see this post: [Ebook Formats, DRM and You — A Guide for the Perplexed](https://apprenticealf.wordpress.com/2011/01/13/ebooks-formats-drm-and-you-%E2%80%94-a-guide-for-the-perplexed/). If you already know that you want to strip the DRM from your ebooks, you’ve found the right place.
+
+* 启动 Calibre，安装插件。Kindle 的 DRM 是基于设备串号的，选择 "Customize plugin"，添加 Kindle 授权设备的串号（可在设备上查看，16 位序列号）。至此，Kindle 的 AZW 电子书已经能被正常解密打开了。
+
+![my_kindle](/assets/images/202411/my_kindle.png)
+
+* 导入 AZW 文件，可转换成 PDF 格式导出。
+
+
 
 # 数学
 
