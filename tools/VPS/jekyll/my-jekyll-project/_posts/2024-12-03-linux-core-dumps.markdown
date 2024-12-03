@@ -9,6 +9,20 @@ categories: [Debuggers]
 {:toc}
 
 
+Linux 中的 core dump（核心转储）是一种在程序崩溃时捕获其内存状态的技术。当一个进程异常终止时，操作系统会将该进程的内存内容保存到一个名为 core 的文件中，这个文件包含了程序终止时的内存映像
+。这些信息可以用于调试和分析程序崩溃的原因。
+
+生成 core dump 的过程通常由操作系统内核控制，并受到多种因素的限制，例如文件系统的写权限、磁盘空间是否充足等。在 Linux 系统中，可以通过设置 `ulimit -c unlimited` 来允许生成无限大小的core dump 文件。
+
+core dump 文件的命名和存储位置可以通过系统配置进行自定义。例如，通过修改 `/proc/sys/kernel/core_pattern` 文件，可以指定 core dump 文件的目录和文件名格式。默认情况下，core dump 文件通常被保存在当前工作目录下，文件名为 `core` 或包含进程ID的 `core.PID`。
+
+对于使用 systemd 的系统，core dump 的处理由 systemd-coredump 负责，默认情况下会将核心转储存储在 `/var/lib/systemd/coredump` 目录中，并记录到 systemd journal 中。用户还可以通过 coredumpctl 工具来管理和分析这些核心转储文件。
+
+此外，Linux 还支持内核崩溃转储（Kernel Coredump），这允许在内核崩溃时捕获内核的内存状态。这通常需要配置 `kdump` 服务，并在内核启动参数中添加相应的选项。
+
+总结来说，Linux 中的 core dump 机制是一种强大的工具，用于在程序崩溃时捕获和分析其内存状态，从而帮助开发者定位和修复问题。
+
+
 # Linux Core Dumps
 
 ## So what?
