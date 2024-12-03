@@ -1646,6 +1646,9 @@ git tag -d <tag-name>
 
 # 删除远程仓库中的 tag
 git push <remote-name> :<tag-name>
+
+# 更新远程仓库的 tag 信息
+git fetch --tags
 ```
 
 * https://git-scm.com/book/zh/v2/Git-%E5%9F%BA%E7%A1%80-%E6%89%93%E6%A0%87%E7%AD%BE

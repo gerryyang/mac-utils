@@ -1061,6 +1061,9 @@ $ blkparse sdb -d sdb.bin
 $ fio --name=replay --filename=/dev/sdb --direct=1 --read_iolog=sdb.bin
 ```
 
+[腾讯云 - 云硬盘类型性能指标参考](https://cloud.tencent.com/document/product/362/2353)
+
+
 ## 性能调优
 
 **应用程序优化：**

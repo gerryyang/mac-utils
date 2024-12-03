@@ -8,6 +8,62 @@ categories: 英语学习
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# Words (柯林斯)
+
+* compulsory /kəmˈpʌlsəri/
+    + If something is **compulsory**, you must do it or accept it, because it is the law or because someone in a position of authority says you must. 强制性的
+
+* compliance /kəmˈplaɪəns/
+    + **Compliance with** something, for example a law, treaty, or agreement, means doing what you are required or expected to do. 遵从
+
+* refine /rɪˈfaɪn/
+    + When a substance **is refined**, it is made pure by having all other substances removed from it. 提炼
+    + If something such as a process, theory, or machine **is refined**, it is improved by having small changes made to it. 完善
+
+* urge /ɜːdʒ/
+    + If you **urge** someone to do something, you try hard to persuade them to do it. 敦促 (某人做某事)
+    + If you **urge** someone somewhere, you make them go there by touching them or talking to them. 鼓动 (某人去某地)
+    + If you **urge** a course of action, you strongly advise that it should be taken. 竭力主张
+    + If you have an **urge** to do or have something, you have a strong wish to do or have it. 强烈欲望
+
+* discrepancies /dɪˈskrepənsi/
+    + If there is a **discrepancy between** two things that ought to be the same, there is a noticeable difference between them. 差异
+
+* prevail /prɪˈveɪl/
+    + If a proposal, principle, or opinion **prevails**, it gains influence or is accepted, often after a struggle or argument. 占上风
+    + If a situation, attitude, or custom **prevails** in a particular place at a particular time, it is normal or most common in that place at that time. 盛行; 普遍存在
+    + If one side in a battle, contest, or dispute **prevails**, it wins. 获胜
+
+* embody /ɪmˈbɒdi/
+    + To **embody** an idea or quality means to be a symbol or expression of that idea or quality. 体现; 具体象征
+    + If something **is embodied in** a particular thing, the second thing contains or consists of the first. 包含; 收录
+
+* integrity /ɪnˈteɡrəti/
+    + If you have **integrity**, you are honest and firm in your moral principles. 正直; 诚实
+    + The **integrity** of something such as a group of people or a text is its state of being a united whole. 完整
+
+* leverage 英 /ˈliːvərɪdʒ/ 美 /ˈlevərɪdʒ/
+    + **Leverage** is the ability to influence situations or people so that you can control what happens. 影响力
+    + To **leverage** a company or investment means to use borrowed money in order to buy it or pay for it. 举债经营
+
+* incorporate 英 /ɪnˈkɔːpəreɪt/
+    + If one thing **incorporates** another thing, it includes the other thing. 包含
+    + If someone or something is **incorporated** into a large group, system, or area, they become a part of it. 使并入
+
+* refill
+    + If you **refill** something, you fill it again after it has been emptied. 重新装满
+    + **Refill** is also a noun. 重新装满
+    + A **refill** of a particular product is a quantity of that product sold in a cheaper container than the one it is usually sold in. You use a refill to fill the more permanent container when it is empty. 补充剂
+
+* workplace
+    + Your **workplace** is the place where you work. 工作场所
+
+* transient /ˈtrænziənt/
+    + **Transient** is used to describe a situation that lasts only a short time or is constantly changing. 短暂的
+    + **Transients** are people who stay in a place for only a short time and then move somewhere else. 流动人员
+
+
+
 # 流利阅读
 
 ## Trump administration owes Americans answers about restrictions on Huawei (2019-5-23)
