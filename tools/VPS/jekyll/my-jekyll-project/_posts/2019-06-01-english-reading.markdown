@@ -62,6 +62,10 @@ categories: 英语学习
     + **Transient** is used to describe a situation that lasts only a short time or is constantly changing. 短暂的
     + **Transients** are people who stay in a place for only a short time and then move somewhere else. 流动人员
 
+* spurious /ˈspjʊəriəs/
+    + Something that is **spurious** seems to be genuine, but is false. 似是而非的
+    + A **spurious** argument or way of reasoning is incorrect, and so the conclusion is probably incorrect. (论据、推理) 不正确的
+
 
 
 # 流利阅读

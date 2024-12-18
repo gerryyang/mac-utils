@@ -9,7 +9,6 @@ categories: [Linux Performance]
 {:toc}
 
 
-
 # bpftrace
 
 > High-level tracing language for Linux eBPF.
@@ -23,9 +22,6 @@ The `bpftrace` language is inspired by awk and C, and predecessor tracers such a
 `bpftrace` was created by Alastair Robertson.
 
 To learn more about bpftrace, see the [Manual](https://github.com/iovisor/bpftrace/blob/master/man/adoc/bpftrace.adoc) the [Reference Guide](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md) and [One-Liner Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md).
-
-
-
 
 
 ```
@@ -80,6 +76,50 @@ bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
     count syscalls by process name
 ```
 
+# bpftrace Probe types
+
+See the [Manual](https://github.com/bpftrace/bpftrace/blob/master/man/adoc/bpftrace.adoc) for more details.
+
+![bpftrace_probes_2018](/assets/images/202412/bpftrace_probes_2018.png)
+
+
+# Example One-Liners
+
+The following one-liners demonstrate different capabilities:
+
+```
+# Files opened by thread name
+bpftrace -e 'tracepoint:syscalls:sys_enter_open { printf("%s %s\n", comm, str(args->filename)); }'
+
+# Syscall count by thread name
+bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
+
+# Read bytes by thread name:
+bpftrace -e 'tracepoint:syscalls:sys_exit_read /args->ret/ { @[comm] = sum(args->ret); }'
+
+# Read size distribution by thread name:
+bpftrace -e 'tracepoint:syscalls:sys_exit_read { @[comm] = hist(args->ret); }'
+
+# Show per-second syscall rates:
+bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @ = count(); } interval:s:1 { print(@); clear(@); }'
+
+# Trace disk size by PID and thread name
+bpftrace -e 'tracepoint:block:block_rq_issue { printf("%d %s %d\n", pid, comm, args->bytes); }'
+
+# Count page faults by thread name
+bpftrace -e 'software:faults:1 { @[comm] = count(); }'
+
+# Count LLC cache misses by thread name and PID (uses PMCs):
+bpftrace -e 'hardware:cache-misses:1000000 { @[comm, pid] = count(); }'
+
+# Profile user-level stacks at 99 Hertz for PID 189:
+bpftrace -e 'profile:hz:99 /pid == 189/ { @[ustack] = count(); }'
+
+# Files opened in the root cgroup-v2
+bpftrace -e 'tracepoint:syscalls:sys_enter_openat /cgroup == cgroupid("/sys/fs/cgroup/unified/mycg")/ { printf("%s\n", str(args->filename)); }'
+```
+
+More powerful scripts can easily be constructed. See [Tools](https://github.com/bpftrace/bpftrace/blob/master/tools/README.md) for examples.
 
 
 # uprobe (用户态函数探针)
@@ -266,6 +306,7 @@ uretprobe:./a.out:_Z6hello2i took 2000082869 ns
 
 # Refer
 
+* https://github.com/bpftrace/bpftrace/tree/master
 * https://bpftrace.org/
 * [bpftrace Reference Guide](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md)
 

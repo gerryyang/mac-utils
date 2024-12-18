@@ -1653,6 +1653,47 @@ git fetch --tags
 
 * https://git-scm.com/book/zh/v2/Git-%E5%9F%BA%E7%A1%80-%E6%89%93%E6%A0%87%E7%AD%BE
 
+## [git describe](https://git-scm.com/docs/git-describe)
+
+git-describe - Give an object a human readable name based on an available ref
+
+The command finds the most recent tag that is reachable from a commit. If the tag points to the commit, then only the tag is shown. Otherwise, it suffixes the tag name with the number of additional commits on top of the tagged object and the abbreviated object name of the most recent commit. The result is a "human-readable" object name which can also be used to identify the commit to other git commands.
+
+[How to find the current git branch in detached HEAD state?](https://stackoverflow.com/questions/6059336/how-to-find-the-current-git-branch-in-detached-head-state)
+
+I can find the current git branch name by doing either of these:
+
+``` bash
+$ git describe --contains --all HEAD
+feature/apollo
+
+$ git branch | awk '/^\*/ { print $2 }'
+feature/apollo
+```
+
+But when in a detached HEAD state, these commands doesn't work.
+
+Answers:
+
+A more porcelain way:
+
+```
+$ git describe
+v0.15.1
+
+$ git log -n 1 --pretty=%d HEAD
+ (HEAD, tag: v0.15.1)
+
+$ git log -n 1 --pretty=%D HEAD
+HEAD, tag: v0.15.1
+
+$ git show -s --pretty=%d HEAD
+ (HEAD, tag: v0.15.1)
+```
+
+The refs will be listed in the format (HEAD, master) - you'll have to parse it a little bit if you intend to use this in scripts rather than for human consumption.
+
+
 # Git hooks
 
 ```

@@ -24,6 +24,47 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
+# 编译器
+
+## [How to printf uint64_t?](https://stackoverflow.com/questions/8132399/how-to-printf-uint64-t-fails-with-spurious-trailing-in-format)
+
+I wrote a very simple test code of printf uint64_t:
+
+``` C++
+#include <inttypes.h>
+#include <stdio.h>
+
+int main()
+{
+  uint64_t ui64 = 90;
+  printf("test uint64_t : %" PRIu64 "\n", ui64);
+  return 0;
+}
+```
+
+I use ubuntu 11.10 (64 bit) and gcc version 4.6.1 to compile it, but failed:
+
+```
+main.cpp: In function ‘int main()’:
+main.cpp:9:30: error: expected ‘)’ before ‘PRIu64’
+main.cpp:9:47: warning: spurious trailing ‘%’ in format [-Wformat]
+```
+
+Answers:
+
+The ISO C99 standard specifies that these macros must only be defined if explicitly requested.
+
+``` cpp
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
+... now PRIu64 will work
+```
+
+Hm, just including the header should suffice. The `__STDC_FORMAT_MACROS` macro is only required for inclusion in C++.
+
+
+
 
 # Data Struct
 

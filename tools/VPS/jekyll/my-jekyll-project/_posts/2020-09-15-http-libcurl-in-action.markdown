@@ -275,6 +275,36 @@ class AClass {
 
 # Q&A
 
+## [curl_multi_perform creates new thread](https://curl.se/mail/lib-2023-09/0039.html)
+
+I compiled curl from the github repository with `--with-openssl` then I compiled multi-app.c. When I run the program in gdb and add a breakpoint for pthread_create I see:
+
+```
+> gdb) bt
+> #0 __pthread_create_2_1 (newthread=0x555555590d50, attr=0x0,
+> start_routine=0x7ffff7f61d20, arg=0x555555590fe0) at pthread_create.c:625
+> #1 0x00007ffff7f61da6 in ?? () from /lib/x86_64-linux-gnu/libcurl.so.4
+> #2 0x00007ffff7f65224 in ?? () from /lib/x86_64-linux-gnu/libcurl.so.4
+> #3 0x00007ffff7f29875 in ?? () from /lib/x86_64-linux-gnu/libcurl.so.4
+> #4 0x00007ffff7f3f2ce in ?? () from /lib/x86_64-linux-gnu/libcurl.so.4
+> #5 0x00007ffff7f5125f in ?? () from /lib/x86_64-linux-gnu/libcurl.so.4
+> #6 0x00007ffff7f520c1 in curl_multi_perform () from
+> /lib/x86_64-linux-gnu/libcurl.so.4
+> #7 0x00005555555554ec in main () at main.c:45
+>
+```
+Is this expected?
+
+Thanks
+
+Answers:
+
+curl will use **the threaded resolver** option by default, so yes, this is expected. You can configure with the `--disable-threaded-resolver` or
+`--enable-ares` option to avoid this.
+
+
+
+
 ## [Chunked encoded POSTs](https://everything.curl.dev/http/post/chunked)
 
 When talking to an `HTTP 1.1` server, you can tell curl to send the request body without a `Content-Length`: header upfront that specifies exactly how big the POST is. By insisting on curl using chunked Transfer-Encoding, curl will send the POST chunked piece by piece in a special style that also sends the size for each such chunk as it goes along.
