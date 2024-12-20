@@ -486,6 +486,38 @@ gdb -q a.out -d /search/code/some
 refer: [Specifying Source Directories](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Source-Path.html)
 
 
+## 替换源文件查找路径
+
+```
+set substitute-path from to
+```
+
+Define a source path substitution rule, and add it at the end of the current list of existing substitution rules. If a rule with the same from was already defined, then the old rule is also deleted.
+
+For example, if the file `/foo/bar/baz.c` was moved to `/mnt/cross/baz.c`, then the command
+
+```
+(gdb) set substitute-path /foo/bar /mnt/cross
+```
+
+will tell GDB to replace `/foo/bar` with `/mnt/cross`, which will allow GDB to find the file baz.c even though it was moved.
+
+In the case when more than one substitution rule have been defined, the rules are evaluated one by one in the order where they have been defined. The first one matching, if any, is selected to perform the substitution.
+
+For instance, if we had entered the following commands:
+
+```
+(gdb) set substitute-path /usr/src/include /mnt/include
+(gdb) set substitute-path /usr/src /mnt/src
+```
+
+GDB would then rewrite `/usr/src/include/defs.h` into `/mnt/include/defs.h` by using the first rule. However, it would use the second rule to rewrite `/usr/src/lib/foo.c` into `/mnt/src/lib/foo.c`.
+
+* https://sourceware.org/gdb/current/onlinedocs/gdb.html/Source-Path.html#index-set-substitute_002dpath
+* https://stackoverflow.com/questions/23868252/gdb-source-path
+
+
+
 ## Launch 调试
 
 工具脚本示例：

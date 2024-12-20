@@ -523,6 +523,117 @@ Contents of section .eh_frame_hdr:
 
 * https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Variable-Attributes.html
 
+## [Declaring Attributes of Functions](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Function-Attributes.html)
+
+In GNU C, you declare certain things about functions called in your program which help the compiler optimize function calls and check your code more carefully.
+
+The keyword `__attribute__` allows you to specify special attributes when making a declaration. This keyword is followed by an attribute specification inside double parentheses. The following attributes are currently defined for functions on all targets:
+
+```
+aligned, alloc_size, noreturn, returns_twice, noinline, noclone, always_inline, flatten, pure, const, nothrow, sentinel, format, format_arg, no_instrument_function, no_split_stack, section, constructor, destructor, used, unused, deprecated, weak, malloc, alias, ifunc, warn_unused_result, nonnull, gnu_inline, externally_visible, hot, cold, artificial, no_sanitize_address, no_address_safety_analysis, error and warning.
+```
+
+Several other attributes are defined for functions on particular target systems. Other attributes, including section are supported for variables declarations (see [Variable Attributes](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Variable-Attributes.html#Variable-Attributes)) and for types (see [Type Attributes](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Type-Attributes.html#Type-Attributes)).
+
+GCC plugins may provide their own attributes.
+
+You may also specify attributes with `__` preceding and following each keyword. This allows you to use them in header files without being concerned about a possible macro of the same name. For example, you may use `__noreturn__` instead of `noreturn`.
+
+See [Attribute Syntax](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Attribute-Syntax.html#Attribute-Syntax), for details of the exact syntax for using attributes.
+
+
+### format (archetype, string-index, first-to-check)
+
+The `format` attribute specifies that a function takes `printf`, `scanf`, `strftime` or `strfmon` style arguments that should be type-checked against a format string. For example, the declaration:
+
+``` cpp
+extern int my_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));
+```
+
+causes the compiler to check the arguments in calls to `my_printf` for consistency with the `printf` style format string argument `my_format`.
+
+In the example above, the format string (`my_format`) is the second argument of the function `my_print`, and the arguments to check start with the third argument, so the correct parameters for the format attribute are 2 and 3.
+
+The format attribute allows you to identify your own functions that take format strings as arguments, so that GCC can check the calls to these functions for errors. The compiler always (unless `-ffreestanding` or `-fno-builtin` is used) checks formats for the standard library functions `printf`, `fprintf`, `sprintf`, `scanf`, `fscanf`, `sscanf`, `strftime`, `vprintf`, `vfprintf` and `vsprintf` whenever such warnings are requested (using `-Wformat`), so there is no need to modify the header file stdio.h. In C99 mode, the functions `snprintf`, `vsnprintf`, `vscanf`, `vfscanf` and `vsscanf` are also checked.
+
+
+* The parameter **archetype** determines how the format string is interpreted, and should be `printf`, `scanf`, `strftime`, `gnu_printf`, `gnu_scanf`, `gnu_strftime` or `strfmon`. (You can also use `__printf__`, `__scanf__`, `__strftime__` or `__strfmon__`.) On MinGW targets, `ms_printf`, `ms_scanf`, and `ms_strftime` are also present.
+
+* **archetype** values such as printf refer to the formats accepted by **the system's C runtime library**, while values prefixed with `gnu_` always refer to the formats accepted by **the GNU C Library**.
+
+* On Microsoft Windows targets, values prefixed with `ms_` refer to the formats accepted by **the msvcrt.dll library**.
+
+* The parameter **string-index** specifies which argument is the format string argument (starting from 1), while first-to-check is the number of the first argument to check against the format string.
+
+* For functions where the arguments are not available to be checked (such as `vprintf`), specify the third parameter as zero. In this case the compiler only checks the format string for consistency.
+
+* For `strftime` formats, the third parameter is required to be zero.
+
+* Since non-static C++ methods have an implicit this argument, the arguments of such methods should be counted from two, not one, when giving values for string-index and first-to-check.
+
+`vprintf` 是一个可变参数函数，用于格式化输出到标准输出。由于它的参数是可变的，编译器无法在编译时检查这些参数是否正确。因此，对于 `vprintf` 函数，编译器只检查格式字符串的格式是否一致。
+
+``` cpp
+// Print formatted data from variable argument list to stdout
+int vprintf ( const char * format, va_list arg );
+```
+
+* format: C string that contains a format string that follows the same specifications as **format** in printf (see [printf](https://cplusplus.com/printf) for details).
+* arg: A value identifying a variable arguments list initialized with [va_start](https://cplusplus.com/va_start). [va_list](https://cplusplus.com/va_list) is a special type defined in [<cstdarg>](https://cplusplus.com/cstdarg).
+
+Writes the C string pointed by format to the standard output ([stdout](https://cplusplus.com/stdout)), replacing any **format specifier** in the same way as [printf](https://cplusplus.com/printf) does, but using the elements in the variable argument list identified by **arg** instead of additional function arguments.
+
+Internally, the function retrieves arguments from the list identified by **arg** as if [va_arg](https://cplusplus.com/va_arg) was used on it, and thus the state of **arg** is likely altered by the call.
+
+In any case, **arg** should have been initialized by [va_start](https://cplusplus.com/va_start) at some point before the call, and it is expected to be released by [va_end](https://cplusplus.com/va_end) at some point after the call.
+
+Example:
+
+``` cpp
+/* vprintf example */
+#include <stdio.h>
+#include <stdarg.h>
+
+void WriteFormatted ( const char * format, ... )
+{
+  va_list args;
+  va_start (args, format);
+  vprintf (format, args);
+  va_end (args);
+}
+
+int main ()
+{
+   WriteFormatted ("Call with %d variable argument.\n",1);
+   WriteFormatted ("Call with %d variable %s.\n",2,"arguments");
+
+   return 0;
+}
+```
+
+The example illustrates how the WriteFormatted can be called with a different number of arguments, which are on their turn passed to the vprintf function, showing the following output:
+
+```
+Call with 1 variable argument.
+Call with 2 variable arguments.
+```
+
+
+
+## [Specifying Attributes of Types](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Type-Attributes.html#Type-Attributes)
+
+The keyword `__attribute__` allows you to specify special attributes of struct and union types when you define such types. This keyword is followed by an attribute specification inside double parentheses. Seven attributes are currently defined for types:
+
+```
+aligned, packed, transparent_union, unused, deprecated, visibility, and may_alias.
+```
+
+Other attributes are defined for functions (see [Function Attributes](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Function-Attributes.html#Function-Attributes)) and for variables (see [Variable Attributes](https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Variable-Attributes.html#Variable-Attributes)).
+
+
+
+
+
 # Pragmas
 
 关于编译器 [pragmas](https://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas) 的用法：

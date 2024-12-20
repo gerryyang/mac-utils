@@ -66,6 +66,10 @@ categories: 英语学习
     + Something that is **spurious** seems to be genuine, but is false. 似是而非的
     + A **spurious** argument or way of reasoning is incorrect, and so the conclusion is probably incorrect. (论据、推理) 不正确的
 
+* cryptic /ˈkrɪptɪk/
+    + ADJ A cryptic remark or message contains a hidden meaning or is difficult to understand. 隐晦的
+    + ADV "Not necessarily," she says cryptically. “不一定，”她神秘地说道。
+
 
 
 # 流利阅读

@@ -598,7 +598,7 @@ fi
 | stderr 2 file | grep da * 2> grep-errors.txt
 | stdout 2 stderr | grep da * 1>&2
 | stderr 2 stdout | grep * 2>&1
-| stderr and stdout 2 file | rm -f $(find / -name core) &> /dev/null
+| stderr and stdout 2 file | program > file.txt 2>&1
 
 
 * https://tldp.org/HOWTO/Bash-Prog-Intro-HOWTO-3.html

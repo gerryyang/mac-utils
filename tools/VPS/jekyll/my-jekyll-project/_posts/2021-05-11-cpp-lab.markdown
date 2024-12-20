@@ -3173,7 +3173,60 @@ clang16 -std=c++20 编译：
 
 https://en.cppreference.com/w/cpp/thread/shared_mutex
 
+## std::shared_timed_mutex (C++14)
 
+The shared_timed_mutex class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads. In contrast to other mutex types which facilitate exclusive access, a shared_timed_mutex has two levels of access:
+
+* exclusive - only one thread can own the mutex.
+* shared - several threads can share ownership of the same mutex.
+
+Shared mutexes are usually used in situations when multiple readers can access the same resource at the same time without causing data races, but only one writer can do so.
+
+In a manner similar to [timed_mutex](https://en.cppreference.com/w/cpp/thread/timed_mutex), shared_timed_mutex provides the ability to attempt to claim ownership of a shared_timed_mutex with a timeout via the [try_lock_for()](https://en.cppreference.com/w/cpp/thread/shared_timed_mutex/try_lock_for), [try_lock_until()](https://en.cppreference.com/w/cpp/thread/shared_timed_mutex/try_lock_until), [try_lock_shared_for()](https://en.cppreference.com/w/cpp/thread/shared_timed_mutex/try_lock_shared_for), [try_lock_shared_until()](https://en.cppreference.com/w/cpp/thread/shared_timed_mutex/try_lock_shared_until) member functions.
+
+The shared_timed_mutex class satisfies all requirements of [SharedTimedMutex](https://en.cppreference.com/w/cpp/named_req/SharedTimedMutex) and [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType).
+
+``` cpp
+#include <chrono>
+#include <iostream>
+#include <shared_mutex>
+#include <syncstream>
+#include <thread>
+
+std::shared_timed_mutex m;
+int i = 10;
+
+void read_shared_var(int id)
+{
+     // both the threads get access to the integer i
+     std::shared_lock<std::shared_timed_mutex> slk(m);
+     const int ii = i; // reads global i
+
+     std::osyncstream(std::cout) << '#' << id << " read i as " << ii << "...\n";
+     std::this_thread::sleep_for(std::chrono::milliseconds(10));
+     std::osyncstream(std::cout) << '#' << id << " woke up..." << std::endl;
+}
+
+int main()
+{
+     std::thread r1{read_shared_var, 1};
+     std::thread r2{read_shared_var, 2};
+
+     r1.join();
+     r2.join();
+}
+```
+
+Possible output:
+
+```
+#2 read i as 10...
+#1 read i as 10...
+#2 woke up...
+#1 woke up...
+```
+
+https://en.cppreference.com/w/cpp/thread/shared_timed_mutex
 
 ## std::unique_lock (C++11)
 
@@ -3233,8 +3286,19 @@ https://en.cppreference.com/w/cpp/thread/unique_lock
 
 The class `shared_lock` is a general-purpose shared mutex ownership wrapper allowing deferred locking, timed locking and transfer of lock ownership. Locking a shared_lock locks the associated shared mutex in shared mode (to lock it in exclusive mode, `std::unique_lock` can be used).
 
-
 https://en.cppreference.com/w/cpp/thread/shared_lock
+
+[What's the difference between unique_lock and shared_lock in C++](https://stackoverflow.com/questions/63240416/whats-the-difference-between-unique-lock-and-shared-lock-in-c)
+
+Its pretty simple, really. `unique_lock` calls `lock()` on the mutex. `shared_lock` calls `shared_lock()`.
+
+The difference between them is that `shared_lock` is designed to support readers in a read/write lock. You can have multiple threads all acquire the shared lock and reading the same data, but if anyone wants to write to the data, they need to use `lock` to get permission to write to the data.
+
+Which one you should use depends on the pattern you are looking for. There are plenty of times where a read/write lock is desired (which is why the standard includes support for them). There are also times where a simple unique mutex is called for. In general, if reading and writing are meaningful concepts to you, there's a decent chance that a read/write mutex like `shared_timed_mutex` is the right approach.
+
+[When to use C++11 mutex, lock, unique_lock, and shared_lock?](https://stackoverflow.com/questions/33770500/when-to-use-c11-mutex-lock-unique-lock-and-shared-lock)
+
+
 
 ## std::lock (C++11)
 
