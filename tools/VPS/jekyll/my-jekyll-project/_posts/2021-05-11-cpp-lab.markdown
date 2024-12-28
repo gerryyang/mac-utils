@@ -291,6 +291,58 @@ find
 
 # C++11
 
+## std::numeric_limits
+
+``` cpp
+template< class T > class numeric_limits;
+```
+
+The `std::numeric_limits` class template provides a standardized way to query various properties of arithmetic types (e.g. the largest possible value for type int is `std::numeric_limits<int>::max()`).
+
+This information is provided via specializations of the std::numeric_limits template. The standard library makes available specializations for all arithmetic types (only lists the specializations for cv-unqualified arithmetic types)
+
+``` cpp
+#include <iostream>
+#include <limits>
+
+int main()
+{
+    std::cout << "type\t│ lowest()\t│ min()\t\t│ max()\n"
+              << "bool\t│ "
+              << std::numeric_limits<bool>::lowest() << "\t\t│ "
+              << std::numeric_limits<bool>::min() << "\t\t│ "
+              << std::numeric_limits<bool>::max() << '\n'
+              << "uchar\t│ "
+              << +std::numeric_limits<unsigned char>::lowest() << "\t\t│ "
+              << +std::numeric_limits<unsigned char>::min() << "\t\t│ "
+              << +std::numeric_limits<unsigned char>::max() << '\n'
+              << "int\t│ "
+              << std::numeric_limits<int>::lowest() << "\t│ "
+              << std::numeric_limits<int>::min() << "\t│ "
+              << std::numeric_limits<int>::max() << '\n'
+              << "float\t│ "
+              << std::numeric_limits<float>::lowest() << "\t│ "
+              << std::numeric_limits<float>::min() << "\t│ "
+              << std::numeric_limits<float>::max() << '\n'
+              << "double\t│ "
+              << std::numeric_limits<double>::lowest() << "\t│ "
+              << std::numeric_limits<double>::min() << "\t│ "
+              << std::numeric_limits<double>::max() << '\n';
+}
+```
+
+Possible output:
+
+```
+type	│ lowest()	│ min()		│ max()
+bool	│ 0		│ 0		│ 1
+uchar	│ 0		│ 0		│ 255
+int	│ -2147483648	│ -2147483648	│ 2147483647
+float	│ -3.40282e+38	│ 1.17549e-38	│ 3.40282e+38
+double	│ -1.79769e+308	│ 2.22507e-308	│ 1.79769e+308
+```
+
+https://en.cppreference.com/w/cpp/types/numeric_limits
 
 ## In-class initialization
 
@@ -3298,6 +3350,8 @@ Which one you should use depends on the pattern you are looking for. There are p
 
 [When to use C++11 mutex, lock, unique_lock, and shared_lock?](https://stackoverflow.com/questions/33770500/when-to-use-c11-mutex-lock-unique-lock-and-shared-lock)
 
+
+ [Understanding std::unique_lock and std::shared_lock in C++](https://dev.to/vivekyadav200988/understanding-stduniquelock-and-stdsharedlock-in-c-73p)
 
 
 ## std::lock (C++11)

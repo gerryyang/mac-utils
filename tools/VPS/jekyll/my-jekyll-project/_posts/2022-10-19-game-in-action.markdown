@@ -26,12 +26,31 @@ categories: 游戏开发
 
 # 专业词汇
 
-| 名词 | 含义
-| -- | --
-| 3C | Control, Camera, Character, 操作, 镜头, 角色
-| NPC | Non-Player-Controlled Character, 非玩家控制角色
-| MMO | Massively Multiplayer Online, 大型多人在线游戏
-| AOI | Area Of Interest, 游戏玩家视野
+## 3C
+
+Control, Camera, Character, 操作, 镜头, 角色
+
+## NPC
+
+Non-Player-Controlled Character, 非玩家控制角色
+
+## MMO
+
+Massively Multiplayer Online, 大型多人在线游戏
+
+## AOI
+
+Area Of Interest, 游戏玩家视野
+
+## APM
+
+在即时战略游戏中，每分钟操作数（APM，Actions Per Minute）指的是每分钟操作指令数。这一般包括鼠标点击和键盘敲击。APM 很好地反映了玩家的手速，即操作速度。
+
+在职业即时战略游戏比赛中，对职业玩家 APM 的要求十分苛刻。特别是在《星际争霸》中，职业选手的 APM 通常高达 200-300 甚至更高，是普通玩家的 3 倍左右；而在《魔兽争霸III》中，也对 APM 有着比较高的要求，但不及《星际争霸》苛刻。
+
+
+
+
 
 # 游戏留存漏斗模型
 

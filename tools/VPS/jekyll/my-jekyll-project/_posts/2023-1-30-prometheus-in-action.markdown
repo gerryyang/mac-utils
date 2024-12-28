@@ -670,6 +670,7 @@ topk(1, count ({__name__=~"msgame_P.*"}) by(__name__))
 * [Prometheus 实战](https://songjiayang.gitbooks.io/prometheus/content/promql/summary.html)
 * [腾讯云 Prometheus 介绍](https://cloud.tencent.com/document/product/1416/55770)
 * [PromQL Cheat Sheet: Must-Know PromQL Queries](https://last9.io/blog/promql-cheat-sheet/)
+* [初识 PromQL](https://prometheus.fuckcloudnative.io/di-san-zhang-prometheus/di-4-jie-cha-xun/basics)
 
 
 

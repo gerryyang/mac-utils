@@ -835,6 +835,6 @@ Helgrind 会报告潜在的线程安全问题，如数据竞争、死锁等。
 * [C++ reference](https://en.cppreference.com/w/cpp)
 * [Concurrency in C++11](https://www.classes.cs.uchicago.edu/archive/2013/spring/12300-1/labs/lab6/)
 * [A Tutorial on Modern Multithreading and Concurrency in C++](https://www.educative.io/blog/modern-multithreading-and-concurrency-in-cpp)
-
+* [Understanding std::unique_lock and std::shared_lock in C++](https://dev.to/vivekyadav200988/understanding-stduniquelock-and-stdsharedlock-in-c-73p)
 
 
