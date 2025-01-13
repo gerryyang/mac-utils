@@ -9,6 +9,13 @@ categories: 机器学习
 {:toc}
 
 
+# 静态的图像识别技术 OpenCV
+
+OpenCV（Open Source Computer Vision Library）是一个开源的计算机视觉和机器学习库，广泛应用于静态图像识别技术中。它由英特尔公司开发，并且支持多种编程语言，包括C++、Python、Java和MATLAB，适用于多个操作系统，如Windows、Linux、Mac OS、Android和iOS。
+
+[OpenCV By Example](https://kingcall.oss-cn-hangzhou.aliyuncs.com/blog/pdf/OpenCV%20By%20Example64091604821968890.pdf)
+
+
 # [推荐系统](https://en.wikipedia.org/wiki/Recommender_system) (Recommender systems)
 
 

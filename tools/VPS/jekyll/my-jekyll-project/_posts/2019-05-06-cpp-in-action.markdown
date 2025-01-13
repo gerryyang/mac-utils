@@ -757,6 +757,46 @@ void bar(T&& s)
 }
 ```
 
+测试代码：https://gcc.godbolt.org/z/sYfcnoj7M
+
+``` cpp
+#include <type_traits>
+#include <iostream>
+#include <string>
+
+template <typename T>
+void test(T&& x)
+{
+    using XType = decltype(x);
+    std::cout << "XType is "
+              << (std::is_reference<XType>::value ? "reference " : "non-reference ")
+              << (std::is_lvalue_reference<XType>::value ? "&" : "")
+              << (std::is_rvalue_reference<XType>::value ? "&&" : "")
+              << std::endl;
+}
+
+int main()
+{
+    int i = 0;
+    const int ci = 0;
+
+    // 1. 左值 int
+    test(i);       // T 推断为 int&，T&& 折叠为 int&
+    // 2. 右值 int
+    test(10);      // T 推断为 int，T&& 折叠为 int&&
+    // 3. 左值 const int
+    test(ci);      // T 推断为 const int&，T&& 折叠为 const int&
+    // 4. 右值 const int
+    test(std::move(ci)); // T 推断为 const int，T&& 折叠为 const int&&
+}
+/*
+XType is reference &
+XType is reference &&
+XType is reference &
+XType is reference &&
+*/
+```
+
 
 ## 智能指针
 

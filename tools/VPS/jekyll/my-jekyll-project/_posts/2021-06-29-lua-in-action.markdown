@@ -422,6 +422,25 @@ sudo yum install readline-devel
 * [Lua 5.3 升级注意](https://blog.codingnow.com/2015/01/lua_53_update.html)
 
 
+# Lua 工具
+
+## [LuaPanda](https://github.com/Tencent/LuaPanda)
+
+LuaPanda 是一个基于 VS Code 的 lua 代码工具，设计目标是简单易用。它支持多种开发框架，主要提供以下功能：
+
+* 代码补全（code completion）
+* 代码片段（snippet completion）
+* 定义跳转（definition）
+* 生成注释（comment generation）
+* 类型推断（limited type inference）
+* 代码格式化（formatting）: 依赖 lua-fmt
+* 代码诊断（linting）：依赖 luacheck
+* 调试器（debugger）
+
+功能详情：https://github.com/Tencent/LuaPanda/blob/master/Docs/Manual/feature-introduction.md
+
+LuaPanda 支持 lua5.1- 5.4，**调试器运行环境需要包含 luasocket**。
+
 
 # Refer
 

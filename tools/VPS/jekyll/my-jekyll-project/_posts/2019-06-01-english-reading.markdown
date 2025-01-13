@@ -10,6 +10,19 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* evergreen
+    + 名词 An **evergreen** is a tree or bush that has green leaves all year long. 常青树; 常绿植物
+    + 形容词 **Evergreen** is also an adjective. 常绿的
+
+* adversity /ədˈvɜːsɪtɪ/
+    + **Adversity** is a very difficult or unfavourable situation. 困境; 逆境
+
+> He showed courage in adversity. 他在逆境中显示出了勇气。
+
+* breakthrough
+    + A **breakthrough** is an important development or achievement. 突破
+
+
 * compulsory /kəmˈpʌlsəri/
     + If something is **compulsory**, you must do it or accept it, because it is the law or because someone in a position of authority says you must. 强制性的
 
@@ -189,6 +202,15 @@ On this special day, I would like to extend my gratitude to everyone who has con
 最后，感谢每一位为`T`人的成长和发展做出贡献的老师！同时，也期待更多的小伙伴能够加入到“老师”的行列中来，用自己的知识和智慧去影响和帮助更多的人。让我们一起庆祝这个属于我们大家的节日，互勉互助、一起迈入next level！
 
 
+# Stay Focused and Create Value (保持专注，创造价值)
 
+In a few hours, we'll bid farewell to 2024 and welcome 2025. First and foremost, we would like to wish everyone a happy New Year! Thank you so much for your efforts over the past year. Together, we have overcome great challenges and maintained stable, high-quality growth. More importantly, we have sharpened our focus and reinvented ourselves in the face of adversity. These strengths will be invaluable as we move forward.
+
+2025 will present us with both challenges and opportunities, driven by economic volatility (经济周期波动起伏) and intensified market competition (市场竞争加剧) across the world.
+
+
+再过十几个小时，我们即将告别2024，迈入2025。首先祝大家新年快乐！非常感谢所有腾讯人的努力，让我们在过去一年经受住了宏观考验，保持了稳定、高质量的发展。尤其难得的是，在困难中磨炼了我们专注与自我革新的能力，这将是我们走向未来最宝贵的财富。
+
+放眼世界，各种不稳定因素依旧活跃，经济周期波动起伏，市场竞争加剧，2025年我们面对的仍然是一个充满挑战与机遇的未来。
 
 

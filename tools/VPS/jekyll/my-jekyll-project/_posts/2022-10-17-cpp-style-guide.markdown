@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Google CPP Style Guide"
+title:  "CPP Style Guide"
 date:   2022-10-17 08:00:00 +0800
 categories: [C/C++]
 ---
@@ -9,6 +9,60 @@ categories: [C/C++]
 {:toc}
 
 # Google C++ Style Guide
+
+## [Forward Declarations](https://google.github.io/styleguide/cppguide.html#Forward_Declarations) (不建议)
+
+Avoid using forward declarations where possible. Instead, [include the headers you need](https://google.github.io/styleguide/cppguide.html#Include_What_You_Use).
+
+**Definition**:
+
+A "forward declaration" is a declaration of an entity without an associated definition.
+
+``` cpp
+// In a C++ source file:
+class B;
+void FuncInB();
+extern int variable_in_b;
+ABSL_DECLARE_FLAG(flag_in_b);
+```
+
+**Pros**:
+
+* Forward declarations can save compile time, as #includes force the compiler to open more files and process more input.
+* Forward declarations can save on unnecessary recompilation. #includes can force your code to be recompiled more often, due to unrelated changes in the header.
+
+**Cons**:
+
+* Forward declarations can hide a dependency, allowing user code to skip necessary recompilation when headers change.
+* A forward declaration as opposed to an #include statement makes it difficult for automatic tooling to discover the module defining the symbol.
+* A forward declaration may be broken by subsequent changes to the library. Forward declarations of functions and templates can prevent the header owners from making otherwise-compatible changes to their APIs, such as widening a parameter type, adding a template parameter with a default value, or migrating to a new namespace.
+* Forward declaring symbols from namespace std:: yields undefined behavior.
+* It can be difficult to determine whether a forward declaration or a full #include is needed. Replacing an #include with a forward declaration can silently change the meaning of code:
+
+``` cpp
+// b.h:
+struct B {};
+struct D : B {};
+
+// good_user.cc:
+#include "b.h"
+void f(B*);
+void f(void*);
+void test(D* x) { f(x); }  // Calls f(B*)
+```
+
+If the #include was replaced with forward decls for B and D, test() would call f(void*).
+
+* Forward declaring multiple symbols from a header can be more verbose than simply #includeing the header.
+* Structuring code to enable forward declarations (e.g., using pointer members instead of object members) can make the code slower and more complex.
+
+**Decision**:
+
+Try to avoid forward declarations of entities defined in another project.
+
+
+
+
 
 ## [Casting](https://google.github.io/styleguide/cppguide.html#Casting)
 

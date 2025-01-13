@@ -3608,6 +3608,202 @@ second setsockopt() worked
 
 ## 性能监控
 
+### [GNU Parallel](https://www.gnu.org/software/parallel/)
+
+GNU `parallel` is a shell tool for executing jobs in parallel using one or more computers. A job can be a single command or a small script that has to be run for each of the lines in the input. The typical input is a list of files, a list of hosts, a list of users, a list of URLs, or a list of tables. A job can also be a command that reads from a pipe. GNU `parallel` can then split the input and pipe it into commands in parallel.
+
+If you use `xargs` and `tee` today you will find GNU `parallel` very easy to use as GNU `parallel` is written to have the same options as `xargs`. **If you write loops in shell, you will find GNU parallel may be able to replace most of the loops and make them run faster by running several jobs in parallel**.
+
+GNU `parallel` makes sure output from the commands is the same output as you would get had you run the commands sequentially. This makes it possible to use output from GNU parallel as input for other programs.
+
+For each line of input GNU `parallel` will execute command with the line as arguments. If no command is given, the line of input is executed. Several lines will be run in parallel. GNU `parallel` can often be used as a substitute for `xargs` or `cat | bash`.
+
+```
+$ parallel --help
+Usage:
+
+parallel [options] [command [arguments]] < list_of_arguments
+parallel [options] [command [arguments]] (::: arguments|:::: argfile(s))...
+cat ... | parallel --pipe [options] [command [arguments]]
+
+-j n            Run n jobs in parallel
+-k              Keep same order
+-X              Multiple arguments with context replace
+--colsep regexp Split input on regexp for positional replacements
+{} {.} {/} {/.} {#} {%} {= perl code =} Replacement strings
+{3} {3.} {3/} {3/.} {=3 perl code =}    Positional replacement strings
+With --plus:    {} = {+/}/{/} = {.}.{+.} = {+/}/{/.}.{+.} = {..}.{+..} =
+                {+/}/{/..}.{+..} = {...}.{+...} = {+/}/{/...}.{+...}
+
+-S sshlogin     Example: foo@server.example.com
+--slf ..        Use ~/.parallel/sshloginfile as the list of sshlogins
+--trc {}.bar    Shorthand for --transfer --return {}.bar --cleanup
+--onall         Run the given command with argument on all sshlogins
+--nonall        Run the given command with no arguments on all sshlogins
+
+--pipe          Split stdin (standard input) to multiple jobs.
+--recend str    Record end separator for --pipe.
+--recstart str  Record start separator for --pipe.
+
+GNU Parallel can do much more. See 'man parallel' for details
+
+Academic tradition requires you to cite works you base your article on.
+If you use programs that use GNU Parallel to process data for an article in a
+scientific publication, please cite:
+
+  Tange, O. (2023, November 22). GNU Parallel 20231122 ('Grindavík').
+  Zenodo. https://doi.org/10.5281/zenodo.10199085
+
+This helps funding further development; AND IT WON'T COST YOU A CENT.
+If you pay 10000 EUR you should feel free to use GNU Parallel without citing.
+```
+
+#### 用法示例
+
+更多用法可参考：https://www.gnu.org/software/parallel/parallel_examples.html
+
+> Working as xargs -n1. Argument appending
+
+GNU parallel can work similar to `xargs -n1`.
+
+To compress all html files using `gzip` run:
+
+``` bash
+find . -name '*.html' | parallel gzip --best
+```
+> Reading arguments from command line
+
+GNU `parallel` can take the arguments from command line instead of `stdin` (standard input). To compress all html files in the current dir using `gzip` run:
+
+``` bash
+parallel gzip --best ::: *.html
+```
+
+> Running full commands in parallel
+
+If there is no command given to GNU parallel, then the arguments are treated as a command line.
+
+To run `gzip foo` and `bzip2 bar` in parallel run:
+
+``` bash
+parallel ::: "gzip foo" "bzip2 bar"
+```
+
+or:
+
+``` bash
+(echo "gzip foo"; echo "bzip2 bar") | parallel
+```
+
+> Inserting multiple arguments
+
+When moving a lot of files like this: `mv *.log destdir` you will sometimes get the error:
+
+```
+bash: /bin/mv: Argument list too long
+```
+
+because there are too many files. You can instead do:
+
+``` bash
+ls | grep -E '\.log$' | parallel mv {} destdir
+```
+
+This will run mv for each file. It can be done faster if mv gets as many arguments that will fit on the line:
+
+``` bash
+ls | grep -E '\.log$' | parallel -m mv {} destdir
+```
+
+> Composed commands
+
+A job can consist of several commands. This will print the number of files in each directory:
+
+``` bash
+# 查看当前目录的文件个数，不包括子目录
+ls | parallel --no-notice 'echo -n {}" "; ls {}|wc -l'
+```
+
+``` bash
+# 查看当前目录的文件个数，包括子目录
+ls | parallel --no-notice 'echo -n {}" "; find {} -type f |wc -l'
+```
+
+> Function tester
+
+To test a program with different parameters:
+
+``` bash
+tester() {
+  if (eval "$@") >&/dev/null; then
+    perl -e 'printf "\033[30;102m[ OK ]\033[0m @ARGV\n"' "$@"
+  else
+    perl -e 'printf "\033[30;101m[FAIL]\033[0m @ARGV\n"' "$@"
+  fi
+}
+export -f tester
+parallel tester my_program ::: arg1 arg2
+parallel tester exit ::: 1 0 2 0
+```
+
+If `my_program` fails a red FAIL will be printed followed by the failing command; otherwise a green OK will be printed followed by the command.
+
+
+> Log rotate
+
+Log rotation renames a logfile to an extension with a higher number: log.1 becomes log.2, log.2 becomes log.3, and so on. The oldest log is removed. To avoid overwriting files the process starts backwards from the high number to the low number. This will keep 10 old versions of the log:
+
+``` bash
+seq 9 -1 1 | parallel -j1 mv log.{} log.'{= $_++ =}'
+mv log log.1
+```
+
+> Simple network scanner
+
+`prips` can generate IP-addresses from CIDR notation. With GNU `parallel` you can build a simple network scanner to see which addresses respond to `ping`:
+
+``` bash
+prips 130.229.16.0/20 | \
+  parallel --timeout 2 -j0 \
+    'ping -c 1 {} >/dev/null && echo {}' 2>/dev/null
+```
+
+#### 用法建议
+
+> Tips1: 使用 --no-notice 屏蔽 parallel 的版权提示信息
+
+例如：
+
+``` bash
+ls | parallel --no-notice 'echo -n {}" "; find {} -type f | wc -l'
+```
+
+> Tips2: parallel命令有一个 --dry-run 选项，可以打印出实际执行的命令，而不是真正执行它们
+
+可以将这个选项添加到命令中，来查看 parallel 命令实际执行的命令。
+
+> Tips3: --eta 参数用于显示估计的剩余时间
+
+```
+Computers / CPU cores / Max jobs to run
+1:local / 48 / 48
+
+Computer:jobs running/jobs completed/%of started jobs/Average seconds to complete
+ETA: 0s Left: 3 AVG: 0.00s  local:3/411/100%/0.0s
+```
+
+以上信息输出的含义：
+
+* `Computers / CPU cores / Max jobs to run`：这一行提供了计算机的相关信息。在这个提示中，表示有 1 台计算机可用，拥有 48 个 CPU 核心，最大可同时运行 48 个作业。
+* `Computer:jobs running/jobs completed/%of started jobs/Average seconds to complete`：这一行提供了每台计算机的作业状态和性能信息。
+* `ETA`: 0s：ETA 是 Estimated Time of Arrival 的缩写，表示**估计的剩余时间**。在这个提示中，0s 表示估计的剩余时间为 0 秒，即任务预计即将完成。
+* `Left`: 3：Left 表示剩余的任务数量。在这个提示中，3 表示还有 3 个任务需要完成。
+* `AVG`: 0.00s：AVG 是 Average 的缩写，表示平均完成时间。在这个提示中，0.00s 表示平均每个任务的完成时间为 0 秒。
+* `local:3/411/100%/0.0s`：local 表示当前计算机的状态。在这个提示中，3 表示当前计算机正在运行 3 个任务，411 表示已经完成了 411 个任务，100% 表示已经启动的任务的百分比，0.0s 表示平均每个任务的完成时间为 0 秒。
+
+
+
+
 ### atop
 
 `atop` 工具是一种性能监控工具，可记录历史资源使用情况以供以后分析。该工具还可以进行实时报告。可以检索每个进程和线程的 CPU 利用率、内存消耗和磁盘 I/O 的使用情况。atop 工具作为后台负保持活动状态，同时记录统计信息，以便进行长期的服务器分析。默认情况下，统计信息将存储 28 天。
