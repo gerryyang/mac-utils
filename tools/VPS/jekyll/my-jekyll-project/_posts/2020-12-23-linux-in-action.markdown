@@ -3618,45 +3618,6 @@ GNU `parallel` makes sure output from the commands is the same output as you wou
 
 For each line of input GNU `parallel` will execute command with the line as arguments. If no command is given, the line of input is executed. Several lines will be run in parallel. GNU `parallel` can often be used as a substitute for `xargs` or `cat | bash`.
 
-```
-$ parallel --help
-Usage:
-
-parallel [options] [command [arguments]] < list_of_arguments
-parallel [options] [command [arguments]] (::: arguments|:::: argfile(s))...
-cat ... | parallel --pipe [options] [command [arguments]]
-
--j n            Run n jobs in parallel
--k              Keep same order
--X              Multiple arguments with context replace
---colsep regexp Split input on regexp for positional replacements
-{} {.} {/} {/.} {#} {%} {= perl code =} Replacement strings
-{3} {3.} {3/} {3/.} {=3 perl code =}    Positional replacement strings
-With --plus:    {} = {+/}/{/} = {.}.{+.} = {+/}/{/.}.{+.} = {..}.{+..} =
-                {+/}/{/..}.{+..} = {...}.{+...} = {+/}/{/...}.{+...}
-
--S sshlogin     Example: foo@server.example.com
---slf ..        Use ~/.parallel/sshloginfile as the list of sshlogins
---trc {}.bar    Shorthand for --transfer --return {}.bar --cleanup
---onall         Run the given command with argument on all sshlogins
---nonall        Run the given command with no arguments on all sshlogins
-
---pipe          Split stdin (standard input) to multiple jobs.
---recend str    Record end separator for --pipe.
---recstart str  Record start separator for --pipe.
-
-GNU Parallel can do much more. See 'man parallel' for details
-
-Academic tradition requires you to cite works you base your article on.
-If you use programs that use GNU Parallel to process data for an article in a
-scientific publication, please cite:
-
-  Tange, O. (2023, November 22). GNU Parallel 20231122 ('Grindavík').
-  Zenodo. https://doi.org/10.5281/zenodo.10199085
-
-This helps funding further development; AND IT WON'T COST YOU A CENT.
-If you pay 10000 EUR you should feel free to use GNU Parallel without citing.
-```
 
 #### 用法示例
 

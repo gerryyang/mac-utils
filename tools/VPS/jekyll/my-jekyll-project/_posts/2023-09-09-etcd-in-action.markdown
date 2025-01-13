@@ -8,10 +8,175 @@ categories: GoLang
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-`etcd` 是一个分布式键值存储系统，用于存储和管理配置数据。`etcd` 使用一种称为 `Raft` 的共识算法来确保数据在集群中的一致性。
+# 基本介绍
+
+* `etcd` 是一个分布式键值 KV 存储系统，用于存储和管理配置数据。
+* `etcd` 使用 `Raft` 共识算法来确保数据在集群中的一致性。(容器编排系统 Kubernetes 使用 etcd 作为底层存储。Google 的 Spanner 和微信的 PaxosStore 都是基于 Paxos 协议实现的 KV 存储。Paxos 和 Raft 各有优劣，一般认为 Raft 工程实现简单，但是有租约不可用的问题，基于无租约 Paxos 协议没有 Leader 节点，可以做到无痕切换)。
+* 支持 gRPC 和 Http 协议调用。
 
 
-# Install
+![etcd_frame](/assets/images/202501/etcd_frame.png)
+
+1. client 层：包括 client V2 和 V3 这两个客户端 API 库，同时支持负载均衡和节点故障转移。
+2. API 层：负责对外提供 HTTP 和 gRPC 两种类型的访问接口。
+3. Raft 层：实现了包括 Leader 选举和日志复制等 Raft 算法核心功能，并且通过 wal 机制持久化日志条目，保障 etcd 多节点的一致性和可用性，同时使用 Read Index 机制实现读请求的强一致性。
+4. 通信层：集群多节点通信实现，使用 gRPC 在服务器 peer 间和 client 间通信。
+5. 存储层：包括 KeyIndex 和 BoltDB，KeyIndex 基于 B-Tree，存储每个 KV 对的历史版本，在内存中 BoltDB 基于 B+Tree 存储在磁盘中。结合 KeyIndex 和 BoltDB 实现 MVCC 机制。
+
+
+
+# Raft 协议论文 [In Search of an Understandable Consensus Algorithm](https://raft.github.io/raft.pdf)
+
+`Raft` is a consensus algorithm for **managing a replicated log**. It produces a result equivalent to **(multi-)Paxos**, and it is as efficient as `Paxos`, but its structure is different from `Paxos`; this makes `Raft` more understandable than `Paxos` and also provides a better foundation for building practical systems.
+
+In order to enhance **understandability (易懂)**, `Raft` separates the key elements of consensus, such as **leader election**, **log replication**, and **safety**, and it enforces a stronger degree of coherency to reduce the number of states that must be considered.
+
+Results from a user study demonstrate that `Raft` is easier for students to learn than `Paxos`. `Raft` also includes a new mechanism for changing the cluster membership, which uses overlapping majorities to guarantee safety.
+
+Raft is similar in many ways to existing consensus algorithms, but it has several novel features:
+
+1. **Strong leader**: **Raft uses a stronger form of leadership than other consensus algorithms**. For example, log entries only flow from the leader to other servers. This simplifies the management of the replicated log and makes Raft easier to understand.
+2. **Leader election**: **Raft uses randomized timers to elect leaders**. This adds only a small amount of mechanism to the heartbeats already required for any consensus algorithm, while resolving conflicts simply and rapidly.
+3. **Membership changes**: Raft’s mechanism for changing the set of servers in the cluster uses a new joint consensus approach where the majorities of
+two different configurations overlap during transitions. This allows the cluster to continue operating normally during configuration changes.
+
+> Raft 协议的 "Membership changes" 特性是指 Raft 协议如何处理集群中服务器成员的变化。这是一个非常重要的特性，因为在一个分布式系统中，服务器可能会因为各种原因（比如故障、升级、扩容等）而加入或离开集群。
+>
+> 在 Raft 协议中，当集群需要改变配置（比如添加或删除服务器）时，会使用一种称为 "joint consensus" 的方法。这个方法的关键在于，它会在旧配置和新配置之间创建一个过渡状态，这个过渡状态的服务器集合是旧配置和新配置的并集。在这个过渡状态中，任何决策（比如选举领导者或者提交日志条目）都需要旧配置和新配置的大多数服务器的同意。这样，即使在配置变化的过程中，集群也能够继续正常运行。
+>
+> 这种方法的优点是，它可以在不中断服务的情况下进行配置变化。此外，它还可以防止在配置变化过程中出现分裂脑（split-brain）问题，这是一个在分布式系统中常见的问题，可能导致数据不一致。
+
+We believe that `Raft` is superior to `Paxos` and other consensus algorithms, both for educational purposes and as a foundation for implementation. It is simpler and more understandable than other algorithms; it is described completely enough to meet the needs of a practical system; it has several open-source implementations and is used by several companies; its safety properties have been formally specified and proven; and its efficiency is comparable to other algorithms.
+
+
+## Replicated state machines
+
+Consensus algorithms typically arise in the context of **replicated state machines**. In this approach, state machines on a collection of servers compute identical copies of the same state and can continue operating even if some of the servers are down. Replicated state machines are used to solve a variety of fault tolerance problems in distributed systems.
+
+**Replicated state machines are typically implemented using a replicated log**, as shown in **Figure 1**. **Each server stores a log containing a series of commands, which its state machine executes in order. Each log contains the same commands in the same order, so each state machine processes the same sequence of commands. Since the state machines are deterministic, each computes the same state and the same sequence of outputs**.
+
+Figure 1:
+
+![raft1](/assets/images/202501/raft1.png)
+
+Keeping the replicated log consistent is the job of the consensus algorithm. **The consensus module on a server receives commands from clients and adds them to its log. It communicates with the consensus modules on other servers to ensure that every log eventually contains the same requests in the same order, even if some servers fail. Once commands are properly replicated, each server’s state machine processes them in log order, and the outputs are returned to clients. As a result, the servers appear to form a single, highly reliable state machine**.
+
+Consensus algorithms for practical systems typically have the following properties:
+
+1. **They ensure safety** (never returning an incorrect result) under **all non-Byzantine conditions** (非拜占庭问题), including network delays, partitions, and packet loss, duplication, and reordering.
+2. **They are fully functional (available) as long as any majority of the servers are operational and can communicate with each other and with clients**. **Thus, a typical cluster of five servers can tolerate the failure of any two servers**. Servers are assumed to fail by stopping; they may later recover from state on stable
+storage and rejoin the cluster.
+3. **They do not depend on timing to ensure the consistency of the logs**: faulty clocks and extreme message delays can, at worst, cause availability problems.
+4. **In the common case, a command can complete as soon as a majority of the cluster has responded to a single round of remote procedure calls**; a minority of
+slow servers need not impact overall system performance.
+
+
+
+> [Byzantine and non-Byzantine distributed systems](https://ravendb.net/articles/byzantine-and-non-byzantine-distributed-systems)
+>
+> The problem was originally posed by Lamport in the Byzantine Generals paper. You have a group of generals that needs to agree on a particular time to attack a city. They can only communicate by (unreliable) messenger, and one or more of them are traitors. The paper itself is interesting to read and the problem is pervasive enough that we now divide distributed systems to Byzantine and non-Byzantine systems.  We now have pervasive cryptography deployed, to the point where you read this post over an encrypted channel, verified using public key infrastructure to validate that it indeed came from me. You can solve the Byzantine generals problem easily now.
+>
+> Today, the terminology changed. We now refer to Byzantine networks as systems where some of the nodes are malicious and non-Byzantine as systems where we trust that other nodes will do their task. For example, Raft or Paxos are both distributed consensus algorithms that assumes a non-Byzantine system. Oh, the network communication gores through hostile environment, but that is why we have TLS for. Authentication and encryption over the wire are mostly a solved problem at this point. It isn’t a simple problem, but it is a solved one.
+
+
+
+## Raft consensus algorithm
+
+**Figure 2** summarizes the algorithm in condensed (概要) form for reference, and **Figure 3** lists key properties of the algorithm; the elements of these figures are discussed piecewise over the rest of this section.
+
+Raft implements consensus by first electing a distinguished leader, then giving the leader complete responsibility for managing the replicated log. The leader accepts log entries from clients, replicates them on other servers, and tells servers when it is safe to apply log entries to their state machines.
+
+Having a leader simplifies the management of the replicated log. For example, the leader can decide where to place new entries in the log without consulting other servers, and data flows in a simple fashion from the leader to other servers. A leader can fail or become disconnected from the other servers, in which case
+a new leader is elected.
+
+Given the leader approach, **`Raft` decomposes the consensus problem into three relatively independent subproblems**, which are discussed in the subsections that follow:
+
+1. **Leader election**: a new leader must be chosen when an existing leader fails.
+2. **Log replication**: the leader must accept log entries from clients and replicate them across the cluster, forcing the other logs to agree with its own.
+3. **Safety**: the key safety property for Raft is the State Machine Safety Property in **Figure 3**: if any server has applied a particular log entry to its state machine, then no other server may apply a different command for the same log index.
+
+
+Figure 2:
+
+![raft2](/assets/images/202501/raft2.png)
+
+Figure 3:
+
+![raft3](/assets/images/202501/raft3.png)
+
+### Raft basics
+
+A Raft cluster contains several servers; **five is a typical number, which allows the system to tolerate two failures**. At any given time each server is in one of three states: `leader`, `follower`, or `candidate`. In normal operation there is exactly one leader and all of the other servers are followers. Followers are passive: they issue no requests on their own but simply respond to requests from leaders and candidates. The leader handles all client requests (if
+a client contacts a follower, the follower redirects it to the leader). The third state, candidate, is used to elect a new leader as described in Section 5.2. **Figure 4** shows the states and their transitions; the transitions are discussed below.
+
+Figure 4:
+
+![raft4](/assets/images/202501/raft4.png)
+
+Raft divides time into terms of arbitrary length, as shown in **Figure 5**. Terms are numbered with consecutive integers. Each term begins with an election, in which one or more candidates attempt to become leader as described in Section 5.2. If a candidate wins the election, then it serves as leader for the rest of the term. In some situations an election will result in a split vote. In this case the term will end with no leader; a new term (with a new election) will begin shortly. Raft ensures that there is at most one leader in a given term.
+
+Figure 5:
+
+![raft5](/assets/images/202501/raft5.png)
+
+Different servers may observe the transitions between terms at different times, and in some situations a server may not observe an election or even entire terms. Terms act as **a logical clock** in Raft, and they allow servers to detect obsolete (过时的) information such as stale leaders. Each server stores a current term number, which increases monotonically over time. Current terms are exchanged whenever servers communicate; if one server’s current term is smaller than the other’s, then it updates its current term to the larger value. If a candidate or leader discovers that its term is out of date, it immediately reverts to follower state. If a server receives a request with a stale term number, it rejects the request.
+
+```
+在 Raft 协议中，"Term" 是一个非常重要的概念。每个 Term 代表一个选举周期，它可以被视为一个逻辑时钟，帮助服务器检测过时的信息，如陈旧的领导者。
+
+每个服务器都存储一个当前的 Term 数字，这个数字随着时间单调递增。每当服务器之间进行通信时，都会交换当前的 Term。如果一个服务器发现自己的当前 Term 小于另一个服务器的 Term，那么它会更新自己的当前 Term 为较大的值。
+
+这种机制有几个重要的效果：
+
+如果一个候选人或领导者发现自己的 Term 已经过时（即，存在一个更大的 Term），那么它会立即变回 Follower 状态。这是因为一个更大的 Term 意味着已经有一个新的选举开始，而这个服务器没有参与。为了保持一致性，它必须放弃当前的候选人或领导者角色，变回 Follower。
+
+如果一个服务器收到一个请求，但是这个请求的 Term 小于它自己的当前 Term，那么它会拒绝这个请求。这是因为一个较小的 Term 意味着这个请求是在一个过去的选举周期中产生的，因此是过时的。
+
+通过这种方式，Raft 协议能够确保集群中的所有服务器都能够在选举过程中保持一致性，即使在网络延迟或者服务器故障的情况下。
+```
+
+Raft servers communicate using remote procedure calls (RPCs), and **the basic consensus algorithm requires only two types of RPCs**. **RequestVote RPCs** are initiated by candidates during elections (Section 5.2), and **AppendEntries RPCs** are initiated by leaders to replicate log entries and to provide a form of heartbeat (Section 5.3). Section 7 adds **a third RPC for transferring snapshots between servers**. Servers retry RPCs if they do not receive a response in a timely manner, and they issue RPCs in parallel for best performance.
+
+### Performance (举领导者和复制日志条目等关键操作上的性能)
+
+Raft’s performance is similar to other consensus algorithms such as Paxos.
+
+**The most important case for performance is when an established leader is replicating new log entries**. Raft achieves this using the minimal number of messages (a single round-trip from the leader to half the cluster). It is also possible to further improve Raft’s performance. For example, it easily supports batching and pipelining requests for higher throughput and lower latency. Various optimizations have been proposed in the literature for other algorithms; many of these could be applied to Raft, but we leave this to future work.
+
+We used our Raft implementation to measure the performance of Raft’s leader election algorithm and answer two questions. First, does the election process converge quickly? Second, what is the minimum downtime that can be achieved after leader crashes?
+
+To measure leader election, we repeatedly crashed the leader of a cluster of five servers and timed how long it took to detect the crash and elect a new leader (see **Figure 16**). **To generate a worst-case scenario**, the servers in each trial had different log lengths, so some candidates were not eligible to become leader. Furthermore, to encourage split votes, our test script triggered a synchronized broadcast of heartbeat RPCs from the leader before terminating its process (this approximates the behavior of the leader replicating a new log entry prior to crashing). The leader was crashed uniformly randomly within its heartbeat interval, which was half of the minimum election timeout for all tests. Thus, the smallest possible downtime was about half of the minimum election timeout.
+
+**The top graph** in **Figure 16** shows that a small amount of randomization in the election timeout is enough to avoid split votes in elections. In the absence of randomness, leader election consistently took longer than 10 seconds in our tests due to many split votes. Adding just 5ms of randomness helps significantly, resulting in a median downtime of 287ms. Using more randomness improves worst-case behavior: with 50ms of randomness the worstcase completion time (over 1000 trials) was 513ms.
+
+**The bottom graph** in **Figure 16** shows that downtime can be reduced by reducing the election timeout. With an election timeout of 12–24ms, it takes only 35ms on average to elect a leader (the longest trial took 152ms). However, lowering the timeouts beyond this point violates Raft’s timing requirement: leaders have difficulty broadcasting heartbeats before other servers start new elections. This can cause unnecessary leader changes and lower overall system availability. We recommend using a conservative election timeout such as 150–300ms; such timeouts are unlikely to cause unnecessary leader changes and will still provide good availability.
+
+Figure 6:
+
+![raft6](/assets/images/202501/raft6.png)
+
+> Raft 协议在选举领导者和复制日志条目等关键操作上的性能表现，以及如何通过调整参数来优化性能。
+>
+> 首先，Raft 协议在复制新的日志条目时的性能与 Paxos 等其他一致性算法相当。这是因为 Raft 协议使用了最少的消息数量（从领导者到集群一半的服务器只需要一个往返的消息）来完成这个操作。此外，Raft 协议还支持批处理和流水线请求，以提高吞吐量和降低延迟。
+>
+> 然后，通过实验测量了 Raft 协议的领导者选举算法的性能。实验的目标是回答两个问题：选举过程是否能快速收敛？在领导者崩溃后，可以达到的最小停机时间是多少？
+>
+> 实验结果显示，通过在选举超时时间中引入一定的随机性，可以有效地避免选举过程中的分裂投票，从而加快选举速度。在没有随机性的情况下，由于分裂投票的问题，选举过程在测试中通常需要超过 10 秒。而添加了 5ms 的随机性后，中位数的停机时间就降低到了 287ms。增加更多的随机性可以进一步改善最坏情况的表现：在添加了 50ms 的随机性后，最坏情况下的完成时间（在 1000 次试验中）是 513ms。
+>
+> 此外，实验还发现，通过减小选举超时时间，可以进一步减少停机时间。当选举超时时间为 12-24ms 时，选举领导者的平均时间只需要 35ms（最长的试验需要 152ms）。然而，如果进一步降低超时时间，就可能违反 Raft 协议的时间要求：领导者可能在其他服务器开始新的选举之前，无法广播心跳消息。这可能导致不必要的领导者更换，降低整个系统的可用性。因此，建议使用较为保守的选举超时时间，如 150-300ms。这样的超时时间不太可能导致不必要的领导者更换，同时仍能提供良好的可用性。
+
+Q: **在没有随机性的情况下，为什么会导致分裂投票的问题？**
+
+A: 在 Raft 协议中，分裂投票（split vote）的问题通常发生在领导者崩溃或网络分区等情况下。当一个或多个 Follower 服务器在一段时间内没有收到领导者的心跳消息时，它们会认为领导者已经崩溃，然后开始新的选举。
+
+如果没有随机性，那么所有的 Follower 服务器都会在相同的时间开始新的选举。这就可能导致分裂投票的问题，因为每个服务器都有可能成为候选人，并且它们都会在开始选举时给自己投票。如果集群中的服务器数量是偶数，那么投票就可能会被平分，导致没有任何一个候选人能够得到大多数的票数，从而无法选出新的领导者。这样，集群就会进入一个无领导者的状态，直到下一轮的选举开始。
+
+为了解决这个问题，Raft 协议引入了随机性。每个 Follower 服务器在开始新的选举之前，都会等待一个随机的超时时间。这样，一些服务器会比其他服务器更早开始选举，从而有更大的机会成为新的领导者。这就大大降低了分裂投票问题的发生概率，从而提高了选举的效率和集群的稳定性。
+
+
+
+
+# Install [v3.5](https://etcd.io/docs/v3.5/)
 
 Instructions for installing `etcd` from pre-built binaries or from source.
 
@@ -86,17 +251,13 @@ Example application workload: A 3,000 node Kubernetes cluster
 ![etcd4](/assets/images/202501/etcd4.png)
 
 
-
-
-# Quickstart [v3.5](https://etcd.io/docs/v3.5/) ()
+----------------
 
 These docs cover everything from setting up and running an etcd cluster to using etcd in applications.
 
-Follow these instructions to locally install, run, and test a single-member cluster of etcd:
+Follow these instructions to locally install, run, and test **a single-member cluster of etcd**:
 
-* Install etcd from pre-built binaries or from source. For details, see [Install](https://etcd.io/docs/v3.5/install/).
-
-> **Important**: Ensure that you perform the last step of the installation instructions to verify that `etcd` is in your path.
+Install etcd from pre-built binaries or from source. For details, see [Install](https://etcd.io/docs/v3.5/install/).
 
 
 ## Install pre-built binaries
@@ -116,7 +277,7 @@ Go Version: go1.22.9
 Go OS/Arch: linux/amd64
 ```
 
-### 安装和测试 etcd 功能脚本
+### etcd 简单安装和测试功能脚本
 
 ``` bash
 #!/bin/bash
@@ -188,7 +349,7 @@ echo "Writing and reading data to etcd..."
 kill ${ETCD_PID}
 ```
 
-### etcd 的运行脚本
+### etcd 启动脚本
 
 ``` bash
 #!/bin/bash
@@ -260,7 +421,14 @@ exit 1
 etcd --name JLib-etcd-1 --data-dir /data/home/gerryyang/tools/etcd/etcd-data --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://0.0.0.0:2379 --listen-peer-urls http://0.0.0.0:2380 --initial-advertise-peer-urls http://0.0.0.0:2380 --initial-cluster JLib-etcd-1=http://0.0.0.0:2380 --initial-cluster-token JLib-etcd-token --initial-cluster-state new
 ```
 
-### etcd 用例测试
+etcd 默认启动参数：
+
+```
+starting an etcd server","etcd-version":"3.5.17","git-sha":"507c0de","go-version":"go1.22.9","go-os":"linux","go-arch":"amd64","max-cpu-set":48,"max-cpu-available":48,"member-initialized":false,"name":"default","data-dir":"default.etcd","wal-dir":"","wal-dir-dedicated":"","member-dir":"default.etcd/member","force-new-cluster":false,"heartbeat-interval":"100ms","election-timeout":"1s","initial-election-tick-advance":true,"snapshot-count":100000,"max-wals":5,"max-snapshots":5,"snapshot-catchup-entries":5000,"initial-advertise-peer-urls":["http://localhost:2380"],"listen-peer-urls":["http://localhost:2380"],"advertise-client-urls":["http://localhost:2379"],"listen-client-urls":["http://localhost:2379"],"listen-metrics-urls":[],"cors":["*"],"host-whitelist":["*"],"initial-cluster":"default=http://localhost:2380","initial-cluster-state":"new","initial-cluster-token":"etcd-cluster","quota-backend-bytes":2147483648,"max-request-bytes":1572864,"max-concurrent-streams":4294967295,"pre-vote":true,"initial-corrupt-check":false,"corrupt-check-time-interval":"0s","compact-check-time-enabled":false,"compact-check-time-interval":"1m0s","auto-compaction-mode":"periodic","auto-compaction-retention":"0s","auto-compaction-interval":"0s","discovery-url":"","discovery-proxy":"","downgrade-check-interval":"5s"
+```
+
+
+### etcd 用例测试脚本
 
 ``` bash
 #!/bin/bash
@@ -367,8 +535,41 @@ The etcd project does not currently maintain a helm chart, however you can follo
 与线性一致性读取相比，**可串行化读取**的成本更低，因为它们可以由单个 `etcd` 成员提供，而**无需在集群成员之间达成共识**。这意味着，当一个可串行化读取请求被发出时，它可以直接从任何一个 `etcd` 成员获取数据，而无需等待其他成员的同意。这可以减少延迟和开销，但可能会返回过时的数据，因为数据可能尚未在集群中完全同步。
 
 
+# Watch 机制 (高效获取数据变化)
+
+![raft6](/assets/images/202501/raft6.png)
 
 
+1. 当通过 etcd client 发起 watch 请求的时候，首先会通过 gRPC Proxy，这一部分会将多个 watch 请求合并减少请求处理负担。
+
+2. 创建一个 serverWatchStream，当收到 watch key 请求会创建两个协程 recvLoop 和 sendLoop，recvLoop 负责接收 client create/cancel watcher 的请求，并将从管道中收到的请求转发给 sendLoop 最终发给 client。
+
+3. serverWatchStream 收到 client 创建 watcher 的请求后会创建一个 WatchStream 并分配一个 watcherid，每个 watcher 对应唯一的 watcherid
+
+4. 一旦 watcher 创建成功就会存储在 watchableStore 的 synced watcher 中，如果监听到版本号变化，则会将 watcher 放入 unsyned watcher 中。版本号变化通过 MVCC 得知，通过 watcher.ch 管道进行信息中转。同时 synced watcher 和 unsynced watcher 底层有 map 和 interval tree 两个数据结构，分别对应单个 key 的监控和区间 key 监控。
+
+5. etcd 启动时会创建 syncWatchersLoop 和 syncVictimsLoop 协程，进行 watcher 的同步操作。
+
+6. 用户通过 Raft 机制写入一致性数据，通过 MVCC 机制产生 Event 事件，并写入到管道中。
+
+
+# 事务机制
+
+事务，将应用程序的多个读写操作合并成一个逻辑操作单元，即事务中的操作要么成功提交，要么失败回滚，即使失败也可以在应用层进行重试。几乎所有的**关系型数据库** (例如，Mysql) 都支持事务处理，然而**当非关系型 (NoSQL) 数据库**兴起后，事务逐渐开始被放弃。非关系型数据库主要通过复制、分区的方式来提升系统的可扩展性和可用性，有更灵活的数据格式，而且一般是分布式设计。一方面，实现事务意味着降低性能，如果是跨 IDC 部署，那么就得用 `2PC` 等方式实现分布式事务，实现难度变得很大；另一方面，很多场景下事务又是不可或缺的，比如支付转账的场景，对异常极其敏感，不使用事务实现会需要在应用层做更多的兜底逻辑。
+
+etcd 基于 MVCC 机制实现了事务，许多使用了 MVCC 的数据库都不会暴露底层 MVCC 信息，例如 Mysql 的事务操作基于 MVCC 实现，基于 `START TRANSACTION`、`COMMIT`、`ROLLBACK`就可以实现事务的创建、提交、回滚操作。
+
+一个 etcd 事务的例子：
+
+这个事务首先检查键 "key" 的值是否等于 "value"。如果条件满足，那么它会将 "key" 的值更新为 "new_value"；否则，它会获取 "key" 的当前值。这个事务是一个原子操作，它要么全部执行成功，要么全部执行失败，不会出现部分成功部分失败的情况。
+
+``` go
+_, err := cli.Txn(ctx).
+  If(clientv3.Compare(clientv3.Value("key"), "=", "value")).
+  Then(clientv3.OpPut("key", "new_value")).
+  Else(clientv3.OpGet("key")).
+  Commit()
+```
 
 # Performance
 
@@ -466,16 +667,9 @@ We encourage running the benchmark test when setting up an etcd cluster for the 
 
 etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产环境中，这种配置并不推荐，因为它可能会导致性能问题或者其他潜在的问题。etcd 默认使用 gRPC 进行通信，但是它也提供了一个 HTTP API 以便于向后兼容。在生产环境中，通常建议将 HTTP 和 gRPC 服务分别运行在不同的端口上，以便于管理和监控。
 
-## 'data-dir' was empty; using default","data-dir":"default.etcd
 
 
-## etcd 默认启动参数
 
-```
-starting an etcd server","etcd-version":"3.5.17","git-sha":"507c0de","go-version":"go1.22.9","go-os":"linux","go-arch":"amd64","max-cpu-set":48,"max-cpu-available":48,"member-initialized":false,"name":"default","data-dir":"default.etcd","wal-dir":"","wal-dir-dedicated":"","member-dir":"default.etcd/member","force-new-cluster":false,"heartbeat-interval":"100ms","election-timeout":"1s","initial-election-tick-advance":true,"snapshot-count":100000,"max-wals":5,"max-snapshots":5,"snapshot-catchup-entries":5000,"initial-advertise-peer-urls":["http://localhost:2380"],"listen-peer-urls":["http://localhost:2380"],"advertise-client-urls":["http://localhost:2379"],"listen-client-urls":["http://localhost:2379"],"listen-metrics-urls":[],"cors":["*"],"host-whitelist":["*"],"initial-cluster":"default=http://localhost:2380","initial-cluster-state":"new","initial-cluster-token":"etcd-cluster","quota-backend-bytes":2147483648,"max-request-bytes":1572864,"max-concurrent-streams":4294967295,"pre-vote":true,"initial-corrupt-check":false,"corrupt-check-time-interval":"0s","compact-check-time-enabled":false,"compact-check-time-interval":"1m0s","auto-compaction-mode":"periodic","auto-compaction-retention":"0s","auto-compaction-interval":"0s","discovery-url":"","discovery-proxy":"","downgrade-check-interval":"5s"
-```
-
-## opened backend db","path":"default.etcd/member/snap/db","took":"4.283251ms
 
 
 
