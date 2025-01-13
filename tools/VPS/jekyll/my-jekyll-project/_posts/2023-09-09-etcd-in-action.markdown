@@ -104,7 +104,7 @@ Figure 3:
 
 ![raft3](/assets/images/202501/raft3.png)
 
-### Raft basics
+## Raft basics
 
 A Raft cluster contains several servers; **five is a typical number, which allows the system to tolerate two failures**. At any given time each server is in one of three states: `leader`, `follower`, or `candidate`. In normal operation there is exactly one leader and all of the other servers are followers. Followers are passive: they issue no requests on their own but simply respond to requests from leaders and candidates. The leader handles all client requests (if
 a client contacts a follower, the follower redirects it to the leader). The third state, candidate, is used to elect a new leader as described in Section 5.2. **Figure 4** shows the states and their transitions; the transitions are discussed below.
@@ -121,23 +121,17 @@ Figure 5:
 
 Different servers may observe the transitions between terms at different times, and in some situations a server may not observe an election or even entire terms. Terms act as **a logical clock** in Raft, and they allow servers to detect obsolete (过时的) information such as stale leaders. Each server stores a current term number, which increases monotonically over time. Current terms are exchanged whenever servers communicate; if one server’s current term is smaller than the other’s, then it updates its current term to the larger value. If a candidate or leader discovers that its term is out of date, it immediately reverts to follower state. If a server receives a request with a stale term number, it rejects the request.
 
-```
-在 Raft 协议中，"Term" 是一个非常重要的概念。每个 Term 代表一个选举周期，它可以被视为一个逻辑时钟，帮助服务器检测过时的信息，如陈旧的领导者。
 
-每个服务器都存储一个当前的 Term 数字，这个数字随着时间单调递增。每当服务器之间进行通信时，都会交换当前的 Term。如果一个服务器发现自己的当前 Term 小于另一个服务器的 Term，那么它会更新自己的当前 Term 为较大的值。
+在 Raft 协议中，"Term" 是一个非常重要的概念。每个 Term 代表一个选举周期，它可以被视为一个逻辑时钟，帮助服务器检测过时的信息，如陈旧的领导者。每个服务器都存储一个当前的 Term 数字，这个数字随着时间单调递增。每当服务器之间进行通信时，都会交换当前的 Term。如果一个服务器发现自己的当前 Term 小于另一个服务器的 Term，那么它会更新自己的当前 Term 为较大的值。
 
 这种机制有几个重要的效果：
 
-如果一个候选人或领导者发现自己的 Term 已经过时（即，存在一个更大的 Term），那么它会立即变回 Follower 状态。这是因为一个更大的 Term 意味着已经有一个新的选举开始，而这个服务器没有参与。为了保持一致性，它必须放弃当前的候选人或领导者角色，变回 Follower。
+如果一个候选人或领导者发现自己的 Term 已经过时（即，存在一个更大的 Term），那么它会立即变回 Follower 状态。这是因为一个更大的 Term 意味着已经有一个新的选举开始，而这个服务器没有参与。为了保持一致性，它必须放弃当前的候选人或领导者角色，变回 Follower。如果一个服务器收到一个请求，但是这个请求的 Term 小于它自己的当前 Term，那么它会拒绝这个请求。这是因为一个较小的 Term 意味着这个请求是在一个过去的选举周期中产生的，因此是过时的。通过这种方式，Raft 协议能够确保集群中的所有服务器都能够在选举过程中保持一致性，即使在网络延迟或者服务器故障的情况下。
 
-如果一个服务器收到一个请求，但是这个请求的 Term 小于它自己的当前 Term，那么它会拒绝这个请求。这是因为一个较小的 Term 意味着这个请求是在一个过去的选举周期中产生的，因此是过时的。
-
-通过这种方式，Raft 协议能够确保集群中的所有服务器都能够在选举过程中保持一致性，即使在网络延迟或者服务器故障的情况下。
-```
 
 Raft servers communicate using remote procedure calls (RPCs), and **the basic consensus algorithm requires only two types of RPCs**. **RequestVote RPCs** are initiated by candidates during elections (Section 5.2), and **AppendEntries RPCs** are initiated by leaders to replicate log entries and to provide a form of heartbeat (Section 5.3). Section 7 adds **a third RPC for transferring snapshots between servers**. Servers retry RPCs if they do not receive a response in a timely manner, and they issue RPCs in parallel for best performance.
 
-### Performance (举领导者和复制日志条目等关键操作上的性能)
+## Performance (举领导者和复制日志条目等关键操作上的性能)
 
 Raft’s performance is similar to other consensus algorithms such as Paxos.
 
@@ -537,7 +531,7 @@ The etcd project does not currently maintain a helm chart, however you can follo
 
 # Watch 机制 (高效获取数据变化)
 
-![raft6](/assets/images/202501/raft6.png)
+![raft7](/assets/images/202501/raft7.png)
 
 
 1. 当通过 etcd client 发起 watch 请求的时候，首先会通过 gRPC Proxy，这一部分会将多个 watch 请求合并减少请求处理负担。
