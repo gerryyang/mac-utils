@@ -8,11 +8,56 @@ categories: GoLang
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# 思考问题
+
+* **原理**
+  + 如何判断 etcd 是否适合你的业务场景？
+  + 为什么 etcd 适合读多写少？
+  + 线性读和串行读各自适用什么业务场景，分别是如何实现的？
+  + etcd Watch 机制能保证事件不丢吗？
+  + 为什么 Follower 节点的 Raft 日志条目可能会与 Leader 冲突？冲突时 Follower 节点的 WAL 日志如何删除已持久化但冲突的日志条目？
+  + 不小心删除一个 key 后，可以马上找回来吗？
+
+* **稳定性**
+  + 哪些因素会导致 etcd 集群 Leader 发生切换？
+  + 为什么 etcd 社区压测结果显示读能达到10几万每秒，但在自己的业务集群中 QPS 可能未过百就出现超时错误？
+  + etcd 能跨地域部署吗？
+  + 如何优化提升 etcd 性能和稳定性？
+
+* **一致性**
+  + 为什么基于 Raft 实现的 etcd 还可能会出现数据不一致？
+
+* **延迟**
+  + 为什么集群各节点磁盘 I/O 延迟很低，写请求也会超时？
+
+* **内存**
+  + 为什么只存储一个几百 KB 的 KV，etcd 进程却可能消耗数 G 内存？
+
+* **DB 大小**
+  + 为什么删除大量的数据，DB 大小不减少？
+  + 为何 etcd 社区建议 DB 大小不要超过 8G？
+  + 哪些因素会导致 DB 大小增加？
+
+* **最佳实践**
+  + 当在一个 namespace 下创建了数万个 Pod/CRD 资源时，同时频繁通过标签去查询指定 Pod/CRD 资源时， APIServer 和 etcd 为什么扛不住？
+  + 快速增长的业务应如何避免单 etcd 集群出现性能瓶颈？
+  + 如何构建安全，高可靠的 etcd 集群运维体系？
+
+* **Kubernetes**
+  + Kubernetes 创建 Pod 背后 etcd 是如何工作的？
+  + etcd 如何为 Kubernetes 控制器编程模型提供支撑？
+  + APIServer 的 "too old resource version" 错误跟 etcd 有什么关系？
+
+
+
 # 基本介绍
 
-* `etcd` 是一个分布式键值 KV 存储系统，用于存储和管理配置数据。
-* `etcd` 使用 `Raft` 共识算法来确保数据在集群中的一致性。(容器编排系统 Kubernetes 使用 etcd 作为底层存储。Google 的 Spanner 和微信的 PaxosStore 都是基于 Paxos 协议实现的 KV 存储。Paxos 和 Raft 各有优劣，一般认为 Raft 工程实现简单，但是有租约不可用的问题，基于无租约 Paxos 协议没有 Leader 节点，可以做到无痕切换)。
-* 支持 gRPC 和 Http 协议调用。
+* `etcd` 是一个分布式键值 KV 存储系统，应用于服务发现，分布式锁，配置存储，分布式协调等。
+* `etcd` 使用 `Raft` 共识算法来确保数据在集群中的一致性。
+* 支持 `gRPC` 和 `Http` 协议调用。
+* Kubernetes 使用 etcd 作为底层存储。Google 的 Spanner 和微信的 PaxosStore 都是基于 Paxos 协议实现的 KV 存储。Paxos 和 Raft 各有优劣，一般 Raft 工程实现简单，但是有租约不可用的问题；基于无租约 Paxos 协议没有 Leader 节点，可以做到无缝切换。
+
 
 
 ![etcd_frame](/assets/images/202501/etcd_frame.png)
