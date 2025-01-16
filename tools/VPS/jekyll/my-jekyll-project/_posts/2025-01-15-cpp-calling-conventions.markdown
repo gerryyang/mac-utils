@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Calling conventions for different C++ compilers and operating systems (函数调用约定)"
+title:  "CPP Calling Conventions (函数调用约定)"
 date:   2025-01-15 12:30:00 +0800
 categories: [C/C++]
 ---

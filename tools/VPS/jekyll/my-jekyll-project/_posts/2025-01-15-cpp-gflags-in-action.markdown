@@ -8,37 +8,63 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# 代码示例
+# Example
+
+https://github.com/gflags/example
 
 ``` cpp
-#include "agent.h"
-#include "define.h"
-#include <iostream>
-
+#include <cstdio>
 #include <gflags/gflags.h>
 
-DEFINE_string(svrname, "agent", "set server's name");
-
-int ServerApp::Run()
-{
-    printf("%s\n", __PRETTY_FUNCTION__);
-    return CServer::Run();
-}
+DEFINE_bool(verbose, false, "Display agent's version information");
+DEFINE_string(svrname, "agent", "Set agent's name");
 
 int main(int argc, char **argv)
 {
-    gflags::SetUsageMessage("This is a agent program");
+    std::string strUsage("This program is an example.\n");
+    strUsage += "\nUsage:\n";
+    strUsage += "  ";
+    strUsage += argv[0];
+    strUsage += " [flags]\n";
+    strUsage += "    Start an agent server.";
+
+    gflags::SetUsageMessage(strUsage);
     google::SetVersionString(JLib::kVersion);
+
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     std::string strSvrName = FLAGS_svrname;
-    ServerApp::ServerVersion(strSvrName.c_str());
+    ServerApp::SetServerName(strSvrName.c_str());
+
+    if (FLAGS_verbose)
+    {
+        printf("%s verbose information:\n\n", gflags::ProgramInvocationShortName());
+        ServerApp::ShowServerVersion();
+        exit(0);
+    }
 
     ServerApp app;
     app.Run();
 
     return 0;
 }
+```
+
+输出示例：
+
+```
+$ ./agent -help
+agent: This program is an example.
+
+Usage:
+  ./agent [flags]
+    Start an agent server.
+
+  Flags from agent/agent.cpp:
+    -svrname (Set agent's name) type: string default: "agent"
+    -verbose (Display agent's version information) type: bool default: false
+
+...
 ```
 
 # Introduction, and Comparison to Other Commandline Flags Libraries
@@ -504,4 +530,4 @@ int main(int argc, char* argv[])
 # Refer
 
 * [How To Use gflags (formerly Google Commandline Flags)](https://gflags.github.io/gflags/)
-* https://github.com/gflags/gflags
+* https://github.com/gflags
