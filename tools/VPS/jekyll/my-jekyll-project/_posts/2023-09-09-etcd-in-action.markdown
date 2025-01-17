@@ -9,6 +9,60 @@ categories: GoLang
 {:toc}
 
 
+# 历史背景
+
+* etcd 名字的由来？它源于两个方面，Unix 的 “/etc” 文件夹和分布式系统 (“D”istribute system) 的 D，组合在一起表示 etcd 是用于存储分布式配置的存储服务。
+* CoreOS 团队在 2013 年 8 月对外发布了第一个测试版本 v0.1，API v1 版本，命名为 etcd。
+* v0.1 版本实现了简单的 HTTP Get/Set/Delete/Watch API，但读数据一致性无法保证。
+* v0.2 版本，支持通过指定 consistent 模式，从 Leader 读取数据，并将 Test And Set 机制修正为 CAS(Compare And Swap)，解决原子更新的问题，同时发布了新的 API 版本 v2。
+* 在 2015 年 1 月，CoreOS 发布了 etcd 第一个稳定版本 2.0，支持了 **quorum read**，提供了严格的线性一致性读能力。7 月，基于 etcd 2.0 的 Kubernetes 第一个生产环境可用版本 v1.0.1 发布了，Kubernetes 开始了新的里程碑的发展。
+
+![etcd6](/assets/images/202501/etcd6.png)
+
+![etcd7](/assets/images/202501/etcd7.png)
+
+* 随着 Kubernetes 项目不断发展，v2 版本的瓶颈和缺陷逐渐暴露，遇到了若干性能和稳定性问题，Kubernetes 社区呼吁支持新的存储、批评 etcd 不可靠的声音开始不断出现。具体问题如下：
+  + **功能局限性问题。**
+    - etcd v2 不支持范围查询和分页。分页对于数据较多的场景是必不可少的。在 Kubernetes 中，在集群规模增大后，Pod、Event 等资源可能会出现数千个以上，但是 etcd v2 不支持分页，不支持范围查询，大包等 expensive request 会导致严重的性能乃至雪崩问题。
+    - etcd v2 不支持多 key 事务。在实际转账等业务场景中，往往我们需要在一个事务中同时更新多个 key。
+  + **Watch 机制可靠性问题。**
+    - Kubernetes 项目严重依赖 etcd Watch 机制，然而 etcd v2 是内存型、不支持保存 key 历史版本的数据库，只在内存中使用滑动窗口保存了最近的 1000 条变更事件，当 etcd server 写请求较多、网络波动时等场景，很容易出现事件丢失问题，进而又触发 client 数据全量拉取，产生大量 expensive request，甚至导致 etcd 雪崩。
+  + **性能瓶颈问题。**
+    - etcd v2 早期使用了简单、易调试的 HTTP/1.x API，但是随着 Kubernetes 支撑的集群规模越来越大，HTTP/1.x 协议的瓶颈逐渐暴露出来。比如集群规模大时，由于 HTTP/1.x 协议没有压缩机制，批量拉取较多 Pod 时容易导致 APIServer 和 etcd 出现 CPU 高负载、OOM、丢包等问题。
+    - 另外，etcd v2 client 会通过 HTTP 长连接轮询 Watch 事件，当 watcher 较多的时候，因 HTTP/1.x 不支持多路复用，会创建大量的连接，消耗 server 端过多的 socket 和内存资源。
+    - 同时 etcd v2 支持为每个 key 设置 TTL 过期时间，client 为了防止 key 的 TTL 过期后被删除，需要周期性刷新 key 的 TTL。实际业务中很有可能若干 key 拥有相同的 TTL，可是在 etcd v2 中，即使大量 key TTL 一样，你也需要分别为每个 key 发起续期操作，当 key 较多的时候，这会显著增加集群负载、导致集群性能显著下降。
+  + **内存开销问题。**
+    - etcd v2 在内存维护了一颗树来保存所有节点 key 及 value。在数据量略大的场景，如配置项较多、存储了大量 Kubernetes Events，它会导致较大的内存开销，同时 etcd 需要定时把全量内存树持久化到磁盘。这会消耗大量的 CPU 和磁盘 I/O 资源，对系统的稳定性造成一定影响。
+
+![etcd8](/assets/images/202501/etcd8.png)
+
+
+> 为什么 etcd v2 有以上若干问题，Consul 等其他竞品依然没有被 Kubernetes 支持呢？
+
+1. 一方面当时包括 Consul 在内，没有一个开源项目是十全十美完全满足 Kubernetes 需求。而 CoreOS 团队一直在聆听社区的声音并积极改进，解决社区的痛点。用户吐槽 etcd 不稳定，他们就设计实现自动化的测试方案，模拟、注入各类故障场景，及时发现修复 Bug，以提升 etcd 稳定性。
+2. 另一方面，用户吐槽性能问题，针对 etcd v2 各种先天性缺陷问题，他们从 2015 年就开始设计、实现新一代 etcd v3 方案去解决以上痛点，并积极参与 Kubernetes 项目，负责 etcd v2 到 v3 的存储引擎切换，推动 Kubernetes 项目的前进。同时，设计开发通用压测工具、输出 Consul、ZooKeeper、etcd 性能测试报告，证明 etcd 的优越性。
+
+> etcd v3 就是为了解决以上稳定性、扩展性、性能问题而诞生的。
+
+1. 在内存开销、Watch 事件可靠性、功能局限上，它通过引入 B-tree、boltdb 实现一个 MVCC 数据库，数据模型从层次型目录结构改成扁平的 key-value，提供稳定可靠的事件通知，实现了事务，支持多 key 原子更新，同时基于 boltdb 的持久化存储，显著降低了 etcd 的内存占用、避免了 etcd v2 定期生成快照时的昂贵的资源开销。
+2. 性能上，首先 etcd v3 使用了 gRPC API，使用 protobuf 定义消息，消息编解码性能相比 JSON 超过 2 倍以上，并通过 HTTP/2.0 多路复用机制，减少了大量 watcher 等场景下的连接数。
+3. 其次使用 Lease 优化 TTL 机制，每个 Lease 具有一个 TTL，相同的 TTL 的 key 关联一个 Lease，Lease 过期的时候自动删除相关联的所有 key，不再需要为每个 key 单独续期。
+4. 最后是 etcd v3 支持范围、分页查询，可避免大包等 expensive request。
+
+> 2016 年 6 月，etcd 3.0 诞生，随后 Kubernetes 1.6 发布，默认启用 etcd v3，助力 **Kubernetes 支撑 5000 节点集群规模**。
+
+下面的时间轴图总结了 etcd3 重要特性及版本发布时间。从图中可以看出，从 3.0 到未来的 3.5，更稳、更快是 etcd 的追求目标。
+
+![etcd9](/assets/images/202501/etcd9.png)
+
+> 从 2013 年发布第一个版本 v0.1 到今天的 3.5.0-pre，从 v2 到 v3，etcd 走过了 7 年的历程，etcd 的稳定性、扩展性、性能不断提升。在 Kubernetes 的业务场景磨炼下它不断成长，走向稳定和成熟，成为技术圈众所周知的开源产品，而 v3 方案的发布，也标志着 etcd 进入了技术成熟期，成为云原生时代的首选元数据存储产品。
+
+
+
+
+
+
+
 # 思考问题
 
 * **原理**
@@ -50,12 +104,55 @@ categories: GoLang
   + APIServer 的 "too old resource version" 错误跟 etcd 有什么关系？
 
 
+# 方案选型
+
+方案需要具备的能力：
+
+1. 高可用（方案：多节点 -> 问题：数据一致性问题）
+2. 数据一致性（方案：Raft 协议）
+3. 存储容量（方案：仅需保存控制面信息，存储上不需要考虑分片）
+4. 增删改查，监听数据变化（方案：Watch 机制）
+5. 可维护性（方案：提供 API 等易便的操作接口，降低运维复杂度）
+
+可选方案：
+
+* ZooKeeper
+  + 维护成本相对较高
+  + Java 程序部署繁琐且资源开销较高
+  + 私有 TCP 协议通信，不支持 HTTP 协议调用，调试不方便
+
+* etcd
+  + Kubernetes 使用 etcd 作为底层存储
+  + Raft 共识算法来确保数据在集群中的一致性，相比 Paxos 算法工程化更简单
+  + 支持 gRPC 和 HTTP 协议调用
+  + Watch 机制
+  + Key TTL 特性
+  + 服务发现
+  + 分布式锁
+  + 主备选举
+  + 事务
+  + etcd v3 支持范围、分页查询，可避免大包等 expensive request
+  + Kubernetes 支撑 5000 节点集群规模
+  + 低容量的关键元数据存储，DB大小一般不超过8G
+  + etcd 集群异地容灾，建议使用 raft learner 特性，建议在 >= 3.5 版本使用
+
+
+* Consul
+  + 在大规模集群中，etcd 的性能会优于 Consul
+  + etcd v3 在稳定性、扩展性、性能方面做了大量优化
+  + 支持健康检查功能，可以自动剔除不健康的服务。而 etcd 则没有这个功能，需要额外的工具来实现
+
+* Redis
+  + 主备异步复制，可能会丢数据
+  + 存储的一般是用户数据，可以承载上T数据
+  + 存储引擎和 API 上 Redis 内存实现了各种丰富数据结构
+
 
 # 基本介绍
 
 * `etcd` 是一个分布式键值 KV 存储系统，应用于服务发现，分布式锁，配置存储，分布式协调等。
 * `etcd` 使用 `Raft` 共识算法来确保数据在集群中的一致性。
-* 支持 `gRPC` 和 `Http` 协议调用。
+* 支持 `gRPC` 和 `HTTP` 协议调用。
 * Kubernetes 使用 etcd 作为底层存储。Google 的 Spanner 和微信的 PaxosStore 都是基于 Paxos 协议实现的 KV 存储。Paxos 和 Raft 各有优劣，一般 Raft 工程实现简单，但是有租约不可用的问题；基于无租约 Paxos 协议没有 Leader 节点，可以做到无缝切换。
 
 
@@ -67,6 +164,24 @@ categories: GoLang
 3. Raft 层：实现了包括 Leader 选举和日志复制等 Raft 算法核心功能，并且通过 wal 机制持久化日志条目，保障 etcd 多节点的一致性和可用性，同时使用 Read Index 机制实现读请求的强一致性。
 4. 通信层：集群多节点通信实现，使用 gRPC 在服务器 peer 间和 client 间通信。
 5. 存储层：包括 KeyIndex 和 BoltDB，KeyIndex 基于 B-Tree，存储每个 KV 对的历史版本，在内存中 BoltDB 基于 B+Tree 存储在磁盘中。结合 KeyIndex 和 BoltDB 实现 MVCC 机制。
+
+
+# 数据模型
+
+etcd 使用的是简单内存树，它的节点数据结构精简后如下，含节点路径、值、孩子节点信息。这是一个典型的低容量设计，数据全放在内存，无需考虑数据分片，只能保存 key 的最新版本，简单易实现。
+
+``` go
+type node struct {
+   Path string                    // 节点路径
+   Parent *node                   // 关联父亲节点
+   Value string                   // key 的 value 值
+   ExpireTime time.Time           // 过期时间
+   Children map[string]*node      // 此节点的孩子节点
+}
+```
+
+![etcd5](/assets/images/202501/etcd5.png)
+
 
 
 
