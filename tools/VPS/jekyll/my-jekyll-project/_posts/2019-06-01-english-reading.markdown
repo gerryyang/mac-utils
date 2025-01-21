@@ -10,6 +10,30 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* quota
+    + A quota is the limited number or quantity of something which is officially allowed. 限额
+
+> The quota of four tickets per person had been reduced to two. 每人4张票的限额已减少到了2张。
+
+    + A quota is a fixed maximum or minimum proportion of people from a particular group who are allowed to do something, such as come and live in a country or work for the government. 配额
+
+> The bill would force employers to adopt a quota system when recruiting workers. 该法案将迫使雇主们在录用工人时采取配额制。
+
+
+* advertise
+    + If you advertise something such as a product, an event, or a job, you tell people about it in newspapers, on television, or on posters in order to encourage them to buy the product, go to the event, or apply for the job. 为 ... 做广告; 做广告
+
+> The company is spending heavily to advertise its strongest brands. 该公司在花重金为其最强势的品牌做广告。
+
+    + If you advertise for someone to do something for you, for example, to work for you or share your accommodation, you announce it in a newspaper, on television, or on a bulletin board. 登广告 (寻求职员、合住者等)
+
+> We advertised for staff in a local newspaper. 我们在一份地方报纸上登了广告招聘员工。
+
+    + TIf you do not advertise the fact that something is the case, you try not to let other people know about it. 宣传
+
+> There is no need to advertise the fact that you are a single woman. 没必要宣传你是个单身女性这一事实。
+
+
 * evergreen
     + 名词 An **evergreen** is a tree or bush that has green leaves all year long. 常青树; 常绿植物
     + 形容词 **Evergreen** is also an adjective. 常绿的
