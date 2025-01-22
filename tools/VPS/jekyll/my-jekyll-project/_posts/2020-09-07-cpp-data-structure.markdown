@@ -93,24 +93,49 @@ refer:
 
 # B树
 
-`B树`和`平衡二叉树`稍有不同的是B树属于**多叉树**又名**平衡多路查找树**（查找路径不只两个），数据库索引技术里大量使用者`B树`和`B+树`的数据结构。
+`B树`和`平衡二叉树`稍有不同的是`B树`属于**多叉树**又名**平衡多路查找树**（查找路径不只两个），数据库索引技术里大量使用者`B树`和`B+树`的数据结构。
 
 特点：
 
-B树相对于平衡二叉树的不同是，每个节点包含的关键字增多了，特别是在B树应用到数据库中的时候，数据库充分利用了磁盘块的原理（磁盘数据存储是采用块的形式存储的，每个块的大小为4K，每次IO进行数据读取时，同一个磁盘块的数据可以一次性读取出来）把节点大小限制和充分使用在磁盘快大小范围；把树的节点关键字增多后树的层级比原来的二叉树少了，减少数据查找的次数和复杂度。
+`B树`相对于`平衡二叉树`的不同是，每个节点包含的关键字增多了，特别是在`B树`应用到数据库中的时候，数据库充分利用了磁盘块的原理（磁盘数据存储是采用块的形式存储的，每个块的大小为4K，每次IO进行数据读取时，同一个磁盘块的数据可以一次性读取出来）把节点大小限制和充分使用在磁盘快大小范围；把树的节点关键字增多后树的层级比原来的二叉树少了，减少数据查找的次数和复杂度。
+
+
+[Introduction of B-Tree](https://www.geeksforgeeks.org/introduction-of-b-tree-2/)
+
+A B-Tree is a specialized m-way tree designed to optimize data access, especially on disk-based storage systems. In a B-Tree of order `m`, each node can have up to `m` children and `m-1` keys, allowing it to efficiently manage large datasets.
+
+One of the standout features of a B-Tree is its ability to store a significant number of keys within a single node, including large key values. It significantly reduces the tree’s height, hence reducing costly disk operations. B Trees allow faster data retrieval and updates, making them an ideal choice for systems requiring efficient and scalable data management. By maintaining a balanced structure at all times, B-Trees deliver consistent and efficient performance for critical operations such as search, insertion, and deletion.
+
+**Properties of a B-Tree**:
+
+A B Tree of order `m` can be defined as an m-way search tree which satisfies the following properties:
+
+1. All leaf nodes of a B tree are at the same level, i.e. they have the same depth (height of the tree). (所有叶子节点都在相同的层级)
+2. The keys of each node of a B tree (in case of multiple keys), should be stored in the ascending order. (每个节点包含多个 key 以升序排列)
+3. In a B tree, all non-leaf nodes (except root node) should have at least `m/2` children. (除了根节点，所有非叶子节点应该包含至少 `m/2` 个子节点)
+4. All nodes (except root node) should have at least `m/2 - 1` keys. (除了根节点，所有节点应该包含至少 `m/2 - 1` 个 key)
+5. If the root node is a leaf node (only node in the tree), then it will have no children and will have at least one key. If the root node is a non-leaf node, then it will have at least 2 children and at least one key.
+6. A non-leaf node with `n-1` key values should have `n` non NULL children.
+
+Following is an example of a B-Tree of order 5.
+
+![etcd37](/assets/images/202501/etcd37.png)
+
+We can see in the above diagram that all the leaf nodes are at the same level and all non-leaf nodes have no empty sub-tree and have number of keys one less than the number of their children.
+
 
 # B+树
 
-`B+树`是`B树`的一个升级版，相对于B树来说B+树更充分的利用了节点的空间，让查询速度更加稳定，其速度完全接近于二分法查找。
+`B+树`是`B树`的一个升级版，相对于`B树`来说`B+树`更充分的利用了节点的空间，让查询速度更加稳定，其速度完全接近于**二分法查找**。
 
 特点：
 
-* B+树的层级更少：相较于B树B+每个非叶子节点存储的关键字数更多，树的层级更少所以查询数据更快；
-* B+树查询速度更稳定：B+所有关键字数据地址都存在叶子节点上，所以每次查找的次数都相同所以查询速度要比B树更稳定;
+* B+树的层级更少：相较于B树B+树每个非叶子节点存储的关键字数更多，树的层级更少所以查询数据更快；
+* B+树查询速度更稳定：B+树所有关键字数据地址都存在叶子节点上，所以每次查找的次数都相同所以查询速度要比B树更稳定;
 * B+树天然具备排序功能：B+树所有的叶子节点数据构成了一个有序链表，在查询大小区间的数据时候更方便，数据紧密性很高，缓存的命中率也会比B树高。
 * B+树全节点遍历更快：B+树遍历整棵树只需要遍历所有的叶子节点即可，而不需要像B树一样需要对每一层进行遍历，这有利于数据库做全表扫描。
 
-B树相对于B+树的优点是，如果经常访问的数据离根节点很近，而B树的非叶子节点本身存有关键字其数据的地址，所以这种数据检索的时候会要比B+树快。
+
 
 # 红黑树
 

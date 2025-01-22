@@ -19,8 +19,6 @@ categories: GoLang
 
 
 
-
-
 # 历史背景
 
 * etcd 名字的由来？它源于两个方面，Unix 的 **/etc** 文件夹和分布式系统 (**D**istribute system) 的 **D**，组合在一起表示 **etcd** 是用于存储分布式配置的存储服务。
@@ -118,6 +116,10 @@ categories: GoLang
 
 # 方案选型
 
+[etcd versus other key-value stores](https://etcd.io/docs/v3.6/learning/why/)
+
+![etcd56](/assets/images/202501/etcd56.png)
+
 方案需要具备的能力：
 
 1. 高可用（方案：多节点 -> 问题：数据一致性问题）
@@ -132,6 +134,7 @@ categories: GoLang
   + 维护成本相对较高
   + Java 程序部署繁琐且资源开销较高
   + 私有 TCP 协议通信，不支持 HTTP 协议调用，调试不方便
+  + 共识算法，etcd 使用的是 Raft，ZooKeeper 使用的是 Zab
 
 * etcd
   + Kubernetes 使用 etcd 作为底层存储
@@ -168,12 +171,26 @@ categories: GoLang
 * Kubernetes 使用 etcd 作为底层存储。Google 的 Spanner 和微信的 PaxosStore 都是基于 Paxos 协议实现的 KV 存储。Paxos 和 Raft 各有优劣，一般 Raft 工程实现简单，但是有租约不可用的问题；基于无租约 Paxos 协议没有 Leader 节点，可以做到无缝切换。
 
 
+
+
 # 基础架构
 
+etcd 是基于复制状态机实现的分布式协调服务。如下图所示，由 Raft 共识模块、日志模块、基于 boltdb 持久化存储的状态机组成。
+
+![etcd55](/assets/images/202501/etcd55.png)
+
+以下是 etcd 基于复制状态机模型的写请求流程：
+
+1. client 发起一个写请求（put x = 3）
+2. etcdserver 模块向 Raft 共识模块提交请求，共识模块生成一个写提案日志条目。若 server 是 Leader，则把日志条目广播给其他节点，并持久化日志条目到 WAL 中
+3. 当一半以上节点持久化日志条目后，Leader 的共识模块将此日志条目标记为已提交（committed），并通知其他节点提交
+4. etcdserver 模块从 Raft 共识模块获取已经提交的日志条目，异步应用到 boltdb 状态机存储中，然后返回给 client
+
+
+按照分层模型，etcd 可分为 **Client 层**、**API 网络层**、**Raft 算法层**、**逻辑层**和**存储层**。这些层的功能如下：
 
 ![etcd_frame](/assets/images/202501/etcd_frame.png)
 
-按照分层模型，etcd 可分为 **Client 层**、**API 网络层**、**Raft 算法层**、**逻辑层**和**存储层**。这些层的功能如下：
 
 1. **Client 层**：Client 层包括 client v2 和 v3 两个大版本 API 客户端库，提供了简洁易用的 API，同时支持负载均衡、节点间故障自动转移，可极大降低业务使用 etcd 复杂度，提升开发效率、服务可用性。
 2. **API 网络层**：API 网络层主要包括 client 访问 server 和 server 节点之间的通信协议。一方面，client 访问 etcd server 的 API 分为 v2 和 v3 两个大版本。v2 API 使用 `HTTP/1.x` 协议，v3 API 使用 `gRPC` 协议。同时 v3 通过 etcd grpc-gateway 组件也支持 `HTTP/1.x` 协议，便于各种语言的服务调用。另一方面，server 之间通信协议，是指节点间通过 Raft 算法实现数据复制和 Leader 选举等功能时使用的 HTTP 协议。
@@ -192,7 +209,7 @@ type node struct {
    Path string                    // 节点路径
    Parent *node                   // 关联父亲节点
    Value string                   // key 的 value 值
-   ExpireTime time.Time           // 过期时间
+   ExpireTime time.Time           // 过期时间v2
    Children map[string]*node      // 此节点的孩子节点
 }
 ```
@@ -211,7 +228,7 @@ type node struct {
 
 ![etcd10](/assets/images/202501/etcd10.png)
 
-> client
+### client
 
 启动完 etcd 集群后，用 etcd 的客户端工具 `etcdctl` 执行一个 `get hello` 命令时，对应到图中流程1，etcdctl 是如何工作的呢？
 
@@ -236,12 +253,12 @@ world
 
 * client 和 server 之间的通信，使用的是基于 HTTP/2 的 gRPC 协议。相比 etcd v2 的 HTTP/1.x，HTTP/2 是基于二进制而不是文本、支持多路复用而不再有序且阻塞、支持数据压缩以减少包大小、支持 server push 等特性。因此，基于 HTTP/2 的 gRPC 协议具有低延迟、高性能的特点，有效解决了 etcd v2 中 HTTP/1.x 性能问题。
 
-> KVServer
+### KVServer
 
 * client 发送 Range RPC 请求到了 server 后，就开始进入架构图中的流程2，也就是 KVServer 模块了。
 
 
-> 拦截器
+### 拦截器
 
 * etcd 提供了丰富的 metrics、日志、请求行为检查等机制，可记录所有请求的执行耗时及错误码、来源 IP 等，也可控制请求是否允许通过，比如 etcd Learner 节点只允许指定接口和参数的访问，帮助大家定位问题、提高服务可观测性等，而这些特性是怎么非侵入式的实现呢？答案就是拦截器。
 
@@ -266,7 +283,7 @@ service KV {
 
 * server 收到 client 的 Range RPC 请求后，根据 ServiceName 和 RPC Method 将请求转发到对应的 handler 实现，handler 首先会将上面描述的一系列拦截器串联成一个执行，在拦截器逻辑中，通过调用 KVServer 模块的 Range 接口获取数据。
 
-> 串行读与线性读
+### 串行读与线性读
 
 * 进入 KVServer 模块后，就进入核心的读流程了，对应架构图中的流程3和4。知道 etcd 为了保证服务高可用，生产环境一般部署多个节点，那各个节点数据在任意时间点读出来都是一致的吗？什么情况下会读到旧数据呢？
 
@@ -280,13 +297,13 @@ service KV {
   + 首先来看一个对数据敏感度较低的场景。假如老板让你做一个旁路数据统计服务，希望你每分钟统计下 etcd 里的服务、配置信息等，这种场景其实对数据时效性要求并不高，读请求可直接从节点的状态机获取数据。即便数据落后一点，也不影响业务，毕竟这是一个定时统计的旁路服务而已。**这种直接读状态机数据返回、无需通过 Raft 协议与集群进行交互的模式，在 etcd 里叫做串行 (Serializable) 读，它具有低延时、高吞吐量的特点，适合对数据一致性要求不高的场景**。
   + 再看一个对数据敏感性高的场景。比如说一个转账场景，Alice 给 Bob 转账成功，钱被正常扣出，一刷新页面发现钱又回来了，这也是令人不可接受的。以上的业务场景就对数据准确性要求极高了，**在 etcd 里面，提供了一种线性读模式来解决对数据一致性要求高的场景**。
 
-> 什么是线性读呢?
+### 什么是线性读呢?
 
 * **可以理解一旦一个值更新成功，随后任何通过线性读的 client 都能及时访问到**。虽然集群中有多个节点，但 client 通过线性读就如访问一个节点一样。etcd 默认读模式是线性读，因为它需要经过 Raft 协议模块，反应的是集群共识，因此在延时和吞吐量上相比串行读略差一点，适用于对数据一致性要求高的场景。
 
 * 如果 etcd 读请求显示指定了是串行读，就不会经过架构图流程中的流程3、4。默认是线性读，因此接下来看看读请求进入线性读模块，它是如何工作的。
 
-> 线性读之 ReadIndex
+### 线性读之 ReadIndex
 
 串行读之所以能读到旧数据，主要原因是 Follower 节点收到 Leader 节点同步的写请求后，**应用日志条目到状态机是个异步过程**，那么能否有一种机制在读取的时候，确保最新的数据已经应用到状态机中？
 
@@ -302,7 +319,7 @@ service KV {
 
 * 总体而言，KVServer 模块收到线性读请求后，通过架构图中流程3向 Raft 模块发起 ReadIndex 请求，Raft 模块将 Leader 最新的已提交日志索引封装在流程4的 ReadState 结构体，通过 channel 层层返回给线性读模块，线性读模块等待本节点状态机追赶上 Leader 进度，追赶完成后，就通知 KVServer 模块，进行架构图中流程5，与状态机中的 MVCC 模块进行进行交互了。
 
-> MVCC
+### MVCC
 
 流程5中的多版本并发控制 (**Multiversion concurrency control**) 模块是为了解决 etcd v2 不支持保存 key 的历史版本、不支持多 key 事务等问题而产生的。
 
@@ -328,7 +345,7 @@ service KV {
 https://dezeming.top/wp-content/uploads/2023/04/B-Tree%E5%92%8CBTree.pdf
 ```
 
-> treeIndex
+### treeIndex
 
 * treeIndex 模块是基于 Google 开源的内存版 btree 库实现的，为什么 etcd 选择上图中的 B-tree 数据结构保存用户 key 与版本号之间的映射关系，而不是哈希表、二叉树呢？(后面介绍)
 
@@ -336,13 +353,13 @@ https://dezeming.top/wp-content/uploads/2023/04/B-Tree%E5%92%8CBTree.pdf
 
 * 简单介绍了 etcd 如何保存 key 的历史版本后，架构图中流程6也就非常容易理解了，它需要从 treeIndex 模块中获取 hello 这个 key 对应的版本号信息。treeIndex 模块基于 B-tree 快速查找此 key，返回此 key 对应的索引项 `keyIndex` 即可。索引项中包含版本号等信息。
 
-> buffer
+### buffer
 
 * 在获取到版本号信息后，就可从 boltdb 模块中获取用户的 key-value 数据了。不过有一点要注意，并不是所有请求都一定要从 boltdb 获取数据。
 
 * etcd 出于数据一致性、性能等考虑，在访问 boltdb 前，首先会从一个内存读事务 buffer 中，二分查找要访问 key 是否在 buffer 里面，若命中则直接返回。
 
-> boltdb
+### boltdb
 
 * 若 buffer 未命中，此时就真正需要向 boltdb 模块查询数据了，进入了流程7。
 
@@ -393,7 +410,7 @@ OK
 
 * 与读流程不一样的是写流程还涉及 Quota、WAL、Apply 三个模块。**crash-safe 及幂等性也正是基于 WAL 和 Apply 流程的 consistent index 等实现的**，因此重点介绍这三个模块。
 
-> Quota (限额) 模块
+### Quota (限额) 模块
 
 * 首先是流程1 client 端发起 gRPC 调用到 etcd 节点，和读请求不一样的是，写请求需要经过流程二 db 配额（Quota）模块，它有什么功能呢？
 
@@ -413,11 +430,11 @@ OK
   + 如果需要回收空间，减少 db 大小，得使用碎片整理（defrag），它会遍历旧的 db 文件数据，写入到一个新的 db 文件。但是它对服务性能有较大影响，不建议在生产集群频繁使用。
   + 最后需要注意配额（quota-backend-bytes）的行为，默认0 就是使用 etcd 默认的 2GB 大小，需要根据业务场景适当调优。如果填的是个小于 0 的数，就会禁用配额功能，这可能会让 db 大小处于失控，导致性能下降，不建议禁用配额。
 
-> KVServer 模块
+### KVServer 模块
 
 * 通过流程2的配额检查后，请求就从 API 层转发到了流程3的 KVServer 模块的 put 方法，我们知道 etcd 是基于 Raft 算法实现节点间数据复制的，因此它需要将 put 写请求内容打包成一个提案消息，提交给 Raft 模块。不过 KVServer 模块在提交提案前，还有如下的一系列检查和限速。
 
-> Preflight Check
+### Preflight Check
 
 * **为了保证集群稳定性，避免雪崩，任何提交到 Raft 模块的请求，都会做一些简单的限速判断**。如下面的流程图所示，首先，如果 Raft 模块已提交的日志索引（committed index）比已应用到状态机的日志索引（applied index）超过了 5000，那么它就返回一个 "etcdserver: too many requests" 错误给 client。
 
@@ -427,13 +444,13 @@ OK
 
 ![etcd16](/assets/images/202501/etcd16.png)
 
-> Propose
+### Propose
 
 * **最后通过一系列检查之后，会生成一个唯一的 ID，将此请求关联到一个对应的消息通知 channel，然后向 Raft 模块发起（Propose）一个提案（Proposal）**，提案内容为 “大家好，请使用 put 方法执行一个 key 为 hello，value 为 world 的命令”，也就是整体架构图里的流程4。
 
 * 向 Raft 模块发起提案后，KVServer 模块会等待此 put 请求，等待写入结果通过消息通知 channel 返回或者超时。**etcd 默认超时时间是 7 秒**（5 秒磁盘 IO 延时 + 2*1 秒竞选超时时间），如果一个请求超时未返回结果，则可能会出现你熟悉的 "etcdserver: request timed out" 错误。
 
-> WAL 模块
+### WAL 模块
 
 * **Raft 模块收到提案后，如果当前节点是 Follower，它会转发给 Leader，只有 Leader 才能处理写请求**。Leader 收到提案后，通过 Raft 模块输出待转发给 Follower 节点的消息和待持久化的日志条目，日志条目则封装了上面所说的 put hello 提案内容。
 
@@ -476,7 +493,7 @@ type Entry struct {
 
 * 于是进入流程6，etcdserver 模块从 channel 取出提案内容，添加到先进先出（FIFO）调度队列，随后通过 Apply 模块按入队顺序，异步、依次执行提案内容。
 
-> Apply 模块
+### Apply 模块
 
 * 执行 put 提案内容对应架构图中的流程7，其细节图如下。那么 Apply 模块是如何执行 put 请求的呢？若 put 请求提案在执行流程7的时候 etcd 突然 crash 了，重启恢复的时候，etcd 是如何找回异常提案，再次执行的呢？
 
@@ -494,11 +511,11 @@ type Entry struct {
 
 * Apply 模块在执行提案内容前，首先会判断当前提案是否已经执行过了，如果执行了则直接返回，若未执行同时无 db 配额满告警，则进入到 MVCC 模块，开始与持久化存储模块打交道。
 
-> MVCC
+### MVCC
 
 * Apply 模块判断此提案未执行后，就会调用 MVCC 模块来执行提案内容。**MVCC 主要由两部分组成，一个是内存索引模块 treeIndex，保存 key 的历史版本号信息，另一个是 boltdb 模块，用来持久化存储 key-value 数据**。那么 MVCC 模块执行 put hello 为 world 命令时，它是如何构建内存索引和保存哪些数据到 db 呢？
 
-> treeIndex
+### treeIndex
 
 * 首先来看 MVCC 的索引模块 treeIndex，当收到更新 key hello 为 world 的时候，此 key 的索引版本号信息是怎么生成的呢？需要维护、持久化存储一个全局版本号吗？
 
@@ -510,7 +527,7 @@ type Entry struct {
 
 ![etcd19](/assets/images/202501/etcd19.png)
 
-> boltdb
+### boltdb
 
 * MVCC 写事务自增全局版本号后生成的 revision{2,0}，它就是 boltdb 的 key，通过它就可以往 boltdb 写数据了，进入了整体架构图中的流程9。
 
@@ -550,15 +567,15 @@ type Entry struct {
 在 etcd 3.4 中，实现了全并发读，创建读事务的时候会全量拷贝 buffer, 读写事务不再因为 buffer 阻塞，大大缓解了 expensive request 对 etcd 性能的影响。尤其是 Kubernetes List Pod 等资源场景来说，etcd 稳定性显著提升。
 
 
-## Raft 协议：etcd 如何实现高可用、数据强一致的？
+## Raft 协议：etcd 如何实现高可用、数据强一致的
 
-> 如何避免单点故障？
+### 如何避免单点故障
 
 * 首先回想下，早期使用的数据存储服务，它们往往是部署在单节点上的。但是单节点存在单点故障，一宕机就整个服务不可用，对业务影响非常大。
 
 * 随后，为了解决单点问题，软件系统工程师引入了**数据复制技术，实现多副本**。通过数据复制方案，一方面可以提高服务可用性，避免单点故障。另一方面，多副本可以提升读吞吐量、甚至就近部署在业务所在的地理位置，降低访问延迟。
 
-> 多副本复制是如何实现的呢？
+### 多副本复制是如何实现的呢
 
 * 多副本常用的技术方案主要有**主从复制**和**去中心化复制**。
 
@@ -571,7 +588,7 @@ type Entry struct {
   + 可以根据实际业务场景对数据一致性的敏感度，设置合适 w/r 参数。比如希望每次写入后，任意 client 都能读取到新值，如果 n 是 3 个副本，可以将 w 和 r 设置为 2，这样当读两个节点时候，必有一个节点含有最近写入的新值，这种读称之为**法定票数读**（quorum read）。
   + AWS 的 Dynamo 系统就是基于去中心化的复制算法实现的。它的优点是节点角色都是平等的，降低运维复杂度，可用性更高。但是缺陷是去中心化复制，势必会导致各种写入冲突，业务需要关注冲突处理。
 
-> 如何解决以上复制算法的困境呢？
+### 如何解决以上复制算法的困境呢
 
 答案就是**共识算法**，它最早是**基于复制状态机背景下提出来的**。 下图是复制状态机的结构（引用自 Raft paper）， 它由共识模块、日志模块、状态机组成。通过共识模块保证各个节点日志的一致性，然后各个节点基于同样的日志、顺序执行指令，最终各个复制状态机的结果实现一致。
 
@@ -582,7 +599,7 @@ type Entry struct {
   + **日志复制**，集群只有 Leader 能写入日志，Leader 负责复制日志到 Follower 节点，并强制 Follower 节点与自己保持相同
   + **安全性**，一个任期内集群只能产生一个 Leader、已提交的日志条目在发生 Leader 选举时，一定会存在更高任期的新 Leader 日志中、各个节点的状态机应用的任意位置的日志条目内容应一样等。
 
-> Leader 选举
+### Leader 选举
 
 * 当 etcd server 收到 client 发起的 put hello 写请求后，KV 模块会向 Raft 模块提交一个 put 提案，**只有集群 Leader 才能处理写提案，如果此时集群中无 Leader， 整个请求就会超时**。
 
@@ -630,7 +647,7 @@ type Entry struct {
 
 * 这就是 Raft Leader 选举核心原理，使用心跳机制维持 Leader 身份、触发 Leader 选举，**etcd 基于它实现了高可用，只要集群一半以上节点存活、可相互通信，Leader 宕机后，就能快速选举出新的 Leader，继续对外提供服务**。
 
-> 日志复制
+### 日志复制
 
 * 假设在上面的 Leader 选举流程中，B 成为了新的 Leader，它收到 put 提案后，它是如何将日志同步给 Follower 节点的呢？ 什么时候它可以确定一个日志条目为已提交，通知 etcdserver 模块应用日志条目指令到状态机呢？
 
@@ -676,7 +693,7 @@ type Entry struct {
 
 * **通过以上流程，Leader 就完成了同步日志条目给 Follower 的任务，一个日志条目被确定为已提交的前提是，它需要被 Leader 同步到一半以上节点上。以上就是 etcd Raft 日志复制的核心原理**。
 
-> 安全性
+### 安全性
 
 * 介绍完 Leader 选举和日志复制后，最后再来看看 Raft 是如何保证安全性的。
 
@@ -689,7 +706,7 @@ type Entry struct {
 * 这就是 Raft 的第三个子问题需要解决的。Raft 通过给选举和日志复制增加一系列规则，来实现 Raft 算法的安全性。
 
 
-> 选举规则
+### 选举规则
 
 * 当节点收到选举投票的时候，**需检查候选者的最后一条日志中的任期号，若小于自己则拒绝投票**。**如果任期号相同，日志却比自己短，也拒绝为其投票**。
 
@@ -699,7 +716,7 @@ type Entry struct {
 
 * 通过以上规则就可防止日志图 2 中的 Follower A 节点成为 Leader。
 
-> 日志复制规则
+### 日志复制规则
 
 * 在日志图 2 中，Leader B 返回给 client 成功后若突然 crash 了，此时可能还并未将 6 号日志条目已提交的消息通知到 Follower A 和 C，那么如何确保 6 号日志条目不被新 Leader 删除呢？ 同时在 etcd 集群运行过程中，Leader 节点若频繁发生 crash 后，可能会导致 Follower 节点与 Leader 节点日志条目冲突，如何保证各个节点的同 Raft 日志位置含有同样的日志条目？
 
@@ -912,7 +929,787 @@ $ etcdctl put hello world --endpoints http://127.0.0.1:2379 --user gerry:gerry
 OK
 ```
 
-重要业务不建议多租户模式哈，多租户场景不同租户可能会相互影响，导致各种稳定性问题，除非各个租户的行为是可控的，可信赖的。
+> **建议：重要业务不建议使用多租户模式，多租户场景不同租户可能会相互影响，导致各种稳定性问题，除非各个租户的行为是可控的，可信赖的。**
+
+
+## 租约 (Lease)：如何检测你的客户端存活
+
+### 什么是 Lease
+
+* 在实际业务场景中，我们常常会遇到类似 Kubernetes 的调度器、控制器组件同一时刻只能存在一个副本对外提供服务的情况。然而单副本部署的组件，是无法保证其高可用性的。
+
+* 那为了解决单副本的可用性问题，就需要多副本部署。同时，为了保证同一时刻只有一个能对外提供服务，需要引入 **Leader 选举机制**。那么 Leader 选举本质是要解决什么问题呢？
+  + **首先当然是要保证 Leader 的唯一性，确保集群不出现多个 Leader，才能保证业务逻辑准确性，也就是安全性（Safety）、互斥性**。
+  + 其次是主节点故障后，备节点应可快速感知到其异常，也就是**活性（liveness）检测**。实现活性检测主要有两种方案。
+     - 方案1：**被动型检测**，可以通过探测节点定时拨测 Leader 节点，看是否健康，比如 Redis Sentinel (哨兵)。
+     - 方案2：**主动型上报**，Leader 节点可定期向协调服务发送"特殊心跳"汇报健康状态，若其未正常发送心跳，并超过和协调服务约定的最大存活时间后，就会被协调服务移除 Leader 身份标识。同时其他节点可通过协调服务，快速感知到 Leader 故障了，进而发起新的选举。
+
+* **Lease**，正是基于**主动型上报模式**，提供的一种活性检测机制。Lease 顾名思义，client 和 etcd server 之间存在一个约定，内容是 etcd server 保证在约定的有效期内（TTL），不会删除你关联到此 Lease 上的 key-value。若你未在有效期内续租，那么 etcd server 就会删除 Lease 和其关联的 key-value。
+
+* 可以基于 Lease 的 TTL 特性，解决类似 Leader 选举、Kubernetes Event 自动淘汰、服务发现场景中故障节点自动剔除等问题。
+
+* 为了帮助理解 Lease 的核心特性原理，以一个实际场景中的经常遇到的异常节点自动剔除为案例，围绕这个问题深入介绍 Lease 特性的实现。
+
+### Lease 整体架构
+
+![etcd30](/assets/images/202501/etcd30.png)
+
+* etcd 在启动的时候，创建 `Lessor` (出租人) 模块的时候，它会启动两个常驻 goroutine，如上图所示，一个是 `RevokeExpiredLease` 任务，定时检查是否有过期 Lease，发起撤销过期的 Lease 操作。一个是 `CheckpointScheduledLease`，定时触发更新 Lease 的剩余到期时间的操作。
+
+* `Lessor` 模块提供了 Grant、Revoke、LeaseTimeToLive、LeaseKeepAlive API 给 client 使用，各接口作用如下:
+  + Grant 表示创建一个 TTL 为指定秒数的 Lease，Lessor 会将 Lease 信息持久化存储在 boltdb 中
+  + Revoke 表示撤销 Lease 并删除其关联的数据
+  + LeaseTimeToLive 表示获取一个 Lease 的有效期、剩余时间
+  + LeaseKeepAlive 表示为 Lease 续期
+
+### key 如何关联 Lease
+
+* 了解完整体架构后，再看如何基于 Lease 特性实现检测一个节点存活。首先如何为节点健康指标创建一个租约、并与节点健康指标 key 关联呢? 如 KV 模块的一样，client 可通过 clientv3 库的 Lease API 发起 RPC 调用，可以使用如下的 etcdctl 命令为 node 的健康状态指标，创建一个 Lease，有效期为 600 秒。然后通过 `timetolive` 命令，查看 Lease 的有效期、剩余时间。
+
+``` bash
+# 创建一个 TTL 为 600 秒的 lease，etcd server 返回 LeaseID
+$ etcdctl lease grant 600
+lease 326975935f48f814 granted with TTL(600s)
+
+# 查看 lease 的 TTL 剩余时间
+$ etcdctl lease timetolive 326975935f48f814
+lease 326975935f48f814 granted with TTL(600s)，remaining(590s)
+```
+
+* 当 Lease server 收到 client 的创建一个有效期 600 秒的 Lease 请求后，会通过 Raft 模块完成日志同步，随后 Apply 模块通过 Lessor 模块的 Grant 接口执行日志条目内容。
+
+* 首先 Lessor 的 Grant 接口会把 Lease 保存到内存的 ItemMap 数据结构中，然后它需要持久化 Lease，将 Lease 数据保存到 boltdb 的 Lease bucket 中，返回一个唯一的 LeaseID 给 client。通过这样一个流程，就基本完成了 Lease 的创建。那么节点的健康指标数据如何关联到此 Lease 上呢？很简单，KV 模块的 API 接口提供了一个 `--lease` 参数，可以通过如下命令，将 key `node` 关联到对应的 LeaseID 上。然后查询的时候增加 `-w` 参数输出格式为 json，就可查看到 key 关联的 LeaseID。
+
+``` bash
+$ etcdctl put node healthy --lease 326975935f48f818
+OK
+$ etcdctl get node -w=json | python -m json.tool
+```
+
+输出：
+
+``` json
+{
+    "kvs":[
+        {
+            "create_revision":24，
+            "key":"bm9kZQ=="，
+            "Lease":3632563850270275608，
+            "mod_revision":24，
+            "value":"aGVhbHRoeQ=="，
+            "version":1
+        }
+    ]
+}
+```
+
+* 以上流程原理如下图所示，它描述了用户的 key 是如何与指定 Lease 关联的。当通过 put 等命令新增一个指定了 `--lease` 的 key 时，MVCC 模块它会通过 Lessor 模块的 Attach 方法，将 key 关联到 Lease 的 key 内存集合 ItemSet 中。
+
+![etcd31](/assets/images/202501/etcd31.png)
+
+* 一个 Lease 关联的 key 集合是保存在内存中的，那么 etcd 重启时，是如何知道每个 Lease 上关联了哪些 key 呢？答案是 etcd 的 MVCC 模块在持久化存储 key-value 的时候，保存到 boltdb 的 value 是个结构体（mvccpb.KeyValue），它不仅包含你的 key-value 数据，还包含了关联的 LeaseID 等信息。因此当 etcd 重启时，可根据此信息，重建关联各个 Lease 的 key 集合列表。
+
+### 如何优化 Lease 续期性能
+
+* 通过以上流程，完成了 Lease 创建和数据关联操作。**在正常情况下，节点存活时，需要定期发送 KeepAlive 请求给 etcd 续期健康状态的 Lease，否则 Lease 和关联的数据就会被删除**。
+
+* 那么 Lease 是如何续期的? 作为一个高频率的请求 API，etcd 如何优化 Lease 续期的性能呢？Lease 续期其实很简单，**核心是将 Lease 的过期时间更新为当前系统时间加其 TTL**。**关键问题在于续期的性能能否满足业务诉求**。然而影响续期性能因素又是源自多方面的。首先是 TTL，TTL 过长会导致节点异常后，无法及时从 etcd 中删除，影响服务可用性，而过短，则要求 client 频繁发送续期请求。其次是 Lease 数，如果 Lease 成千上万个，那么 etcd 可能无法支撑如此大规模的 Lease 数，导致高负载。**如何解决呢？**
+  + 首先回顾下早期 etcd v2 版本是如何实现 TTL 特性的。在早期 v2 版本中，没有 Lease 概念，TTL 属性是在 key 上面，为了保证 key 不删除，即便你的 TTL 相同，client 也需要为每个 TTL、key 创建一个 HTTP/1.x 连接，定时发送续期请求给 etcd server。很显然，v2 老版本这种设计，因不支持连接多路复用、相同 TTL 无法复用导致性能较差，无法支撑较大规模的 Lease 场景。
+  + etcd v3 版本为了解决以上问题，提出了 Lease 特性，TTL 属性转移到了 Lease 上， 同时协议从 HTTP/1.x 优化成 gRPC 协议。**一方面不同 key 若 TTL 相同，可复用同一个 Lease，显著减少了 Lease 数**。**另一方面，通过 gRPC HTTP/2 实现了多路复用，流式传输，同一连接可支持为多个 Lease 续期，大大减少了连接数**。通过以上两个优化，实现 Lease 性能大幅提升，满足了各个业务场景诉求。
+
+### 如何高效淘汰过期 Lease
+
+* 在了解完节点正常情况下的 Lease 续期特性后，再看看节点异常时，未正常续期后，etcd 又是如何淘汰过期 Lease、删除节点健康指标 key 的。
+
+* 淘汰过期 Lease 的工作由 Lessor 模块的一个异步 goroutine 负责。如下面架构图虚线框所示，它会定时从最小堆中取出已过期的 Lease，执行删除 Lease 和其关联的 key 列表数据的 `RevokeExpiredLease` 任务。
+
+![etcd32](/assets/images/202501/etcd32.png)
+
+* 从图中可以看到，**目前 etcd 是基于最小堆来管理 Lease，实现快速淘汰过期的 Lease**。
+  + etcd 早期的时候，淘汰 Lease 非常暴力。etcd 会直接遍历所有 Lease，逐个检查 Lease 是否过期，过期则从 Lease 关联的 key 集合中，取出 key 列表，删除它们，时间复杂度是 `O(N)`。然而这种方案随着 Lease 数增大，毫无疑问它的性能会变得越来越差。**我们能否按过期时间排序呢？这样每次只需轮询、检查排在前面的 Lease 过期时间，一旦轮询到未过期的 Lease， 则可结束本轮检查**。
+  + 刚刚说的就是 **etcd Lease 高效淘汰方案最小堆的实现方法**。每次新增 Lease、续期的时候，它会插入、更新一个对象到最小堆中，对象含有 LeaseID 和其到期时间 unixnano，对象之间按到期时间升序排序。etcd Lessor 主循环每隔 `500ms` 执行一次撤销 Lease 检查（RevokeExpiredLease），每次轮询堆顶的元素，若已过期则加入到待淘汰列表，直到堆顶的 Lease 过期时间大于当前，则结束本轮轮询。
+  + 相比早期 `O(N)` 的遍历时间复杂度，使用堆后，插入、更新、删除，它的时间复杂度是 `O(LogN)`，查询堆顶对象是否过期时间复杂度仅为 `O(1)`，性能大大提升，可支撑大规模场景下 Lease 的高效淘汰。
+
+* 获取到待过期的 LeaseID 后，Leader 是如何通知其他 Follower 节点淘汰它们呢？
+  + Lessor 模块会将已确认过期的 LeaseID，保存在一个名为 expiredC 的 channel 中，而 etcd server 的主循环会定期从 channel 中获取 LeaseID，发起 revoke 请求，通过 Raft Log 传递给 Follower 节点。
+  + 各个节点收到 revoke Lease 请求后，获取关联到此 Lease 上的 key 列表，从 boltdb 中删除 key，从 Lessor 的 Lease map 内存中删除此 Lease 对象，最后还需要从 boltdb 的 Lease bucket 中删除这个 Lease。
+
+* 以上就是 Lease 的过期自动淘汰逻辑。Leader 节点按过期时间维护了一个最小堆，若你的节点异常未正常续期，那么随着时间消逝，对应的 Lease 则会过期，Lessor 主循环定时轮询过期的 Lease。获取到 ID 后，Leader 发起 revoke 操作，通知整个集群删除 Lease 和关联的数据。
+
+### 为什么需要 checkpoint 机制
+
+* 了解完 Lease 的创建、续期、自动淘汰机制后，你可能已经发现，检查 Lease 是否过期、维护最小堆、针对过期的 Lease 发起 revoke 操作，**都是 Leader 节点负责的**，它类似于 Lease 的仲裁者，通过以上清晰的权责划分，降低了 Lease 特性的实现复杂度。
+
+* 那么当 Leader 因重启、crash、磁盘 IO 等异常不可用时，Follower 节点就会发起 Leader 选举，**新 Leader 要完成以上职责，必须重建 Lease 过期最小堆等管理数据结构，那么以上重建可能会触发什么问题呢？**
+
+* 当集群发生 Leader 切换后，新的 Leader 基于 Lease map 信息，按 Lease 过期时间构建一个最小堆时，etcd 早期版本为了优化性能，并未持久化存储 Lease 剩余 TTL 信息，因此重建的时候就会自动给所有 Lease 自动续期了。然而若较频繁出现 Leader 切换，切换时间小于 Lease 的 TTL，这会导致 Lease 永远无法删除，大量 key 堆积，db 大小超过配额等异常。**为了解决这个问题，etcd 引入了检查点机制，也就是下面架构图中黑色虚线框所示的 `CheckPointScheduledLeases` 的任务**。
+
+![etcd33](/assets/images/202501/etcd33.png)
+
+* 一方面，etcd 启动的时候，Leader 节点后台会运行此**异步任务**，定期批量地将 Lease 剩余的 TTL 基于 Raft Log 同步给 Follower 节点，Follower 节点收到 CheckPoint 请求后，更新内存数据结构 LeaseMap 的剩余 TTL 信息。(**即，Leader 节点定时批量同步 TTL 信息给 Follower 节点**)
+
+* 另一方面，当 Leader 节点收到 **KeepAlive 请求**的时候，它也会通过 checkpoint 机制把此 Lease 的剩余 TTL 重置，并同步给 Follower 节点，尽量确保续期后集群各个节点的 Lease 剩余 TTL 一致性。（**即，通过 KeepAlive 消息同步 TTL 信息**）
+
+
+### Q&A
+
+#### etcd lease 最小的 TTL 时间是多少？它跟什么因素有关？
+
+TODO
+
+
+#### 对于 Lease 操作，请求是否必须由 Leader 接收处理。这种写请求路由是通过 client3 客户端直接发到 Leader 还是通过可以通过 Follower 转发？
+
+非常好的问题，从原理上我们知道 Lease 是 Leader 在内存中维护过期最小堆的，因此续期操作 client 是必须要直接发送给 Leader 的，如果 Follower 节点收到了 KeepAlive 请求，会转发给 Leader 节点。续期操作不经过 Raft 协议处理同步，而 leaseGrant/Revoke 请求会经过 Raft 协议同步给各个节点，因此任意节点都可以处理它。
+
+
+## MVCC (Multiversion concurrency control)：如何实现多版本并发控制
+
+* etcd v2 版本存在若干局限，如仅保留最新版本 key-value 数据、丢弃历史版本。而 etcd 核心特性 watch 又依赖历史版本，**因此 etcd v2 为了缓解这个问题，会在内存中维护一个较短的全局事件滑动窗口，保留最近的 1000 条变更事件。但是在集群写请求较多等场景下，它依然无法提供可靠的 Watch 机制**。那么不可靠的 etcd v2 事件机制，在 etcd v3 中是如何解决的呢？MVCC（Multiversion concurrency control）机制，正是为解决这个问题而诞生的。
+
+* MVCC 机制的**核心思想**是**保存一个 key-value 数据的多个历史版本，etcd 基于它不仅实现了可靠的 Watch 机制，避免了 client 频繁发起 List Pod 等 expensive request 操作，保障 etcd 集群稳定性。而且 MVCC 还能以较低的并发控制开销，实现各类隔离级别的事务，保障事务的安全性，是事务特性的基础**。
+
+### 什么是 MVCC
+
+* 它是一个基于多版本技术实现的一种并发控制机制。那常见的并发机制有哪些？MVCC 的优点在哪里呢？
+
+* 提到并发控制机制你可能就没那么陌生了，比如数据库中的**悲观锁**，也就是通过锁机制确保同一时刻只能有一个事务对数据进行修改操作，常见的实现方案有读写锁、互斥锁、两阶段锁等。**悲观锁**是一种事先预防机制，**它悲观地认为多个并发事务可能会发生冲突，因此它要求事务必须先获得锁，才能进行修改数据操作。但是悲观锁粒度过大、高并发场景下大量事务会阻塞等，会导致服务性能较差**。
+
+* MVCC 机制正是基于多版本技术实现的一种**乐观锁**机制，**它乐观地认为数据不会发生冲突，但是当事务提交时，具备检测数据是否冲突的能力**。
+
+* 在 MVCC 数据库中，**更新一个 key-value 数据的时候，它并不会直接覆盖原数据，而是新增一个版本来存储新的数据，每个数据都有一个版本号。版本号它是一个逻辑时间**，为了方便深入理解版本号意义，在下面画了一个 etcd MVCC 版本号时间序列图。从图中可以看到，随着时间增长，**每次修改操作，版本号都会递增。每修改一次，生成一条新的数据记录**。**当指定版本号读取数据时，它实际上访问的是版本号生成那个时间点的快照数据。当删除数据的时候，它实际也是新增一条带删除标识的数据记录**。
+
+![etcd34](/assets/images/202501/etcd34.png)
+
+
+### MVCC 特性初体验
+
+* 过几个简单命令，初体验下 MVCC 特性，看看它是如何帮助你查询历史修改记录，以及找回不小心删除的 key 的。
+
+* 启动一个空集群，更新两次 key hello 后，如何获取 key hello 的上一个版本值呢？ 删除 key hello 后，还能读到历史版本吗?
+
+* 如下面的命令所示，第一次 key hello 更新完后，通过 get 命令获取下它的 key-value 详细信息。正如所看到的，除了 key、value 信息，还有各类版本号。这里重点关注 `mod_revision`，它**表示 key 最后一次修改时的 etcd 版本号**。当再次更新 key hello 为 world2 后，然后通过查询时指定 key 第一次更新后的版本号，会发现查询到了第一次更新的值，甚至执行删除 key hello 后，依然可以获得到这个值。那么 etcd 是如何实现的呢?
+
+``` bash
+# 更新 key hello 为 world1
+$ etcdctl put hello world1
+OK
+# 通过指定输出模式为 json，查看 key hello 更新后的详细信息
+$ etcdctl get hello -w=json
+{
+    "kvs":[
+        {
+            "key":"aGVsbG8=",
+            "create_revision":2,
+            "mod_revision":2,
+            "version":1,
+            "value":"d29ybGQx"
+        }
+    ],
+    "count":1
+}
+# 再次修改 key hello 为 world2
+$ etcdctl put hello world2
+OK
+# 确认修改成功，最新值为 wolrd2
+$ etcdctl get hello
+hello
+world2
+# 指定查询版本号，获得了 hello 上一次修改的值
+$ etcdctl get hello --rev=2
+hello
+world1
+# 删除 key hello
+$ etcdctl del  hello
+1
+# 删除后指定查询版本号 3 获得了 hello 删除前的值
+$ etcdctl get hello --rev=3
+hello
+world2
+```
+
+### 整体架构
+
+* 在详细介绍 etcd 如何实现 MVCC 特性前，先从整体上介绍下 MVCC 模块。下图是 MVCC 模块的一个整体架构图，整个 MVCC 特性由 treeIndex、Backend/boltdb 组成。当执行 MVCC 特性初体验中的 put 命令后，请求经过 gRPC KV Server、Raft 模块流转，对应的日志条目被提交后，Apply 模块开始执行此日志内容。
+
+![etcd35](/assets/images/202501/etcd35.png)
+
+* Apply 模块通过 MVCC 模块来执行 put 请求，持久化 key-value 数据。MVCC 模块将请求请划分成两个类别，分别是**读事务**（ReadTxn）和**写事务**（WriteTxn）。
+  + **读事务**负责处理 range 请求
+  + **写事务**负责 put/delete 操作
+  + **读写事务**基于 treeIndex、Backend/boltdb 提供的能力，实现对 key-value 的增删改查功能。
+
+* `treeIndex` 模块基于**内存版 B-tree 实现了 key 索引管理**，它保存了**用户 key 与版本号（revision）的映射关系等信息**。
+
+* Backend 模块负责 etcd 的 key-value 持久化存储，主要由 ReadTx、BatchTx、Buffer 组成，ReadTx 定义了抽象的读事务接口，BatchTx 在 ReadTx 之上定义了抽象的写事务接口，Buffer 是数据缓存区。
+
+* **etcd 设计上支持多种 Backend 实现**，目前实现的 Backend 是 `boltdb`。**boltdb 是一个基于 B+ tree 实现的、支持事务的 key-value 嵌入式数据库**。
+
+* **treeIndex 与 boltdb 关系可参考下图**。当发起一个 get hello 命令时，从 treeIndex 中获取 key 的版本号，然后再通过这个版本号，从 boltdb 获取 value 信息。boltdb 的 value 是包含用户 key-value、各种版本号、lease 信息的结构体。
+
+![etcd36](/assets/images/202501/etcd36.png)
+
+### treeIndex 原理
+
+* 为什么需要 treeIndex 模块呢？对于 etcd v2 来说，当通过 etcdctl 发起一个 put hello 操作时，etcd v2 直接更新内存树，这就导致历史版本直接被覆盖，无法支持保存 key 的历史版本。在 etcd v3 中引入 treeIndex 模块正是为了解决这个问题，支持保存 key 的历史版本，提供稳定的 Watch 机制和事务隔离等能力。
+
+* 那 etcd v3 又是如何基于 treeIndex 模块，实现保存 key 的历史版本的呢？etcd 在每次修改 key 时会生成一个全局递增的版本号（revision），然后通过数据结构 B-tree 保存用户 key 与版本号之间的关系，再以版本号作为 boltdb key，以用户的 key-value 等信息作为 boltdb value，保存到 boltdb。
+
+* etcd 保存用户 key 与版本号映射关系的数据结构 **B-tree**，为什么 etcd 使用它而不使用**哈希表**、**平衡二叉树 (AVL 树)**？从 etcd 的功能特性上分析，因 etcd 支持范围查询，因此保存索引的数据结构也必须支持范围查询才行。所以哈希表不适合，而 **B-tree 支持范围查询**。从性能上分析，平横二叉树每个节点只能容纳一个数据、导致树的高度较高，而 **B-tree 每个节点可以容纳多个数据，树的高度更低，更扁平，涉及的查找次数更少，具有优越的增、删、改、查性能**。Google 的开源项目 btree，使用 Go 语言实现了一个内存版的 B-tree，对外提供了简单易用的接口。etcd 正是基于 btree 库实现了一个名为 treeIndex 的索引模块，通过它来查询、保存用户 key 与版本号之间的关系。
+
+* 下图是个最大度（degree > 1，简称 d）为 5 的 B-tree，**度是 B-tree 中的一个核心参数，它决定了每个节点上的数据量多少**、节点的“胖”、“瘦”程度。从图中可以看到，节点越胖，意味着一个节点可以存储更多数据，树的高度越低。在一个度为 d 的 B-tree 中，节点保存的最大 key 数为 2d - 1，否则需要进行平衡、分裂操作。这里注意的是在 etcd treeIndex 模块中，创建的是最大度 32 的 B-tree，也就是一个叶子节点最多可以保存 63 个 key。
+
+
+![etcd38](/assets/images/202501/etcd38.png)
+
+
+* 从图中可以看到，通过 put/txn 命令写入的一系列 key，treeIndex 模块基于 B-tree 将其组织起来，节点之间基于用户 key 比较大小。当查找一个 key k95 时，通过 B-tree 的特性，仅需通过图中流程 1 和 2 两次快速比较，就可快速找到 k95 所在的节点。
+
+* 在 treeIndex 中，每个节点的 key 是一个 keyIndex 结构，etcd 就是通过它保存了用户的 key 与版本号的映射关系。那么 keyIndex 结构包含哪些信息呢？下面是字段说明。
+
+``` golang
+type keyIndex struct {
+   key         []byte          // 用户的 key 名称，比如示例中的 "hello"
+   modified    revision        // 最后一次修改 key 时的 etcd 版本号，比如示例中的刚写入 hello 为 world1 时的版本号为 2
+   generations []generation    // generation 保存了一个 key 若干代版本号信息，每代中包含对 key 的多次修改的版本号列表
+}
+```
+
+* keyIndex 中包含用户的 key、最后一次修改 key 时的 etcd 版本号、key 的若干代（generation）版本号信息，每代中包含对 key 的多次修改的版本号列表。那要如何理解 generations？为什么它是个数组呢？generations 表示一个 key 从创建到删除的过程，每代对应 key 的一个生命周期的开始与结束。当第一次创建一个 key 时，会生成第 0 代，后续的修改操作都是在往第 0 代中追加修改版本号。当把 key 删除后，它就会生成新的第 1 代，一个 key 不断经历创建、删除的过程，它就会生成多个代。generation 结构详细信息如下：generation 结构中包含此 key 的修改次数、generation 创建时的版本号、对此 key 的修改版本号记录列表。
+
+``` golang
+type generation struct {
+   ver     int64            // 表示此 key 的修改次数
+   created revision         // 表示 generation 结构创建时的版本号
+   revs    []revision       // 每次修改 key 时的 revision 追加到此数组
+}
+```
+
+* 需要注意的是版本号（revision）并不是一个简单的整数，而是一个结构体。revision 结构及含义如下：revision 包含 main 和 sub 两个字段，main 是全局递增的版本号，它是个 etcd 逻辑时钟，随着 put/txn/delete 等事务递增。sub 是一个事务内的子版本号，从 0 开始随事务内的 put/delete 操作递增。
+
+> 解释：通过引入事务的子版本号 sub，实现了同一事务的操作可见，不同事务的操作不可见，满足了不同事务间的隔离性。
+
+``` golang
+type revision struct {
+   main int64    // 一个全局递增的主版本号，随 put/txn/delete 事务递增，一个事务内的 key main 版本号是一致的
+   sub int64     // 一个事务内的子版本号，从 0 开始随事务内 put/delete 操作递增
+}
+```
+
+* 比如启动一个空集群，全局版本号默认为 1，执行下面的 txn 事务，它包含两次 put、一次 get 操作，那么按照上面介绍的原理，全局版本号随读写事务自增，因此是 main 为 2，sub 随事务内的 put/delete 操作递增，因此 key hello 的 revison 为 {2,0}，key world 的 revision 为 {2,1}。
+
+> 解释：初始 main 为 1 事务 main++ 为 2 操作 put hello，使用初始事务内子版本号，sub 为 0 操作 get hello，读操作不影响事务内子版本号。操作 put world，sub++，事务内子版本号增加，sub 为 1
+
+```
+$ etcdctl txn -i
+compares:
+
+
+success requests (get，put，del):
+put hello 1
+get hello
+put world 2
+```
+
+* 介绍完 treeIndex 基本原理、核心数据结构后，再看看在 MVCC 特性初体验中的更新、查询、删除 key 案例里，treeIndex 与 boltdb 是如何协作，完成以上 key-value 操作的?
+
+### MVCC 更新 key 原理
+
+* 当通过 etcdctl 发起一个 put hello 操作时，如下面的 put 事务流程图流程一所示，在 put 写事务中，首先它需要从 treeIndex 模块中查询 key 的 keyIndex 索引信息，keyIndex 中存储了 key 的创建版本号、修改的次数等信息，这些信息在事务中发挥着重要作用，因此会存储在 boltdb 的 value 中。
+
+* 在示例中，因为是第一次创建 hello key，此时 keyIndex 索引为空。其次 etcd 会根据当前的全局版本号（空集群启动时默认为 1）自增，生成 put hello 操作对应的版本号 revision {2,0}，这就是 boltdb 的 key。boltdb 的 value 是 mvccpb.KeyValue 结构体，它是由用户 key、value、create_revision、mod_revision、version、lease 组成。它们的含义分别如下：
+  + `create_revision` **表示此 key 创建时的版本号**。在我们的示例中，key hello 是第一次创建，那么值就是 2。当再次修改 key hello 的时候，写事务会从 treeIndex 模块查询 hello 第一次创建的版本号，也就是 keyIndex.generations[i].created 字段，赋值给 create_revision 字段
+  + `mod_revision` **表示 key 最后一次修改时的版本号**，即 put 操作发生时的全局版本号加 1；
+  + `version` **表示此 key 的修改次数**。每次修改的时候，写事务会从 treeIndex 模块查询 hello 已经历过的修改次数，也就是 keyIndex.generations[i].ver 字段，将 ver 字段值加 1 后，赋值给 version 字段。
+
+
+![etcd39](/assets/images/202501/etcd39.png)
+
+
+* 填充好 boltdb 的 KeyValue 结构体后，这时就可以通过 Backend 的写事务 batchTx 接口将 key{2,0}，value 为 mvccpb.KeyValue 保存到 boltdb 的缓存中，并同步更新 buffer，如上图中的流程2所示。此时存储到 boltdb 中的 key、value 数据如下：
+
+![etcd40](/assets/images/202501/etcd40.png)
+
+* 然后 put 事务需将本次修改的版本号与用户 key 的映射关系保存到 treeIndex 模块中，也就是上图中的流程3。因为 key hello 是首次创建，treeIndex 模块它会生成 key hello 对应的 keyIndex 对象，并填充相关数据结构。keyIndex 填充后的结果如下所示：
+
+```
+key hello 的 keyIndex:
+
+key:         "hello"
+modified:    <2,0>
+generations: [ { ver:1, created:<2,0>, revisions:[ <2,0> ] } ]
+```
+
+1. key 为 hello，modified 为最后一次修改版本号 <2,0>，key hello 是首次创建的，因此新增一个 generation 代跟踪它的生命周期、修改记录
+2. generation 的 ver 表示修改次数，首次创建为 1，后续随着修改操作递增
+3. generation.created 表示创建 generation 时的版本号为 <2,0>
+4. revision 数组保存对此 key 修改的版本号列表，每次修改都会将将相应的版本号追加到 revisions 数组中
+
+* 通过以上流程，一个 put 操作终于完成。但是此时数据还并未持久化，为了提升 etcd 的写吞吐量、性能，一般情况下（默认堆积的写事务数大于 1 万才在写事务结束时同步持久化），数据持久化由 Backend 的异步 goroutine 完成，**它通过事务批量提交，定时将 boltdb 页缓存中的脏数据提交到持久化存储磁盘中**，也就是下图中的黑色虚线框住的流程4。
+
+> 解释：etcd 提供了如下两个参数可以控制事务提交的行为。--backend-batch-interval 和 --backend-batch-limit。在 etcd v3.4.9 中，--backend-batch-interval 如果你没指定，默认是 100ms，对应的异步 goroutine 将批量每隔 100ms 将 boltdb 事务进行提交。--backend-batch-limit 默认是 10000，当堆积的 put/del 等操作若超过 10000 个，则会同步触发 boltdb 事务提交。
+
+![etcd41](/assets/images/202501/etcd41.png)
+
+### MVCC 查询 key 原理
+
+* 完成 put hello 为 world1 操作后，这时通过 etcdctl 发起一个 get hello 操作，MVCC 模块首先会创建一个读事务对象（TxnRead），在 etcd 3.4 中 Backend 实现了 ConcurrentReadTx，也就是并发读特性。
+
+* 并发读特性的核心原理是，创建读事务对象时，它会全量拷贝当前写事务未提交的 buffer 数据，并发的读写事务不再阻塞在一个 buffer 资源锁上，实现了全并发读。
+
+![etcd42](/assets/images/202501/etcd42.png)
+
+* 如上图所示，在读事务中，它首先需要根据 key 从 treeIndex 模块获取版本号，因我们未带版本号读，默认是读取最新的数据。treeIndex 模块从 B-tree 中，根据 key 查找到 keyIndex 对象后，匹配有效的 generation，返回 generation 的 revisions 数组中最后一个版本号 {2,0} 给读事务对象。
+
+* 读事务对象根据此版本号为 key，通过 Backend 的并发读事务（ConcurrentReadTx）接口，优先从 buffer 中查询，命中则直接返回，否则从 boltdb 中查询此 key 的 value 信息。
+
+* 那指定版本号读取历史记录又是怎么实现的呢？当你再次发起一个 put hello 为 world2 修改操作时，key hello 对应的 keyIndex 的结果如下面所示，keyIndex.modified 字段更新为 <3,0>，generation 的 revision 数组追加最新的版本号 <3,0>，ver 修改为 2。
+
+```
+key hello 的 keyIndex:
+
+key:            "hello"
+modified:       <3,0>
+generations:    [ { ver:2, created:<2,0>, revisions:[ <2,0>, <3,0> ] } ]
+```
+
+* boltdb 插入一个新的 key revision {3,0}，此时存储到 boltdb 中的 key-value 数据如下：
+
+![etcd43](/assets/images/202501/etcd43.png)
+
+* 这时你再发起一个指定历史版本号为 2 的读请求时，实际是读版本号为 2 的时间点的快照数据。treeIndex 模块会遍历 generation 内的历史版本号，返回小于等于 2 的最大历史版本号，在这个示例中，也就是 revision{2,0}，以它作为 boltdb 的 key，从 boltdb 中查询出 value 即可。
+
+
+### MVCC 删除 key 原理
+
+* 介绍完 MVCC 更新、查询 key 的原理后，我们接着往下看。当你执行 etcdctl del hello 命令时，etcd 会立刻从 treeIndex 和 boltdb 中删除此数据吗？还是增加一个标记实现延迟删除（lazy delete）呢？答案为 **etcd 实现的是延期删除模式**，原理与 key 更新类似。
+
+* 与更新 key 不一样之处在于，一方面，生成的 boltdb key 版本号 {4,0,t} 追加了删除标识（`tombstone`, 简写 `t`），boltdb value 变成只含用户 key 的 KeyValue 结构体。另一方面 treeIndex 模块也会给此 key hello 对应的 keyIndex 对象，追加一个空的 generation 对象，表示此索引对应的 key 被删除了。
+
+* 当再次查询 hello 的时候，treeIndex 模块根据 key hello 查找到 keyindex 对象后，若发现其存在空的 generation 对象，并且查询的版本号大于等于被删除时的版本号，则会返回空。
+
+* etcdctl hello 操作后的 keyIndex 的结果如下面所示：
+
+```
+key hello 的 keyIndex:
+
+key:            "hello"
+modified:       <4,0>
+generations:
+[
+{ver:3,created:<2,0>,revisions: [<2,0>,<3,0>,<4,0>(t)]}，{empty}
+]
+```
+
+* boltdb 此时会插入一个新的 key revision{4,0,t}，此时存储到 boltdb 中的 key-value 数据如下：
+
+![etcd44](/assets/images/202501/etcd44.png)
+
+* 那么 key 打上删除标记后有哪些用途呢？什么时候会真正删除它呢？
+  + 一方面删除 key 时会生成 events，Watch 模块根据 key 的删除标识，会生成对应的 Delete 事件。
+  + 另一方面，当重启 etcd，遍历 boltdb 中的 key 构建 treeIndex 内存树时，需要知道哪些 key 是已经被删除的，并为对应的 key 索引生成 tombstone 标识。而真正删除 treeIndex 中的索引对象、boltdb 中的 key 是通过压缩 (compactor) 组件异步完成。
+
+* **正因为 etcd 的删除 key 操作是基于以上延期删除原理实现的，因此只要压缩组件未回收历史版本，我们就能从 etcd 中找回误删的数据**。
+
+### Q&A
+
+#### 你认为 etcd 为什么删除使用 lazy delete 方式呢？ 相比同步 delete, 各有什么优缺点？当你突然删除大量 key 后，db 大小是立刻增加还是减少呢？
+
+1. 为了保证 key 对应的 watcher 能够获取到 key 的所有状态信息，留给 watcher 时间做相应的处理
+2. 实时从 boltdb 删除 key，会可能触发树的不平衡，影响其他读写请求的性能
+
+
+
+## Watch：如何高效获取数据变化通知
+
+* 在 Kubernetes 中，各种各样的控制器实现了 Deployment、StatefulSet、Job 等功能强大的 Workload。**控制器的核心思想是监听、比较资源实际状态与期望状态是否一致，若不一致则进行协调工作，使其最终一致**。那么当你修改一个 Deployment 的镜像时，Deployment 控制器是如何高效的感知到期望状态发生了变化呢？要回答这个问题，得从 etcd 的 **Watch 特性**说起，它是 Kubernetes 控制器的工作基础。
+
+
+### Watch 特性初体验
+
+* 启动一个空集群，更新两次 key hello 后，使用 Watch 特性如何获取 key hello 的历史修改记录呢？可以通过下面的 watch 命令，带版本号监听 key hello，集群版本号可通过 endpoint status 命令获取，空集群启动后的版本号为 1。
+
+* 执行后输出如下代码所示，两个事件记录分别对应上面的两次的修改，事件中含有 key、value、各类版本号等信息，你还可以通过比较 create_revision 和 mod_revision 区分此事件是 add 还是 update 事件。watch 命令执行后，你后续执行的增量 put hello 修改操作，它同样可持续输出最新的变更事件给你。
+
+```
+$ etcdctl put hello world1
+$ etcdctl put hello world2
+$ etcdctl watch hello -w=json --rev=1
+{
+    "Events":[
+        {
+            "kv":{
+                "key":"aGVsbG8=",
+                "create_revision":2,
+                "mod_revision":2,
+                "version":1,
+                "value":"d29ybGQx"
+            }
+        },
+        {
+            "kv":{
+                "key":"aGVsbG8=",
+                "create_revision":2,
+                "mod_revision":3,
+                "version":2,
+                "value":"d29ybGQy"
+            }
+        }
+    ],
+    "CompactRevision":0,
+    "Canceled":false,
+    "Created":false
+}
+```
+
+* 从以上初体验中，你可以看到，基于 Watch 特性，可以快速获取到感兴趣的数据变化事件，这也是 Kubernetes 控制器工作的核心基础。在这过程中，其实有以下四大核心问题：
+  + client 获取事件的机制，etcd 是使用轮询模式还是推送模式呢？两者各有什么优缺点？
+  + 事件是如何存储的？ 会保留多久？watch 命令中的版本号具有什么作用？
+  + 当 client 和 server 端出现短暂网络波动等异常因素后，导致事件堆积时，server 端会丢弃事件吗？若你监听的历史版本号 server 端不存在了，你的代码该如何处理？
+  + 如果你创建了上万个 watcher 监听 key 变化，当 server 端收到一个写请求后，etcd 是如何根据变化的 key 快速找到监听它的 watcher 呢？
+
+
+
+### 轮询 vs 流式推送
+
+* 首先第一个问题是 client 获取事件机制，etcd 是使用轮询模式还是推送模式呢？两者各有什么优缺点？答案是两种机制 etcd 都使用过。
+  + 在 etcd v2 Watch 机制实现中，使用的是 HTTP/1.x 协议，实现简单、兼容性好，每个 watcher 对应一个 TCP 连接。client 通过 HTTP/1.1 协议长连接定时轮询 server，获取最新的数据变化事件。然而当你的 watcher 成千上万的时，即使集群空负载，大量轮询也会产生一定的 QPS，server 端会消耗大量的 socket、内存等资源，导致 etcd 的扩展性、稳定性无法满足 Kubernetes 等业务场景诉求。
+  + etcd v3 的 Watch 机制的设计实现并非凭空出现，它正是吸取了 etcd v2 的经验、教训而重构诞生的。在 etcd v3 中，为了解决 etcd v2 的以上缺陷，使用的是基于 HTTP/2 的 gRPC 协议，双向流的 Watch API 设计，实现了连接多路复用。
+
+* etcd 基于 HTTP/2 协议的多路复用等机制，实现了一个 client/TCP 连接支持多 gRPC Stream， 一个 gRPC Stream 又支持多个 watcher，如下图所示。同时事件通知模式也从 client 轮询优化成 server 流式推送，极大降低了 server 端 socket、内存等资源。
+
+![etcd45](/assets/images/202501/etcd45.png)
+
+* 在 clientv3 库中，Watch 特性被抽象成 Watch、Close、RequestProgress 三个简单 API 提供给开发者使用，屏蔽了 client 与 gRPC WatchServer 交互的复杂细节，实现了一个 client 支持多个 gRPC Stream，一个 gRPC Stream 支持多个 watcher，显著降低了开发复杂度。
+
+* 同时当 watch 连接的节点故障，clientv3 库支持自动重连到健康节点，并使用之前已接收的最大版本号创建新的 watcher，避免旧事件回放等。
+
+
+### 滑动窗口 vs MVCC
+
+* 再看第二个问题，事件是如何存储的？会保留多久呢？watch 命令中的版本号具有什么作用？
+
+* 第二个问题的本质是历史版本存储，etcd 经历了从滑动窗口到 MVCC 机制的演变，滑动窗口是仅保存有限的最近历史版本到内存中，而 MVCC 机制则将历史版本保存在磁盘中，避免了历史版本的丢失，极大的提升了 Watch 机制的可靠性。
+
+* etcd v2 滑动窗口是如何实现的？它有什么缺点呢？它使用的是如下一个简单的环形数组来存储历史事件版本，当 key 被修改后，相关事件就会被添加到数组中来。若超过 eventQueue 的容量，则淘汰最旧的事件。在 etcd v2 中，eventQueue 的容量是固定的 1000，因此它最多只会保存 1000 条事件记录，不会占用大量 etcd 内存导致 etcd OOM。但是它的缺陷显而易见的，固定的事件窗口只能保存有限的历史事件版本，是不可靠的。当写请求较多的时候、client 与 server 网络出现波动等异常时，很容易导致事件丢失，client 不得不触发大量的 expensive 查询操作，以获取最新的数据及版本号，才能持续监听数据。特别是对于重度依赖 Watch 机制的 Kubernetes 来说，显然是无法接受的。因为这会导致控制器等组件频繁的发起 expensive List Pod 等资源操作，导致 APIServer/etcd 出现高负载、OOM 等，对稳定性造成极大的伤害。
+
+``` golang
+type EventHistory struct {
+   Queue      eventQueue
+   StartIndex uint64
+   LastIndex  uint64
+   rwl        sync.RWMutex
+}
+```
+
+* etcd v3 的 MVCC 机制，就是为解决 etcd v2 Watch 机制不可靠而诞生。相比 etcd v2 直接保存事件到内存的环形数组中，etcd v3 则是将一个 key 的历史修改版本保存在 boltdb 里面。boltdb 是一个基于磁盘文件的持久化存储，因此它重启后历史事件不像 etcd v2 一样会丢失，同时可通过配置压缩策略，来控制保存的历史版本数。
+
+* 最后 watch 命令中的版本号具有什么作用呢？版本号是 etcd 逻辑时钟，当 client 因网络等异常出现连接闪断后，通过版本号，它就可从 server 端的 boltdb 中获取错过的历史事件，**而无需全量同步，它是 etcd Watch 机制数据增量同步的核心**。
+
+### 可靠的事件推送机制
+
+* 当 client 和 server 端出现短暂网络波动等异常因素后，导致事件堆积时，server 端会丢弃事件吗？若你监听的历史版本号 server 端不存在了，你的代码该如何处理？**这个问题的本质是可靠事件推送机制**，要搞懂它，我们就得弄懂 etcd Watch 特性的整体架构、核心流程，下图是 **Watch 特性整体架构图**。
+
+![etcd46](/assets/images/202501/etcd46.png)
+
+1. 当通过 etcdctl 或 API 发起一个 watch key 请求的时候，etcd 的 gRPCWatchServer 收到 watch 请求后，会创建一个 serverWatchStream, 它负责接收 client 的 gRPC Stream 的 create/cancel watcher 请求 (recvLoop goroutine)，并将从 MVCC 模块接收的 Watch 事件转发给 client(sendLoop goroutine)。
+2. 当 serverWatchStream 收到 create watcher 请求后，serverWatchStream 会调用 MVCC 模块的 WatchStream 子模块分配一个 watcher id，并将 watcher 注册到 MVCC 的 WatchableKV 模块。
+3. 在 etcd 启动的时候，WatchableKV 模块会运行 syncWatchersLoop 和 syncVictimsLoop goroutine，分别负责不同场景下的事件推送，它们也是 Watch 特性可靠性的核心之一。
+
+* 从架构图中可以看到 Watch 特性的核心实现是 **WatchableKV 模块**，下面看看 "etcdctl watch hello -w=json --rev=1" 命令在 WatchableKV 模块是如何处理的？面对各类异常，它如何实现可靠事件推送？
+
+* etcd 核心解决方案是复杂度管理，问题拆分。etcd 根据不同场景，对问题进行了分解，将 watcher 按场景分类，实现了轻重分离、低耦合。首先介绍下 synced watcher、unsynced watcher 它们各自的含义。
+  + **synced watcher**，顾名思义，表示此类 watcher 监听的数据都已经同步完毕，在等待新的变更。如果你创建的 watcher 未指定版本号 (默认 0)、或指定的版本号大于 etcd sever 当前最新的版本号 (currentRev)，那么它就会保存到 synced watcherGroup 中。watcherGroup 负责管理多个 watcher，能够根据 key 快速找到监听该 key 的一个或多个 watcher。
+  + **unsynced watcher**，表示此类 watcher 监听的数据还未同步完成，落后于当前最新数据变更，正在努力追赶。如果你创建的 watcher 指定版本号小于 etcd server 当前最新版本号，那么它就会保存到 unsynced watcherGroup 中。
+
+* 从以上介绍中，可以将可靠的事件推送机制拆分成**最新事件推送**、**异常场景重试**、**历史事件推送机制**三个子问题来进行分析。
+
+> Watch 特性的核心实现模块是 watchableStore，它通过将 watcher 划分为 synced/unsynced/victim 三类，将问题进行了分解，并通过多个后台异步循环 goroutine 负责不同场景下的事件推送，提供了各类异常等场景下的 Watch 事件重试机制，尽力确保变更事件不丢失、按逻辑时钟版本号顺序推送给 client。
+
+
+
+
+
+### 高效的事件匹配
+
+* 如果你创建了上万个 watcher 监听 key 变化，当 server 端收到一个写请求后，etcd 是如何根据变化的 key 快速找到监听它的 watcher 呢？一个个遍历 watcher 吗？显然一个个遍历 watcher 是最简单的方法，但是它的时间复杂度是 `O(N)`，在 watcher 数较多的场景下，会导致性能出现瓶颈。更何况 etcd 是在执行一个写事务结束时，同步触发事件通知流程的，若匹配 watcher 开销较大，将严重影响 etcd 性能。那使用什么数据结构来快速查找哪些 watcher 监听了一个事件中的 key 呢？
+
+* 也许你会说使用 map 记录下哪些 watcher 监听了什么 key 不就可以了吗？ etcd 的确使用 map 记录了监听单个 key 的 watcher，但是你要注意的是 Watch 特性不仅仅可以监听单 key，它还可以指定监听 key 范围、key 前缀，因此 etcd 还使用了如下的**区间树**。
+
+![etcd47](/assets/images/202501/etcd47.png)
+
+* 当收到创建 watcher 请求的时候，它会把 watcher 监听的 key 范围插入到上面的区间树中，区间的值保存了监听同样 key 范围的 watcher 集合 /watcherSet。
+
+* 当产生一个事件时，etcd 首先需要从 map 查找是否有 watcher 监听了单 key，其次它还需要从区间树找出与此 key 相交的所有区间，然后从区间的值获取监听的 watcher 集合。
+
+* **区间树**支持快速查找一个 key 是否在某个区间内，时间复杂度 `O(LogN)`，**因此 etcd 基于 map 和区间树实现了 watcher 与事件快速匹配，具备良好的扩展性**。
+
+
+## 事务：如何安全地实现多 key 操作
+
+* 在软件开发过程中，我们经常会遇到需要批量执行多个 key 操作的业务场景，比如转账案例中，Alice 给 Bob 转账 100 元，Alice 账号减少 100，Bob 账号增加 100，这涉及到多个 key 的原子更新。无论发生任何故障，我们应用层期望的结果是，要么两个操作一起成功，要么两个一起失败。我们无法容忍出现一个成功，一个失败的情况。那么 etcd 是如何解决多 key 原子更新问题呢？
+
+* **事务**，**它就是为了简化应用层的编程模型而诞生的**。将通过转账案例来剖析 etcd 事务实现，了解 etcd 如何实现事务 ACID 特性的，以及 MVCC 版本号在事务中的重要作用。
+
+
+### 事务特性初体验及 API
+
+* 如何使用 etcd 实现 Alice 向 Bob 转账功能呢？
+
+* 在 etcd v2 的时候， etcd 提供了 CAS（Compare and swap），**然而其只支持单 key，不支持多 key**，因此无法满足类似转账场景的需求。严格意义上说 CAS 称不上事务，无法实现事务的各个隔离级别。
+
+* etcd v3 为了解决多 key 的原子操作问题，提供了全新迷你事务 API，同时基于 MVCC 版本号，它可以实现各种隔离级别的事务。它的基本结构如下：
+
+```
+client.Txn(ctx).If(cmp1, cmp2, ...).Then(op1, op2, ...,).Else(op1, op2, …)
+```
+
+* 从上面结构中可以看到，事务 API 由 If 语句、Then 语句、Else 语句组成，这与平时常见的 MySQL 事务完全不一样。它的基本原理是，在 If 语句中，可以添加一系列的条件表达式，若条件表达式全部通过检查，则执行 Then 语句的 get/put/delete 等操作，否则执行 Else 的 get/put/delete 等操作。
+
+* 那么 If 语句支持哪些检查项呢？
+  + 首先是 key 的最近一次修改版本号 mod_revision，简称 mod。你可以通过它检查 key 最近一次被修改时的版本号是否符合你的预期。比如当你查询到 Alice 账号资金为 100 元时，它的 mod_revision 是 v1，当你发起转账操作时，你得确保 Alice 账号上的 100 元未被挪用，这就可以通过 mod(“Alice”) = “v1” 条件表达式来保障转账安全性。
+  + 其次是 key 的创建版本号 create_revision，简称 create。你可以通过它检查 key 是否已存在。比如在分布式锁场景里，只有分布式锁 key(lock) 不存在的时候，你才能发起 put 操作创建锁，这时你可以通过 create(“lock”) = "0"来判断，因为一个 key 不存在的话它的 create_revision 版本号就是 0。
+  + 接着是 key 的修改次数 version。你可以通过它检查 key 的修改次数是否符合预期。比如你期望 key 在修改次数小于 3 时，才能发起某些操作时，可以通过 version(“key”) < "3"来判断。
+  + 最后是 key 的 value 值。你可以通过检查 key 的 value 值是否符合预期，然后发起某些操作。比如期望 Alice 的账号资金为 200, value(“Alice”) = “200”。
+
+* If 语句通过以上 MVCC 版本号、value 值、各种比较运算符 (等于、大于、小于、不等于)，实现了灵活的比较的功能，满足你各类业务场景诉求。
+
+* 下面给出了一个使用 etcdctl 的 `txn` 事务命令，基于以上介绍的特性，初步实现的一个 Alice 向 Bob 转账 100 元的事务。Alice 和 Bob 初始账上资金分别都为 200 元，事务首先判断 Alice 账号资金是否为 200，若是则执行转账操作，不是则返回最新资金。etcd 是如何执行这个事务的呢？这个事务实现上有哪些问题呢？
+
+```
+$ etcdctl txn -i
+compares:                   // 对应 If 语句
+value("Alice") = "200"      // 判断 Alice 账号资金是否为 200
+
+
+success requests (get, put, del):              // 对应 Then 语句
+put Alice 100                                  // Alice 账号初始资金 200 减 100
+put Bob 300                                    // Bob 账号初始资金 200 加 100
+
+
+failure requests (get, put, del):   // 对应 Else 语句
+get Alice
+get Bob
+
+
+SUCCESS
+
+
+OK
+
+OK
+```
+
+![etcd48](/assets/images/202501/etcd48.png)
+
+* 上图是 etcd 事务的执行流程，当通过 client 发起一个 txn 转账事务操作时，通过 gRPC KV Server、Raft 模块处理后，在 Apply 模块执行此事务的时候，它首先对你的事务的 If 语句进行检查，也就是 ApplyCompares 操作，如果通过此操作，则执行 ApplyTxn/Then 语句，否则执行 ApplyTxn/Else 语句。
+
+* 在执行以上操作过程中，它会根据事务是否只读、可写，通过 MVCC 层的读写事务对象，执行事务中的 get/put/delete 各操作，也就是之前介绍的 MVCC 对 key 的读写原理。
+
+
+### 事务 ACID 特性
+
+> ACID 是衡量事务的四个特性，由原子性（Atomicity）、一致性（Consistency）、隔离性（Isolation）、持久性（Durability）组成。
+
+1. **原子性**，是指一个事务要么全部成功要么全部失败，etcd 基于 WAL 日志、consistent index、boltdb 的事务能力提供支持。
+2. **一致性**，是指事务转账前后的，数据库和应用程序期望的恒等状态应该保持不变，这通过数据库和业务应用程序相互协作完成。
+3. **持久性**，是指事务提交后，数据不丢失
+4. **隔离性**，是指事务提交过程中的可见性，etcd 不存在脏读，基于 MVCC 机制、boltdb 事务你可以实现可重复读、串行化快照隔离级别的事务，保障并发事务场景中你的数据安全性。
+
+
+
+## boltdb：如何持久化存储 key-value 数据
+
+* 通过一个写请求在 boltdb 中执行的简要流程，分析其背后的 boltdb 的磁盘文件布局，帮助了解 page、node、bucket 等核心数据结构的原理与作用，搞懂 boltdb 基于 B+ tree、各类 page 实现查找、更新、事务提交的原理，让你明白 etcd 为什么适合读多写少的场景。
+
+
+### boltdb 磁盘布局
+
+* boltdb 文件指的是你 etcd 数据目录下的 `member/snap/db` 的文件，etcd 的 key-value、lease、meta、member、cluster、auth 等所有数据存储在其中。etcd 启动的时候，会通过 mmap 机制将 db 文件映射到内存，后续可从内存中快速读取文件中的数据。写请求通过 fwrite 和 fdatasync 来写入、持久化数据到磁盘。
+
+![etcd49](/assets/images/202501/etcd49.png)
+
+
+* 上图是db 文件磁盘布局，从图中的左边部分可以看到，文件的内容由若干个 page 组成，一般情况下 page size 为 4KB。
+  + page 按照功能可分为元数据页 (meta page)、B+ tree 索引节点页 (branch page)、B+ tree 叶子节点页 (leaf page)、空闲页管理页 (freelist page)、空闲页 (free page)。
+  + 文件最开头的两个 page 是固定的 db 元数据 meta page，空闲页管理页记录了 db 中哪些页是空闲、可使用的。索引节点页保存了 B+ tree 的内部节点，如图中的右边部分所示，它们记录了 key 值，叶子节点页记录了 B+ tree 中的 key-value 和 bucket 数据。
+
+* boltdb 逻辑上通过 B+ tree 来管理 branch/leaf page， 实现快速查找、写入 key-value 数据。
+
+* boltdb 本身自带了一个工具 [bbolt](https://github.com/etcd-io/bbolt/tree/main/cmd/bbolt)，它可以按页打印出 db 文件的十六进制的内容。
+
+* 下图左边的十六进制是执行如下 bbolt dump 命令，所打印的 boltdb 第 0 页的数据，图的右边是对应的 page 磁盘页结构和 meta page 的数据结构。
+
+``` bash
+$ bbolt dump ./infra1.etcd/member/snap/db 0
+```
+
+![etcd50](/assets/images/202501/etcd50.png)
+
+> page 磁盘页结构
+
+* 如上图所示，它由页 ID(id)、页类型 (flags)、数量 (count)、溢出页数量 (overflow)、页面数据起始位置 (ptr) 字段组成。
+
+* 页类型目前有如下四种：0x01 表示 branch page，0x02 表示 leaf page，0x04 表示 meta page，0x10 表示 freelist page。
+
+* 数量字段仅在页类型为 leaf 和 branch 时生效，溢出页数量是指当前页面数据存放不下，需要向后再申请 overflow 个连续页面使用，页面数据起始位置指向 page 的载体数据，比如 meta page、branch/leaf 等 page 的内容。
+
+
+
+> meta page 数据结构
+
+* 第 0、1 页我们知道它是固定存储 db 元数据的页 (meta page)，那么 meta page 它为了管理整个 boltdb 含有哪些信息呢？
+
+* 如上图中的 meta page 数据结构所示，可以看到它由 boltdb 的文件标识 (magic)、版本号 (version)、页大小 (pagesize)、boltdb 的根 bucket 信息 (root bucket)、freelist 页面 ID(freelist)、总的页面数量 (pgid)、上一次写事务 ID(txid)、校验码 (checksum) 组成。
+
+> meta page 十六进制分析
+
+* 了解完 page 磁盘页结构和 meta page 数据结构后，再结合图左边的十六进数据简要分析下其含义。
+
+* 上图中十六进制输出的是 db 文件的 page 0 页结构，**左边第一列表示此行十六进制内容对应的文件起始地址，每行 16 个字节**。
+
+* 结合 page 磁盘页和 meta page 数据结构可知，第一行前 8 个字节描述 pgid(忽略第一列) 是 0。接下来 2 个字节描述的页类型， 其值为 0x04 表示 meta page， 说明此页的数据存储的是 meta page 内容，因此 ptr 开始的数据存储的是 meta page 内容。
+
+* 正如下图中所看到的，第二行首先含有一个 4 字节的 **magic number**(`0xED0CDAED`)，通过它来识别当前文件是否 boltdb，接下来是两个字节描述 boltdb 的版本号 `0x2`， 然后是四个字节的 page size 大小，`0x1000` 表示 4096 个字节，四个字节的 flags 为 0。
+
+* 第三行对应的就是 meta page 的 root bucket 结构（16 个字节），它描述了 boltdb 的 root bucket 信息，比如一个 db 中有哪些 bucket， bucket 里面的数据存储在哪里。
+
+* 第四行中前面的 8 个字节，0x3 表示 freelist 页面 ID，此页面记录了 db 当前哪些页面是空闲的。后面 8 个字节，0x6 表示当前 db 总的页面数。
+
+* 第五行前面的 8 个字节，0x1a 表示上一次的写事务 ID，后面的 8 个字节表示校验码，用于检测文件是否损坏。
+
+
+## 压缩：如何回收旧版本数据
+
+* 我们知道 etcd 中的每一次更新、删除 key 操作，treeIndex 的 keyIndex 索引中都会追加一个版本号，在 boltdb 中会生成一个新版本 boltdb key 和 value。也就是随着你不停更新、删除，你的 etcd 进程内存占用和 db 文件就会越来越大。很显然，这会导致 etcd OOM 和 db 大小增长到最大 db 配额，最终不可写。
+
+* 那么 etcd 是通过什么机制来回收历史版本数据，控制索引内存占用和 db 大小的呢？
+
+![etcd51](/assets/images/202501/etcd51.png)
+
+
+* 从图中可知，可以通过 client API 发起**人工的压缩** (Compact) 操作，也可以**配置自动压缩策略**。在自动压缩策略中，可以根据你的业务场景选择合适的压缩模式。目前 etcd 支持两种压缩模式，分别是**时间周期性压缩**和**版本号压缩**。
+
+* 当通过 API 发起一个 Compact 请求后，KV Server 收到 Compact 请求提交到 Raft 模块处理，在 Raft 模块中提交后，Apply 模块就会通过 MVCC 模块的 Compact 接口执行此压缩任务。
+
+* Compact 接口首先会更新当前 server 已压缩的版本号，并将耗时昂贵的压缩任务保存到 FIFO 队列中异步执行。压缩任务执行时，它首先会压缩 treeIndex 模块中的 keyIndex 索引，其次会遍历 boltdb 中的 key，删除已废弃的 key。
+
+### 压缩特性初体验
+
+* 在使用 etcd 过程中，当遇到 "etcdserver: mvcc: database space exceeded" 错误时，若是未开启压缩策略导致 db 大小达到配额，这时可以使用 etcdctl compact 命令，主动触发压缩操作，回收历史版本。
+
+* 如下所示，可以先通过 endpoint status 命令获取 etcd 当前版本号，然后再通过 etcdctl compact 命令发起压缩操作即可。
+
+```
+# 获取 etcd 当前版本号
+$ rev=$(etcdctl endpoint status --write-out="json" | egrep -o '"revision":[0-9]*' | egrep -o '[0-9].*')
+$ echo $rev
+9
+# 执行压缩操作，指定压缩的版本号为当前版本号
+$ etcdctl compact $rev
+Compacted revision 9
+# 压缩一个已经压缩的版本号
+$ etcdctl compact $rev
+Error: etcdserver: mvcc: required revision has been compacted
+# 压缩一个比当前最大版号大的版本号
+$ etcdctl compact 12
+Error: etcdserver: mvcc: required revision is a future revision
+```
+
+* 请注意，如果压缩命令传递的版本号小于等于当前 etcd server 记录的压缩版本号，etcd server 会返回已压缩错误 ("mvcc: required revision has been compacted") 给 client。如果版本号大于当前 etcd server 最新的版本号，etcd server 则返回一个未来的版本号错误给 client("mvcc: required revision is a future revision")。
+
+* 执行压缩命令的时候，不少初学者有一个常见的误区，就是担心压缩会不会把我最新版本数据给删除？
+
+* **压缩的本质是回收历史版本，目标对象仅是历史版本，不包括一个 key-value 数据的最新版本，因此可以放心执行压缩命令，不会删除最新版本数据**。不过在介绍 Watch 机制时提到，Watch 特性中的历史版本数据同步，依赖于 MVCC 中是否还保存了相关数据，因此建议不要每次简单粗暴地回收所有历史版本。
+
+* 在生产环境中，建议精细化的控制历史版本数，那如何实现精细化控制呢？主要有两种方案：
+  + 一种是使用 etcd server 的自带的**自动压缩机制**，根据业务场景配置合适的压缩策略即可。
+  + 另外一种方案是如果觉得 etcd server 的自带压缩机制无法满足你的诉求，想更精细化的控制 etcd 保留的历史版本记录，你就**可以基于 etcd 的 Compact API，在业务逻辑代码中、或定时任务中主动触发压缩操作**。你需要确保发起 Compact 操作的程序高可用，压缩的频率、保留的历史版本在合理范围内，并最终能使 etcd 的 db 大小保持平稳，否则会导致 db 大小不断增长，直至 db 配额满，无法写入。
+
+* **在一般情况下，建议使用 etcd 自带的压缩机制**。它支持两种模式，分别是**按时间周期性压缩**和**保留版本号的压缩**，配置相应策略后，etcd 节点会自动化的发起 Compact 操作。
+
+### 周期性压缩
+
+* 当你希望 etcd 只保留最近一段时间写入的历史版本时，就可以选择配置 etcd 的压缩模式为 periodic，保留时间为自定义的 1h 等。
+
+* 如何给 etcd server 配置压缩模式和保留时间呢？如下所示，etcd server 提供了配置压缩模式和保留时间的参数：
+
+```
+--auto-compaction-retention '0'
+Auto compaction retention length. 0 means disable auto Compaction.
+
+--auto-compaction-mode 'periodic'
+Interpret 'auto-Compaction-retention' one of: periodic|revision.
+```
+
+* `--auto-compaction-mode` 为 **periodic** 时，它表示启用时间周期性压缩，`--auto-compaction-retention` 为保留的时间的周期，比如 1h。
+
+* `--auto-compaction-mode` 为 **revision** 时，它表示启用版本号压缩模式，`--auto-compaction-retention` 为保留的历史版本号数，比如 10000。
+
+> 注意，etcd server 的 --auto-compaction-retention 为 0 时，将关闭自动压缩策略。
+
+* 那么周期性压缩模式的原理是怎样的呢？ etcd 是如何知道配置的 1h 前的 etcd server 版本号呢？其实非常简单，etcd server 启动后，根据你的配置的模式 periodic，会创建 periodic Compactor，它会异步的获取、记录过去一段时间的版本号。periodic Compactor 组件获取你设置的压缩间隔参数 1h， 并将其划分成 10 个区间，也就是每个区间 6 分钟。每隔 6 分钟，它会通过 etcd MVCC 模块的接口获取当前的 server 版本号，追加到 rev 数组中。因为你只需要保留过去 1 个小时的历史版本，periodic Compactor 组件会通过当前时间减去上一次成功执行 Compact 操作的时间，如果间隔大于一个小时，它会取出 rev 数组的首元素，通过 etcd server 的 Compact 接口，发起压缩操作。
+
+### 版本号压缩
+
+* 当你写请求比较多，可能产生比较多的历史版本导致 db 增长时，或者不确定配置 periodic 周期为多少才是最佳的时候，你可以通过设置压缩模式为 revision，指定保留的历史版本号数。比如你希望 etcd 尽量只保存 1 万个历史版本，那么你可以指定 compaction-mode 为 revision，auto-compaction-retention 为 10000。
+
+* 它的实现原理又是怎样的呢？也很简单，etcd 启动后会根据你的压缩模式 revision，创建 revision Compactor。revision Compactor 会根据你设置的保留版本号数，每隔 5 分钟定时获取当前 server 的最大版本号，减去你想保留的历史版本数，然后通过 etcd server 的 Compact 接口发起如下的压缩操作即可。
+
+### 压缩原理
+
+* 介绍完两种自动化的压缩模式原理后，接下来就深入分析下压缩的本质。当 etcd server 收到 Compact 请求后，它是如何执行的呢？ 核心原理是什么？如前面的整体架构图所述，Compact 请求经过 Raft 日志同步给多数节点后，etcd 会从 Raft 日志取出 Compact 请求，应用此请求到状态机执行。
+
+* 执行流程如下图所示，MVCC 模块的 Compact 接口首先会检查 Compact 请求的版本号 rev 是否已被压缩过，若是则返回 ErrCompacted 错误给 client。其次会检查 rev 是否大于当前 etcd server 的最大版本号，若是则返回 ErrFutureRev 给 client，这就是我们上面执行 etcdctl compact 命令所看到的那两个错误原理。
+
+* 通过检查后，Compact 接口会通过 boltdb 的 API 在 meta bucket 中更新当前已调度的压缩版本号 (scheduledCompactedRev) 号，然后将压缩任务追加到 FIFO Scheduled 中，异步调度执行。
+
+![etcd52](/assets/images/202501/etcd52.png)
+
+
+* 为什么 Compact 接口需要持久化存储当前已调度的压缩版本号到 boltdb 中呢？试想下如果不保存这个版本号，etcd 在异步执行的 Compact 任务过程中 crash 了，那么异常节点重启后，各个节点数据就会不一致。因此 etcd 通过持久化存储 scheduledCompactedRev，节点 crash 重启后，会重新向 FIFO Scheduled 中添加压缩任务，已保证各个节点间的数据一致性。
+
+
+* 异步的执行压缩任务会做哪些工作呢？
+
+* 首先 treeIndex 索引模块，它是 etcd 支持保存历史版本的核心模块，每个 key 在 treeIndex 模块中都有一个 keyIndex 数据结构，记录其历史版本号信息。
+
+![etcd53](/assets/images/202501/etcd53.png)
+
+
+* 如上图所示，因此异步压缩任务的第一项工作，就是压缩 treeIndex 模块中的各 key 的历史版本、已删除的版本。为了避免压缩工作影响读写性能，首先会克隆一个 B-tree，然后通过克隆后的 B-tree 遍历每一个 keyIndex 对象，压缩历史版本号、清理已删除的版本。
+
+* 假设当前压缩的版本号是 CompactedRev， 它会保留 keyIndex 中最大的版本号，移除小于等于 CompactedRev 的版本号，并通过一个 map 记录 treeIndex 中有效的版本号返回给 boltdb 模块使用。
+
+* 为什么要保留最大版本号呢？因为最大版本号是这个 key 的最新版本，移除了会导致 key 丢失。而 Compact 的目的是回收旧版本。当然如果 keyIndex 中的最大版本号被打了删除标记 (tombstone)，就会从 treeIndex 中删除这个 keyIndex，否则会出现内存泄露。
+
+* Compact 任务执行完索引压缩后，它通过遍历 B-tree、keyIndex 中的所有 generation 获得当前内存索引模块中有效的版本号，这些信息将帮助 etcd 清理 boltdb 中的废弃历史版本。
+
+![etcd54](/assets/images/202501/etcd54.png)
+
+* **压缩任务的第二项工作就是删除 boltdb 中废弃的历史版本数据**。如上图所示，它通过 etcd 一个名为 scheduleCompaction 任务来完成。
+
+* scheduleCompaction 任务会根据 key 区间，从 0 到 CompactedRev 遍历 boltdb 中的所有 key，通过 treeIndex 模块返回的有效索引信息，判断这个 key 是否有效，无效则调用 boltdb 的 delete 接口将 key-value 数据删除。
+
+* 在这过程中，scheduleCompaction 任务还会更新当前 etcd 已经完成的压缩版本号 (finishedCompactRev)，将其保存到 boltdb 的 meta bucket 中。
+
+* scheduleCompaction 任务遍历、删除 key 的过程可能会对 boltdb 造成压力，为了不影响正常读写请求，它在执行过程中会通过参数控制每次遍历、删除的 key 数（默认为 100，每批间隔 10ms），分批完成 boltdb key 的删除操作。
+
+
+### 为什么压缩后 db 大小不减少呢?
+
+* 当执行完压缩任务后，db 大小减少了吗？ 事实是并没有减少。那为什么都通过 boltdb API 删除了 key，db 大小还不减少呢？
+
+* boltdb 将 db 文件划分成若干个 page 页，page 页又有四种类型，分别是 meta page、branch page、leaf page 以及 freelist page。branch page 保存 B+ tree 的非叶子节点 key 数据，leaf page 保存 bucket 和 key-value 数据，freelist 会记录哪些页是空闲的。
+
+* 当我们通过 boltdb 删除大量的 key，在事务提交后 B+ tree 经过分裂、平衡，会释放出若干 branch/leaf page 页面，**然而 boltdb 并不会将其释放给磁盘，调整 db 大小操作是昂贵的，会对性能有较大的损害**。
+
+* boltdb 是通过 freelist page 记录这些空闲页的分布位置，当收到新的写请求时，优先从空闲页数组中申请若干连续页使用，实现高性能的读写（而不是直接扩大 db 大小）。当连续空闲页申请无法得到满足的时候，boltdb 才会通过增大 db 大小来补充空闲页。
+
+* 一般情况下，压缩操作释放的空闲页就能满足后续新增写请求的空闲页需求，db 大小会趋于整体稳定。
+
+
+
 
 
 # Tools
@@ -927,7 +1724,8 @@ go install github.com/mattn/goreman@latest
 goreman Procfile 文件：https://github.com/etcd-io/etcd/blob/v3.5.17/Procfile
 
 * 它描述了 etcd 进程名、节点数、参数等信息。
-* 最后通过 `goreman -f Procfile start` 命令就可以快速启动一个 3 节点的本地集群了。
+* 通过 `goreman -f Procfile start` 命令就可以快速启动一个 3 节点的本地集群了。
+* 通过 `goreman -f Procfile run stop-all` 命令停止集群
 
 ``` bash
 # Use goreman to run `go get github.com/mattn/goreman`
@@ -956,7 +1754,43 @@ gerryya+ 1865817  0.7  0.0 11739100 31676 pts/0  Sl   14:57   0:00 /usr/local/bi
 ```
 
 
+## [bbolt](https://github.com/etcd-io/bbolt/tree/main/cmd/bbolt)
 
+bbolt provides a command line utility for inspecting and manipulating bbolt database files. To install bbolt command-line please refer [here](https://github.com/etcd-io/bbolt#installing)
+
+Run go install to install the bbolt command line utility into your $GOBIN path, which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH environment variable is not set.
+
+```
+go install go.etcd.io/bbolt/cmd/bbolt@latest
+```
+
+```
+$ bbolt --help
+Bbolt is a tool for inspecting bbolt databases.
+
+Usage:
+
+        bbolt command [arguments]
+
+The commands are:
+
+    bench       run synthetic benchmark against bbolt
+    buckets     print a list of buckets
+    check       verifies integrity of bbolt database
+    compact     copies a bbolt database, compacting it in the process
+    dump        print a hexadecimal dump of a single page
+    get         print the value of a key in a bucket
+    info        print basic info
+    keys        print a list of keys in a bucket
+    help        print this screen
+    page        print one or more pages in human readable format
+    pages       print list of pages with their types
+    page-item   print the key and value of a page item.
+    stats       iterate over all pages and generate usage stats
+    surgery     perform surgery on bbolt database
+
+Use "bbolt [command] -h" for more information about a command.
+```
 
 
 
@@ -1603,6 +2437,8 @@ etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产
 
 
 
+# [etcd versus other key-value stores](https://etcd.io/docs/v3.6/learning/why/)
+
 
 
 
@@ -1610,7 +2446,7 @@ etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产
 
 * https://etcd.io/docs/v3.5/
 * https://etcd.io/docs/v3.4/op-guide/performance/
-
+* [一篇文章带你搞懂 etcd 3.5 的核心特性](https://mp.weixin.qq.com/s/mhHPyCAmdbT5wXF0vBiGzQ)
 
 
 

@@ -9,6 +9,51 @@ categories: [C/C++]
 {:toc}
 
 
+# 问题
+
+``` cpp
+#include <iostream>
+
+class IBaseA
+{
+public:
+    virtual void CallA() = 0;
+};
+
+class IBaseB
+{
+public:
+    virtual void CallB() = 0;
+};
+
+// 继承 A 和 B
+class DerivedAB : public IBaseA, public IBaseB
+{
+public:
+    void CallA() override
+    {
+        std::cout << "Call A" << std::endl;
+    }
+    void CallB() override
+    {
+        std::cout << "Call B" << std::endl;
+    }
+};
+
+int main()
+{
+    void* p = new DerivedAB();
+    auto* pBaseB = static_cast<IBaseB*>(p);
+    pBaseB->CallB();  // error, Call A
+
+    IBaseB* p2 = new DerivedAB();
+    p2->CallB(); // ok, Call B
+
+    return 0;
+}
+```
+
+
 # Example
 
 ``` cpp
