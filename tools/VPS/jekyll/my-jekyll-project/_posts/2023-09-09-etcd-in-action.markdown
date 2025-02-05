@@ -3111,7 +3111,8 @@ nano templates/etcd.conf.yaml.j2
 
 Then, add the following highlighted lines:
 
-``` bash
+```
+{% raw %}
 data-dir: /var/lib/etcd/{{ inventory_hostname }}.etcd
 name: {{ inventory_hostname }}
 initial-advertise-peer-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2380
@@ -3120,6 +3121,7 @@ advertise-client-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['
 listen-client-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2379,http://127.0.0.1:2379
 initial-cluster-state: new
 initial-cluster: {% for host in groups['etcd'] %}{{ hostvars[host]['ansible_facts']['hostname'] }}=http://{{ hostvars[host]['ansible_facts']['eth1']['ipv4']['address'] }}:2380{% if not loop.last %},{% endif %}{% endfor %}
+{% endraw %}
 ```
 
 Close and save the `templates/etcd.conf.yaml.j2` file by pressing `CTRL+X` followed by `Y`.
@@ -3161,7 +3163,11 @@ Each of these IP addresses are associated with a different network interface—t
 
 Understanding of network interfaces is not required for this article, but if you’d like to learn more, [An Introduction to Networking Terminology, Interfaces, and Protocols](https://www.digitalocean.com/community/tutorials/an-introduction-to-networking-terminology-interfaces-and-protocols) is a great place to start.
 
-The `{% %}` Jinja2 syntax defines the `for` loop structure that iterates through every node in the `etcd` group to build up the `initial-cluster` string into a format required by etcd.
+
+{% raw %}
+The {% %} Jinja2 syntax defines the `for` loop structure that iterates through every node in the `etcd` group to build up the `initial-cluster` string into a format required by etcd.
+{% endraw %}
+
 
 **To form the new three-member cluster, you must first stop the etcd service and clear the data directory before launching the cluster. To do this, use an editor to open up the playbook.yaml file on your local machine**:
 
