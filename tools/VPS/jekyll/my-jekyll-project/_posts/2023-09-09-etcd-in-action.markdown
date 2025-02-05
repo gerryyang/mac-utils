@@ -1793,6 +1793,34 @@ Use "bbolt [command] -h" for more information about a command.
 ```
 
 
+## [Kstone](https://github.com/kstone-io/kstone)
+
+Kstone 是一个针对 etcd 的全方位运维解决方案，提供集群管理 (关联已有集群、创建新集群等)、监控、备份、巡检、数据迁移、数据可视化、智能诊断等一系列特性。Kstone 将帮助你高效管理 etcd 集群，显著降低运维成本、及时发现潜在隐患、提升 k8s etcd 存储的稳定性和用户体验。
+
+Kstone is an [etcd](https://github.com/etcd-io/etcd) management platform, providing cluster management, monitoring, backup, inspection, data migration, visual viewing of etcd data, and intelligent diagnosis.
+
+Kstone will help you efficiently manage etcd clusters, significantly reduce operation and maintenance costs, discover potential hazards in time, and improve the stability and user experience of k8s etcd storage.
+
+> Features
+
+* Supports registration of existing clusters and creation of new etcd clusters.
+* Support prometheus monitoring, built-in rich etcd grafana panel diagram.
+* Support multiple data backup methods (minute-level backup to object storage, real-time backup by deploying learner).
+* Support multiple inspection strategies (data consistency, health, hot write requests, number of resource objects, etc.).
+* Built-in web console and visual view etcd data.
+* Lightweight, easy to install.
+* Support data migration(to do list).
+* Support intelligent diagnosis(to do list).
+
+
+## [k3s](https://github.com/k3s-io/k3s)
+
+Lightweight Kubernetes. Production ready, easy to install, half the memory, all in a binary less than 100 MB.
+
+## [kine](https://github.com/k3s-io/kine)
+
+Kine as a datastore shim that allows etcd to be replaced with other databases.
+
 
 
 # Raft 协议论文 [In Search of an Understandable Consensus Algorithm](https://raft.github.io/raft.pdf)
@@ -2428,6 +2456,835 @@ We encourage running the benchmark test when setting up an etcd cluster for the 
 总之，当在新环境中首次设置 etcd 集群时，运行基准测试可以帮助您确保集群具有足够的性能。这将能够在投入生产环境之前发现和解决潜在的性能问题，从而确保应用程序能够正常运行。
 
 
+# 运维
+
+在基于物理机和虚拟机的部署方案中，推荐你使用 ansible、puppet 等自动运维工具，构建标准、自动化的 etcd 集群搭建、扩缩容流程。基于 ansible 部署 etcd 集群可以拆分成以下若干个任务:
+
+* 下载及安装 etcd 二进制到指定目录
+* 将 etcd 加入 systemd 等服务管理
+* 为 etcd 增加配置文件，合理设置相关参数
+* 为 etcd 集群各个节点生成相关证书，构建一个安全的集群
+* 组建集群版（静态配置、动态配置，发现集群其他节点）
+* 开启 etcd 服务，启动 etcd 集群
+
+
+详细可以参考 [digitalocean 这篇博客文章](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)，它介绍了如何使用 ansible 去部署一个安全的 etcd 集群，并给出了对应的 yaml 任务文件。
+
+
+
+# 腾讯云第三方服务 (腾讯云云原生 etcd)
+
+参考：[云原生 etcd 概述](https://cloud.tencent.com/document/product/457/58176)
+
+腾讯云云原生 etcd（Cloud Service for etcd）是基于 开源 etcd 针对云原生服务场景进行优化的 etcd 托管解决方案，由腾讯云容器团队提供，完全兼容开源的 etcd 分布式存储能力，为用户提供高稳定、可观测、免运维的云原生 etcd 服务。
+
+> 云原生 etcd 服务已于2022年6月8日结束内测，正式对外开放并开始商业化计费，详细资费策略请查看[购买指南](https://cloud.tencent.com/document/product/457/73706)。
+
+## 应用场景
+
+etcd 是一个分布式、高可靠的键值存储，可以容忍集群中部分节点故障，只需存活一半以上节点即可对外提供服务。主要用于元数据存储、服务发现、分布式选举等场景。基于 etcd 提供的 Watch 机制，可以更便捷的实现发布订阅等功能。
+
+## 为什么需要云原生 etcd 服务
+
+* 用户对 etcd 了解程度不够，在使用过程中难以快速上手。
+* 用户维护自建 etcd 时缺乏使用经验，在使用过程中遇到问题难以快速定位。
+* 自建 etcd 往往还需要维护一套监控告警系统和备份恢复机制，增加了用户的运维负担。
+* 腾讯云容器团队目前线上运维了上万套 K8S 集群，后端使用了上千套 etcd 集群作为支撑存储。团队在保障 etcd 稳定运行的同时积累了大量的实践经验，可以帮助用户降低 etcd 的运维负担，从而更专注于业务发展。
+
+## 产品功能
+
+* 一键部署 etcd 集群：支持集群高可用部署、HTTPS 访问和数据自动压缩等功能。
+* 集成云原生监控能力：提供完善的监控告警机制。
+* 日常运维管理：支持备份恢复、节点扩缩容和版本升级等功能。
+
+
+## 相关服务
+
+腾讯云 [Prometheus 监控服务](https://cloud.tencent.com/document/product/457/84543)（Managed Service for Prometheus，TMP）是针对云原生服务场景进行优化的监控和报警解决方案，全面支持开源 Prometheus 监控能力，为用户提供轻量、稳定、高可用的云原生 Prometheus 监控服务。
+
+
+
+
+
+# [How To Set Up and Secure an etcd Cluster with Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)
+
+The first half of this article will guide you through setting up a 3-node etcd cluster on Ubuntu 18.04 servers. The second half will focus on securing the cluster using [Transport Layer Security, or TLS](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs). To run each setup in an automated manner, we will use [Ansible](https://www.digitalocean.com/community/conceptual-articles/an-introduction-to-configuration-management-with-ansible) throughout. Ansible is a configuration management tool similar to [Puppet](https://puppet.com/), [Chef](https://www.chef.io/), and [SaltStack](https://www.saltstack.com/); it allows us to define each setup step in a declarative manner, inside files called **playbooks**.
+
+At the end of this tutorial, you will have a secure 3-node etcd cluster running on your servers. You will also have an Ansible playbook that allows you to repeatedly and consistently recreate the same setup on a fresh set of servers.
+
+
+## Prerequisites
+
+Before you begin this guide you’ll need the following:
+
+* [Python](https://www.python.org/), pip, and the [pyOpenSSL](https://pypi.org/project/pyOpenSSL/) package installed on your local machine. To learn how to install Python3, pip, and Python packages, refer to [How To Install Python 3 and Set Up a Local Programming Environment on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-local-programming-environment-on-ubuntu-18-04).
+
+* Three Ubuntu 18.04 servers on the same local network, with at least 2GB of RAM and root SSH access. You should also configure the servers to have the hostnames **etcd1**, **etcd2**, and **etcd3**. The steps outlined in this article would work on any generic server, not necessarily DigitalOcean Droplets. However, if you’d like to host your servers on DigitalOcean, you can follow the [How to Create a Droplet from the DigitalOcean Control Panel](https://www.digitalocean.com/docs/droplets/how-to/create) guide to fulfil this requirement. Note that you must enable the Private Networking option when creating your Droplet. To enable private networking on existing Droplets, refer to [How to Enable Private Networking on Droplets](https://www.digitalocean.com/docs/networking/private-networking/how-to/enable).
+
+> **Warning**: Since the purpose of this article is to provide an introduction to setting up an etcd cluster on a private network, the three Ubuntu 18.04 servers in this setup were not tested with a firewall and are accessed as the root user. In a production setup, any node exposed to the public internet would require a firewall and a sudo user to adhere to security best practices. For more information, check out the [Initial Server Setup with Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04) tutorial.
+
+
+* An SSH key pair allowing your local machine access to the **etcd1**, **etcd2**, and **etcd3** servers. If you do not know what SSH is, or do not have an SSH key pair, you can learn about it by reading [SSH Essentials: Working with SSH Servers, Clients, and Keys](https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys#generating-and-working-with-ssh-keys).
+
+* Ansible installed on your local machine. For example, if you’re running Ubuntu 18.04, you can install Ansible by following **Step 1** of the [How to Install and Configure Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ansible-on-ubuntu-18-04) article. This will make the `ansible` and `ansible-playbook` commands available on your machine. You may also want to keep this [How to Use Ansible: A Reference Guide](https://www.digitalocean.com/community/tutorials/how-to-use-ansible-cheat-sheet-guide) handy. The commands in this tutorial should work with Ansible v2.x; we have tested it on Ansible v2.9.7 running Python v3.8.2.
+
+
+## Step 1 — Configuring Ansible for the Control Node
+
+Ansible is a tool used to manage servers. The servers Ansible is managing are called the managed nodes, and the machine that is running Ansible is called the control node. Ansible works by using the SSH keys on the control node to gain access to the managed nodes. Once an SSH session is established, Ansible will run a set of scripts to provision and configure the managed nodes. In this step, we will test that we are able to use Ansible to connect to the managed nodes and run the [`hostname` command](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/hostname_module.html).
+
+A typical day for a system administrator may involve managing different sets of nodes. For instance, you may use Ansible to provision some new servers, but later on use it to reconfigure another set of servers. To allow administrators to better organize the set of managed nodes, Ansible provides the concept of host inventory (or inventory for short). You can define every node that you wish to manage with Ansible inside an **inventory** file, and organize them into groups. Then, when running the `ansible` and `ansible-playbook` commands, you can specify which hosts or groups the command applies to.
+
+By default, Ansible reads the inventory file from `/etc/ansible/hosts`; however, we can specify a different inventory file by using the `--inventory` flag (or `-i` for short).
+
+To get started, create a new directory on your local machine (the control node) to house all the files for this tutorial:
+
+``` bash
+mkdir -p $HOME/playground/etcd-ansible
+```
+
+Then, enter into the directory you just created:
+
+``` bash
+cd $HOME/playground/etcd-ansible
+```
+
+Inside the directory, create and open a blank inventory file named hosts using your editor:
+
+``` bash
+nano $HOME/playground/etcd-ansible/hosts
+```
+
+Inside the `hosts` file, list out each of your managed nodes in the following format, replacing the public IP addresses highlighted with the actual public IP addresses of your servers:
+
+``` bash
+[etcd]
+etcd1 ansible_host=etcd1_public_ip  ansible_user=root
+etcd2 ansible_host=etcd2_public_ip  ansible_user=root
+etcd3 ansible_host=etcd3_public_ip  ansible_user=root
+```
+
+The `[etcd]` line defines a group called **etcd**. Under the group definition, we list all our managed nodes. Each line begins with an alias (e.g., **etcd1**), which allows us to refer to each host using an easy-to-remember name instead of a long IP address. The `ansible_host` and `ansible_user` are Ansible **variables**. In this case, they are used to provide Ansible with the public IP addresses and SSH usernames to use when connecting via SSH.
+
+To ensure Ansible is able to connect with our managed nodes, we can test for connectivity by using Ansible to run the `hostname` command on each of the hosts within the **etcd** group:
+
+``` bash
+ansible etcd -i hosts -m command -a hostname
+```
+
+Let us break down this command to learn what each part means:
+
+* `etcd`: specifies the host pattern to use to determine which hosts from the inventory are being managed with this command. Here, we are using the group name as the host pattern.
+* `-i hosts`: specifies the inventory file to use.
+* `-m command`: the functionality behind Ansible is provided by modules. The `command` module takes the argument passed in and executes it as a command on each of the managed nodes. This tutorial will introduce a few more Ansible modules as we progress.
+* `-a hostname`: the argument to pass into the module. The number and types of arguments depend on the module.
+
+After running the command, you will find the following output, which means Ansible is configured correctly:
+
+```
+Output
+etcd2 | CHANGED | rc=0 >>
+etcd2
+
+etcd3 | CHANGED | rc=0 >>
+etcd3
+
+etcd1 | CHANGED | rc=0 >>
+etcd1
+```
+
+![ansible3](/assets/images/202502/ansible3.png)
+
+Each command that Ansible runs is called a **task**. Using `ansible` on the command line to run tasks is called running **ad-hoc** commands. The upside of ad-hoc commands is that they are quick and require little setup; the downside is that they run manually, and thus cannot be committed to a version control system like [Git](https://git-scm.com/).
+
+A slight improvement would be to write a shell script and run our commands using Ansible’s [`script` module](https://docs.ansible.com/ansible/latest/modules/script_module.html). This would allow us to record the configuration steps we took into version control. However, shell scripts are **imperative**, which means we are responsible for figuring out the commands to run (the "how"s) to configure the system to the desired state. Ansible, on the other hand, advocates for a **declarative** approach, where we define “what” the desired state of our server should be inside configuration files, and Ansible is responsible for getting the server to that desired state.
+
+The declarative approach is preferred because the intent of the configuration file is immediately conveyed, meaning it’s easier to understand and maintain. It also places the onus of handling edge cases on Ansible instead of the administrator, saving us a lot of work.
+
+Now that you have configured the Ansible control node to communicate with the managed nodes, in the next step, we will introduce you to Ansible playbooks, which allow you to specify tasks in a declarative way.
+
+## Step 2 — Getting the Hostnames of Managed Nodes with Ansible Playbooks
+
+In this step, we will replicate what was done in Step 1—printing out the hostnames of the managed nodes—but instead of running ad-hoc tasks, we will define each task declaratively as an Ansible playbook and run it. The purpose of this step is to demonstrate how Ansible playbooks work; we will carry out much more substantial tasks with playbooks in later steps.
+
+Inside your project directory, create a new file named `playbook.yaml` using your editor:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Inside playbook.yaml, add the following lines:
+
+``` yaml
+- hosts: etcd
+  tasks:
+    - name: "Retrieve hostname"
+      command: hostname
+      register: output
+    - name: "Print hostname"
+      debug: var=output.stdout_lines
+```
+
+Close and save the `playbook.yaml` file by pressing `CTRL+X` followed by `Y`.
+
+The playbook contains a list of plays; each play contains a list of tasks that should be run on all hosts matching the host pattern specified by the `hosts` key. In this playbook, we have one play that contains two tasks. The first task runs the `hostname` command using the `command` module and registers the output to a variable named `output`. In the second task, we use the debug module to print out the `stdout_lines` property of the `output` variable.
+
+We can now run this playbook using the `ansible-playbook` command:
+
+``` bash
+ansible-playbook -i hosts playbook.yaml
+```
+
+You will find the following output, which means your playbook is working correctly:
+
+![ansible4](/assets/images/202502/ansible4.png)
+
+> **Note**: `ansible-playbook` sometimes uses `cowsay` as a playful way to print the headings. If you find a lot of ASCII-art cows printed on your terminal, now you know why. To disable this feature, set the ANSIBLE_NOCOWS environment variable to 1 prior to running ansible-playbook by running `export ANSIBLE_NOCOWS=1` in your shell.
+
+In this step, we’ve moved from running imperative ad-hoc tasks to running declarative playbooks. In the next step, we will replace these two demo tasks with tasks that will set up our etcd cluster.
+
+
+
+## Step 3 — Installing etcd on the Managed Nodes
+
+In this step, we will show you the commands to install `etcd` manually and demonstrate how to translate these same commands into tasks inside our Ansible playbook.
+
+`etcd` and its client `etcdctl` are available as binaries, which we’ll download, extract, and move to a directory that’s part of the `PATH` environment variable. When configured manually, these are the steps we would take on each of the managed nodes:
+
+``` bash
+mkdir -p /opt/etcd/bin
+cd /opt/etcd/bin
+wget -qO- https://storage.googleapis.com/etcd/v3.3.13/etcd-v3.3.13-linux-amd64.tar.gz | tar --extract --gzip --strip-components=1
+echo 'export PATH="$PATH:/opt/etcd/bin"' >> ~/.profile
+echo 'export ETCDCTL_API=3" >> ~/.profile
+```
+
+The first four commands download and extract the binaries to the `/opt/etcd/bin/` directory. By default, the `etcdctl` client will use API v2 to communicate with the `etcd` server. Since we are running etcd v3.x, the last command sets the `ETCDCTL_API` environment variable to `3`.
+
+> **Note**: Here, we are using etcd v3.3.13 built for a machine with processors that use the AMD64 instruction set. You can find binaries for other systems and other versions on the the official GitHub [Releases](https://github.com/etcd-io/etcd/releases) page.
+
+To replicate the same steps in a standardized format, we can add tasks to our playbook. Open the `playbook.yaml` playbook file in your editor:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Replace the entirety of the `playbook.yaml` file with the following contents:
+
+``` yaml
+- hosts: etcd
+  become: True
+  tasks:
+    - name: "Create directory for etcd binaries"
+      file:
+        path: /opt/etcd/bin
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+    - name: "Download the tarball into the /tmp directory"
+      get_url:
+        url: https://storage.googleapis.com/etcd/v3.3.13/etcd-v3.3.13-linux-amd64.tar.gz
+        dest: /tmp/etcd.tar.gz
+        owner: root
+        group: root
+        mode: 0600
+        force: True
+    - name: "Extract the contents of the tarball"
+      unarchive:
+        src: /tmp/etcd.tar.gz
+        dest: /opt/etcd/bin/
+        owner: root
+        group: root
+        mode: 0600
+        extra_opts:
+          - --strip-components=1
+        decrypt: True
+        remote_src: True
+    - name: "Set permissions for etcd"
+      file:
+        path: /opt/etcd/bin/etcd
+        state: file
+        owner: root
+        group: root
+        mode: 0700
+    - name: "Set permissions for etcdctl"
+      file:
+        path: /opt/etcd/bin/etcdctl
+        state: file
+        owner: root
+        group: root
+        mode: 0700
+    - name: "Add /opt/etcd/bin/ to the $PATH environment variable"
+      lineinfile:
+        path: /etc/profile
+        line: export PATH="$PATH:/opt/etcd/bin"
+        state: present
+        create: True
+        insertafter: EOF
+    - name: "Set the ETCDCTL_API environment variable to 3"
+      lineinfile:
+        path: /etc/profile
+        line: export ETCDCTL_API=3
+        state: present
+        create: True
+        insertafter: EOF
+```
+
+Each task uses a module; for this set of tasks, we are making use of the following modules:
+
+* [file](https://docs.ansible.com/ansible/latest/modules/file_module.html): to create the `/opt/etcd/bin` directory, and to later set the file permissions for the `etcd` and `etcdctl` binaries.
+* [get_url](https://docs.ansible.com/ansible/latest/modules/get_url_module.html): to download the gzipped tarball onto the managed nodes.
+* [unarchive](https://docs.ansible.com/ansible/latest/modules/unarchive_module.html): to extract and unpack the `etcd` and `etcdctl` binaries from the gzipped tarball.
+* [lineinfile](https://docs.ansible.com/ansible/latest/modules/lineinfile_module.html): to add an entry into the `.profile` file.
+
+To apply these changes, close and save the `playbook.yaml` file by pressing `CTRL+X` followed by `Y`. Then, on the terminal, run the same `ansible-playbook` command again:
+
+``` bash
+ansible-playbook -i hosts playbook.yaml
+```
+
+The `PLAY RECAP` section of the output will show only `ok` and `changed`:
+
+![ansible5](/assets/images/202502/ansible5.png)
+
+To confirm a correct installation of etcd, manually SSH into one of the managed nodes and run `etcd` and `etcdctl`:
+
+``` bash
+ssh root@etcd1_public_ip
+```
+
+`etcd1_public_ip` is the public IP addresses of the server named **etcd1**. Once you have gained SSH access, run `etcd --version` to print out the version of etcd installed:
+
+``` bash
+etcd --version
+```
+
+You will find output similar to what’s shown in the following, which means the etcd binary is successfully installed:
+
+```
+etcd Version: 3.3.13
+Git SHA: 98d3084
+Go Version: go1.10.8
+Go OS/Arch: linux/amd64
+```
+
+To confirm etcdctl is successfully installed, run etcdctl version:
+
+``` bash
+etcdctl version
+```
+
+You will find output similar to the following:
+
+```
+etcdctl version: 3.3.13
+API version: 3.3
+```
+
+Note that the output says API version: 3.3, which also confirms that our ETCDCTL_API environment variable was set correctly.
+
+Exit out of the **etcd1** server to return to your local environment.
+
+We have now successfully installed `etcd` and `etcdctl` on all of our managed nodes. In the next step, we will add more tasks to our play to run etcd as a background service.
+
+
+## Step 4 — Creating a Unit File for etcd
+
+The quickest way to run `etcd` with Ansible may appear to be to use the command module to run `/opt/etcd/bin/etcd`. However, this will not work because it will make `etcd` run as a foreground process. Using the `command` module will cause Ansible to hang as it waits for the `etcd` command to return, which it never will. So in this step, we are going to update our playbook to run our `etcd` binary as a background service instead.
+
+Ubuntu 18.04 uses [systemd](https://www.digitalocean.com/community/tutorials/systemd-essentials-working-with-services-units-and-the-journal) as its init system, which means we can create new services by writing unit files and placing them inside the `/etc/systemd/system/` directory.
+
+First, inside our project directory, create a new directory named `files/`:
+
+``` bash
+mkdir files
+```
+
+Then, using your editor, create a new file named `etcd.service` within that directory:
+
+``` bash
+nano files/etcd.service
+```
+
+Next, copy the following code block into the `files/etcd.service` file:
+
+``` bash
+[Unit]
+Description=etcd distributed reliable key-value store
+
+[Service]
+Type=notify
+ExecStart=/opt/etcd/bin/etcd
+Restart=always
+```
+
+This unit file defines a service that runs the executable at `/opt/etcd/bin/etcd`, notifies `systemd` when it has finished initializing, and always restarts if it ever exits.
+
+> **Note**: If you’d like to understand more about systemd and unit files, or want to tailor the unit file to your needs, read the [Understanding Systemd Units and Unit Files](https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files) guide.
+
+Close and save the `files/etcd.service` file by pressing `CTRL+X` followed by `Y`.
+
+Next, we need to add a task inside our playbook that will copy the `files/etcd.service` local file into the `/etc/systemd/system/etcd`.service directory for every managed node. We can do this using the [`copy` module](https://docs.ansible.com/ansible/latest/modules/copy_module.html).
+
+Open up your playbook:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Append the following highlighted task to the end of our existing tasks:
+
+``` yaml
+    - name: "Create a etcd service"
+      copy:
+        src: files/etcd.service
+        remote_src: False
+        dest: /etc/systemd/system/etcd.service
+        owner: root
+        group: root
+        mode: 0644
+```
+
+By copying the unit file into the `/etc/systemd/system/etcd.service`, a service is now defined.
+
+Save and exit the playbook.
+
+Run the same `ansible-playbook` command again to apply the new changes:
+
+``` bash
+ansible-playbook -i hosts playbook.yaml
+```
+
+To confirm the changes have been applied, first SSH into one of the managed nodes:
+
+``` bash
+ssh root@etcd1_public_ip
+```
+
+Then, run `systemctl status etcd` to query systemd about the status of the etcd service:
+
+``` bash
+systemctl status etcd
+```
+
+You will find the following output, which states that the service is loaded:
+
+![ansible6](/assets/images/202502/ansible6.png)
+
+> **Note**: The last line (`Active: inactive (dead)`) of the output states that the service is inactive, which means it would not be automatically run when the system starts. This is expected and not an error.
+
+Press `q` to return to the shell, and then run `exit` to exit out of the managed node and back to your local shell:
+
+``` bash
+exit
+```
+
+In this step, we updated our playbook to run the etcd binary as a systemd service. In the next step, we will continue to set up etcd by providing it space to store its data.
+
+## Step 5 — Configuring the Data Directory
+
+etcd is a key-value data store, which means we must provide it with space to store its data. In this step, we are going to update our playbook to define a dedicated data directory for etcd to use.
+
+Open up your playbook:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Append the following task to the end of the list of tasks:
+
+``` yaml
+    - name: "Create a data directory"
+      file:
+        path: /var/lib/etcd/{{ inventory_hostname }}.etcd
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+```
+
+Here, we are using `/var/lib/etcd/hostname.etcd` as the data directory, where `hostname` is the hostname of the current managed node. `inventory_hostname` is a variable that represents the hostname of the current managed node; its value is populated by Ansible automatically. The curly-braces syntax (i.e., `{{ inventory_hostname }}`) is used for variable substitution, supported by the [Jinja2](https://palletsprojects.com/p/jinja/) template engine, which is the default templating engine for Ansible.
+
+Close the text editor and save the file.
+
+Next, we need to instruct etcd to use this data directory. We do this by passing in the `data-dir` parameter to `etcd`. To set `etcd` parameters, we can use a combination of environment variables, command-line flags, and configuration files. For this tutorial, we will use a configuration file, as it is much neater to isolate all configurations into a file, rather than have configuration littered across our playbook.
+
+In your project directory, create a new directory named `templates/`:
+
+``` bash
+mkdir templates
+```
+
+Then, using your editor, create a new file named `etcd.conf.yaml.j2` within the directory:
+
+``` bash
+nano templates/etcd.conf.yaml.j2
+```
+
+Next, copy the following line and paste it into the file:
+
+``` bash
+data-dir: /var/lib/etcd/{{ inventory_hostname }}.etcd
+```
+
+This file uses the same Jinja2 variable substitution syntax as our playbook. To substitute the variables and upload the result to each managed host, we can use the [`template` module](https://docs.ansible.com/ansible/latest/modules/template_module.html). It works in a similar way to `copy`, except it will perform variable substitution prior to upload.
+
+Exit from `etcd.conf.yaml.j2`, then open up your playbook:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Append the following tasks to the list of tasks to create a directory and upload the templated configuration file into it:
+
+
+``` yaml
+    - name: "Create directory for etcd configuration"
+      file:
+        path: /etc/etcd
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+    - name: "Create configuration file for etcd"
+      template:
+        src: templates/etcd.conf.yaml.j2
+        dest: /etc/etcd/etcd.conf.yaml
+        owner: root
+        group: root
+        mode: 0600
+```
+
+Save and close this file.
+
+Because we’ve made this change, we need to update our service’s unit file to pass it the location of our configuration file (i.e., `/etc/etcd/etcd.conf.yaml`).
+
+Open the etcd service file on your local machine:
+
+``` bash
+nano files/etcd.service
+```
+
+Update the files/etcd.service file by adding the `--config-file` flag highlighted in the following:
+
+
+``` bash
+[Unit]
+Description=etcd distributed reliable key-value store
+
+[Service]
+Type=notify
+ExecStart=/opt/etcd/bin/etcd --config-file /etc/etcd/etcd.conf.yaml
+Restart=always
+```
+
+Save and close this file.
+
+In this step, we used our playbook to provide a data directory for etcd to store its data. In the next step, we will add a couple more tasks to restart the `etcd` service and have it run on startup.
+
+## Step 6 — Enabling and Starting the etcd Service
+
+Whenever we make changes to the unit file of a service, we need to restart the service to have it take effect. We can do this by running the `systemctl restart etcd` command. Furthermore, to make the `etcd` service start automatically on system startup, we need to run `systemctl enable etcd`. In this step, we will run those two commands using the playbook.
+
+To run commands, we can use the [`command` module](https://docs.ansible.com/ansible/latest/modules/command_module.html):
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Append the following tasks to the end of the task list:
+
+``` yaml
+    - name: "Enable the etcd service"
+      command: systemctl enable etcd
+    - name: "Start the etcd service"
+      command: systemctl restart etcd
+```
+
+Save and close the file.
+
+Run `ansible-playbook -i hosts playbook.yaml` once more:
+
+``` bash
+ansible-playbook -i hosts playbook.yaml
+```
+
+To check that the `etcd` service is now restarted and enabled, SSH into one of the managed nodes:
+
+``` bash
+ssh root@etcd1_public_ip
+```
+
+Then, run `systemctl status etcd` to check the status of the `etcd` service:
+
+``` bash
+systemctl status etcd
+```
+
+You will find `enabled` and `active (running)` as highlighted in the following; this means the changes we made in our playbook have taken effect:
+
+![ansible7](/assets/images/202502/ansible7.png)
+
+In this step, we used the `command` module to run `systemctl` commands that restart and enable the `etcd` service on our managed nodes. Now that we have set up an etcd installation, we will, in the next step, test out its functionality by carry out some basic create, read, update, and delete (CRUD) operations.
+
+## Step 7 — Testing etcd
+
+Although we have a working etcd installation, it is insecure and not yet ready for production use. But before we secure our etcd setup in later steps, let’s first understand what etcd can do in terms of functionality. In this step, we are going to manually send requests to etcd to add, retrieve, update, and delete data from it.
+
+By default, etcd exposes an API that listens on port `2379` for client communication. This means we can send raw API requests to etcd using an HTTP client. However, it’s quicker to use the official etcd client `etcdctl`, which allows you to create/update, retrieve, and delete key-value pairs using the `put`, `get`, and `del` subcommands, respectively.
+
+![ansible8](/assets/images/202502/ansible8.png)
+
+Make sure you’re still inside the **etcd1** managed node, and run the following `etcdctl` commands to confirm your etcd installation is working.
+
+First, create a new entry using the `put` subcommand.
+
+The `put` subcommand has the following syntax:
+
+``` bash
+etcdctl put key value
+```
+
+On **etcd1**, run the following command:
+
+``` bash
+etcdctl put foo "bar"
+```
+
+The command we just ran instructs etcd to write the value `"bar"` to the key `foo` in the store.
+
+You will then find `OK` printed in the output, which indicates the data persisted.
+
+We can then retrieve this entry using the get subcommand, which has the syntax `etcdctl get` key:
+
+``` bash
+etcdctl get foo
+```
+
+You will find this output, which shows the key on the first line and the value you inserted earlier on the second line.
+
+We can delete the entry using the del subcommand, which has the syntax `etcdctl del` key:
+
+``` bash
+etcdctl del foo
+```
+
+You will find the following output, which indicates the number of entries deleted.
+
+Now, let’s run the get subcommand once more in an attempt to retrieve a deleted key-value pair:
+
+``` bash
+etcdctl get foo
+```
+
+You will not receive an output, which means etcdctl is unable to retrieve the key-value pair. This confirms that after the entry is deleted, it can no longer be retrieved.
+
+Now that you’ve tested the basic operations of etcd and etcdctl, let’s exit out of our managed node and back to your local environment:
+
+``` bash
+exit
+```
+
+![ansible9](/assets/images/202502/ansible9.png)
+
+In this step, we used the `etcdctl` client to send requests to etcd. At this point, we are running three separate instances of etcd, each acting independently from each other. However, etcd is designed as a distributed key-value store, which means multiple etcd instances can group up to form a single cluster; each instance then becomes a member of the cluster. After forming a cluster, you would be able to retrieve a key-value pair that was inserted from a different member of the cluster. **In the next step, we will use our playbook to transform our 3 single-node clusters into a single 3-node cluster**.
+
+
+## Step 8 — Forming a Cluster Using Static Discovery
+
+**To create one 3-node cluster instead of three 1-node clusters, we must configure these etcd installations to communicate with each other**. This means each one must know the IP addresses of the others. This process is called **discovery**. Discovery can be done using either **static configuration** or **dynamic service discovery**. In this step, we will discuss the difference between the two, as well as update our playbook to set up an etcd cluster using static discovery.
+
+Discovery by static configuration is the method that requires the least setup; this is where the endpoints of each member are passed into the `etcd` command before it is executed. To use static configuration, the following conditions must be met prior to the initialization of the cluster:
+
+* the number of members are known
+* the endpoints of each member are known
+* the IP addresses for all endpoints are static
+
+If these conditions cannot be met, then you can use a dynamic discovery service. With dynamic service discovery, all instances would register with the discovery service, which allows each member to retrieve information about the location of other members.
+
+Since we know we want a 3-node etcd cluster, and all our servers have static IP addresses, we will use static discovery. To initiate our cluster using static discovery, we must add several parameters to our configuration file. Use an editor to open up the `templates/etcd.conf.yaml.j2` template file:
+
+``` bash
+nano templates/etcd.conf.yaml.j2
+```
+
+Then, add the following highlighted lines:
+
+``` bash
+data-dir: /var/lib/etcd/{{ inventory_hostname }}.etcd
+name: {{ inventory_hostname }}
+initial-advertise-peer-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2380
+listen-peer-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2380,http://127.0.0.1:2380
+advertise-client-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2379
+listen-client-urls: http://{{ hostvars[inventory_hostname]['ansible_facts']['eth1']['ipv4']['address'] }}:2379,http://127.0.0.1:2379
+initial-cluster-state: new
+initial-cluster: {% for host in groups['etcd'] %}{{ hostvars[host]['ansible_facts']['hostname'] }}=http://{{ hostvars[host]['ansible_facts']['eth1']['ipv4']['address'] }}:2380{% if not loop.last %},{% endif %}{% endfor %}
+```
+
+Close and save the `templates/etcd.conf.yaml.j2` file by pressing `CTRL+X` followed by `Y`.
+
+Here’s a brief explanation of each parameter:
+
+* **name** - a human-readable name for the member. By default, etcd uses a unique, randomly-generated ID to identify each member; however, a human-readable name allows us to reference it more easily inside configuration files and on the command line. Here, we will use the hostnames as the member names (i.e., **etcd1**, **etcd2**, and **etcd3**).
+
+* **initial-advertise-peer-urls** - a list of IP address/port combinations that other members can use to communicate with this member. In addition to the API port (`2379`), etcd also exposes port `2380` for peer communication between etcd members, which allows them to send messages to each other and exchange data. Note that these URLs must be reachable by its peers (and not be a local IP address).
+
+* **listen-peer-urls** - a list of IP address/port combinations where the current member will listen for communication from other members. This must include all the URLs from the **--initial-advertise-peer-urls** flag, but also local URLs like `127.0.0.1:2380`. The destination IP address/port of incoming peer messages must match one of the URLs listed here.
+
+* **advertise-client-urls** - a list of IP address/port combinations that clients should use to communicate with this member. These URLs must be reachable by the client (and not be a local address). If the client is accessing the cluster over public internet, this must be a public IP address.
+
+* **listen-client-urls** - a list of IP address/port combinations where the current member will listen for communication from clients. This must include all the URLs from the **--advertise-client-urls** flag, but also local URLs like `127.0.0.1:2379`. The destination IP address/port of incoming client messages must match one of the URLs listed here.
+
+* **initial-cluster** - a list of endpoints for each member of the cluster. Each endpoint must match one of the corresponding member’s **initial-advertise-peer-urls** URLs.
+
+* **initial-cluster-state** - either `new` or `existing`.
+
+To ensure consistency, etcd can only make decisions when a majority of the nodes are healthy. This is known as establishing **quorum**. In other words, in a three-member cluster, **quorum** is reached if two or more of the members are healthy.
+
+
+If the **initial-cluster-state** parameter is set to `new`, `etcd` will know that this is a new cluster being bootstrapped, and will allow members to start in parallel, without waiting for quorum to be reached. More concretely, after the first member is started, it will not have quorum because one third (33.33%) is less than or equal to 50%. Normally, etcd will halt and refuse to commit any more actions and the cluster will never be formed. However, with **initial-cluster-state** set to `new`, it will ignore the initial lack of quorum.
+
+If set to `existing`, the member will try to join an existing cluster, and expects quorum to already be established.
+
+> **Note**: You can find more details about all supported configuration flags in the [Configuration](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md) section of etcd’s documentation.
+
+In the updated `templates/etcd.conf.yaml.j2` template file, there are a few instances of `hostvars`. When Ansible runs, it will collect variables from a variety of sources. We have already made use of the `inventory_hostname` variable before, but there are a lot more available. These variables are available under `hostvars[inventory_hostname]['ansible_facts']`. Here, we are extracting the private IP addresses of each node and using it to construct our parameter value.
+
+> **Note**: Because we enabled the **Private Networking** option when we created our servers, each server would have three IP addresses associated with them:
+
+* A loopback IP address - an address that is only valid inside the same machine. It is used for the machine to refer to itself, e.g., `127.0.0.1`
+* A public IP address - an address that is routable over the public internet, e.g., `178.128.169.51`
+* A private IP address - an address that is routable only within the private network; in the case of DigitalOcean Droplets, there’s a private network within each datacenter, e.g., `10.131.82.225`
+
+Each of these IP addresses are associated with a different network interface—the loopback address is associated with the `lo` interface, the public IP address is associated with the `eth0` interface, and the private IP address with the `eth1` interface. We are using the `eth1` interface so that all traffic stays within the private network, without ever reaching the internet.
+
+Understanding of network interfaces is not required for this article, but if you’d like to learn more, [An Introduction to Networking Terminology, Interfaces, and Protocols](https://www.digitalocean.com/community/tutorials/an-introduction-to-networking-terminology-interfaces-and-protocols) is a great place to start.
+
+The `{% %}` Jinja2 syntax defines the `for` loop structure that iterates through every node in the `etcd` group to build up the `initial-cluster` string into a format required by etcd.
+
+**To form the new three-member cluster, you must first stop the etcd service and clear the data directory before launching the cluster. To do this, use an editor to open up the playbook.yaml file on your local machine**:
+
+``` bash
+nano $HOME/playground/etcd-ansible/playbook.yaml
+```
+
+Then, before the "Create a data directory" task, add a task to stop the etcd service:
+
+``` yaml
+- hosts: etcd
+  become: True
+  tasks:
+    ...
+        group: root
+        mode: 0644
+    - name: "Stop the etcd service"
+      command: systemctl stop etcd
+    - name: "Create a data directory"
+      file:
+    ...
+```
+
+Next, update the "Create a data directory" task to first delete the data directory and recreate it:
+
+
+``` yaml
+- hosts: etcd
+  become: True
+  tasks:
+    ...
+    - name: "Stop the etcd service"
+      command: systemctl stop etcd
+    - name: "Create a data directory"
+      file:
+        path: /var/lib/etcd/{{ inventory_hostname }}.etcd
+        state: "{{ item }}"
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - absent
+        - directory
+    - name: "Create directory for etcd configuration"
+      file:
+    ...
+```
+
+The `with_items` property defines a list of strings that this task will iterate over. It is equivalent to repeating the same task twice but with different values for the `state` property. Here, we are iterating over the list with items `absent` and `directory`, which ensures that the data directory is deleted first and then re-created after.
+
+Close and save the `playbook.yaml` file by pressing `CTRL+X` followed by `Y`. Then, run `ansible-playbook` again. Ansible will now create a single, 3-member etcd cluster:
+
+``` bash
+ansible-playbook -i hosts playbook.yaml
+```
+
+You can check this by SSH-ing into any etcd member node:
+
+``` bash
+ssh root@etcd1_public_ip
+```
+
+Then run `etcdctl endpoint health --cluster`:
+
+``` bash
+etcdctl endpoint health --cluster
+```
+
+This will list out the health of each member of the cluster:
+
+```
+http://etcd2_private_ip:2379 is healthy: successfully committed proposal: took = 2.517267ms
+http://etcd1_private_ip:2379 is healthy: successfully committed proposal: took = 2.153612ms
+http://etcd3_private_ip:2379 is healthy: successfully committed proposal: took = 2.639277ms
+```
+
+We have now successfully created a 3-node etcd cluster. We can confirm this by adding an entry to etcd on one member node, and retrieving it on another member node. On one of the member nodes, run `etcdctl put`:
+
+``` bash
+etcdctl put foo "bar"
+```
+
+Then, use a new terminal to SSH into a different member node:
+
+``` bash
+ssh root@etcd2_public_ip
+```
+
+Next, attempt to retrieve the same entry using the key:
+
+``` bash
+etcdctl get foo
+```
+
+You will be able to retrieve the entry, which proves that the cluster is working:
+
+```
+foo
+bar
+```
+
+In this step, we provisioned a new 3-node cluster. At the moment, communication between `etcd` members and their peers and clients are conducted through HTTP. **This means the communication is unencrypted and any party who can intercept the traffic can read the messages. This is not a big issue if the etcd cluster and clients are all deployed within a private network or virtual private network (VPN) which you fully control**. However, if any of the traffic needs to travel through a shared network (private or public), then you should ensure this traffic is encrypted. Furthermore, a mechanism needs to be put in place for a client or peer to verify the authenticity of the server.
+
+In the next step, we will look at how to secure client-to-server as well as peer communication using `TLS`.
+
+
+## Conclusion
+
+You have now successfully provisioned a 3-node etcd cluster, secured it with TLS, and confirmed that it is working.
+
+etcd is a tool originally created by [CoreOS](https://coreos.com/). To understand etcd’s usage in relation to CoreOS, you can read [How To Use Etcdctl and Etcd, CoreOS’s Distributed Key-Value Store](https://www.digitalocean.com/community/tutorials/how-to-use-etcdctl-and-etcd-coreos-s-distributed-key-value-store). The article also guides you through setting up a dynamic discovery model, something which was discussed but not demonstrated in this tutorial.
+
+As mentioned at the beginning of this tutorial, etcd is an important part of the Kubernetes ecosystem. To learn more about Kubernetes and etcd’s role within it, you can read [An Introduction to Kubernetes](https://www.digitalocean.com/community/tutorials/an-introduction-to-kubernetes). If you are deploying etcd as part of a Kubernetes cluster, know that there are other tools available, such as [kubespray](https://github.com/kubernetes-sigs/kubespray) and [kubeadm](https://kubernetes.io/docs/reference/setup-tools/kubeadm/). For more details on the latter, you can read [How To Create a Kubernetes Cluster Using Kubeadm on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-create-a-kubernetes-cluster-using-kubeadm-on-ubuntu-18-04).
+
+Finally, this tutorial made use of many tools, but could not dive into each in too much detail. In the following you’ll find links that will provide a more detailed examination of each tool:
+
+
+* To learn more advanced syntax of Ansible playbooks, you can read [Configuration Management 101: Writing Ansible Playbooks](https://www.digitalocean.com/community/tutorials/configuration-management-101-writing-ansible-playbooks). Ansible’s official [Intro to Playbooks](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html) is also a great resource.
+* To learn more about OpenSSL, you can read [OpenSSL Essentials: Working with SSL Certificates, Private Keys and CSRs](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs).
+
+
+
+
 # Q&A
 
 ## Running http and grpc server on single port. This is not recommended for production
@@ -2437,7 +3294,7 @@ etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产
 
 
 
-# [etcd versus other key-value stores](https://etcd.io/docs/v3.6/learning/why/)
+
 
 
 
@@ -2446,8 +3303,11 @@ etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产
 
 * https://etcd.io/docs/v3.5/
 * https://etcd.io/docs/v3.4/op-guide/performance/
+* [etcd versus other key-value stores](https://etcd.io/docs/v3.6/learning/why/)
 * [一篇文章带你搞懂 etcd 3.5 的核心特性](https://mp.weixin.qq.com/s/mhHPyCAmdbT5wXF0vBiGzQ)
-
+* [How To Set Up and Secure an etcd Cluster with Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)
+* https://github.com/kstone-io/kstone
+* [How To Use Etcdctl and Etcd, CoreOS's Distributed Key-Value Store](https://www.digitalocean.com/community/tutorials/how-to-use-etcdctl-and-etcd-coreos-s-distributed-key-value-store)
 
 
 
