@@ -3289,6 +3289,149 @@ Finally, this tutorial made use of many tools, but could not dive into each in t
 * To learn more about OpenSSL, you can read [OpenSSL Essentials: Working with SSL Certificates, Private Keys and CSRs](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs).
 
 
+![etcd_demo](/assets/images/202502/etcd_dem.png)
+
+```
+# cat /etc/etcd/etcd.conf.yaml
+data-dir: /var/lib/etcd/VM-84-53-tencentos.etcd
+
+# A cluster using static discovery
+name: VM-84-53-tencentos
+initial-advertise-peer-urls: http://9.134.84.53:2380
+listen-peer-urls: http://9.134.84.53:2380,http://127.0.0.1:2380
+advertise-client-urls: http://9.134.84.53:2379
+listen-client-urls: http://9.134.84.53:2379,http://127.0.0.1:2379
+initial-cluster-state: new
+initial-cluster: VM-129-173-tencentos=http://9.134.129.173:2380,VM-84-53-tencentos=http://9.134.84.53:2380,VM-11-48-centos=http://9.135.11.48:2380
+```
+
+
+# Tips
+
+## setup 模块用于收集远程主机的事实信息
+
+例如，想查看主机的操作系统信息，`filter=ansible_os_family` 表示只显示 `ansible_os_family` 这个字段的信息。
+
+``` bash
+$ ansible server1 -m setup -a 'filter=ansible_os_family' -i hosts
+```
+
+输出：
+
+```
+server1 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_os_family": "RedHat",
+        "discovered_interpreter_python": "/usr/bin/python3.12"
+    },
+    "changed": false
+}
+```
+
+也可以使用通配符来匹配多个字段。例如，想查看所有以 `ansible_eth` 开头的网络接口信息，`filter=ansible_eth*` 表示显示所有以 `ansible_eth` 开头的字段的信息。
+
+``` bash
+$ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
+```
+
+输出：
+
+```
+server2 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_eth0": {
+            "active": true,
+            "device": "eth0",
+            "features": {
+                "fcoe_mtu": "off [fixed]",
+                "generic_receive_offload": "on",
+                "generic_segmentation_offload": "on",
+                "highdma": "on",
+                "large_receive_offload": "off [fixed]",
+                "loopback": "off [fixed]",
+                "netns_local": "off [fixed]",
+                "ntuple_filters": "off [fixed]",
+                "receive_hashing": "off [fixed]",
+                "rx_all": "off [fixed]",
+                "rx_checksumming": "on",
+                "rx_fcs": "off [fixed]",
+                "rx_vlan_filter": "off [fixed]",
+                "rx_vlan_offload": "on",
+                "rx_vlan_stag_filter": "off [fixed]",
+                "rx_vlan_stag_hw_parse": "on",
+                "scatter_gather": "on",
+                "tcp_segmentation_offload": "on",
+                "tx_checksum_fcoe_crc": "off [fixed]",
+                "tx_checksum_ip_generic": "on",
+                "tx_checksum_ipv4": "off [fixed]",
+                "tx_checksum_ipv6": "off [fixed]",
+                "tx_checksum_sctp": "off [fixed]",
+                "tx_checksumming": "on",
+                "tx_fcoe_segmentation": "off [fixed]",
+                "tx_gre_segmentation": "off [fixed]",
+                "tx_gso_robust": "off [fixed]",
+                "tx_lockless": "on [fixed]",
+                "tx_nocache_copy": "on",
+                "tx_scatter_gather": "on",
+                "tx_scatter_gather_fraglist": "on",
+                "tx_tcp6_segmentation": "on",
+                "tx_tcp_ecn_segmentation": "on",
+                "tx_tcp_segmentation": "on",
+                "tx_udp_tnl_segmentation": "off [fixed]",
+                "tx_vlan_offload": "on",
+                "tx_vlan_stag_hw_insert": "on",
+                "udp_fragmentation_offload": "off [fixed]",
+                "vlan_challenged": "off [fixed]"
+            },
+            "hw_timestamp_filters": [],
+            "ipv4": {
+                "address": "9.135.18.186",
+                "broadcast": "9.135.18.186",
+                "netmask": "255.255.255.255",
+                "network": "9.135.18.186",
+                "prefix": "32"
+            },
+            "macaddress": "92:79:2c:6e:36:6b",
+            "mtu": 1500,
+            "promisc": false,
+            "speed": 10000,
+            "timestamping": [
+                "rx_software",
+                "software"
+            ],
+            "type": "ether"
+        },
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false
+}
+```
+
+## 查看 cluster leader 信息
+
+``` bash
+etcdctl endpoint status --write-out=table
+```
+
+这将返回一个表格，其中包含每个成员的ID、名称、版本、数据库大小、是否是 leader、raft term、raft index 等信息。在 "IS LEADER" 列中，可以看到哪个实例是当前的 leader。
+
+还可以通过查看每个成员的 "RAFT TERM" 和 "RAFT INDEX" 来推测哪个实例可能是 leader。通常，具有最高 raft term 和 raft index 的实例是 leader。
+
+![etcd1](/assets/images/202502/etcd1.png)
+
+![etcd2](/assets/images/202502/etcd2.png)
+
+![etcd3](/assets/images/202502/etcd3.png)
+
+
+
+## 查看 cluster 的成员信息
+
+``` bash
+etcdctl member list
+```
+
+![etcd0](/assets/images/202502/etcd0.png)
 
 
 # Q&A
@@ -3297,11 +3440,15 @@ Finally, this tutorial made use of many tools, but could not dive into each in t
 
 etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产环境中，这种配置并不推荐，因为它可能会导致性能问题或者其他潜在的问题。etcd 默认使用 gRPC 进行通信，但是它也提供了一个 HTTP API 以便于向后兼容。在生产环境中，通常建议将 HTTP 和 gRPC 服务分别运行在不同的端口上，以便于管理和监控。
 
+## The error was: ansible.errors.AnsibleUndefinedVariable: 'dict object' has no attribute 'eth1'
 
+[AnsibleUndefinedVariable: 'dict object' has no attribute](https://groups.google.com/g/ansible-project/c/ww4iv1NyxXQ/m/HEdZvNBEDAAJ)
 
+查看所有以 `ansible_eth` 开头的网络接口信息：
 
-
-
+``` bash
+$ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
+```
 
 
 
