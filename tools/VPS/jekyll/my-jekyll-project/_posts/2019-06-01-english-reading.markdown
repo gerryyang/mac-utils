@@ -10,6 +10,20 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* mimic
+    + V-T If you **mimic** the actions or voice of a person or animal, you imitate them, usually in a way that is meant to be amusing or entertaining. 模仿
+
+> He could mimic anybody, and he often reduced Isabel to helpless laughter. 他可以模仿任何人，而且经常逗得伊莎贝尔情不自禁地大笑。
+
+    + V-T If someone or something mimics another person or thing, they try to be like them. 模仿
+
+> The computer doesn't mimic human thought; it reaches the same ends by different means. 计算机模仿不了人类的思维；它通过不同的方式达到相同的目的。
+
+    + N-COUNTA mimic is a person who is able to mimic people or animals. 善于模仿的人
+
+> At school I was a good mimic. 上学时我是一个善于模仿的人。
+
+
 * inevitably /ɪnˈevɪtəbli/
     + ADV If something will **inevitably** happen, it is certain to happen and cannot be prevented or avoided. 必然发生地
 
