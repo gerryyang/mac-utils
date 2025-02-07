@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Deepseek in Action"
+title:  "DeepSeek in Action"
 date:   2025-02-07 12:00:00 +0800
 categories: 机器学习
 ---
@@ -13,11 +13,11 @@ categories: 机器学习
 [DeepSeek](https://github.com/deepseek-ai) 是由深度求索公司推出的大语言模型。其中：
 
 * `DeepSeek-V3` 是在14.8万亿高质量 token 上完成预训练的一个强大的**混合专家 (MoE) 语言模型**，拥有**6710亿参数**。作为通用大语言模型，其在知识问答、内容生成、智能客服等领域表现出色。
-* `DeepSeek-R1` 是基于 DeepSeek-V3-Base 训练生成的高性能推理模型，在数学、代码生成和逻辑推断等复杂推理任务上表现优异。
-* `DeepSeek-R1-Distill` 是使用 DeepSeek-R1 生成的样本对开源模型进行有**监督微调（SFT）**得到的小模型，即**蒸馏模型**。拥有更小参数规模，推理成本更低，基准测试同样表现出色。
+* `DeepSeek-R1` 是基于 `DeepSeek-V3-Base` 训练生成的高性能推理模型，在数学、代码生成和逻辑推断等复杂推理任务上表现优异。
+* `DeepSeek-R1-Distill` 是使用 `DeepSeek-R1` 生成的样本对开源模型进行有**监督微调（SFT）**得到的小模型，即**蒸馏模型**。拥有更小参数规模，推理成本更低，基准测试同样表现出色。
 
 
-DeepSeek-V3 在推理速度上相较历史模型有了大幅提升。在目前大模型主流榜单中，DeepSeek-V3 在开源模型中位列榜首，与世界上最先进的闭源模型不分伯仲。论文：https://github.com/deepseek-ai/DeepSeek-R1/blob/main/DeepSeek_R1.pdf
+`DeepSeek-V3` 在推理速度上相较历史模型有了大幅提升。在目前大模型主流榜单中，`DeepSeek-V3` 在开源模型中位列榜首，与世界上最先进的闭源模型不分伯仲。论文：https://github.com/deepseek-ai/DeepSeek-R1/blob/main/DeepSeek_R1.pdf
 
 ![deepseek0](/assets/images/202502/deepseek0.png)
 
@@ -25,11 +25,11 @@ DeepSeek-V3 在推理速度上相较历史模型有了大幅提升。在目前�
 
 We introduce our first-generation reasoning models, `DeepSeek-R1-Zero` and `DeepSeek-R1`. `DeepSeek-R1-Zero`, a model trained via large-scale **reinforcement learning** (`RL`) without **supervised fine-tuning** (`SFT`) as a preliminary step, **demonstrated remarkable performance on reasoning**. With `RL`, `DeepSeek-R1-Zero` naturally emerged with numerous powerful and interesting reasoning behaviors. However, `DeepSeek-R1-Zero` **encounters challenges such as endless repetition, poor readability, and language mixing**. To address these issues and further enhance reasoning performance, we introduce `DeepSeek-R1`, which incorporates cold-start data before `RL`. `DeepSeek-R1` achieves performance comparable to `OpenAI-o1` across **math**, **code**, and **reasoning tasks**. To support the research community, we have open-sourced `DeepSeek-R1-Zero`, `DeepSeek-R1`, and six dense models **distilled** from `DeepSeek-R1` based on `Llama` and `Qwen`. `DeepSeek-R1-Distill-Qwen-32B` outperforms `OpenAI-o1-mini` across various benchmarks, achieving new state-of-the-art results for dense models.
 
-DeepSeek-R1-Zero是一个通过大规模强化学习（RL）训练的模型，没有进行监督微调（SFT）作为预备步骤。这个模型在推理方面表现出了显著的性能。通过RL，DeepSeek-R1-Zero自然地展现出了许多强大且有趣的推理行为。然而，DeepSeek-R1-Zero也遇到了一些挑战，如无尽的重复、可读性差和语言混淆等问题。
+`DeepSeek-R1-Zero` 是一个通过大规模强化学习（RL）训练的模型，没有进行监督微调（SFT）作为预备步骤。这个模型在推理方面表现出了显著的性能。通过RL，`DeepSeek-R1-Zero` 自然地展现出了许多强大且有趣的推理行为。然而，`DeepSeek-R1-Zero` 也遇到了一些挑战，如无尽的重复、可读性差和语言混淆等问题。
 
-为了解决这些问题并进一步提高推理性能，他们引入了DeepSeek-R1，这个模型在RL之前引入了冷启动数据。DeepSeek-R1在数学、编码和推理任务上的性能与OpenAI-o1相当。
+为了解决这些问题并进一步提高推理性能，他们引入了 `DeepSeek-R1`，这个模型在RL之前引入了冷启动数据。`DeepSeek-R1` 在数学、编码和推理任务上的性能与 `OpenAI-o1` 相当。
 
-为了支持研究社区，他们已经开源了DeepSeek-R1-Zero、DeepSeek-R1以及从DeepSeek-R1中提炼出的六个基于Llama和Qwen的密集模型。其中，DeepSeek-R1-Distill-Qwen-32B在各种基准测试中的表现超过了OpenAI-o1-mini，为密集模型创造了新的最佳结果。
+为了支持研究社区，他们已经开源了 `DeepSeek-R1-Zero`、`DeepSeek-R1` 以及从 `DeepSeek-R1` 中提炼出的六个基于 `Llama` 和 `Qwen` 的密集模型。其中，`DeepSeek-R1-Distill-Qwen-32B` 在各种基准测试中的表现超过了 `OpenAI-o1-mini`，为密集模型创造了新的最佳结果。
 
 > **NOTE**: Before running DeepSeek-R1 series models locally, we kindly recommend reviewing the **Usage Recommendation** section.
 
@@ -73,11 +73,11 @@ Please visit [DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3) repo for 
 
 We present `DeepSeek-V3`, a strong **Mixture-of-Experts** (`MoE`) language model with `671B` total parameters with `37B` activated for each token. To achieve efficient inference and cost-effective training, `DeepSeek-V3` adopts **Multi-head Latent Attention** (`MLA`) and DeepSeekMoE architectures, which were thoroughly validated in `DeepSeek-V2`. Furthermore, `DeepSeek-V3` pioneers an auxiliary-loss-free strategy for load balancing and sets a multi-token prediction training objective for stronger performance. We pre-train `DeepSeek-V3` on **14.8 trillion diverse and high-quality tokens**, followed by Supervised Fine-Tuning and Reinforcement Learning stages to fully harness its capabilities. Comprehensive evaluations reveal that `DeepSeek-V3` outperforms other open-source models and achieves performance comparable to leading closed-source models. Despite its excellent performance, `DeepSeek-V3` requires only **2.788M H800 GPU hours** for its full training. In addition, its training process is remarkably stable. Throughout the entire training process, we did not experience any irrecoverable loss spikes or perform any rollbacks.
 
-DeepSeek-V3，这是一个强大的专家混合（Mixture-of-Experts，MoE）语言模型，总共有671B（即6710亿）个参数，每个标记（token）激活了37B（即370亿）个参数。为了实现高效的推理和经济有效的训练，DeepSeek-V3采用了多头潜在注意力（Multi-head Latent Attention，MLA）和DeepSeekMoE架构，这些都在DeepSeek-V2中得到了充分的验证。
+`DeepSeek-V3` 是一个强大的专家混合（Mixture-of-Experts，MoE）语言模型，总共有671B（即6710亿）个参数，每个标记（token）激活了37B（即370亿）个参数。为了实现高效的推理和经济有效的训练，`DeepSeek-V3` 采用了多头潜在注意力（Multi-head Latent Attention，MLA）和DeepSeekMoE架构，这些都在 `DeepSeek-V2` 中得到了充分的验证。
 
-此外，DeepSeek-V3首次引入了一个无辅助损失的策略进行负载均衡，并设定了一个多标记预测训练目标以提高性能。我们在14.8万亿个多样化和高质量的标记上预训练了DeepSeek-V3，然后进行了监督微调和强化学习阶段，以充分发挥其能力。
+此外，`DeepSeek-V3` 首次引入了一个无辅助损失的策略进行负载均衡，并设定了一个多标记预测训练目标以提高性能。我们在14.8万亿个多样化和高质量的标记上预训练了 `DeepSeek-V3`，然后进行了监督微调和强化学习阶段，以充分发挥其能力。
 
-全面的评估显示，DeepSeek-V3的性能超过了其他开源模型，并与领先的闭源模型相当。尽管DeepSeek-V3的性能出色，但其完全训练只需要2.788M H800 GPU小时。此外，其训练过程非常稳定。在整个训练过程中，我们没有遇到任何无法恢复的损失峰值，也没有进行任何回滚操作。
+全面的评估显示，`DeepSeek-V3` 的性能超过了其他开源模型，并与领先的闭源模型相当。尽管 `DeepSeek-V3` 的性能出色，但其完全训练只需要2.788M H800 GPU小时。此外，其训练过程非常稳定。在整个训练过程中，我们没有遇到任何无法恢复的损失峰值，也没有进行任何回滚操作。
 
 
 ![deepseek_compare2](/assets/images/202502/deepseek_compare2.png)
