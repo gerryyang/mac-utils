@@ -10,47 +10,74 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* diverse /daɪˈvɜːs/
+    + **ADJ** If a group of things is **diverse**, it is made up of a wide variety of things. 各种各样的
+      - The building houses a wide and diverse variety of antiques. 这栋楼里摆放着大量各式各样的古董。
+    + **ADJ** Diverse people or things are very different from each other. 不同的
+
+
+* auxiliary /ɔːɡˈzɪliəri/
+    + **ADJ** **Auxiliary** equipment is extra equipment that is available for use when necessary. 备用的
+    + **ADJ** **Auxiliary** staff and troops assist other staff and troops. 后备的
+    + **N-COUNT** An **auxiliary** is a person who is employed to assist other people in their work. Auxiliaries are often medical workers or members of the armed forces. 助手
+
+* pioneers /ˌpaɪəˈnɪəs/
+    + **N-COUNT** Someone who is referred to as a **pioneer** in a particular area of activity is one of the first people to be involved in it and develop it. 先驱
+    + **V-T** Someone who **pioneers** a new activity, invention, or process is one of the first people to do it. 倡导
+
+
+* incoherent /ˌɪnkəʊˈhɪərənt/
+    + **ADJ** If someone is **incoherent**, they are talking in a confused and unclear way. 语无伦次的
+      - The man was almost incoherent with fear. 那人几乎害怕得说话语无伦次。
+    + **ADJ** If you say that something such as a policy is incoherent, you are criticizing it because the different parts of it do not fit together properly. 不连贯的
+
+
+* distil /dɪˈstɪl/
+    + **V-T** If a liquid such as whisky or water is **distilled**, it is heated until it changes into steam or vapour and then cooled until it becomes liquid again. This is usually done in order to make it pure. 蒸馏
+      - The whisky had been **distilled** in 1926 and sat quietly maturing until 1987. 这瓶威士忌是1926年被蒸馏的，存放至1987年酿造成熟。
+    + **N-UNCOUNT** 蒸馏
+      - Any faults in the original cider stood out sharply after **distillation**. 苹果酒原浆中的任何瑕疵蒸馏后就会突现出来。
+    + **V-T** If an oil or liquid is distilled from a plant, it is produced by a process which extracts the most essential part of the plant. To distil a plant means to produce an oil or liquid from it by this process. 提炼
+      - The oil is **distilled** from the berries of this small tree. 这种油是从这种小树的浆果中提炼的。
+
+
+* preliminary /prɪˈlɪmɪnəri/
+    + **ADJ** **Preliminary** activities or discussions take place at the beginning of an event, often as a form of preparation. 初步的
+      - Preliminary results show the Republican Party with 11 percent of the vote. 初步结果显示共和党得到11%的选票。
+    + **N-COUNT** A **preliminary** is something that you do at the beginning of an activity, often as a form of preparation. (程序性或礼节性的) 预备事务
+      - You all know why I am here. So I won't waste time on preliminaries. 你们都知道我为什么在这里。所以我就不浪费时间讲客套话了。
+
+
 * mimic
-    + V-T If you **mimic** the actions or voice of a person or animal, you imitate them, usually in a way that is meant to be amusing or entertaining. 模仿
+    + **V-T** If you **mimic** the actions or voice of a person or animal, you imitate them, usually in a way that is meant to be amusing or entertaining. 模仿
+      - He could mimic anybody, and he often reduced Isabel to helpless laughter. 他可以模仿任何人，而且经常逗得伊莎贝尔情不自禁地大笑。
+    + **V-T** If someone or something **mimics** another person or thing, they try to be like them. 模仿
+      - The computer doesn't mimic human thought; it reaches the same ends by different means. 计算机模仿不了人类的思维；它通过不同的方式达到相同的目的。
+    + **N-COUNTA** **mimic** is a person who is able to mimic people or animals. 善于模仿的人
+      - At school I was a good mimic. 上学时我是一个善于模仿的人。
 
-> He could mimic anybody, and he often reduced Isabel to helpless laughter. 他可以模仿任何人，而且经常逗得伊莎贝尔情不自禁地大笑。
-
-    + V-T If someone or something mimics another person or thing, they try to be like them. 模仿
-
-> The computer doesn't mimic human thought; it reaches the same ends by different means. 计算机模仿不了人类的思维；它通过不同的方式达到相同的目的。
-
-    + N-COUNTA mimic is a person who is able to mimic people or animals. 善于模仿的人
-
-> At school I was a good mimic. 上学时我是一个善于模仿的人。
 
 
 * inevitably /ɪnˈevɪtəbli/
-    + ADV If something will **inevitably** happen, it is certain to happen and cannot be prevented or avoided. 必然发生地
-
-> Technological changes will inevitably lead to unemployment. 技术变革将必然导致失业。
+    + **ADV** If something will **inevitably** happen, it is certain to happen and cannot be prevented or avoided. 必然发生地
+      - Technological changes will inevitably lead to unemployment. 技术变革将必然导致失业。
 
 * quota
-    + A quota is the limited number or quantity of something which is officially allowed. 限额
+    + A **quota** is the limited number or quantity of something which is officially allowed. 限额
+      - The quota of four tickets per person had been reduced to two. 每人4张票的限额已减少到了2张。
+    + A **quota** is a fixed maximum or minimum proportion of people from a particular group who are allowed to do something, such as come and live in a country or work for the government. 配额
+      - The bill would force employers to adopt a quota system when recruiting workers. 该法案将迫使雇主们在录用工人时采取配额制。
 
-> The quota of four tickets per person had been reduced to two. 每人4张票的限额已减少到了2张。
-
-    + A quota is a fixed maximum or minimum proportion of people from a particular group who are allowed to do something, such as come and live in a country or work for the government. 配额
-
-> The bill would force employers to adopt a quota system when recruiting workers. 该法案将迫使雇主们在录用工人时采取配额制。
 
 
 * advertise
     + If you advertise something such as a product, an event, or a job, you tell people about it in newspapers, on television, or on posters in order to encourage them to buy the product, go to the event, or apply for the job. 为 ... 做广告; 做广告
-
-> The company is spending heavily to advertise its strongest brands. 该公司在花重金为其最强势的品牌做广告。
-
+      - The company is spending heavily to advertise its strongest brands. 该公司在花重金为其最强势的品牌做广告。
     + If you advertise for someone to do something for you, for example, to work for you or share your accommodation, you announce it in a newspaper, on television, or on a bulletin board. 登广告 (寻求职员、合住者等)
+      - We advertised for staff in a local newspaper. 我们在一份地方报纸上登了广告招聘员工。
+    + If you do not advertise the fact that something is the case, you try not to let other people know about it. 宣传
+      - There is no need to advertise the fact that you are a single woman. 没必要宣传你是个单身女性这一事实。
 
-> We advertised for staff in a local newspaper. 我们在一份地方报纸上登了广告招聘员工。
-
-    + TIf you do not advertise the fact that something is the case, you try not to let other people know about it. 宣传
-
-> There is no need to advertise the fact that you are a single woman. 没必要宣传你是个单身女性这一事实。
 
 
 * evergreen
@@ -59,8 +86,7 @@ categories: 英语学习
 
 * adversity /ədˈvɜːsɪtɪ/
     + **Adversity** is a very difficult or unfavourable situation. 困境; 逆境
-
-> He showed courage in adversity. 他在逆境中显示出了勇气。
+      - He showed courage in adversity. 他在逆境中显示出了勇气。
 
 * breakthrough
     + A **breakthrough** is an important development or achievement. 突破
@@ -123,8 +149,8 @@ categories: 英语学习
     + A **spurious** argument or way of reasoning is incorrect, and so the conclusion is probably incorrect. (论据、推理) 不正确的
 
 * cryptic /ˈkrɪptɪk/
-    + ADJ A cryptic remark or message contains a hidden meaning or is difficult to understand. 隐晦的
-    + ADV "Not necessarily," she says cryptically. “不一定，”她神秘地说道。
+    + **ADJ** A cryptic remark or message contains a hidden meaning or is difficult to understand. 隐晦的
+    + **ADV** "Not necessarily," she says cryptically. “不一定，”她神秘地说道。
 
 
 
