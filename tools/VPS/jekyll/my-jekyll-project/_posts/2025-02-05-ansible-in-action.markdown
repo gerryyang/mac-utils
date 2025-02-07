@@ -321,6 +321,128 @@ Once you’ve confirmed you’re able to connect and control your infrastructure
 
 For more information on how to use Ansible, check out our [Ansible Cheat Sheet Guide](https://www.digitalocean.com/community/cheatsheets/how-to-use-ansible-cheat-sheet-guide).
 
+# Tips
+
+## [Interpreter Discovery](https://docs.ansible.com/ansible-core/2.16/reference_appendices/interpreter_discovery.html)
+
+Most Ansible modules that execute under a POSIX environment require a Python interpreter on the target host. Unless configured otherwise, Ansible will attempt to discover a suitable Python interpreter on each target host the first time a Python module is executed for that host.
+
+To control the discovery behavior:
+
+* for individual hosts and groups, use the `ansible_python_interpreter` inventory variable
+* globally, use the `interpreter_python` key in the `[defaults]` section of `ansible.cfg`
+
+
+![ansible10](/assets/images/202502/ansible10.png)
+
+
+You can still set `ansible_python_interpreter` to a specific path at any variable level (for example, in host_vars, in vars files, in playbooks, and so on). **Setting a specific path completely disables automatic interpreter discovery; Ansible always uses the path specified**.
+
+
+
+```
+[root /etc/ansible 15:02:12]$ ls
+ansible.cfg  hosts  roles
+```
+
+## setup 模块用于收集远程主机的信息
+
+例如，想查看主机的操作系统信息，`filter=ansible_os_family` 表示只显示 `ansible_os_family` 这个字段的信息。
+
+``` bash
+$ ansible server1 -m setup -a 'filter=ansible_os_family' -i hosts
+```
+
+输出：
+
+```
+server1 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_os_family": "RedHat",
+        "discovered_interpreter_python": "/usr/bin/python3.12"
+    },
+    "changed": false
+}
+```
+
+也可以使用通配符来匹配多个字段。例如，想查看所有以 `ansible_eth` 开头的网络接口信息，`filter=ansible_eth*` 表示显示所有以 `ansible_eth` 开头的字段的信息。
+
+``` bash
+$ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
+```
+
+输出：
+
+```
+server2 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_eth0": {
+            "active": true,
+            "device": "eth0",
+            "features": {
+                "fcoe_mtu": "off [fixed]",
+                "generic_receive_offload": "on",
+                "generic_segmentation_offload": "on",
+                "highdma": "on",
+                "large_receive_offload": "off [fixed]",
+                "loopback": "off [fixed]",
+                "netns_local": "off [fixed]",
+                "ntuple_filters": "off [fixed]",
+                "receive_hashing": "off [fixed]",
+                "rx_all": "off [fixed]",
+                "rx_checksumming": "on",
+                "rx_fcs": "off [fixed]",
+                "rx_vlan_filter": "off [fixed]",
+                "rx_vlan_offload": "on",
+                "rx_vlan_stag_filter": "off [fixed]",
+                "rx_vlan_stag_hw_parse": "on",
+                "scatter_gather": "on",
+                "tcp_segmentation_offload": "on",
+                "tx_checksum_fcoe_crc": "off [fixed]",
+                "tx_checksum_ip_generic": "on",
+                "tx_checksum_ipv4": "off [fixed]",
+                "tx_checksum_ipv6": "off [fixed]",
+                "tx_checksum_sctp": "off [fixed]",
+                "tx_checksumming": "on",
+                "tx_fcoe_segmentation": "off [fixed]",
+                "tx_gre_segmentation": "off [fixed]",
+                "tx_gso_robust": "off [fixed]",
+                "tx_lockless": "on [fixed]",
+                "tx_nocache_copy": "on",
+                "tx_scatter_gather": "on",
+                "tx_scatter_gather_fraglist": "on",
+                "tx_tcp6_segmentation": "on",
+                "tx_tcp_ecn_segmentation": "on",
+                "tx_tcp_segmentation": "on",
+                "tx_udp_tnl_segmentation": "off [fixed]",
+                "tx_vlan_offload": "on",
+                "tx_vlan_stag_hw_insert": "on",
+                "udp_fragmentation_offload": "off [fixed]",
+                "vlan_challenged": "off [fixed]"
+            },
+            "hw_timestamp_filters": [],
+            "ipv4": {
+                "address": "9.135.18.186",
+                "broadcast": "9.135.18.186",
+                "netmask": "255.255.255.255",
+                "network": "9.135.18.186",
+                "prefix": "32"
+            },
+            "macaddress": "92:79:2c:6e:36:6b",
+            "mtu": 1500,
+            "promisc": false,
+            "speed": 10000,
+            "timestamping": [
+                "rx_software",
+                "software"
+            ],
+            "type": "ether"
+        },
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false
+}
+```
 
 
 # Refer

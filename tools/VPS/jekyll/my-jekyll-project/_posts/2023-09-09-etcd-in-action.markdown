@@ -1714,6 +1714,38 @@ Interpret 'auto-Compaction-retention' one of: periodic|revision.
 
 # Tools
 
+
+## WAL 工具 [etcd-dump-logs](https://github.com/etcd-io/etcd/blob/main/tools/etcd-dump-logs/README.md)
+
+etcd-dump-logs dumps the log from data directory.
+
+Install the tool by running the following command from the etcd source directory.
+
+``` bash
+$ go install -v ./tools/etcd-dump-logs
+```
+
+The installation will place executables in the `$GOPATH/bin`. If `$GOPATH` environment variable is not set, the tool will be installed into the `$HOME/go/bin`. You can also find out the installed location by running the following command from the etcd source directory. Make sure that `$PATH` is set accordingly in your environment.
+
+``` bash
+$ go list -f "{{.Target}}" ./tools/etcd-dump-logs
+```
+
+Alternatively, instead of installing the tool, you can use it by simply running the following command from the etcd source directory.
+
+``` bash
+$ go run ./tools/etcd-dump-logs
+```
+
+测试：
+
+```
+$ etcd-dump-logs /var/lib/etcd/VM-129-173-tencentos.etcd | grep foo
+   2             9      norm    header:<ID:16477145849607075335 > put:<key:"foo" value:"bar" >
+   2            10      norm    header:<ID:16477145849607075337 > put:<key:"foo" value:"bar2" >
+```
+
+
 ## 进程管理工具 [goreman](https://github.com/mattn/goreman)
 
 
@@ -1820,6 +1852,58 @@ Lightweight Kubernetes. Production ready, easy to install, half the memory, all 
 ## [kine](https://github.com/k3s-io/kine)
 
 Kine as a datastore shim that allows etcd to be replaced with other databases.
+
+
+# [The Raft Consensus Algorithm](https://raft.github.io/)
+
+## Quick Links
+
+* [Raft paper](https://raft.github.io/raft.pdf)
+* [raft-dev mailing list](https://groups.google.com/forum/#!forum/raft-dev)
+* [Raft implementations](https://raft.github.io/#implementations)
+
+
+## What is Raft?
+
+Raft is a consensus algorithm that is designed to be easy to understand. It's equivalent to Paxos in fault-tolerance and performance. The difference is that it's decomposed into relatively independent subproblems, and it cleanly addresses all major pieces needed for practical systems. We hope Raft will make consensus available to a wider audience, and that this wider audience will be able to develop a variety of higher quality consensus-based systems than are available today.
+
+
+## Hold on—what is consensus?
+
+![raft](/assets/images/202502/raft.png)
+
+
+## Raft Visualization
+
+https://raft.github.io/raftscope/index.html
+
+Here's a Raft cluster running in your browser. You can interact with it to see Raft in action. Five servers are shown on the left, and their logs are shown on the right. We hope to create a screencast soon to explain what's going on. This visualization (RaftScope) is still pretty rough around the edges; pull requests would be very welcome.
+
+![raft2](/assets/images/202502/raft2.png)
+
+![raft3](/assets/images/202502/raft3.png)
+
+![raft4](/assets/images/202502/raft4.png)
+
+## Publications
+
+This is "the Raft paper", which describes Raft in detail: [In Search of an Understandable Consensus Algorithm (Extended Version)](https://raft.github.io/raft.pdf) by [Diego Ongaro](https://twitter.com/ongardie) and [John Ousterhout](https://www.stanford.edu/~ouster/). A slightly shorter version of this paper received a Best Paper Award at the 2014 USENIX Annual Technical Conference.
+
+Diego Ongaro's [Ph.D. dissertation](https://github.com/ongardie/dissertation#readme) expands on the content of the paper in much more detail, and it includes a simpler cluster membership change algorithm. The dissertation also includes a formal specification of Raft written in TLA+; a slightly updated version of that specification is [here](https://github.com/ongardie/raft.tla).
+
+## Talks
+
+These talks serve as good introductions to Raft:
+
+* Talk on Raft at CS@Illinois Distinguished Lecture Series by John Ousterhout, August 2016: Video [YouTube](https://youtu.be/vYp4LYbnnW8) Slides [PDF](https://raft.github.io/slides/uiuc2016.pdf) with [RaftScope visualization](https://raft.github.io/raftscope/index.html)
+
+* Talk on Raft at Build Stuff 2015 by Diego Ongaro, November 2015: Video [InfoQ](https://www.infoq.com/presentations/raft-consensus-algorithm) Slides	[HTML](https://ongardie.github.io/raft-talk-archive/2015/buildstuff/#/) [PDF](https://raft.github.io/slides/buildstuff2015.pdf) with [RaftScope visualization](https://ongardie.github.io/raft-talk-archive/2015/buildstuff/raftscope-replay/)
+
+
+## Where can I get Raft?
+
+There are many implementations of Raft available in various stages of development. This table lists the implementations we know about with source code available. The most popular and/or recently updated implementations are towards the top. This information will inevitably get out of date; please submit a [pull request](https://github.com/raft/raft.github.io) or an issue to update it.
+
 
 
 
@@ -2456,21 +2540,6 @@ We encourage running the benchmark test when setting up an etcd cluster for the 
 总之，当在新环境中首次设置 etcd 集群时，运行基准测试可以帮助您确保集群具有足够的性能。这将能够在投入生产环境之前发现和解决潜在的性能问题，从而确保应用程序能够正常运行。
 
 
-# 运维
-
-在基于物理机和虚拟机的部署方案中，推荐你使用 ansible、puppet 等自动运维工具，构建标准、自动化的 etcd 集群搭建、扩缩容流程。基于 ansible 部署 etcd 集群可以拆分成以下若干个任务:
-
-* 下载及安装 etcd 二进制到指定目录
-* 将 etcd 加入 systemd 等服务管理
-* 为 etcd 增加配置文件，合理设置相关参数
-* 为 etcd 集群各个节点生成相关证书，构建一个安全的集群
-* 组建集群版（静态配置、动态配置，发现集群其他节点）
-* 开启 etcd 服务，启动 etcd 集群
-
-
-详细可以参考 [digitalocean 这篇博客文章](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)，它介绍了如何使用 ansible 去部署一个安全的 etcd 集群，并给出了对应的 yaml 任务文件。
-
-
 
 # 腾讯云第三方服务 (腾讯云云原生 etcd)
 
@@ -2507,6 +2576,19 @@ etcd 是一个分布式、高可靠的键值存储，可以容忍集群中部分
 
 
 # [How To Set Up and Secure an etcd Cluster with Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)
+
+
+在基于物理机和虚拟机的部署方案中，推荐你使用 ansible、puppet 等自动运维工具，构建标准、自动化的 etcd 集群搭建、扩缩容流程。基于 ansible 部署 etcd 集群可以拆分成以下若干个任务:
+
+* 下载及安装 etcd 二进制到指定目录
+* 将 etcd 加入 systemd 等服务管理
+* 为 etcd 增加配置文件，合理设置相关参数
+* 为 etcd 集群各个节点生成相关证书，构建一个安全的集群
+* 组建集群版（静态配置、动态配置，发现集群其他节点）
+* 开启 etcd 服务，启动 etcd 集群
+
+详细可以参考 [digitalocean 这篇博客文章](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)，它介绍了如何使用 ansible 去部署一个安全的 etcd 集群，并给出了对应的 yaml 任务文件。
+
 
 The first half of this article will guide you through setting up a 3-node etcd cluster on Ubuntu 18.04 servers. The second half will focus on securing the cluster using [Transport Layer Security, or TLS](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs). To run each setup in an automated manner, we will use [Ansible](https://www.digitalocean.com/community/conceptual-articles/an-introduction-to-configuration-management-with-ansible) throughout. Ansible is a configuration management tool similar to [Puppet](https://puppet.com/), [Chef](https://www.chef.io/), and [SaltStack](https://www.saltstack.com/); it allows us to define each setup step in a declarative manner, inside files called **playbooks**.
 
@@ -3289,7 +3371,7 @@ Finally, this tutorial made use of many tools, but could not dive into each in t
 * To learn more about OpenSSL, you can read [OpenSSL Essentials: Working with SSL Certificates, Private Keys and CSRs](https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs).
 
 
-![etcd_demo](/assets/images/202502/etcd_dem.png)
+![etcd_demo](/assets/images/202502/etcd_demo.png)
 
 ```
 # cat /etc/etcd/etcd.conf.yaml
@@ -3306,106 +3388,140 @@ initial-cluster: VM-129-173-tencentos=http://9.134.129.173:2380,VM-84-53-tencent
 ```
 
 
+
+# 测试用例
+
+## etcdctl
+
+``` bash
+#!/bin/bash
+
+# enable xtrace
+set -x
+
+ENDPOINT=localhost:2379
+
+# test write
+echo "Writing data to etcd..."
+etcdctl --endpoints=$ENDPOINT put foo bar
+
+# test read
+echo "Reading data from etcd..."
+etcdctl --endpoints=$ENDPOINT get foo
+
+# test list
+echo "Listing all keys in etcd..."
+etcdctl --endpoints=$ENDPOINT get "" --prefix=true
+
+# test delete
+echo "Deleting data from etcd..."
+etcdctl --endpoints=$ENDPOINT del foo
+
+# test list after delete
+echo "Listing all keys in etcd after deletion..."
+etcdctl --endpoints=$ENDPOINT get "" --prefix=true
+
+# close xtrace
+# set +x
+```
+
+输出：
+
+```
++ ENDPOINT=localhost:2379
++ echo 'Writing data to etcd...'
+Writing data to etcd...
++ etcdctl --endpoints=localhost:2379 put foo bar
+OK
++ echo 'Reading data from etcd...'
+Reading data from etcd...
++ etcdctl --endpoints=localhost:2379 get foo
+foo
+bar
++ echo 'Listing all keys in etcd...'
+Listing all keys in etcd...
++ etcdctl --endpoints=localhost:2379 get '' --prefix=true
+foo
+bar
++ echo 'Deleting data from etcd...'
+Deleting data from etcd...
++ etcdctl --endpoints=localhost:2379 del foo
+1
++ echo 'Listing all keys in etcd after deletion...'
+Listing all keys in etcd after deletion...
++ etcdctl --endpoints=localhost:2379 get '' --prefix=true
+```
+
+
+## HTTP
+
+etcd 提供了一个 HTTP/JSON API，可以使用 curl 命令或者其他 HTTP 客户端来访问这个 API。
+
+* 这些命令使用了 etcd 的 v3 API，这是 etcd 的最新版本的 API。这个 API 使用 JSON 格式的请求和响应，所以可以使用 curl 命令的 `-d` 选项来发送 JSON 数据。
+* etcd 的 v3 API 使用 base64 编码的字符串来表示键和值。这就是为什么需要使用 `echo -n "foo" | base64` 这样的命令来生成键和值的 base64 编码。(`-n` do not output the trailing newline)
+* etcd 的 v3 API 使用 HTTP POST 方法来发送请求，所以你需要使用 curl 命令的 `-X POST` 选项。
+* `-L` 选项告诉 curl 跟随重定向，这在某些 etcd 配置中可能是必要的。
+* 可以使用 `jq` 工具来解析 JSON 响应并提取 value 字段，然后使用 `base64` 命令来解码这个字段。安装 jq 工具：`yum -y install jq`
+
+
+``` bash
+#!/bin/bash
+
+# enable xtrace
+# set -x
+
+ENDPOINT=localhost:2379
+
+# test write
+echo "Writing data to etcd..."
+curl -L http://$ENDPOINT/v3/kv/put -X POST -d '{"key": "'$(echo -n "foo" | base64)'", "value": "'$(echo -n "bar" | base64)'"}'
+echo -e "\n"
+
+# test read
+echo "Reading data from etcd..."
+response=$(curl -s -L http://$ENDPOINT/v3/kv/range -X POST -d '{"key": "'$(echo -n "foo" | base64)'"}')
+echo "response: $response"
+value=$(echo $response | jq -r '.kvs[0].value')
+echo $value | base64 --decode
+echo -e "\n"
+
+# test delete
+echo "Deleting data from etcd..."
+curl -L http://$ENDPOINT/v3/kv/deleterange -X POST -d '{"key": "'$(echo -n "foo" | base64)'"}'
+echo -e "\n"
+
+# test read
+echo "Reading data from etcd..."
+response=$(curl -s -L http://$ENDPOINT/v3/kv/range -X POST -d '{"key": "'$(echo -n "foo" | base64)'"}')
+echo "response: $response"
+echo -e "\n"
+
+# close xtrace
+# set +x
+```
+
+输出：
+
+``` json
+Writing data to etcd...
+{"header":{"cluster_id":"12297797944536498889","member_id":"17894252403103677144","revision":"29","raft_term":"5"}}
+
+Reading data from etcd...
+response: {"header":{"cluster_id":"12297797944536498889","member_id":"17894252403103677144","revision":"29","raft_term":"5"},"kvs":[{"key":"Zm9v","create_revision":"29","mod_revision":"29","version":"1","value":"YmFy"}],"count":"1"}
+bar
+
+Deleting data from etcd...
+{"header":{"cluster_id":"12297797944536498889","member_id":"17894252403103677144","revision":"30","raft_term":"5"},"deleted":"1"}
+
+Reading data from etcd...
+response: {"header":{"cluster_id":"12297797944536498889","member_id":"17894252403103677144","revision":"30","raft_term":"5"}}
+```
+
+
+
+
 # Tips
 
-## setup 模块用于收集远程主机的事实信息
-
-例如，想查看主机的操作系统信息，`filter=ansible_os_family` 表示只显示 `ansible_os_family` 这个字段的信息。
-
-``` bash
-$ ansible server1 -m setup -a 'filter=ansible_os_family' -i hosts
-```
-
-输出：
-
-```
-server1 | SUCCESS => {
-    "ansible_facts": {
-        "ansible_os_family": "RedHat",
-        "discovered_interpreter_python": "/usr/bin/python3.12"
-    },
-    "changed": false
-}
-```
-
-也可以使用通配符来匹配多个字段。例如，想查看所有以 `ansible_eth` 开头的网络接口信息，`filter=ansible_eth*` 表示显示所有以 `ansible_eth` 开头的字段的信息。
-
-``` bash
-$ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
-```
-
-输出：
-
-```
-server2 | SUCCESS => {
-    "ansible_facts": {
-        "ansible_eth0": {
-            "active": true,
-            "device": "eth0",
-            "features": {
-                "fcoe_mtu": "off [fixed]",
-                "generic_receive_offload": "on",
-                "generic_segmentation_offload": "on",
-                "highdma": "on",
-                "large_receive_offload": "off [fixed]",
-                "loopback": "off [fixed]",
-                "netns_local": "off [fixed]",
-                "ntuple_filters": "off [fixed]",
-                "receive_hashing": "off [fixed]",
-                "rx_all": "off [fixed]",
-                "rx_checksumming": "on",
-                "rx_fcs": "off [fixed]",
-                "rx_vlan_filter": "off [fixed]",
-                "rx_vlan_offload": "on",
-                "rx_vlan_stag_filter": "off [fixed]",
-                "rx_vlan_stag_hw_parse": "on",
-                "scatter_gather": "on",
-                "tcp_segmentation_offload": "on",
-                "tx_checksum_fcoe_crc": "off [fixed]",
-                "tx_checksum_ip_generic": "on",
-                "tx_checksum_ipv4": "off [fixed]",
-                "tx_checksum_ipv6": "off [fixed]",
-                "tx_checksum_sctp": "off [fixed]",
-                "tx_checksumming": "on",
-                "tx_fcoe_segmentation": "off [fixed]",
-                "tx_gre_segmentation": "off [fixed]",
-                "tx_gso_robust": "off [fixed]",
-                "tx_lockless": "on [fixed]",
-                "tx_nocache_copy": "on",
-                "tx_scatter_gather": "on",
-                "tx_scatter_gather_fraglist": "on",
-                "tx_tcp6_segmentation": "on",
-                "tx_tcp_ecn_segmentation": "on",
-                "tx_tcp_segmentation": "on",
-                "tx_udp_tnl_segmentation": "off [fixed]",
-                "tx_vlan_offload": "on",
-                "tx_vlan_stag_hw_insert": "on",
-                "udp_fragmentation_offload": "off [fixed]",
-                "vlan_challenged": "off [fixed]"
-            },
-            "hw_timestamp_filters": [],
-            "ipv4": {
-                "address": "9.135.18.186",
-                "broadcast": "9.135.18.186",
-                "netmask": "255.255.255.255",
-                "network": "9.135.18.186",
-                "prefix": "32"
-            },
-            "macaddress": "92:79:2c:6e:36:6b",
-            "mtu": 1500,
-            "promisc": false,
-            "speed": 10000,
-            "timestamping": [
-                "rx_software",
-                "software"
-            ],
-            "type": "ether"
-        },
-        "discovered_interpreter_python": "/usr/bin/python"
-    },
-    "changed": false
-}
-```
 
 ## 查看 cluster leader 信息
 
@@ -3434,6 +3550,74 @@ etcdctl member list
 ![etcd0](/assets/images/202502/etcd0.png)
 
 
+## 查看 cluster 集群信息
+
+``` bash
+etcdctl endpoint status --cluster -w json | python -mjson.tool
+```
+
+``` json
+[
+    {
+        "Endpoint": "http://9.135.11.48:2379",
+        "Status": {
+            "header": {
+                "cluster_id": 1001830784961041594,
+                "member_id": 7901483741016259879,
+                "revision": 3,
+                "raft_term": 13
+            },
+            "version": "3.5.17",
+            "dbSize": 20480,
+            "leader": 17453000336978732202,
+            "raftIndex": 38,
+            "raftTerm": 13,
+            "raftAppliedIndex": 38,
+            "dbSizeInUse": 16384
+        }
+    },
+    {
+        "Endpoint": "http://9.134.84.53:2379",
+        "Status": {
+            "header": {
+                "cluster_id": 1001830784961041594,
+                "member_id": 12755789866461112567,
+                "revision": 3,
+                "raft_term": 13
+            },
+            "version": "3.5.17",
+            "dbSize": 20480,
+            "leader": 17453000336978732202,
+            "raftIndex": 38,
+            "raftTerm": 13,
+            "raftAppliedIndex": 38,
+            "dbSizeInUse": 16384
+        }
+    },
+    {
+        "Endpoint": "http://9.134.129.173:2379",
+        "Status": {
+            "header": {
+                "cluster_id": 1001830784961041594,
+                "member_id": 17453000336978732202,
+                "revision": 3,
+                "raft_term": 13
+            },
+            "version": "3.5.17",
+            "dbSize": 20480,
+            "leader": 17453000336978732202,
+            "raftIndex": 38,
+            "raftTerm": 13,
+            "raftAppliedIndex": 38,
+            "dbSizeInUse": 16384
+        }
+    }
+]
+```
+
+
+
+
 # Q&A
 
 ## Running http and grpc server on single port. This is not recommended for production
@@ -3452,8 +3636,15 @@ $ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
 
 
 
+
+
+
+
+
+
 # Refer
 
+* [The Raft Consensus Algorithm](https://raft.github.io/)
 * https://etcd.io/docs/v3.5/
 * https://etcd.io/docs/v3.4/op-guide/performance/
 * [etcd versus other key-value stores](https://etcd.io/docs/v3.6/learning/why/)
@@ -3461,7 +3652,6 @@ $ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
 * [How To Set Up and Secure an etcd Cluster with Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)
 * https://github.com/kstone-io/kstone
 * [How To Use Etcdctl and Etcd, CoreOS's Distributed Key-Value Store](https://www.digitalocean.com/community/tutorials/how-to-use-etcdctl-and-etcd-coreos-s-distributed-key-value-store)
-
 
 
 

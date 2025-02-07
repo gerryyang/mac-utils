@@ -10,6 +10,11 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* inevitably /ɪnˈevɪtəbli/
+    + ADV If something will **inevitably** happen, it is certain to happen and cannot be prevented or avoided. 必然发生地
+
+> Technological changes will inevitably lead to unemployment. 技术变革将必然导致失业。
+
 * quota
     + A quota is the limited number or quantity of something which is officially allowed. 限额
 
