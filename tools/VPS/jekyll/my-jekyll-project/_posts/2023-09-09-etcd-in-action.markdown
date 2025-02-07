@@ -1728,7 +1728,9 @@ $ go install -v ./tools/etcd-dump-logs
 The installation will place executables in the `$GOPATH/bin`. If `$GOPATH` environment variable is not set, the tool will be installed into the `$HOME/go/bin`. You can also find out the installed location by running the following command from the etcd source directory. Make sure that `$PATH` is set accordingly in your environment.
 
 ``` bash
+{% raw %}
 $ go list -f "{{.Target}}" ./tools/etcd-dump-logs
+{% endraw %}
 ```
 
 Alternatively, instead of installing the tool, you can use it by simply running the following command from the etcd source directory.
