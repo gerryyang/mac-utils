@@ -44,6 +44,9 @@ categories: 机器学习
 
 ## 用最简单的配方，回归最纯粹的强化学习
 
+在 o1 推出之后，推理强化成了业界最关注的方法。一般来说，一个模型在训练过程中只会尝试一种固定训练方法来提升推理能力。而 DeepSeek 团队在 R1 的训练过程中，直接一次性实验了三种截然不同的技术路径：**直接强化学习训练（R1-Zero）**、**多阶段渐进训练（R1）**和**模型蒸馏**，还都成功了。多阶段渐进训练方法和模型蒸馏都包含着很多创新意义元素，对行业有着重要影响。其中最让人激动的，还是直接强化学习这个路径。因为 DeepSeek-R1 是首个证明这一方法有效的模型。
+
+
 
 
 
@@ -404,6 +407,50 @@ ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
 
 ![ds_local12](/assets/images/202502/ds_local12.png)
 
+
+Ollama 空跑时资源开销：
+
+![ds_local13](/assets/images/202502/ds_local13.png)
+
+![ds_local14](/assets/images/202502/ds_local14.png)
+
+Ollama 推理时资源开销，GPU 跑了 100%。
+
+![ds_local15](/assets/images/202502/ds_local15.png)
+
+![ds_local16](/assets/images/202502/ds_local16.png)
+
+![ds_local17](/assets/images/202502/ds_local17.png)
+
+关于 Ollama 资源使用的一些说明：
+
+* [Low GPU / High CPU Utilization ==> Slow Performance #4668](https://github.com/ollama/ollama/issues/4668)
+* [Why doesn't Ollama use MORE RAM?](https://stackoverflow.com/questions/78068285/why-doesnt-ollama-use-more-ram)
+* [How can I ensure ollama is using my GPU and RAM effectively?](https://www.reddit.com/r/ollama/comments/1d6h3kb/how_can_i_ensure_ollama_is_using_my_gpu_and_ram/)
+* [default num_thread incorrect on some large core count system (non-hyperthreading) #2496](https://github.com/ollama/ollama/issues/2496)
+
+其中一个解释：
+
+I have tested Ollama on different machines yet, but no matter how many cores or RAM I have, it's only using 50% of the cores and just a very few GB of RAM.
+For example now I'm running ollama rum llama2:70b on 16 core server with 32 GB of RAM, but while prompting only eight cores are used and just around 1 GB of RAM.
+
+Is there something wrong? In the models descriptions are aleways warning you neet at least 8,16,32,... GB of RAM.
+
+![ds_local18](/assets/images/202502/ds_local18.png)
+
+That's fine & as expected.
+
+Model data is memory mapped and shows up in file cache #. Note too, VIRT, RES & SHR memory # of the Ollama processes.
+
+Generation is memory bandwidth limited, not compute limited. Saturation is generally achieved ~1/2 the number of virtual cores. Using more can actually hurt speeds and interferes unnecessarily with other processes.
+
+**首先，Ollama 模型的数据是内存映射的，这意味着模型的数据被存储在文件缓存中，而不是 RAM 中。因此，即使你的系统有大量的 RAM，Ollama 也只会使用一小部分 RAM。这就解释了为什么 Ollama 只使用了大约 1GB 的 RAM。**
+
+**其次，模型的生成过程主要受限于内存带宽，而不是计算能力。这意味着，即使你的系统有更多的核心，Ollama 也不会使用所有的核心。实际上，使用超过一半的虚拟核心可能会降低速度，并且不必要地干扰其他进程。这就解释了为什么 Ollama 只使用了一半的核心。**
+
+因此，这个问题并不是错误，而是 Ollama 的预期行为。虽然模型的描述中警告你需要至少 8GB、16GB、32GB 等的 RAM，但这只是为了确保你的系统有足够的资源来运行模型，而不是说模型会使用所有的这些资源。
+
+
 英文测试：
 
 ![ds_local4](/assets/images/202502/ds_local4.png)
@@ -416,11 +463,11 @@ ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
 
 ![ds_local6](/assets/images/202502/ds_local6.png)
 
-然后在 Cherry Studio 设置 -> 模型服务 -> Ollama 中，将 API 地址设置为 `http://localhost:11434/v1/`，并添加本地创建的模型，其中模型 ID 为：`modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`，添加完成后，点击检查，测试连接是否成功。
+然后在 Cherry Studio 设置 -> 模型服务 -> Ollama 中，将 API 地址设置为 `http://localhost:11434/v1/`，并添加本地创建的模型，其中模型 ID 为：`modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`，添加完成后，点击检查，测试连接是否成功。**注意：模型 ID 务必填写与之前下载的模型版本完全一致的名称，否则会连接失败**。
 
 ![ds_local7](/assets/images/202502/ds_local7.png)
 
-连接成功后，创建一个智能体 agent 命名为 `gerry_local_agent` 并设置使用本地创建的大模型 `modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`，注意：模型名称务必填写与之前下载的模型版本完全一致的名称，否则会连接失败。
+连接成功后，创建一个智能体 agent 命名为 `gerry_local_agent` 并设置使用本地创建的大模型 `modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`。
 
 
 ![ds_local8](/assets/images/202502/ds_local8.png)
