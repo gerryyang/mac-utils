@@ -309,7 +309,7 @@ DeepSeek-R1-Distill-Llama-70B
 
 Get up and running with large language models. Ollama 是一个开源工具，旨在帮助你在本地轻松运行和部署大型语言模型。
 
-以下选择 macOS 版本，下载 https://ollama.com/download/Ollama-darwin.zip 安装完成后：
+以下选择 macOS 版本，本地机器配置 Apple M1 Pro 32G 内存，下载 https://ollama.com/download/Ollama-darwin.zip 安装完成后：
 
 ``` bash
 ~ ollama --version
@@ -379,7 +379,8 @@ Ollama 支持的模型：Ollama supports a list of models available on [ollama.c
 | LLaVA              | 7B         | 4.5GB | `ollama run llava`               |
 | Solar              | 10.7B      | 6.1GB | `ollama run solar`               |
 
-> **Note**: You should have at least 8 GB of RAM available to run the 7B models, 16 GB to run the 13B models, and 32 GB to run the 33B models.
+![ds_local11](/assets/images/202502/ds_local11.png)
+
 
 可以发现通过 Ollama 直接下载模型速度非常慢：
 
@@ -401,6 +402,8 @@ ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
 
 ![ds_local3](/assets/images/202502/ds_local3.png)
 
+![ds_local12](/assets/images/202502/ds_local12.png)
+
 英文测试：
 
 ![ds_local4](/assets/images/202502/ds_local4.png)
@@ -417,7 +420,8 @@ ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
 
 ![ds_local7](/assets/images/202502/ds_local7.png)
 
-连接成功后，创建一个智能体 agent 命名为 `gerry_local_agent` 并设置使用本地创建的大模型 `modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`：
+连接成功后，创建一个智能体 agent 命名为 `gerry_local_agent` 并设置使用本地创建的大模型 `modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`，注意：模型名称务必填写与之前下载的模型版本完全一致的名称，否则会连接失败。
+
 
 ![ds_local8](/assets/images/202502/ds_local8.png)
 
@@ -426,6 +430,15 @@ ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
 ![ds_local9](/assets/images/202502/ds_local9.png)
 
 ![ds_local10](/assets/images/202502/ds_local10.png)
+
+
+### Q&A
+
+#### [How to change place of saving models on ollama](https://dev.to/hamed0406/how-to-change-place-of-saving-models-on-ollama-4ko8)
+
+To change the default location where Ollama saves its models, you need to set an environment variable called `OLLAMA_MODELS` to the desired directory. Here's how you can do it on different operating systems.
+
+See more: [Windows How do I install the model onto a different drive instead of the C drive? #2859](https://github.com/ollama/ollama/issues/2859)
 
 
 
