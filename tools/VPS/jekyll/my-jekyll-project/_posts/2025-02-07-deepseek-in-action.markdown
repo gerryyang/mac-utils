@@ -8,6 +8,8 @@ categories: 机器学习
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+
 # 背景介绍
 
 [DeepSeek](https://github.com/deepseek-ai) 是由深度求索公司推出的大语言模型。其中：
@@ -20,6 +22,30 @@ categories: 机器学习
 `DeepSeek-V3` 在推理速度上相较历史模型有了大幅提升。在目前大模型主流榜单中，`DeepSeek-V3` 在开源模型中位列榜首，与世界上最先进的闭源模型不分伯仲。论文：https://github.com/deepseek-ai/DeepSeek-R1/blob/main/DeepSeek_R1.pdf
 
 ![deepseek0](/assets/images/202502/deepseek0.png)
+
+前 Meta AI 工作人员、知名 AI 论文作者 Elvis 在推特发文，DeepSeek-R1 的论文堪称瑰宝，因为它探索了提升大语言模型推理能力的多种方法，并发现了其中更明确的涌现特性。
+
+![news](/assets/images/202502/news.png)
+
+另一位 AI 圈大V Yuchen Jin 则认为，DeepSeek-R1 论文中提出的，模型利用纯 RL 方法引导其自主学习和反思推理这一发现，意义非常重大。
+
+![news2](/assets/images/202502/news2.png)
+
+英伟达 GEAR Lab 项目负责人 Jim Fan 在推特中也提到了，DeepSeek-R1 用通过硬编码规则计算出的真实奖励，而避免使用任何 RL 容易破解的学习奖励模型。这使得模型产生了自我反思与探索行为的涌现。
+
+![news3](/assets/images/202502/news3.png)
+
+
+# 技术原理
+
+* 纯 RL 方法训练模型是指什么？
+* 模型出现的`Aha Moment`，又凭什么能证明 AI 具有了涌现能力？
+* DeepSeek-R1 的这一重要创新对于 AI 领域未来的发展，究竟意味着什么？
+
+## 用最简单的配方，回归最纯粹的强化学习
+
+
+
 
 # [DeepSeek-R1](https://github.com/deepseek-ai/DeepSeek-R1)
 
@@ -225,13 +251,13 @@ DeepSeek-R1-Distill-14B: `ollama run deepseek-r1:14b`
 
 ## Q&A
 
-## [获取嵌入维度失败 #932](https://github.com/CherryHQ/cherry-studio/issues/932)
+### [获取嵌入维度失败 #932](https://github.com/CherryHQ/cherry-studio/issues/932)
 
 在模型服务中，选择 Ollama，将 deepseek-r1:1.5b 选择模型类型勾选：嵌入。
 
 ![cherry-studio6](/assets/images/202502/cherry-studio6.png)
 
-## [出错了，如果没有配置 API 密钥，请前往设置 > 模型提供商中配置密钥 #1027](https://github.com/CherryHQ/cherry-studio/issues/1027)
+### [出错了，如果没有配置 API 密钥，请前往设置 > 模型提供商中配置密钥 #1027](https://github.com/CherryHQ/cherry-studio/issues/1027)
 
 选择自己的模型，并重置。
 
@@ -242,6 +268,15 @@ DeepSeek-R1-Distill-14B: `ollama run deepseek-r1:14b`
 > 嵌入类模型、对话类模型、绘画类模型等各自有各自的功能，其请求方式跟返回内容、结构都有所不同，请勿强行将其他类别的模型作为嵌入模型使用；
 >
 > 嵌入类模型 CherryStudio 会自动分类显示在嵌入模型列表中，如果确认为嵌入模型但未被正确分类，可到模型列表中点击对应模型后方的设置按钮勾选嵌入选项；如果无法确认哪些模型是嵌入模型可到对应服务商查询模型信息。
+
+
+# 通过腾讯云 API 调用
+
+也可直接调用腾讯云上的 DeepSeek API，参考：[获取 API 接口文档及费用说明](https://cloud.tencent.com/document/product/1772/115963)
+
+![tencentyun](/assets/images/202502/tencentyun.png)
+
+
 
 
 # 大小模型效果对比 (DeepSeek-R1-Distill-Qwen-1.5B VS. DeepSeek-R1)
@@ -268,6 +303,146 @@ DeepSeek-R1-Distill-Qwen-32B
 DeepSeek-R1-Distill-Llama-70B
 ```
 
+# Tools
+
+## [Ollama](https://github.com/ollama/ollama) (本地部署 DeepSeek 模型)
+
+Get up and running with large language models. Ollama 是一个开源工具，旨在帮助你在本地轻松运行和部署大型语言模型。
+
+以下选择 macOS 版本，下载 https://ollama.com/download/Ollama-darwin.zip 安装完成后：
+
+``` bash
+~ ollama --version
+ollama version is 0.5.7
+```
+
+``` bash
+~ ollama --help
+Large language model runner
+
+Usage:
+  ollama [flags]
+  ollama [command]
+
+Available Commands:
+  serve       Start ollama
+  create      Create a model from a Modelfile
+  show        Show information for a model
+  run         Run a model
+  stop        Stop a running model
+  pull        Pull a model from a registry
+  push        Push a model to a registry
+  list        List models
+  ps          List running models
+  cp          Copy a model
+  rm          Remove a model
+  help        Help about any command
+
+Flags:
+  -h, --help      help for ollama
+  -v, --version   Show version information
+
+Use "ollama [command] --help" for more information about a command.
+```
+
+下载安装第一个模型：
+
+``` bash
+# Run your first model
+ollama run llama3.2
+```
+
+Ollama 支持的模型：Ollama supports a list of models available on [ollama.com/library](https://ollama.com/library)
+
+| Model              | Parameters | Size  | Download                         |
+| ------------------ | ---------- | ----- | -------------------------------- |
+| DeepSeek-R1        | 7B         | 4.7GB | `ollama run deepseek-r1`         |
+| DeepSeek-R1        | 671B       | 404GB | `ollama run deepseek-r1:671b`    |
+| Llama 3.3          | 70B        | 43GB  | `ollama run llama3.3`            |
+| Llama 3.2          | 3B         | 2.0GB | `ollama run llama3.2`            |
+| Llama 3.2          | 1B         | 1.3GB | `ollama run llama3.2:1b`         |
+| Llama 3.2 Vision   | 11B        | 7.9GB | `ollama run llama3.2-vision`     |
+| Llama 3.2 Vision   | 90B        | 55GB  | `ollama run llama3.2-vision:90b` |
+| Llama 3.1          | 8B         | 4.7GB | `ollama run llama3.1`            |
+| Llama 3.1          | 405B       | 231GB | `ollama run llama3.1:405b`       |
+| Phi 4              | 14B        | 9.1GB | `ollama run phi4`                |
+| Phi 3 Mini         | 3.8B       | 2.3GB | `ollama run phi3`                |
+| Gemma 2            | 2B         | 1.6GB | `ollama run gemma2:2b`           |
+| Gemma 2            | 9B         | 5.5GB | `ollama run gemma2`              |
+| Gemma 2            | 27B        | 16GB  | `ollama run gemma2:27b`          |
+| Mistral            | 7B         | 4.1GB | `ollama run mistral`             |
+| Moondream 2        | 1.4B       | 829MB | `ollama run moondream`           |
+| Neural Chat        | 7B         | 4.1GB | `ollama run neural-chat`         |
+| Starling           | 7B         | 4.1GB | `ollama run starling-lm`         |
+| Code Llama         | 7B         | 3.8GB | `ollama run codellama`           |
+| Llama 2 Uncensored | 7B         | 3.8GB | `ollama run llama2-uncensored`   |
+| LLaVA              | 7B         | 4.5GB | `ollama run llava`               |
+| Solar              | 10.7B      | 6.1GB | `ollama run solar`               |
+
+> **Note**: You should have at least 8 GB of RAM available to run the 7B models, 16 GB to run the 13B models, and 32 GB to run the 33B models.
+
+可以发现通过 Ollama 直接下载模型速度非常慢：
+
+![ds_local2](/assets/images/202502/ds_local2.png)
+
+
+为了提高下载模型的速度，可以在 https://modelscope.cn/home 国内的代理服务下载所需的模型，这里测试下载 [DeepSeek-R1-Distill-Qwen-7B-GGUF 模型](https://modelscope.cn/models/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF)。
+
+```
+ollama run modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF
+```
+
+![ds_local1](/assets/images/202502/ds_local1.png)
+
+![ds_local](/assets/images/202502/ds_local.png)
+
+
+下载完成：
+
+![ds_local3](/assets/images/202502/ds_local3.png)
+
+英文测试：
+
+![ds_local4](/assets/images/202502/ds_local4.png)
+
+中文测试：
+
+![ds_local5](/assets/images/202502/ds_local5.png)
+
+除了通过 Terminal 与大模型交互，也可以通过 [Cherry Studio](https://github.com/CherryHQ/cherry-studio) 提供的 GUI 图形界面工具访问本地的大模型。查看 Ollama 在本地监听的地址：`localhost:11434`，这是 Ollama 服务的默认接口地址。
+
+![ds_local6](/assets/images/202502/ds_local6.png)
+
+然后在 Cherry Studio 设置 -> 模型服务 -> Ollama 中，将 API 地址设置为 `http://localhost:11434/v1/`，并添加本地创建的模型，其中模型 ID 为：`modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`，添加完成后，点击检查，测试连接是否成功。
+
+![ds_local7](/assets/images/202502/ds_local7.png)
+
+连接成功后，创建一个智能体 agent 命名为 `gerry_local_agent` 并设置使用本地创建的大模型 `modelscope.cn/unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF`：
+
+![ds_local8](/assets/images/202502/ds_local8.png)
+
+测试功能：
+
+![ds_local9](/assets/images/202502/ds_local9.png)
+
+![ds_local10](/assets/images/202502/ds_local10.png)
+
+
+
+## [Open WebUI](https://github.com/open-webui/open-webui)
+
+Open WebUI is an [extensible](https://docs.openwebui.com/features/plugin/), feature-rich, and user-friendly self-hosted AI platform designed to operate entirely offline. It supports various LLM runners like **Ollama** and **OpenAI-compatible APIs**, with built-in inference engine for RAG, making it a powerful AI deployment solution.
+
+For more information, be sure to check out our [Open WebUI Documentation](https://docs.openwebui.com/).
+
+
+## [Cherry Studio](https://github.com/CherryHQ/cherry-studio)
+
+Desktop client with Ollama support.
+
+
+
+
 # Refer
 
 * https://github.com/deepseek-ai
@@ -279,8 +454,9 @@ DeepSeek-R1-Distill-Llama-70B
 * https://cloud.tencent.com/document/product/1721/115966
 * [快速部署和体验 DeepSeek 系列模型](https://cloud.tencent.com/document/product/851/115962?from=25520)
 * [大模型推理所需资源指南](https://cloud.tencent.com/document/product/851/107823)
-
-
+* [带你一文读懂DeepSeek-R1新模型，为何震动了全球AI圈](https://mp.weixin.qq.com/s?__biz=MjM5ODYwMjI2MA==&mid=2649789735&idx=1&sn=4ae4eccba7f876a8fe692d8610589e86)
+* [小白也能看懂的DeepSeek-R1本地部署指南](https://cloud.tencent.com/developer/article/2493853)
+* [基于 Cherry Studio+Ollama+DeepSeek 构建私有知识库](https://cloud.tencent.com/developer/article/2494120)
 
 
 
