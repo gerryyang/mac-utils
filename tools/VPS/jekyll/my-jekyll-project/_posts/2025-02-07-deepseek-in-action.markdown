@@ -8,6 +8,13 @@ categories: 机器学习
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+# 名词解释
+
+* `AI` (**Artificial Intelligence**) 人工智能。指通过计算机系统实现的一种模拟人类智能行为的技术，它是一种非常广泛的概念，包括了很多不同的方法和技术，如机器学习，深度学习，专家系统和自然语言处理等。主要是让计算机可以像人一样执行各种任务，比如识别语音，识别图像，能对自然语言进行处理等。AI 的目标是使计算机系统能够模仿人类智能的某些特定方面，如感知，理解，学习，推理和决策等。
+
+* `AGI` (**Aritificial General Intelligence**)，是指一种能够在各种不同任务和环境中都表现出类似于人类智能的系统。它能处理各种类型的任务，而不像 AI 仅仅是处理特定领域的任务。AGI 的发展目标是使计算机能够像人类一样思考和行动，从而使其能够自主的解决各种问题，其实这才是人类真正惧怕人工智能的源头。
+
+* `AIGC` (**Aritificial Intelligence Generated Content**)，指的是人工智能生成内容。比如，`ChatGPT` 和 `DeepSeek` 的应用。
 
 
 # 背景介绍
@@ -46,6 +53,42 @@ categories: 机器学习
 
 在 o1 推出之后，推理强化成了业界最关注的方法。一般来说，一个模型在训练过程中只会尝试一种固定训练方法来提升推理能力。而 DeepSeek 团队在 R1 的训练过程中，直接一次性实验了三种截然不同的技术路径：**直接强化学习训练（R1-Zero）**、**多阶段渐进训练（R1）**和**模型蒸馏**，还都成功了。多阶段渐进训练方法和模型蒸馏都包含着很多创新意义元素，对行业有着重要影响。其中最让人激动的，还是直接强化学习这个路径。因为 DeepSeek-R1 是首个证明这一方法有效的模型。
 
+训练 AI 的推理能力传统的方法通常是什么？一般是通过在**监督微调** (`SFT`) 加入大量的**思维链** (`COT`)范例，用例证和复杂的如过程奖励模型 (`PRM`) 之类的复杂神经网络奖励模型，来让模型学会用思维链思考。甚至会加入**蒙特卡洛树搜索** (`MCTS`)，让模型在多种可能中搜索最好的可能。但 `DeepSeek-R1-Zero` 选择了一条前所未有的路径“纯”强化学习路径，它完全抛开了预设的**思维链**模板 (`Chain of Thought`) 和**监督式微调** (`SFT`)，仅依靠简单的奖惩信号来优化模型行为。这就像让一个天才儿童在没有任何范例和指导的情况下，纯粹通过不断尝试和获得反馈来学习解题。`DeepSeek-R1-Zero` 有的只是一套最简单的奖励系统，来激发 AI 的推理能力。
+
+![ds_why](/assets/images/202502/ds_why.png)
+
+**简单来说，可以把它想象成老师出题，每道题让模型同时回答多次，然后用上面的奖惩规则给每个答案打分，根据追求高分、避免低分的逻辑更新模型。流程大概是这样的：输入问题 → 模型生成多个答案 → 规则系统评分 → `GRPO` (Group Relative Policy Optimization) 计算相对优势 → 更新模型。这种直接训练方法带来了几个显著的优势。首先是训练效率的提升，整个过程可以在更短的时间内完成。其次是资源消耗的降低，由于省去了 `SFT` 和复杂的奖惩模型，计算资源的需求大幅减少。更重要的是，这种方法真的让模型学会了思考，而且是以“顿悟”的方式学会的。这种顿悟往往是模型思维能力跃升的时刻。**
+
+## 用自己的语言，在“顿悟”中学习
+
+我们是怎么看出模型在这种非常“原始”的方法下，是真的学会了“思考”的呢？论文记录了一个引人注目的案例：在处理一个涉及复杂数学表达式的问题时，模型突然停下来说 "Wait, wait. Wait. That's an aha moment I can flag here"（等等、等等、这是个值得标记的啊哈时刻），随后重新审视了整个解题过程。这种类似人类顿悟的行为完全是自发产生的，而不是预先设定的。
+
+![ds_why1](/assets/images/202502/ds_why1.png)
+
+因为根据 DeepSeek 的研究，模型的进步并非均匀渐进的。在强化学习过程中，响应长度会出现突然的显著增长，这些"跳跃点"往往伴随着解题策略的质变。这种模式酷似人类在长期思考后的突然顿悟，暗示着某种深层的认知突破。
+
+![ds_why2](/assets/images/202502/ds_why2.png)
+
+在这种伴随着顿悟的能力提升下，R1-Zero 在数学界享有盛誉的 AIME 竞赛中从最初的 15.6% 正确率一路攀升至 71.0% 的准确率。而让模型对同一问题进行多次尝试时，准确率甚至达到了 86.7%。这不是简单的看过了就会做了——因为AIME的题目需要深度的数学直觉和创造性思维，而不是机械性的公式应用。模型基本必须能推理，才可能有这样的提升。另一个模型确实通过这种方法学会了推理的另一个核心证据，是模型响应长度会根据问题的复杂度自然调节。这种自适应行为表明，它不是在简单地套用模板，而是真正理解了问题的难度，并相应地投入更多的"思考时间"。就像人类面对简单的加法和复杂的积分会自然调整思考时间一样，R1-Zero 展现出了类似的智慧。最有说服力的或许是模型展现出的迁移学习能力。在完全不同的编程竞赛平台 Codeforces 上，R1-Zero 达到了超过 96.3% 人类选手的水平。这种跨域表现表明，模型不是在死记硬背特定领域的解题技巧，而是掌握了某种普适的推理能力。
+
+![ds_why3](/assets/images/202502/ds_why3.png)
+
+## 一个聪明但口齿不清的天才
+
+**尽管 R1-Zero 展现出了惊人的推理能力，但研究者们很快发现了一个严重的问题：它的思维过程往往难以被人类理解。论文坦诚地指出，这个纯强化学习训练出来的模型存在 "poor readability"（可读性差）和 "language mixing"（语言混杂）的问题。这个现象其实很好理解：R1-Zero 完全通过奖惩信号来优化其行为，没有任何人类示范的"标准答案"作为参考。就像一个天才儿童自创了一套解题方法，虽然屡试不爽，但向别人解释时却语无伦次。它在解题过程中可能同时使用多种语言，或者发展出了某种特殊的表达方式，这些都让其推理过程难以被追踪和理解**。
+
+正是为了解决这个问题，研究团队开发了改进版本 DeepSeek-R1。通过引入更传统的 "cold-start data"（冷启动数据）和多阶段训练流程，R1 不仅保持了强大的推理能力，还学会了用人类易懂的方式表达思维过程。这就像给那个天才儿童配了一个沟通教练，教会他如何清晰地表达自己的想法。在这一调教下之后，DeepSeek-R1 展现出了与 OpenAI o1 相当甚至在某些方面更优的性能。在 MATH 基准测试上，R1 达到了 77.5% 的准确率，与 o1 的 77.3 %相近；在更具挑战性的 AIME 2024 上，R1 的准确率达到 71.3%，超过了 o1 的 71.0%。在代码领域，R1 在 Codeforces 评测中达到了 2441 分的水平，高于 96.3% 的人类参与者。然而，DeepSeek-R1 Zero 的潜力似乎更大。它在 AIME 2024 测试中使用多数投票机制时达到的 86.7% 准确率——这个成绩甚至超过了 OpenAI 的 o1-0912。这种"多次尝试会变得更准确"的特征，暗示 R1-Zero 可能掌握了某种基础的推理框架，而不是简单地记忆解题模式。论文数据显示，从 MATH-500 到 AIME，再到 GSM8K，模型表现出稳定的跨域性能，特别是在需要创造性思维的复杂问题上。这种广谱性能提示 R1-Zero 可能确实培养出了某种基础的推理能力，这与传统的特定任务优化模型形成鲜明对比。所以，虽然口齿不清，但也许 DeepSeek-R1-Zero 才是真正理解了推理的“天才”。
+
+![ds_why4](/assets/images/202502/ds_why4.png)
+
+![ds_why5](/assets/images/202502/ds_why5.png)
+
+
+## 纯粹强化学习，也许才是通向 AGI 的意外捷径
+
+之所以 DeepSeek-R1 的发布让圈内人的焦点都投向了纯强化学习方法，因为它完全可以说得上是打开了AI 进化的一条新路径。R1-Zero 这个完全通过强化学习训练出来的 AI 模型，展现出了令人惊讶的通用推理能力。它不仅在数学竞赛中取得了惊人成绩。更重要的是，R1-Zero 不仅是在模仿思考，而是真正发展出了某种形式的推理能力。因为在过往的训练方法中，尤其在监督微调中使用训练好的神经网络来评估质量的话，模型可能学会触发奖励模型的特定模式，生成对奖励模型"口味"的内容，而不是真正提升推理能力。换句话说，AI 系统找到了获得高奖励但实际上违背训练目标的投机取巧方式。这就是我们常说的**奖励欺骗**（`reward hacking`）。**但 R1-Zero 用极简的奖励规则基本避免了奖励欺骗的可能性——规则太简单了，没有什么“口味”可以去模仿。模型在这个情况下发展出的推理能力更可信，也更自然**。这个发现可能会改变我们对机器学习的认识：**传统的 AI 训练方法可能一直在重复一个根本性的错误，我们太专注于让 AI 模仿人类的思维方式了，业界需要重新思考监督学习在 AI 发展中的角色。通过纯粹的强化学习，AI 系统似乎能够发展出更原生的问题解决能力，而不是被限制在预设的解决方案框架内**。
+
+虽然 R1-Zero 在输出可读性上存在明显缺陷，但这个"缺陷"本身可能恰恰印证了其思维方式的独特性。就像一个天才儿童发明了自己的解题方法，却难以用常规语言解释一样。这提示我们：真正的通用人工智能可能需要完全不同于人类的认知方式。**这才是真正的强化学习。就像著名教育家皮亚杰的理论：真正的理解来自于主动建构，而不是被动接受**。
 
 
 
@@ -500,7 +543,133 @@ For more information, be sure to check out our [Open WebUI Documentation](https:
 
 Desktop client with Ollama support.
 
+## [Continue](https://marketplace.visualstudio.com/items?itemName=Continue.continue) (vscode 扩展)
 
+Continue is the leading open-source AI code assistant. You can connect any models and any context to build custom autocomplete and chat experiences inside VS Code and JetBrains.
+
+配置选择本地部署的模型服务：
+
+![continue](/assets/images/202502/continue.png)
+
+通过 `command + I` 触发交互命令 (Edit highlighted code)，输入：实现计算一个最大公约数的代码。
+
+![continue2](/assets/images/202502/continue2.png)
+
+选中需要修改的代码，通过 `command + L` 获取当前代码内容 (Add to chat)，输入下一个指令：对当前代码生成注释。
+
+![continue3](/assets/images/202502/continue3.png)
+
+最后选择 accept 接受，完成代码编写。
+
+# LLM
+
+## [Intro to Large Language Models - Andrej Karpathy](https://www.youtube.com/watch?v=zjkBMFhNj_g)
+
+This is a 1 hour general-audience introduction to Large Language Models: the core technical component behind systems like ChatGPT, Claude, and Bard. What they are, where they are headed, comparisons and analogies to present-day operating systems, and some of the security-related challenges of this new computing paradigm.
+
+As of November 2023 (this field moves fast!).
+
+Context: This video is based on the slides of a talk I gave recently at the AI Security Summit. The talk was not recorded but a lot of people came to me after and told me they liked it. Seeing as I had already put in one long weekend of work to make the slides, I decided to just tune them a bit, record this round 2 of the talk and upload it here on YouTube. Pardon the random background, that's my hotel room during the thanksgiving break.
+
+Slides as PDF: https://drive.google.com/file/d/1pxx_... (42MB)
+Slides. as Keynote: https://drive.google.com/file/d/1FPUp... (140MB)
+
+Few things I wish I said (I'll add items here as they come up):
+
+* The dreams and hallucinations do not get fixed with finetuning. Finetuning just "directs" the dreams into "helpful assistant dreams". Always be careful with what LLMs tell you, especially if they are telling you something from memory alone. That said, similar to a human, if the LLM used browsing or retrieval and the answer made its way into the "working memory" of its context window, you can trust the LLM a bit more to process that information into the final answer. But TLDR right now, do not trust what LLMs say or do. For example, in the tools section, I'd always recommend double-checking the math/code the LLM did.
+* How does the LLM use a tool like the browser? It emits special words, e.g. |BROWSER|. When the code "above" that is inferencing the LLM detects these words it captures the output that follows, sends it off to a tool, comes back with the result and continues the generation. How does the LLM know to emit these special words? Finetuning datasets teach it how and when to browse, by example. And/or the instructions for tool use can also be automatically placed in the context window (in the “system message”).
+* You might also enjoy my 2015 blog post "Unreasonable Effectiveness of Recurrent Neural Networks". The way we obtain base models today is pretty much identical on a high level, except the RNN is swapped for a Transformer. http://karpathy.github.io/2015/05/21/...
+* What is in the run.c file? A bit more full-featured 1000-line version hre: https://github.com/karpathy/llama2.c/...
+
+Chapters:
+
+Part 1: LLMs
+00:00:00 Intro: Large Language Model (LLM) talk
+00:00:20 LLM Inference
+00:04:17 LLM Training
+00:08:58 LLM dreams
+00:11:22 How do they work?
+00:14:14 Finetuning into an Assistant
+00:17:52 Summary so far
+00:21:05 Appendix: Comparisons, Labeling docs, RLHF, Synthetic data, Leaderboard
+
+Part 2: Future of LLMs
+00:25:43 LLM Scaling Laws
+00:27:43 Tool Use (Browser, Calculator, Interpreter, DALL-E)
+00:33:32 Multimodality (Vision, Audio)
+00:35:00 Thinking, System 1/2
+00:38:02 Self-improvement, LLM AlphaGo
+00:40:45 LLM Customization, GPTs store
+00:42:15 LLM OS
+
+Part 3: LLM Security
+00:45:43 LLM Security Intro
+00:46:14 Jailbreaks
+00:51:30 Prompt Injection
+00:56:23 Data poisoning
+00:58:37 LLM Security conclusions
+
+End
+00:59:23 Outro
+
+
+## [Deep Dive into LLMs like ChatGPT - Andrej Karpathy](https://www.youtube.com/watch?v=7xTGNNLPyMI)
+
+This is a general audience deep dive into the Large Language Model (LLM) AI technology that powers ChatGPT and related products. It is covers the full training stack of how the models are developed, along with mental models of how to think about their "psychology", and how to get the best use them in practical applications. I have one "Intro to LLMs" video already from ~year ago, but that is just a re-recording of a random talk, so I wanted to loop around and do a lot more comprehensive version.
+
+Instructor
+
+Andrej was a founding member at OpenAI (2015) and then Sr. Director of AI at Tesla (2017-2022), and is now a founder at Eureka Labs, which is building an AI-native school. His goal in this video is to raise knowledge and understanding of the state of the art in AI, and empower people to effectively use the latest and greatest in their work.
+Find more at https://karpathy.ai/ and https://x.com/karpathy
+
+Chapters
+
+00:00:00 introduction
+00:01:00 pretraining data (internet)
+00:07:47 tokenization
+00:14:27 neural network I/O
+00:20:11 neural network internals
+00:26:01 inference
+00:31:09 GPT-2: training and inference
+00:42:52 Llama 3.1 base model inference
+00:59:23 pretraining to post-training
+01:01:06 post-training data (conversations)
+01:20:32 hallucinations, tool use, knowledge/working memory
+01:41:46 knowledge of self
+01:46:56 models need tokens to think
+02:01:11 tokenization revisited: models struggle with spelling
+02:04:53 jagged intelligence
+02:07:28 supervised finetuning to reinforcement learning
+02:14:42 reinforcement learning
+02:27:47 DeepSeek-R1
+02:42:07 AlphaGo
+02:48:26 reinforcement learning from human feedback (RLHF)
+03:09:39 preview of things to come
+03:15:15 keeping track of LLMs
+03:18:34 where to find LLMs
+03:21:46 grand summary
+
+Links
+
+* ChatGPT https://chatgpt.com/
+* FineWeb (pretraining dataset): https://huggingface.co/spaces/Hugging...
+* Tiktokenizer: https://tiktokenizer.vercel.app/
+* Transformer Neural Net 3D visualizer: https://bbycroft.net/llm
+* llm.c Let's Reproduce GPT-2 https://github.com/karpathy/llm.c/dis...
+* Llama 3 paper from Meta: https://arxiv.org/abs/2407.21783
+* Hyperbolic, for inference of base model: https://app.hyperbolic.xyz/
+* InstructGPT paper on SFT: https://arxiv.org/abs/2203.02155
+* HuggingFace inference playground: https://huggingface.co/spaces/hugging...
+* DeepSeek-R1 paper: https://arxiv.org/abs/2501.12948
+* TogetherAI Playground for open model inference: https://api.together.xyz/playground
+* AlphaGo paper (PDF): https://discovery.ucl.ac.uk/id/eprint...
+* AlphaGo Move 37 video:    • Lee Sedol vs AlphaGo  Move 37 reactio...
+* LM Arena for model rankings: https://lmarena.ai/
+* AI News Newsletter: https://buttondown.com/ainews
+* LMStudio for local inference https://lmstudio.ai/
+* The visualization UI I was using in the video: https://excalidraw.com/
+* The specific file of Excalidraw we built up: https://drive.google.com/file/d/1EZh5...
+* Discord channel for Eureka Labs and this video:   / discord
 
 
 # Refer

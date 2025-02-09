@@ -433,10 +433,15 @@ Import Public Library
 
 Check out the available libraries at libraries.excalidraw.com, and don't hesitate to contribute your own !
 
-# Bazel
+## Bazel
 
 * Bazel
 * bazel-stack-vscode
+
+
+## Continue
+
+The leading open-source AI code assistant
 
 
 # 有趣的扩展
