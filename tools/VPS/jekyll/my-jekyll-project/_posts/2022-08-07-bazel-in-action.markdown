@@ -1290,6 +1290,8 @@ INFO: Elapsed time: 4.497s, Critical Path: 2.53s
 Executed 1 out of 1 tests: 1 test passes.
 ```
 
+More: https://google.github.io/googletest/quickstart-bazel.html
+
 ## Adding dependencies on precompiled libraries
 
 If you want to use a library of which you only have a compiled version (for example, `headers` and a `.so` file) wrap it in a `cc_library` rule:
@@ -3710,6 +3712,58 @@ Source: https://github.com/bazelbuild/bazel/issues/3582#issuecomment-329405311
 
 refer: [Grok Your Bazel Build: The Action Graph](https://jin.crypt.sg/articles/bazel-action-graph.html)
 
+## 单测加载外部文件
+
+* [Access runtime files in application built with Bazel](https://stackoverflow.com/questions/49875481/access-runtime-files-in-application-built-with-bazel)
+
+Looks like Bazel 0.15 [added](https://github.com/bazelbuild/bazel/issues/4460#issuecomment-402165299) support for what is called [Rlocation](https://github.com/bazelbuild/bazel/blob/master/tools/cpp/runfiles/runfiles_src.h), which allows looking up the runtime files in the application code:
+
+1. Depend on this runfiles library from your build rule:
+
+```
+cc_binary(
+  name = "my_binary",
+  ...
+  deps = ["@bazel_tools//tools/cpp/runfiles"],
+)
+```
+
+2. Include the runfiles library.
+
+``` cpp
+#include "tools/cpp/runfiles/runfiles.h"
+using bazel::tools::cpp::runfiles::Runfiles;
+```
+
+3. Create a `Runfiles` object and use `Rlocation` to look up runfile paths:
+
+``` cpp
+int main(int argc, char** argv) {
+  std::string error;
+  std::unique_ptr<Runfiles> runfiles(Runfiles::Create(argv[0], &error));
+
+  // Important:
+  //   If this is a test, use Runfiles::CreateForTest(&error).
+  //   Otherwise, if you don't have the value for argv[0] for whatever
+  //   reason, then use Runfiles::Create(&error).
+
+  if (runfiles == nullptr) {
+    // error handling
+  }
+
+  std::string path = runfiles->Rlocation("my_workspace/path/to/my/data.txt");
+
+  // ...
+}
+```
+
+* [Why can't my programs find resource files when using bazel run //package](https://stackoverflow.com/questions/71826978/why-cant-my-programs-find-resource-files-when-using-bazel-run-package)
+
+* [C++ Bazel project with a Data repository](https://stackoverflow.com/questions/46100906/c-bazel-project-with-a-data-repository)
+
+https://github.com/vincent-picaud/Bazel_with_Data
+
+
 
 
 
@@ -3734,6 +3788,7 @@ refer: [Grok Your Bazel Build: The Action Graph](https://jin.crypt.sg/articles/b
 * https://bazel.build/reference?hl=zh-cn
 * [Bazel学习笔记](https://blog.gmem.cc/bazel-study-note)
 * https://github.com/abseil/abseil-cpp/blob/master/absl/base/BUILD.bazel
+* https://google.github.io/googletest/quickstart-bazel.html
 
 
 

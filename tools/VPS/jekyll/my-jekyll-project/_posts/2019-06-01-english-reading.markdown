@@ -10,6 +10,29 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* prompt /prɒmpt/
+  + **V-T** To **prompt** someone to do something means to make them decide to do it. 促使
+    - Japan's recession has **prompted** consumers to cut back on buying cars. 日本的经济衰退已促使消费者们削减购车花销。
+  + **V-T** If you **prompt** someone when they stop speaking, you encourage or help them to continue. If you prompt an actor, you tell them what their next line is when they have forgotten what comes next. 提示; 给 (演员) 提示词
+    - "You wouldn't have wanted to bring those people to justice anyway, would you?" Brand **prompted** him. “你本不想将那些人绳之以法的，是吧？”布兰德提示他说。
+  + **ADJ** A **prompt** action is done without any delay. 立即的 (行动)
+    - It is not too late, but **prompt** action is needed. 还不太晚，但需要立即行动。
+  + **ADJ** If you are **prompt** to do something, you do it without delay or you are not late. (做某事) 迅速的
+    - You have been so **prompt** in carrying out all these commissions. 你执行所有这些任务非常迅速。
+
+
+* stale /steɪl/
+  + **ADJ** **Stale** food is no longer fresh or good to eat. (食物) 不新鲜的; 变味的
+    - Their daily diet consisted of a lump of **stale** bread, a bowl of rice, and **stale** water. 他们的日常饮食包括一块不新鲜的面包、一碗米饭，还有不新鲜的水。
+  + **ADJ** **Stale** air or smells are unpleasant because they are no longer fresh. (空气或气味) 不新鲜的
+  + **ADJ** If you say that a place, an activity, or an idea is stale, you mean that it has become boring because it is always the same. (地方、活动、主意) 缺乏新鲜感的
+    - Her relationship with Mark has become **stale**. 她和马克的关系已变得乏味了。
+
+* caveat /ˈkæviæt/
+    + **N-COUNT** A **caveat** is a warning of a specific limitation of something such as information or an agreement. 警告; 提醒
+      - There was one **caveat**: he was not to enter into a merger or otherwise weaken the Roche family's control of the firm. 提醒一下：他不是要参与并购或其他削弱罗技家族对该公司控制的行动。
+
+
 * diverse /daɪˈvɜːs/
     + **ADJ** If a group of things is **diverse**, it is made up of a wide variety of things. 各种各样的
       - The building houses a wide and diverse variety of antiques. 这栋楼里摆放着大量各式各样的古董。

@@ -2148,6 +2148,67 @@ ls -l *.o | sort -k5,5 -n -r | head
 
 # Example
 
+
+## parallel 统计当前目录下包含的文件数量
+
+``` bash
+ls | parallel 'echo -n {}" "; find {} -type f | wc -l'
+```
+
+
+## trap (在接收到指定信号时执行特定操作)
+
+`trap` 是一个 shell 命令，用于在接收到指定信号时执行特定操作。它的语法如下：
+
+``` bash
+trap COMMAND SIGNALS
+```
+
+其中 COMMAND 是在接收到指定信号时要执行的命令，SIGNALS 是一个或多个要捕获的信号。
+
+在 `trap "" TRAP` 的示例中，设置了一个空命令（""）作为 SIGTRAP 信号的处理程序。当脚本接收到 SIGTRAP 信号时，它将执行空命令，即什么也不做，从而实际上忽略了该信号。
+
+以下是使用 trap 命令的更多示例：
+
+* 捕获 SIGINT 信号（通常由 Ctrl+C 产生）并执行自定义操作：
+
+``` bash
+#!/bin/bash
+
+trap "echo 'Caught SIGINT signal. Exiting...'; exit 1" INT
+
+echo "Press Ctrl+C to exit..."
+while true; do
+    sleep 1
+done
+```
+
+在这个示例中，当脚本接收到 SIGINT 信号时，它将打印一条消息并退出。
+
+* 在脚本退出时执行清理操作：
+
+``` bash
+#!/bin/bash
+
+function cleanup {
+    echo "Cleaning up temporary files..."
+    rm -f /tmp/some_temp_file
+}
+
+trap cleanup EXIT
+
+echo "Creating temporary file..."
+touch /tmp/some_temp_file
+
+echo "Press Ctrl+C to exit or wait for 10 seconds..."
+sleep 10
+```
+
+在这个示例中，定义了一个名为 `cleanup` 的函数，用于在脚本退出时删除临时文件。使用 `trap cleanup EXIT` 在脚本退出时调用 `cleanup` 函数。
+
+
+
+
 ## 检查是否是 root 用户
 
 ``` bash
