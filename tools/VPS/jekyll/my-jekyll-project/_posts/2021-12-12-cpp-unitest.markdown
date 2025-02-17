@@ -22,11 +22,24 @@ categories: [C/C++]
 refer: https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++
 
 
-# [Quickstart: Building with Bazel](https://google.github.io/googletest/quickstart-bazel.html)
+# GoogleTest - Google Testing and Mocking Framework
+
+> googletest helps you write better C++ tests.
+
+googletest is a testing framework developed by the Testing Technology team with Google’s specific requirements and constraints in mind. Whether you work on Linux, Windows, or a Mac, if you write C++ code, googletest can help you. And it supports any kind of tests, not just unit tests.
+
+refer:
+
+* [Github GoogleTest](https://github.com/google/googletest)
+* [GoogleTest User’s Guide](https://google.github.io/googletest/)
+
+
+
+## [Quickstart: Building with Bazel](https://google.github.io/googletest/quickstart-bazel.html)
 
 This tutorial aims to get you up and running with GoogleTest using the Bazel build system. If you’re using GoogleTest for the first time or need a refresher, we recommend this tutorial as a starting point.
 
-## Prerequisites
+### Prerequisites
 
 To complete this tutorial, you’ll need:
 
@@ -40,7 +53,7 @@ If you don’t already have Bazel installed, see the [Bazel installation guide](
 
 > **Note**: The terminal commands in this tutorial show a Unix shell prompt, but the commands work on the Windows command line as well.
 
-## Set up a Bazel workspace
+### Set up a Bazel workspace
 
 A [Bazel workspace](https://docs.bazel.build/versions/main/build-ref.html#workspace) is a directory on your filesystem that you use to manage source files for the software you want to build. Each workspace directory has a text file named `MODULE.bazel` which may be empty, or may contain references to external dependencies required to build the outputs.
 
@@ -62,7 +75,7 @@ bazel_dep(name = "googletest", version = "1.15.2")
 
 Now you’re ready to build C++ code that uses **GoogleTest**.
 
-## Create and run a binary
+### Create and run a binary
 
 With your Bazel workspace set up, you can now use **GoogleTest** code within your own project. As an example, create a file named `hello_test.cc` in your `my_workspace` directory with the following contents:
 
@@ -130,19 +143,19 @@ INFO: Build completed successfully, 27 total actions
 
 Congratulations! You’ve successfully built and run a test binary using **GoogleTest**.
 
-## Next steps
+### Next steps
 
 * [Check out the Primer](https://google.github.io/googletest/primer.html) to start learning how to write simple tests.
 * [See the code samples](https://google.github.io/googletest/samples.html) for more examples showing how to use a variety of GoogleTest features.
 
 
 
-# [Quickstart: Building with CMake](https://google.github.io/googletest/quickstart-cmake.html)
+## [Quickstart: Building with CMake](https://google.github.io/googletest/quickstart-cmake.html)
 
 This tutorial aims to get you up and running with **GoogleTest** using **CMake**. If you’re using **GoogleTest** for the first time or need a refresher, we recommend this tutorial as a starting point. If your project uses **Bazel**, see the [Quickstart for Bazel](https://google.github.io/googletest/quickstart-bazel.html) instead.
 
 
-## Prerequisites
+### Prerequisites
 
 To complete this tutorial, you’ll need:
 
@@ -158,7 +171,7 @@ If you don’t already have CMake installed, see the [CMake installation guide](
 > **Note**: The terminal commands in this tutorial show a Unix shell prompt, but the commands work on the Windows command line as well.
 
 
-## Set up a project
+### Set up a project
 
 CMake uses a file named `CMakeLists.txt` to configure the build system for a project. You’ll use this file to set up your project and declare a dependency on GoogleTest.
 
@@ -192,7 +205,7 @@ The above configuration declares a dependency on GoogleTest which is downloaded 
 
 For more information about how to create `CMakeLists.txt` files, see the [CMake Tutorial](https://cmake.org/cmake/help/latest/guide/tutorial/index.html).
 
-## Create and run a binary
+### Create and run a binary
 
 With GoogleTest declared as a dependency, you can use GoogleTest code within your own project.
 
@@ -259,24 +272,12 @@ Total Test time (real) =   0.01 sec
 Congratulations! You’ve successfully built and run a test binary using GoogleTest.
 
 
-## Next steps
+### Next steps
 
 * [Check out the Primer](https://google.github.io/googletest/primer.html) to start learning how to write simple tests.
 * [See the code samples](https://google.github.io/googletest/samples.html) for more examples showing how to use a variety of GoogleTest features.
 
 
-
-
-# GoogleTest - Google Testing and Mocking Framework
-
-> googletest helps you write better C++ tests.
-
-googletest is a testing framework developed by the Testing Technology team with Google’s specific requirements and constraints in mind. Whether you work on Linux, Windows, or a Mac, if you write C++ code, googletest can help you. And it supports any kind of tests, not just unit tests.
-
-refer:
-
-* [Github GoogleTest](https://github.com/google/googletest)
-* [GoogleTest User’s Guide](https://google.github.io/googletest/)
 
 
 ## [Googletest Primer](https://google.github.io/googletest/primer.html)
@@ -1038,7 +1039,7 @@ Old macros and their new equivalents:
 ![gtest2](/assets/images/202502/gtest2.png)
 
 
-## [gMock Cheat Sheet](https://google.github.io/googletest/gmock_cheat_sheet.html) (简介使用说明)
+## [gMock Cheat Sheet](https://google.github.io/googletest/gmock_cheat_sheet.html) (用法速查表)
 
 
 gMock Cheat Sheet相比[gMock Cookbook](https://google.github.io/googletest/gmock_cook_book.html) 提供了更精简的内容。
