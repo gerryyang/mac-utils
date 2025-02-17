@@ -1480,8 +1480,7 @@ This is `stack-buffer-overflow`, **not** `stack-overflow`. **Meaning read or wri
 If it's not done with `longjmp-in-libc` (the one that ASan intercepts), you'd need to call `__asan_unpoison` on the relevant portion of the stack.
 
 Switching between coroutines would generally be fine with ASan. It's undeclared returns from functions (longjmp, exceptions, etc) that asan has
-problems with because we rely on each function to clear the stack shadow
-after itself.
+problems with because we rely on each function to clear the stack shadow after itself.
 
 `__asan_unpoison_memory_region` does solve the issue.
 

@@ -265,9 +265,6 @@ Congratulations! You’ve successfully built and run a test binary using GoogleT
 * [See the code samples](https://google.github.io/googletest/samples.html) for more examples showing how to use a variety of GoogleTest features.
 
 
-## Refer
-
-[CMake: Project structure with unit tests](https://stackoverflow.com/questions/14446495/cmake-project-structure-with-unit-tests)
 
 
 # GoogleTest - Google Testing and Mocking Framework
@@ -600,12 +597,458 @@ But maybe you think that writing all those `main` functions is too much work? We
 
 **Google Test is designed to be thread-safe**. The implementation is thread-safe on systems where the pthreads library is available. It is currently unsafe to use Google Test assertions from two threads concurrently on other systems (e.g. Windows). In most tests this is not an issue as usually the assertions are done in the main thread. If you want to help, you can volunteer to implement the necessary synchronization primitives in `gtest-port.h` for your platform.
 
-## Advanced googletest Topics
 
-TODO
+## [Googletest Samples](https://google.github.io/googletest/samples.html)
 
-* http://google.github.io/googletest/advanced.html
+If you’re like us, you’d like to look at [googletest samples](https://github.com/google/googletest/blob/main/googletest/samples). The sample directory has a number of well-commented samples showing how to use a variety of googletest features.
 
+* Sample #1 shows the basic steps of using googletest to test C++ functions.
+* Sample #2 shows a more complex unit test for a class with multiple member functions.
+* Sample #3 uses a test fixture.
+* Sample #4 teaches you how to use googletest and `googletest.h` together to get the best of both libraries.
+* Sample #5 puts shared testing logic in a base test fixture, and reuses it in derived fixtures.
+* Sample #6 demonstrates type-parameterized tests.
+* Sample #7 teaches the basics of value-parameterized tests.
+* Sample #8 shows using `Combine()` in value-parameterized tests.
+* Sample #9 shows use of the listener API to modify Google Test’s console output and the use of its reflection API to inspect test results.
+* Sample #10 shows use of the listener API to implement a primitive memory leak checker.
+
+
+
+## [Advanced googletest Topics](http://google.github.io/googletest/advanced.html)
+
+
+### Introduction
+
+Now that you have read the [GoogleTest Primer](https://google.github.io/googletest/primer.html) and learned how to write tests using GoogleTest, it’s time to learn some new tricks. This document will show you more assertions as well as how to construct complex failure messages, propagate fatal failures, reuse and speed up your test fixtures, and use various flags with your tests.
+
+
+
+## [gMock for Dummies](https://google.github.io/googletest/gmock_for_dummies.html)
+
+### What Is gMock?
+
+When you write a prototype or test, often it’s not feasible or wise to rely on real objects entirely. A mock object implements the same interface as a real object (so it can be used as one), but lets you specify at run time how it will be used and what it should do (which methods will be called? in which order? how many times? with what arguments? what will they return? etc).
+
+It is easy to confuse(混淆) the term **fake** objects with **mock** objects. Fakes and mocks actually mean very different things in the **Test-Driven Development** (`TDD`) community:
+
+* **Fake** objects have working implementations, but usually take some shortcut (perhaps to make the operations less expensive), which makes them not suitable for production. An in-memory file system would be an example of a fake.
+
+* **Mocks** are objects pre-programmed with expectations, which form a specification of the calls they are expected to receive.
+
+If all this seems too abstract for you, don’t worry - **the most important thing to remember is that a mock allows you to check the interaction between itself and code that uses it**. The difference between fakes and mocks shall become much clearer once you start to use mocks.
+
+**gMock** is a library (sometimes we also call it a “framework” to make it sound cool) for creating mock classes and using them. It does to C++ what **jMock**/**EasyMock** does to **Java** (well, more or less).
+
+When using **gMock**,
+
+1. **first**, you use some simple macros to describe the interface you want to mock, and they will expand to the implementation of your mock class;
+2. **next**, you create some mock objects and specify its expectations and behavior using an intuitive syntax;
+3. **then** you exercise code that uses the mock objects. **gMock** will catch any violation to the expectations as soon as it arises.
+
+### Why gMock?
+
+While mock objects help you remove unnecessary dependencies in tests and make them fast and reliable, using mocks manually in C++ is **hard**:
+
+* Someone has to implement the mocks. The job is usually tedious and error-prone. No wonder people go great distance to avoid it.
+* The quality of those manually written mocks is a bit, uh, unpredictable. You may see some really polished ones, but you may also see some that were hacked up in a hurry and have all sorts of ad hoc restrictions.
+* The knowledge you gained from using one mock doesn’t transfer to the next one.
+
+In contrast, **Java** and **Python** programmers have some fine mock frameworks (**jMock**, **EasyMock**, etc), which automate the creation of mocks. As a result, mocking is a proven effective technique and widely adopted practice in those communities. Having the right tool absolutely makes the difference.
+
+**gMock** was built to help C++ programmers. It was inspired by **jMock** and **EasyMock**, but designed with C++’s specifics in mind. It is your friend if any of the following problems is bothering you:
+
+* You are stuck with a sub-optimal design and wish you had done more prototyping before it was too late, but prototyping in C++ is by no means “rapid”.
+* Your tests are slow as they depend on too many libraries or use expensive resources (e.g. a database).
+* Your tests are brittle as some resources they use are unreliable (e.g. the network).
+* You want to test how your code handles a failure (e.g. a file checksum error), but it’s not easy to cause one.
+* You need to make sure that your module interacts with other modules in the right way, but it’s hard to observe the interaction; therefore you resort to observing the side effects at the end of the action, but it’s awkward at best.
+* You want to “mock out” your dependencies, except that they don’t have mock implementations yet; and, frankly, you aren’t thrilled by some of those hand-written mocks.
+
+We encourage you to use **gMock** as
+
+* **a design tool, for it lets you experiment with your interface design early and often. More iterations lead to better designs!**
+* **a testing tool to cut your tests’ outbound dependencies and probe the interaction between your module and its collaborators.**
+
+### Getting Started
+
+gMock is bundled with googletest.
+
+
+### A Case for Mock Turtles
+
+Let’s look at an example. Suppose you are developing a graphics program that relies on a [LOGO](https://en.wikipedia.org/wiki/Logo_programming_language)-like API for drawing. **How would you test that it does the right thing? Well, you can run it and compare the screen with a golden screen snapshot, but let’s admit it: tests like this are expensive to run and fragile** (What if you just upgraded to a shiny new graphics card that has better anti-aliasing? Suddenly you have to update all your golden images.). It would be too painful if all your tests are like this. **Fortunately, you learned about [Dependency Injection(依赖注入)](https://en.wikipedia.org/wiki/Dependency_injection) and know the right thing to do: instead of having your application talk to the system API directly, wrap the API in an interface (say, Turtle) and code to that interface**:
+
+``` cpp
+class Turtle {
+  ...
+  virtual ~Turtle() {}
+
+  virtual void PenUp() = 0;
+  virtual void PenDown() = 0;
+  virtual void Forward(int distance) = 0;
+  virtual void Turn(int degrees) = 0;
+  virtual void GoTo(int x, int y) = 0;
+  virtual int GetX() const = 0;
+  virtual int GetY() const = 0;
+};
+```
+
+> Note that the destructor of `Turtle` **must be virtual**, as is the case for all classes you intend to inherit from - otherwise the destructor of the derived class will not be called when you delete an object through a base pointer, and you’ll get corrupted program states like memory leaks.
+
+You can control whether the turtle’s movement will leave a trace using `PenUp()` and `PenDown()`, and control its movement using `Forward()`, `Turn()`, and `GoTo()`. Finally, `GetX()` and `GetY()` tell you the current position of the turtle.
+
+**Your program will normally use a real implementation of this interface. In tests, you can use a mock implementation instead.** This allows you to easily check what drawing primitives your program is calling, with what arguments, and in which order. Tests written this way are much more robust (they won’t break because your new machine does anti-aliasing differently), easier to read and maintain (the intent of a test is expressed in the code, not in some binary images), and run much, much faster.
+
+### Writing the Mock Class
+
+If you are lucky, the mocks you need to use have already been implemented by some nice people. If, however, you find yourself in the position to write a mock class, relax - **gMock** turns this task into a fun game! (Well, almost.)
+
+#### How to Define It
+
+Using the `Turtle` interface as example, here are the simple steps you need to follow:
+
+* Derive a class `MockTurtle` from `Turtle`.
+
+* Take a `virtual` function of `Turtle` (while it’s possible to [mock non-virtual methods using templates](https://google.github.io/googletest/gmock_cook_book.html#MockingNonVirtualMethods), it’s much more involved).
+
+* In the public: section of the child class, write `MOCK_METHOD()`;
+
+* Now comes the fun part: you take the function signature, cut-and-paste it into the macro, and add two commas - one between the return type and the name, another between the name and the argument list.
+
+* If you’re mocking a **const** method, add a 4th parameter containing `(const)` (the parentheses are required).
+
+* Since you’re overriding a `virtual` method, we suggest adding the `override` keyword. For **const** methods the 4th parameter becomes `(const, override)`, for non-const methods just `(override)`. **This isn’t mandatory**.
+
+* Repeat until all `virtual` functions you want to mock are done. (It goes without saying that **all pure virtual methods** in your abstract class must be either mocked or overridden.)
+
+After the process, you should have something like:
+
+``` cpp
+#include <gmock/gmock.h>  // Brings in gMock.
+
+class MockTurtle : public Turtle {
+ public:
+  ...
+  MOCK_METHOD(void, PenUp, (), (override));
+  MOCK_METHOD(void, PenDown, (), (override));
+  MOCK_METHOD(void, Forward, (int distance), (override));
+  MOCK_METHOD(void, Turn, (int degrees), (override));
+  MOCK_METHOD(void, GoTo, (int x, int y), (override));
+  MOCK_METHOD(int, GetX, (), (const, override));
+  MOCK_METHOD(int, GetY, (), (const, override));
+};
+```
+
+You don’t need to define these mock methods somewhere else - the `MOCK_METHOD` macro **will generate the definitions** for you. It’s that simple!
+
+#### Where to Put It
+
+When you define a mock class, you need to decide where to put its definition. Some people put it in a `_test.cc`. This is fine when the interface being mocked (say, `Foo`) is owned by the same person or team. Otherwise, when the owner of `Foo` changes it, your test could break. (You can’t really expect Foo’s maintainer to fix every test that uses `Foo`, can you?)
+
+**Generally, you should not mock classes you don’t own**. If you must mock such a class owned by others, define the mock class in Foo’s Bazel package (usually the same directory or a testing sub-directory), and put it in a `.h` and a `cc_library` with `testonly=True`. Then everyone can reference them from their tests. If `Foo` ever changes, there is only one copy of `MockFoo` to change, and only tests that depend on the changed methods need to be fixed.
+
+Another way to do it: you can introduce a thin layer `FooAdaptor` on top of `Foo` and code to this new interface. Since you own `FooAdaptor`, you can absorb changes in `Foo` much more easily. While this is more work initially, carefully choosing the adaptor interface can make your code easier to write and more readable (a net win in the long run), as you can choose `FooAdaptor` to fit your specific domain much better than Foo does.
+
+> 在使用 gmock 创建 mock 类时，应该如何选择放置 mock 类定义的位置？
+
+1. **放在 `_test.cc` 文件中**：如果你正在 mock 的接口（比如 `Foo`）是由同一个人或团队拥有的，那么将 mock 类定义放在 `_test.cc` 文件中是可以的。但是，如果 `Foo` 的所有者更改了它，你的测试可能会失败。因为你不能真正期望 `Foo` 的维护者修复每一个使用 `Foo` 的测试。
+
+2. **不要 mock 不属于你的类**：这是一个一般性的建议。如果你必须 mock 一个由其他人拥有的类，那么应该在 `Foo` 的 Bazel 包（通常是同一个目录或一个 `testing` 子目录）中定义 mock 类，并将其放在一个 `.h` 文件和一个带有 `testonly=True` 的 `cc_library` 中。这样，每个人都可以从他们的测试中引用它们。如果 `Foo` 发生了变化，只需要更改一份 `MockFoo` 的副本，只有依赖于改变的方法的测试需要被修复。
+
+3. **引入一个薄层适配器**：你可以在 `Foo` 之上引入一个薄层适配器 `FooAdaptor`，并针对这个新接口进行编码。由于你拥有 `FooAdaptor`，你可以更容易地吸收 `Foo` 的变化。虽然这在初始阶段需要更多的工作，但是仔细选择适配器接口可以使你的代码更易于编写和阅读（从长远来看，这是一个净胜利），因为你可以选择 `FooAdaptor` 更好地适应你的特定领域，比 `Foo` 做得更好。
+
+
+### Using Mocks in Tests
+
+Once you have a mock class, using it is easy. The typical work flow is:
+
+1. Import the `gMock` names from the `testing` namespace such that you can use them unqualified (You only have to do it once per file). Remember that namespaces are a good idea.
+2. Create some mock objects.
+3. Specify your expectations on them (How many times will a method be called? With what arguments? What should it do? etc.).
+4. Exercise some code that uses the mocks; optionally, check the result using googletest assertions. If a mock method is called more than expected or with wrong arguments, you’ll get an error immediately.
+5. When a mock is destructed, `gMock` will automatically check whether all expectations on it have been satisfied.
+
+Here’s an example:
+
+``` cpp
+#include "path/to/mock-turtle.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+using ::testing::AtLeast;                         // #1
+
+TEST(PainterTest, CanDrawSomething) {
+  MockTurtle turtle;                              // #2
+  EXPECT_CALL(turtle, PenDown())                  // #3
+      .Times(AtLeast(1));
+
+  Painter painter(&turtle);                       // #4
+
+  EXPECT_TRUE(painter.DrawCircle(0, 0, 10));      // #5
+}
+```
+
+As you might have guessed, this test checks that `PenDown()` is called at least once. If the painter object didn’t call this method, your test will fail with a message like this:
+
+```
+path/to/my_test.cc:119: Failure
+Actual function call count doesn't match this expectation:
+Actually: never called;
+Expected: called at least once.
+Stack trace:
+...
+```
+
+
+
+
+
+
+## [gMock Cookbook](https://google.github.io/googletest/gmock_cook_book.html)
+
+You can find recipes for using gMock here. If you haven’t yet, please read [the dummy guide](https://google.github.io/googletest/gmock_for_dummies.html) first to make sure you understand the basics.
+
+> **Note**: gMock lives in the testing name space. For readability, it is recommended to write `using ::testing::Foo`; once in your file before using the name `Foo` defined by gMock. We omit such `using` statements in this section for brevity, but you should do it in your own code.
+
+### Creating Mock Classes
+
+Mock classes are defined as normal classes, using the `MOCK_METHOD` macro to generate mocked methods. The macro gets 3 or 4 parameters:
+
+``` cpp
+class MyMock {
+ public:
+  MOCK_METHOD(ReturnType, MethodName, (Args...));
+  MOCK_METHOD(ReturnType, MethodName, (Args...), (Specs...));
+};
+```
+
+The first 3 parameters are simply the method declaration, split into 3 parts. The 4th parameter accepts a closed list of qualifiers, which affect the generated method:
+
+* **const** - Makes the mocked method a `const` method. Required if overriding a `const` method.
+* **override** - Marks the method with `override`. Recommended if overriding a `virtual` method.
+* **noexcept** - Marks the method with `noexcept`. Required if overriding a `noexcept` method.
+* **Calltype(...)** - Sets the call type for the method (e.g. to `STDMETHODCALLTYPE`), useful in Windows.
+* **ref(...)** - Marks the method with the reference qualification specified. Required if overriding a method that has reference qualifications. Eg `ref(&)` or `ref(&&)`.
+
+
+#### Dealing with unprotected commas
+
+Unprotected commas, i.e. commas which are not surrounded by parentheses, prevent `MOCK_METHOD` from parsing its arguments correctly:
+
+![gtest1](/assets/images/202502/gtest1.png)
+
+
+#### Mocking Private or Protected Methods
+
+You must always put a mock method definition (`MOCK_METHOD`) in a `public`: section of the mock class, regardless of the method being mocked being `public`, `protected`, or `private` in the base class. This allows `ON_CALL` and `EXPECT_CALL` to reference the mock function from outside of the mock class. (Yes, C++ allows a subclass to change the access level of a virtual function in the base class.) Example:
+
+``` cpp
+class Foo {
+ public:
+  ...
+  virtual bool Transform(Gadget* g) = 0;
+
+ protected:
+  virtual void Resume();
+
+ private:
+  virtual int GetTimeOut();
+};
+
+class MockFoo : public Foo {
+ public:
+  ...
+  MOCK_METHOD(bool, Transform, (Gadget* g), (override));
+
+  // The following must be in the public section, even though the
+  // methods are protected or private in the base class.
+  MOCK_METHOD(void, Resume, (), (override));
+  MOCK_METHOD(int, GetTimeOut, (), (override));
+};
+```
+
+#### Mocking Overloaded Methods
+
+You can mock overloaded functions as usual. No special attention is required:
+
+``` cpp
+class Foo {
+  ...
+
+  // Must be virtual as we'll inherit from Foo.
+  virtual ~Foo();
+
+  // Overloaded on the types and/or numbers of arguments.
+  virtual int Add(Element x);
+  virtual int Add(int times, Element x);
+
+  // Overloaded on the const-ness of this object.
+  virtual Bar& GetBar();
+  virtual const Bar& GetBar() const;
+};
+
+class MockFoo : public Foo {
+  ...
+  MOCK_METHOD(int, Add, (Element x), (override));
+  MOCK_METHOD(int, Add, (int times, Element x), (override));
+
+  MOCK_METHOD(Bar&, GetBar, (), (override));
+  MOCK_METHOD(const Bar&, GetBar, (), (const, override));
+};
+```
+
+> **Note**: if you don’t mock all versions of the overloaded method, the compiler will give you a warning about some methods in the base class being hidden. To fix that, use using to bring them in scope:
+
+``` cpp
+class MockFoo : public Foo {
+  ...
+  using Foo::Add;
+  MOCK_METHOD(int, Add, (Element x), (override));
+  // We don't want to mock int Add(int times, Element x);
+  ...
+};
+```
+
+#### Mocking Class Templates
+
+You can mock class templates just like any class.
+
+``` cpp
+template <typename Elem>
+class StackInterface {
+  ...
+  // Must be virtual as we'll inherit from StackInterface.
+  virtual ~StackInterface();
+
+  virtual int GetSize() const = 0;
+  virtual void Push(const Elem& x) = 0;
+};
+
+template <typename Elem>
+class MockStack : public StackInterface<Elem> {
+  ...
+  MOCK_METHOD(int, GetSize, (), (const, override));
+  MOCK_METHOD(void, Push, (const Elem& x), (override));
+};
+```
+
+#### Mocking Non-virtual Methods
+
+gMock can mock non-virtual functions to be used in Hi-perf dependency injection.
+
+In this case, instead of sharing a common base class with the real class, your mock class will be unrelated to the real class, but contain methods with the same signatures. The syntax for mocking non-virtual methods is the same as mocking virtual methods (just don’t add `override`):
+
+``` cpp
+// A simple packet stream class.  None of its members is virtual.
+class ConcretePacketStream {
+ public:
+  void AppendPacket(Packet* new_packet);
+  const Packet* GetPacket(size_t packet_number) const;
+  size_t NumberOfPackets() const;
+  ...
+};
+
+// A mock packet stream class.  It inherits from no other, but defines
+// GetPacket() and NumberOfPackets().
+class MockPacketStream {
+ public:
+  MOCK_METHOD(const Packet*, GetPacket, (size_t packet_number), (const));
+  MOCK_METHOD(size_t, NumberOfPackets, (), (const));
+  ...
+};
+```
+
+Note that the mock class doesn’t define `AppendPacket()`, unlike the real class. **That’s fine as long as the test doesn’t need to call it**.
+
+Next, you need a way to say that you want to use `ConcretePacketStream` in production code, and use `MockPacketStream` in tests. Since the functions are not virtual and the two classes are unrelated, you must specify your choice at compile time (as opposed to run time).
+
+One way to do it is to templatize your code that needs to use a packet stream. More specifically, you will give your code a template type argument for the type of the packet stream. In production, you will instantiate your template with `ConcretePacketStream` as the type argument. In tests, you will instantiate the same template with `MockPacketStream`. For example, you may write:
+
+``` cpp
+template <class PacketStream>
+void CreateConnection(PacketStream* stream) { ... }
+
+template <class PacketStream>
+class PacketReader {
+ public:
+  void ReadPackets(PacketStream* stream, size_t packet_num);
+};
+```
+
+Then you can use `CreateConnection<ConcretePacketStream>()` and `PacketReader<ConcretePacketStream>` in production code, and use `CreateConnection<MockPacketStream>()` and `PacketReader<MockPacketStream>` in tests.
+
+```
+  MockPacketStream mock_stream;
+  EXPECT_CALL(mock_stream, ...)...;
+  .. set more expectations on mock_stream ...
+  PacketReader<MockPacketStream> reader(&mock_stream);
+  ... exercise reader ...
+```
+
+#### Mocking Free Functions
+
+It is not possible to directly mock a free function (i.e. **a C-style function** or **a static method**). If you need to, you can rewrite your code to use an interface (abstract class).
+
+Instead of calling a free function (say, `OpenFile`) directly, introduce an interface for it and have a concrete subclass that calls the free function:
+
+``` cpp
+class FileInterface {
+ public:
+  ...
+  virtual bool Open(const char* path, const char* mode) = 0;
+};
+
+class File : public FileInterface {
+ public:
+  ...
+  bool Open(const char* path, const char* mode) override {
+     return OpenFile(path, mode);
+  }
+};
+```
+
+Your code should talk to `FileInterface` to open a file. Now it’s easy to mock out the function.
+
+This may seem like a lot of **hassle**, but in practice you often have multiple related functions that you can put in the same interface, so the per-function syntactic overhead will be much lower.
+
+If you are concerned about the performance overhead incurred by virtual functions, and profiling confirms your concern, you can combine this with the recipe for [mocking non-virtual methods](https://google.github.io/googletest/gmock_cook_book.html#MockingNonVirtualMethods).
+
+Alternatively, instead of introducing a new interface, you can rewrite your code to accept a `std::function` **instead of the free function**, and then use [MockFunction](https://google.github.io/googletest/gmock_cook_book.html#MockFunction) to mock the `std::function`.
+
+
+#### Old-Style `MOCK_METHODn` Macros
+
+Before the generic `MOCK_METHOD` macro [was introduced in 2018](https://github.com/google/googletest/commit/c5f08bf91944ce1b19bcf414fa1760e69d20afc2), mocks where created using a family of macros collectively called `MOCK_METHODn`. These macros are still supported, though migration to the new `MOCK_METHOD` is recommended.
+
+The macros in the `MOCK_METHODn` family differ from `MOCK_METHOD`:
+
+* The general structure is `MOCK_METHODn(MethodName, ReturnType(Args))`, instead of `MOCK_METHOD(ReturnType, MethodName, (Args))`.
+
+* The number `n` must equal the number of arguments.
+
+* When mocking a `const` method, one must use `MOCK_CONST_METHODn`.
+
+* When mocking a class template, the macro name must be suffixed with `_T`.
+
+* In order to specify the call type, the macro name must be suffixed with `_WITH_CALLTYPE`, and the call type is the first macro argument.
+
+Old macros and their new equivalents:
+
+![gtest2](/assets/images/202502/gtest2.png)
+
+
+## [gMock Cheat Sheet](https://google.github.io/googletest/gmock_cheat_sheet.html) (简介使用说明)
+
+
+gMock Cheat Sheet相比[gMock Cookbook](https://google.github.io/googletest/gmock_cook_book.html) 提供了更精简的内容。
+
+
+
+## Demo
+
+* https://github.com/bast/gtest-demo/tree/master
+* [CMake: Project structure with unit tests](https://stackoverflow.com/questions/14446495/cmake-project-structure-with-unit-tests)
 
 
 ## Q&A

@@ -10,6 +10,21 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* recipe /ˈresəpi/
+  + **N-COUNT** A **recipe** is a list of ingredients and a set of instructions that tell you how to cook something. 食谱
+  + **N-SING** If you say that something is a **recipe** for a particular situation, you mean that it is likely to result in that situation. 方法
+    - Large-scale inflation is a **recipe** for disaster. 大规模的通货膨胀有可能导致灾难。
+
+* hassle /ˈhæs(ə)l/
+  + **N-VAR** A **hassle** is a situation that is difficult and involves problems, effort, or arguments with people. 麻烦
+    - I don't think it's worth the money or the **hassle**. 我认为不值得为此花钱或者费劲。
+  + **V-T** If someone **hassles** you, they cause problems for you, often by repeatedly telling you or asking you to do something, in an annoying way. 烦扰
+    - Then my husband started hassling me. 然后我丈夫便开始不停地烦我。
+
+* fragile /ˈfrædʒaɪl/
+  + **ADJ** If you describe a situation as fragile, you mean that it is weak or uncertain, and unlikely to be able to resist strong pressure or attack. 脆弱的
+    - The **fragile** economies of several southern African nations could be irreparably damaged. 几个南部非洲国家脆弱的经济可能会无可挽救地被摧垮。
+
 * mandatory /ˈmændətərɪ/
   + **ADJ** If an action or procedure is **mandatory**, people have to do it, because it is a rule or a law. 法定的
     - the mandatory retirement age of 65. 65岁的法定退休年龄。
