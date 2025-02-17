@@ -21,7 +21,251 @@ categories: [C/C++]
 
 refer: https://en.wikipedia.org/wiki/List_of_unit_testing_frameworks#C++
 
-# CMake with unitest
+
+# [Quickstart: Building with Bazel](https://google.github.io/googletest/quickstart-bazel.html)
+
+This tutorial aims to get you up and running with GoogleTest using the Bazel build system. If you’re using GoogleTest for the first time or need a refresher, we recommend this tutorial as a starting point.
+
+## Prerequisites
+
+To complete this tutorial, you’ll need:
+
+* A compatible operating system (e.g. Linux, macOS, Windows).
+* A compatible C++ compiler that supports at least `C++14`.
+* Bazel 7.0 or higher, the preferred build system used by the GoogleTest team.
+
+See [Supported Platforms](https://google.github.io/googletest/platforms.html) for more information about platforms compatible with GoogleTest.
+
+If you don’t already have Bazel installed, see the [Bazel installation guide](https://bazel.build/install).
+
+> **Note**: The terminal commands in this tutorial show a Unix shell prompt, but the commands work on the Windows command line as well.
+
+## Set up a Bazel workspace
+
+A [Bazel workspace](https://docs.bazel.build/versions/main/build-ref.html#workspace) is a directory on your filesystem that you use to manage source files for the software you want to build. Each workspace directory has a text file named `MODULE.bazel` which may be empty, or may contain references to external dependencies required to build the outputs.
+
+First, create a directory for your workspace:
+
+``` bash
+$ mkdir my_workspace && cd my_workspace
+```
+
+Next, you’ll create the `MODULE.bazel` file to specify dependencies. As of **Bazel 7.0**, the recommended way to consume **GoogleTest** is through the [Bazel Central Registry](https://registry.bazel.build/modules/googletest). To do this, create a `MODULE.bazel` file in the root directory of your Bazel workspace with the following content:
+
+```
+# MODULE.bazel
+
+# Choose the most recent version available at
+# https://registry.bazel.build/modules/googletest
+bazel_dep(name = "googletest", version = "1.15.2")
+```
+
+Now you’re ready to build C++ code that uses **GoogleTest**.
+
+## Create and run a binary
+
+With your Bazel workspace set up, you can now use **GoogleTest** code within your own project. As an example, create a file named `hello_test.cc` in your `my_workspace` directory with the following contents:
+
+``` cpp
+#include <gtest/gtest.h>
+
+// Demonstrate some basic assertions.
+TEST(HelloTest, BasicAssertions) {
+  // Expect two strings not to be equal.
+  EXPECT_STRNE("hello", "world");
+  // Expect equality.
+  EXPECT_EQ(7 * 6, 42);
+}
+```
+
+GoogleTest provides [assertions](https://google.github.io/googletest/primer.html#assertions) that you use to test the behavior of your code. The above sample includes the main GoogleTest header file and demonstrates some basic assertions.
+
+To build the code, create a file named `BUILD` in the same directory with the following contents:
+
+```
+cc_test(
+    name = "hello_test",
+    size = "small",
+    srcs = ["hello_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+```
+
+This `cc_test` rule declares the C++ test binary you want to build, and links to the **GoogleTest** library (`@googletest//:gtest"`) and the **GoogleTest** `main() `function (`@googletest//:gtest_main`). For more information about Bazel `BUILD` files, see the [Bazel C++ Tutorial](https://docs.bazel.build/versions/main/tutorial/cpp.html).
+
+> **NOTE**: In the example below, we assume Clang or GCC and set --cxxopt=-std=c++14 to ensure that GoogleTest is compiled as C++14 instead of the compiler’s default setting (which could be C++11). For MSVC, the equivalent would be --cxxopt=/std:c++14. See Supported Platforms for more details on supported language versions.
+
+Now you can build and run your test:
+
+```
+$ bazel test --cxxopt=-std=c++14 --test_output=all //:hello_test
+INFO: Analyzed target //:hello_test (26 packages loaded, 362 targets configured).
+INFO: Found 1 test target...
+INFO: From Testing //:hello_test:
+==================== Test output for //:hello_test:
+Running main() from gmock_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from HelloTest
+[ RUN      ] HelloTest.BasicAssertions
+[       OK ] HelloTest.BasicAssertions (0 ms)
+[----------] 1 test from HelloTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+================================================================================
+Target //:hello_test up-to-date:
+  bazel-bin/hello_test
+INFO: Elapsed time: 4.190s, Critical Path: 3.05s
+INFO: 27 processes: 8 internal, 19 linux-sandbox.
+INFO: Build completed successfully, 27 total actions
+//:hello_test                                                     PASSED in 0.1s
+
+INFO: Build completed successfully, 27 total actions
+```
+
+Congratulations! You’ve successfully built and run a test binary using **GoogleTest**.
+
+## Next steps
+
+* [Check out the Primer](https://google.github.io/googletest/primer.html) to start learning how to write simple tests.
+* [See the code samples](https://google.github.io/googletest/samples.html) for more examples showing how to use a variety of GoogleTest features.
+
+
+
+# [Quickstart: Building with CMake](https://google.github.io/googletest/quickstart-cmake.html)
+
+This tutorial aims to get you up and running with **GoogleTest** using **CMake**. If you’re using **GoogleTest** for the first time or need a refresher, we recommend this tutorial as a starting point. If your project uses **Bazel**, see the [Quickstart for Bazel](https://google.github.io/googletest/quickstart-bazel.html) instead.
+
+
+## Prerequisites
+
+To complete this tutorial, you’ll need:
+
+* A compatible operating system (e.g. Linux, macOS, Windows).
+* A compatible C++ compiler that supports at least `C++14`.
+* [CMake](https://cmake.org/) and a compatible build tool for building the project.
+   + Compatible build tools include **Make**, **Ninja**, and others - see [CMake Generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html) for more information.
+
+See [Supported Platforms](https://google.github.io/googletest/platforms.html) for more information about platforms compatible with GoogleTest.
+
+If you don’t already have CMake installed, see the [CMake installation guide](https://cmake.org/install).
+
+> **Note**: The terminal commands in this tutorial show a Unix shell prompt, but the commands work on the Windows command line as well.
+
+
+## Set up a project
+
+CMake uses a file named `CMakeLists.txt` to configure the build system for a project. You’ll use this file to set up your project and declare a dependency on GoogleTest.
+
+First, create a directory for your project:
+
+``` bash
+mkdir my_project && cd my_project
+```
+
+Next, you’ll create the `CMakeLists.txt` file and declare a dependency on **GoogleTest**. There are many ways to express dependencies in the CMake ecosystem; in this quickstart, you’ll use the [FetchContent CMake module](https://cmake.org/cmake/help/latest/module/FetchContent.html). To do this, in your project directory (`my_project`), create a file named `CMakeLists.txt` with the following contents:
+
+```
+cmake_minimum_required(VERSION 3.14)
+project(my_project)
+
+# GoogleTest requires at least C++14
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+```
+
+The above configuration declares a dependency on GoogleTest which is downloaded from GitHub. In the above example, `03597a01ee50ed33e9dfd640b249b4be3799d395` is the Git commit hash of the GoogleTest version to use; we recommend updating the hash often to point to the latest version.
+
+For more information about how to create `CMakeLists.txt` files, see the [CMake Tutorial](https://cmake.org/cmake/help/latest/guide/tutorial/index.html).
+
+## Create and run a binary
+
+With GoogleTest declared as a dependency, you can use GoogleTest code within your own project.
+
+As an example, create a file named `hello_test.cc` in your `my_project` directory with the following contents:
+
+``` cpp
+#include <gtest/gtest.h>
+
+// Demonstrate some basic assertions.
+TEST(HelloTest, BasicAssertions) {
+  // Expect two strings not to be equal.
+  EXPECT_STRNE("hello", "world");
+  // Expect equality.
+  EXPECT_EQ(7 * 6, 42);
+}
+```
+
+GoogleTest provides [assertions](https://google.github.io/googletest/primer.html#assertions) that you use to test the behavior of your code. The above sample includes the main GoogleTest header file and demonstrates some basic assertions.
+
+To build the code, add the following to the end of your `CMakeLists.txt` file:
+
+```
+enable_testing()
+
+add_executable(
+  hello_test
+  hello_test.cc
+)
+target_link_libraries(
+  hello_test
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(hello_test)
+```
+
+The above configuration enables testing in CMake, declares the C++ test binary you want to build (`hello_test`), and links it to GoogleTest (`gtest_main`). The last two lines enable CMake’s test runner to discover the tests included in the binary, using the [GoogleTest CMake module](https://cmake.org/cmake/help/git-stage/module/GoogleTest.html).
+
+Now you can build and run your test:
+
+```
+my_project$ cmake -S . -B build
+-- The C compiler identification is GNU 10.2.1
+-- The CXX compiler identification is GNU 10.2.1
+...
+-- Build files have been written to: .../my_project/build
+
+my_project$ cmake --build build
+Scanning dependencies of target gtest
+...
+[100%] Built target gmock_main
+
+my_project$ cd build && ctest
+Test project .../my_project/build
+    Start 1: HelloTest.BasicAssertions
+1/1 Test #1: HelloTest.BasicAssertions ........   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+```
+
+Congratulations! You’ve successfully built and run a test binary using GoogleTest.
+
+
+## Next steps
+
+* [Check out the Primer](https://google.github.io/googletest/primer.html) to start learning how to write simple tests.
+* [See the code samples](https://google.github.io/googletest/samples.html) for more examples showing how to use a variety of GoogleTest features.
+
+
+## Refer
 
 [CMake: Project structure with unit tests](https://stackoverflow.com/questions/14446495/cmake-project-structure-with-unit-tests)
 

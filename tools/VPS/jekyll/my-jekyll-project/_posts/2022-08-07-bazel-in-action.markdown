@@ -115,6 +115,35 @@ fi
 > 参考 [How does Bazelisk know which Bazel version to run?](https://github.com/bazelbuild/bazelisk#how-does-bazelisk-know-which-bazel-version-to-run) 控制使用的 bazel 版本。
 
 
+# Bazel 版本升级
+
+## [Bzlmod Migration Guide](https://bazel.build/external/migration)
+
+Due to the [shortcomings of WORKSPACE](https://bazel.build/external/overview#workspace-shortcomings), `Bzlmod` is replacing the legacy `WORKSPACE` system. The `WORKSPACE` file is already disabled in **Bazel 8** (late 2024) and will be removed in **Bazel 9** (late 2025). This guide helps you migrate your project to `Bzlmod` and drop `WORKSPACE` for managing external dependencies.
+
+### Shortcomings of the WORKSPACE system
+
+In the years since the `WORKSPACE` system was introduced, users have reported many pain points, including:
+
+* Bazel does not evaluate the `WORKSPACE` files of any dependencies, so all transitive dependencies must be defined in the `WORKSPACE` file of the main repo, in addition to direct dependencies.
+
+* To work around this, projects have adopted the "deps.bzl" pattern, in which they define a macro which in turn defines multiple repos, and ask users to call this macro in their `WORKSPACE` files.
+  + This has its own problems: macros cannot `load` other `.bzl` files, so these projects have to define their transitive dependencies in this "deps" macro, or work around this issue by having the user call multiple layered "deps" macros.
+  + Bazel evaluates the `WORKSPACE` file sequentially. Additionally, dependencies are specified using `http_archive` with URLs, without any version information. This means that there is no reliable way to perform version resolution in the case of diamond dependencies (A depends on B and C; B and C both depend on different versions of D).
+
+Due to the shortcomings of `WORKSPACE`, Bzlmod is going to replace the legacy `WORKSPACE` system in future Bazel releases. Please read the [Bzlmod migration guide](https://bazel.build/external/migration) on how to migrate to Bzlmod.
+
+
+### Why migrate to Bzlmod?
+
+* There are many [advantages](https://bazel.build/external/migration#benefits-of-bzlmod) compared to the legacy `WORKSPACE` system, which helps to ensure a healthy growth of the Bazel ecosystem.
+
+* If your project is a dependency of other projects, migrating to `Bzlmod` will unblock their migration and make it easier for them to depend on your project.
+
+* Migration to `Bzlmod` is a necessary step in order to use future Bazel versions (mandatory(强制性的) in Bazel 9).
+
+
+
 # Bazel 优势
 
 Bazel offers the following advantages:

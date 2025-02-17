@@ -2245,6 +2245,21 @@ https://github.com/MestreLion/git-tools
 
 # Q&A
 
+## [fatal: in unpopulated submodule](https://stackoverflow.com/questions/47403358/fatal-in-unpopulated-submodule)
+
+The root cause of this error in my case was that I have a subdirectory with its own .git folder inside. When I issued the `git add --all` command, I got this same error.
+
+Here's how I resolved the issue:
+
+1. Remove all `.git` folder inside the sub directory causing the error
+2. `cd` to the main directory
+3. `git rm --cached sub_directory_name -f`
+4. `git add --all` to add the subdirectory and contents, recursively
+5. `git status` to verify that the items are added
+
+I almost got a headache with this error but thanks for the previous answers, a combination of those worked for me.
+
+
 ## [How do I make Git ignore file mode (chmod) changes?](https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes)
 
 ```

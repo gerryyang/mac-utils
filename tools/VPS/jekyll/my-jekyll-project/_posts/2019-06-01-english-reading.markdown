@@ -10,6 +10,13 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* mandatory /ˈmændətərɪ/
+  + **ADJ** If an action or procedure is **mandatory**, people have to do it, because it is a rule or a law. 法定的
+    - the mandatory retirement age of 65. 65岁的法定退休年龄。
+  + **ADJ** If a crime carries a **mandatory** punishment, that punishment is fixed by law for all cases, in contrast to crimes for which the judge or magistrate has to decide the punishment for each particular case. (刑罚) 强制性的
+    - the mandatory life sentence for murder. 谋杀罪的强制性终身监禁。
+
+
 * prompt /prɒmpt/
   + **V-T** To **prompt** someone to do something means to make them decide to do it. 促使
     - Japan's recession has **prompted** consumers to cut back on buying cars. 日本的经济衰退已促使消费者们削减购车花销。

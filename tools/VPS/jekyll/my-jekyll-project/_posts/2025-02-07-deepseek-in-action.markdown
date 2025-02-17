@@ -579,6 +579,12 @@ Continue is the leading open-source AI code assistant. You can connect any model
 
 最后选择 accept 接受，完成代码编写。
 
+## [ima.copilot](https://ima.qq.com/) (会思考的知识库)
+
+ima.copilot (简称 ima) 是一款由腾讯混元大模型提供技术支持的智能工作台产品。
+
+![ima](/assets/images/202502/ima.png)
+
 
 
 # Refer

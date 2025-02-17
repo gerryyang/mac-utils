@@ -9,6 +9,23 @@ categories: 机器学习
 {:toc}
 
 
+# TTS (Text To Speech 从文本到语音)
+
+它是同时运用语言学和心理学的杰出之作，在内置芯片的支持之下，通过神经网络的设计，把文字智能地转化为自然语音流。TTS技术对文本文件进行实时转换，转换时间之短可以秒计算。在其特有智能语音控制器作用下，文本输出的语音音律流畅，使得听者在听取信息时感觉自然，毫无机器语音输出的冷漠与生涩感。
+
+* [GPT-SoVITS指南](https://www.yuque.com/baicaigongchang1145haoyuangong/ib3g1e)
+* [GPT-SoVITS-WebUI](https://github.com/RVC-Boss/GPT-SoVITS) A Powerful Few-shot Voice Conversion and Text-to-Speech WebUI.
+* [耗时两个月自主研发的低成本AI音色克隆软件](https://www.bilibili.com/video/BV12g4y1m7Uw/?vd_source=a93a41a77eb9d3f6d0145e87094f8289)
+* [GPT-SoVITS语音合成官方镜像，3080Ti卡测试通过](https://www.codewithgpu.com/i/RVC-Boss/GPT-SoVITS/GPT-SoVITS-Official)
+
+测试使用：
+
+* 各种游戏600多个角色在线试用：https://gsv.acgnai.top/
+* zero shot试用：https://gsv-zs.acgnai.top/&https://huggingface.co/spaces/lj1995/GPT-SoVITS-v2
+
+
+
+
 # 静态的图像识别技术 OpenCV
 
 OpenCV（Open Source Computer Vision Library）是一个开源的计算机视觉和机器学习库，广泛应用于静态图像识别技术中。它由英特尔公司开发，并且支持多种编程语言，包括C++、Python、Java和MATLAB，适用于多个操作系统，如Windows、Linux、Mac OS、Android和iOS。
