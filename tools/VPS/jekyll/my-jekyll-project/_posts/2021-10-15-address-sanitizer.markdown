@@ -1485,6 +1485,223 @@ problems with because we rely on each function to clear the stack shadow after i
 `__asan_unpoison_memory_region` does solve the issue.
 
 
+ASan 通过在内存分配和释放时添加“毒药”（poison）来检测内存错误。当你试图访问已经被“毒化”的内存时，ASan 就会报告一个错误。在某些情况下，ASan 可能会误报错误。例如，当使用 longjmp 或其他非标准的方式来改变控制流时，ASan 可能会误认为正在访问已经被释放的内存，从而报告一个错误。这就是所谓的假阳性。`__asan_unpoison_memory_region` 是一个 ASan 提供的函数，它可以用来移除内存区域的“毒药”。当你确定一个内存访问是合法的，但 ASan 误报了错误时，你可以使用这个函数来解决问题。
+
+
+参考：[AddressSanitizerManualPoisoning](https://github.com/google/sanitizers/wiki/AddressSanitizerManualPoisoning)
+
+A user may **poison**/**unpoison** a region of memory manually. Use this feature with caution. In many cases good old malloc+free is a better way to find heap bugs than using custom allocators with manual poisoning.
+
+From `compiler-rt/include/sanitizer/asan_interface.h`:
+
+``` cpp
+  // Marks memory region [addr, addr+size) as unaddressable.
+  // This memory must be previously allocated by the user program. Accessing
+  // addresses in this region from instrumented code is forbidden until
+  // this region is unpoisoned. This function is not guaranteed to poison
+  // the whole region - it may poison only subregion of [addr, addr+size) due
+  // to ASan alignment restrictions.
+  // Method is NOT thread-safe in the sense that no two threads can
+  // (un)poison memory in the same memory region simultaneously.
+  void __asan_poison_memory_region(void const volatile *addr, size_t size);
+  // Marks memory region [addr, addr+size) as addressable.
+  // This memory must be previously allocated by the user program. Accessing
+  // addresses in this region is allowed until this region is poisoned again.
+  // This function may unpoison a superregion of [addr, addr+size) due to
+  // ASan alignment restrictions.
+  // Method is NOT thread-safe in the sense that no two threads can
+  // (un)poison memory in the same memory region simultaneously.
+  void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
+
+// User code should use macros instead of functions.
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+#define ASAN_POISON_MEMORY_REGION(addr, size) \
+  __asan_poison_memory_region((addr), (size))
+#define ASAN_UNPOISON_MEMORY_REGION(addr, size) \
+  __asan_unpoison_memory_region((addr), (size))
+#else
+#define ASAN_POISON_MEMORY_REGION(addr, size) \
+  ((void)(addr), (void)(size))
+#define ASAN_UNPOISON_MEMORY_REGION(addr, size) \
+  ((void)(addr), (void)(size))
+#endif
+```
+
+If you have a custom allocation arena, the typical workflow would be to poison the entire arena first, and then unpoison allocated chunks of memory leaving poisoned redzones between them. The allocated chunks should start with 8-aligned addresses.
+
+If a [run-time flag](https://github.com/google/sanitizers/wiki/AddressSanitizerFlags) `allow_user_poisoning` is set to 0, the manual poisoning callbacks are no-ops.
+
+源码：https://github.com/llvm-mirror/compiler-rt/blob/master/include/sanitizer/asan_interface.h
+
+
+参考：[issue: support swapcontext](https://github.com/google/sanitizers/issues/189)
+
+> Compatible issue between ASAN and swapcontext()
+
+* Phenomenon
+
+ASAN does not fully support swapcontext technology, as asan has indicated in log：==1000==WARNING: ASan doesn't fully support makecontext/swapcontext functions and may produce false positives in some cases!
+
+Under this constraint, if function swapcontext() is introduced in your program, there will be some false positives reported after coroutine was changed. The detection capability of ASAN is almost ineffective, and even seriously affects the normal operation of the program.
+
+* Mechanism of asan
+
+To solve this problem, we need to understand why these false positives occur.
+
+And to understand why these false positives occur, we need to learn how asan works: **ASAN needs to allocate and store a shadow stack for each fiber, to track usage. You should also poison the stack when it’s no longer in use (e.g. if you track a high water mark, or completely free it)**.
+
+* Way to make swapcontext() compatible with asan
+
+Note: The flag 'ASAN_OPTIONS=detect_stack_use_after_return=true' is necessary when the swapcontext() function is used on your program.
+
+Therefore, we need to find a way to notify ASAN before/after we exchange the fiber.
+
+To make things easier, I recommend adding `fake_stack` pointer for every fiber when ASAN is enabled.
+
+For this `fake_stack`:
+
+* **The fake stack is required per context/fiber/coroutine for the purpose of tracking memory usage in ASAN.**
+* **ASAN will allocate the fake stack.**
+
+And when we try to jump to new(target) coroutine by executing swapcontext(), we need to store the `fake_stack` of old(current) fiber, so that when we try to return to the old fiber, we can restore the stack of old fiber with the `fake_stack` we ever stored before.
+
+Here introduce two function provided by ASAN to manage the `fake_stack`:
+
+``` cpp
+// Fiber annotation interface.
+// Before switching to a different stack, one must call
+// __sanitizer_start_switch_fiber with a pointer to the bottom of the
+// destination stack and its size. When code starts running on the new stack,
+// it must call __sanitizer_finish_switch_fiber to finalize the switch.
+// The start_switch function takes a void** to store the current fake stack if
+// there is one (it is needed when detect_stack_use_after_return is enabled).
+// When restoring a stack, this pointer must be given to the finish_switch
+// function. In most cases, this void* can be stored on the stack just before
+// switching. When leaving a fiber definitely, null must be passed as first
+// argument to the start_switch function so that the fake stack is destroyed.
+// If you do not want support for stack use-after-return detection, you can
+// always pass null to these two functions.
+// Note that the fake stack mechanism is disabled during fiber switch, so if a
+// signal callback runs during the switch, it will not benefit from the stack
+// use-after-return detection.
+void __sanitizer_start_switch_fiber(void **fake_stack_save,
+                                    const void *bottom, size_t size);
+
+void __sanitizer_finish_switch_fiber(void *fake_stack_save,
+                                     const void **bottom_old,
+                                     size_t *size_old);
+```
+
+The implementation of these two function is in here: https://github.com/llvm/llvm-project/blob/a2ef44a5d65932c7bb0f483217826856325b60df/compiler-rt/lib/asan/asan_thread.cpp#L526-L551
+
+From the source code, we can see that, `__sanitizer_start_switch_fiber` will assign the fake_stack IF and ONLY IF you provide a pointer.
+
+This is how I handle swapcontext() issue:
+
+
+``` cpp
+//vthctx: Context of main fiber/coroutine
+//vth:  Context of fiber/coroutine A
+
+Step1: Try to exchange from main fiber to fiber A =========================================================================:
+//On the main fiber.
+
+//Argument0: The container for asan to allocate the fake_stack for current fiber.
+//           - If we want the current fiber to stay still(we are going to jump back later),then one valid pointer(&vthctx->fake_stack here) shall be passed to argument 0 to store the fake_stack of current fiber;
+//           - If we don't want to keep the current fiber alive(we won't jump back), 'NULL' shall be passed to argument 0 to notify asan to delete the fake_stack of current fiber.
+//Argument1: The info of target fiber we are going to jump to.
+//Argument2: The info of target fiber we are going to jump to.
+__sanitizer_start_switch_fiber(&vthctx->fake_stack, vth->uctx.uc_stack.ss_sp, vth->uctx.uc_stack.ss_size);
+
+//exchange to target fiber A.
+swapcontext(&vthctx->tmp_outer_uctx, &vth->uctx);
+
+Step2: On the trigger function of fiber A =========================================================================:
+//On the fiber A
+const void *from_stack;
+size_t from_stacksize;
+
+//Argument0: We are the first time to jump into this fiber, so NULL shall be set as argument 0;
+//           - Set argument 0 to 'NULL' means that we have no historical stack to restore for this fiber;
+//           - If we have been to this fiber and have historical stack to restore for this fiber, then set the historical stack to argument 0.
+//Argument1: The container for asan to return the info of old fiber we were in before we jumped over.
+//Argument2: The container for asan to return the info of old fiber we were in before we jumped over.
+__sanitizer_finish_switch_fiber(NULL, &from_stack, &from_stacksize);
+
+ Step3: jump back from fiber A to main fiber=========================================================================:
+//Argument0: To store the fake_stack of old fiber before jumping out.
+//           - Pass 'NULL' to argument 0 if we won't jump back to fiber A, then asan will delete the fake_stack of fiber A for us.
+//           - Pass '&vth->fake_stack'to argument 0 if we plan to keep fiber A alive and we will jump back in the future，and asan will keep the fake_stack of fiber A for us.
+//Argument1: The info of target fiber we are going to jump to.
+//Argument2: The info of target fiber we are going to jump to.
+__sanitizer_start_switch_fiber(NULL, vthctx->tmp_outer_uctx.uc_stack.ss_sp, vthctx->tmp_outer_uctx.uc_stack.ss_size);
+
+//exchange to main fiber.
+swapcontext(&vth->uctx, &vthctx->tmp_outer_uctx);
+
+Step4: Restore the fake_stack on main fiber =========================================================================:
+//At the point of the main fiber we're jumping back to
+
+//Argument0: The fake_stack sotred before(see Step1),also the one we try to restore for this fiber.
+//Argument1: The container for asan to return the info of old fiber we were in before we jumped over.
+//Argument2: The container for asan to return the info of old fiber we were in before we jumped over.
+__sanitizer_finish_switch_fiber(vthctx->fake_stack, &from_stack, &from_stacksize);
+```
+
+ASAN only cares about tracking the stack swapping, so as long as you wrap the stack exchange operation (coroutine transfer) correctly, ASAN should work well with swapcontext().
+
+
+
+源码参考：sanitizer/include/common_interface_defs.h
+
+``` cpp
+/// Notify ASan that a fiber switch has started (required only if implementing
+/// your own fiber library).
+///
+/// Before switching to a different stack, you must call
+/// <c>__sanitizer_start_switch_fiber()</c> with a pointer to the bottom of the
+/// destination stack and with its size. When code starts running on the new
+/// stack, it must call <c>__sanitizer_finish_switch_fiber()</c> to finalize
+/// the switch. The <c>__sanitizer_start_switch_fiber()</c> function takes a
+/// <c>void**</c> pointer argument to store the current fake stack if there is
+/// one (it is necessary when the runtime option
+/// <c>detect_stack_use_after_return</c> is enabled).
+///
+/// When restoring a stack, this <c>void**</c> pointer must be given to the
+/// <c>__sanitizer_finish_switch_fiber()</c> function. In most cases, this
+/// pointer can be stored on the stack immediately before switching. When
+/// leaving a fiber definitely, NULL must be passed as the first argument to
+/// the <c>__sanitizer_start_switch_fiber()</c> function so that the fake stack
+/// is destroyed. If your program does not need stack use-after-return
+/// detection, you can always pass NULL to these two functions.
+///
+/// \note The fake stack mechanism is disabled during fiber switch, so if a
+/// signal callback runs during the switch, it will not benefit from stack
+/// use-after-return detection.
+///
+/// \param fake_stack_save [out] Fake stack save location.
+/// \param bottom Bottom address of stack.
+/// \param size Size of stack in bytes.
+void __sanitizer_start_switch_fiber(void **fake_stack_save,
+                                    const void *bottom, size_t size);
+
+/// Notify ASan that a fiber switch has completed (required only if
+/// implementing your own fiber library).
+///
+/// When code starts running on the new stack, it must call
+/// <c>__sanitizer_finish_switch_fiber()</c> to finalize
+/// the switch. For usage details, see the description of
+/// <c>__sanitizer_start_switch_fiber()</c>.
+///
+/// \param fake_stack_save Fake stack save location.
+/// \param bottom_old [out] Bottom address of old stack.
+/// \param size_old [out] Size of old stack in bytes.
+void __sanitizer_finish_switch_fiber(void *fake_stack_save,
+                                     const void **bottom_old,
+                                     size_t *size_old);
+```
+
+[__sanitizer_start_switch_fiber() unmaps per-thread "fake" stack #1760](https://github.com/google/sanitizers/issues/1760)
 
 
 
