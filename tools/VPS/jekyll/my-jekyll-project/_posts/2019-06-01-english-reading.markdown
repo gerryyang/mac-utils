@@ -8,7 +8,12 @@ categories: 英语学习
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+
 # Words (柯林斯)
+
+* phenomenon /fəˈnɒmɪnən/
+  + **N-COUNT** A **phenomenon** is something that is observed to happen or exist. 现象
 
 * recipe /ˈresəpi/
   + **N-COUNT** A **recipe** is a list of ingredients and a set of instructions that tell you how to cook something. 食谱

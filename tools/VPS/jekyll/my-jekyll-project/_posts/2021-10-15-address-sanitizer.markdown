@@ -1473,7 +1473,7 @@ It means that you contains at least one serious bug, that under certain circumst
 
 ## stack-buffer-overflow
 
-参考 [Suspicious stack-overflow message that points to a valid stack range](https://github.com/google/sanitizers/issues/1533)
+### 参考 [Suspicious stack-overflow message that points to a valid stack range](https://github.com/google/sanitizers/issues/1533)
 
 This is `stack-buffer-overflow`, **not** `stack-overflow`. **Meaning read or write out of bounds of some local variable on stack**. If you are sure that this particular access is within bounds and within lifetime of whatever location it targets, then the common cause of **false positives** would be moving the stack pointer up (i.e. taking a function frame or several off the stack, like `longjmp` would) without telling asan about it. Sounds like your "breaking out" of the handler is exactly that.
 
@@ -1487,8 +1487,99 @@ problems with because we rely on each function to clear the stack shadow after i
 
 ASan 通过在内存分配和释放时添加“毒药”（poison）来检测内存错误。当你试图访问已经被“毒化”的内存时，ASan 就会报告一个错误。在某些情况下，ASan 可能会误报错误。例如，当使用 longjmp 或其他非标准的方式来改变控制流时，ASan 可能会误认为正在访问已经被释放的内存，从而报告一个错误。这就是所谓的假阳性。`__asan_unpoison_memory_region` 是一个 ASan 提供的函数，它可以用来移除内存区域的“毒药”。当你确定一个内存访问是合法的，但 ASan 误报了错误时，你可以使用这个函数来解决问题。
 
+`__asan_poison_memory_region` 操作的调用时机？
 
-参考：[AddressSanitizerManualPoisoning](https://github.com/google/sanitizers/wiki/AddressSanitizerManualPoisoning)
+ASan（AddressSanitizer）主要用于检测内存错误，比如缓冲区溢出、使用释放后的内存等。它通过在内存周围插入“红区”（redzones）来检测越界访问。**对于堆内存**，ASan在分配时会自动添加红区，并在释放时标记为中毒状态。**而栈内存的处理可能有所不同，因为栈变量的生命周期由编译器管理**。当使用栈检查功能时，ASan会在栈变量周围插入红区。这些红区在变量作用域结束时会被标记为中毒，以防止后续访问导致的问题。例如，当一个函数中的局部变量超出作用域后，ASan可能会将对应的栈内存区域中毒，这样任何后续的访问（比如通过悬空指针）都会被检测到。具体来说，当函数返回时，栈上的局部变量会被销毁，ASan此时会调用`__asan_poison_memory_region`来标记这些变量的内存区域为中毒状态。这样可以防止use-after-return错误。此外，在变量作用域结束的时候，比如在块结束时，ASan也可能立即中毒该变量的内存，以检测use-after-scope问题。另外，ASan可能在变量初始化之前就预先中毒整个栈帧，然后在变量初始化时解毒对应的区域。当变量不再使用时，再次中毒。这样可以检测到未初始化的访问或越界访问。需要注意的是，栈内存的中毒和解毒操作是由编译器插桩自动完成的，而不是显式调用。**因此，__asan_poison_memory_region的调用是在编译后的代码中自动插入的，而不是由程序员手动调用**。
+
+总结一下，ASan在以下情况会调用`__asan_poison_memory_region`操作来中毒栈内存：
+
+1. 函数返回时，标记所有局部变量的内存为中毒，防止use-after-return。
+2. 局部变量离开其作用域时，立即中毒其内存，检测use-after-scope。
+3. 在变量初始化前，整个栈帧可能被预先中毒，初始化时解毒，释放时再次中毒。
+4. 在栈内存分配时，插入红区并标记为中毒，以检测越界访问。
+
+需要确认这些情况是否准确，可能需要查阅ASan的文档或源码。例如，use-after-scope检测是通过在变量作用域结束时中毒其内存来实现的，而栈变量周围的红区在编译时插入，并在变量生命周期结束后被标记为中毒状态。此外，ASan的栈保护还包括对alloca等动态栈分配的处理，这些情况下也会使用中毒操作来保护内存。
+
+AddressSanitizer (ASan) 在栈内存管理中使用 `__asan_poison_memory_region` 的典型场景如下：
+
+**Case1: 栈变量作用域结束**
+
+触发条件：变量离开作用域（如函数返回、代码块结束）
+目的：检测 Use-after-Scope 错误（悬空指针访问已释放的栈内存）
+
+``` cpp
+void func() {
+  {
+    int x[10]; // 栈变量
+    ASAN_UNPOISON_MEMORY_REGION(x, sizeof(x)); // 初始化时解毒
+  } // 作用域结束
+  // ASan 自动调用 __asan_poison_memory_region(x, ...)
+}
+```
+
+**Case2: 栈内存红区保护**
+
+触发条件：栈帧初始化时
+目的：检测缓冲区溢出（如 `buffer[32]` 访问会触及红区）
+
+``` cpp
+void func() {
+  char buffer[32];
+  // 编译器自动插入红区：
+  // [红区][buffer][红区]
+  // ASan 初始化时调用 __asan_poison_memory_region 标记红区为中毒
+}
+```
+
+**Case3: 动态栈分配 alloca**
+
+触发条件：[alloca](https://man7.org/linux/man-pages/man3/alloca.3.html) 分配的动态栈内存释放时
+目的：检测动态栈内存的越界访问
+
+``` cpp
+void func(int n) {
+  char *buf = (char*)alloca(n);
+  // ASan 调用 __asan_poison_memory_region 标记未初始化区域
+  // 并在 buf 释放时再次中毒
+}
+```
+
+**Case4: 栈内存重用优化**
+
+触发条件：编译器优化导致栈内存复用
+目的：防止残留数据被错误访问
+
+``` cpp
+void func() {
+  int a[100];
+  // a 使用结束后...
+  double b[50];
+  // ASan 可能重用 a 的内存区域
+  // 调用 __asan_poison_memory_region 标记 a 的旧区域
+}
+```
+
+**底层实现机制：**
+
+1. 编译器插桩：Clang/GCC 在编译时插入对 `__asan_poison_memory_region` 的调用
+2. 影子内存映射：通过 `0xF1F1F1F1` 等魔数标记中毒区域
+3. 作用域追踪：利用 LLVM 的 `LifetimeSanitizer` 跟踪变量生命周期
+
+例如，对于以下代码，ASan 会在 `x` 离开作用域时标记其内存为中毒状态，后续通过 `ptr` 的访问将被拦截。
+
+``` cpp
+void test() {
+  int *ptr;
+  {
+    int x[4];
+    ptr = &x[0];
+  } // __asan_poison_memory_region(x, 16) 在此处调用
+  *ptr = 42; // 触发 ASan 错误
+}
+```
+
+
+### 参考：[AddressSanitizerManualPoisoning](https://github.com/google/sanitizers/wiki/AddressSanitizerManualPoisoning)
 
 A user may **poison**/**unpoison** a region of memory manually. Use this feature with caution. In many cases good old malloc+free is a better way to find heap bugs than using custom allocators with manual poisoning.
 
@@ -1527,14 +1618,14 @@ From `compiler-rt/include/sanitizer/asan_interface.h`:
 #endif
 ```
 
-If you have a custom allocation arena, the typical workflow would be to poison the entire arena first, and then unpoison allocated chunks of memory leaving poisoned redzones between them. The allocated chunks should start with 8-aligned addresses.
+**If you have a custom allocation arena,** the typical workflow would be to poison the entire arena first, and then unpoison allocated chunks of memory leaving poisoned redzones between them. The allocated chunks should start with 8-aligned addresses.
 
 If a [run-time flag](https://github.com/google/sanitizers/wiki/AddressSanitizerFlags) `allow_user_poisoning` is set to 0, the manual poisoning callbacks are no-ops.
 
 源码：https://github.com/llvm-mirror/compiler-rt/blob/master/include/sanitizer/asan_interface.h
 
 
-参考：[issue: support swapcontext](https://github.com/google/sanitizers/issues/189)
+### 参考：[issue: support swapcontext](https://github.com/google/sanitizers/issues/189)
 
 > Compatible issue between ASAN and swapcontext()
 
@@ -1701,7 +1792,235 @@ void __sanitizer_finish_switch_fiber(void *fake_stack_save,
                                      size_t *size_old);
 ```
 
-[__sanitizer_start_switch_fiber() unmaps per-thread "fake" stack #1760](https://github.com/google/sanitizers/issues/1760)
+### __asan_poison_memory_region 单元测试
+
+BUILD 构建脚本：
+
+```
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_test(
+    name = "AsanTest",
+    size = "small",
+
+    srcs = glob(
+        [
+            "**/*.cpp",
+            "**/*.cc",
+            "**/*.c",
+        ],
+        exclude = [
+        ],
+    ),
+
+    copts = [
+        "-g",
+        "-ggdb",
+        "-fno-omit-frame-pointer",
+        "-fno-optimize-sibling-calls",
+        "-fsanitize=address",
+        "-fsanitize-recover=address", # 设置遇到错误时继续运行
+        "-fno-common",
+        "-mllvm",
+        "-asan-stack=1",
+    ],
+
+    linkopts = [
+        "-fuse-ld=lld",
+        "-fsanitize=address",
+    ],
+
+    includes = [
+    ],
+
+    deps = [
+        "//unittest/utils:unittest_utils_hdrs",
+        "//thirdparty/googletest:googletest",
+    ],
+)
+```
+
+单元测试代码：
+
+``` cpp
+#include "unittest/utils/Utils.h"
+#include "gtest/gtest.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+// 接口定义 compiler-rt/include/sanitizer/asan_interface.h
+// https://github.com/google/sanitizers/issues/1533
+
+#include "unittest/utils/Utils.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+    /// Marks a memory region (<c>[addr, addr+size)</c>) as unaddressable.
+    ///
+    /// This memory must be previously allocated by your program. Instrumented
+    /// code is forbidden from accessing addresses in this region until it is
+    /// unpoisoned. This function is not guaranteed to poison the entire region -
+    /// it could poison only a subregion of <c>[addr, addr+size)</c> due to ASan
+    /// alignment restrictions.
+    ///
+    /// \note This function is not thread-safe because no two threads can poison or
+    /// unpoison memory in the same memory region simultaneously.
+    ///
+    /// \param addr Start of memory region.
+    /// \param size Size of memory region.
+    void __asan_poison_memory_region(void const volatile* addr, size_t size);
+
+    /// Marks a memory region (<c>[addr, addr+size)</c>) as addressable.
+    ///
+    /// This memory must be previously allocated by your program. Accessing
+    /// addresses in this region is allowed until this region is poisoned again.
+    /// This function could unpoison a super-region of <c>[addr, addr+size)</c> due
+    /// to ASan alignment restrictions.
+    ///
+    /// \note This function is not thread-safe because no two threads can
+    /// poison or unpoison memory in the same memory region simultaneously.
+    ///
+    /// \param addr Start of memory region.
+    /// \param size Size of memory region.
+    void __asan_unpoison_memory_region(void const volatile* addr, size_t size);
+
+    /// Checks if an address is poisoned.
+    ///
+    /// Returns 1 if <c><i>addr</i></c> is poisoned (that is, 1-byte read/write
+    /// access to this address would result in an error report from ASan).
+    /// Otherwise returns 0.
+    ///
+    /// \param addr Address to check.
+    ///
+    /// \retval 1 Address is poisoned.
+    /// \retval 0 Address is not poisoned.
+    int __asan_address_is_poisoned(void const volatile* addr);
+
+    /// Checks if a region is poisoned.
+    ///
+    /// If at least one byte in <c>[beg, beg+size)</c> is poisoned, returns the
+    /// address of the first such byte. Otherwise returns 0.
+    ///
+    /// \param beg Start of memory region.
+    /// \param size Start of memory region.
+    /// \returns Address of first poisoned byte.
+    void* __asan_region_is_poisoned(void* beg, size_t size);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+static const char* kUseAfterPoisonErrorMessage = "use-after-poison";
+
+#define GOOD_ACCESS(ptr, offset) EXPECT_FALSE(__asan_address_is_poisoned(ptr + offset))
+#define BAD_ACCESS(ptr, offset) EXPECT_TRUE(__asan_address_is_poisoned(ptr + offset))
+
+// 验证 ASan 的手动内存标记接口在边界条件、错误检测等方面的正确性
+TEST(AddressSanitizerInterface, SimplePoisonMemoryRegionTest)
+{
+    // 分配 120 字节内存
+    char* array = Ident((char*)malloc(120));
+
+    // 使用 __asan_poison_memory_region 将偏移 40-80 字节标记为中毒（禁止访问）
+    // poison array[40..80)
+    __asan_poison_memory_region(array + 40, 40);
+
+    // 未中毒区域允许访问
+    GOOD_ACCESS(array, 39);
+    GOOD_ACCESS(array, 80);
+
+    // 中毒区域禁止访问
+    BAD_ACCESS(array, 40);
+    BAD_ACCESS(array, 60);
+    BAD_ACCESS(array, 79);
+
+    // 验证访问中毒内存会触发崩溃，预期错误消息为 "use-after-poison"
+    char value;
+    EXPECT_DEATH(value = Ident(array[40]), kUseAfterPoisonErrorMessage);
+
+    // 解毒验证
+    __asan_unpoison_memory_region(array + 40, 40);
+
+    // 再次验证原中毒区域可正常访问
+    // access previously poisoned memory.
+    GOOD_ACCESS(array, 40);
+    GOOD_ACCESS(array, 79);
+
+    free(array);
+}
+
+// 验证
+// 1. 非连续区域的中毒
+// 2. 重叠中毒操作
+// 3. 部分解毒操作
+TEST(AddressSanitizerInterface, OverlappingPoisonMemoryRegionTest)
+{
+    char* array = Ident((char*)malloc(120));
+
+    // Poison [0..40) and [80..120)
+    __asan_poison_memory_region(array, 40);
+    __asan_poison_memory_region(array + 80, 40);
+
+    BAD_ACCESS(array, 20);
+    GOOD_ACCESS(array, 60);
+    BAD_ACCESS(array, 100);
+
+    // Poison whole array - [0..120)
+    __asan_poison_memory_region(array, 120);
+
+    BAD_ACCESS(array, 60);
+
+    // Unpoison [24..96)
+    __asan_unpoison_memory_region(array + 24, 72);
+
+    BAD_ACCESS(array, 23);
+    GOOD_ACCESS(array, 24);
+    GOOD_ACCESS(array, 60);
+    GOOD_ACCESS(array, 95);
+    BAD_ACCESS(array, 96);
+
+    free(array);
+}
+```
+
+测试输出结果：
+
+```
+$ bazel test //unittest/asan/...
+INFO: Analyzed target //unittest/asan:AsanTest (1 packages loaded, 2 targets configured).
+INFO: Found 1 test target...
+INFO: From Linking unittest/asan/AsanTest:
+/bin/ld.gold: warning: Cannot export local symbol '__asan_extra_spill_area'
+/bin/ld.gold: warning: Cannot export local symbol '__lsan_current_stage'
+Target //unittest/asan:AsanTest up-to-date:
+  bazel-bin/unittest/asan/AsanTest
+INFO: Elapsed time: 2.272s, Critical Path: 2.15s
+INFO: 4 processes: 1 internal, 3 local.
+INFO: Build completed successfully, 4 total actions
+//unittest/asan:AsanTest                                                 PASSED in 0.6s
+```
+
+```
+$ bazel-bin/unittest/asan/AsanTest
+Running main() from /thirdparty/googletest-1.15.2/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from AddressSanitizerInterface
+[ RUN      ] AddressSanitizerInterface.SimplePoisonMemoryRegionTest
+[       OK ] AddressSanitizerInterface.SimplePoisonMemoryRegionTest (588 ms)
+[ RUN      ] AddressSanitizerInterface.OverlappingPoisonMemoryRegionTest
+[       OK ] AddressSanitizerInterface.OverlappingPoisonMemoryRegionTest (0 ms)
+[----------] 2 tests from AddressSanitizerInterface (588 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (589 ms total)
+[  PASSED  ] 2 tests.
+```
 
 
 
