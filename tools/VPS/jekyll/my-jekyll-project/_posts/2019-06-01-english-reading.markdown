@@ -12,6 +12,16 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* quarantine /ˈkwɒrəntiːn/
+  + **N-UNCOUNT** If a person or animal is in **quarantine**, they are being kept separate from other people or animals for a set period of time, usually because they have or may have a disease that could spread. 隔离
+    - She was sent home and put in **quarantine**. 她被送回家实施隔离。
+  + **V-T** If people or animals are quarantined, they are stopped from having contact with other people or animals. If a place is quarantined, people and animals are prevented from entering or leaving it. 对…进行隔离
+    - Dogs have to be **quarantined** for six months before they'll let them in. 狗必须被隔离6个月后他们才会放它们进来。
+
+* awesome /ˈɔːsəm/
+  + **ADJ** An awesome person or thing is very impressive and often frightening. 令人畏惧的
+  + **ADJ** If you describe someone or something as awesome, you are emphasizing that you think that they are very impressive or extraordinary. 棒极了的
+
 * phenomenon /fəˈnɒmɪnən/
   + **N-COUNT** A **phenomenon** is something that is observed to happen or exist. 现象
 

@@ -4266,7 +4266,7 @@ Sorted using quicksort:
 * [C - Bit Fields](https://www.tutorialspoint.com/cprogramming/c_bit_fields.htm)
 
 
-## offsetof (macro)
+## [offsetof](https://en.cppreference.com/w/cpp/types/offsetof) (macro)
 
 ``` cpp
 #define offsetof(type, member) /*implementation-defined*/
@@ -4299,7 +4299,52 @@ offset of char   m3 = 18
 */
 ```
 
-https://en.cppreference.com/w/cpp/types/offsetof
+## [aligned_alloc](https://en.cppreference.com/w/c/memory/aligned_alloc)
+
+``` c
+#include <stdlib.h>
+void *aligned_alloc( size_t alignment, size_t size ); // since C11
+```
+
+Allocate `size` bytes of uninitialized storage whose alignment is specified by `alignment`. The `size` parameter must be an integral multiple of `alignment`.
+
+`aligned_alloc` is **thread-safe**: it behaves as though only accessing the memory locations visible through its argument, and not any static storage.
+
+**Parameters**
+
+* `alignment`	-	specifies the alignment. Must be a valid alignment supported by the implementation.
+* `size`	-	number of bytes to allocate. An integral multiple of alignment
+
+**Return value**
+
+On success, returns the pointer to the beginning of newly allocated memory. To avoid a memory leak, the returned pointer must be deallocated with `free` or `realloc`.
+
+On failure, returns a null pointer.
+
+**Example**
+
+``` c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+    int *p1 = malloc(10*sizeof *p1);
+    printf("default-aligned addr:   %p\n", (void*)p1);
+    free(p1);
+
+    int *p2 = aligned_alloc(1024, 1024*sizeof *p2);
+    printf("1024-byte aligned addr: %p\n", (void*)p2);
+    free(p2);
+}
+```
+
+Possible output:
+
+```
+default-aligned addr:   0x1e40c20
+1024-byte aligned addr: 0x1e41000
+```
 
 
 ## operator<<

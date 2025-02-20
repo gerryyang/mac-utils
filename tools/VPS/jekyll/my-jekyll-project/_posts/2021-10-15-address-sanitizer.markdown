@@ -275,6 +275,263 @@ ASAN_OPTIONS=help=1 ./a.out
 | log_path | stderr | Write logs to log_path.pid. The special values are stdout and stderr
 
 
+### ASAN_OPTIONS Run-time flags 参考 (ASAN_OPTIONS=help=1)
+
+```
+Available flags for AddressSanitizer:
+
+        quarantine_size
+                - Deprecated, please use quarantine_size_mb. (Current Value: -1)
+        quarantine_size_mb
+                - Size (in Mb) of quarantine used to detect use-after-free errors. Lower value may reduce memory usage but increase the chance of false negatives. (Current Value: -1)
+        thread_local_quarantine_size_kb
+                - Size (in Kb) of thread local quarantine used to detect use-after-free errors. Lower value may reduce memory usage but increase the chance of false negatives. It is not advised to go lower than 64Kb, otherwise frequent transfers to global quarantine might affect performance. (Current Value: -1)
+        redzone
+                - Minimal size (in bytes) of redzones around heap objects. Requirement: redzone >= 16, is a power of two. (Current Value: 16)
+        max_redzone
+                - Maximal size (in bytes) of redzones around heap objects. (Current Value: 2048)
+        debug
+                - If set, prints some debugging information and does additional checks. (Current Value: false)
+        report_globals
+                - Controls the way to handle globals (0 - don't detect buffer overflow on globals, 1 - detect buffer overflow, 2 - print data about registered globals). (Current Value: 1)
+        check_initialization_order
+                - If set, attempts to catch initialization order issues. (Current Value: false)
+        replace_str
+                - If set, uses custom wrappers and replacements for libc string functions to find more errors. (Current Value: true)
+        replace_intrin
+                - If set, uses custom wrappers for memset/memcpy/memmove intrinsics. (Current Value: true)
+        detect_stack_use_after_return
+                - Enables stack-use-after-return checking at run-time. (Current Value: false)
+        min_uar_stack_size_log
+                - Minimum fake stack size log. (Current Value: 16)
+        max_uar_stack_size_log
+                - Maximum fake stack size log. (Current Value: 20)
+        uar_noreserve
+                - Use mmap with 'noreserve' flag to allocate fake stack. (Current Value: false)
+        max_malloc_fill_size
+                - ASan allocator flag. max_malloc_fill_size is the maximal amount of bytes that will be filled with malloc_fill_byte on malloc. (Current Value: 4096)
+        max_free_fill_size
+                - ASan allocator flag. max_free_fill_size is the maximal amount of bytes that will be filled with free_fill_byte during free. (Current Value: 0)
+        malloc_fill_byte
+                - Value used to fill the newly allocated memory. (Current Value: 190)
+        free_fill_byte
+                - Value used to fill deallocated memory. (Current Value: 85)
+        allow_user_poisoning
+                - If set, user may manually mark memory regions as poisoned or unpoisoned. (Current Value: true)
+        sleep_before_dying
+                - Number of seconds to sleep between printing an error report and terminating the program. Useful for debugging purposes (e.g. when one needs to attach gdb). (Current Value: 0)
+        sleep_after_init
+                - Number of seconds to sleep after AddressSanitizer is initialized. Useful for debugging purposes (e.g. when one needs to attach gdb). (Current Value: 0)
+        check_malloc_usable_size
+                - Allows the users to work around the bug in Nvidia drivers prior to 295.*. (Current Value: true)
+        unmap_shadow_on_exit
+                - If set, explicitly unmaps the (huge) shadow at exit. (Current Value: false)
+        protect_shadow_gap
+                - If set, mprotect the shadow gap (Current Value: true)
+        print_stats
+                - Print various statistics after printing an error message or if atexit=1. (Current Value: false)
+        print_legend
+                - Print the legend for the shadow bytes. (Current Value: true)
+        print_scariness
+                - Print the scariness score. Experimental. (Current Value: false)
+        atexit
+                - If set, prints ASan exit stats even after program terminates successfully. (Current Value: false)
+        print_full_thread_history
+                - If set, prints thread creation stacks for the threads involved in the report and their ancestors up to the main thread. (Current Value: true)
+        poison_heap
+                - Poison (or not) the heap memory on [de]allocation. Zero value is useful for benchmarking the allocator or instrumentator. (Current Value: true)
+        poison_partial
+                - If true, poison partially addressable 8-byte aligned words (default=true). This flag affects heap and global buffers, but not stack buffers. (Current Value: true)
+        poison_array_cookie
+                - Poison (or not) the array cookie after operator new[]. (Current Value: true)
+        alloc_dealloc_mismatch
+                - Report errors on malloc/delete, new/free, new/delete[], etc. (Current Value: true)
+        new_delete_type_mismatch
+                - Report errors on mismatch between size of new and delete. (Current Value: true)
+        strict_init_order
+                - If true, assume that dynamic initializers can never access globals from other modules, even if the latter are already initialized. (Current Value: false)
+        start_deactivated
+                - If true, ASan tweaks a bunch of other flags (quarantine, redzone, heap poisoning) to reduce memory consumption as much as possible, and restores them to original values when the first instrumented module is loaded into the process. This is mainly intended to be used on Android.  (Current Value: false)
+        detect_invalid_pointer_pairs
+                - If >= 2, detect operations like <, <=, >, >= and - on invalid pointer pairs (e.g. when pointers belong to different objects); If == 1, detect invalid operations only when both pointers are non-null. (Current Value: 0)
+        detect_container_overflow
+                - If true, honor the container overflow annotations. See https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow (Current Value: true)
+        detect_odr_violation
+                - If >=2, detect violation of One-Definition-Rule (ODR); If ==1, detect ODR-violation only if the two variables have different sizes (Current Value: 2)
+        suppressions
+                - Suppressions file name. (Current Value: )
+        halt_on_error
+                - Crash the program after printing the first error report (WARNING: USE AT YOUR OWN RISK!) (Current Value: true)
+        allocator_frees_and_returns_null_on_realloc_zero
+                - realloc(p, 0) is equivalent to free(p) by default (Same as the POSIX standard). If set to false, realloc(p, 0) will return a pointer to an allocated space which can not be used. (Current Value: true)
+        verify_asan_link_order
+                - Check position of ASan runtime in library list (needs to be disabled when other library has to be preloaded system-wide) (Current Value: true)
+        windows_hook_rtl_allocators
+                - (Windows only) enable hooking of Rtl(Allocate|Free|Size|ReAllocate)Heap. (Current Value: false)
+        symbolize
+                - If set, use the online symbolizer from common sanitizer runtime to turn virtual addresses to file/line locations. (Current Value: true)
+        external_symbolizer_path
+                - Path to external symbolizer. If empty, the tool will search $PATH for the symbolizer. (Current Value: <null>)
+        allow_addr2line
+                - If set, allows online symbolizer to run addr2line binary to symbolize stack traces (addr2line will only be used if llvm-symbolizer binary is unavailable. (Current Value: false)
+        strip_path_prefix
+                - Strips this prefix from file paths in error reports. (Current Value: )
+        fast_unwind_on_check
+                - If available, use the fast frame-pointer-based unwinder on internal CHECK failures. (Current Value: false)
+        fast_unwind_on_fatal
+                - If available, use the fast frame-pointer-based unwinder on fatal errors. (Current Value: false)
+        fast_unwind_on_malloc
+                - If available, use the fast frame-pointer-based unwinder on malloc/free. (Current Value: true)
+        handle_ioctl
+                - Intercept and handle ioctl requests. (Current Value: false)
+        malloc_context_size
+                - Max number of stack frames kept for each allocation/deallocation. (Current Value: 30)
+        log_path
+                - Write logs to "log_path.pid". The special values are "stdout" and "stderr". The default is "stderr". (Current Value: stderr)
+        log_exe_name
+                - Mention name of executable when reporting error and append executable name to logs (as in "log_path.exe_name.pid"). (Current Value: false)
+        log_to_syslog
+                - Write all sanitizer output to syslog in addition to other means of logging. (Current Value: false)
+        verbosity
+                - Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output). (Current Value: 0)
+        strip_env
+                - Whether to remove the sanitizer from DYLD_INSERT_LIBRARIES to avoid passing it to children. Default is true. (Current Value: true)
+        detect_leaks
+                - Enable memory leak detection. (Current Value: true)
+        leak_check_at_exit
+                - Invoke leak checking in an atexit handler. Has no effect if detect_leaks=false, or if __lsan_do_leak_check() is called before the handler has a chance to run. (Current Value: true)
+        allocator_may_return_null
+                - If false, the allocator will crash instead of returning 0 on out-of-memory. (Current Value: false)
+        print_summary
+                - If false, disable printing error summaries in addition to error reports. (Current Value: true)
+        print_module_map
+                - OS X only (0 - don't print, 1 - print only once before process exits, 2 - print after each report). (Current Value: 0)
+        check_printf
+                - Check printf arguments. (Current Value: true)
+        handle_segv
+                - Controls custom tool's SIGSEGV handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 1)
+        handle_sigbus
+                - Controls custom tool's SIGBUS handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 1)
+        handle_abort
+                - Controls custom tool's SIGABRT handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 0)
+        handle_sigill
+                - Controls custom tool's SIGILL handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 0)
+        handle_sigtrap
+                - Controls custom tool's SIGTRAP handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 0)
+        handle_sigfpe
+                - Controls custom tool's SIGFPE handler (0 - do not registers the handler, 1 - register the handler and allow user to set own, 2 - registers the handler and block user from changing it).  (Current Value: 1)
+        allow_user_segv_handler
+                - Deprecated. True has no effect, use handle_sigbus=1. If false, handle_*=1 will be upgraded to handle_*=2. (Current Value: true)
+        use_sigaltstack
+                - If set, uses alternate stack for signal handling. (Current Value: true)
+        detect_deadlocks
+                - If set, deadlock detection is enabled. (Current Value: true)
+        clear_shadow_mmap_threshold
+                - Large shadow regions are zero-filled using mmap(NORESERVE) instead of memset(). This is the threshold size in bytes. (Current Value: 0x000000010000)
+        color
+                - Colorize reports: (always|never|auto). (Current Value: auto)
+        legacy_pthread_cond
+                - Enables support for dynamic libraries linked with libpthread 2.2.5. (Current Value: false)
+        intercept_tls_get_addr
+                - Intercept __tls_get_addr. (Current Value: true)
+        help
+                - Print the flag descriptions. (Current Value: true)
+        mmap_limit_mb
+                - Limit the amount of mmap-ed memory (excluding shadow) in Mb; not a user-facing flag, used mosly for testing the tools (Current Value: 0x000000000000)
+        hard_rss_limit_mb
+                - Hard RSS limit in Mb. If non-zero, a background thread is spawned at startup which periodically reads RSS and aborts the process if the limit is reached (Current Value: 0x000000000000)
+        soft_rss_limit_mb
+                - Soft RSS limit in Mb. If non-zero, a background thread is spawned at startup which periodically reads RSS. If the limit is reached all subsequent malloc/new calls will fail or return NULL (depending on the value of allocator_may_return_null) until the RSS goes below the soft limit. This limit does not affect memory allocations other than malloc/new. (Current Value: 0x000000000000)
+        max_allocation_size_mb
+                - If non-zero, malloc/new calls larger than this size will return nullptr (or crash if allocator_may_return_null=false). (Current Value: 0x000000000000)
+        heap_profile
+                - Experimental heap profiler, asan-only (Current Value: false)
+        allocator_release_to_os_interval_ms
+                - Only affects a 64-bit allocator. If set, tries to release unused memory to the OS, but not more often than this interval (in milliseconds). Negative values mean do not attempt to release memory to the OS.
+ (Current Value: 5000)
+        can_use_proc_maps_statm
+                - If false, do not attempt to read /proc/maps/statm. Mostly useful for testing sanitizers. (Current Value: true)
+        coverage
+                - If set, coverage information will be dumped at program shutdown (if the coverage instrumentation was enabled at compile time). (Current Value: false)
+        coverage_dir
+                - Target directory for coverage dumps. Defaults to the current directory. (Current Value: .)
+        full_address_space
+                - Sanitize complete address space; by default kernel area on 32-bit platforms will not be sanitized (Current Value: false)
+        print_suppressions
+                - Print matched suppressions at exit. (Current Value: true)
+        disable_coredump
+                - Disable core dumping. By default, disable_coredump=1 on 64-bit to avoid dumping a 16T+ core file. Ignored on OSes that don't dump core by default and for sanitizers that don't reserve lots of virtual memory. (Current Value: true)
+        use_madv_dontdump
+                - If set, instructs kernel to not store the (huge) shadow in core file. (Current Value: true)
+        symbolize_inline_frames
+                - Print inlined frames in stacktraces. Defaults to true. (Current Value: true)
+        symbolize_vs_style
+                - Print file locations in Visual Studio style (e.g:  file(10,42): ... (Current Value: false)
+        dedup_token_length
+                - If positive, after printing a stack trace also print a short string token based on this number of frames that will simplify deduplication of the reports. Example: 'DEDUP_TOKEN: foo-bar-main'. Default is 0. (Current Value: 0)
+        stack_trace_format
+                - Format string used to render stack frames. See sanitizer_stacktrace_printer.h for the format description. Use DEFAULT to get default format. (Current Value: DEFAULT)
+        no_huge_pages_for_shadow
+                - If true, the shadow is not allowed to use huge pages.  (Current Value: true)
+        strict_string_checks
+                - If set check that string arguments are properly null-terminated (Current Value: false)
+        intercept_strstr
+                - If set, uses custom wrappers for strstr and strcasestr functions to find more errors. (Current Value: true)
+        intercept_strspn
+                - If set, uses custom wrappers for strspn and strcspn function to find more errors. (Current Value: true)
+        intercept_strtok
+                - If set, uses a custom wrapper for the strtok function to find more errors. (Current Value: true)
+        intercept_strpbrk
+                - If set, uses custom wrappers for strpbrk function to find more errors. (Current Value: true)
+        intercept_strlen
+                - If set, uses custom wrappers for strlen and strnlen functions to find more errors. (Current Value: true)
+        intercept_strndup
+                - If set, uses custom wrappers for strndup functions to find more errors. (Current Value: true)
+        intercept_strchr
+                - If set, uses custom wrappers for strchr, strchrnul, and strrchr functions to find more errors. (Current Value: true)
+        intercept_memcmp
+                - If set, uses custom wrappers for memcmp function to find more errors. (Current Value: true)
+        strict_memcmp
+                - If true, assume that memcmp(p1, p2, n) always reads n bytes before comparing p1 and p2. (Current Value: true)
+        intercept_memmem
+                - If set, uses a wrapper for memmem() to find more errors. (Current Value: true)
+        intercept_intrin
+                - If set, uses custom wrappers for memset/memcpy/memmove intrinsics to find more errors. (Current Value: true)
+        intercept_stat
+                - If set, uses custom wrappers for *stat functions to find more errors. (Current Value: true)
+        intercept_send
+                - If set, uses custom wrappers for send* functions to find more errors. (Current Value: true)
+        decorate_proc_maps
+                - If set, decorate sanitizer mappings in /proc/self/maps with user-readable names (Current Value: false)
+        exitcode
+                - Override the program exit status if the tool found an error (Current Value: 1)
+        abort_on_error
+                - If set, the tool calls abort() instead of _exit() after printing the error report. (Current Value: false)
+        suppress_equal_pcs
+                - Deduplicate multiple reports for single source location in halt_on_error=false mode (asan only). (Current Value: true)
+        print_cmdline
+                - Print command line on crash (asan only). (Current Value: false)
+        html_cov_report
+                - Generate html coverage report. (Current Value: false)
+        sancov_path
+                - Sancov tool location. (Current Value: sancov)
+        dump_instruction_bytes
+                - If true, dump 16 bytes starting at the instruction that caused SEGV (Current Value: false)
+        dump_registers
+                - If true, dump values of CPU registers when SEGV happens. Only available on OS X for now. (Current Value: true)
+        detect_write_exec
+                - If true, triggers warning when writable-executable pages requests are being made (Current Value: false)
+        test_only_emulate_no_memorymap
+                - TEST ONLY fail to read memory mappings to emulate sanitized "init" (Current Value: false)
+        include
+                - read more options from the given file (Current Value: )
+        include_if_exists
+                - read more options from the given file (if it exists) (Current Value: )
+```
+
+
+
+
 ## [SanitizerCommonFlags](https://github.com/google/sanitizers/wiki/SanitizerCommonFlags)
 
 Each tool parses the common options from the corresponding environment variable (`ASAN_OPTIONS`, `TSAN_OPTIONS`, `MSAN_OPTIONS`, `LSAN_OPTIONS`) together with the tool-specific options.
@@ -364,6 +621,173 @@ fun:*MyFooBar*
 
 * Watch the presentation from the [LLVM Developer's meeting](http://llvm.org/devmtg/2011-11/) (Nov 18, 2011): [Video](http://www.youtube.com/watch?v=CPnRS1nv3_s), [slides](http://llvm.org/devmtg/2011-11/Serebryany_FindingRacesMemoryErrors.pdf).
 * Read the [USENIX ATC '2012 paper](http://research.google.com/pubs/pub37752.html).
+
+
+
+
+## [AddressSanitizerUseAfterReturn](https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn)
+
+`Stack-use-after-return` bug appears when a stack object is used after the function where this object is defined has returned. Example (see also [AddressSanitizerExampleUseAfterReturn](https://github.com/google/sanitizers/wiki/AddressSanitizerExampleUseAfterReturn)):
+
+``` cpp
+// RUN: clang -O -g -fsanitize=address %t && ./a.out
+// By default, AddressSanitizer does not try to detect
+// stack-use-after-return bugs.
+// It may still find such bugs occasionally
+// and report them as a hard-to-explain stack-buffer-overflow.
+
+// You need to run the test with ASAN_OPTIONS=detect_stack_use_after_return=1
+
+int *ptr;
+__attribute__((noinline))
+void FunctionThatEscapesLocalObject() {
+  int local[100];
+  ptr = &local[0];
+}
+
+int main(int argc, char **argv) {
+  FunctionThatEscapesLocalObject();
+  return ptr[argc];
+}
+```
+
+```
+=================================================================
+==6268== ERROR: AddressSanitizer: stack-use-after-return on address 0x7fa19a8fc024 at pc 0x4180d5 bp 0x7fff73c3fc50 sp 0x7fff73c3fc48
+READ of size 4 at 0x7fa19a8fc024 thread T0
+    #0 0x4180d4 in main example_UseAfterReturn.cc:17
+    #1 0x7fa19b11d76c (/lib/x86_64-linux-gnu/libc.so.6+0x2176c)
+    #2 0x417f34 (a.out+0x417f34)
+Address 0x7fa19a8fc024 is located at offset 36 in frame <_Z30FunctionThatEscapesLocalObjectv> of T0's stack:
+  This frame has 1 object(s):
+    [32, 432) 'local'
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism or swapcontext
+      (longjmp and C++ exceptions *are* supported)
+Shadow bytes around the buggy address:
+  0x1ff43351f7b0: fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe
+  0x1ff43351f7c0: fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe
+  0x1ff43351f7d0: fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe
+  0x1ff43351f7e0: fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe
+  0x1ff43351f7f0: fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe fe
+=>0x1ff43351f800: f5 f5 f5 f5[f5]f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x1ff43351f810: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x1ff43351f820: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x1ff43351f830: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 00 00 00 00
+  0x1ff43351f840: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1ff43351f850: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:     fa
+  Heap righ redzone:     fb
+  Freed Heap region:     fd
+  Stack left redzone:    f1
+  Stack mid redzone:     f2
+  Stack right redzone:   f3
+  Stack partial redzone: f4
+  Stack after return:    f5
+  Stack use after scope: f8
+  Global redzone:        f9
+  Global init order:     f6
+  Poisoned by user:      f7
+  ASan internal:         fe
+==6268== ABORTING
+```
+
+AddressSanitizer currently does not attempt to detect these bugs by default, only with an additional flag run-time: `ASAN_OPTIONS=detect_stack_use_after_return=1`
+
+**Algorithm**
+
+Detection of stack-use-after-return is similar to detection of heap-use-after-free, but the **quarantine** should be implemented in a different way.
+
+Once a function has returned, its stack memory is reused by the next call instruction. So in order to implement quarantine for the stack memory we need to promote stack to heap. The current implementation does it like this:
+
+Before:
+
+``` cpp
+void foo() {
+  int local;
+  escape_addr(&local);
+}
+```
+
+After:
+
+``` cpp
+void foo() {
+  char redzone1[32];
+  int local;
+  char redzone2[32+28];
+  char *fake_stack = __asan_stack_malloc(&local, 96);
+  poison_redzones(fake_stack);  // Done by the inlined instrumentation code.
+  escape_addr(fake_stack + 32);
+  __asan_stack_free(stack, &local, 96)
+}
+```
+
+`__asan_stack_malloc(real_stack, frame_size)` allocates a fake frame (`frame_size` bytes) from **a thread-local heap-like structure** (**fake stack**). Every fake frame comes unpoisoned and then the redzones are poisoned in the instrumented function code.
+
+`__asan_stack_free(fake_stack, real_stack, frame_size)` poisons the entire fake frame and deallocates it.
+
+ASan 检测"栈返回后使用"（stack-use-after-return）漏洞的机制。**其核心原理是通过将栈分配转移到堆内存，并添加毒化区域（redzone）来检测非法访问**。具体分析如下：
+
+* 内存分配
+  + `__asan_stack_malloc(&local, 96)` **将原本的栈分配转换为堆分配，返回的 fake_stack 是堆内存地址**
+  + `redzone1[32]` 和 `redzone2[32+28]` 是 ASan 添加的毒化区域，用于检测越界访问
+* 漏洞触发点
+  + `escape_addr(fake_stack + 32)` **将分配的堆地址泄露到函数外部**
+  + 当 `foo()` 函数返回后，`__asan_stack_free` 会释放该堆内存
+  + 如果外部代码继续使用 `fake_stack + 32` 地址，就会触发 `use-after-return` 错误
+* 检测原理
+  + ASan 通过替换栈分配为堆分配，使得函数返回后相关内存立即被释放
+  + 毒化区域 `poison_redzones(fake_stack)` 会标记内存边界，任何越界访问都会被立即检测到
+  + 典型的错误表现是：`ERROR: AddressSanitizer: stack-use-after-return`
+
+**Memory consumption**
+
+The **Fake Stack** allocator uses a fixed amount of memory per each thread. The allocator has 11 size classes (from `2**6` bytes to `2**16` bytes), every size class has fixed amount of chunks. If the given size class is fully used, the allocator will return 0 and thus regular stack will be used (i.e. `stack-use-after-return` detection will not work for the given function call). The amount of memory given to every size class is proportional to the size of thread's real stack, but not more than `2**max_uar_stack_size_log` (by default, `2**20`) and not less than `2**min_uar_stack_size_log` (by default, `2**16`). See also: [AddressSanitizerFlags](https://github.com/google/sanitizers/wiki/AddressSanitizerFlags).
+
+So, with the default `8Mb` stack size and default AddressSanitizerFlags each size class will get `2**20` bytes and thus every thread will mmap ~11Mb for Fake Stack.
+
+**The bigger the Fake Stack the better your chances to catch a stack-use-after-return and get a correct report, but the greater is the memory consumption.**
+
+ASan 的 **Fake Stack** 分配器通过内存预分配机制检测"栈返回后使用"（stack-use-after-return）漏洞，其内存消耗机制如下：
+
+* 内存分配架构
+  + 固定大小类别：分配器包含 2^6 到 2^16 字节共 11 个大小类别，每个类别有固定数量的内存块（chunk）
+  + 线程独立内存池：每个线程独立分配 Fake Stack 内存池，避免多线程竞争
+  + 动态调整规则
+    - 每个类别的内存总量与线程实际栈大小成比例
+    - 受上下限约束：上限 2^20（默认 1MB），下限 2^16（默认 64KB）
+  + 默认配置下的计算 (以 8MB 线程栈和默认参数为例：)
+    - 每个大小类别分配：2^20 字节（1MB）
+    - 总内存消耗：11 × 1MB = 11MB 虚拟内存（通过 `mmap` 分配）
+  + 性能与内存的权衡 (当某大小类别的内存耗尽时，ASan 会回退到常规栈分配，此时无法检测 stack-use-after-return)
+    - 增大 Fake Stack -> 提高检测成功率，错误报告更精准 -> 内存消耗增加（线性增长）
+    - 减小 Fake Stack -> 降低内存占用 -> 可能漏检部分 use-after-return
+  + 设计意义
+    - 堆模拟栈：**将栈对象转移到堆内存，通过毒化（poison）标记边界（redzone），实现越界访问检测**
+    - 效率优化：固定大小类别减少内存碎片，预分配策略降低运行时开销（相比 Valgrind 性能损失减少 10 倍以上）
+
+**Performance**
+
+Detecting `stack-use-after-return` is expensive in both `CPU` and `RAM`:
+
+* **Allocating fake frames** introduces two function calls per every function with non-empty frame. (多了一次内存分配，一次内存回收的函数调用)
+* **The entire fake frames should be unpoisoned on entry and poisoned on exit**, as opposed to poisoning just the redzones in the default mode. (poisoning 的内存范围更大)
+
+
+
+
+
+
+
+Read about [AddressSanitizerCallStack](https://github.com/google/sanitizers/wiki/AddressSanitizerCallStack)
+
+Read more about [AddressSanitizerUseAfterReturn](https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn)
+
+
+
 
 
 
@@ -1625,6 +2049,148 @@ If a [run-time flag](https://github.com/google/sanitizers/wiki/AddressSanitizerF
 源码：https://github.com/llvm-mirror/compiler-rt/blob/master/include/sanitizer/asan_interface.h
 
 
+## 参考 [Boost Coroutine AddressSanitizer support](https://github.com/boostorg/coroutine/issues/30)
+
+Q1:
+
+Can we please add something like `<asan>on` (similar to `<valgrind>on`) which informs AddressSanitizer of the stack changes? It is described here:
+
+https://github.com/google/sanitizers/issues/189#issuecomment-312914329
+https://github.com/llvm-mirror/compiler-rt/blob/master/include/sanitizer/common_interface_defs.h#L166
+
+A1:
+
+already contained in boost.context (boost-1.65 release) -> BOOST_USE_ASAN
+but without bjam property (will be obsolete after transission to cmake)
+
+Q2:
+
+I tried this, but noted that `BOOST_USE_ASAN` is used only in `boost/context/continuation_ucontext.hpp` and should therefore only be available when Boost is compiled with `context-impl=ucontext` (as opposed to `fcontext`).
+
+However, `Boost.Coroutine` includes `boost/context/detail/fcontext.hpp` directly, which implies that it uses some `fcontext` functions and cannot fully make use of `BOOST_USE_ASAN`.
+
+Indeed, using `BOOST_USE_ASAN` I still get an ASan warning about false positive error reports followed by an ASan error whose stack trace begins with `make_fcontext` (see below).
+
+Can I assume that to get AddressSanitizer support I need to switch to Boost.Coroutine2? Or did I miss something?
+
+```
+==20341==WARNING: ASan is ignoring requested __asan_handle_no_return: stack top: 0x7ffffffff000; bottom 0x7fffeb7a8000; size: 0x000014857000 (344289280)
+False positive error reports may follow
+For details see http://code.google.com/p/address-sanitizer/issues/detail?id=189
+=================================================================
+==20341==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7fffeb7a9820 at pc 0x0000004477eb bp 0x7fffeb7a9650 sp 0x7fffeb7a9648
+WRITE of size 4 at 0x7fffeb7a9820 thread T0
+[... omitted ...]
+    #17 0x454d45 in void boost::coroutines::detail::trampoline_void<boost::coroutines::detail::symmetric_coroutine_impl<void> >(boost::context::detail::transfer_t) /usr/local/include/boost/coroutine/detail/trampoline.hpp:60
+    #18 0x7fffef797fae in make_fcontext (/usr/local/lib/libboost_context.so.1.65.0+0x2fae)
+```
+
+Here is a simple test case:
+
+``` cpp
+#include <exception>
+#include <iostream>
+#include <boost/coroutine/coroutine.hpp>
+
+void throw_something() {
+  // The stack frame of this function is not cleaned up after the throw().
+  // [ASan is ignoring requested __asan_handle_no_return]
+  // Make sure we have something to not clean up.
+  int a[10];
+  a[0] = 0;
+  std::cout << a[0];
+
+  throw std::runtime_error("hello world");
+}
+
+// The calling sequence looks as follows:
+// > my_coroutine
+// >> throw_something() -- stack frame not cleaned up
+// >> write_to_stack
+//
+// If write_to_stack's stack frame is bigger than that of throw_something,
+// it will contain the (still poisoned) stack frame of throw_something.
+void write_to_stack() {
+  constexpr size_t kArraySize = 10000;
+  int a[kArraySize];
+  for (size_t i = 0; i < kArraySize; i++) {
+    a[i] = i;
+  }
+  std::cout << a[0];
+}
+
+void my_coroutine(boost::coroutines::symmetric_coroutine<void>::yield_type& yield) {
+  try {
+    throw_something();
+  } catch(...) {
+    write_to_stack();
+  }
+}
+
+int main() {
+  boost::coroutines::symmetric_coroutine<void>::call_type coroutine(my_coroutine);
+  coroutine();
+  return 0;
+}
+```
+
+Compiled with `$ g++ -Wall -Werror -std=c++11 -fsanitize=address -DBOOST_USE_ASAN -DBOOST_COROUTINES_NO_DEPRECATION_WARNING -lboost_system -lboost_coroutine -o test_coroutine2_asan -O0 -gdwarf -fno-omit-frame-pointer -fno-rtti test_coroutine2.cpp` on both **g++ 6.3.0** and **g++ 7.1.1** (edit: reproducible with **clang 4.0.1** as well when changing the array size in `throw_something` to 80):
+
+What happens is that ASan is not notified about the stack switch and therefore refuses to clean up the stack frame of throw_something (because stack top and bottom differ too much, see [here](https://github.com/clang-omp/compiler-rt_trunk/blob/93a50dbdb518d19d5120af03a8479d42ed951c48/lib/asan/asan_rtl.cc#L562)). The writes in write_to_stack then hit the poisoned region and cause the crash.
+
+`BOOST_USE_ASAN` should enable notifying ASan about stack switches, but again it only seems to work when using ucontext.
+
+A2:
+
+Yes, ASAN is only supported for `ucontext` (see `continuation_ucontext.hpp`) - that's because the assembler implementation (`continuation_fcontext.hpp`) does not use global pointers, so it has no way to store restore stack bottoms.
+
+Q3:
+
+Thanks for the confirmation. It looks like Boost.Coroutine is using some fcontext functionality directly (see here), without the library user being given a choice to use ucontext instead. This would mean Boost.Coroutine cannot be used with ASan at the moment, correct?
+
+A3:
+
+`Boost.Coroutine` is deprecated - so it will never benefit from new features.
+You could use `Boost.Coroutine2` instead in order to get ASAN working (re-build with `context-impl=ucontext` + `BOOST_USE_ASAN`).
+
+
+## 参考：[boost Coroutine resume 代码](https://github.com/boostorg/context/blob/master/include/boost/context/continuation_ucontext.hpp#L130)
+
+
+``` cpp
+activation_record * resume() {
+        from = current();
+        // store `this` in static, thread local pointer
+        // `this` will become the active (running) context
+        current() = this;
+#if defined(BOOST_USE_SEGMENTED_STACKS)
+        // adjust segmented stack properties
+        __splitstack_getcontext( from->sctx.segments_ctx);
+        __splitstack_setcontext( sctx.segments_ctx);
+#endif
+#if defined(BOOST_USE_ASAN)
+        if ( terminated) {
+            __sanitizer_start_switch_fiber( nullptr, stack_bottom, stack_size);
+        } else {
+            __sanitizer_start_switch_fiber( & from->fake_stack, stack_bottom, stack_size);
+        }
+#endif
+        // context switch from parent context to `this`-context
+        ::swapcontext( & from->uctx, & uctx);
+#if defined(BOOST_USE_ASAN)
+        __sanitizer_finish_switch_fiber( current()->fake_stack,
+                                         (const void **) & current()->from->stack_bottom,
+                                         & current()->from->stack_size);
+#endif
+#if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+        return exchange( current()->from, nullptr);
+#else
+        return std::exchange( current()->from, nullptr);
+#endif
+}
+```
+
+
 ### 参考：[issue: support swapcontext](https://github.com/google/sanitizers/issues/189)
 
 > Compatible issue between ASAN and swapcontext()
@@ -1682,6 +2248,88 @@ void __sanitizer_finish_switch_fiber(void *fake_stack_save,
                                      const void **bottom_old,
                                      size_t *size_old);
 ```
+
+这两个接口是用于在支持纤程（Fiber）切换时，配合内存检测工具（如 AddressSanitizer）管理伪栈（Fake Stack）的机制。以下是它们的详细用法和设计逻辑：
+
+**核心作用**：**当使用纤程（或协程）时，栈的切换会绕过常规的函数调用约定，导致 AddressSanitizer 无法自动追踪栈内存的使用（尤其是 detect_stack_use_after_return 功能）。这两个接口通过显式管理伪栈状态，确保内存检测的准确性**。
+
+**`__sanitizer_start_switch_fiber` 何时调用？在切换到新纤程的栈之前调用，用于保存当前纤程的伪栈状态。**
+
+参数解释：
+
+`void **fake_stack_save` 用于保存当前纤程的伪栈指针。如果当前启用了 `detect_stack_use_after_return`，工具会为函数返回后的栈内存模拟一个伪栈，此参数用于存储该伪栈的指针，以便后续恢复。如果永久离开当前纤程（不再返回），需传递 `nullptr`，这会触发伪栈的销毁。如果不需要检测 `stack-use-after-return`，可直接传递 `nullptr`。
+
+`const void *bottom, size_t size` 目标纤程的新栈的底部地址和大小。AddressSanitizer 用此信息初始化新栈的内存检测。
+
+示例场景：
+
+``` cpp
+// 切换到新纤程前
+void* saved_fake_stack = nullptr;
+__sanitizer_start_switch_fiber(&saved_fake_stack, new_stack_bottom, new_stack_size);
+// 保存 saved_fake_stack 到当前栈的某个位置（例如局部变量）
+perform_context_switch_to_new_stack();
+```
+
+**`__sanitizer_finish_switch_fiber` 何时调用？在新栈上开始运行后立即调用，用于恢复或清理旧纤程的伪栈状态。**
+
+参数解释：
+
+`void *fake_stack_save` 从 `__sanitizer_start_switch_fiber` 保存的伪栈指针。如果是首次切换到某个纤程（无旧伪栈），或不需要恢复伪栈，传递 `nullptr`。
+
+`const void **bottom_old, size_t *size_old` 可选参数，用于获取旧纤程的栈底部地址和大小。如果不需要这些信息，可传递 `nullptr`。
+
+示例场景：
+
+``` cpp
+// 在新栈上运行后
+const void* old_stack_bottom;
+size_t old_stack_size;
+__sanitizer_finish_switch_fiber(saved_fake_stack, &old_stack_bottom, &old_stack_size);
+// 此后 AddressSanitizer 会在新栈上检测内存
+```
+
+常规纤程切换：
+
+1. 保存旧栈状态 → 调用 start_switch_fiber。
+2. 切换栈（汇编或上下文切换函数）。
+3. 在新栈上调用 finish_switch_fiber，恢复或清理旧状态。
+
+永久退出纤程：
+
+``` cpp
+// 结束当前纤程，不再返回
+__sanitizer_start_switch_fiber(nullptr, new_stack_bottom, new_stack_size);
+perform_context_switch_to_new_stack();
+// 新栈上调用时，无需恢复旧栈
+__sanitizer_finish_switch_fiber(nullptr, nullptr, nullptr);
+```
+
+禁用 `stack-use-after-return` 检测：(参考：[AddressSanitizerUseAfterReturn](https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn))
+
+``` cpp
+// 所有调用均传递 nullptr，伪栈机制完全禁用
+__sanitizer_start_switch_fiber(nullptr, new_stack_bottom, new_stack_size);
+perform_switch();
+__sanitizer_finish_switch_fiber(nullptr, nullptr, nullptr);
+```
+
+注意事项：
+
+1. 伪栈的存储位置。fake_stack_save 应存储在旧栈上（例如局部变量），因为切换到新栈后旧栈可能被覆盖。
+2. 信号处理。在切换期间伪栈机制被暂停，若信号处理函数在此期间运行，stack-use-after-return 检测可能失效。
+3. 性能与兼容性。如果纤程切换不涉及栈溢出或 use-after-return 问题，可禁用伪栈以提升性能。
+
+**底层逻辑：**
+
+* **AddressSanitizer 为每个函数栈帧生成伪栈，防止返回后栈内存重用导致的误判。**
+* **纤程切换会绕过常规栈操作，因此需手动通知工具栈的切换，确保伪栈与实际栈一致。**
+
+通过这两个接口，开发者可以确保 AddressSanitizer 在纤程环境下仍能精确检测内存错误。
+
+
+
+
 
 The implementation of these two function is in here: https://github.com/llvm/llvm-project/blob/a2ef44a5d65932c7bb0f483217826856325b60df/compiler-rt/lib/asan/asan_thread.cpp#L526-L551
 
@@ -1791,6 +2439,14 @@ void __sanitizer_finish_switch_fiber(void *fake_stack_save,
                                      const void **bottom_old,
                                      size_t *size_old);
 ```
+
+
+
+
+
+
+
+
 
 ### __asan_poison_memory_region 单元测试
 
@@ -2024,8 +2680,12 @@ Running main() from /thirdparty/googletest-1.15.2/googletest/src/gtest_main.cc
 
 
 
+
+
+
 # Refer
 
+* 源码 https://github.com/llvm-mirror/compiler-rt/tree/master/include/sanitizer
 * https://github.com/google/sanitizers/wiki/
 * https://www.usenix.org/system/files/conference/atc12/atc12-final39.pdf
 * [No more leaks with sanitize flags in gcc and clang](https://lemire.me/blog/2016/04/20/no-more-leaks-with-sanitize-flags-in-gcc-and-clang/)
