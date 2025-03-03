@@ -10,7 +10,7 @@ categories: [Linux Performance]
 
 # TL;DR
 
-`AddressSanitizer` is a fast memory error detector. It consists of a compiler instrumentation module and a run-time library. The tool can detect the following types of bugs:
+[AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) is a fast memory error detector. It consists of a compiler instrumentation module and a run-time library. The tool can detect the following types of bugs:
 
 1. Out-of-bounds accesses to heap, stack and globals
 2. Use-after-free
@@ -21,7 +21,9 @@ categories: [Linux Performance]
 5. Double-free, invalid free
 6. Memory leaks (experimental)
 
-Typical slowdown introduced by AddressSanitizer is `2x`.
+Typical slowdown introduced by AddressSanitizer is `2x`. 性能指标可参考：[AddressSanitizerComparisonOfMemoryTools](https://github.com/google/sanitizers/wiki/AddressSanitizerComparisonOfMemoryTools) 和 [AddressSanitizerPerformanceNumbers](https://github.com/google/sanitizers/wiki/AddressSanitizerPerformanceNumbers)
+
+
 
 Simply **compile** and **link** your program with `-fsanitize=address` flag. The AddressSanitizer run-time library should be linked to the final executable, so make sure to use `clang` (not `ld`) for the final link step. When linking shared libraries, the AddressSanitizer run-time is not linked, so `-Wl,-z,defs` may cause link errors (don’t use it with AddressSanitizer). To get a reasonable performance add `-O1` or higher. To get nicer stack traces in error messages add `-fno-omit-frame-pointer`. To get perfect stack traces you may need to disable inlining (just use `-O1`) and tail call elimination (`-fno-optimize-sibling-calls`).
 
@@ -775,8 +777,6 @@ Detecting `stack-use-after-return` is expensive in both `CPU` and `RAM`:
 
 * **Allocating fake frames** introduces two function calls per every function with non-empty frame. (多了一次内存分配，一次内存回收的函数调用)
 * **The entire fake frames should be unpoisoned on entry and poisoned on exit**, as opposed to poisoning just the redzones in the default mode. (poisoning 的内存范围更大)
-
-
 
 
 
@@ -1893,9 +1893,59 @@ It means that you contains at least one serious bug, that under certain circumst
 
 
 
-# 误报场景
+# 问题记录
 
-## stack-buffer-overflow
+## WARNING: ASan is ignoring requested __asan_handle_no_return: ... False positive error reports may follow. For details see https://github.com/google/sanitizers/issues/189
+
+**问题描述：**
+
+当编译开启 ASan 内存检查，并设置编译选项 `--copt=-asan-stack=1` 和运行时选项 `ASAN_OPTIONS=detect_stack_use_after_return=1` 时，在处理请求时 ASan 的处理会出现下面错误：
+
+![asan4](/assets/images/202502/asan4.png)
+
+**问题排查：**
+
+* 网上相似的问题：[Cannot disable warning "ASan is ignoring requested __asan_handle_no_return" #980](https://github.com/google/sanitizers/issues/980)
+* 参考解决方案：
+  + http://code.google.com/p/address-sanitizer/issues/detail?id=189
+  + https://address-sanitizer.narkive.com/U0Fo97M7/issue-189-in-support-swapcontext
+
+![asan5](/assets/images/202502/asan5.png)
+
+在技术文档中，"w/o" 是英文 "without" 的常见缩写，表示 "没有" 或 "无需"。"the location of the stack changes w/o asan noticing it" 表示栈的位置发生改变，而没有被 ASan 检测到。
+
+1. **问题背景**
+   + ASan 通过监控内存访问来检测错误（如越界、释放后使用等）。当使用 `swapcontext` 这类手动切换协程上下文的函数时，栈指针（Stack Pointer）会被直接修改，但 ASan 无法自动感知这种变化。
+2. **关键原因**
+   + `swapcontext` 直接操作寄存器和栈指针，绕过了 ASan 的监控机制。
+   + ASan 依赖对栈的连续性和生命周期的假设，手动切换栈会破坏这些假设，导致：
+      - **Shadow Memory 污染**：ASan 可能误判整个内存区域（如 16TB 的 Shadow Memory）为需要处理的状态。
+      - **性能问题**：大量 Shadow Memory 的无效操作会导致程序卡死或运行极慢。
+3. **解决方案**
+    + 在使用协程或手动切换栈时，需显式通知 ASan 栈的变化：通过接口 `__sanitizer_start_switch_fiber` 和 `__sanitizer_finish_switch_fiber` 明确标记栈切换的边界。
+
+``` cpp
+// 切换前：保存旧栈，准备新栈
+__sanitizer_start_switch_fiber(&old_fake_stack, new_stack_base, new_stack_size);
+swapcontext(&old_ctx, &new_ctx);
+// 切换后：激活新栈
+__sanitizer_finish_switch_fiber(new_fake_stack, nullptr, nullptr);
+```
+
+这两个接口必须成对调用，且遵循以下规则：
+
+* start 在旧协程中调用：保存旧协程的 Fake Stack 状态，并为新协程准备栈范围。
+* finish 在新协程中调用：激活新协程的 Fake Stack，标记其栈内存为合法。
+
+若连续调用 start 而不切换上下文并调用 finish，会导致 ASan 内部状态混乱，可能引发 `stack_top == stack_bottom` 等断言错误。
+
+
+**问题结论：**
+
+1. 在使用协程或手动切换栈时，需显式通知 ASan 栈的变化，通过接口 `__sanitizer_start_switch_fiber` 和 `__sanitizer_finish_switch_fiber` 明确标记栈切换的边界。
+2. 若使用的是共享栈 RunStack，在切换协程时会多一次拷贝（即将 CCoroutineData 里保存的要执行的协程堆栈拷贝到 RunStack），需要通过接口 `__asan_unpoison_memory_region` 对拷贝的协程堆栈内存告知 ASan 此段内存区间为可访问的地址区间，以防止 ASan 出现误报。
+
+
 
 ### 参考 [Suspicious stack-overflow message that points to a valid stack range](https://github.com/google/sanitizers/issues/1533)
 
@@ -1913,18 +1963,18 @@ ASan 通过在内存分配和释放时添加“毒药”（poison）来检测内
 
 `__asan_poison_memory_region` 操作的调用时机？
 
-ASan（AddressSanitizer）主要用于检测内存错误，比如缓冲区溢出、使用释放后的内存等。它通过在内存周围插入“红区”（redzones）来检测越界访问。**对于堆内存**，ASan在分配时会自动添加红区，并在释放时标记为中毒状态。**而栈内存的处理可能有所不同，因为栈变量的生命周期由编译器管理**。当使用栈检查功能时，ASan会在栈变量周围插入红区。这些红区在变量作用域结束时会被标记为中毒，以防止后续访问导致的问题。例如，当一个函数中的局部变量超出作用域后，ASan可能会将对应的栈内存区域中毒，这样任何后续的访问（比如通过悬空指针）都会被检测到。具体来说，当函数返回时，栈上的局部变量会被销毁，ASan此时会调用`__asan_poison_memory_region`来标记这些变量的内存区域为中毒状态。这样可以防止use-after-return错误。此外，在变量作用域结束的时候，比如在块结束时，ASan也可能立即中毒该变量的内存，以检测use-after-scope问题。另外，ASan可能在变量初始化之前就预先中毒整个栈帧，然后在变量初始化时解毒对应的区域。当变量不再使用时，再次中毒。这样可以检测到未初始化的访问或越界访问。需要注意的是，栈内存的中毒和解毒操作是由编译器插桩自动完成的，而不是显式调用。**因此，__asan_poison_memory_region的调用是在编译后的代码中自动插入的，而不是由程序员手动调用**。
+ASan 主要用于检测内存错误，比如缓冲区溢出、使用释放后的内存等。它通过在内存周围插入“红区”（redzones）来检测越界访问。**对于堆内存**，ASan 在分配时会自动添加红区，并在释放时标记为中毒状态。**而栈内存的处理可能有所不同，因为栈变量的生命周期由编译器管理**。当使用栈检查功能时，ASan 会在栈变量周围插入红区。这些红区在变量作用域结束时会被标记为中毒，以防止后续访问导致的问题。例如，当一个函数中的局部变量超出作用域后，ASan 可能会将对应的栈内存区域中毒，这样任何后续的访问（比如通过悬空指针）都会被检测到。具体来说，当函数返回时，栈上的局部变量会被销毁，ASan 此时会调用`__asan_poison_memory_region`来标记这些变量的内存区域为中毒状态。这样可以防止 `use-after-return` 错误。此外，在变量作用域结束的时候，比如在块结束时，ASan 也可能立即中毒该变量的内存，以检测 `use-after-scope` 问题。另外，ASan 可能在变量初始化之前就预先中毒整个栈帧，然后在变量初始化时解毒对应的区域。当变量不再使用时，再次中毒。这样可以检测到未初始化的访问或越界访问。需要注意的是，栈内存的中毒和解毒操作是由编译器插桩自动完成的，而不是显式调用。**因此，__asan_poison_memory_region的调用是在编译后的代码中自动插入的，而不是由程序员手动调用**。
 
-总结一下，ASan在以下情况会调用`__asan_poison_memory_region`操作来中毒栈内存：
+总结一下，ASan 在以下情况会调用`__asan_poison_memory_region`操作来中毒栈内存：
 
-1. 函数返回时，标记所有局部变量的内存为中毒，防止use-after-return。
-2. 局部变量离开其作用域时，立即中毒其内存，检测use-after-scope。
+1. 函数返回时，标记所有局部变量的内存为中毒，防止 use-after-return。
+2. 局部变量离开其作用域时，立即中毒其内存，检测 use-after-scope。
 3. 在变量初始化前，整个栈帧可能被预先中毒，初始化时解毒，释放时再次中毒。
 4. 在栈内存分配时，插入红区并标记为中毒，以检测越界访问。
 
-需要确认这些情况是否准确，可能需要查阅ASan的文档或源码。例如，use-after-scope检测是通过在变量作用域结束时中毒其内存来实现的，而栈变量周围的红区在编译时插入，并在变量生命周期结束后被标记为中毒状态。此外，ASan的栈保护还包括对alloca等动态栈分配的处理，这些情况下也会使用中毒操作来保护内存。
+需要确认这些情况是否准确，可能需要查阅 ASan 的文档或源码。例如，use-after-scope 检测是通过在变量作用域结束时中毒其内存来实现的，而栈变量周围的红区在编译时插入，并在变量生命周期结束后被标记为中毒状态。此外，ASan 的栈保护还包括对 alloca 等动态栈分配的处理，这些情况下也会使用中毒操作来保护内存。
 
-AddressSanitizer (ASan) 在栈内存管理中使用 `__asan_poison_memory_region` 的典型场景如下：
+ASan 在栈内存管理中使用 `__asan_poison_memory_region` 的典型场景如下：
 
 **Case1: 栈变量作用域结束**
 
@@ -2049,7 +2099,7 @@ If a [run-time flag](https://github.com/google/sanitizers/wiki/AddressSanitizerF
 源码：https://github.com/llvm-mirror/compiler-rt/blob/master/include/sanitizer/asan_interface.h
 
 
-## 参考 [Boost Coroutine AddressSanitizer support](https://github.com/boostorg/coroutine/issues/30)
+### 参考 [Boost Coroutine AddressSanitizer support](https://github.com/boostorg/coroutine/issues/30)
 
 Q1:
 
@@ -2154,7 +2204,7 @@ A3:
 You could use `Boost.Coroutine2` instead in order to get ASAN working (re-build with `context-impl=ucontext` + `BOOST_USE_ASAN`).
 
 
-## 参考：[boost Coroutine resume 代码](https://github.com/boostorg/context/blob/master/include/boost/context/continuation_ucontext.hpp#L130)
+### 参考：[boost Coroutine resume 代码](https://github.com/boostorg/context/blob/master/include/boost/context/continuation_ucontext.hpp#L130)
 
 
 ``` cpp
@@ -2440,15 +2490,32 @@ void __sanitizer_finish_switch_fiber(void *fake_stack_save,
                                      size_t *size_old);
 ```
 
+### 参考：[[asan] add primitives that allow coroutine implementations](https://reviews.llvm.org/D20913)
+
+This patch adds the `sanitizer_start_switch_fiber` and `sanitizer_finish_switch_fiber` methods inspired from what can be found here https://github.com/facebook/folly/commit/2ea64dd24946cbc9f3f4ac3f6c6b98a486c56e73 .
+
+These methods are needed when the compiled software needs to implement coroutines, fibers or the like. **Without a way to annotate them, when the program jumps to a stack that is not the thread stack**, `__asan_handle_no_return` shows a warning about that, and the fake stack mechanism may free fake frames that are
+still in use.
+
+
+### 参考：[__sanitizer_start_switch_fiber() unmaps per-thread "fake" stack #1760](https://github.com/google/sanitizers/issues/1760)
+
+https://github.com/ruby/ruby/blob/a15e4d405ba6cafbe2f63921bd771b1241049841/cont.c#L830-L839
+
+![asan3](/assets/images/202502/asan3.png)
+
+
+
+![asan1](/assets/images/202502/asan1.png)
+
+![asan2](/assets/images/202502/asan2.png)
 
 
 
 
 
 
-
-
-### __asan_poison_memory_region 单元测试
+# 单元测试 __asan_poison_memory_region
 
 BUILD 构建脚本：
 

@@ -2699,6 +2699,116 @@ Since POSIX.1-2003 `ucontext_t` is **deprecated** and was **removed** in POSIX.1
 
 The third argument of `makecontext()` specifies the number of integer arguments that follow which will require function pointer cast if func will accept those arguments which is undefined in C99. The arguments in the var-arg list are required to be integers, passing pointers in var-arg list is not guaranteed to work, especially it will fail for architectures where pointers are larger than integers.
 
+Refer: [swapcontext](https://linux.die.net/man/3/swapcontext)
+
+> makecontext() and swapcontext() are provided in glibc since version 2.1.
+
+``` c
+#include <ucontext.h>
+
+void makecontext(ucontext_t *ucp, void (*func)(), int argc, ...);
+int swapcontext(ucontext_t *oucp, ucontext_t *ucp);
+
+int getcontext(ucontext_t *ucp);
+int setcontext(const ucontext_t *ucp);
+```
+
+**Description**
+
+In a System V-like environment, one has the type ucontext_t defined in `<ucontext.h>` and the four functions [getcontext()](https://linux.die.net/man/3/getcontext), [setcontext()](https://linux.die.net/man/3/setcontext), makecontext() and [swapcontext()](https://linux.die.net/man/3/swapcontext) that allow user-level context switching between multiple threads of control within a process.
+
+For the type and the first two functions, see `getcontext()`.
+
+The `makecontext()` function modifies the context pointed to by `ucp` (which was obtained from a call to `getcontext()`). Before invoking `makecontext()`, the caller must allocate a new stack for this context and assign its address to `ucp->uc_stack`, and define a successor context and assign its address to `ucp->uc_link`.
+
+When this context is later activated (using `setcontext()` or `swapcontext()`) the function func is called, and passed the series of integer (int) arguments that follow `argc`; the caller must specify the number of these arguments in argc. When this function returns, the successor context is activated. If the successor context pointer is NULL, the thread exits.
+
+The `swapcontext()` function saves the current context in the structure pointed to by `oucp`, and then activates the context pointed to by `ucp`.
+
+**Return Value**
+
+When successful, `swapcontext()` does not return. (But we may return later, in case `oucp` is activated, in which case it looks like `swapcontext()` returns 0.) On error, `swapcontext()` returns -1 and sets `errno` appropriately.
+
+
+**Example**
+
+The example program below demonstrates the use of `getcontext()`, `makecontext()`, and `swapcontext()`. Running the program produces the following output:
+
+```
+$ ./a.out
+main: swapcontext(&uctx_main, &uctx_func2)
+func2: started
+func2: swapcontext(&uctx_func2, &uctx_func1)
+func1: started
+func1: swapcontext(&uctx_func1, &uctx_func2)
+func2: returning
+func1: returning
+main: exiting
+```
+
+
+``` c
+#include <ucontext.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+static ucontext_t uctx_main, uctx_func1, uctx_func2;
+
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static void
+func1(void)
+{
+    printf("func1: started\n");
+    printf("func1: swapcontext(&uctx_func1, &uctx_func2)\n");
+    if (swapcontext(&uctx_func1, &uctx_func2) == -1)
+        handle_error("swapcontext");
+    printf("func1: returning\n");
+}
+
+static void
+func2(void)
+{
+    printf("func2: started\n");
+    printf("func2: swapcontext(&uctx_func2, &uctx_func1)\n");
+    if (swapcontext(&uctx_func2, &uctx_func1) == -1)
+        handle_error("swapcontext");
+    printf("func2: returning\n");
+}
+
+int
+main(int argc, char *argv[])
+{
+    char func1_stack[16384];
+    char func2_stack[16384];
+
+   if (getcontext(&uctx_func1) == -1)
+        handle_error("getcontext");
+    uctx_func1.uc_stack.ss_sp = func1_stack;
+    uctx_func1.uc_stack.ss_size = sizeof(func1_stack);
+    uctx_func1.uc_link = &uctx_main;
+    makecontext(&uctx_func1, func1, 0);
+
+   if (getcontext(&uctx_func2) == -1)
+        handle_error("getcontext");
+    uctx_func2.uc_stack.ss_sp = func2_stack;
+    uctx_func2.uc_stack.ss_size = sizeof(func2_stack);
+    /* Successor context is f1(), unless argc > 1 */
+    uctx_func2.uc_link = (argc > 1) ? NULL : &uctx_func1;
+    makecontext(&uctx_func2, func2, 0);
+
+   printf("main: swapcontext(&uctx_main, &uctx_func2)\n");
+    if (swapcontext(&uctx_main, &uctx_func2) == -1)
+        handle_error("swapcontext");
+
+   printf("main: exiting\n");
+    exit(EXIT_SUCCESS);
+}
+```
+
+
+
 
 ## Boost.Context
 
