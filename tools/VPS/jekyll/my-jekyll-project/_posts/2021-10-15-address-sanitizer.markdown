@@ -1903,12 +1903,10 @@ It means that you contains at least one serious bug, that under certain circumst
 
 ![asan4](/assets/images/202502/asan4.png)
 
-**问题排查：**
+**ASan 官方给出的问题参考：**
 
-* 网上相似的问题：[Cannot disable warning "ASan is ignoring requested __asan_handle_no_return" #980](https://github.com/google/sanitizers/issues/980)
-* 参考解决方案：
-  + http://code.google.com/p/address-sanitizer/issues/detail?id=189
-  + https://address-sanitizer.narkive.com/U0Fo97M7/issue-189-in-support-swapcontext
+* http://code.google.com/p/address-sanitizer/issues/detail?id=189
+* https://address-sanitizer.narkive.com/U0Fo97M7/issue-189-in-support-swapcontext
 
 ![asan5](/assets/images/202502/asan5.png)
 
@@ -1932,7 +1930,7 @@ swapcontext(&old_ctx, &new_ctx);
 __sanitizer_finish_switch_fiber(new_fake_stack, nullptr, nullptr);
 ```
 
-这两个接口必须成对调用，且遵循以下规则：
+注意这两个接口必须成对调用，且遵循以下规则：
 
 * start 在旧协程中调用：保存旧协程的 Fake Stack 状态，并为新协程准备栈范围。
 * finish 在新协程中调用：激活新协程的 Fake Stack，标记其栈内存为合法。
@@ -1942,9 +1940,31 @@ __sanitizer_finish_switch_fiber(new_fake_stack, nullptr, nullptr);
 
 **问题结论：**
 
-1. 在使用协程或手动切换栈时，需显式通知 ASan 栈的变化，通过接口 `__sanitizer_start_switch_fiber` 和 `__sanitizer_finish_switch_fiber` 明确标记栈切换的边界。
-2. 若使用的是共享栈 RunStack，在切换协程时会多一次拷贝（即将 CCoroutineData 里保存的要执行的协程堆栈拷贝到 RunStack），需要通过接口 `__asan_unpoison_memory_region` 对拷贝的协程堆栈内存告知 ASan 此段内存区间为可访问的地址区间，以防止 ASan 出现误报。
+1. 在使用协程或手动切换栈时，需显式通知 ASan 栈的变化，通过接口 `__sanitizer_start_switch_fiber` 和 `__sanitizer_finish_switch_fiber` 明确标记栈切换的边界。可参考 [support swapcontext #189](http://code.google.com/p/address-sanitizer/issues/detail?id=189)
 
+2. 若使用的是共享栈 RunStack，在切换协程时会多一次拷贝（即将 CCoroutineData 里保存的要执行的协程堆栈拷贝到 RunStack），需要通过接口 `__asan_unpoison_memory_region` 对 RunStack 执行 Save 和 Restore 时需指定 RunStack 的内存区间为可访问的地址区间，以防止 ASan 出现误报。可参考 [AddressSanitizerManualPoisoning](https://github.com/google/sanitizers/wiki/AddressSanitizerManualPoisoning) 和 [Suspicious stack-overflow message that points to a valid stack range #1533](https://github.com/google/sanitizers/issues/1533)。
+
+
+**__asan_poison_memory_region 和 __asan_unpoison_memory_region 接口说明**
+
+源码参考：https://github.com/llvm/llvm-project/blob/a2ef44a5d65932c7bb0f483217826856325b60df/compiler-rt/lib/asan/asan_poisoning.cpp#L103-L171
+
+**__sanitizer_start_switch_fiber 和 __sanitizer_finish_switch_fiber 接口说明**
+
+源码参考：https://github.com/llvm/llvm-project/blob/a2ef44a5d65932c7bb0f483217826856325b60df/compiler-rt/lib/asan/asan_thread.cpp#L526-L551 和 https://github.com/llvm/llvm-project/blob/a2ef44a5d65932c7bb0f483217826856325b60df/compiler-rt/lib/asan/asan_thread.cpp#L125C1-L168
+
+
+**Concurrent 代码参考：**
+
+https://github.com/kurocha/concurrent/blob/663aacb14430777fc61c86c03b5eb10b8a93611c/source/Concurrent/Fiber.cpp#L46-L70
+
+**boost 代码参考：**
+
+https://github.com/boostorg/context/blob/master/include/boost/context/continuation_ucontext.hpp#L130
+
+**ruby 代码参考：**
+
+https://github.com/ruby/ruby/blob/a15e4d405ba6cafbe2f63921bd771b1241049841/cont.c#L830-L839
 
 
 ### 参考 [Suspicious stack-overflow message that points to a valid stack range](https://github.com/google/sanitizers/issues/1533)
