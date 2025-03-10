@@ -766,6 +766,35 @@ git clone ftp[s]://example.com/path/to/repo.git/
 git clone rsync://example.com/path/to/repo.git/
 ```
 
+使用 `git clone --mirror` 完整克隆原仓库的镜像（包含所有分支、标签和提交历史），然后修改远程地址并推送到新仓库。
+
+``` bash
+# 1. 克隆原仓库的镜像
+git clone --mirror https://git.woa.com/gerryyang/abc.git
+cd abc.git  # 进入克隆生成的目录
+
+# 2. 修改远程地址为新仓库
+git remote set-url origin https://git.woa.com/jlib/jlib_mesh.git
+
+# 3. 推送所有内容到新仓库
+git push --mirror
+
+# 4. 验证迁移
+# 访问新仓库页面 https://git.woa.com/jlib/jlib_mesh.git，检查提交历史、分支和标签是否完整
+
+# 5. 删除本地镜像副本：迁移完成后可清理本地文件
+
+# 6. 克隆新仓库进行开发
+git clone https://git.woa.com/jlib/jlib_mesh.git
+
+# 7. 注意事项
+# 确保新仓库为空：若 jlib/jlib_mesh 已存在内容，需先清空或联系管理员处理
+# 权限检查：确认你有权限推送到目标仓库
+# 处理特殊内容：如原仓库使用 Git LFS，需额外迁移 LFS 对象
+  git lfs fetch --all
+  git lfs push --all origin
+```
+
 
 ## 远程仓库操作 - git remote
 

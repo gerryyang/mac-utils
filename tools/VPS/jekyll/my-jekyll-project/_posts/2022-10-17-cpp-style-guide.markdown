@@ -501,6 +501,77 @@ Foo bar() {
 }
 ```
 
+## [modernize-use-nodiscard](https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-nodiscard.html)
+
+Adds `[[nodiscard]]` attributes (introduced in C++17) to member functions in order to highlight at compile time which return values should not be ignored.
+
+`[[nodiscard]]` 是 C++17 引入的属性，用于标记函数的返回值不可被忽略。若调用者未处理返回值，编译器会生成警告。
+
+**应使用 modernize-use-nodiscard 的场景：**
+
+1. 函数仅通过返回值传递关键信息。
+2. 忽略返回值可能导致逻辑错误、资源泄漏或性能浪费。
+3. 函数无副作用，且符合工具列出的静态条件。
+
+通过自动化标记，该工具帮助团队强制执行“**必须处理返回值**”的设计约定，提升代码安全性和可维护性。
+
+**适用场景：**
+
+* 纯计算型函数。
+  + 特征：函数仅通过返回值传递结果，不修改对象或外部状态（因为是 const 成员函数），且无副作用。
+  + 风险：若忽略返回值，计算逻辑完全浪费，可能隐藏逻辑错误。
+
+``` cpp
+class MathUtils {
+public:
+    // 计算结果，忽略返回值无意义
+    [[nodiscard]] int computeValue() const {
+        return someComplexCalculation();
+    }
+};
+```
+
+* 资源状态查询
+  + 特征：返回对象关键状态（如是否为空、是否有效），但可能被误认为“动作”而非“查询”。
+  + 风险：若未检查返回值直接操作资源（如发送数据），可能引发未定义行为。
+
+``` cpp
+class Connection {
+public:
+    // 检查连接是否有效，忽略返回值可能导致后续操作失败
+    [[nodiscard]] bool isValid() const {
+        return status == Connected;
+    }
+};
+```
+
+* 工厂方法或构造型函数
+  + 特征：返回新对象或资源句柄，但可能被误认为修改当前对象。
+  + 风险：若忽略返回值，开发者可能误以为原对象被修改，导致逻辑错误。
+
+``` cpp
+class StringProcessor {
+public:
+    // 生成新字符串，原对象未被修改
+    [[nodiscard]] std::string toUpper() const {
+        return transformToUppercase();
+    }
+};
+```
+
+**错误用法（触发警告）**
+
+``` cpp
+auto result = vec.empty(); // 正确：使用返回值
+vec.empty();               // 警告：未处理 [[nodiscard]] 值
+```
+
+绕过警告。若需主动忽略返回值（少数情况），可显式转换为 void：
+
+``` cpp
+static_cast<void>(vec.someNodiscardMethod());
+```
+
 
 
 # Refer

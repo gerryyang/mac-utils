@@ -30,6 +30,8 @@ categories: 游戏开发
 
 Control, Camera, Character, 操作, 镜头, 角色
 
+> 注意区分：电子产品的 3C，是计算机（Computer）、通讯（Communication）和消费电子产品（Consumer Electronics）。
+
 ## NPC
 
 Non-Player-Controlled Character, 非玩家控制角色

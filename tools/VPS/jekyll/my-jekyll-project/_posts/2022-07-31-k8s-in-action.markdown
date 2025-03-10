@@ -23,7 +23,7 @@ categories: 云原生
 
 作为世界上最大的搜索引擎，Google 拥有数量庞大的服务器集群，为例提高资源利用率和部署运维效率，专门开发了一个集群管理系统 `Borg`。在 2014 年，因为之前在发表 MapReduce，BigTable，GFS 时吃过亏，被 Yahoo 开发的 Hadoop 占领了市场，所以 Google 决定借着 Docker 的“东风”，在发表论文的同时，把 C++ 开发的 Borg 系统用 Go 语言重写并开源，于是 `Kubernetes` 就这样诞生了。然后，在 2015 年，Google 又联合 Linux 基金会成立了 CNCF (Cloud Native Computing Foundation，云原生基金会)，并把 Kubernetes 捐献出来作为种子项目。有了 Google 和 Linux 这两大家族的保驾护航，再加上宽容开放的社区，Kubernetes 仅用了两年的时间就打败了同期的竞争对手 `Apache Mesos` 和 `Docker Swarm`，成为了这个领域的唯一霸主。
 
-简单来说，Kubernetes 就是一个生产级别的容器编排平台和集群管理系统，不能能够创建，调度容器，还能够监控，管理服务器，从而可以具备运维海量计算节点，即云计算的能力。
+简单来说，Kubernetes 就是一个生产级别的容器编排平台和集群管理系统，不仅能够创建，调度容器，还能够监控，管理服务器，从而可以具备运维海量计算节点，即云计算的能力。
 
 > Borg 系统的名字来自于《星际迷航》（Star Trek）里的外星人种族，Kubernetes 在开发之初为了延续与 Borg 的关系，使用了一个代号 Seven of Nine ，即 Borg 与地球文明之间联络人的名字，隐喻从内部系统到开源项目，所以 Kubernetes 的标志有七条轮辐。Kubernetes 这个词来自希腊语，意思是“舵手”，“领航员”，可以理解成是操控着满载集装箱（容器）大船的指挥官。Kubernetes 有时候会缩写成 “k8s”，这个是因为 k 和 s 之间有 8 个字符，类似的还有 i18n (internationalization)
 
@@ -48,7 +48,7 @@ Node 的数量非常多，构成了一个资源池，Kubernetes 就在这个池�
 
 > 补充：
 > 1. 相比早期的架构，目前 Kubernetes 在控制面里多出了一个 cloud-controller-manager，顾名思义，是用来与特定云厂商连接进而控制 Kubernetes 对象的。
-> 2. 为例确保控制面的高可用，Kubernetes 集群里都会部署多个 Master 节点，数量一般会是奇数（3/5/7），这是由 etcd 的特性决定的。
+> 2. 为了确保控制面的高可用，Kubernetes 集群里都会部署多个 Master 节点，数量一般会是奇数（3/5/7），这是由 etcd 的特性决定的。
 > 3. etcd 由 CoreOS 公司开发，基于类 Paxos 的 Raft 算法实现数据一致性。
 
 

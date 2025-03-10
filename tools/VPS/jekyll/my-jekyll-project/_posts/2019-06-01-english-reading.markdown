@@ -12,6 +12,31 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* copilot /ˈkəʊˌpaɪlət/
+  + 副驾驶员
+
+* pilot /ˈpaɪlət/
+  + **N-COUNT** A **pilot** is a person who is trained to fly an aircraft. 飞行员
+    - He spent seventeen years as an airline pilot. 他当了17年的航空公司飞行员。
+  + **N-COUNT** A **pilot** is a person who steers a ship through a difficult stretch of water, for example, the entrance to a harbour. 领航员
+  + **V-T** If someone **pilots** an aircraft or ship, they act as its pilot. 驾驶 (飞机); 为 (船只) 领航
+  + **ADJ** A **pilot** plan or a pilot project is one that is used to test an idea before deciding whether to introduce it on a larger scale. 试验性的
+  + **V-T** If a government or organization **pilots** a programme or project, they test it, before deciding whether to introduce it on a larger scale. 试行 (计划或方案)
+
+
+* retrieval /rɪˈtriːv(ə)l/
+  + N-UNCOUNT The **retrieval** of information from a computer is the process of getting it back. (电脑中信息的) 读取
+    - electronic storage and **retrieval** systems. 电子存储和读取系统。
+  + N-UNCOUNT The **retrieval** of something is the process of getting it back from a particular place, especially from a place where it should not be. 找回; 取回
+    - Its real purpose is the launching and **retrieval** of small aeroplanes in flight. 它的真正目的是发射和找回飞行中的小型飞机。
+
+
+
+* divergent /daɪˈvɜːdʒənt/
+  + **ADJ** **Divergent** things are different from each other. 不同的; 有分歧的
+    - Two people who have divergent views on this question are George Watt and Bob Marr. 在这个问题上意见相左的两个人是乔治·瓦特和鲍勃·马尔。
+
+
 * mimic /ˈmɪmɪk/
   + **V-T** If you **mimic** the actions or voice of a person or animal, you imitate them, usually in a way that is meant to be amusing or entertaining. 模仿
     - He could mimic anybody, and he often reduced Isabel to helpless laughter. 他可以模仿任何人，而且经常逗得伊莎贝尔情不自禁地大笑。

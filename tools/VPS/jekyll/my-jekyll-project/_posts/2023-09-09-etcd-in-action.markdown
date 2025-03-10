@@ -3654,6 +3654,7 @@ $ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
 * [How To Set Up and Secure an etcd Cluster with Ansible on Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-and-secure-an-etcd-cluster-with-ansible-on-ubuntu-18-04)
 * https://github.com/kstone-io/kstone
 * [How To Use Etcdctl and Etcd, CoreOS's Distributed Key-Value Store](https://www.digitalocean.com/community/tutorials/how-to-use-etcdctl-and-etcd-coreos-s-distributed-key-value-store)
+* https://time.geekbang.org/column/intro/100069901
 
 
 
