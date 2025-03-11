@@ -9,6 +9,99 @@ categories: 机器学习
 {:toc}
 
 
+
+# [Prompt Engineering Guide](https://www.promptingguide.ai/zh)
+
+> 替代你的不是 AI，而是会用 AI 的人
+
+提示工程（Prompt Engineering）是一门较新的学科，关注提示词开发和优化，帮助用户将大语言模型（Large Language Model, LLM）用于各场景和研究领域。 掌握了提示工程相关技能将有助于用户更好地了解大型语言模型的能力和局限性。
+
+More: [Prompt engineering](https://platform.openai.com/docs/guides/prompt-engineering)
+
+
+# [RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) (Retrieval-Augmented Generation) 检索增强生成
+
+> **Retrieval-augmented generation** (`RAG`) is a technique that enables generative artificial intelligence (Gen AI) models to retrieve and incorporate new information. It modifies interactions with a large language model (LLM) so that the model responds to user queries with reference to a specified set of documents, using this information to supplement information from its pre-existing training data. This allows LLMs to use domain-specific and/or updated information. Use cases include providing chatbot access to internal company data or generating responses based on authoritative sources.
+
+参考：https://aws.amazon.com/cn/what-is/retrieval-augmented-generation/
+
+**检索增强生成** (`RAG`) 是指**对大型语言模型输出进行优化，使其能够在生成响应之前引用训练数据来源之外的权威知识库**。大型语言模型 (LLM) 用海量数据进行训练，使用数十亿个参数为回答问题、翻译语言和完成句子等任务生成原始输出。**在 LLM 本就强大的功能基础上，RAG 将其扩展为能访问特定领域或组织的内部知识库，所有这些都无需重新训练模型。这是一种经济高效地改进 LLM 输出的方法，让它在各种情境下都能保持相关性、准确性和实用性**。
+
+如果没有 RAG，LLM 会接受用户输入，并根据它所接受训练的信息或它已经知道的信息创建响应。RAG 引入了一个信息检索组件，该组件利用用户输入首先从新数据源提取信息。用户查询和相关信息都提供给 LLM。LLM 使用新知识及其训练数据来创建更好的响应。以下各部分概述了该过程。
+
+* 创建外部数据
+
+LLM 原始训练数据集之外的新数据称为外部数据。它可以来自多个数据来源，例如 API、数据库或文档存储库。数据可能以各种格式存在，例如文件、数据库记录或长篇文本。另一种称为嵌入语言模型的 AI 技术将数据转换为数字表示形式并将其存储在向量数据库中。这个过程会创建一个生成式人工智能模型可以理解的知识库。
+
+* 检索相关信息
+
+下一步是执行相关性搜索。用户查询将转换为向量表示形式，并与向量数据库匹配。例如，考虑一个可以回答组织的人力资源问题的智能聊天机器人。如果员工搜索：“我有多少年假？”，系统将检索年假政策文件以及员工个人过去的休假记录。这些特定文件将被退回，因为它们与员工输入的内容高度相关。相关性是使用数学向量计算和表示法计算和建立的。
+
+* 增强 LLM 提示
+
+接下来，RAG 模型通过在上下文中添加检索到的相关数据来增强用户输入（或提示）。此步骤使用提示工程技术与 LLM 进行有效沟通。增强提示允许大型语言模型为用户查询生成准确的答案。
+
+* 更新外部数据
+
+下一个问题可能是——如果外部数据过时了怎么办？ 要维护当前信息以供检索，请异步更新文档并更新文档的嵌入表示形式。可以通过自动化实时流程或定期批处理来执行此操作。这是数据分析中常见的挑战——可以使用不同的数据科学方法进行变更管理。
+
+下图显示了将 RAG 与 LLM 配合使用的概念流程：
+
+![rag2](/assets/images/202503/rag2.png)
+
+
+如果无法一次性给 LLM 喂太多知识，那就少喂点，根据用户的具体提问去找到和它最相关的知识，把这部分精选后的知识喂给 LLM。应用程序要提前根据用户问题，对海量材料进行过滤，把最相关的内容截取出来发给大模型。这种方法就是我们经常在各种技术方案中看到的：RAG (Retrieval-Augmented Generation)，检索增强生成技术。通过检索出和问题相关的内容，来辅助增强生成答案的准确性。
+
+RAG 需要注意两个问题：
+
+1. 检索结果和解答问题需要参考的资料越相关，生成结果越准确
+2. 检索出过多的内容，又会引入更多的噪声影响 LLM 注意力，增加幻觉风险，生成的质量反而降低
+
+向量相似度检索，就是基于这种方式，使用训练好的神经网络模型去“理解”文本，得到对应的高维向量。再通过数学上的相似度计算，来判断文本之间的语义相关性。
+
+通过模型把各种内容（词、句子、图片等）转化成高维向量的过程，称为 **Embedding（嵌入）**。但是，和 LLM 有上下文长度限制一样，使用模型进行 Embedding 时，对输入的有长度也是有限制，不能直接把一篇文章扔给模型做 Embedding，通常需要对内容进行一定的**切分 (Chunk)**，比如按照段落或者按照句子进行 Chunk。
+
+```
+一篇文章 -> Chunk (文本分块) -> Embedding (向量化) -> 一些列长度相等的向量
+```
+
+当把文档按如上流程 Embedding 之后，就可以得到这篇文档的向量表示 `[[..], [..], [..]]`。进一步可以把它们存储到**向量数据库 (VectorDB)**。
+
+对于一个给定的待搜索文本，就可以把它以用同样的方式进行 Embedding，然后在向量数据库中执行相关性查找，这样可以快速找到它**语义相近的文本**。
+
+> Chunk + Embedding + VectorDB = RAG
+
+这就是所谓的**检索增强生成**：通过**检索**，拿到和问题相关内容，去**增强** prompt，从而增强大模型**生成**的回答质量。RAG 完整的流程如下：
+
+![rag](/assets/images/202503/rag.png)
+
+
+# [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP)
+
+`MCP` is an open protocol that standardizes how applications provide context to LLMs. Think of MCP like a USB-C port for AI applications. Just as USB-C provides a standardized way to connect your devices to various peripherals and accessories, MCP provides a standardized way to connect AI models to different data sources and tools.
+
+**Why `MCP`?**
+
+MCP helps you build agents and complex workflows on top of LLMs. LLMs frequently need to integrate with data and tools, and MCP provides:
+
+* A growing list of pre-built integrations that your LLM can directly plug into
+* The flexibility to switch between LLM providers and vendors
+* Best practices for securing your data within your infrastructure
+
+**General architecture**
+
+At its core, MCP follows a client-server architecture where a host application can connect to multiple servers:
+
+![mcp](/assets/images/202503/mcp.png)
+
+* MCP Hosts: Programs like Claude Desktop, IDEs, or AI tools that want to access data through MCP
+* MCP Clients: Protocol clients that maintain 1:1 connections with servers
+* MCP Servers: Lightweight programs that each expose specific capabilities through the standardized Model Context Protocol
+* Local Data Sources: Your computer’s files, databases, and services that MCP servers can securely access
+* Remote Services: External systems available over the internet (e.g., through APIs) that MCP servers can connect to
+
+
+
 # TTS (Text To Speech 从文本到语音)
 
 它是同时运用语言学和心理学的杰出之作，在内置芯片的支持之下，通过神经网络的设计，把文字智能地转化为自然语音流。TTS技术对文本文件进行实时转换，转换时间之短可以秒计算。在其特有智能语音控制器作用下，文本输出的语音音律流畅，使得听者在听取信息时感觉自然，毫无机器语音输出的冷漠与生涩感。

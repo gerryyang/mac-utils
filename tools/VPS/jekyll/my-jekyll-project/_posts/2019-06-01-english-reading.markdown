@@ -12,6 +12,17 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* abuse /əˈbjuːs/
+  + **N-UNCOUNT** **Abuse** of someone is cruel and violent treatment of them. 虐待
+  + **N-UNCOUNT** **Abuse** is extremely rude and insulting things that people say when they are angry. 辱骂
+  + **N-VAR** **Abuse** of something is the use of it in a wrong way or for a bad purpose. 滥用
+  + **V-T** If someone is abused, they are treated cruelly and violently. 虐待
+    - Janet had been abused by her father since she was eleven. 詹妮特自从11岁起就被她的父亲虐待。
+  + **V-T** You can say that someone is abused if extremely rude and insulting things are said to them. 侮辱
+  + **V-T** If you abuse something, you use it in a wrong way or for a bad purpose. 滥用
+    - He showed how the rich and powerful can abuse their position. 他揭露了有钱有势的人会如何滥用他们的地位。
+
 * copilot /ˈkəʊˌpaɪlət/
   + 副驾驶员
 
