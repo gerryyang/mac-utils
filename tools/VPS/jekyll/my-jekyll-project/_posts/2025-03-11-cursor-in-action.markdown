@@ -9,9 +9,30 @@ categories: 机器学习
 {:toc}
 
 
+# 背景介绍
+
 > Built to make you extraordinarily productive, **Cursor** is the best way to code with AI.
 
 `Cursor` 是 `VS Code` 的一个分支。这使我们能够专注于与 AI 进行编码的最佳方式，同时提供熟悉的文本编辑体验。
+
+![cursor0](/assets/images/202503/cursor0.png)
+
+Cursor 背后的公司于 2023 年在旧金山成立，主要开发利用 LLM 从基层建立的 IDE。创始团队目前 2 位已获得 OpenAI 的投资：
+
+* Aman Sanger，2022 年毕业于麻省理工学院数学与计算机科学专业，Abelian AI 联合创始人
+* Michael Truell，2022 年毕业于麻省理工学院数学与计算机科学专业。
+
+可以通过作者 Aman Sanger 在[Twitter 上的一个视频](https://twitter.com/amanrsanger/status/1615539968772050946?cxt=HHwWhMDU8djCxussAAAA)来评测它的功能，这个视频一共执行了五条指令：
+
+1. Build the `SearchResult component showing file icons, names, and paths
+2. Connect this component to redux
+3. How do I add a keyboard shortcut in electron?
+4. Where in the code are shortcuts and redux reducers to open file search
+5. Make cmd+p with label File Search open file search
+
+
+
+
 
 # 常用功能
 

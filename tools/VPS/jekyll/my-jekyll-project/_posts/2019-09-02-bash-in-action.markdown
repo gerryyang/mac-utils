@@ -2148,6 +2148,27 @@ ls -l *.o | sort -k5,5 -n -r | head
 
 # Example
 
+## 比较版本号大小
+
+将最小版本和当前版本通过管道传给 sort，使用 version sort 模式 (`-V`) 检查当前版本是否 >= 最小版本（当且仅当 `go_version >= MIN_GO_VERSION` 时，`sort -C` 返回 true）
+
+``` bash
+# 检查 Golang 版本
+local go_version=$(go version | awk '{print $3}' | sed 's/go//')
+if ! printf '%s\n%s' "$MIN_GO_VERSION" "$go_version" | sort -V -C ; then
+    echo "❌ Golang version must be >= ${MIN_GO_VERSION}"
+    exit 1
+fi
+```
+
+``` bash
+$ printf "1.23.0\n1.23.5" | sort -V -C
+$ echo $?
+0
+$ printf "1.25.0\n1.23.5" | sort -V -C
+$ echo $?
+1
+```
 
 ## parallel 统计当前目录下包含的文件数量
 
@@ -2396,6 +2417,13 @@ date +%s
 # 5. 显示指定时间的时间戳
 
 date -d "2010-07-20 10:25:30" +%s
+
+# 6. 输出当前完整的日期
+# https://stackoverflow.com/questions/49187200/convert-linux-date-to-yyyy-mm-ddthhmmssz-format
+
+date -u +'%Y-%m-%dT%H:%M:%SZ'   # 2025-03-13T02:18:22Z (for UTC)
+date +'%Y-%m-%dT%H:%M:%SZ'      # 2025-03-13T10:18:22Z
+date -Is                        # 2025-03-13T10:21:28+08:00
 ```
 
 ## ps

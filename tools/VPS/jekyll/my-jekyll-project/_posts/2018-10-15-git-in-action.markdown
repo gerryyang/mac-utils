@@ -2238,16 +2238,27 @@ refer:
 * [Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
 * [Autolinked references and URLs](https://docs.github.com/en/github/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests)
 
-# 使用技巧
+# Tips
+
+More: https://github.com/git-tips/tips
 
 ##  添加常用的 alias
 
-```
+``` bash
 git config --global alias.st status
 git config --global alias.co checkout
 git config --global alias.ci commit
 git config --global alias.br branch
 ```
+
+## Reset author, after author has been changed in the global config
+
+``` bash
+git commit --amend --reset-author --no-edit
+```
+
+
+
 
 
 # Git相关工具

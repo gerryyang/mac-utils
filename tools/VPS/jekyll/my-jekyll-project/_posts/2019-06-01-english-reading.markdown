@@ -10,8 +10,20 @@ categories: 英语学习
 
 
 
+
 # Words (柯林斯)
 
+
+* premium /ˈpriːmiəm/
+  + **N-COUNT** A **premium** is a sum of money that you pay regularly to an insurance company for an insurance policy. 保险费
+    - It is too early to say whether insurance **premiums** will be affected. 保险费会不会受到影响现在判定还为时过早。
+  + **N-COUNT** A **premium** is a sum of money that you have to pay for something in addition to the normal cost. 附加费
+    - Even if customers want "solutions," most are not willing to pay a **premium** for them. 即使顾客们想要“解决方案”，大部分人不愿意为此支付附加费。
+  + **ADJ** **Premium** products are of a higher than usual quality and are often expensive. 高端的
+
+
+* billboard /ˈbɪlˌbɔːd/
+  + **N-COUNT** A **billboard** is a very large board on which advertising is displayed. 广告牌
 
 * abuse /əˈbjuːs/
   + **N-UNCOUNT** **Abuse** of someone is cruel and violent treatment of them. 虐待
