@@ -152,7 +152,32 @@ categories: 杂记
 
 ![myapp10](/assets/images/202503/myapp10.png)
 
+![myapp12](/assets/images/202503/myapp12.png)
+
 ![myapp11](/assets/images/202503/myapp11.png)
+
+构建：
+
+![myapp13](/assets/images/202503/myapp13.png)
+
+运行：
+
+![myapp14](/assets/images/202503/myapp14.png)
+
+![myapp15](/assets/images/202503/myapp15.png)
+
+停止：
+
+![myapp16](/assets/images/202503/myapp16.png)
+
+## 配置 Nginx 反向代理
+
+需求描述：
+
+在 Linux 上部署实现一个 Nginx 反向代理服务，反向代理的配置为：1. Nginx 监听 80 端口 2. 将 www.gerryyang.com 转发到 8080 端口 3. 将 llmnews.gerryyang.com 转发到 8081 端口。请完善相关的功能实现，并添加 README.md 使用说明文件。还需要提供下载安装 Nginx 可执行程序的脚本，可以将反向服务跑起来。
+
+![myapp17](/assets/images/202503/myapp17.png)
+
 
 
 ## 优化建议
