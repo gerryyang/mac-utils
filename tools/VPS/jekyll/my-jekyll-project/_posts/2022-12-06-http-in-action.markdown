@@ -112,4 +112,6 @@ The common workaround for these problems is to use [POST](https://en.wikipedia.o
 # Refer
 
 * https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+* https://developer.mozilla.org/zh-CN/docs/Web/HTTP
+
 
