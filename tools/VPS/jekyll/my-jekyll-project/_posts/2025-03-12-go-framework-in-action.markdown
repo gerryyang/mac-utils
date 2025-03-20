@@ -433,6 +433,11 @@ func example() {
 }
 ```
 
+## [Gin](github.com/gin-gonic/gin) (高性能 HTTP Web 框架)
+
+Gin is a web framework written in Go. It features a martini-like API with performance that is up to 40 times faster thanks to [httprouter](https://github.com/julienschmidt/httprouter). If you need performance and good productivity, you will love Gin.
+
+
 
 
 # Tips
@@ -537,9 +542,9 @@ All 64-bit GOARCH values:
 
 # 代码工具
 
-## golangci-lint
+## [golangci-lint](https://github.com/golangci/golangci-lint)
 
-https://github.com/golangci/golangci-lint
+**golangci-lint** is a fast Go linters runner. It runs linters in parallel, uses caching, supports YAML configuration, integrates with all major IDEs, and includes over a hundred linters.
 
 ``` bash
 # binary will be $(go env GOPATH)/bin/golangci-lint
@@ -547,3 +552,10 @@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install
 
 golangci-lint --version
 ```
+
+## [jq](https://github.com/jqlang/jq)
+
+**jq** is a lightweight and flexible command-line JSON processor akin to `sed`, `awk`, `grep`, and friends for JSON data. It's written in portable C and has zero runtime dependencies, allowing you to easily slice, filter, map, and transform structured data.
+
+https://github.com/jqlang/jq/releases
+

@@ -15,7 +15,9 @@ categories: GoLang
 * 初始化 go mod 文件：`go mod init git.woa.com/trpc-go/helloworld`
 * 编写服务协议文件，如：`helloworld.proto`, 协议规范如下：
     * `package` 分成三级 `trpc.app.server`, `app` 是一个业务项目分类，`server` 是具体的进程服务名
-    * 必须指定 `option go_package`，表明协议的 `git` 地址
+    * 建议指定 `option go_package`，表明协议的 `git` 地址。开发期间，可以使用本地的地址，例如：
+      + `option go_package="git.woa.com/trpcprotocol/test/helloworld";` 表示在 `git.woa.com/trpcprotocol/test/helloworld` 地址生成 `pb.go` 的文件
+      + `option go_package = "server/api/trpc/proto";` 表示在 `server/api/trpc/proto` 目录下生成 `pb.go` 的文件
     * 定义 `service rpc` 方法，一个 `server` 可以有多个 `service`，一般都是一个 `server` 一个 `service`
 
 ``` proto
@@ -46,7 +48,7 @@ message HelloReply {
 trpc create --protofile=qqchatsvr.proto --rpconly
 ```
 
-* 可以在 `trpc_go.yaml` 的 server service 中额外添加 HTTP RPC 服务:
+* 可以在 `trpc_go.yaml` 的 server service 中额外添加 HTTP RPC 服务：
 
 ``` yaml
     - name: trpc.test.helloworld.Greeter  # service 的名字服务路由名称
@@ -64,13 +66,13 @@ trpc create --protofile=qqchatsvr.proto --rpconly
 * 自测 trpc 协议：`trpc-cli -func "/trpc.test.helloworld.Greeter/SayHello" -target "ip://127.0.0.1:8000" -body '{"msg":"hello"}' -v`
 * 自测 http 协议：`curl -X POST -d '{"msg":"hello"}' -H "Content-Type:application/json" http://127.0.0.1:8080/trpc.test.helloworld.Greeter/SayHello`
 
-> 注意：trpc-cli 工具支持很多参数，使用时注意指定。
+> 注意：`trpc-cli` 工具支持很多参数，使用时注意指定。
 >
-> 1. func 为 pb 协议定义的 /package.service/method，如上面的 helloworld.proto，则为 /trpc.test.helloworld.Greeter/SayHello，千万注意：不是 yaml 里面配置的 service。
+> 1. `func` 为 pb 协议定义的 `/package.service/method`，如上面的 `helloworld.proto`，则为 `/trpc.test.helloworld.Greeter/SayHello`，千万注意：不是 yaml 里面配置的 service。
 >
-> 2. target 为被调服务的目标地址，格式为 selectorname://servicename，这里只是本地自测，没有接入名字服务，直接指定 ip:port 寻址，使用 ip selector 就可以了，格式是 ip://${ip}:${port}，如 ip://127.0.0.1:8000。
+> 2. `target` 为被调服务的目标地址，格式为 `selectorname://servicename`，这里只是本地自测，没有接入名字服务，直接指定 `ip:port` 寻址，使用 `ip selector` 就可以了，格式是 `ip://${ip}:${port}`，例如：`ip://127.0.0.1:8000`。
 >
-> 3. body 为请求包体数据的 json 结构字符串，内部 json 字段要跟 pb 定义的字段完全一致，注意大小写不要写错。
+> 3. `body` 为请求包体数据的 `json` 结构字符串，内部 `json` 字段要跟 `pb` 定义的字段完全一致，注意大小写不要写错。
 
 
 # tRPC-Go 拦截器功能及实现 (filter 过滤器)

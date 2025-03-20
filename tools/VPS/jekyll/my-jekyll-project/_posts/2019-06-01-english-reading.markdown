@@ -13,6 +13,17 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* vendor /ˈvendə(r)/
+  + **N-COUNT** A **vendor** is someone who sells things such as newspapers, cigarettes, or food from a small stall or cart. 小贩
+    - ice cream vendors. 卖冰淇淋的小贩们
+  + **N-COUNT** A **vendor** is a company or person that sells a product or service, especially one who sells to other companies that sell to the public. 卖主
+
+
+* smashing /ˈsmæʃɪŋ/
+  + **ADJ** excellent or first-rate; wonderful 杰出的; 极好的
+
+* abbreviated /əˈbriːvɪˌeɪt/
+  + **V-T** If you **abbreviate** something, especially a word or a piece of writing, you make it shorter. 缩写
 
 * premium /ˈpriːmiəm/
   + **N-COUNT** A **premium** is a sum of money that you pay regularly to an insurance company for an insurance policy. 保险费

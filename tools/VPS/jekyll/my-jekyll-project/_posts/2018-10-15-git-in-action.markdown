@@ -1686,7 +1686,7 @@ git fetch --tags
 
 git-describe - Give an object a human readable name based on an available ref
 
-The command finds the most recent tag that is reachable from a commit. If the tag points to the commit, then only the tag is shown. Otherwise, it suffixes the tag name with the number of additional commits on top of the tagged object and the abbreviated object name of the most recent commit. The result is a "human-readable" object name which can also be used to identify the commit to other git commands.
+**The command finds the most recent tag that is reachable from a commit**. **If the tag points to the commit, then only the tag is shown. Otherwise, it suffixes the tag name with the number of additional commits on top of the tagged object and the abbreviated object name of the most recent commit**. The result is a "human-readable" object name which can also be used to identify the commit to other git commands.
 
 [How to find the current git branch in detached HEAD state?](https://stackoverflow.com/questions/6059336/how-to-find-the-current-git-branch-in-detached-head-state)
 
@@ -1721,6 +1721,9 @@ $ git show -s --pretty=%d HEAD
 ```
 
 The refs will be listed in the format (HEAD, master) - you'll have to parse it a little bit if you intend to use this in scripts rather than for human consumption.
+
+More: [Make Git show the correct tag on branches with git describe](https://stackoverflow.com/questions/57685432/make-git-show-the-correct-tag-on-branches-with-git-describe)
+
 
 
 # Git hooks
