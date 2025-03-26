@@ -10,6 +10,17 @@ categories: 机器学习
 
 
 
+# [Vibe coding](https://en.wikipedia.org/wiki/Vibe_coding)
+
+**Vibe coding** is an AI-dependent programming technique where a person describes a problem in a few sentences as a prompt to a [large language model (LLM)](https://en.wikipedia.org/wiki/Large_language_model) tuned for coding. The LLM generates software, shifting the programmer’s role from manual coding to guiding, testing, and refining the AI-generated source code. **Vibe coding** is claimed by its **advocates*(倡导者)** to allow even **amateur(业余的) programmers** to produce software without the extensive training and skills previously required for software engineering. The term was introduced by [Andrej Karpathy](https://en.wikipedia.org/wiki/Andrej_Karpathy) in February 2025 and listed in the Merriam-Webster Dictionary the following month as a "slang & trending" noun.
+
+More: [Vibe Coding - AI-Assisted Coding for Non-Developers](https://medium.com/@niall.mcnulty/vibe-coding-b79a6d3f0caa)
+
+> I’m a big fan of Cursor for coding with AI, and this movement now has a name — “vibe coding” — which allows people to create programs by describing what they want in natural language and letting AI handle much of the actual coding.
+
+
+
+
 # [Prompt Engineering Guide](https://www.promptingguide.ai/zh)
 
 > 替代你的不是 AI，而是会用 AI 的人

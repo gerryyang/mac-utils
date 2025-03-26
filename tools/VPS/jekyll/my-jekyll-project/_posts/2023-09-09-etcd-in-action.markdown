@@ -3636,8 +3636,84 @@ etcd 服务同时在同一个端口上运行了 HTTP 和 gRPC 服务。在生产
 $ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
 ```
 
+# Libraries and tools
+
+Note that third-party libraries and tools (not hosted on https://github.com/etcd-io) mentioned below are not tested or maintained by the etcd team. Before using them, users are recommended to read and investigate them.
+
+## Tools
+
+* [etcdctl](https://github.com/etcd-io/etcd/tree/master/etcdctl) - A command line client for etcd
+* [etcd-dump](https://npmjs.org/package/etcd-dump) - Command line utility for dumping/restoring etcd.
+* [etcd-fs](https://github.com/xetorthio/etcd-fs) - FUSE filesystem for etcd
+* [etcddir](https://github.com/rekby/etcddir) - Realtime sync etcd and local directory. Work with windows and linux.
+* [etcd-browser](https://github.com/henszey/etcd-browser) - A web-based key/value editor for etcd using AngularJS
+* [etcd-lock](https://github.com/datawisesystems/etcd-lock) - Master election & distributed r/w lock implementation using etcd - Supports v2
+* [etcd-console](https://github.com/matishsiao/etcd-console) - A web-base key/value editor for etcd using PHP
+* [etcd-viewer](https://github.com/nikfoundas/etcd-viewer) - An etcd key-value store editor/viewer written in Java
+* [etcdtool](https://github.com/mickep76/etcdtool) - Export/Import/Edit etcd directory as JSON/YAML/TOML and Validate directory using JSON schema
+* [etcdloadtest](https://github.com/sinsharat/etcdloadtest) - A command line load test client for etcd version 3.0 and above.
+* [lucas](https://github.com/ringtail/lucas) - A web-based key-value viewer for kubernetes etcd3.0+ cluster.
+* [etcd-manager](https://etcdmanager.io/) - A modern, efficient, multi-platform and free etcd 3.x GUI & client tool. Available for Windows, Linux and Mac.
+* [etcd-backup-restore](https://github.com/gardener/etcd-backup-restore) - Utility to periodically and incrementally backup and restore the etcd.
+* [etcd-druid](https://github.com/gardener/etcd-druid) - A Kubernetes operator to deploy etcd clusters and manage day-2 operations.
+* [etcdadm](https://github.com/kubernetes-sigs/etcdadm) - A command-line tool for operating an etcd cluster.
+* [etcd-defrag](https://github.com/ahrtr/etcd-defrag) - An easier to use and smarter etcd defragmentation tool.
+* [etcdhelper](https://github.com/tsonglew/intellij-etcdhelper) - An intellij platform plugin for etcd.
 
 
+## Libraries
+
+The sections below list etcd client libraries by language.
+
+### Go
+
+* [etcd/client/v3](https://github.com/etcd-io/etcd/tree/main/client/v3) - the officially maintained Go client for v3
+* [etcd/client/v2](https://github.com/etcd-io/etcd/tree/release-3.5/client/v2) - the officially maintained Go client for v2
+* [go-etcd](https://github.com/coreos/go-etcd) - the deprecated official client. May be useful for older (<2.0.0) versions of etcd.
+* [encWrapper](https://github.com/lumjjb/etcd/tree/enc_wrapper/clientwrap/encwrapper) - encWrapper is an encryption wrapper for the etcd client Keys API/KV.
+
+### C
+
+* [apache/celix/etcdlib](https://github.com/apache/celix/tree/master/libs/etcdlib) - Supports v2
+* [jdarcy/etcd-api](https://github.com/jdarcy/etcd-api) - Supports v2
+* [shafreeck/cetcd](https://github.com/shafreeck/cetcd) - Supports v2
+
+
+### C++
+
+* [edwardcapriolo/etcdcpp](https://github.com/edwardcapriolo/etcdcpp) - Supports v2
+* [suryanathan/etcdcpp](https://github.com/suryanathan/etcdcpp) - Supports v2 (with waits)
+* [nokia/etcd-cpp-api](https://github.com/nokia/etcd-cpp-api) - Supports v2
+* [nokia/etcd-cpp-apiv3](https://github.com/nokia/etcd-cpp-apiv3) - Supports v3
+
+
+## Projects using etcd
+
+
+* [etcd Raft users](https://github.com/etcd-io/etcd/blob/master/raft/README.md#notable-users) - projects using etcd’s raft library implementation.
+* [go-discover](https://github.com/flynn/go-discover) - service discovery in Go
+* [kelseyhightower/confd](https://github.com/kelseyhightower/confd) - Manage local app config files using templates and data from etcd
+* [configdb](https://git.autistici.org/ai/configdb/tree/master) - A REST relational abstraction on top of arbitrary database backends, aimed at storing configs and inventories.
+* [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes) - Container cluster manager introduced by Google.
+* [spf13/viper](https://github.com/spf13/viper) - Go configuration library, reads values from ENV, pflags, files, and etcd with optional encryption
+* [CoreDNS](https://github.com/coredns/coredns/tree/master/plugin/etcd) - CoreDNS is a DNS server that chains plugins, part of CNCF and Kubernetes
+* [Uber M3](https://github.com/m3db/m3) - M3: Uber’s Open Source, Large-scale Metrics Platform for Prometheus
+* [Apache Pulsar](https://pulsar.apache.org/) - Apache Pulsar is an open-source, distributed messaging and streaming platform built for the cloud.
+
+
+
+# Next steps
+
+Now it's time to dig into the full etcd API and other guides.
+
+* Read the full [documentation](https://etcd.io/docs/latest).
+* Review etcd [frequently asked questions](https://etcd.io/docs/latest/faq).
+* Explore the full gRPC [API](https://etcd.io/docs/latest/learning/api).
+* Set up a [multi-machine cluster](https://etcd.io/docs/latest/op-guide/clustering).
+* Learn the [config format, env variables and flags](https://etcd.io/docs/latest/op-guide/configuration).
+* Find [language bindings and tools](https://etcd.io/docs/latest/integrations).
+* Use TLS to [secure an etcd cluster](https://etcd.io/docs/latest/op-guide/security).
+* [Tune etcd](https://etcd.io/docs/latest/tuning).
 
 
 
@@ -3646,6 +3722,7 @@ $ ansible server2 -m setup -a 'filter=ansible_eth*' -i hosts
 
 # Refer
 
+* https://github.com/etcd-io/etcd
 * [The Raft Consensus Algorithm](https://raft.github.io/)
 * https://etcd.io/docs/v3.5/
 * https://etcd.io/docs/v3.4/op-guide/performance/

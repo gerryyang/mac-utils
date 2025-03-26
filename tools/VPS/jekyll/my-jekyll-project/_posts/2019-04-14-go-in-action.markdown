@@ -1617,6 +1617,64 @@ CopyFile success:  8
 需要注意的是，使用 `-mod=vendor` 的时候，需要在项目根目录下创建 vendor 目录，并将依赖的包复制到 vendor 目录中。可以使用 `go mod vendor` 命令来自动将依赖的包复制到 vendor 目录中。
 
 
+## [Format errors in Go - %s %v or %w](https://stackoverflow.com/questions/61283248/format-errors-in-go-s-v-or-w)
+
+**TL;DR;** Use `%w` in 99.99% of cases. In the other 0.001% of cases, `%v` and `%s` probably "should" behave the same, except when the error value is `nil`, but there are no guarantees.
+
+Use `%v` for an error val.
+
+``` go
+if err != nil {
+    return fmt.Errorf("pack %v: %v", name, err)
+}
+```
+
+But, In `Go 1.13`, the `fmt.Errorf` function supports a new `%w` verb. When this verb is present, the error returned by `fmt.Errorf` will have an **Unwrap** method returning the argument of `%w`, which must be an error. In all other ways, `%w` is identical to `%v`.
+
+``` go
+if err != nil {
+    // Return an error which unwraps to err.
+    return fmt.Errorf("pack %v: %w", name, err)
+}
+```
+
+Places where you need to differentiate between `%w` and `%v`:
+
+Read comments in the codeblock
+
+``` go
+f, err := os.Open(filename)
+if err != nil {
+    // The *os.PathError returned by os.Open is an internal detail.
+    // To avoid exposing it to the caller, repackage it as a new
+    // error with the same text.
+    //
+    //
+    // We use the %v formatting verb, since
+    // %w would permit the caller to unwrap the original *os.PathError.
+    return fmt.Errorf("%v", err)
+}
+```
+
+Read: [For an error, when should I switch to w](https://github.com/golang/go/wiki/ErrorValueFAQ#i-am-already-using-fmterrorf-with-v-or-s-to-provide-context-for-an-error-when-should-i-switch-to-w)
+
+Also, the built-in error interface allows Go programmers to add whatever information they desire. All it requires is a type that implements an `Error` method
+
+Example:
+
+``` go
+type QueryError struct {
+    Query string
+    Err   error
+}
+
+func (e *QueryError) Error() string { return e.Query + ": " + e.Err.Error() }
+```
+
+So, mostly most examples have a similar type of implementation where `err` has an `Error` method which returns `string` for which you can use `%s`
+
+
+
 # 标准库
 
 ## [exec](https://pkg.go.dev/os/exec)

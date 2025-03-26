@@ -13,6 +13,67 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* advocate /ˈædvəkeɪt/
+  + V-T If you **advocate** a particular action or plan, you recommend it publicly. 提倡
+    - Mr. Williams is a conservative who **advocates** fewer government controls on business. 威廉斯先生是一位提倡减少政府对商业的控制的保守人士。
+  + N-COUN An **advocate** of a particular action or plan is someone who recommends it publicly. 倡导者
+    - He was a strong **advocate** of free market policies and a multi-party system. 他是自由市场政策以及多党制的坚定倡导者。
+  + N-COUNT An **advocate** for a particular group is a person who works for the interests of that group. 为 (某团体) 谋利益者
+  + N-COUNT An **advocate** is a lawyer who speaks in favour of someone or defends them in a court of law. 辩护律师
+
+
+* amateur /ˈæmətə(r)/
+  + **N-COUNT** An **amateur** is someone who does something as a hobby and not as a job. 业余爱好者
+    - Jerry is an amateur who dances because he feels like it. 杰瑞是一位业余舞蹈爱好者，他跳舞因为他喜欢跳。
+  + **ADJ** **Amateur** sports or activities are done by people as a hobby and not as a job. 业余的
+    - professional athletes and amateur runners. 专业运动员和业余赛跑运动员。
+
+* athletes /ˈæθliːt/
+  + **N-COUNT** An **athlete** is a person who does any kind of physical sports, exercise, or games, especially in competitions. 运动员
+    - Mark Spitz was a great athlete. 马克·斯皮茨是一名伟大的运动员。
+  + **N-COUNT** You can refer to someone who is fit and **athletic** as an **athlete**. 运动型人
+    -  I was no athlete. 我完全不是运动型的人。
+
+
+* vibe /vaɪb/
+  + **N-COUNT** **Vibes** are the good or bad atmosphere that you sense with a person or in a place. 感应; 气氛
+   - Sorry, Chris, but I have bad vibes about this guy. 对不起，克里斯，但我对这家伙感觉不太好。
+
+* atmosphere /ˈætməsfɪə(r)/
+  + **N-COUNT** A planet's **atmosphere** is the layer of air or other gases around it. (行星的) 大气层
+  + **N-COUNT** The **atmosphere** of a place is the air that you breathe there. (某地的) 空气
+    - These gases pollute the atmosphere of towns and cities. 这些气体污染城镇的空气。
+  + **N-SING** The **atmosphere** of a place is the general impression that you get of it. 气氛
+    - There's still an atmosphere of great hostility and tension in the city. 在这座城市里依然有一种极其敌对和紧张的气氛。
+  + **N-UNCOUNT** If a place or an event has **atmosphere**, it is interesting. 神韵
+    - The old harbour is still full of atmosphere and well worth visiting. 旧港口依然充满神韵，很值得参观。
+
+* legacy /ˈleɡəsi/
+  + **N-COUNT** A **legacy** is money or property which someone leaves to you when they die. 遗产
+    - You could make a real difference to someone's life by leaving them a generous **legacy**. 你留给某人一大笔遗产就可以真正改变他的生活。
+  + **N-COUNT** A **legacy** of an event or period of history is something which is a direct result of it and which continues to exist after it is over. 遗留问题
+
+
+* propagate /ˈprɒpəɡeɪt/
+  + **V-T** If people **propagate** an idea or piece of information, they spread it and try to make people believe it or support it. 宣传
+  + **V-T** If you **propagate** plants, you grow more of them from the original ones. 繁殖
+
+* revision /rɪˈvɪʒ(ə)n/
+  + **N-VAR** To make a **revision** of something that is written or something that has been decided means to make changes to it in order to improve it, make it more modern, or make it more suitable for a particular purpose. 修改; 修正
+    - The phase of writing that is actually most important is **revision**. 写作中真正最重要的阶段是修改。
+  + **N-UNCOUNT** When people who are studying do **revision**, they read things again and make notes in order to prepare for an examination. 复习
+
+
+* retention /rɪˈtenʃ(ə)n/
+  + **N-UNCOUNT** The **retention** of something is the keeping of it. 保留
+
+* emeritus /ɪˈmɛrɪtəs/
+  + **ADJ** **Emeritus** is used with a professional title to indicate that the person bearing it has retired but keeps the title as an honour. (退休后保留的)荣誉职称
+
+* follower /ˈfɒləʊə(r)/
+  + **N-COUNT** A **follower** of a particular person, group, or belief is someone who supports or admires this person, group, or belief. 追随者
+
+
 * vendor /ˈvendə(r)/
   + **N-COUNT** A **vendor** is someone who sells things such as newspapers, cigarettes, or food from a small stall or cart. 小贩
     - ice cream vendors. 卖冰淇淋的小贩们

@@ -125,6 +125,14 @@ Links
 
 
 
+# Papers
+
+* https://papers.cool
+* https://www.aminer.cn/
+* https://consensus.app/
+
+再通过元宝上传 pdf 总结精读。
+
 
 
 

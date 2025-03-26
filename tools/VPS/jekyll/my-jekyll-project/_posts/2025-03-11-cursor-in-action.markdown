@@ -222,6 +222,34 @@ Cursor 的**应用**允许用户快速将聊天中的代码块建议集成到用
 用户可以使用上下箭头键在选定的 Cmd K @ 符号列表中导航，按 Enter 展开/折叠选定的上下文项。对于文件引用，用户可以使用 `Ctrl/⌘ M` 切换文件读取策略。有关文件读取策略的更多信息，请[点击这里](https://cursordocs.com/docs/context/@-symbols/@-files#cmd-k-chunking-strategy)。
 
 
+## [配置 rules](https://cursor.document.top/tips/usage/set-rules/) (.cursorrules)
+
+Cursor 的 `.cursorrules` 功能为 AI 助手提供了一个定制化的 Prompt。
+
+通过在项目的根目录放置 `.cursorrules` 文件，我们可以在这个文件里提供更多用与 Cursor 编辑的上下问，比如可以：
+
+1. 指定项目的技术栈
+2. 设定开发规范
+3. 引导 AI 的问题解决思路
+4. 创建自定义指令
+
+这样的预设能显著提高 Curosr 生成代码的准确性和相关性，使其更好地符合项目需求。
+
+### 参考其他人的规则
+
+* [Cursor Directory](https://cursor.directory/)
+* [cursorlist](https://cursorlist.com/)
+* [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules)
+
+这些仓库都维护了各种开发语言的规则。可以选择适合自己的直接使用，或者参考修改一份。
+
+### 自动生成规则
+
+可以在这个网站描述自己的需求然后生成规则 https://cursorrules.agnt.one/
+
+
+More: https://docs.cursor.com/context/rules-for-ai
+
 
 
 # Tips
@@ -296,6 +324,34 @@ Cursor 提供了强大的代码生成和优化功能。用户可以通过输入�
 
 Cursor 使用情况每月重置，基于用户的订阅开始日期。
 
+# 对话技巧
+
+* **多用 Git 保存分阶段提交可用的代码**，虽然 Cursor 生成代码的能力很强，但是有时生成大量的代码被 Accept All 后容易让整个项目运行失败，建议分阶段提交代码，这样遇到问题可以回滚。
+
+* **一个 Cursor 窗口打开一整个项目**，Cursor 默认的上下文目录就是这个目录，如果这个目录的范围太大或者太小都不利于代码生成。
+
+* Cursor 有时会只给出修改的部分代码，其它则忽略掉，这样在 Accept All 后会破坏已有的代码。**可以在全局 rules 里写明要生成完整的代码，也可以在对话的时候强调**。
+
+
+# [Privacy Policy](https://www.cursor.com/privacy)
+
+**TLDR**
+
+* If you enable "Privacy Mode" in Cursor's settings: **zero data retention will be enabled, and none of your code will ever be stored or trained on by us or any third-party.**
+
+* If you choose to keep "Privacy Mode" off, we collect telemetry and usage data. This may include prompts, editor actions, code snippets, and edits made to this code. We use this data to evaluate and improve our AI features.
+
+* With "Privacy Mode" off, if you use autocomplete, Fireworks (our inference provider) may also collect prompts to improve inference speed.
+
+**Other notes**
+
+* Even if you use your API key, your requests will still go through our backend! That's where we do our final prompt building.
+
+* **If you choose to index your codebase, Cursor will upload your codebase in small chunks to our server to compute embeddings, but all plaintext code ceases to exist after the life of the request. The embeddings and metadata about your codebase (hashes, file names) may be stored in our database, but none of your code is**.
+
+* **We temporarily cache file contents on our servers to reduce latency and network usage**. The files are encrypted using unique client-generated keys, and these encryption keys only exist on our servers for the duration of a request. All cached file contents are temporary, never permanently stored, and never used as training data when privacy mode is enabled.
+
+
 
 
 
@@ -305,4 +361,6 @@ Cursor 使用情况每月重置，基于用户的订阅开始日期。
 * https://www.cursor.com/features
 * https://www.cursor.com/en
 * [Cursor 中文文档](https://cursordocs.com/)
+* https://cursor.document.top/
+* [Transcript for Cursor Team: Future of Programming with AI | Lex Fridman Podcast #447](https://lexfridman.com/cursor-team-transcript)
 

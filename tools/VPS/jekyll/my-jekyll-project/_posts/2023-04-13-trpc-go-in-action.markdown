@@ -15,9 +15,9 @@ categories: GoLang
 * 初始化 go mod 文件：`go mod init git.woa.com/trpc-go/helloworld`
 * 编写服务协议文件，如：`helloworld.proto`, 协议规范如下：
     * `package` 分成三级 `trpc.app.server`, `app` 是一个业务项目分类，`server` 是具体的进程服务名
-    * 建议指定 `option go_package`，表明协议的 `git` 地址。开发期间，可以使用本地的地址，例如：
-      + `option go_package="git.woa.com/trpcprotocol/test/helloworld";` 表示在 `git.woa.com/trpcprotocol/test/helloworld` 地址生成 `pb.go` 的文件
-      + `option go_package = "server/api/trpc/proto";` 表示在 `server/api/trpc/proto` 目录下生成 `pb.go` 的文件
+    * 指定 `option go_package`，建议为协议的 `git` 地址。开发期间，也可以使用本地的地址，例如：
+      + `option go_package="git.woa.com/trpcprotocol/test/helloworld";` 表示在 `git.woa.com/trpcprotocol/test/helloworld` 地址生成 `pb.go` 文件
+      + `option go_package = "server/api/trpc/proto";` 表示在本地目录 `server/api/trpc/proto` 下生成 `pb.go` 文件
     * 定义 `service rpc` 方法，一个 `server` 可以有多个 `service`，一般都是一个 `server` 一个 `service`
 
 ``` proto
