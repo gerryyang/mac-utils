@@ -13,6 +13,54 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* litter /ˈlɪtə(r)/
+  + N-UNCOUNT **Litter** is rubbish or waste that is left lying around outside. 垃圾
+    - If you see litter in the corridor, pick it up. 如果你看到走廊里有垃圾，就把它捡起来。
+  + V-T If a number of things **litter** a place, they are scattered around it or over it. 散放在
+    - Glass from broken bottles litters the sidewalk. 碎瓶子的玻璃渣散落在人行道上。
+  + ADJ 散放的
+    - The entrance hall is littered with toys. 入口大厅里散落着玩具。
+
+* lease /liːs/
+  + N-COUNT A **lease** is a legal agreement by which the owner of a building, a piece of land, or something such as a car allows someone else to use it for a period of time in return for money. 租约
+    - He took up a 10-year lease on the house. 他为这房子签了10年的租约。
+  + V-T If you **lease** property or something such as a car from someone or if they lease it to you, they allow you to use it in return for regular payments of money. 租进; 租出
+    - She hopes to lease the building to students. 她希望把大楼租给学生。
+
+
+* brackets /ˈbrækɪts/
+  + N-COUNT If you say that someone or something is in a particular **bracket**, you mean that they come within a particular range, for example, a range of incomes, ages, or prices. (收入、年龄、价格等的) 范围
+  + N-COUNT **Brackets** are pair of marks ( ) that are placed around a series of symbols in a mathematical expression to indicate that those symbols function as one item within the expression. (数学中用以表示整体的) 括号
+    - square brackets 方括号
+
+
+* pending /ˈpendɪŋ/
+  + ADJ If something such as a legal procedure is **pending**, it is waiting to be dealt with or settled. 待处理的
+    - In 2006, the court had 600 pending cases. 2006年，该法院有600件未结的案子。
+  + ADJ Something that is **pending** is going to happen soon. 即将发生的
+    - A growing number of customers have been inquiring about the **pending** price rises. 越来越多的顾客在询问即将出现的价格上涨问题。
+
+
+* iterative /ˈɪtərətɪv/
+  + ADJ repetitious or frequent 重复的
+
+* interactive /ˌɪntərˈæktɪv/
+  + ADJ An **interactive** computer program or electronic device is one that allows direct communication between the user and the machine. 交互的
+  + ADJ If you describe a group of people or their activities as **interactive**, you mean that the people communicate with each other. 互动的
+
+
+* buzzword /ˈbʌzwɜːd/
+  + N-COUNT A **buzzword** is a word or expression that has become fashionable in a particular field and is being used a lot by the media. 某领域的时髦用语
+    - Biodiversity was the **buzzword** of the Rio Earth Summit. 生物多样性是里约地球峰会上的时髦用语。
+
+* coin /kɔɪn/
+  + N-COUNT A **coin** is a small piece of metal which is used as money. 硬币
+    - a few loose coins. 几枚零钱
+  + V-T If you **coin** a word or a phrase, you are the first person to say it. 创造 (新词语)
+    - Jaron Lanier **coined** the term "virtual reality" and pioneered its early development. 加隆·雷尼尔首创“虚拟现实”一词，并率先进行早期开发。
+
+
 * advocate /ˈædvəkeɪt/
   + V-T If you **advocate** a particular action or plan, you recommend it publicly. 提倡
     - Mr. Williams is a conservative who **advocates** fewer government controls on business. 威廉斯先生是一位提倡减少政府对商业的控制的保守人士。
@@ -256,8 +304,6 @@ categories: 英语学习
     + A **quota** is a fixed maximum or minimum proportion of people from a particular group who are allowed to do something, such as come and live in a country or work for the government. 配额
       - The bill would force employers to adopt a quota system when recruiting workers. 该法案将迫使雇主们在录用工人时采取配额制。
 
-
-
 * advertise
     + If you advertise something such as a product, an event, or a job, you tell people about it in newspapers, on television, or on posters in order to encourage them to buy the product, go to the event, or apply for the job. 为 ... 做广告; 做广告
       - The company is spending heavily to advertise its strongest brands. 该公司在花重金为其最强势的品牌做广告。
@@ -265,8 +311,6 @@ categories: 英语学习
       - We advertised for staff in a local newspaper. 我们在一份地方报纸上登了广告招聘员工。
     + If you do not advertise the fact that something is the case, you try not to let other people know about it. 宣传
       - There is no need to advertise the fact that you are a single woman. 没必要宣传你是个单身女性这一事实。
-
-
 
 * evergreen
     + 名词 An **evergreen** is a tree or bush that has green leaves all year long. 常青树; 常绿植物
