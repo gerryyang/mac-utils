@@ -8,7 +8,8 @@ categories: [C/C++]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# TL;DR
+
+# std::shared_ptr
 
 `std::shared_ptr` 是 C++11 引入的智能指针类型，用于自动管理对象的生命周期。当 `std::shared_ptr` 变量被赋值为 `nullptr`（C++11 中引入的空指针字面值）时，它表示该智能指针不指向任何对象。当一个 `std::shared_ptr` 变量被赋值为 nullptr 时，它会自动释放与之前关联的对象的引用。**如果这是指向该对象的最后一个 `std::shared_ptr`，则对象将被自动删除**。
 
@@ -24,14 +25,14 @@ public:
 
 int main() {
     std::shared_ptr<MyClass> ptr1 = std::make_shared<MyClass>();
-    std::shared_ptr<MyClass> ptr2 = ptr1; // ptr1和ptr2共享同一个对象
+    std::shared_ptr<MyClass> ptr2 = ptr1; // ptr1 和 ptr2 共享同一个对象
     std::cout << "Initial use_count: " << ptr1.use_count() << std::endl;
 
-    ptr1 = nullptr; // ptr1不再引用对象，但ptr2仍然引用它
+    ptr1 = nullptr; // ptr1 不再引用对象，但 ptr2 仍然引用它
     std::cout << "after ptr1 = nullptr, use_count: " << ptr2.use_count() << std::endl;
 
-    ptr2 = nullptr; // ptr2不再引用对象，因为没有其他shared_ptr引用它，所以对象被删除
-    std::cout << "after ptr2 = nullptr\n";
+    ptr2 = nullptr; // ptr2 不再引用对象，因为没有其他 shared_ptr 引用它，所以对象被删除
+    std::cout << "after ptr2 = nullptr, use_count: " << ptr2.use_count() << std::endl;
     return 0;
 }
 /*
@@ -39,35 +40,32 @@ MyClass constructed
 Initial use_count: 2
 after ptr1 = nullptr, use_count: 1
 MyClass destroyed
-after ptr2 = nullptr
+after ptr2 = nullptr, use_count: 0
 */
 ```
-
-
-# Implementation (std::shared_ptr)
-
-`std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
 
 ``` cpp
 #include <iostream>
 #include <memory>
 
 class A {
-  public: A() {
-      std::cout << "A()\n";
-    }
-    ~A() {
-      std::cout << "~A()\n";
-    }
+    public:
+        A() {
+            std::cout << "A()\n";
+        }
+        ~A() {
+            std::cout << "~A()\n";
+        }
 };
 
 int main() {
-  std::shared_ptr<A> ptr1(new A, [](A * p) {
-    delete p;
-    std::cout << "over\n";
-  });
-  std::shared_ptr < A > ptr2 = ptr1;
-  std::cout << ptr1.use_count() << std::endl;
+    std::shared_ptr<A> ptr1(new A, [](A * p) {
+        delete p;
+        std::cout << "over\n";}
+    );
+
+    std::shared_ptr < A > ptr2 = ptr1;
+    std::cout << ptr1.use_count() << std::endl;
 }
 /*
 A()
@@ -77,6 +75,8 @@ over
 */
 ```
 
+`std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
+
 * the last remaining shared_ptr owning the object is destroyed; (**当所持对象的最后一个 shared_ptr 销毁时，才对所持的对象进行销毁**)
 
 ``` cpp
@@ -84,24 +84,25 @@ over
 #include <memory>
 
 class A {
-  public: A() {
-      std::cout << "A()\n";
-    }
-    ~A() {
-      std::cout << "~A()\n";
-    }
+    public:
+        A() {
+            std::cout << "A()\n";
+        }
+        ~A() {
+            std::cout << "~A()\n";
+        }
 };
 
 int main() {
-  {
-    std::shared_ptr<A> ptr1(new A, [](A * p) {
-      delete p;
-      std::cout << "over\n";
-    });
-    std::cout << ptr1.use_count() << std::endl;
-  }
+    {
+        std::shared_ptr<A> ptr1(new A, [](A * p) {
+            delete p;
+            std::cout << "over\n";}
+        );
 
-  std::cout << "end\n";
+        std::cout << ptr1.use_count() << std::endl;
+    }
+    std::cout << "end\n";
 }
 /*
 A()
@@ -112,28 +113,31 @@ end
 */
 ```
 
-* the last remaining shared_ptr owning the object is assigned another pointer via `operator=` or `reset()`. (**当所持对象的最后一个 shared_ptr 通过`operator=`赋值为另一个指针，或者`reset()`(replaces the managed object)替换为另一个对象时，才对所持的对象进行销毁**)
+* the last remaining shared_ptr owning the object is assigned another pointer via `operator=` or `reset()`. (**当所持对象的最后一个 shared_ptr 通过 `operator=` 赋值为另一个指针，或者 `reset()`(replaces the managed object) 替换为另一个对象时，才对所持的对象进行销毁**)
 
 ``` cpp
 #include <iostream>
 #include <memory>
 
 class A {
-  public: A() {
-    std::cout << "A()\n";
-  }~A() {
-    std::cout << "~A()\n";
-  }
+    public:
+        A() {
+            std::cout << "A()\n";
+        }
+        ~A() {
+            std::cout << "~A()\n";
+        }
 };
 
 int main() {
-  std::shared_ptr<A> ptr1(new A, [](A * p) {
-    delete p;
-    std::cout << "over\n";
-  });
-  std::cout << ptr1.use_count() << std::endl;
-  ptr1 = nullptr;
-  std::cout << ptr1.use_count() << std::endl;
+    std::shared_ptr<A> ptr1(new A, [](A * p) {
+        delete p;
+        std::cout << "over\n";}
+    );
+
+    std::cout << ptr1.use_count() << std::endl;
+    ptr1 = nullptr;
+    std::cout << ptr1.use_count() << std::endl;
 }
 /*
 A()
@@ -149,23 +153,25 @@ over
 #include <memory>
 
 class A {
-  public: A() {
-    std::cout << "A()\n";
-  }~A() {
-    std::cout << "~A()\n";
-  }
+    public:
+    A() {
+        std::cout << "A()\n";
+    }
+    ~A() {
+        std::cout << "~A()\n";
+    }
 };
 
 int main() {
-  std::shared_ptr<A> ptr1(new A, [](A * p) {
-    delete p;
-    std::cout << "over\n";
-  });
-  std::cout << ptr1.use_count() << std::endl;
+    std::shared_ptr<A> ptr1(new A, [](A * p) {
+        delete p;
+        std::cout << "over\n";}
+    );
+    std::cout << ptr1.use_count() << std::endl;
 
-  std::cout << "before reset\n";
-  ptr1.reset(new A);
-  std::cout << "after reset\n";
+    std::cout << "before reset\n";
+    ptr1.reset(new A);
+    std::cout << "after reset\n";
 }
 /*
 A()
@@ -194,12 +200,19 @@ shared_ptr( Y* ptr, Deleter d, Alloc alloc );
 ```
 
 
-## shard_ptr 的存储结构
+## shared_ptr 的存储结构
 
 In a typical implementation, `std::shared_ptr` holds **only two pointers**: ([refer std::shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr))
 
 * **the stored pointer** (one returned by `get()`)
 * **a pointer to control block**
+
+在典型实现中，`std::shared_ptr` 包含 两个指针：
+
++ **存储指针（Stored Pointer）**
+    - 通过 `get()` 方法返回的指针，指向实际管理的对象。
++ **控制块指针（Control Block Pointer）**
+    - 指向一个动态分配的控制块（Control Block），用于管理对象的生命周期。
 
 The **control block** is a dynamically-allocated object that holds:
 
@@ -209,15 +222,100 @@ The **control block** is a dynamically-allocated object that holds:
 * the number of shared_ptrs that own the managed object;
 * the number of weak_ptrs that refer to the managed object.
 
+**控制块（Control Block）的结构：**
+
+| 成员 | 作用
+| -- | --
+| 指向对象的指针 | 可能是原始对象的指针，或对象本身
+| 删除器（Deleter） | 用于销毁对象的函数或函数对象（类型擦除，支持自定义删除逻辑）
+| 分配器（Allocator）| 用于分配内存的分配器（类型擦除，通常使用默认分配器）
+| 共享引用计数 | 记录当前有多少个 std::shared_ptr 拥有对象所有权
+| 弱引用计数 | 记录当前有多少个 std::weak_ptr 观察该对象（用于延长控制块的生命周期）
+
+
+
+**控制块的创建方式：** (控制块的初始化方式直接影响其内存布局)
+
+**场景 1：通过 `new` 创建 `shared_ptr`**
+
+``` cpp
+std::shared_ptr<Object> ptr(new Object);
+```
+
+* 对象在堆上单独分配（通过 new）
+* 控制块在堆上单独分配（包含指向对象的指针）
+* 内存碎片化：两次独立分配可能导致内存碎片
+
+通过 `new` 创建：
+
+```
++----------------+      +-----------------+
+| shared_ptr     |      | Control Block   |
+| - stored_ptr   | ---> | - Object*       |
+| - control_block| --+  | - Deleter       |
++----------------+   |  | - Allocator     |
+                     |  | - use_count = 1 |
+                     |  | - weak_count = 0|
+                     |  +-----------------+
+                     |
+                     +--> +------------+
+                          | Object     |
+                          +------------+
+```
+
+**场景 2：通过 `std::make_shared` 创建** - 对象和控制块在**同一块连续内存中分配**（通过一次内存分配完成）
+
+``` cpp
+auto ptr = std::make_shared<Object>();
+```
+
+* 优势：减少内存分配次数，提升性能，避免内存碎片
+* 代价：对象和控制块生命周期绑定，即使所有 `shared_ptr` 销毁，若仍有 `weak_ptr` 存在，对象占用的内存不会立即释放（需等控制块释放）
+
+通过 `make_shared` 创建：
+
+```
++----------------+      +-----------------------------+
+| shared_ptr     |      | Combined Control Block      |
+| - stored_ptr   | ---> | - Object (embedded)         |
+| - control_block| --+  | - Deleter                   |
++----------------+   |  | - Allocator                 |
+                     |  | - use_count = 1             |
+                     |  | - weak_count = 0            |
+                     |  +-----------------------------+
+                     +---（对象和控制块在同一内存块）
+```
+
+
+**共享引用计数与弱引用计数：**
+
+1. 共享引用计数（use_count）
+   * 当 shared_ptr 被拷贝或赋值时递增，销毁时递减
+   * 归零时，调用删除器销毁对象（但控制块可能仍存在，直到弱引用计数归零）
+
+2. 弱引用计数
+    * 当 weak_ptr 被拷贝或赋值时递增，销毁时递减
+    * 归零时，释放控制块内存（若共享引用计数已归零）
+
+**类型擦除（Type Erasure）**
+
+控制块中的 **删除器** 和 **分配器** 通过类型擦除技术存储，使得 `std::shared_ptr` 可以：
+
+* 支持任意类型的删除器和分配器（如自定义的 Deleter 或内存池）
+* 保持统一的接口，无需为不同类型生成额外的模板代码
+
+
+
 ## shared_ptr 的两种初始化方式
 
-方式一：一次分配 (推荐方式)
+**方式 1：一次分配 (推荐方式)**
 
 When `shared_ptr` is created by calling `std::make_shared` or `std::allocate_shared`, the memory for **both the control block and the managed object** is created with a single allocation. The managed object is constructed in-place in a data member of the control block.
 
-方式二：两次分配
+**方式 2：两次分配**
 
 When `shared_ptr` is created via one of the `shared_ptr` constructors, the managed object and the control block must be allocated separately. In this case, the control block stores a pointer to the managed object.
+
 
 ## shared_ptr 的销毁方式
 
@@ -384,7 +482,7 @@ As an informed guess, the “well within the state of the art” has been achiev
 
 
 
-# Implementation (std::unique_ptr)
+# std::unique_ptr
 
 `std::unique_ptr` is a smart pointer that owns and manages another object through a pointer and disposes of that object when the unique_ptr goes out of scope.
 
@@ -398,7 +496,7 @@ There are two versions of `std::unique_ptr`:
 1. Manages a single object (e.g. allocated with `new`)
 2. Manages a dynamically-allocated array of objects (e.g. allocated with `new[]`) (支持数组)
 
-> The class satisfies the requirements of MoveConstructible and MoveAssignable, but of neither CopyConstructible nor CopyAssignable.
+> The class satisfies the requirements of MoveConstructible and MoveAssignable, but of neither CopyConstructible nor CopyAssignable. (构造函数需要满足**移动构造**和**移动赋值**，但是不能满足**拷贝构造**和**拷贝赋值**)
 
 
 Only `non-const unique_ptr` can transfer the ownership of the managed object to another unique_ptr. If an object's lifetime is managed by a `const std::unique_ptr`, it is limited to the scope in which the pointer was created.
@@ -416,13 +514,25 @@ Only `non-const unique_ptr` can transfer the ownership of the managed object to 
 
 
 
-# Implementation (std::weak_ptr)
+# std::weak_ptr
 
 `std::weak_ptr` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `std::shared_ptr`. It must be converted to `std::shared_ptr` in order to access the referenced object.
 
+`weak_ptr` 是一个不拥有对象的智能指针，它引用由 `shared_ptr` 管理的对象。因为 `weak_ptr` 本身不增加引用计数，所以 `weak_ptr` 必须转换成 `shared_ptr` 才能访问对象。所以当原来的 `shared_ptr` 都被销毁后，对象会被释放，这时候 `weak_ptr` 就会知道对象已经不存在了。
+
 `std::weak_ptr` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else, `std::weak_ptr` is used to track the object, and it is converted to `std::shared_ptr` to assume temporary ownership. If the original `std::shared_ptr` is destroyed at this time, the object's lifetime is extended until the temporary `std::shared_ptr` is destroyed as well.
 
+**临时所有权是什么意思呢？**
+
+当某个对象存在时，我们可能需要临时访问它，但不确定它是否已经被删除。这时候用 `weak_ptr` 来跟踪对象，需要的时候转换成 `shared_ptr`，这样如果原来的 `shared_ptr` 还存在，转换后的 `shared_ptr` 会增加引用计数，保证在使用期间对象不会被释放。如果原来的已经被销毁了，那么转换得到的 `shared_ptr` 会是空的，这样就能安全处理了。
+
 **Another use for `std::weak_ptr` is to break reference cycles formed by objects managed by `std::shared_ptr`.** If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the shared_ptr reference counts cannot reach zero and the memory is leaked. To prevent this, one of the pointers in the cycle can be made weak.
+
+**什么是循环引用的问题？**
+
+比如两个类 `A` 和 `B`，各自有一个 `shared_ptr` 指向对方，这样它们的引用计数都是 1，永远不会变成 0，导致内存泄漏。
+
+如果其中一个使用 `weak_ptr`，比如 `A` 持有指向 `B` 的 `shared_ptr`，`B` 持有指向 `A` 的 `weak_ptr`。这样当外部的 `shared_ptr` 被销毁后，`A` 的引用计数可以降为 0，从而释放 `A`，接着 `B` 的引用计数也会降为 0，释放 `B`。这样就打破了循环。所以 `weak_ptr` 在这里的作用就是避免循环引用导致的内存泄漏。
 
 Like `std::shared_ptr`, a typical implementation of `weak_ptr` stores two pointers:
 
@@ -431,8 +541,123 @@ Like `std::shared_ptr`, a typical implementation of `weak_ptr` stores two pointe
 
 A separate stored pointer is necessary to ensure that converting a `shared_ptr` to `weak_ptr` and then back works correctly, even for aliased shared_ptrs. It is not possible to access the stored pointer in a `weak_ptr` without locking it into a shared_ptr.
 
+**怎么使用 weak_ptr 呢？**
 
-# Implementation (std::auto_ptr)
+当需要观察某个资源是否存在，但不想拥有所有权的时候。
+
+例如，缓存中的对象可能被其他部分管理，缓存只需要在对象存在时提供访问，不存在时重新加载。这时候缓存可以用 `weak_ptr` 来保存这些对象的引用，当需要时尝试转换为 `shared_ptr`，如果成功则使用，否则重新加载。
+
+另外，当需要将 `weak_ptr` 转换为 `shared_ptr` 时，可以使用 `lock()` 方法。这个方法会返回一个 `shared_ptr`，如果原来的对象还存在，那么这个 `shared_ptr` 会增加引用计数，确保对象在本次使用期间有效。否则返回空的 `shared_ptr`。
+
+或者也可以使用 `weak_ptr` 的构造函数来创建 `shared_ptr`，但这样在对象不存在时会抛出异常，可能不如 `lock()` 安全。
+
+**循环引用的代码示例：**
+
+``` cpp
+class B;
+
+class A {
+public:
+    std::shared_ptr<B> b_ptr;
+    ~A() { std::cout << "A destroyed\n"; }
+};
+
+class B {
+public:
+    std::shared_ptr<A> a_ptr; // 这里如果用 shared_ptr 就会循环引用
+    ~B() { std::cout << "B destroyed\n"; }
+};
+```
+
+当 `A` 和 `B` 互相持有对方的 `shared_ptr`，那么它们的引用计数不会归零。但如果将其中一个改为 `weak_ptr`，比如 `B` 中的 `a_ptr` 改为 `std::weak_ptr<A>`，那么当外部的 `shared_ptr` 被销毁后，`A` 的引用计数会减少到 0，从而释放 `A`，接着 `B` 的引用计数也会减少，从而释放 `B`。这样就避免了内存泄漏。
+
+**什么时候应该用 weak_ptr 来避免循环引用呢？**
+
+通常是在有双向引用的情况下，比如树结构中的父节点和子节点，或者观察者模式中的观察者和被观察者。在这些情况下，如果双方都用 `shared_ptr`，就可能出现循环。这时可以将其中一个方向改为 `weak_ptr`。
+
+**那 weak_ptr 的另一个应用场景是缓存**
+
+例如，一个对象缓存可能保存着一些不再被主要拥有的对象的 `weak_ptr`。当需要访问这些对象时，可以尝试提升为 `shared_ptr`，如果成功则使用缓存的对象，否则重新生成。这样，当对象不再被其他 `shared_ptr` 引用时，缓存中的 `weak_ptr` 不会阻止其被销毁，从而节省内存。
+
+**weak_ptr 不会增加引用计数代码示例：**
+
+``` cpp
+std::weak_ptr<int> wptr;
+
+{
+    auto sptr = std::make_shared<int>(42);
+    wptr = sptr;
+
+    // 此时 sptr 引用计数是 1，wptr 不增加
+}
+
+// 离开作用域后，sptr 销毁，引用计数归零，int 对象被销毁
+
+auto sptr2 = wptr.lock();
+if (sptr2) {
+    // 这里的代码不会执行，因为 wptr 已经失效
+} else {
+    // 处理对象不存在的情况
+}
+```
+
+在转换的时候，如果原来的 `shared_ptr` 还存在，则 `lock()` 返回有效的 `shared_ptr`，此时引用计数会增加，保证在 `shared_ptr` 存在期间对象不会被释放。
+
+> 总结，weak_ptr 的两个主要用途：
+
+1. **临时所有权（Temporary Ownership）**。临时获取 `shared_ptr` 以安全访问可能已被释放的对象
+    + 作用：`weak_ptr` 用于观察一个由 `shared_ptr` 管理的对象，但不拥有其所有权（不增加引用计数）。
+    + 使用场景：当需要访问一个对象但不确定其是否仍存在时（可能已被其他 `shared_ptr` 释放），可通过 `weak_ptr` 安全地尝试获取临时所有权。
+    + 操作：通过 `lock()` 方法将 `weak_ptr` 转换为 `shared_ptr`
+      - 若对象仍存在，`lock()` 返回一个有效的 `shared_ptr`，此时引用计数增加，对象的生命周期被延长至该临时 `shared_ptr` 销毁。
+      - 若对象已被释放，`lock()` 返回空的 `shared_ptr`，避免悬垂指针。
+
+``` cpp
+std::weak_ptr<Object> weak;
+
+{
+    auto shared = std::make_shared<Object>();
+    weak = shared; // 不增加引用计数
+    // shared 离开作用域，对象销毁
+}
+
+auto temp = weak.lock(); // 返回空指针
+if (temp) {
+    /* 安全使用对象 */
+}
+```
+
+2. **打破循环引用（Breaking Reference Cycles）**。打破 shared_ptr 之间的循环引用，防止内存泄漏
+    + 问题：若多个 `shared_ptr` 形成环形依赖（如双向链表、父子节点），它们的引用计数无法归零，导致内存泄漏。
+    + 解决方案：将环形依赖中的某一环替换为 `weak_ptr`，使其不参与引用计数。
+
+``` cpp
+class B; // 前向声明
+
+class A {
+public:
+    std::shared_ptr<B> b_ptr; // 强引用 B
+    ~A() { std::cout << "A destroyed\n"; }
+};
+
+class B {
+public:
+    std::weak_ptr<A> a_weak; // 弱引用 A，打破循环
+    ~B() { std::cout << "B destroyed\n"; }
+};
+
+int main() {
+    auto a = std::make_shared<A>();
+    auto b = std::make_shared<B>();
+    a->b_ptr = b;
+    b->a_weak = a; // 使用 weak_ptr 而非 shared_ptr
+
+    // a 和 b 的引用计数均为 1，退出作用域后正常销毁
+}
+```
+
+
+# std::auto_ptr
 
 ``` cpp
 // (deprecated in C++11)

@@ -441,7 +441,7 @@ void func()
         // :: has only one in IPv6
         size_t found = src.find("::");
         if (found != std::string::npos) {
- 
+
                 // a::b:c -> a:*:b:c
                 replace(src);
 
@@ -884,7 +884,7 @@ class A
 
 public:
         record m_var{
-            {"a", "b"}, 
+            {"a", "b"},
             {"c", "d"}
         };
 
@@ -966,6 +966,34 @@ refer:
 * https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
 * https://www.fluentcpp.com/2018/05/08/std-iterator-deprecated/
 
+
+# 判断是否是闰年
+
+判断闰年时有两个条件：
+
+1. `year % 4 == 0 && year % 100 != 0`：这一条件用于判断非整百年份。**能被4整除的年份通常是闰年，但整百年份是个例外**。所以需要排除能被100整除的情况，确保只有非整百年份且能被4整除的才是闰年。例如，2024年能被4整除且不能被100整除，是闰年；而1900年能被4整除，但也能被100整除，不符合该条件，不是闰年。
+
+2. `year % 400 == 0`：这是针对整百年份的判断条件。整百年份必须能被400整除才是闰年。例如，2000年能被400整除，是闰年；1900年不能被400整除，不是闰年。
+
+通过这两个条件的组合使用，就可以准确判断任意一个年份是否为闰年。
+
+``` c
+#include <stdio.h>
+
+int main() {
+    int year;
+    printf("请输入一个年份: ");
+    scanf("%d", &year);
+
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        printf("%d年是闰年。\n", year);
+    } else {
+        printf("%d年不是闰年。\n", year);
+    }
+
+    return 0;
+}
+```
 
 
 

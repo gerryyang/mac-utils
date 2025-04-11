@@ -13,6 +13,134 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* dispose /dɪˈspəʊz/
+  + V to deal with or settle 处理; 安排
+  + V to give, sell, or transfer to another 给予; 卖给
+  + V to throw out or away 扔掉
+  + V to consume, esp hurriedly 消耗; 尤指匆忙地
+  + V to kill 杀
+
+* summit /ˈsʌmɪt/
+  + N-COUNT A **summit** is a meeting at which the leaders of two or more countries discuss important matters. 峰会
+  + N-COUNT The **summit** of a mountain is the top of it. (山) 峰
+    - He made it to the summit of Kilimanjaro before collapsing. 他成功登上乞力马扎罗山峰顶后倒下了。
+
+
+* delegate /ˈdelɪɡət/
+  + N-COUNT A **delegate** is a person who is chosen to vote or make decisions on behalf of a group of other people, especially at a conference or a meeting. 代表
+  + V-T/V-I If you **delegate** duties, responsibilities, or power to someone, you give them those duties, those responsibilities, or that power so that they can act on your behalf. 委托; 授权
+  + V-T If you are **delegated** to do something, you are given the duty of acting on someone else's behalf by making decisions, voting, or doing some particular work. 委派
+    - Officials have now been delegated to start work on a draft settlement. 官员们现已被委派开始准备一份拟定协议。
+
+
+* revoke /rɪˈvəʊk/
+  + V-T When people in authority **revoke** something such as a licence, a law, or an agreement, they cancel it. 撤销; 废除
+    - The government **revoked** her husband's licence to operate migrant labour crews. 政府撤销了她丈夫经营流动劳工团队的许可证。
+
+
+* negotiation /nɪˌɡəʊʃɪˈeɪʃən/
+  + N-VAR **Negotiations** are formal discussions between people who have different aims or intentions, especially in business or politics, during which they try to reach an agreement. (尤指商业或政治上的) 谈判
+
+
+* concerning /kənˈsɜːnɪŋ/
+  + PREP You use **concerning** to indicate what a question or piece of information is about. 关于
+    - For more information **concerning** the club, contact Mr. Coldwell. 想了解更多有关该俱乐部的信息，请跟科德韦尔先生联系。
+  + ADJ If something is **concerning**, it causes you to feel concerned about it. 令人担心的
+    - It is particularly **concerning** that he is working for foreign companies while advising on foreign policy. 尤其令人担心的是，他在为外交政策提供咨询的同时也在为外国公司工作。
+
+
+* additional /əˈdɪʃən(ə)l/
+  + ADJ **Additional** things are extra things apart from the ones already present. 额外的
+    - The U.S. is sending additional troops to the region. 美国正在往该地区派遣额外的部队。
+
+* impose /ɪmˈpəʊz/
+  + V-T If you **impose** something on people, you use your authority to force them to accept it. 强制实行
+    - Fines are **imposed** on retailers who sell tobacco to minors. 向未成年人销售烟草制品的零售商要被强制罚款。
+  + V-T If you **impose** your opinions or beliefs on other people, you try and make people accept them as a rule or as a model to copy. 把 (观点、信仰等) 强加于
+    - Parents should beware of **imposing** their own tastes on their children. 父母应该提防把自己的兴趣强加给孩子。
+
+
+* withdraw /wɪðˈdrɔː/
+  + V-T If you **withdraw** something from a place, you remove it or take it away. 移开; 拿走
+    - He reached into his pocket and **withdrew** a sheet of notepaper. 他把手伸进口袋，拿出一张便签。
+  + V-T/V-I When groups of people such as troops **withdraw** or when someone **withdraws** them, they leave the place where they are fighting or where they are based and return nearer home. 使撤退; 撤退
+    - He stated that all foreign forces would **withdraw** as soon as the crisis ended. 他声明危机一结束所有外国军队就会撤退。
+  + V-T If you **withdraw** money from a bank account, you take it out of that account. (从银行) 取 (钱)
+    - Open a savings account that does not charge ridiculous fees to **withdraw** money. 开立一个取钱时不荒唐地收取费用的储蓄账户。
+
+
+* substantially /səbˈstænʃəli/
+  + ADV If something changes **substantially** or is **substantially** different, it changes a lot or is very different. 很大程度地
+    - The percentage of girls in engineering has increased **substantially**. 工科女生的比例已经大大增长了。
+
+
+* currency /ˈkʌrənsi/
+  + N-VAR The money used in a particular country is referred to as its **currency**. 货币
+    - More people favour a single European **currency** than oppose it. 支持欧洲单一货币的人比反对的多。
+
+* tariff /ˈtærɪf/
+  + N-COUNT A **tariff** is a tax that a government collects on goods coming into a country. (政府对进口货物征收的) 关税
+    - America wants to eliminate **tariffs** on items such as electronics. 美国想要取消电子类产品的关税。
+
+* monetary /ˈmʌnɪtri/
+  + ADJ **Monetary** means relating to money, especially the total amount of money in a country. 货币的
+    - Some countries tighten **monetary** policy to avoid inflation. 一些国家紧缩货币政策以避免通货膨胀。
+
+* retaliatory /rɪˈtæliətri/
+  + ADJ If you take **retaliatory** action, you try to harm or annoy someone who has harmed or annoyed you. 报复性的; 以牙还牙的
+
+* issue /ˈɪʃuː/
+  + N-COUNT An **issue** is an important subject that people are arguing about or discussing. 议题
+  + N-SING If something is the **issue**, it is the thing you consider to be the most important part of a situation or discussion. 要点
+    - I was earning a lot of money, but that was not the **issue**. 我是挣着很多钱，但那不是问题的关键。
+  + N-COUNT An **issue** of something such as a magazine or newspaper is the version of it that is published, for example, in a particular month or on a particular day. (杂志或报刊的) 期
+    - The growing problem is underlined in the latest **issue** of the Scientific American. 这一日益严重的问题在最新一期的《科学美国人》上得到强调。
+  + V-T If you **issue** a statement or a warning, you make it known formally or publicly. 发表 (声明); 发出 (警告)
+    - The government **issued** a warning that the strikers should end their action or face dismissal. 该政府发出了警告，罢工者们应停止他们的行动，否则将被免职
+
+* clutter /ˈklʌtə/
+  + N-UNCOUNT **Clutter** is a lot of things in a messy state, especially things that are not useful or necessary. 乱七八糟
+    - Caroline prefers her countertops to be clear of clutter. 卡罗琳喜欢把她的厨房台面弄得整整齐齐。
+  + V-T If things or people **clutter** a place, they fill it in a messy way. (物或人) 拥塞
+    - Empty soft-drink cans lie everywhere. They clutter the desks and are strewn across the floor.  软饮料空罐到处都是，堆满了桌面，还扔了一地。
+
+* summarize /ˈsʌməraɪz/
+  + V-T/V-I If you **summarize** something, you give a **summary** of it. 总结
+    - Basically, the article can be **summarized** in three sentences. 基本上，这篇文章可用3句话概括。
+
+* summary /ˈsʌməri/
+  + N-COUNT A **summary** of something is a short account of it, which gives the main points but not the details. 总结
+    - What follows is a brief summary of the process. 接下来是对该过程的一个简短总结。
+  + PHRASE You use **in summary** to indicate that what you are about to say is a summary of what has just been said. 总之
+    - **In summary**, it is my opinion that this complete treatment process was very successful. 总之，我认为这整个治疗过程非常成功。
+
+* unary /ˈjuːnəri/
+  + ADJ consisting of, or affecting, a single element or component; monadic 一元的
+
+* squash /skwɒʃ/
+  + V-T If someone or something is **squashed**, they are pressed or crushed with such force that they become injured or lose their shape. 压扁; 压碎
+  + ADJ If people or things are **squashed** into a place, they are put or pushed into a place where there is not enough room for them to be. 挤进去了的
+    - There were 2,000 people squashed into her recent show. 有2千人挤进了她最近的演出现场。
+  + V-T If you **squash** something that is causing you trouble, you put a stop to it, often by force. 镇压
+    - The troops would stay in position to **squash** the first murmur of trouble. 该部队将严阵以待，一有骚乱声音即进行镇压。
+
+
+
+* servant /ˈsɜːvənt/
+  + N-COUNT A **servant** is someone who is employed to work at another person's home, for example, as a cleaner or a gardener. 仆人; 佣人
+  + N-COUNT You can use **servant** to refer to someone or something that provides a service for people or can be used by them. 雇员
+
+* grant /ɡrɑːnt/
+  + N-COUNT A **grant** is an amount of money that a government or other institution gives to an individual or to an organization for a particular purpose such as education or home improvements. 补助金
+    - They'd got a special **grant** to encourage research. 他们已得到了一笔用来支持研究的特别补助金。
+  + V-T If someone in authority **grants** you something, or if something is **granted** to you, you are allowed to have it. 准予
+    - Single parents tend to **grant** more independence to their children than other parents do. 单亲父母往往比其他父母给予孩子们更多的自主性。
+  + V-T If you **grant** that something is true, you accept that it is true, even though your opinion about it does not change. 承认
+
+
+* quorum /ˈkwɔːrəm/
+  + N-SING A **quorum** is the minimum number of people that a committee needs in order to carry out its business officially. When a meeting has a **quorum**, there are at least that number of people present. 法定人数
+
 
 * litter /ˈlɪtə(r)/
   + N-UNCOUNT **Litter** is rubbish or waste that is left lying around outside. 垃圾
@@ -173,6 +301,9 @@ categories: 英语学习
   + N-UNCOUNT The **retrieval** of something is the process of getting it back from a particular place, especially from a place where it should not be. 找回; 取回
     - Its real purpose is the launching and **retrieval** of small aeroplanes in flight. 它的真正目的是发射和找回飞行中的小型飞机。
 
+* augment /ɔːɡˈment/
+  + V-T To **augment** something means to make it larger, stronger, or more effective by adding something to it. 增加
+    - While searching for a way to **augment** the family income, she began making dolls. 为求增加家庭收入，她开始做起了玩具娃娃。
 
 
 * divergent /daɪˈvɜːdʒənt/

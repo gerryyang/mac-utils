@@ -3617,6 +3617,239 @@ etcdctl endpoint status --cluster -w json | python -mjson.tool
 ]
 ```
 
+# etcd 运维脚本
+
+``` bash
+#!/bin/bash
+
+# 设置默认值
+ETCD_ENDPOINTS=${ETCD_ENDPOINTS:-"localhost:2379"}
+NAMESVR_PREFIX=${NAMESVR_PREFIX:-"/namesvr"}
+ELECTION_PREFIX="${NAMESVR_PREFIX}/election"
+
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# 帮助信息
+usage() {
+    echo -e "${GREEN}NameSvr ETCD 管理工具${NC}"
+    echo "Usage: $0 [command]"
+    echo
+    echo "Commands:"
+    echo "  list         - 列出所有 NameSvr 相关的 key"
+    echo "  ids          - 查看所有 NameSvr 实例 ID"
+    echo "  leader       - 查看当前 leader 信息"
+    echo "  routes       - 查看路由信息"
+    echo "  clean        - 清理所有 NameSvr 相关的数据"
+    echo "  clean-ids    - 仅清理 ID 相关数据"
+    echo "  watch        - 监控 key 变化"
+    echo "  status       - 查看 etcd 集群状态"
+    echo "  backup       - 备份 NameSvr 相关数据"
+    echo "  restore      - 从备份恢复数据"
+    echo "  help         - 显示帮助信息"
+    echo
+    echo "Options:"
+    echo "  --endpoints  - 指定 etcd 端点 (默认: localhost:2379)"
+    echo "  --prefix    - 指定 namesvr 前缀 (默认: /namesvr)"
+}
+
+# 检查 etcdctl 是否可用
+check_etcdctl() {
+    if ! command -v etcdctl &> /dev/null; then
+        echo -e "${RED}Error: etcdctl not found${NC}"
+        echo "Please install etcdctl first"
+        exit 1
+    fi
+}
+
+# 列出所有 key
+list_all() {
+    echo -e "${GREEN}Listing all NameSvr related keys:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS get "$NAMESVR_PREFIX" --prefix=true
+}
+
+# 查看所有 NameSvr ID
+list_ids() {
+    echo -e "${GREEN}Current NameSvr IDs:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS get "${ELECTION_PREFIX}/ids" --prefix=true
+}
+
+# 查看当前 leader
+show_leader() {
+    echo -e "${GREEN}Current Leader:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS get "${ELECTION_PREFIX}/leader"
+}
+
+# 查看路由信息
+show_routes() {
+    echo -e "${GREEN}Current Routes:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS get "${ELECTION_PREFIX}/routes" --prefix=true
+}
+
+# 清理所有数据
+clean_all() {
+    echo -e "${YELLOW}Warning: This will delete all NameSvr related data!${NC}"
+    read -p "Are you sure? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        etcdctl --endpoints=$ETCD_ENDPOINTS del "$NAMESVR_PREFIX" --prefix=true
+        echo -e "${GREEN}All NameSvr data cleaned${NC}"
+    fi
+}
+
+# 清理 ID 数据
+clean_ids() {
+    echo -e "${YELLOW}Warning: This will delete all NameSvr ID data!${NC}"
+    read -p "Are you sure? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        etcdctl --endpoints=$ETCD_ENDPOINTS del "${ELECTION_PREFIX}/ids" --prefix=true
+        echo -e "${GREEN}NameSvr ID data cleaned${NC}"
+    fi
+}
+
+# 监控 key 变化
+watch_keys() {
+    echo -e "${GREEN}Watching NameSvr key changes (Ctrl+C to stop):${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS watch "$NAMESVR_PREFIX" --prefix=true
+}
+
+# 查看集群状态
+show_status() {
+    echo -e "${GREEN}ETCD Cluster Status:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS endpoint status -w table
+    echo -e "\n${GREEN}ETCD Cluster Health:${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS endpoint health
+}
+
+# 备份数据
+backup_data() {
+    BACKUP_FILE="namesvr_backup_$(date +%Y%m%d_%H%M%S).etcd"
+    echo -e "${GREEN}Backing up NameSvr data to ${BACKUP_FILE}${NC}"
+    etcdctl --endpoints=$ETCD_ENDPOINTS snapshot save "$BACKUP_FILE"
+    echo -e "${GREEN}Backup completed${NC}"
+}
+
+# 从备份恢复
+restore_data() {
+    if [ -z "$1" ]; then
+        echo -e "${RED}Error: Please specify backup file${NC}"
+        echo "Usage: $0 restore <backup_file>"
+        return 1
+    fi
+
+    echo -e "${YELLOW}Warning: This will restore data from backup!${NC}"
+    read -p "Are you sure? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        etcdctl --endpoints=$ETCD_ENDPOINTS snapshot restore "$1"
+        echo -e "${GREEN}Restore completed${NC}"
+    fi
+}
+
+# 主函数
+main() {
+    check_etcdctl
+
+    case "$1" in
+        "list")
+            list_all
+            ;;
+        "ids")
+            list_ids
+            ;;
+        "leader")
+            show_leader
+            ;;
+        "routes")
+            show_routes
+            ;;
+        "clean")
+            clean_all
+            ;;
+        "clean-ids")
+            clean_ids
+            ;;
+        "watch")
+            watch_keys
+            ;;
+        "status")
+            show_status
+            ;;
+        "backup")
+            backup_data
+            ;;
+        "restore")
+            restore_data "$2"
+            ;;
+        "help"|"--help"|"-h")
+            usage
+            ;;
+        *)
+            echo -e "${RED}Unknown command: $1${NC}"
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+# 处理命令行参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --endpoints)
+            ETCD_ENDPOINTS="$2"
+            shift 2
+            ;;
+        --prefix)
+            NAMESVR_PREFIX="$2"
+            ELECTION_PREFIX="${NAMESVR_PREFIX}/election"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# 如果没有参数，显示帮助信息
+if [ $# -eq 0 ]; then
+    usage
+    exit 0
+fi
+
+main "$@"
+```
+
+
+# 安全访问
+
+问题：etcd 服务若未授权，攻击者可以对服务器进行写操作。通过 `etcdctl --endpoints=ip:port get / --prefix --limit 2` 命令若能访问则说明存在安全访问问题。
+
+修复方案：
+
+> 方案1：basic 认证 (基于角色的访问控制)
+
+``` bash
+# 首先创建 root 用户
+etcdctl --endpoints=ip:port user add root
+
+# 然后启用认证，启用认证后会自动为 root 账号创建一个 root 角色，该角色拥有全部 etcd 数据的读写权限。接下来访问 etcd 就必须带着账号密码访问，否则请求会被拒绝
+etcdctl --endpoints=ip:port auth enable
+```
+
+> 方案2：配置为监听 localhost 访问
+
+将下面两个参数改成只监听本地的 127.0.0.1 地址。
+
+``` bash
+LISTEN_CLIENT_URLS=${LISTEN_CLIENT_URLS:-http://0.0.0.0:2379}
+ADVERTISE_CLIENT_URLS=${ADVERTISE_CLIENT_URLS:-http://0.0.0.0:2379}
+```
+
+
 
 
 

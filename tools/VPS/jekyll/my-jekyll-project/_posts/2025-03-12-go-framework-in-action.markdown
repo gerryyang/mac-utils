@@ -540,7 +540,33 @@ All 64-bit GOARCH values:
 
 > **Note**: The full list is based on https://github.com/golang/go/blob/master/src/go/build/syslist.go. The "out of the box" information is based on the result of [2-make1.sh](https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63#file-2-make1-sh) below. The "32-bit/64-bit" information is based on the result of [4-make2.sh]([#file-4-make2-sh](https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63#file-4-make2-sh)) below and https://golang.org/doc/install/source.
 
-# 代码工具
+# 工具
+
+## 安装 Protocol Buffers
+
+### macOS
+
+```bash
+# 1. 下载
+# https://github.com/protocolbuffers/protobuf/releases/
+# 2. 解压
+unzip protoc-30.1-osx-aarch_64.zip -d /usr/local/protoc
+# 3. 添加环境变量 ~/.zshrc
+export PATH="$PATH:/usr/local/protoc/bin"
+# 4. 刷新配置
+source ~/.zshrc
+# 5. 解决 MacOS 安全限制
+# 首次运行时若提示"无法验证开发者"，需前往 系统设置 → 隐私与安全性 → 仍允许，以授权
+# 6. 验证安装
+protoc --version
+```
+
+### Linux
+
+```bash
+apt-get install -y protobuf-compiler
+```
+
 
 ## [golangci-lint](https://github.com/golangci/golangci-lint)
 
