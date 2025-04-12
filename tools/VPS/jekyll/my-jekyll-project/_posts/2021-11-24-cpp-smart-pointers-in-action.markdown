@@ -9,6 +9,22 @@ categories: [C/C++]
 {:toc}
 
 
+# TL;DR
+
+**std::shared_ptr 与 std::unique_ptr 的对比：**
+
+| 特性 | std::shared_ptr | std::unique_ptr
+| -- | -- | --
+| **所有权** | 共享（多个所有者） | 独占（唯一所有者）
+｜ **性能** | 引用计数原子操作 | 无额外开销
+| **拷贝语义** | 允许拷贝 | 禁止拷贝，支持移动
+| **适用场景** | 需要共享所有权的资源 | 明确独占所有权的资源
+
+
+设计哲学：**std::unique_ptr** 体现了 C++ 的 资源获取即初始化（`RAII`） 原则，将资源生命周期与对象作用域绑定，避免内存泄漏和资源未释放问题。
+
+
+
 # std::shared_ptr
 
 `std::shared_ptr` 是 C++11 引入的智能指针类型，用于自动管理对象的生命周期。当 `std::shared_ptr` 变量被赋值为 `nullptr`（C++11 中引入的空指针字面值）时，它表示该智能指针不指向任何对象。当一个 `std::shared_ptr` 变量被赋值为 nullptr 时，它会自动释放与之前关联的对象的引用。**如果这是指向该对象的最后一个 `std::shared_ptr`，则对象将被自动删除**。
@@ -75,9 +91,9 @@ over
 */
 ```
 
-`std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several shared_ptr objects may own the same object**. The object is destroyed and its memory deallocated when either of the following happens:
+`std::shared_ptr` is a smart pointer that retains(保持，保存) shared ownership of an object through a pointer. **Several `shared_ptr` objects may own the same object (几个 shared_ptr 对象可以共同持有同一个对象)**. The object is destroyed and its memory deallocated when either of the following happens (**持有对象销毁的时机在满足以下条件**):
 
-* the last remaining shared_ptr owning the object is destroyed; (**当所持对象的最后一个 shared_ptr 销毁时，才对所持的对象进行销毁**)
+* the last remaining `shared_ptr` owning the object is destroyed; (**当所持对象的最后一个 `shared_ptr` 销毁时，才对所持的对象进行销毁**)
 
 ``` cpp
 #include <iostream>
@@ -200,7 +216,7 @@ shared_ptr( Y* ptr, Deleter d, Alloc alloc );
 ```
 
 
-## shared_ptr 的存储结构
+## std::shared_ptr 的存储结构
 
 In a typical implementation, `std::shared_ptr` holds **only two pointers**: ([refer std::shared_ptr](https://en.cppreference.com/w/cpp/memory/shared_ptr))
 
@@ -306,7 +322,7 @@ auto ptr = std::make_shared<Object>();
 
 
 
-## shared_ptr 的两种初始化方式
+## std::shared_ptr 的两种初始化方式
 
 **方式 1：一次分配 (推荐方式)**
 
@@ -317,16 +333,274 @@ When `shared_ptr` is created by calling `std::make_shared` or `std::allocate_sha
 When `shared_ptr` is created via one of the `shared_ptr` constructors, the managed object and the control block must be allocated separately. In this case, the control block stores a pointer to the managed object.
 
 
-## shared_ptr 的销毁方式
+## std::shared_ptr 的销毁方式
 
 The destructor of `shared_ptr` decrements the number of shared owners of the control block. If that counter reaches zero, the control block calls the destructor of the managed object. The control block does not deallocate itself until the `std::weak_ptr` counter reaches zero as well.
 
+**shared_ptr 的析构过程：**
 
-## 线程安全 (std::shared_ptr)
+当 `std::shared_ptr` 的析构函数被调用时：
+
+1. 共享引用计数（`use_count`）递减
+   + 表示当前 `shared_ptr` 放弃对对象的所有权。
+
+2. 检查共享引用计数是否归零
+   + 若归零，控制块会调用托管对象的析构函数（销毁对象），并释放对象占用的内存（除非使用 `std::make_shared` 且仍有 `weak_ptr` 存在）
+   + 若未归零，仅减少引用计数，对象和控制块继续保留
+
+``` cpp
+{
+    auto sp1 = std::make_shared<int>(42); // use_count = 1
+    {
+        auto sp2 = sp1; // use_count = 2
+    } // sp2 析构，use_count = 1
+} // sp1 析构，use_count = 0 → 对象被销毁
+```
+
+**控制块的释放条件：**
+
+控制块的生命周期由两个计数器共同决定：
+
+* 共享引用计数（`use_count`）：管理对象的生命周期
+* 弱引用计数（`weak_count`）：管理控制块自身的生命周期
+
+当以下条件满足时，控制块才会被释放：
+
+1. `use_count == 0`：对象已被销毁
+2. `weak_count == 0`：没有 `weak_ptr` 再观察该控制块
+
+``` cpp
+std::weak_ptr<int> wp;
+
+{
+    auto sp = std::make_shared<int>(42); // use_count=1, weak_count=0
+    wp = sp; // weak_count=1
+} // sp 析构 → use_count=0 → 对象被销毁，但控制块保留（weak_count=1）
+
+// 此时 wp 仍指向控制块，但对象已销毁
+if (wp.expired()) { /* 对象已释放 */ }
+
+// 当 wp 析构时 → weak_count=0 → 控制块被释放
+```
+
+**为什么控制块需要等待 `weak_count` 归零？**
+
+`std::weak_ptr` 需要通过控制块判断对象是否存在（如调用 `lock()` 或 `expired()`）。
+
+若控制块过早释放：
+
+* `weak_ptr` 无法安全检查对象状态
+* 尝试通过 `lock()` 获取 `shared_ptr` 会导致未定义行为
+
+因此，控制块必须保留至最后一个 `weak_ptr` 析构。
+
+**特殊情况：std::make_shared 的优化：**
+
+当使用 `std::make_shared` 时，**对象和控制块分配在连续内存中**：
+
+* 对象销毁时机：当 `use_count` 归零时，调用析构函数
+* 内存释放时机：当 `weak_count` 归零时，整个内存块（包含对象和控制块）被释放
+
+**这意味着，即使对象已被销毁，其占用的内存可能不会立即归还给系统（需等待控制块释放）**。
+
+``` cpp
+#include <memory>
+#include <iostream>
+
+struct Object {
+    ~Object() { std::cout << "Object destroyed\n"; }
+};
+
+int main() {
+    std::weak_ptr<Object> wp;
+
+    {
+        auto sp = std::make_shared<Object>(); // use_count=1, weak_count=0
+        wp = sp; // weak_count=1
+        std::cout << "use_count: " << sp.use_count()
+                  << ", weak_count: " << wp.use_count() << "\n";
+    } // sp 析构 → use_count=0 → 对象销毁，但控制块保留（weak_count=1）
+
+    std::cout << "Control block still exists? " << !wp.expired() << "\n";
+
+    // 最后一个 weak_ptr 析构 → weak_count=0 → 控制块释放
+}
+/*
+use_count: 1, weak_count: 1
+Object destroyed
+Control block still exists? 0
+*/
+```
+
+**总结**
+
+1. `shared_ptr` 析构行为：减少共享引用计数，归零时销毁对象。
+2. 控制块释放条件：共享和弱引用计数均归零。
+3. 设计意义：确保 `weak_ptr` 能安全检测对象状态，避免悬垂指针。
+4. 优化权衡：`std::make_shared` 减少内存分配次数，但耦合对象与控制块的生命周期。
+
+
+
+## std::shared_ptr 的线程安全
 
 To satisfy thread safety requirements, the reference counters are typically incremented using an equivalent of `std::atomic::fetch_add` with `std::memory_order_relaxed`(**松散内存序，只用来保证对原子对象的操作是原子的**) (decrementing requires stronger ordering to safely destroy the control block).
 
 > All member functions (including copy constructor and copy assignment) can be called by multiple threads on different instances of `shared_ptr` without additional synchronization even if these instances are copies and share ownership of the same object.
+
+所有成员函数（包括拷贝构造函数和拷贝赋值运算符）都可以由多个线程在不同的 shared_ptr 实例上调用，且无需额外的同步机制，即使这些实例是同一对象的副本并共享所有权。
+
+
+`std::shared_ptr` 的线程安全性涉及多个层面，包括**引用计数的原子性操作**、**成员函数的并发调用**，以及**托管对象本身的线程安全**。
+
+## 引用计数的线程安全性
+
+`std::shared_ptr` 的引用计数（`use_count` 和 `weak_count`）通过原子操作（`std::atomic`）实现。
+
+* 递增操作（拷贝 `shared_ptr` 或 `weak_ptr`）：使用 `std::atomic::fetch_add` 配合 宽松内存序（`std::memory_order_relaxed`），仅保证操作的原子性，不保证内存顺序的同步。
+* 递减操作（析构 `shared_ptr` 或 `weak_ptr`）：使用更强的内存序（如 `std::memory_order_acq_rel`），确保在引用计数归零时，正确同步对象的析构和控制块的释放。
+
+设计意义：
+
+1. 引用计数的原子性保证多个线程并发操作时不会导致计数错误。
+2. 递减操作需要强内存序，确保析构对象和释放内存的可见性。
+
+
+## 成员函数的线程安全性
+
+`std::shared_ptr` 的 **所有成员函数**（包括拷贝构造、拷贝赋值、析构等）可以在不同线程的 **不同实例** 上并发调用，无需额外同步。
+
+
+## 托管对象的线程安全性
+
+`std::shared_ptr` 仅保证引用计数的线程安全，对托管对象的访问需用户自行管理。
+
+若多个线程通过不同的 `shared_ptr` 实例访问同一对象，且至少有一个线程修改对象，需使用同步机制（如互斥锁）。
+
+``` cpp
+auto obj = std::make_shared<int>(0);
+
+// 线程1（写操作）
+std::thread t1([&obj]() {
+    *obj = 42; // 需要同步
+});
+
+// 线程2（读操作）
+std::thread t2([&obj]() {
+    std::cout << *obj; // 需要同步
+});
+
+t1.join(); t2.join();
+```
+
+线程1和线程2对同一内存地址的读写未同步，导致未定义行为。
+
+
+
+
+
+## 同一实例的非线程安全场景
+
+以下代码展示了在多线程中直接操作同一 `std::shared_ptr` 实例导致的 **数据竞争** 和 **未定义行为**：
+
+``` cpp
+#include <memory>
+#include <thread>
+#include <iostream>
+
+struct Object {
+    int value = 42;
+    ~Object() { std::cout << "Object destroyed\n"; }
+};
+
+std::shared_ptr<Object> p = std::make_shared<Object>();
+
+// 线程1：修改 p（reset 操作）
+void thread_reset() {
+    p.reset(new Object); // 非线程安全！
+}
+
+// 线程2：读取 p 的引用计数和值
+void thread_read() {
+    if (!p.expired()) { // 非线程安全！
+        std::shared_ptr<Object> local_p = p; // 非线程安全！
+        std::cout << "Value: " << local_p->value
+                  << ", use_count: " << local_p.use_count() << "\n";
+    }
+}
+
+int main() {
+    std::thread t1(thread_reset);
+    std::thread t2(thread_read);
+    t1.join();
+    t2.join();
+    return 0;
+}
+```
+
+**数据竞争的产生：**
+
+* 线程1 调用 p.reset(new Object)，这会修改 p 的存储指针和控制块指针
+* 线程2 同时调用 p.expired() 或拷贝 p 到 local_p，这些操作需要读取 p 的指针值
+
+若两个线程同时操作 p，p 的内部指针和控制块指针的读写可能交叉执行，导致：
+
+1. 悬垂指针：线程2可能读取到已被 reset() 释放的旧指针
+2. 内存泄漏：旧对象的引用计数未正确归零
+3. 双重释放：新旧控制块可能被错误管理
+
+**std::shared_ptr 的非原子操作：**
+
+reset() 的步骤：
+
+1. 创建新对象和控制块
+2. 递减旧对象的引用计数（可能触发析构）
+3. 将 p 的指针指向新对象
+
+这些步骤不是原子的，多线程并发操作会导致中间状态暴露。
+
+expired() 和拷贝操作：
+
+需要读取 p 的控制块指针，若此时 p 正在被修改，可能读到无效指针。
+
+
+**解决方案：使用互斥锁同步**
+
+``` cpp
+#include <mutex>
+
+std::mutex mtx; // 全局互斥锁
+std::shared_ptr<Object> p = std::make_shared<Object>();
+
+void thread_reset() {
+    std::lock_guard<std::mutex> lock(mtx);
+    p.reset(new Object); // 加锁后安全修改
+}
+
+void thread_read() {
+    std::lock_guard<std::mutex> lock(mtx);
+    std::shared_ptr<Object> local_p = p; // 加锁后安全读取
+    if (local_p) {
+        std::cout << "Value: " << local_p->value
+                  << ", use_count: " << local_p.use_count() << "\n";
+    }
+}
+```
+
+
+结论：
+
+| 操作类型 | 线程安全 | 是否需要同步
+| -- | -- | --
+| 不同实例的拷贝/析构 | 安全（引用计数原子操作） ｜ 否
+| 同一实例的并发 reset() | 不安全（修改内部指针） | 是
+| 同一实例的并发读/写访问 ｜ 不安全（指针和控制块状态不一致） | 是
+
+> 补充：避免跨线程直接修改同一 shared_ptr 实例，否则需要使用 `std::atomic<std::shared_ptr>` 同步原语或互斥锁。C++20 提供了 `std::atomic<std::shared_ptr>`，允许原子地修改 shared_ptr。
+
+
+
+
+## 其他
 
 参考：[std::shared_ptr thread safety explained](https://stackoverflow.com/questions/9127816/stdshared-ptr-thread-safety-explained)：
 
@@ -353,7 +627,7 @@ There can be multiple `std::shared_ptr` and whenever they access the control blo
 **If you assign a new object to a `std::shared_ptr` while another thread uses it, it might end up with the new object pointer but still using a pointer to the control block of the old object => CRASH**.
 
 
-## 性能开销 (std::shared_ptr)
+## std::shared_ptr 的性能开销
 
 使用[Quick C++ Benchmark](https://quick-bench.com/q/xDjerjaF4ORhGTPtB5P37NZ78Go) GCC8.1 -O2 编译测试对比：
 
@@ -425,7 +699,7 @@ BENCHMARK(Test2);
 
 
 
-## 性能开销原因分析 (std::shared_ptr)
+## std::shared_ptr 性能开销原因分析
 
 通过[How much is the overhead of smart pointers compared to normal pointers in C++?](https://stackoverflow.com/questions/22295665/how-much-is-the-overhead-of-smart-pointers-compared-to-normal-pointers-in-c) 文章：
 
@@ -486,6 +760,21 @@ As an informed guess, the “well within the state of the art” has been achiev
 
 `std::unique_ptr` is a smart pointer that owns and manages another object through a pointer and disposes of that object when the unique_ptr goes out of scope.
 
+std::unique_ptr 是 C++ 中一种独占所有权的智能指针，用于管理动态分配对象的生命周期。它通过 **独占式所有权（exclusive ownership）** 确保资源的安全释放，**同时支持高效的移动语义**。
+
+**核心特性：**
+
+1. **独占所有权**
+   * 每个 unique_ptr 唯一拥有其指向的对象，不可被其他 unique_ptr 共享
+   * 所有权可通过 **移动语义**（move semantics） 转移，但 **不可拷贝**（拷贝构造和拷贝赋值被删除）
+2. **自动资源释放**
+   * 当 unique_ptr 被销毁（离开作用域）或被 reset() 时，自动调用删除器销毁对象
+   * 删除器默认使用 delete（或 delete[] 用于数组），但支持自定义
+3. **轻量高效**
+   * 与裸指针几乎相同的性能开销（无额外引用计数）
+   * 内存占用通常等同于裸指针（除非自定义删除器引入状态）
+
+
 The object is disposed of, using the associated deleter when either of the following happens:
 
 * the managing unique_ptr object is destroyed
@@ -496,10 +785,55 @@ There are two versions of `std::unique_ptr`:
 1. Manages a single object (e.g. allocated with `new`)
 2. Manages a dynamically-allocated array of objects (e.g. allocated with `new[]`) (支持数组)
 
+**两种版本：**
+
+* 管理单个对象
+
+``` cpp
+std::unique_ptr<Object> ptr(new Object);
+
+// 或使用 std::make_unique（C++14 引入）
+auto ptr = std::make_unique<Object>();
+```
+
+* 管理动态数组
+
+``` cpp
+std::unique_ptr<Object[]> arr(new Object[5]);
+
+// 使用 make_unique（C++14）
+auto arr = std::make_unique<Object[]>(5);
+```
+
+
 > The class satisfies the requirements of MoveConstructible and MoveAssignable, but of neither CopyConstructible nor CopyAssignable. (构造函数需要满足**移动构造**和**移动赋值**，但是不能满足**拷贝构造**和**拷贝赋值**)
 
+**移动语义与所有权转移：**
+
+* 移动构造/赋值：允许所有权从一个 `unique_ptr` 转移到另一个
+
+``` cpp
+auto ptr1 = std::make_unique<Object>();
+auto ptr2 = std::move(ptr1); // ptr1 变为 nullptr，ptr2 接管对象
+```
+
+* 不可拷贝
+
+``` cpp
+// 错误！拷贝构造被删除
+std::unique_ptr<Object> ptr3 = ptr2;
+```
 
 Only `non-const unique_ptr` can transfer the ownership of the managed object to another unique_ptr. If an object's lifetime is managed by a `const std::unique_ptr`, it is limited to the scope in which the pointer was created.
+
+
+**const unique_ptr 的限制：** `const` 修饰的 `unique_ptr` 无法转移所有权（无法移动或 `reset()`）
+
+``` cpp
+const auto ptr = std::make_unique<Object>();
+auto ptr2 = std::move(ptr); // 错误！无法移动 const 对象
+```
+
 
 `std::unique_ptr` is commonly used to manage the lifetime of objects, including:
 
@@ -510,6 +844,78 @@ Only `non-const unique_ptr` can transfer the ownership of the managed object to 
 * acquiring ownership of uniquely-owned objects with dynamic lifetime from functions
 
 * as the element type in move-aware containers, such as std::vector, which hold pointers to dynamically-allocated objects (e.g. if polymorphic(多态的) behavior is desired)
+
+**关键操作：**
+
+* release()          `返回裸指针并释放所有权，unique_ptr` 置空。需手动管理返回的指针
+* reset(ptr)         释放当前对象，接管新指针（若 `ptr` 为空则仅释放当前对象）
+* get()              返回裸指针，不释放所有权
+* swap(other)        交换两个 `unique_ptr` 的所有权
+* operator bool()    判断是否持有对象（等价于 `get() != nullptr`）
+
+**异常安全：**
+
+``` cpp
+void process() {
+    auto resource = std::make_unique<Resource>();
+    // 即使后续代码抛出异常，resource 仍会被正确释放
+    may_throw_exception();
+}
+```
+
+**传递独占所有权到函数：**
+
+``` cpp
+// 函数接收所有权
+void take_ownership(std::unique_ptr<Object> obj) {
+    // 使用 obj
+}
+
+auto obj = std::make_unique<Object>();
+take_ownership(std::move(obj)); // 转移所有权
+```
+
+**从函数返回独占资源：**
+
+``` cpp
+std::unique_ptr<Object> create_object() {
+    return std::make_unique<Object>();
+}
+
+auto obj = create_object(); // 所有权转移到调用者
+```
+
+**容器存储多态对象：**
+
+``` cpp
+std::vector<std::unique_ptr<Base>> vec;
+vec.push_back(std::make_unique<Derived1>());
+vec.push_back(std::make_unique<Derived2>());
+
+// 支持多态操作
+vec[0]->virtual_method();
+```
+
+**自定义删除器：**
+
+允许自定义对象销毁逻辑（如文件句柄、C 风格资源等）：
+
+``` cpp
+// 使用函数对象
+struct FileDeleter {
+    void operator()(FILE* file) {
+        if (file) fclose(file);
+    }
+};
+
+std::unique_ptr<FILE, FileDeleter> file_ptr(fopen("data.txt", "r"));
+
+// 使用 lambda（需指定删除器类型）
+auto deleter = [](FILE* file) { if (file) fclose(file); };
+std::unique_ptr<FILE, decltype(deleter)> file_ptr(fopen("data.txt", "r"), deleter);
+```
+
+
 
 
 
