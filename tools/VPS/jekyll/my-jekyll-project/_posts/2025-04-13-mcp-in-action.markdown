@@ -864,9 +864,11 @@ go mod tidy
 
 ## Remote (SSE)
 
-https://modelcontextprotocol.io/quickstart/server#python
+https://github.com/mark3labs/mcp-go/tree/main/examples/custom_context
 
+![mcp5](/assets/images/202503/mcp5.png)
 
+More: https://modelcontextprotocol.io/quickstart/server#python
 
 
 # Refer
