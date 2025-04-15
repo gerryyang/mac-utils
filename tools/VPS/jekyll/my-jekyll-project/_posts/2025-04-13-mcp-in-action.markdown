@@ -11,43 +11,41 @@ categories: ML
 
 # Introduction
 
+`MCP` is an open protocol that standardizes how applications provide context to LLMs. Think of `MCP` like a `USB-C` port for AI applications. Just as `USB-C` provides a standardized way to connect your devices to various peripherals and accessories, `MCP` provides a standardized way to connect AI models to different data sources and tools.
+
 大模型很长时间面临**认知边界**和**工具使用**的双重约束：其知识体系受限于**预训练阶段的静态数据沉淀**以及**缺少完成任务的工具**。而传统 `Function Call` 存在先天性的不足，线性指令执行机制带来的性能瓶颈与异构接口标准带来的兼容性瓶颈。这种局面在 Anthropic 2024.11 发布 [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP) 后得到改变，**MCP 协议重新定义了大语言模型与现实世界的交互范式**。
 
 MCP 的设计遵循微内核架构的设计理念：定义架构和协议标准。号称工具调用的 USB-C 标准。基于这一框架，大语言模型突破了原有束缚：动态语义对齐机制将工具理解准确率提升至新量级，指令编排引擎则实现了高并发任务的智能调度。MCP 通过标准化接口的语义映射能力，将离散的 API 调用转化为具备上下文感知的协作指令集。
 
+**例如，如果你有个计算器服务，接入 MCP 后，大模型可以直接调用你的加减乘除功能，而不是生成一段代码让用户去执行。**
+
 官方 MCPServer：[GitHub - modelcontextprotocol/servers: Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers)
 
 ![mcp0](/assets/images/202503/mcp0.png)
-
-`MCP` is an open protocol that standardizes how applications provide context to LLMs. Think of `MCP` like a `USB-C` port for AI applications. Just as `USB-C` provides a standardized way to connect your devices to various peripherals and accessories, `MCP` provides a standardized way to connect AI models to different data sources and tools.
-
-Model Context Protocol，即模型上下文协议。是由 Anthropic 于 2024 年推出的开放协议，旨在为大语言模型 LLM 与外部数据源、工具之间建立标准化的通信框架。它通过统一的接口打破数据孤岛，让 AI 模型能够安全高效地连接各类资源，类似于 AI 应用领域的 "USB-C 接口"。MCP 是一个标准协议，使 AI 模型与 API 无缝交互，而 AI Agent 是一个自主运行的智能系统，利用 Function Calling 和 MCP 来分析和执行任务，实现特定目标。
-
-例如，如果你有个计算器服务，接入 MCP 后，大模型可以直接调用你的加减乘除功能，而不是生成一段代码让用户去执行。
 
 ![mcp_explain2](/assets/images/202503/mcp_explain2.gif)
 
 
 # MCP Timeline
 
-* 2024 年 11 月 24 日
+* **2024 年 11 月 24 日**
     + Anthropic 发布 MCP 协议人工智能公司 Anthropic 首次提出 MCP。旨在为无法直接修改底层逻辑的 Agent (如 Cursor、Claude 桌面端等) 提供工具调用标准。协议允许用户为第三方 Agent 动态接入自定义工具，无需开发者介入。
 
-* 2024 年 12 月
+* **2024 年 12 月**
     + Claude + MCP 应用案例涌现。技术社区出现首批基于 `Claude 3.5 + MCP` 的应用案例，例如，通过 MCP 协议实现 Claude 与本地文件系统、数据库的自动化交互。开发者工具 Cursor 同期发布 MCP 适配版本，验证了该协议在多工具协作场景的可行性。
 
-* 2025 年 3月初
+* **2025 年 3月初**
     + MCP 生态进入规模化应用阶段。开发者工具 Cline、Windsurf 等工具原生支持 MCP 协议。
 
-* 2025 年 3 月 11 日
+* **2025 年 3 月 11 日**
     + LangChain 官方发布核心辩论文章。LangChain 联合创始人 Harrison Chase 与 LangGraph 负责人 Nuno Campos 围绕 MCP 展开激辩。40% 参与者支持 MCP 成为未来标准，33% 的人表示观望。
 
 ![mcp11](/assets/images/202503/mcp11.png)
 
-* 2025 年 3 月 12 日
+* **2025 年 3 月 12 日**
     + 开源社区复现 `Manus` 技术方案。开发者社区组织线上分享会，探讨如何基于 MCP 协议复现 Anthropic 的 Manus 框架 (一种多 Agent 协作系统)，进一步推动协议落地应用。
 
-* 2025 年 3 月 17 日
+* **2025 年 3 月 17 日**
     + Anthropic 推出的 MCP 协议新传输方案 `Streamable HTTP`。该方案彻底重构了通信机制。解决了原 `HTTP + SSE` 方案在连接恢复性、服务器负载及双向通信方面的核心瓶颈。
     + https://github.com/modelcontextprotocol/modelcontextprotocol/pull/206
     + https://modelcontextprotocol.io/specification/2025-03-26#http-with-sse
@@ -58,7 +56,7 @@ Model Context Protocol，即模型上下文协议。是由 Anthropic 于 2024 �
 
 ![mcp14](/assets/images/202503/mcp14.png)
 
-* 2025 年 3 月 27 日
+* **2025 年 3 月 27 日**
     + OpenAI 宣布支持 MCP 协议。
 
 
@@ -302,6 +300,8 @@ Binary resources contain raw binary data encoded in base64. These are suitable f
 * Video files
 * Other non-text formats
 ​
+
+
 # [Prompts](https://modelcontextprotocol.io/docs/concepts/prompts) - Create reusable prompt templates and workflows
 
 Prompts enable servers to define reusable prompt templates and workflows that clients can easily surface to users and LLMs. They provide a powerful way to standardize and share common LLM interactions.
