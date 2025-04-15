@@ -2,7 +2,7 @@
 layout: post
 title:  "LLM in Action"
 date:   2025-02-08 12:00:00 +0800
-categories: 机器学习
+categories: ML
 ---
 
 * Do not remove this line (it will not be displayed)

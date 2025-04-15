@@ -2,7 +2,7 @@
 layout: post
 title:  "Cursor in Action"
 date:   2025-03-11 12:30:00 +0800
-categories: 机器学习
+categories: ML
 ---
 
 * Do not remove this line (it will not be displayed)

@@ -13,6 +13,10 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* relevant /ˈreləvənt/
+  + ADJ Something that is **relevant** to a situation or person is important or significant in that situation or to that person. 相关的
+    - Is religion still relevant to most people's lives? 宗教和大多数人的生活还有关系吗？
+
 * dispose /dɪˈspəʊz/
   + V to deal with or settle 处理; 安排
   + V to give, sell, or transfer to another 给予; 卖给
