@@ -11,13 +11,17 @@ categories: ML
 
 # Introduction
 
-`MCP` is an open protocol that standardizes how applications provide context to LLMs. Think of `MCP` like a `USB-C` port for AI applications. Just as `USB-C` provides a standardized way to connect your devices to various peripherals and accessories, `MCP` provides a standardized way to connect AI models to different data sources and tools.
+MCP 起源于 2024 年 11 月 25 日 Anthropic 发布的文章：[Introducing the Model Context Protocol](https://www.anthropic.com/news/model-context-protocol)。
 
-大模型很长时间面临**认知边界**和**工具使用**的双重约束：其知识体系受限于**预训练阶段的静态数据沉淀**以及**缺少完成任务的工具**。而传统 `Function Call` 存在先天性的不足，线性指令执行机制带来的性能瓶颈与异构接口标准带来的兼容性瓶颈。这种局面在 Anthropic 2024.11 发布 [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP) 后得到改变，**MCP 协议重新定义了大语言模型与现实世界的交互范式**。
+> `MCP` is an open protocol that standardizes how applications provide context to LLMs. Think of `MCP` like a `USB-C` port for AI applications. Just as `USB-C` provides a standardized way to connect your devices to various peripherals and accessories, `MCP` provides a standardized way to connect AI models to different data sources and tools.
+
+大模型很长时间面临**认知边界**和**工具使用**的双重约束：其知识体系受限于**预训练阶段的静态数据沉淀**以及**缺少完成任务的工具**。而传统 `Function Call` 存在先天性的不足，线性指令执行机制带来的性能瓶颈与异构接口标准带来的兼容性瓶颈。这种局面在 Anthropic 2024 年 11 月发布 [Model Context Protocol](https://modelcontextprotocol.io/introduction) 后得到改变，**MCP 协议重新定义了大语言模型与现实世界的交互范式**。
 
 MCP 的设计遵循微内核架构的设计理念：定义架构和协议标准。号称工具调用的 USB-C 标准。基于这一框架，大语言模型突破了原有束缚：动态语义对齐机制将工具理解准确率提升至新量级，指令编排引擎则实现了高并发任务的智能调度。MCP 通过标准化接口的语义映射能力，将离散的 API 调用转化为具备上下文感知的协作指令集。
 
 **例如，如果你有个计算器服务，接入 MCP 后，大模型可以直接调用你的加减乘除功能，而不是生成一段代码让用户去执行。**
+
+> MCP 旨在建立 LLM 与外部工具和数据交互的标准，让 MCP 充当 LLM 模型的万能转接头，让 LLM 能轻松的获取数据或调用工具。
 
 官方 MCPServer：[GitHub - modelcontextprotocol/servers: Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers)
 
@@ -341,6 +345,16 @@ Prompts in MCP are predefined templates that can:
 * Chain multiple interactions
 * Guide specific workflows
 * Surface as UI elements (like slash commands)
+
+
+> [What are MCP Prompts?](https://medium.com/@cstroliadavis/building-mcp-servers-13570f347c74)
+
+`Prompts` in MCP are structured templates that servers provide to standardize interactions with language models. Unlike `resources` which provide data, or `tools` which execute actions, **`prompts` define reusable message sequences and workflows that help guide LLM behavior in consistent, predictable ways**. They can accept arguments to customize the interaction while maintaining a standardized structure. If you’ve ever researched prompt engineering, you likely have a pretty decent idea of what a `prompt` is. **Creating these within an MCP server allows us to create a space for the prompts we find the most useful to be easily reused and even shared**. If you imagine going to a restaurant, a `prompt` is like a menu item that you can pick from and provide to the waiter. Sometimes, you can customize the menu items by asking to add or remove certain items or to cook the result a particular way. `Prompts` provided this way serve a similar function.
+
+MCP 中的 `Prompts` 本质是标准化、可定制的对话蓝图。它们像乐谱一样，既规定了演奏的基本节奏（确保一致性），又允许乐手（LLM）即兴发挥（通过参数注入灵活性）。这种机制能显著提升协作效率并降低模型误用的风险。
+
+
+
 
 ## Prompt structure
 
@@ -1971,11 +1985,22 @@ A collection of servers for the Model Context Protocol.
 https://modelcontextprotocol.io/development/roadmap
 
 
-# Visual testing tool for MCP servers
+# Debugging
 
-The MCP inspector is a developer tool for testing and debugging MCP servers.
+https://modelcontextprotocol.io/docs/tools/debugging
+
+A comprehensive guide to debugging Model Context Protocol (MCP) integrations
+
+Effective debugging is essential when developing MCP servers or integrating them with applications. This guide covers the debugging tools and approaches available in the MCP ecosystem.
+
+
+# Inspector
 
 https://github.com/modelcontextprotocol/inspector
+
+In-depth guide to using the MCP Inspector for testing and debugging Model Context Protocol servers
+
+The MCP Inspector is an interactive developer tool for testing and debugging MCP servers. While the Debugging Guide covers the Inspector as part of the overall debugging toolkit, this document provides a detailed exploration of the Inspector’s features and capabilities.
 
 > 由于 MCP 服务器通过标准输入输出通信，调试可能具有挑战性。可以使用 MCP Inspector，可以通过以下脚本运行：`npm run inspector`。Inspector 将提供一个 URL，用于在浏览器中访问调试工具。
 
@@ -2011,6 +2036,14 @@ https://github.com/modelcontextprotocol/inspector
 }
 ```
 
+# TODO
+
+* [Building MCP Servers: Part 1 — Getting Started with Resources](https://medium.com/@cstroliadavis/building-mcp-servers-536969d27809)
+* [Building MCP Servers: Part 2 — Extending Resources with Resource Templates](https://medium.com/@cstroliadavis/building-mcp-servers-315917582ad1)
+* [Building MCP Servers: Part 3 — Adding Prompts](https://medium.com/@cstroliadavis/building-mcp-servers-13570f347c74)
+* [Building MCP Servers: Part 4 — Creating Tools](https://medium.com/@cstroliadavis/building-mcp-servers-f9ce29814f1f)
+
+
 
 # Refer
 
@@ -2028,6 +2061,7 @@ https://github.com/modelcontextprotocol/inspector
 * [图解模型上下文协议（MCP）](https://segmentfault.com/a/1190000046385557)
 * [(译) JSON-RPC 2.0 规范(中文版)](https://wiki.geekdream.com/Specification/json-rpc_2.0.html)
 * MCP 官方规范：https://spec.modelcontextprotocol.io/specification/2024-11-05/
+* [MCP (Model Context Protocol)，一篇就够了](https://zhuanlan.zhihu.com/p/29001189476)
 
 
 

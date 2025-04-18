@@ -2,7 +2,7 @@
 layout: post
 title:  "GitHub 使用 SMS 登录失败且丢失 github-recovery-codes 的账户恢复方法"
 date:   2025-04-18 12:30:00 +0800
-categories: 杂记
+categories: 版本控制
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -41,6 +41,8 @@ categories: 杂记
 **官方同时也提示说，如果一旦你使用过 recovery code 去登陆账户，这个 code 将不能被再次使用，需要重新生成新的 code。** 申请新的 code 的方法如下：
 
 ![github5](/assets/images/202504/github5.png)
+
+# 解决方法
 
 **目前遇到的问题是，知道 GitHub 账号的登陆密码，但是 SMS 短信验证方式使用异常，并且 recovery code 之前也没有保存，此时如何恢复账户登陆？**于是向 GitHub 官方发送了一封问题咨询邮件，并得到了官方的回复。
 
