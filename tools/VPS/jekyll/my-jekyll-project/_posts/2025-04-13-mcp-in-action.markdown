@@ -25,6 +25,34 @@ MCP 的设计遵循微内核架构的设计理念：定义架构和协议标准�
 
 ![mcp_explain2](/assets/images/202503/mcp_explain2.gif)
 
+MCP 的使用场景：
+
+* 开发辅助：
+  + 根据自然语言描述生成 SQL 语句
+  + 连接 GitHub 代码库实现代码补全
+* 客服系统：调用 CRM 数据库自动回复用户查询
+* 智能写作：从本地文件或 API 获取数据生成报告
+
+
+# Model Context Protocol specification
+
+* https://github.com/modelcontextprotocol/modelcontextprotocol
+
+# MCP SDK
+
+* https://github.com/modelcontextprotocol/typescript-sdk
+  + https://modelcontextprotocol.io/quickstart/server#node
+
+* https://github.com/modelcontextprotocol/python-sdk
+  + https://modelcontextprotocol.io/quickstart/server#python
+
+* https://github.com/modelcontextprotocol/java-sdk
+* https://github.com/mark3labs/mcp-go
+
+# MCP Docs
+
+* https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/docs
+
 
 # MCP Timeline
 
@@ -1525,6 +1553,404 @@ A repository of servers and clients from the following Model Context Protocol tu
 * [Building MCP clients](https://modelcontextprotocol.io/tutorials/building-a-client) – an LLM-powered chatbot MCP client
 
 
+
+# [TypeScript Example](https://modelcontextprotocol.io/quickstart/server#node)
+
+## System requirements
+
+For `TypeScript`, make sure you have the latest version of `Node` installed.
+
+> Set up your environment
+
+First, let’s install `Node.js` and npm if you haven’t already. You can download them from nodejs.org. Verify your `Node.js` installation:
+
+``` bash
+node --version
+npm --version
+```
+
+For this tutorial, you’ll need `Node.js` version 16 or higher.
+
+> Install Node.js
+
+https://nodejs.org/zh-cn/download
+
+``` bash
+# Download and install nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+
+# in lieu of restarting the shell
+\. "$HOME/.nvm/nvm.sh"
+
+# Download and install Node.js:
+nvm install 22
+
+# Verify the Node.js version:
+node -v # Should print "v22.14.0".
+nvm current # Should print "v22.14.0".
+
+# Verify npm version:
+npm -v # Should print "10.9.2".
+```
+
+## Create and Set up Our Project
+
+``` bash
+# Create a new directory for our project
+mkdir weather
+cd weather
+
+# Initialize a new npm project
+npm init -y
+
+# Install dependencies
+npm install @modelcontextprotocol/sdk zod
+npm install -D @types/node typescript
+
+# Create our files
+mkdir src
+touch src/index.ts
+```
+
+Update your `package.json` to add type: “module” and a build script:
+
+``` json
+{
+  "type": "module",
+  "bin": {
+    "weather": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+}
+```
+
+Create a `tsconfig.json` in the root of your project:
+
+``` json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "outDir": "./build",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
+```
+
+Now let’s dive into building your server.
+
+> Building your server
+
+Importing packages and setting up the instance
+
+Add these to the top of your `src/index.ts`:
+
+``` typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+
+const NWS_API_BASE = "https://api.weather.gov";
+const USER_AGENT = "weather-app/1.0";
+
+// Create server instance
+const server = new McpServer({
+  name: "weather",
+  version: "1.0.0",
+  capabilities: {
+    resources: {},
+    tools: {},
+  },
+});
+```
+
+
+> Helper functions
+
+Next, let’s add our helper functions for querying and formatting the data from the National Weather Service API:
+
+``` typescript
+// Helper function for making NWS API requests
+async function makeNWSRequest<T>(url: string): Promise<T | null> {
+  const headers = {
+    "User-Agent": USER_AGENT,
+    Accept: "application/geo+json",
+  };
+
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    console.error("Error making NWS request:", error);
+    return null;
+  }
+}
+
+interface AlertFeature {
+  properties: {
+    event?: string;
+    areaDesc?: string;
+    severity?: string;
+    status?: string;
+    headline?: string;
+  };
+}
+
+// Format alert data
+function formatAlert(feature: AlertFeature): string {
+  const props = feature.properties;
+  return [
+    `Event: ${props.event || "Unknown"}`,
+    `Area: ${props.areaDesc || "Unknown"}`,
+    `Severity: ${props.severity || "Unknown"}`,
+    `Status: ${props.status || "Unknown"}`,
+    `Headline: ${props.headline || "No headline"}`,
+    "---",
+  ].join("\n");
+}
+
+interface ForecastPeriod {
+  name?: string;
+  temperature?: number;
+  temperatureUnit?: string;
+  windSpeed?: string;
+  windDirection?: string;
+  shortForecast?: string;
+}
+
+interface AlertsResponse {
+  features: AlertFeature[];
+}
+
+interface PointsResponse {
+  properties: {
+    forecast?: string;
+  };
+}
+
+interface ForecastResponse {
+  properties: {
+    periods: ForecastPeriod[];
+  };
+}
+```
+
+
+> Implementing tool execution
+
+The tool execution handler is responsible for actually executing the logic of each tool. Let’s add it:
+
+``` typescript
+// Register weather tools
+server.tool(
+  "get-alerts",
+  "Get weather alerts for a state",
+  {
+    state: z.string().length(2).describe("Two-letter state code (e.g. CA, NY)"),
+  },
+  async ({ state }) => {
+    const stateCode = state.toUpperCase();
+    const alertsUrl = `${NWS_API_BASE}/alerts?area=${stateCode}`;
+    const alertsData = await makeNWSRequest<AlertsResponse>(alertsUrl);
+
+    if (!alertsData) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to retrieve alerts data",
+          },
+        ],
+      };
+    }
+
+    const features = alertsData.features || [];
+    if (features.length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `No active alerts for ${stateCode}`,
+          },
+        ],
+      };
+    }
+
+    const formattedAlerts = features.map(formatAlert);
+    const alertsText = `Active alerts for ${stateCode}:\n\n${formattedAlerts.join("\n")}`;
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: alertsText,
+        },
+      ],
+    };
+  },
+);
+
+server.tool(
+  "get-forecast",
+  "Get weather forecast for a location",
+  {
+    latitude: z.number().min(-90).max(90).describe("Latitude of the location"),
+    longitude: z.number().min(-180).max(180).describe("Longitude of the location"),
+  },
+  async ({ latitude, longitude }) => {
+    // Get grid point data
+    const pointsUrl = `${NWS_API_BASE}/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`;
+    const pointsData = await makeNWSRequest<PointsResponse>(pointsUrl);
+
+    if (!pointsData) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to retrieve grid point data for coordinates: ${latitude}, ${longitude}. This location may not be supported by the NWS API (only US locations are supported).`,
+          },
+        ],
+      };
+    }
+
+    const forecastUrl = pointsData.properties?.forecast;
+    if (!forecastUrl) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to get forecast URL from grid point data",
+          },
+        ],
+      };
+    }
+
+    // Get forecast data
+    const forecastData = await makeNWSRequest<ForecastResponse>(forecastUrl);
+    if (!forecastData) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to retrieve forecast data",
+          },
+        ],
+      };
+    }
+
+    const periods = forecastData.properties?.periods || [];
+    if (periods.length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "No forecast periods available",
+          },
+        ],
+      };
+    }
+
+    // Format forecast periods
+    const formattedForecast = periods.map((period: ForecastPeriod) =>
+      [
+        `${period.name || "Unknown"}:`,
+        `Temperature: ${period.temperature || "Unknown"}°${period.temperatureUnit || "F"}`,
+        `Wind: ${period.windSpeed || "Unknown"} ${period.windDirection || ""}`,
+        `${period.shortForecast || "No forecast available"}`,
+        "---",
+      ].join("\n"),
+    );
+
+    const forecastText = `Forecast for ${latitude}, ${longitude}:\n\n${formattedForecast.join("\n")}`;
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: forecastText,
+        },
+      ],
+    };
+  },
+);
+```
+
+> Running the server
+
+Finally, implement the main function to run the server:
+
+``` typescript
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Weather MCP Server running on stdio");
+}
+
+main().catch((error) => {
+  console.error("Fatal error in main():", error);
+  process.exit(1);
+});
+```
+
+Make sure to run `npm run build` to build your server! This is a very important step in getting your server to connect.
+
+Let’s now test your server from an existing MCP host, Claude for Desktop.
+
+## Testing Your Server
+
+通过 Cursor 测试 MCP 服务是否正常：
+
+``` json
+{
+    "mcpServers": {
+      "typescript-weather1": {
+        "command": "node",
+        "args": [
+            "/data/home/gerryyang/git/jlib/mcp-server/typescript/weather/build/index.js"
+        ]
+      },
+      "typescript-weather2": {
+        "url": "http://localhost:8080/sse"
+      }
+    }
+}
+```
+
+> Note: Since this is the US National Weather service, the queries will only work for US locations.
+
+
+![mcp20](/assets/images/202503/mcp20.png)
+
+
+## What’s happening under the hood
+
+When you ask a question:
+
+1. The client sends your question to Cursor
+2. Cursor analyzes the available tools and decides which one(s) to use
+3. The client executes the chosen tool(s) through the MCP server
+4. The results are sent back to Cursor
+5. Cursor formulates a natural language response
+6. The response is displayed to you!
+
+
+
+
 # MCP Server (第三方服务)
 
 ## mcp.composio.dev
@@ -1533,18 +1959,57 @@ A repository of servers and clients from the following Model Context Protocol tu
 
 ![mcp17](/assets/images/202503/mcp17.png)
 
+## Awesome MCP Servers
 
+https://mcpservers.org/
+
+A collection of servers for the Model Context Protocol.
 
 
 # MCP Roadmap
 
 https://modelcontextprotocol.io/development/roadmap
 
-# Awesome MCP Servers
 
-https://mcpservers.org/
+# Visual testing tool for MCP servers
 
-A collection of servers for the Model Context Protocol.
+The MCP inspector is a developer tool for testing and debugging MCP servers.
+
+https://github.com/modelcontextprotocol/inspector
+
+> 由于 MCP 服务器通过标准输入输出通信，调试可能具有挑战性。可以使用 MCP Inspector，可以通过以下脚本运行：`npm run inspector`。Inspector 将提供一个 URL，用于在浏览器中访问调试工具。
+
+# Q&A
+
+## MCP Feature “Client Closed” Fix
+
+* https://forum.cursor.com/t/mcp-feature-client-closed-fix/54651
+
+* https://github.com/modelcontextprotocol/servers/issues/891
+
+* https://apidog.com/blog/how-to-fix-cursor-ai-mcp-feature-client-closed-error/
+
+**问题**：通过 Cursor 远程开发连接的工程，如果使用 stdio 的方式测试 MCP 服务会出现 "Client Closed" 的错误，只有 sse 方式的 MCP 可以正常使用。通过下面的回复信息可以看到其他人也遇到了类似额的问题。
+
+**解决方法**：在 MacOS 环境下，使用 Cursor 在本地环境测试 stdio 的 MCP 服务发现可以正常使用。
+
+![mcp21](/assets/images/202503/mcp21.png)
+
+``` json
+{
+    "mcpServers": {
+      "calculate1": {
+        "command": "/Users/gerry/Proj/git/jlib/mcp-server/mcp-go-demo1/mcp-go-demo1"
+      },
+      "typescript-weather1": {
+        "command": "node",
+        "args": [
+            "/Users/gerry/Proj/git/jlib/mcp-server/typescript-demo/weather/build/index.js"
+        ]
+      }
+    }
+}
+```
 
 
 # Refer
@@ -1562,6 +2027,8 @@ A collection of servers for the Model Context Protocol.
 * [MCP协议深度解读：技术创新正以前所未有的速度突破](https://mp.weixin.qq.com/s?__biz=MjM5ODYwMjI2MA==&mid=2649792738&idx=1&sn=337f992522daacb8eb68bd61043ac255)
 * [图解模型上下文协议（MCP）](https://segmentfault.com/a/1190000046385557)
 * [(译) JSON-RPC 2.0 规范(中文版)](https://wiki.geekdream.com/Specification/json-rpc_2.0.html)
+* MCP 官方规范：https://spec.modelcontextprotocol.io/specification/2024-11-05/
+
 
 
 

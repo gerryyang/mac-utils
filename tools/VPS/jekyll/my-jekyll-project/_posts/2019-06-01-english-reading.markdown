@@ -13,6 +13,35 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* retain /rɪˈteɪn/
+  + V-T To **retain** something means to continue to have that thing. 保留
+    - The interior of the shop still retains a nineteenth-century atmosphere. 那家商店内部依然保持着19世纪的格调。
+
+* reclaim /rɪˈkleɪm/
+  + V-T If you **reclaim** something that you have lost or that has been taken away from you, you succeed in getting it back. 拿回; 收回
+    - In 1986, they got the right to **reclaim** South African citizenship. 1986年，他们得到了恢复南非公民身份的权利。
+  + V-T If you **reclaim** an amount of money, for example tax that you have paid, you claim it back. 要求归还
+    - The good news for the industry was that investors don't seem to be in any hurry to **reclaim** their money. 对该行业来说，好消息是投资者们似乎不急于要求收回他们的钱。
+
+
+
+* lieu /luː; ljuː/
+  + PHRASE If you do, get, or give one thing **in lieu of** another, you do, get, or give it instead of the other thing, because the two things are considered to have the same value or importance. 替代
+    - He left what little furniture he owned to his landlord **in lieu of** rent. 他把他仅有的几件家具给了房东以抵房租。
+
+
+* inspector /ɪnˈspektə(r)/
+  + N-COUNT An **inspector** is a person, usually employed by a government agency, whose job is to find out whether people are obeying official regulations. 检查员; 督察员
+
+
+* snippet /ˈsnɪpɪt/
+  + N-COUNT A **snippet** of something is a small piece of it. 片段
+
+* encapsulate /ɪnˈkæpsjuleɪt/
+  + V-T To **encapsulate** particular facts or ideas means to represent all their most important aspects in a very small space or in a single object or event. 概括
+    - A Wall Street Journal editorial encapsulated the views of many conservatives. 《华尔街日报》的一篇社论概括了很多保守派人士的观点。
+
+
 * relevant /ˈreləvənt/
   + ADJ Something that is **relevant** to a situation or person is important or significant in that situation or to that person. 相关的
     - Is religion still relevant to most people's lives? 宗教和大多数人的生活还有关系吗？
