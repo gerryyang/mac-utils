@@ -364,6 +364,7 @@ For `Auto Attached` rules with path patterns defined, Agent will now automatical
 
 We’ve also fixed a long-standing issue where `Always` attached rules now persist across longer conversations. Agent can now also edit rules reliably.
 
+![cursor6](/assets/images/202504/cursor6.png)
 
 ![cursor1](/assets/images/202504/cursor1.png)
 
@@ -467,6 +468,8 @@ We've recently added many more [models](https://docs.cursor.com/settings/models)
 **Models** - Comprehensive guide to Cursor’s models: features, pricing, context windows, and hosting details for Chat and CMD+K
 
 
+![cursor5](/assets/images/202504/cursor5.png)
+
 
 
 
@@ -496,5 +499,5 @@ A:
 * https://www.cursor.com/en
 * [Cursor 中文文档](https://cursordocs.com/)
 * https://cursor.document.top/
-* [Transcript for Cursor Team: Future of Programming with AI | Lex Fridman Podcast #447](https://lexfridman.com/cursor-team-transcript)
+* [Transcript for Cursor Team: Future of Programming with AI - Lex Fridman Podcast #447](https://lexfridman.com/cursor-team-transcript)
 
