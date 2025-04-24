@@ -356,6 +356,137 @@ Cursor 使用情况每月重置，基于用户的订阅开始日期。
 
 https://www.cursor.com/changelog
 
+## Automated and improved rules (0.49.x - April 15, 2025)
+
+You can now generate rules directly from a conversation using the `/Generate Cursor Rules` command. This is useful when you want to capture the existing context of a conversation to reuse later.
+
+For `Auto Attached` rules with path patterns defined, Agent will now automatically apply the right rules when reading or writing files
+
+We’ve also fixed a long-standing issue where `Always` attached rules now persist across longer conversations. Agent can now also edit rules reliably.
+
+
+![cursor1](/assets/images/202504/cursor1.png)
+
+![cursor4](/assets/images/202504/cursor4.png)
+
+More: https://docs.cursor.com/context/rules
+
+## More accessible history (0.49.x - April 15, 2025)
+
+Chat history has moved into the command palette. You can access it from the "Show history button" in Chat as well as through the `Show Chat History` command
+
+![cursor3](/assets/images/202504/cursor3.png)
+
+
+## Making reviews easier (0.49.x - April 15, 2025)
+
+Reviewing agent generated code is now easier with a built-in diff view at the end of each conversation. You'll find the `Review changes` button at the bottom of chat after a message from the agent.
+
+## Images in MCP (0.49.x - April 15, 2025)
+
+You can now pass images as part of the context in MCP servers. This helps when screenshots, UI mocks, or diagrams add essential context to a question or prompt.
+
+
+## Improved agent terminal control (0.49.x - April 15, 2025)
+
+We've added more control for you over terminals started by the agent. **Commands can now be edited before they run**, or skipped entirely. We've also renamed "Pop-out" to "Move to background" to better reflect what it does.
+
+
+## Global ignore files (0.49.x - April 15, 2025)
+
+You can now define [global ignore](https://docs.cursor.com/context/ignore-files) patterns that apply across all projects via your user-level settings. This keeps noisy or sensitive files like build outputs or secrets out of prompts, without needing per-project configuration.
+
+**Ignore Files** - Control which files Cursor’s AI features and indexing can access using `.cursorignore` and `.cursorindexingignore`
+
+Cursor reads and indexes your project’s codebase to power its features. You can control which directories and files Cursor can access by adding a `.cursorignore` file to your root directory.
+
+Cursor makes its best effort to block access to files listed in `.cursorignore` from:
+
+* Codebase indexing
+* Code accessible by [Tab](https://docs.cursor.com/tab/overview), [Chat](https://docs.cursor.com/chat/overview), and [⌘K](https://docs.cursor.com/cmdk/overview)
+* Code accessible via [@ symbol references](https://docs.cursor.com/context/@-symbols/overview)
+
+> Note: Tool calls initiated by Cursor’s Chat feature to services like Terminal and MCP servers are not currently able to block access to code governed by `.cursorignore`
+
+**Global Ignore Files** - You can now define ignore patterns that apply across all projects via your user-level settings. This keeps noisy or sensitive files like build outputs or secrets out of prompts, without needing per-project configuration.
+
+
+**Why Ignore Files?** - There are two common reasons to configure Cursor to ignore portions of your codebase:
+
+* **Security**
+
+While your codebase is not permanently stored on Cursor’s servers or the LLMs that power its features, you may still want to restrict access to certain files for security reasons, such as files containing API keys, database credentials, and other secrets.
+
+Cursor makes its best effort to block access to ignored files, but due to unpredictable LLM behavior, we cannot guarantee these files will never be exposed.
+
+* **Performance**
+
+If you work in a monorepo or very large codebase where significant portions are irrelevant to the code you’re developing, you might consider configuring Cursor to ignore these parts of the application.
+
+By excluding irrelevant parts of the codebase, Cursor will index large codebases faster and find files with more speed and accuracy when searching for context.
+
+Cursor is designed to support large codebases and is skilled at assessing file relevancy, but the ignore feature is helpful when using a codebase that is especially large or includes files immaterial to your development.
+
+**Configuring `.cursorignore`**
+
+To implement Cursor’s ignore feature, add a `.cursorignore` file to the root of your codebase’s directory and list the directories and files to be ignored.
+
+The `.cursorignore` file uses pattern matching syntax identical to that used in `.gitignore` files.
+
+Basic Pattern Examples
+
+``` bash
+# Ignore specific file `config.json`
+config.json
+
+# Ignore `dist` directory and all files inside
+dist/
+
+# Ignore all files with a `.log` extension
+*.log
+```
+
+Advanced Pattern Examples
+
+``` bash
+# Ignore entire codebase
+*
+
+# Do not ignore `app` directory
+!app/
+
+# Ignores logs directories in any directory
+**/logs
+```
+
+## New models (0.49.x - April 15, 2025)
+
+We've recently added many more [models](https://docs.cursor.com/settings/models) you can use. Try out Gemini 2.5 Pro, Gemini 2.5 Flash, Grok 3, Grok 3 Mini, GPT-4.1, o3 and o4-mini from model settings.
+
+
+**Models** - Comprehensive guide to Cursor’s models: features, pricing, context windows, and hosting details for Chat and CMD+K
+
+
+
+
+
+
+# Q&A
+
+## What is a `.mdc` file?
+
+https://forum.cursor.com/t/what-is-a-mdc-file/50417
+
+Q: When adding a new rule file to `cursor/rules`, cursor automatically creates a `.mdc` file. There is no mention of this file type or how the actual description of the rule should be formatted.
+
+A:
+
+![cursor2](/assets/images/202504/cursor2.png)
+
+
+
+
+
 
 
 # Refer
