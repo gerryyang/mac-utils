@@ -13,6 +13,13 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* critical /ˈkrɪtɪk(ə)l/
+  + ADJ A **critical** time, factor, or situation is extremely important. 关键的
+    - The incident happened at a **critical** point in the campaign. 该事件发生在运动的关键时刻。
+  + ADJ A **critical** situation is very serious and dangerous. 危急的
+    - The German authorities are considering an airlift if the situation becomes **critical**. 德国当局正在考虑如果形势危急时进行空运。
+
+
 * underperform /ˌʌndəpəˈfɔːm/
   + V-T/V-I If someone **underperforms** in something such as a sports contest, or if one thing **underperforms** another thing, they do not perform as well as they could, or they perform less well than the other thing. 表现不佳
     - Smaller companies' stocks generally have **underperformed** larger ones in the past several years. 在过去的几年里，较小公司的股票在总体上表现不如较大公司的股票。
