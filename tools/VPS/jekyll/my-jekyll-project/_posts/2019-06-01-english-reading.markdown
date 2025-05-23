@@ -13,6 +13,37 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* intercession /ˌɪntəˈseʃn/
+  + N-VAR **Intercession** is the act of **interceding** with someone. 调解; 仲裁
+    - His intercession could be of help to the tribe. 他的调解会对该部落有帮助。他们请我父亲代他们向国王求情。
+
+* intercede /ˌɪntəˈsiːd/
+  + V-I If you **intercede** with someone, you try to persuade them to forgive someone or end their disagreement with them. 代为求情; 调解
+    - They asked my father to **intercede** with the king on their behalf.
+
+* introspection /ˌɪntrəˈspekʃ(ə)n/
+  + N-UNCOUNT **Introspection** is the examining of your own thoughts, ideas, and feelings. 自省; 反省
+    - He had always had his moments of quiet **introspection**. 他总有安静自省的时候。
+
+
+* decimal /ˈdesɪm(ə)l/
+  + ADJ A **decimal** system involves counting in units of ten. 十进制的
+    - The mathematics of ancient Egypt were based on a **decimal** system. 古埃及数学以十进制为基础。
+
+* hexadecimal /ˌheksəˈdesɪml/
+  + ADJ relating to or using a number system whose base is 16 rather than 10 (关于)十六进制的
+  + N a number system having a base 16; the symbols for the numbers 0–9 are the same as those used in the decimal system, and the numbers 10–15 are usually represented by the letters A–F. The system is used as a convenient way of representing the internal binary code of a computer 十六进制
+
+* alongside /əˌlɒŋˈsaɪd/
+  + PREP If one thing is **alongside** another thing, the first thing is next to the second. 在…旁边
+    - He crossed the street and walked **alongside** Central Park. 他过了马路，然后在中央公园旁边走着。
+  + PREP If you work **alongside** other people, you all work together in the same place. 与…并肩 (工作)
+    - He had worked **alongside** Frank and Mark and they had become friends. 他曾与弗兰克和马克并肩工作过，他们已经成为朋友了。
+
+* discrepancy /dɪˈskrepənsi/
+  + N-VAR If there is a **discrepancy** between two things that ought to be the same, there is a noticeable difference between them. 差异
+    - the **discrepancy** between press and radio reports. 报刊报道与广播报道之间的差异。
+
 * critical /ˈkrɪtɪk(ə)l/
   + ADJ A **critical** time, factor, or situation is extremely important. 关键的
     - The incident happened at a **critical** point in the campaign. 该事件发生在运动的关键时刻。

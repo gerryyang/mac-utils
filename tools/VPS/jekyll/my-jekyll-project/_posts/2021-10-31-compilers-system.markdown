@@ -9,6 +9,148 @@ categories: [GCC/Clang]
 {:toc}
 
 
+# 编译基础
+
+## [Translation unit](https://en.wikipedia.org/wiki/Translation_unit_(programming))
+
+In C and C++ programming language terminology, a **translation unit** (or more casually a compilation unit) is the ultimate input to a C or C++ compiler from which an object file is generated. **A translation unit** roughly consists of a source file after it has been processed by the C preprocessor, meaning that header files listed in `#include` directives are literally included, sections of code within `#ifndef` may be included, and macros have been expanded. A C++ module is also a translation unit.
+
+
+
+
+## [Single compilation unit](https://en.wikipedia.org/wiki/Single_compilation_unit) (编译单元)
+
+**Single compilation unit** (`SCU`) is a computer programming technique for the C and C++ languages, which reduces compilation time for programs spanning multiple files. Specifically, it allows the compiler to keep data from shared header files, definitions and templates, so that it need not recreate them for each file. It is an instance of program optimization. The technique can be applied to an entire program or to some subset of source files; when applied to an entire program, it is also known as a [unity build](https://en.wikipedia.org/wiki/Unity_build).
+
+Example:
+
+For example, if you have the source files `foo.cpp` and `bar.cpp`, they can be placed in a **Single Compilation Unit** as follows:
+
+``` cpp
+#include "foo.cpp"
+#include "bar.cpp"
+```
+
+Suppose `foo.cpp` and `bar.cpp` are:
+
+``` cpp
+//foo.cpp
+#include <iostream> // A large, standard header
+#include "bar.h"    // Declaration of function 'bar'
+
+int main()          // Definition of function 'main'
+{
+  bar();
+}
+```
+
+``` cpp
+//bar.cpp
+#include <iostream> // The same large, standard header
+
+void bar()          // Definition of function 'bar'
+{
+  ...
+}
+```
+
+Now the standard header file (`iostream`) is compiled only once, and function `bar` may be inlined into function `main`, despite being from another module.
+
+
+## [Precompiled header](https://en.wikipedia.org/wiki/Precompiled_header)
+
+In computer programming, a **precompiled header** (`PCH`) is a (C or C++) header file that is compiled into an intermediate form that is faster to process for the compiler. Usage of precompiled headers may significantly reduce compilation time, especially when applied to large header files, header files that include many other header files, or header files that are included in many translation units.
+
+
+## [C preprocessor](https://en.wikipedia.org/wiki/C_preprocessor)
+
+The **C preprocessor** (`CPP`) is a text file processor that is used with C, C++ and other programming tools. The preprocessor provides for file inclusion (often header files), [macro](https://en.wikipedia.org/wiki/Macro_(computer_science)) expansion, [conditional compilation](https://en.wikipedia.org/wiki/Conditional_compilation), and line control. Although named in association with C and used with C, the preprocessor capabilities are not inherently tied to the C language. It can and is used to process other kinds of files.
+
+
+## [Conditional compilation](https://en.wikipedia.org/wiki/Conditional_compilation)
+
+In computer programming, **conditional compilation** is a compilation technique which results in differring executable programs depending on parameters specified. This technique is commonly used when these differences in the program are needed to run it on different platforms, or with different versions of required libraries or hardware.
+
+Many programming languages support conditional compilation. Typically [compiler directives](https://en.wikipedia.org/wiki/Compiler_directives) define or "undefine" certain variables; other directives test these variables and modify compilation accordingly. For example, not using an actual language, the compiler may be set to define "Macintosh" and undefine "PC", and the code may contain:
+
+``` c
+(* System generic code *)
+if mac != Null then
+    (* macOS specific code *)
+else if pc != Null
+    (* Windows specific code *)
+```
+
+In C and some languages with a similar syntax, this is done using an ['#ifdef' directive](https://en.wikipedia.org/wiki/C_preprocessor#Conditional_compilation).
+
+
+
+## [Interprocedural optimization](https://en.wikipedia.org/wiki/Interprocedural_optimization)
+
+**Interprocedural optimization** (`IPO`) is a collection of compiler techniques used in computer programming to improve performance in programs containing many frequently used functions of small or medium length. IPO differs from other compiler optimizations by analyzing the entire program as opposed to a single function or block of code.
+
+`IPO` seeks to reduce or eliminate duplicate calculations and inefficient use of memory and to simplify iterative sequences such as loops. If a call to another routine occurs within a loop, IPO analysis may determine that it is best to [inline](https://en.wikipedia.org/wiki/Inline_expansion) that routine. Additionally, IPO may re-order the routines for better memory layout and [locality](https://en.wikipedia.org/wiki/Memory_locality).
+
+`IPO` may also include typical compiler optimizations applied on a whole-program level, for example, [dead code elimination](https://en.wikipedia.org/wiki/Dead_code_elimination) (`DCE`), which removes code that is never executed. IPO also tries to ensure better use of constants. Modern compilers offer IPO as an option at compile-time. The actual IPO process may occur at any step between the human-readable source code and producing a finished executable binary program.
+
+For languages that compile on a file-by-file basis, effective IPO across [translation units](https://en.wikipedia.org/wiki/Translation_unit_(programming)) (module files) requires knowledge of the "entry points" of the program so that a **whole program optimization** (`WPO`) can be run. In many cases, this is implemented as a **link-time optimization** (`LTO`) pass, because the whole program is visible to the linker.
+
+
+## [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (编译数据库)
+
+Tools based on the **C++ Abstract Syntax Tree** need full information how to parse **a translation unit**. Usually this information is **implicitly** available in the **build system**, but running tools as part of the build system is not necessarily the best solution:
+
+* Build systems are inherently change driven, so running multiple tools over the same code base without changing the code does not fit into the architecture of many build systems.
+
+* Figuring out whether things have changed is often an IO bound process; this makes it hard to build low latency end user tools based on the build system.
+
+* Build systems are inherently sequential in the build graph, for example due to generated source code. While tools that run independently of the build still need the generated source code to exist, running tools multiple times over unchanging source does not require serialization of the runs according to the build dependency graph.
+
+
+JSON 编译数据库格式规范（JSON Compilation Database Format）是一种用于记录 C/C++ 项目编译信息的标准化格式，其核心目的是让代码分析工具（如静态分析器、代码索引工具等）能够在不依赖原始构建系统的前提下，独立获取并复现单个编译单元的完整编译信息。
+
+具体优势如下：
+
+* 独立于构建系统运行
+  + 工具直接读取 JSON 文件中的编译命令，无需与构建系统交互，避免了变更驱动机制的限制。
+  + 示例：clang-tidy 静态分析工具可通过该文件直接获取编译参数，无需触发 CMake 的构建流程。
+
+* 减少 IO 开销
+  + 编译信息被持久化存储，工具无需反复检查文件系统状态，显著降低延迟。
+  + 示例：IDE 可以快速加载 JSON 文件中的编译命令，立即提供代码导航功能。
+
+* 支持并行化处理
+  + 工具可并行处理多个编译单元，无需遵循构建系统的串行依赖。
+  + 示例：代码索引工具可同时分析多个 .cpp 文件，而无需等待生成代码的任务完成。
+
+
+JSON 文件格式示例：
+
+一个典型的编译数据库文件（如 `compile_commands.json`）包含多个编译命令条目，每个条目对应一个源文件的编译过程。格式如下：
+
+``` json
+[
+  {
+    "directory": "/path/to/build/dir",
+    "file": "src/main.cpp",
+    "command": "/usr/bin/clang++ -Iinclude -std=c++17 -c src/main.cpp"
+  },
+  {
+    "directory": "/path/to/build/dir",
+    "file": "src/util.cpp",
+    "arguments": ["/usr/bin/clang++", "-Iinclude", "-std=c++17", "-c", "src/util.cpp"]
+  }
+]
+```
+
+* `directory`：编译命令执行的工作目录（用于解析相对路径）。
+* `file`：源文件的绝对路径或相对于 `directory` 的路径。
+* `command` 或 `arguments`：完整的编译命令（字符串形式或拆分后的参数列表）。
+
+
+
+
+
 # Make (GNU make utility to maintain groups of programs)
 
 The `make` utility will determine automatically which pieces of a large program need to be recompiled, and issue the commands to recompile them. The manual describes the GNU implementation of make, which was written by Richard Stallman and Roland McGrath, and is currently maintained by Paul Smith. Our examples show C programs, since they are very common, but you can use make with any programming language whose compiler can be run with a shell command. In fact, make is not limited to programs. You can use it to describe any task where some files must be updated automatically from others whenever the others change.
@@ -490,11 +632,19 @@ Answers:
 Mixing components built against different standard library implementations in the same application can sometimes be done, but is not straightforward, entails a lot of restrictions, and with things like boost is either not feasible or downright impossible.
 
 
+# Tools
+
+## include-what-you-use (iwyu)
+
+https://github.com/include-what-you-use/include-what-you-use
+
 
 
 # Refer
 
+* https://en.wikipedia.org/wiki/Single_compilation_unit (编译单元)
 * [Switching between GCC and Clang/LLVM using CMake](https://stackoverflow.com/questions/7031126/switching-between-gcc-and-clang-llvm-using-cmake)
+
 
 
 

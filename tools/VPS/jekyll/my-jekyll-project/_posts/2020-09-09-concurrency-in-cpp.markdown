@@ -827,6 +827,131 @@ valgrind --tool=helgrind ./my_program
 Helgrind 会报告潜在的线程安全问题，如数据竞争、死锁等。
 
 
+# 锁的性能对比 (std::shared_mutex / std::mutex)
+
+测试代码：
+
+``` cpp
+#include <thread>
+#include <unordered_map>
+#include <atomic>
+#include <shared_mutex>
+#include <mutex>
+#include <vector>
+#include <chrono>
+#include <stdio.h>
+#include <string_view>
+
+class mutex {
+public:
+    virtual ~mutex() = default;
+
+    virtual void lock() noexcept = 0;
+
+    virtual void unlock() noexcept = 0;
+
+    virtual const char* name() const noexcept = 0;
+};
+
+class std_mutex : public mutex {
+public:
+    void lock() noexcept override {
+        mutex_.lock();
+        }
+
+    void unlock() noexcept override {
+        mutex_.unlock();
+    }
+    const char* name() const noexcept override { return "mutex"; }
+private:
+    std::mutex mutex_;
+};
+
+class std_shared_mutex : public mutex {
+public:
+    void lock() noexcept override {
+        mutex_.lock_shared();
+    }
+
+    void unlock() noexcept override {
+        mutex_.unlock_shared();
+    }
+    const char* name() const noexcept override { return "shared_mutex"; }
+private:
+    std::shared_mutex mutex_;
+};
+
+
+int main(int argc, char* argv[]) {
+    int T = 4;
+    int M = 1;
+    int N = 1000'000;
+    std::string_view type = argv[1];
+    if (argc > 2) {
+        T = atoi(argv[2]);
+        if (argc > 3) {
+            M = atoi(argv[3]);
+            if (argc > 4) {
+                N = atoi(argv[4]);
+            }
+        }
+    }
+    std::unordered_map<int, int> m;
+    for (int i = 0; i < N; ++i) {
+        m[i] = i;
+    }
+    std_shared_mutex smu;
+    std_mutex mu;
+
+    mutex* pmu = nullptr;
+    if (type == "smu") {
+        pmu = &smu;
+    }
+    else {
+        pmu = &mu;
+    }
+    std::atomic_flag start;
+    std::atomic<int> s{ 0 };
+    auto job = [&]() {
+        while (!start.test()) {}
+        for (int i = 0; i < N; ++i) {
+            std::lock_guard _(*pmu);
+            for (int j = 0; j < M; ++j) {
+                if (m.count(i + j)) {
+                    s.fetch_add(1, std::memory_order_relaxed);
+                }
+            }
+        }
+        };
+    std::vector<std::thread> threads(T);
+    for (auto& thd : threads) {
+        thd = std::thread(job);
+    }
+    auto start_time = std::chrono::steady_clock::now();
+    start.test_and_set();
+    for (auto& thd : threads) {
+        thd.join();
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    printf("%s %.6lfs %d\n", pmu->name(), (end_time - start_time).count() / 1000000000.0, s.load());
+}
+```
+
+编译：
+
+```
+clang++ -o a a.cpp -O2 -std=c++17 -pthread
+```
+
+测试：在线程数为 4 时，mutex 互斥锁的性能比 shared_mutex 读写锁的性能更好。
+
+```
+➜  ./a smu 2 3 10000000
+shared_mutex 0.801834s 59999994
+➜  ./a mu 2 3 10000000
+mutex 0.607236s 59999994
+```
 
 
 # Refer

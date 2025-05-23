@@ -1466,9 +1466,703 @@ So, libraries inside the group can be searched for new symbols several time, and
 PS archive means basically a static library (`*.a` files)
 
 
-# 优化调试
+# 编译优化过程调试
+
+## [Investigating compile times, and Clang -ftime-report](https://aras-p.info/blog/2019/01/12/Investigating-compile-times-and-Clang-ftime-report/)
+
+### Need for build time investigation tools
+
+Depending on how your large your codebase is, and how it is structured, C++ compilation times may or might not be an issue for you. **It certainly is for us at Unity, and my understanding of build times of other large projects (like Chrome, LLVM or UE4), they aren’t exactly “fast” either.** There are various underlying reasons for why C++ codebases might be slow to compile (preprocessor, complexity of the language, template instantiations, optimizations done by the compiler, linking times etc.).
+
+It would make sense to have some tools that a programmer could use to help them understand where or why their code is slow to compile.
+
+You might think that, given how big of an issue compile times are in C++, there would be readily-available tools to do that. E.g. some flags in the popular compilers, or something?
+
+**The reality, at least right now, is “ehhh, not really”. There really are no good tools in C++ compilers to help you with investigating build times.**
+
+### Build timing tools in existing compilers
+
+I’ll do example with a super small C++ snippet that just includes some STL headers and does something with them. See the snippet and the output from three major compilers (Visual Studio, Gcc, Clang) in [Compiler Explorer here](https://godbolt.org/z/Yw08WW). The actual code does not do anything useful, I just needed something to throw at the compiler.
+
+``` cpp
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <regex>
+
+int main()
+{
+    std::vector<int> v(10);
+    v.push_back(7);
+    std::unordered_map<std::string, double> m;
+    m.insert(std::make_pair("foo", 1.0));
+    std::regex re("^asd.*$");
+    return 0;
+}
+```
+
+I’m testing with `Visual Studio 2017 v15.9`, `Gcc 8.2` and `Clang 7.0`.
+
+#### Gcc
+
+I’m not using Gcc much, and at least in my industry (game development), it’s not very popular. Out of all platforms that I happen to use at work, they are all on either Visual Studio or some variant of Clang. Gcc is only used on Linux, and even there, there’s an option to use Clang.
+
+Anyway, gcc has `-ftime-report` argument that prints information about where time was spent during compilation. Brace yourself, this will be over 100 lines of text:
+
+``` bash
+#!/bin/bash
+
+g++ -std=c++11 -o test -O2 -ftime-report test.cc
+```
+
+```
+Time variable                                   usr           sys          wall               GGC
+ phase setup                        :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)    1379 kB (  1%)
+ phase parsing                      :   0.84 ( 25%)   0.46 ( 48%)   1.31 ( 27%)   78498 kB ( 40%)
+ phase lang. deferred               :   0.34 ( 10%)   0.12 ( 13%)   0.45 (  9%)   35437 kB ( 18%)
+ phase opt and generate             :   2.15 ( 65%)   0.37 ( 39%)   3.03 ( 63%)   82904 kB ( 42%)
+ |name lookup                       :   0.29 (  9%)   0.10 ( 11%)   0.32 (  7%)    4370 kB (  2%)
+ |overload resolution               :   0.22 (  7%)   0.05 (  5%)   0.28 (  6%)   19307 kB ( 10%)
+ dump files                         :   0.11 (  3%)   0.03 (  3%)   0.12 (  3%)       0 kB (  0%)
+ callgraph construction             :   0.07 (  2%)   0.00 (  0%)   0.04 (  1%)    3771 kB (  2%)
+ callgraph optimization             :   0.07 (  2%)   0.02 (  2%)   0.13 (  3%)      87 kB (  0%)
+ ipa dead code removal              :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ ipa cp                             :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     563 kB (  0%)
+ ipa inlining heuristics            :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)     650 kB (  0%)
+ ipa function splitting             :   0.00 (  0%)   0.01 (  1%)   0.02 (  0%)     182 kB (  0%)
+ ipa pure const                     :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)      22 kB (  0%)
+ ipa icf                            :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)       0 kB (  0%)
+ ipa SRA                            :   0.07 (  2%)   0.01 (  1%)   0.03 (  1%)    5076 kB (  3%)
+ cfg construction                   :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)     181 kB (  0%)
+ cfg cleanup                        :   0.06 (  2%)   0.00 (  0%)   0.00 (  0%)     202 kB (  0%)
+ trivially dead code                :   0.01 (  0%)   0.01 (  1%)   0.01 (  0%)       0 kB (  0%)
+ df scan insns                      :   0.01 (  0%)   0.01 (  1%)   0.01 (  0%)       7 kB (  0%)
+ df multiple defs                   :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ df reaching defs                   :   0.00 (  0%)   0.01 (  1%)   0.04 (  1%)       0 kB (  0%)
+ df live regs                       :   0.04 (  1%)   0.00 (  0%)   0.02 (  0%)       0 kB (  0%)
+ df live&initialized regs           :   0.04 (  1%)   0.00 (  0%)   0.07 (  1%)       0 kB (  0%)
+ df use-def / def-use chains        :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ df reg dead/unused notes           :   0.05 (  2%)   0.00 (  0%)   0.02 (  0%)     498 kB (  0%)
+ alias analysis                     :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)    1183 kB (  1%)
+ alias stmt walking                 :   0.05 (  2%)   0.00 (  0%)   0.06 (  1%)      85 kB (  0%)
+ rebuild jump labels                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ preprocessing                      :   0.12 (  4%)   0.13 ( 14%)   0.28 (  6%)    2539 kB (  1%)
+ parser (global)                    :   0.20 (  6%)   0.11 ( 12%)   0.27 (  6%)   26043 kB ( 13%)
+ parser struct body                 :   0.09 (  3%)   0.02 (  2%)   0.13 (  3%)   13861 kB (  7%)
+ parser function body               :   0.07 (  2%)   0.01 (  1%)   0.09 (  2%)    4688 kB (  2%)
+ parser inl. func. body             :   0.01 (  0%)   0.01 (  1%)   0.06 (  1%)    1596 kB (  1%)
+ parser inl. meth. body             :   0.14 (  4%)   0.07 (  7%)   0.16 (  3%)    8242 kB (  4%)
+ template instantiation             :   0.51 ( 15%)   0.21 ( 22%)   0.75 ( 16%)   56689 kB ( 29%)
+ constant expression evaluation     :   0.03 (  1%)   0.02 (  2%)   0.02 (  0%)     180 kB (  0%)
+ early inlining heuristics          :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)    1572 kB (  1%)
+ inline parameters                  :   0.00 (  0%)   0.02 (  2%)   0.06 (  1%)    4040 kB (  2%)
+ integration                        :   0.07 (  2%)   0.01 (  1%)   0.04 (  1%)   10635 kB (  5%)
+ tree gimplify                      :   0.01 (  0%)   0.02 (  2%)   0.04 (  1%)    6651 kB (  3%)
+ tree eh                            :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)    1036 kB (  1%)
+ tree CFG construction              :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)    2796 kB (  1%)
+ tree CFG cleanup                   :   0.05 (  2%)   0.01 (  1%)   0.11 (  2%)      66 kB (  0%)
+ tree tail merge                    :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     170 kB (  0%)
+ tree VRP                           :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)    1596 kB (  1%)
+ tree Early VRP                     :   0.06 (  2%)   0.01 (  1%)   0.08 (  2%)    2079 kB (  1%)
+ tree copy propagation              :   0.00 (  0%)   0.01 (  1%)   0.00 (  0%)       9 kB (  0%)
+ tree PTA                           :   0.05 (  2%)   0.01 (  1%)   0.06 (  1%)     641 kB (  0%)
+ tree PHI insertion                 :   0.00 (  0%)   0.01 (  1%)   0.00 (  0%)     257 kB (  0%)
+ tree SSA rewrite                   :   0.02 (  1%)   0.01 (  1%)   0.02 (  0%)    2006 kB (  1%)
+ tree SSA other                     :   0.02 (  1%)   0.01 (  1%)   0.02 (  0%)     272 kB (  0%)
+ tree SSA incremental               :   0.01 (  0%)   0.01 (  1%)   0.03 (  1%)     381 kB (  0%)
+ tree operand scan                  :   0.05 (  2%)   0.00 (  0%)   0.14 (  3%)    6173 kB (  3%)
+ dominator optimization             :   0.05 (  2%)   0.01 (  1%)   0.09 (  2%)    1298 kB (  1%)
+ backwards jump threading           :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)     142 kB (  0%)
+ tree SRA                           :   0.00 (  0%)   0.02 (  2%)   0.02 (  0%)     377 kB (  0%)
+ tree CCP                           :   0.02 (  1%)   0.00 (  0%)   0.18 (  4%)     323 kB (  0%)
+ tree PRE                           :   0.02 (  1%)   0.03 (  3%)   0.06 (  1%)    1024 kB (  1%)
+ tree FRE                           :   0.05 (  2%)   0.01 (  1%)   0.05 (  1%)     677 kB (  0%)
+ tree linearize phis                :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)     175 kB (  0%)
+ tree forward propagate             :   0.02 (  1%)   0.00 (  0%)   0.07 (  1%)     270 kB (  0%)
+ tree conservative DCE              :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)      40 kB (  0%)
+ tree aggressive DCE                :   0.03 (  1%)   0.01 (  1%)   0.03 (  1%)    2144 kB (  1%)
+ tree DSE                           :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)      31 kB (  0%)
+ tree loop invariant motion         :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ tree iv optimization               :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)     682 kB (  0%)
+ dominance frontiers                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ dominance computation              :   0.07 (  2%)   0.01 (  1%)   0.08 (  2%)       0 kB (  0%)
+ control dependences                :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ out of ssa                         :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)      14 kB (  0%)
+ expand vars                        :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     307 kB (  0%)
+ expand                             :   0.04 (  1%)   0.01 (  1%)   0.04 (  1%)    3841 kB (  2%)
+ post expand cleanups               :   0.00 (  0%)   0.01 (  1%)   0.01 (  0%)     292 kB (  0%)
+ varconst                           :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       5 kB (  0%)
+ CSE                                :   0.05 (  2%)   0.00 (  0%)   0.05 (  1%)     135 kB (  0%)
+ dead code elimination              :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ dead store elim1                   :   0.02 (  1%)   0.00 (  0%)   0.02 (  0%)     397 kB (  0%)
+ dead store elim2                   :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)     617 kB (  0%)
+ loop analysis                      :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ loop init                          :   0.05 (  2%)   0.00 (  0%)   0.04 (  1%)    2543 kB (  1%)
+ loop invariant motion              :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       3 kB (  0%)
+ loop fini                          :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ CPROP                              :   0.04 (  1%)   0.01 (  1%)   0.02 (  0%)     611 kB (  0%)
+ PRE                                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)      87 kB (  0%)
+ CSE 2                              :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      80 kB (  0%)
+ branch prediction                  :   0.02 (  1%)   0.00 (  0%)   0.01 (  0%)     412 kB (  0%)
+ combiner                           :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)     930 kB (  0%)
+ if-conversion                      :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      73 kB (  0%)
+ integrated RA                      :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)    5783 kB (  3%)
+ LRA non-specific                   :   0.03 (  1%)   0.00 (  0%)   0.03 (  1%)     297 kB (  0%)
+ LRA virtuals elimination           :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)     206 kB (  0%)
+ LRA create live ranges             :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)      42 kB (  0%)
+ LRA rematerialization              :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ reload CSE regs                    :   0.03 (  1%)   0.00 (  0%)   0.04 (  1%)     565 kB (  0%)
+ ree                                :   0.00 (  0%)   0.00 (  0%)   0.03 (  1%)       7 kB (  0%)
+ thread pro- & epilogue             :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)     449 kB (  0%)
+ peephole 2                         :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      40 kB (  0%)
+ hard reg cprop                     :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       7 kB (  0%)
+ scheduling 2                       :   0.07 (  2%)   0.00 (  0%)   0.14 (  3%)     324 kB (  0%)
+ machine dep reorg                  :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ reorder blocks                     :   0.02 (  1%)   0.00 (  0%)   0.01 (  0%)     295 kB (  0%)
+ shorten branches                   :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ final                              :   0.02 (  1%)   0.01 (  1%)   0.01 (  0%)    1113 kB (  1%)
+ rest of compilation                :   0.11 (  3%)   0.00 (  0%)   0.09 (  2%)     721 kB (  0%)
+ unaccounted post reload            :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ remove unused locals               :   0.02 (  1%)   0.00 (  0%)   0.03 (  1%)       2 kB (  0%)
+ address taken                      :   0.02 (  1%)   0.01 (  1%)   0.01 (  0%)       0 kB (  0%)
+ repair loop structures             :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       2 kB (  0%)
+ TOTAL                              :   3.33          0.95          4.80         Time variable                                   usr           sys          wall               GGC
+ phase setup                        :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)    1379 kB (  1%)
+ phase parsing                      :   0.84 ( 25%)   0.46 ( 48%)   1.31 ( 27%)   78498 kB ( 40%)
+ phase lang. deferred               :   0.34 ( 10%)   0.12 ( 13%)   0.45 (  9%)   35437 kB ( 18%)
+ phase opt and generate             :   2.15 ( 65%)   0.37 ( 39%)   3.03 ( 63%)   82904 kB ( 42%)
+ |name lookup                       :   0.29 (  9%)   0.10 ( 11%)   0.32 (  7%)    4370 kB (  2%)
+ |overload resolution               :   0.22 (  7%)   0.05 (  5%)   0.28 (  6%)   19307 kB ( 10%)
+ dump files                         :   0.11 (  3%)   0.03 (  3%)   0.12 (  3%)       0 kB (  0%)
+ callgraph construction             :   0.07 (  2%)   0.00 (  0%)   0.04 (  1%)    3771 kB (  2%)
+ callgraph optimization             :   0.07 (  2%)   0.02 (  2%)   0.13 (  3%)      87 kB (  0%)
+ ipa dead code removal              :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ ipa cp                             :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     563 kB (  0%)
+ ipa inlining heuristics            :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)     650 kB (  0%)
+ ipa function splitting             :   0.00 (  0%)   0.01 (  1%)   0.02 (  0%)     182 kB (  0%)
+ ipa pure const                     :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)      22 kB (  0%)
+ ipa icf                            :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)       0 kB (  0%)
+ ipa SRA                            :   0.07 (  2%)   0.01 (  1%)   0.03 (  1%)    5076 kB (  3%)
+ cfg construction                   :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)     181 kB (  0%)
+ cfg cleanup                        :   0.06 (  2%)   0.00 (  0%)   0.00 (  0%)     202 kB (  0%)
+ trivially dead code                :   0.01 (  0%)   0.01 (  1%)   0.01 (  0%)       0 kB (  0%)
+ df scan insns                      :   0.01 (  0%)   0.01 (  1%)   0.01 (  0%)       7 kB (  0%)
+ df multiple defs                   :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ df reaching defs                   :   0.00 (  0%)   0.01 (  1%)   0.04 (  1%)       0 kB (  0%)
+ df live regs                       :   0.04 (  1%)   0.00 (  0%)   0.02 (  0%)       0 kB (  0%)
+ df live&initialized regs           :   0.04 (  1%)   0.00 (  0%)   0.07 (  1%)       0 kB (  0%)
+ df use-def / def-use chains        :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ df reg dead/unused notes           :   0.05 (  2%)   0.00 (  0%)   0.02 (  0%)     498 kB (  0%)
+ alias analysis                     :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)    1183 kB (  1%)
+ alias stmt walking                 :   0.05 (  2%)   0.00 (  0%)   0.06 (  1%)      85 kB (  0%)
+ rebuild jump labels                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ preprocessing                      :   0.12 (  4%)   0.13 ( 14%)   0.28 (  6%)    2539 kB (  1%)
+ parser (global)                    :   0.20 (  6%)   0.11 ( 12%)   0.27 (  6%)   26043 kB ( 13%)
+ parser struct body                 :   0.09 (  3%)   0.02 (  2%)   0.13 (  3%)   13861 kB (  7%)
+ parser function body               :   0.07 (  2%)   0.01 (  1%)   0.09 (  2%)    4688 kB (  2%)
+ parser inl. func. body             :   0.01 (  0%)   0.01 (  1%)   0.06 (  1%)    1596 kB (  1%)
+ parser inl. meth. body             :   0.14 (  4%)   0.07 (  7%)   0.16 (  3%)    8242 kB (  4%)
+ template instantiation             :   0.51 ( 15%)   0.21 ( 22%)   0.75 ( 16%)   56689 kB ( 29%)
+ constant expression evaluation     :   0.03 (  1%)   0.02 (  2%)   0.02 (  0%)     180 kB (  0%)
+ early inlining heuristics          :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)    1572 kB (  1%)
+ inline parameters                  :   0.00 (  0%)   0.02 (  2%)   0.06 (  1%)    4040 kB (  2%)
+ integration                        :   0.07 (  2%)   0.01 (  1%)   0.04 (  1%)   10635 kB (  5%)
+ tree gimplify                      :   0.01 (  0%)   0.02 (  2%)   0.04 (  1%)    6651 kB (  3%)
+ tree eh                            :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)    1036 kB (  1%)
+ tree CFG construction              :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)    2796 kB (  1%)
+ tree CFG cleanup                   :   0.05 (  2%)   0.01 (  1%)   0.11 (  2%)      66 kB (  0%)
+ tree tail merge                    :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     170 kB (  0%)
+ tree VRP                           :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)    1596 kB (  1%)
+ tree Early VRP                     :   0.06 (  2%)   0.01 (  1%)   0.08 (  2%)    2079 kB (  1%)
+ tree copy propagation              :   0.00 (  0%)   0.01 (  1%)   0.00 (  0%)       9 kB (  0%)
+ tree PTA                           :   0.05 (  2%)   0.01 (  1%)   0.06 (  1%)     641 kB (  0%)
+ tree PHI insertion                 :   0.00 (  0%)   0.01 (  1%)   0.00 (  0%)     257 kB (  0%)
+ tree SSA rewrite                   :   0.02 (  1%)   0.01 (  1%)   0.02 (  0%)    2006 kB (  1%)
+ tree SSA other                     :   0.02 (  1%)   0.01 (  1%)   0.02 (  0%)     272 kB (  0%)
+ tree SSA incremental               :   0.01 (  0%)   0.01 (  1%)   0.03 (  1%)     381 kB (  0%)
+ tree operand scan                  :   0.05 (  2%)   0.00 (  0%)   0.14 (  3%)    6173 kB (  3%)
+ dominator optimization             :   0.05 (  2%)   0.01 (  1%)   0.09 (  2%)    1298 kB (  1%)
+ backwards jump threading           :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)     142 kB (  0%)
+ tree SRA                           :   0.00 (  0%)   0.02 (  2%)   0.02 (  0%)     377 kB (  0%)
+ tree CCP                           :   0.02 (  1%)   0.00 (  0%)   0.18 (  4%)     323 kB (  0%)
+ tree PRE                           :   0.02 (  1%)   0.03 (  3%)   0.06 (  1%)    1024 kB (  1%)
+ tree FRE                           :   0.05 (  2%)   0.01 (  1%)   0.05 (  1%)     677 kB (  0%)
+ tree linearize phis                :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)     175 kB (  0%)
+ tree forward propagate             :   0.02 (  1%)   0.00 (  0%)   0.07 (  1%)     270 kB (  0%)
+ tree conservative DCE              :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)      40 kB (  0%)
+ tree aggressive DCE                :   0.03 (  1%)   0.01 (  1%)   0.03 (  1%)    2144 kB (  1%)
+ tree DSE                           :   0.00 (  0%)   0.00 (  0%)   0.02 (  0%)      31 kB (  0%)
+ tree loop invariant motion         :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ tree iv optimization               :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)     682 kB (  0%)
+ dominance frontiers                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ dominance computation              :   0.07 (  2%)   0.01 (  1%)   0.08 (  2%)       0 kB (  0%)
+ control dependences                :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ out of ssa                         :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)      14 kB (  0%)
+ expand vars                        :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)     307 kB (  0%)
+ expand                             :   0.04 (  1%)   0.01 (  1%)   0.04 (  1%)    3841 kB (  2%)
+ post expand cleanups               :   0.00 (  0%)   0.01 (  1%)   0.01 (  0%)     292 kB (  0%)
+ varconst                           :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       5 kB (  0%)
+ CSE                                :   0.05 (  2%)   0.00 (  0%)   0.05 (  1%)     135 kB (  0%)
+ dead code elimination              :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ dead store elim1                   :   0.02 (  1%)   0.00 (  0%)   0.02 (  0%)     397 kB (  0%)
+ dead store elim2                   :   0.01 (  0%)   0.00 (  0%)   0.03 (  1%)     617 kB (  0%)
+ loop analysis                      :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ loop init                          :   0.05 (  2%)   0.00 (  0%)   0.04 (  1%)    2543 kB (  1%)
+ loop invariant motion              :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       3 kB (  0%)
+ loop fini                          :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       0 kB (  0%)
+ CPROP                              :   0.04 (  1%)   0.01 (  1%)   0.02 (  0%)     611 kB (  0%)
+ PRE                                :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)      87 kB (  0%)
+ CSE 2                              :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      80 kB (  0%)
+ branch prediction                  :   0.02 (  1%)   0.00 (  0%)   0.01 (  0%)     412 kB (  0%)
+ combiner                           :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)     930 kB (  0%)
+ if-conversion                      :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      73 kB (  0%)
+ integrated RA                      :   0.05 (  2%)   0.00 (  0%)   0.07 (  1%)    5783 kB (  3%)
+ LRA non-specific                   :   0.03 (  1%)   0.00 (  0%)   0.03 (  1%)     297 kB (  0%)
+ LRA virtuals elimination           :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)     206 kB (  0%)
+ LRA create live ranges             :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)      42 kB (  0%)
+ LRA rematerialization              :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ reload CSE regs                    :   0.03 (  1%)   0.00 (  0%)   0.04 (  1%)     565 kB (  0%)
+ ree                                :   0.00 (  0%)   0.00 (  0%)   0.03 (  1%)       7 kB (  0%)
+ thread pro- & epilogue             :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)     449 kB (  0%)
+ peephole 2                         :   0.01 (  0%)   0.00 (  0%)   0.02 (  0%)      40 kB (  0%)
+ hard reg cprop                     :   0.01 (  0%)   0.00 (  0%)   0.01 (  0%)       7 kB (  0%)
+ scheduling 2                       :   0.07 (  2%)   0.00 (  0%)   0.14 (  3%)     324 kB (  0%)
+ machine dep reorg                  :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ reorder blocks                     :   0.02 (  1%)   0.00 (  0%)   0.01 (  0%)     295 kB (  0%)
+ shorten branches                   :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ final                              :   0.02 (  1%)   0.01 (  1%)   0.01 (  0%)    1113 kB (  1%)
+ rest of compilation                :   0.11 (  3%)   0.00 (  0%)   0.09 (  2%)     721 kB (  0%)
+ unaccounted post reload            :   0.00 (  0%)   0.00 (  0%)   0.01 (  0%)       0 kB (  0%)
+ remove unused locals               :   0.02 (  1%)   0.00 (  0%)   0.03 (  1%)       2 kB (  0%)
+ address taken                      :   0.02 (  1%)   0.01 (  1%)   0.01 (  0%)       0 kB (  0%)
+ repair loop structures             :   0.01 (  0%)   0.00 (  0%)   0.00 (  0%)       2 kB (  0%)
+ TOTAL                              :   3.33          0.95          4.80         198228 kB
+```
+
+Ok, I guess that totally makes sense, **if you are a compiler developer working on gcc itself. But I’m not! Most of the above either does not mean anything to me, or I don’t really care about it**.
+
+* I don’t care that much about “user” or “system” time; I care about how much time I had to wait for compilation to finish (“wall time”). Why it is in the middle of each row?
+
+* Is this output sorted by something? It’s not sorted from “most expensive” to “least expensive”. Not sorted alphabetically either. I guess it’s sorted by some internal structure that is not obvious to me.
+
+* I think the `phase parsing` is “generally frontend”, and `phase opt and generate` is “generally backend”; these are good to know. Then later on there’s a more detailed `preprocessing` to `template instantiation` which is frontend in more detail; that’s useful too. The rest? Besides some names that mean some optimization passes, many are cryptic to me, and I’m not sure why I should care about them. `tree eh`? Eh indeed.
+
+* Memory usage numbers are interesting to compiler developers, and maybe are useful to users that are under memory-constrained situations (like 32 bit systems etc.). Me? I don’t really care.
+
+So, while the gcc `-ftime-report` prints something, and some of that is very useful (template instantiation time; preprocessing time; time spent performing inlining etc.), it seems to be geared towards compiler developers, and less towards users.
+
+Again - **if I’m investigating compile times of my code, the question I have is what can I change in my code to make it compile faster? Ideally some tool should be able to tell me both what takes time, and where in the code it does it.**
+
+#### Clang
+
+Clang, being the most “fresh” of all these compilers, should be the most excellent, right? Right?
+
+Just like gcc, it also has `-ftime-report` option. That produces 900 lines of output! Instead of pasting it in full here, I’ll [just link to it](https://gist.github.com/aras-p/9b2f3fbad355d44a812e6749d9b69cb9).
+
+Several things to note:
+
+* Almost half of it is just the same information, duplicated? “Register Allocation”, “Instruction Selection and Scheduling”, “DWARF Emission” and “… Pass execution timing report …” sections are just emitted twice, but curiously enough, the other sections are printed just once. This sounds like a bug to me, and testing out various Clang versions in [Compiler Explorer](https://godbolt.org/) suggests that it started with Clang 7.0.0 and still exists on today’s 8.0.0-trunk. I’ve [reported it](https://bugs.llvm.org/show_bug.cgi?id=40328).
+
+* Within the “Pass Execution Timing Report” section, there’s a bunch of items that are repeated multiple times too, e.g. “Combine redundant instructions” is listed 8 times; and “Function Alias Analysis Results” is listed 21 times. I’ve no idea if that’s a bug or not; I think I don’t care about them anyway.
+
+* It suffers from the same “oriented to clang compiler developers, and not clang users” that gcc time report does. I really don’t care about all the LLVM optimization passes you ended up doing; and similarly I don’t care about user vs system times or memory usage.
+
+
+If it stopped printing all the info I don’t care about, did not duplicate half of it, and stopped printing LLVM passes after top 5 most expensive ones, it would already be way more legible, e.g. like this:
+
+```
+===-------------------------------------------------------------------------===
+                         Miscellaneous Ungrouped Timers
+===-------------------------------------------------------------------------===
+   ---Wall Time---  --- Name ---
+   4.1943 ( 93.7%)  Code Generation Time
+   0.2808 (  6.3%)  LLVM IR Generation Time
+   4.4751 (100.0%)  Total
+===-------------------------------------------------------------------------===
+                              Register Allocation
+===-------------------------------------------------------------------------===
+  Total Execution Time: 0.0180 seconds (0.0181 wall clock)
+===-------------------------------------------------------------------------===
+                      Instruction Selection and Scheduling
+===-------------------------------------------------------------------------===
+  Total Execution Time: 0.2894 seconds (0.2894 wall clock)
+===-------------------------------------------------------------------------===
+                                 DWARF Emission
+===-------------------------------------------------------------------------===
+  Total Execution Time: 0.3599 seconds (0.3450 wall clock)
+===-------------------------------------------------------------------------===
+                      ... Pass execution timing report ...
+===-------------------------------------------------------------------------===
+  Total Execution Time: 3.5271 seconds (3.5085 wall clock)
+   ---Wall Time---  --- Name ---
+   0.4859 ( 13.8%)  X86 Assembly Printer
+   0.4388 ( 12.5%)  X86 DAG->DAG Instruction Selection
+   0.2633 (  7.5%)  Function Integration/Inlining
+   0.1228 (  3.5%)  Global Value Numbering
+   0.0695 (  2.0%)  Combine redundant instructions
+   3.5085 (100.0%)  Total
+===-------------------------------------------------------------------------===
+                          Clang front-end time report
+===-------------------------------------------------------------------------===
+  Total Execution Time: 5.2175 seconds (6.3410 wall clock)
+   ---Wall Time---  --- Name ---
+   6.3410 (100.0%)  Clang front-end timer
+   6.3410 (100.0%)  Total
+```
+
+(also, please, drop the “…” around “Pass execution timing report” name; why it is there?)
+
+And then the various “Total” under the sections are quite a bit confusing. Let’s see:
+
+* “Clang front-end time report” seems to be time for “everything”, not just the frontend (Clang frontend, LLVM backend, and whatever else it did).
+
+* I think the “backend” (LLVM) total part is under “Misc Ungrouped Timers, Code Generation Time”. This is probably what is “Pass execution timing” + “Register Allocation” + “Instruction Selection and Scheduling” etc.
+
+* So probably the actual Clang “frontend” (preprocessor, parsing – i.e. doing the C++ bits of the compilation) I could get by subtracting various LLVM related timer bits from the total time. Ugh. Could you just tell me that time please?
+
+Another thing to note: in all the optimization passes, “X86 Assembly Printer” seems to be the heaviest one? That doesn’t sound right. So I dug in a bit… turns out, once you pass `-ftime-report` flag, then the whole compilation time is **heavily affected**. It grows from 1.06s to 1.42s in that super simple STL snippet above, and from 16s to 26s in a much heavier source file I had. Normally for any sort of profiling tool I’d expect at max a couple percent overhead, but **Clang’s time report seems to make compilation take 1.5x longer**! This sounds like a bug to me, so… [reported](https://bugs.llvm.org/show_bug.cgi?id=40303)!
+
+
+Even if presence of `-ftime-report` did not distort the compile times so much, Clang’s current implementation leaves much to be desired. It does not even tell me “how much time I spent parsing C++ code”, for example (without me manually doing the math), and does not tell other important aspects like “how much time I spent instantiating templates”. **And just like gcc time report, it never tells where in my code the expensive parts actually are**.
+
+### But surely someone would have solved this already?
+
+I thought so too! But that doesn’t seem to be the case.
+
+For Clang, various people have proposed changes or submitted patches to improve time report in some ways, for example:
+
+* [This patch](https://reviews.llvm.org/D36946) by Eddie Elizondo adds template instantiation timers. Done in August 2017, everyone in discussion agreed it’s a good idea. Now it’s January 2019…
+
+* [This patch](https://reviews.llvm.org/D36492) by Brian Gesiak added preprocessor timer in August 2017 too. After some back and forth discussion, eventually abandoned since someone else (Andrew Tischenko) said he’ll implement it in a better way. That was 2018 February.
+
+
+
+So I have spent a bit of time trying to make Clang do a “more useful for me” time report. It already pointed out one seemingly simple header file that we had, that was causing Clang to take “ages” (5-8 seconds) just including it, due to some recursive macro usage that Clang isn’t fast to plow through. Yay tools!
+
+What I did and how it works will be in [the next blog post](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)! But maybe you can guess on what it might be from my past blog posts ([here](https://aras-p.info/blog/2017/01/23/Chrome-Tracing-as-Profiler-Frontend/) or [here](https://aras-p.info/blog/2017/08/08/Unreasonable-Effectiveness-of-Profilers/)), and from this teaser image:
+
+
+![clang-timereport-teaser](/assets/images/202505/clang-timereport-teaser.png)
+
+
+
 
 ## [time-trace: timeline / flame chart profiler for Clang](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/)
+
+[Time trace profiler output support (-ftime-trace) #2](https://github.com/aras-p/llvm-project-20170507/pull/2)
+
+![clang-timereport4](/assets/images/202505/clang-timereport4.png)
+
+
+Update: this has landed to LLVM/Clang mainline! So if all goes well, **Clang 9.0** should contain this functionality. The [upstreaming commit](https://reviews.llvm.org/rL357340) landed on 2019 March 30; thanks Anton Afanasyev for doing the work of landing it!
+
+I wanted [Clang](https://clang.llvm.org/) to emit timeline (“flame chart”) style profiling info on where it spends time. So I [made it do that](https://github.com/aras-p/llvm-project-20170507/pull/2).
+
+
+### What kind of compiler profiler I want?
+
+
+In the [previous blog post](https://aras-p.info/blog/2019/01/12/Investigating-compile-times-and-Clang-ftime-report/) I talked about how it is hard to get “useful” information on where C++ compilers spend their time. Various compilers have various ways of reporting something, but most of their reports seem to be geared towards the compiler developers themselves. For them it’s important to know, for example, whether register allocator is the bottleneck; **for me as a compiler user that is much less of an importance – I want to know whether I’m bottlenecked by preprocessor / includes (if so, which ones?), parsing (if so, which classes/functions/templates?), template instantiation (if so, which ones?), code generation, backend optimizations, or something else**.
+
+Having added Chrome Tracing profiling outputs to other parts of our build system in the past ([here](https://aras-p.info/blog/2017/01/23/Chrome-Tracing-as-Profiler-Frontend/) or [there](https://aras-p.info/blog/2017/08/08/Unreasonable-Effectiveness-of-Profilers/)), I quite like it. It’s not perfect, and the UI is not very good, but it gets the job done and the file format is trivial to write.
+
+So I thought I’d try doing it – add some sort of flag to Clang that would emit the profiling information that I would find interesting. Turns out, getting to the “it seems to work” state was easier than I expected!
+
+### -ftime-trace: Chrome Tracing output for Clang
+
+The very first thing I tried it on pointed out a really useful thing: we have a super slow to include header in one place. Just look:
+
+![clang-timereport1](/assets/images/202505/clang-timereport1.png)
+
+This is a timeline / flame chart profiling view in Chrome `chrome://tracing` page. Horizontal axis is time, vertical is nested “callstacks”, so to speak. And **it very clearly shows that there is one header file that takes over 8 seconds to include**.
+
+> I suspect it’s some sort of performance issue with Clang itself; Gcc and Msvc are quite a bit faster at including this file. Will try to gather data and report a bug.
+
+So that was already fairly useful. With this visualization, I can look into other files and see what they end up doing. And based on that, decide what to do to make compiles faster. When including/parsing files takes up time, I can tell which ones are the culprit exactly, and how long it takes to include them:
+
+![clang-timereport2](/assets/images/202505/clang-timereport2.png)
+
+Already found some headers that took longer to process than you’d guess, and I’ve split them up into “rarely used, expensive” parts and “often used, cheap” parts.
+
+Or when looking at template instantiations, I can see which ones end up taking most time to process, and focus on improving them:
+
+![clang-timereport3](/assets/images/202505/clang-timereport3.png)
+
+> Ok where’s the code, and what now?
+
+All the code is at this [github PR for now](https://github.com/aras-p/llvm-project-20170507/pull/2), which is based on Clang 8.0.0-ish “trunk” as it was on 2019 January 10.
+
+It adds a new command line flag to clang, `-ftime-trace`, that produces Chrome Tracing `.json` file next to the regular compiled object files.
+
+I based it on the older LLVM/Clang “git monorepo”; they have switched to another github repository while I was doing it :) However the build instructions are the same as for [regular LLVM/Clang](https://llvm.org/docs/GettingStarted.html#getting-started-quickly-a-summary). Some notes:
+
+* Do use [Ninja](https://ninja-build.org/) backend for building. Default Makefiles backend spends ages figuring out what to build, every time you do the build.
+
+* Default build type is non-optimized Debug build. Build optimized Release build with the usual `-DCMAKE_BUILD_TYPE=RelWithDebInfo` CMake flag.
+
+* LLVM/Clang build is setup in such a way where any changes to the base “Support” library (where timing/profiling utilities are, among other things) cause rebuild of almost everything. Add a comment into Timer.cpp file? There’s 2500 files to recompile! And I wanted to add my profiling stuff in there…
+
+* Overall this was surprisingly easy! I mean I’ve never built LLVM/Clang before, and here, just 350 lines of code later, I have my own modified Clang with the profiling output I always wanted. Pretty good!
+
+I’ve started [a thread on Clang mailing list](http://lists.llvm.org/pipermail/cfe-dev/2019-January/060836.html) about my changes, and will see where that goes. There are some comments already; at some point I’d have to do a proper pull request via whatever is the LLVM/Clang code review tooling.
+
+No idea whether any of this will get accepted into upstream Clang, but if not, then at least I will have my own Clang with the profiler I always wanted.
+
+#### [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
+
+Adds `-ftime-trace` option to clang that produces Chrome `chrome://tracing` compatible JSON profiling output dumps. (**在 `chrome://tracing/` 页面加载编译时输出的 `*.json` 文件，注意不是 `ClangBuildAnalyzer --stop . test.json` 执行后生成的二进制的 `test.json` 文件**)
+
+I have written about how existing `-ftime-report` is not very useful, when one is not a compiler developer ([see blog post](http://aras-p.info/blog/2019/01/12/Investigating-compile-times-and-Clang-ftime-report/)). **As a user, when I'm investigating compile times, I'm most interested in "What and where in my code things are slow to compile?" The existing `-ftime-report` only partially answers the "what" part, and does not answer the "where" part at all.**
+
+
+
+Clang C/C++ build analysis tool when using Clang 9+ `-ftime-trace`. The `-ftime-trace` compiler flag (see [blog post](https://aras-p.info/blog/2019/01/16/time-trace-timeline-flame-chart-profiler-for-Clang/) or [Clang 9 release notes](https://releases.llvm.org/9.0.0/tools/clang/docs/ReleaseNotes.html#new-compiler-flags)) **can be useful to figure out what takes time during compilation of one source file**. This tool helps to aggregate time trace reports from multiple compilations, and output "what took the most time" summary:
+
+* Which files are slowest to parse? i.e. spend time in compiler lexer/parser front-end
+* Which C++ templates took the most time to instantiate?
+* Which files are slowest to generate code for? i.e. spend time in compiler backend doing codegen and optimizations
+* Which functions are slowest to generate code for?
+* Which header files are included the most in the whole build, how much time is spent parsing them, and what are the include chains of them?
+
+Usage:
+
+``` bash
+#!/bin/bash
+
+# -ftime-report
+# clang++ -std=c++11 -g -O2 -ftime-report -c test.cc -o test.o
+# clang++ test.o -o test
+
+
+# -ftime-trace
+#
+# Start the build capture: ClangBuildAnalyzer --start <artifacts_folder>
+# This will write current timestamp in a ClangBuildAnalyzerSession.txt file under the given artifacts_folder.
+# The artifacts folder is where the compiled object files (and time trace report files) are expected to be produced by your build.
+./ClangBuildAnalyzer --start .
+
+# Do your build
+clang++ -std=c++11 -g -O2 -ftime-trace -c test.cc
+clang++ test.o -o test
+
+# Stop the build capture: ClangBuildAnalyzer --stop <artifacts_folder> <capture_file>
+# This will load all Clang time trace compatible *.json files under the given artifacts_folder that were modified after --start step was done
+# (Clang -ftime-trace produces one JSON file next to each object file), process them and store data file into a binary capture_file.
+./ClangBuildAnalyzer --stop . test.json
+
+# Run the build analysis: ClangBuildAnalyzer --analyze <capture_file>
+# This will read the capture_file produced by --stop step, calculate the slowest things and print them.
+# If a ClangBuildAnalyzer.ini file exists in the current folder, it will be read to control how many of various things to print.
+./ClangBuildAnalyzer --analyze test.json
+
+# Aternatively, instead of doing --start and --stop steps, you can do ClangBuildAnalyzer --all <artifacts_folder> <capture_file> after your build;
+# that will include all the compatible *.json files for analysis, no matter when they were produced.
+```
+
+Analysis Output:
+
+```
+Build tracing started. Do some Clang builds with '-ftime-trace', then run 'ClangBuildAnalyzer --stop . <filename>' to stop tracing and save session to a file.
+Stopping build tracing and saving to 'test.json'...
+  done in 0.0s. Run 'ClangBuildAnalyzer --analyze test.json' to analyze it.
+Analyzing build trace from 'test.json'...
+**** Time summary:
+Compilation (1 times):
+  Parsing (frontend):            1.0 s
+  Codegen & opts (backend):      2.9 s
+
+**** Files that took longest to parse (compiler frontend):
+  1041 ms: ./test.json
+
+**** Files that took longest to codegen (compiler backend):
+  2889 ms: ./test.json
+
+**** Templates that took longest to instantiate:
+   475 ms: std::__cxx11::basic_regex<char, std::__cxx11::regex_traits<char>>::b... (2 times, avg 237 ms)
+   237 ms: std::__cxx11::basic_regex<char, std::__cxx11::regex_traits<char>>::b... (1 times, avg 237 ms)
+   236 ms: std::__detail::__compile_nfa<std::__cxx11::regex_traits<char>, const... (1 times, avg 236 ms)
+   229 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_Compiler (1 times, avg 229 ms)
+   184 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_disju... (1 times, avg 184 ms)
+   183 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_alter... (1 times, avg 183 ms)
+   181 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_term (1 times, avg 181 ms)
+   149 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_atom (1 times, avg 149 ms)
+    65 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_inser... (1 times, avg 65 ms)
+    31 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_quant... (1 times, avg 31 ms)
+    29 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_brack... (1 times, avg 29 ms)
+    22 ms: std::__detail::_StateSeq<std::__cxx11::regex_traits<char>>::_M_clone (1 times, avg 22 ms)
+    20 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 20 ms)
+    18 ms: std::map<long, long, std::less<long>, std::allocator<std::pair<const... (1 times, avg 18 ms)
+    17 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 17 ms)
+    16 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_inser... (1 times, avg 16 ms)
+    15 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_inser... (1 times, avg 15 ms)
+    14 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_expre... (1 times, avg 14 ms)
+    13 ms: std::__detail::_Scanner<char>::_Scanner (1 times, avg 13 ms)
+    13 ms: std::_Rb_tree<long, std::pair<const long, long>, std::_Select1st<std... (1 times, avg 13 ms)
+    13 ms: std::__cxx11::regex_traits<char>::lookup_classname<const char *> (1 times, avg 13 ms)
+    12 ms: std::unordered_map<std::__cxx11::basic_string<char>, double, std::ha... (1 times, avg 12 ms)
+    12 ms: std::_Hashtable<std::__cxx11::basic_string<char>, std::pair<const st... (1 times, avg 12 ms)
+    11 ms: std::__detail::_NFA<std::__cxx11::regex_traits<char>>::_M_insert_sub... (1 times, avg 11 ms)
+    11 ms: std::_Hashtable<std::__cxx11::basic_string<char>, std::pair<const st... (1 times, avg 11 ms)
+     9 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_inser... (1 times, avg 9 ms)
+     9 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 9 ms)
+     9 ms: std::_Rb_tree<long, std::pair<const long, long>, std::_Select1st<std... (1 times, avg 9 ms)
+     9 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char>>::_M_expre... (1 times, avg 9 ms)
+     8 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 8 ms)
+
+**** Template sets that took longest to instantiate:
+   237 ms: std::__cxx11::basic_regex<$>::basic_regex (1 times, avg 237 ms)
+   237 ms: std::__cxx11::basic_regex<$>::basic_regex<$> (1 times, avg 237 ms)
+   236 ms: std::__detail::__compile_nfa<$> (1 times, avg 236 ms)
+   229 ms: std::__detail::_Compiler<$>::_Compiler (1 times, avg 229 ms)
+   184 ms: std::__detail::_Compiler<$>::_M_disjunction (1 times, avg 184 ms)
+   183 ms: std::__detail::_Compiler<$>::_M_alternative (1 times, avg 183 ms)
+   181 ms: std::__detail::_Compiler<$>::_M_term (1 times, avg 181 ms)
+   149 ms: std::__detail::_Compiler<$>::_M_atom (1 times, avg 149 ms)
+    90 ms: std::__detail::_Compiler<$>::_M_insert_character_class_matcher<$> (4 times, avg 22 ms)
+    31 ms: std::vector<$>::push_back (8 times, avg 3 ms)
+    31 ms: std::__detail::_Compiler<$>::_M_quantifier (1 times, avg 31 ms)
+    29 ms: std::__detail::_Compiler<$>::_M_bracket_expression (1 times, avg 29 ms)
+    29 ms: std::__detail::_Compiler<$>::_M_insert_bracket_matcher<$> (4 times, avg 7 ms)
+    28 ms: std::__detail::_BracketMatcher<$>::_M_ready (4 times, avg 7 ms)
+    28 ms: std::function<$>::function<$> (16 times, avg 1 ms)
+    26 ms: std::__detail::_Compiler<$>::_M_expression_term<$> (4 times, avg 6 ms)
+    23 ms: std::vector<$>::_M_realloc_insert<$> (8 times, avg 2 ms)
+    22 ms: std::__detail::_StateSeq<$>::_M_clone (1 times, avg 22 ms)
+    19 ms: std::vector<$>::emplace_back<$> (5 times, avg 3 ms)
+    18 ms: std::map<long, long, std::less<long>, std::allocator<std::pair<const... (1 times, avg 18 ms)
+    18 ms: std::vector<$>::vector (13 times, avg 1 ms)
+    17 ms: std::__detail::_BracketMatcher<$>::_M_add_character_class (1 times, avg 17 ms)
+    17 ms: std::__detail::_BracketMatcher<$>::_M_make_cache (4 times, avg 4 ms)
+    16 ms: std::make_pair<$> (6 times, avg 2 ms)
+    16 ms: std::__uninitialized_move_if_noexcept_a<$> (8 times, avg 2 ms)
+    15 ms: std::__detail::_BracketMatcher<$>::_M_apply (4 times, avg 3 ms)
+    14 ms: std::__detail::_BracketMatcher<$>::_M_make_range (2 times, avg 7 ms)
+    13 ms: std::__detail::_Scanner<$>::_Scanner (1 times, avg 13 ms)
+    13 ms: std::__uninitialized_copy_a<$> (14 times, avg 0 ms)
+    13 ms: std::pair<$> (12 times, avg 1 ms)
+
+**** Functions that took longest to compile:
+    88 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_quan... (test.cc)
+    66 ms: std::__detail::_StateSeq<std::__cxx11::regex_traits<char> >::_M_clon... (test.cc)
+    57 ms: bool std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    56 ms: bool std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    39 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_atom() (test.cc)
+    39 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    38 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    30 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (test.cc)
+    30 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (test.cc)
+    29 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M_asse... (test.cc)
+    27 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    27 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    27 ms: std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_Compil... (test.cc)
+    25 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    24 ms: void std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    24 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (test.cc)
+    23 ms: bool std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    23 ms: bool std::__detail::_Compiler<std::__cxx11::regex_traits<char> >::_M... (test.cc)
+    22 ms: void std::vector<std::pair<std::__cxx11::basic_string<char, std::cha... (test.cc)
+    22 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (test.cc)
+    22 ms: void std::__introsort_loop<__gnu_cxx::__normal_iterator<char*, std::... (test.cc)
+    21 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (test.cc)
+    20 ms: std::__detail::_Scanner<char>::_M_eat_escape_ecma() (test.cc)
+    20 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (test.cc)
+    18 ms: void std::vector<std::__cxx11::basic_string<char, std::char_traits<c... (test.cc)
+    18 ms: main (test.cc)
+    18 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (test.cc)
+    17 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (test.cc)
+    16 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (test.cc)
+    16 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (test.cc)
+
+**** Function sets that took longest to compile / optimize:
+   161 ms: bool std::__detail::_Compiler<$>::_M_expression_term<$>(std::pair<$>... (4 times, avg 40 ms)
+   127 ms: void std::__detail::_Compiler<$>::_M_insert_bracket_matcher<$>(bool) (4 times, avg 31 ms)
+   105 ms: std::__detail::_BracketMatcher<$>::_BracketMatcher(std::__detail::_B... (4 times, avg 26 ms)
+    88 ms: std::__detail::_Compiler<$>::_M_quantifier() (1 times, avg 88 ms)
+    87 ms: void std::__detail::_Compiler<$>::_M_insert_character_class_matcher<... (4 times, avg 21 ms)
+    67 ms: std::__detail::_BracketMatcher<$>::_M_add_character_class(std::__cxx... (4 times, avg 16 ms)
+    66 ms: std::__detail::_StateSeq<$>::_M_clone() (1 times, avg 66 ms)
+    63 ms: std::__detail::_BracketMatcher<$>::_M_make_range(char, char) (4 times, avg 15 ms)
+    45 ms: std::__detail::_BracketMatcher<$>::_M_ready() (4 times, avg 11 ms)
+    44 ms: std::__detail::_BracketMatcher<$>::_M_add_equivalence_class(std::__c... (4 times, avg 11 ms)
+    39 ms: std::__detail::_Compiler<$>::_M_atom() (1 times, avg 39 ms)
+    31 ms: std::__detail::_BracketMatcher<$>::_M_add_collate_element(std::__cxx... (4 times, avg 7 ms)
+    29 ms: std::__detail::_Compiler<$>::_M_assertion() (1 times, avg 29 ms)
+    28 ms: std::_Function_base::_Base_manager<$>::_M_manager(std::_Any_data&, s... (16 times, avg 1 ms)
+    27 ms: std::__detail::_Compiler<$>::_Compiler(char const*, char const*, std... (1 times, avg 27 ms)
+    24 ms: void std::vector<$>::_M_realloc_insert<$>(__gnu_cxx::__normal_iterat... (2 times, avg 12 ms)
+    24 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 24 ms)
+    23 ms: void std::__detail::_Compiler<$>::_M_insert_char_matcher<$>() (4 times, avg 5 ms)
+    22 ms: void std::__detail::_Compiler<$>::_M_insert_any_matcher_ecma<$>() (4 times, avg 5 ms)
+    22 ms: void std::__introsort_loop<$>(__gnu_cxx::__normal_iterator<$>, __gnu... (1 times, avg 22 ms)
+    21 ms: void std::__detail::_Compiler<$>::_M_insert_any_matcher_posix<$>() (4 times, avg 5 ms)
+    20 ms: std::__detail::_Scanner<$>::_M_eat_escape_ecma() (1 times, avg 20 ms)
+    20 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (1 times, avg 20 ms)
+    18 ms: void std::vector<$>::_M_realloc_insert<$>(__gnu_cxx::__normal_iterat... (1 times, avg 18 ms)
+    18 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, tru... (1 times, avg 18 ms)
+    16 ms: std::__detail::_BracketMatcher<$>::~_BracketMatcher() (4 times, avg 4 ms)
+    15 ms: std::__detail::_Scanner<$>::_M_scan_normal() (1 times, avg 15 ms)
+    15 ms: std::__detail::_Compiler<$>::_M_disjunction() (1 times, avg 15 ms)
+    15 ms: std::__detail::_BracketMatcher<std::__cxx11::regex_traits<char>, fal... (1 times, avg 15 ms)
+    15 ms: std::__cxx11::regex_traits<$>::_RegexMask std::__cxx11::regex_traits... (1 times, avg 15 ms)
+
+**** Expensive headers:
+437 ms: /usr/include/c++/8/regex (included 1 times, avg 437 ms), included via:
+  1x: <direct include>
+
+34 ms: /usr/include/c++/8/unordered_map (included 1 times, avg 34 ms), included via:
+  1x: <direct include>
+
+  done in 0.0s.
+```
+
+Granularity (粒度) and amount of most expensive things (files, functions, templates, includes) that are reported can be controlled by having an [ClangBuildAnalyzer.ini](https://github.com/aras-p/ClangBuildAnalyzer/blob/main/ClangBuildAnalyzer.ini) file in the working directory. Take a look at ClangBuildAnalyzer.ini for an example.
+
+``` ini
+# ClangBuildAnalyzer reads ClangBuildAnalyzer.ini file from the working directory
+# when invoked, and various aspects of reporting can be configured this way.
+# This file example is setup to be exactly like what the defaults are.
+
+# How many of most expensive things are reported?
+[counts]
+
+# files that took most time to parse
+fileParse = 10
+# files that took most time to generate code for
+fileCodegen = 10
+# functions that took most time to generate code for
+function = 30
+# header files that were most expensive to include
+header = 10
+# for each expensive header, this many include paths to it are shown
+headerChain = 5
+# templates that took longest to instantiate
+template = 30
+
+
+# Minimum times (in ms) for things to be recorded into trace
+[minTimes]
+
+# parse/codegen for a file
+file = 10
+
+
+[misc]
+
+# Maximum length of symbol names printed; longer names will get truncated
+maxNameLength = 70
+
+# Only print "root" headers in expensive header report, i.e.
+# only headers that are directly included by at least one source file
+onlyRootHeaders = true
+```
+
+
+
+
+
+
+
+
 
 # Q&A
 
