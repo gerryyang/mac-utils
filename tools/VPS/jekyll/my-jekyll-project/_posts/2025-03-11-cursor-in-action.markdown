@@ -352,7 +352,7 @@ Cursor 使用情况每月重置，基于用户的订阅开始日期。
 * **We temporarily cache file contents on our servers to reduce latency and network usage**. The files are encrypted using unique client-generated keys, and these encryption keys only exist on our servers for the duration of a request. All cached file contents are temporary, never permanently stored, and never used as training data when privacy mode is enabled.
 
 
-# Changelog
+# [Changelog](https://www.cursor.com/changelog)
 
 https://www.cursor.com/changelog
 

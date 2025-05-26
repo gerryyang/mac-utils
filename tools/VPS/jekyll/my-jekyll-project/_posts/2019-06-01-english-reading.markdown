@@ -13,6 +13,24 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* align /əˈlaɪn/
+  + V-T If you **align** yourself with a particular group, you support them because you have the same political aim. 与…结盟
+    - When war broke out, they **aligned** themselves with the rebel forces. 战争爆发以后，他们与叛军结了盟。
+  + V-T If you **align** something, you place it in a certain position in relation to something else, usually parallel to it. 使对齐
+    - A tripod will be useful to **align** and steady the camera. 三脚架会有助于对齐稳住照相机。
+
+* offload
+  + V-T When goods are **offloaded**, they are removed from a container or vehicle and put somewhere else. 卸货
+    - The cargo was due to be **offloaded** in Singapore three days later. 这艘货轮本定于3天后在新加坡卸载。
+  + V-T If you **offload** something that you do not want, you get rid of it by giving it or selling it to someone else. 清理; 转卖
+
+
+* overview /ˈəʊvəvjuː/
+  + N-COUNT An **overview** of a situation is a general understanding or description of it as a whole. 概述
+    - The central section of the book is a historical **overview** of drug use. 本书的中心部分是对药物使用的一个历史概述。
+
+
 * intercession /ˌɪntəˈseʃn/
   + N-VAR **Intercession** is the act of **interceding** with someone. 调解; 仲裁
     - His intercession could be of help to the tribe. 他的调解会对该部落有帮助。他们请我父亲代他们向国王求情。
