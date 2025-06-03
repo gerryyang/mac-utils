@@ -335,15 +335,15 @@ int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
 
 Maglev hash 是 Google 于 2016 年发表的一篇[论文](https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/44824.pdf)中提出来的一种新的一致性哈希算法。Maglev hash 的基本思路是建立一张一维的查找表，一个长度为 `M` 的列表，记录着每个位置所属的节点编号 `B0...BN`，当需要判断某个 Key 被分配到哪个节点的时候，只需对 Key 计算 hash，然后对 `M` 取模看所落到的位置属于哪个节点。
 
-> 如何查找看上去很简单，问题是如何产生这个查找表。
+> 查找看上去很简单，问题是如何产生这个查找表。
 
 ## [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash)
 
-`MurmurHash` is a non-cryptographic hash function suitable for general hash-based lookup. It was created by Austin Appleby in 2008 and is currently hosted on GitHub along with its test suite named 'SMHasher'. It also exists in a number of variants, all of which have been released into the public domain. The name comes from two basic operations, **multiply** (`MU`) and **rotate** (`R`), used in its inner loop.
+`MurmurHash` is a non-cryptographic hash function suitable for general hash-based lookup. It was created by Austin Appleby in 2008 and is currently hosted on GitHub along with its test suite named `SMHasher`. It also exists in a number of variants, all of which have been released into the public domain. The name comes from two basic operations, **multiply** (`MU`) and **rotate** (`R`), used in its inner loop.
 
 Unlike cryptographic hash functions, it is not specifically designed to be difficult to reverse by an adversary, making it unsuitable for cryptographic purposes.
 
-> MurmurHash 是一种非加密的哈希函数，适用于基于哈希的一般查找。它是由 Austin Appleby 在 2008 年创建的，并且目前在 GitHub 上托管，连同其名为 'SMHasher' 的测试套件。它也存在于多种变体中，所有这些变体都已经发布到公共领域。它的名字来源于其内部循环中使用的两个基本操作，乘法（MU）和旋转（R）。
+> MurmurHash 是一种非加密的哈希函数，适用于基于哈希的一般查找。它是由 Austin Appleby 在 2008 年创建的，并且目前在 GitHub 上托管，连同其名为 SMHasher 的测试套件。它也存在于多种变体中，所有这些变体都已经发布到公共领域。它的名字来源于其内部循环中使用的两个基本操作，乘法（MU）和旋转（R）。
 >
 > 与加密哈希函数不同，MurmurHash 并未特别设计成对抗手方难以逆转，这使得它不适合用于加密目的。
 
@@ -359,6 +359,13 @@ MurmurHash 本身不是一致性哈希算法，而是一个通用的非加密哈
 >
 > The current version is MurmurHash3, which yields a 32-bit or 128-bit hash value. When using 128-bits, the x86 and x64 versions do not produce the same values, as the algorithms are optimized for their respective platforms. MurmurHash3 was released alongside SMHasher—a hash function test suite.
 
+
+## [MementoHash: A Stateful, Minimal Memory, Best Performing Consistent Hash Algorithm](https://arxiv.org/abs/2306.09783)
+
+Consistent hashing is used in distributed systems and networking applications to spread data evenly and efficiently across a cluster of nodes. In this paper, we present MementoHash, a novel consistent hashing algorithm that eliminates known limitations of state-of-the-art algorithms while keeping optimal performance and minimal memory usage. **We describe the algorithm in detail, provide a pseudo-code implementation, and formally establish its solid theoretical guarantees. To measure the efficacy of MementoHash, we compare its performance, in terms of memory usage and lookup time, to that of state-of-the-art algorithms, namely, AnchorHash, DxHash, and JumpHash. Unlike JumpHash, MementoHash can handle random failures. Moreover, MementoHash does not require fixing the overall capacity of the cluster (as AnchorHash and DxHash do), allowing it to scale indefinitely.** The number of removed nodes affects the performance of all the considered algorithms. Therefore, we conduct experiments considering three different scenarios: stable (no removed nodes), one-shot removals (90% of the nodes removed at once), and incremental removals. We report experimental results that averaged a varying number of nodes from ten to one million. Results indicate that our algorithm shows optimal lookup performance and minimal memory usage in its best-case scenario. It behaves better than AnchorHash and DxHash in its average-case scenario and at least as well as those two algorithms in its worst-case scenario. However, the worst-case scenario for MementoHash occurs when more than 70% of the nodes fail, which describes a unlikely scenario. Therefore, MementoHash shows the best performance during the regular life cycle of a cluster.
+
+* 论文 (pdf)：https://arxiv.org/pdf/2306.09783
+* 实现参考：https://github.com/planecrazyf16/loadbalance-go/blob/edf536a7907c4accde63c3143946295026861093/consistenthash/mementohash.go
 
 
 

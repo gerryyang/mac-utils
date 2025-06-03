@@ -13,6 +13,12 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* phony /ˈfəʊni/
+  + ADJ If you describe something as **phony**, you disapprove of it because it is false rather than genuine. 假的
+  + ADJ If you say that someone is **phony**, you disapprove of them because they are pretending to be someone that they are not in order to deceive people. 虚伪的; 做作的
+  + N-COUNT **Phony** is also a noun. 可作名词
+    - She's a phony, a fake. 她是个伪君子、骗子。
+
 
 * align /əˈlaɪn/
   + V-T If you **align** yourself with a particular group, you support them because you have the same political aim. 与…结盟

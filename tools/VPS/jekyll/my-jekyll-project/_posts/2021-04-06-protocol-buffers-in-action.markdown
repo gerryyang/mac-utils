@@ -128,6 +128,100 @@ Protobuf支持多种数据类型，这些数据类型都有不同的设计用意
 * 用`bytes`类型来表示二进制字节流（通常不可读），比如序列化后的内容，二进制表示的MD5，非UTF8编码能表示的文本（比如GBK）。
 * 如果用`string`类型保存非UTF-8兼容的内容，在C++生成的代码中，也会导致运行期警告。
 
+
+# [Protocol Buffers Well-Known Types](https://protobuf.dev/reference/protobuf/google.protobuf/)
+
+## Empty
+
+A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance:
+
+```
+service Foo {
+  rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+```
+
+The JSON representation for `Empty` is empty JSON object `{}`.
+
+**`google.protobuf.Empty` 是 Protobuf 中预定义的一个特殊消息类型，用于表示一个空的请求或响应。它在 gRPC 等基于 Protobuf 的通信场景中非常常见，主要目的是简化接口设计，避免为无参数或无返回值的场景定义冗余的消息类型。**
+
+> 用途：
+
+* **表示空输入或空输出**。当某个 RPC 方法不需要传递任何参数（或不需要返回任何数据）时，可以用 Empty 作为占位符，替代自定义的空消息类型。
+* **标准化接口**。使用 Protobuf 官方提供的 Empty 类型，可以保持不同服务之间接口的一致性，避免每个团队重复定义自己的空消息（如 Void、Null 等）。
+
+> 使用场景：
+
+* **无参数的 RPC 方法**
+
+例如，一个简单的健康检查接口，客户端不需要传递任何参数，服务端也只需确认请求是否成功：
+
+``` cpp
+service HealthService {
+  rpc CheckHealth(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+```
+
+* **无需返回值的 RPC 方法**
+
+例如，一个删除资源的接口，客户端发送删除请求后，服务端无需返回具体数据，只需确认操作成功：
+
+``` cpp
+service ResourceService {
+  rpc DeleteResource(DeleteRequest) returns (google.protobuf.Empty);
+}
+```
+
+* **事件通知或心跳机制**
+
+在发布-订阅模式中，某些事件可能只需要触发动作，不需要携带数据：
+
+``` cpp
+service NotificationService {
+  rpc OnEventTriggered(google.protobuf.Empty) returns (stream Event);
+}
+```
+
+> 代码示例：
+
+Protobuf 定义：
+
+``` proto
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+service ExampleService {
+  rpc DoSomething(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+```
+
+``` go
+package main
+
+import (
+    "context"
+    "google.golang.org/protobuf/types/known/emptypb"
+)
+
+type ExampleServiceServer struct{}
+
+func (s *ExampleServiceServer) DoSomething(ctx context.Context, empty *emptypb.Empty) (*emptypb.Empty, error) {
+    // 执行某些操作，无需输入和输出
+    return &emptypb.Empty{}, nil
+}
+```
+
+> 注意事项：
+
+1. **避免滥用**。如果未来接口可能扩展需要参数或返回值，建议提前定义一个自定义的空消息（如 EmptyResponse），以便后续添加字段。而 google.protobuf.Empty 是固定不可扩展的。
+2. **语言差异**。不同编程语言中导入 Empty 的方式可能不同。例如：
+   + Go: import "google.golang.org/protobuf/types/known/emptypb"
+   + Java: import com.google.protobuf.Empty;
+3. **与 void 的区别**。在 gRPC 中，不能直接使用 void 作为参数或返回类型，必须通过消息类型占位，这就是 Empty 的作用。
+
+
+
+
 # 服务设计
 
 * 服务最好放在单独的`.proto`文件中。
