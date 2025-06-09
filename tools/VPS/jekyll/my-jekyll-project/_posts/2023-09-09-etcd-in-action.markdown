@@ -386,7 +386,7 @@ https://dezeming.top/wp-content/uploads/2023/04/B-Tree%E5%92%8CBTree.pdf
 非常好的问题，我个人认为主要还是性能因素，我记得 etcd v2 早期的时候如果你指定线性读/共识读，它就是直接转发给 leader 的。后来在 etcd v3.0 中实现了 raft log read 但是要走一遍 raft log，读涉及到磁盘IO，v3.1 中引入了 readIndex 机制，它是非常轻量级的，开销较小，相比各个 follower 都转发给 leader 会导致 leader 负载较高，特别是 expensive request 场景，性能会急剧下降，leader 的内存、CPU、网络带宽资源都很容易耗尽，readIndex 机制的引入，使得每个 follower 节点都可以处理读请求，极大扩展提升了写性能。
 
 
-#### 当 Readindex 结束并等待本节点的状态机apply的时候，key又被最新的更新请求给更新了怎么办，这个时候读取到的value是不是又是旧值了？
+#### 当 readindex 结束并等待本节点的状态机apply的时候，key又被最新的更新请求给更新了怎么办，这个时候读取到的value是不是又是旧值了？
 
 线性读，读出来的值实际上是你发出读请求时间点的集群最新共识数据，在你读请求发出后，若耗时一定时间还未完成，在这过程中leader又收到了写请求更新了它，的确你原来读出来的值相比最新的集群共识就是旧的，在实际应用中，我们一般会通过增加版本号检测识别此类问题，后面事务篇会详细介绍。
 
@@ -1438,7 +1438,7 @@ type EventHistory struct {
 
 ![etcd47](/assets/images/202501/etcd47.png)
 
-* 当收到创建 watcher 请求的时候，它会把 watcher 监听的 key 范围插入到上面的区间树中，区间的值保存了监听同样 key 范围的 watcher 集合 /watcherSet。
+* 当收到创建 watcher 请求的时候，它会把 watcher 监听的 key 范围插入到上面的区间树中，区间的值保存了监听同样 key 范围的 watcher 集合 watcherSet。
 
 * 当产生一个事件时，etcd 首先需要从 map 查找是否有 watcher 监听了单 key，其次它还需要从区间树找出与此 key 相交的所有区间，然后从区间的值获取监听的 watcher 集合。
 
@@ -3523,6 +3523,210 @@ response: {"header":{"cluster_id":"12297797944536498889","member_id":"1789425240
 
 
 # Tips
+
+
+## 通过 `-w fields` 或 `-w json` 查看 key 的详细元数据
+
+* `Version`: Key 被修改的次数（从创建开始计数）。
+* `CreateRevision`: Key 创建时的全局 revision。
+* `ModRevision`: Key 最后一次修改时的全局 revision（集群级别）。
+
+``` json
+{
+  "kvs": [
+    {
+      "key": "<your-key>",
+      "value": "<value>",
+      "version": "3",             // 该 key 被修改过 3 次
+      "mod_revision": "789",      // 最后一次修改发生在全局 revision 789
+      "create_revision": "123"    // 创建时的全局 revision
+    }
+  ],
+  "count": 1
+}
+```
+
+``` bash
+$ etcdctl get /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib -w fields
+"ClusterID" : 12297797944536498889
+"MemberID" : 17894252403103677144
+"Revision" : 242999
+"RaftTerm" : 10
+"Key" : "/namesvr/counter/agent"
+"CreateRevision" : 242338
+"ModRevision" : 242338
+"Version" : 1
+"Value" : "1"
+"Lease" : 0
+"More" : false
+"Count" : 1
+```
+
+通过 `-w json` 也可以查看：
+
+```
+$ etcdctl get /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib -w json
+{"header":{"cluster_id":12297797944536498889,"member_id":17894252403103677144,"revision":242999,"raft_term":10},"kvs":[{"key":"L25hbWVzdnIvY291bnRlci9hZ2VudA==","create_revision":242338,"mod_revision":242338,"version":1,"value":"MQ=="}],"count":1}
+```
+
+``` json
+{
+	"header": {
+		"cluster_id": 12297797944536498889,
+		"member_id": 17894252403103677144,
+		"revision": 242999,
+		"raft_term": 10
+	},
+	"kvs": [{
+		"key": "L25hbWVzdnIvY291bnRlci9hZ2VudA==",
+		"create_revision": 242338,
+		"mod_revision": 242338,
+		"version": 1,
+		"value": "MQ=="
+	}],
+	"count": 1
+}
+```
+
+若知道 key 修改时的全局 revision，可查询指定 revision 的数据：
+
+``` bash
+$ etcdctl get /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib --rev=242999
+/namesvr/counter/agent
+1
+```
+
+> 注意：历史数据依赖配置：默认 etcd 不保留所有历史版本，需配置 --max-history 或使用 etcdutl 备份恢复。
+
+
+## 删除 key 的版本号变化，如何查看已删除 key 的记录
+
+在 etcd 中删除 key 时，版本号的变化机制较为特殊。以下是删除操作对版本号的影响及查看方式：
+
+> 删除操作对版本号的影响
+
+* **全局修订版本 (Global Revision)**
+
+每次删除操作都会使全局修订版本号增加 1，无论删除单个 key 还是批量删除。这是 etcd 的核心机制：**所有修改操作（包括 put/del/txn）都会使全局 `revision` 单调递增**。
+
+* **Key 的版本元数据**
+
+当 key 被删除时：
+
+1. `create_revision` 和 `mod_revision` 不再可查（通过普通 `get` 操作）
+2. 但删除操作会在 etcd 中留下一个 "tombstone"（逻辑墓碑）记录，包含删除时的全局 `revision`
+
+> 查看删除操作引起的版本变化
+
+* **方法 1：通过删除命令直接获取**。使用 `etcdctl del` 时添加 `-w fields` 参数。这里的关键字段 `revision` 就是**删除操作发生时的新全局版本号**。
+
+``` bash
+$ etcdctl del /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib -w fields
+"ClusterID" : 12297797944536498889
+"MemberID" : 17894252403103677144
+"Revision" : 243000         // 删除操作发生时的全局 revision
+"RaftTerm" : 10
+"Deleted" : 1               // 删除的 key 数量
+```
+
+* **方法 2：通过历史查询查看删除事件**
+
+使用 `etcdctl del` 时添加 `-w fields` 可以得到删除前的 `revision` 版本号。
+
+``` bash
+$ etcdctl watch /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib --rev=242999
+DELETE                       // 输出删除事件
+/namesvr/counter/agent
+```
+
+* **方法 3：通过墓碑记录查询**
+
+虽然被删除的 key 不可直接访问，但可通过特定修订版本查询其"墓碑"：查询指定 `revision` 的数据（删除操作发生的 `revision`）
+
+``` bash
+$ etcdctl get /namesvr/counter/agent --prefix --endpoints http://127.0.0.1:2379 --user root:jlib --rev=242999
+/namesvr/counter/agent
+1
+```
+
+结果行为：
+
+* 若指定的 revision 等于删除操作的 revision：返回空结果（etcd v3.4+）
+* 若指定的 revision 早于删除操作的 revision：返回删除前的值
+* 若指定的 revision 晚于删除操作的 revision：返回空
+
+> 注意事项
+
+* 历史数据保留
+
+etcd **默认压缩历史数据**（通过 `--auto-compaction` 配置）。**若删除操作发生时的 revision 已被压缩，则无法查询删除事件**。
+
+* 与 key 版本的区别
+  + key 的 `version` 计数器（修改次数）在删除后重置
+  + 重新创建同名 key 时：
+
+```
+create_revision = 新全局 revision
+version = 1（重新计数）
+```
+
+* 删除范围的影响
+
+批量删除（如 `etcdctl del --prefix`）会使全局 `revision` **只增加 1**，无论删除多少 key。
+
+
+
+## watch 查看事件变化 (通过指定 `--rev` 版本号可以历史事件)
+
+首先插入两条记录：
+
+``` bash
+$ etcdctl put hello world1 --endpoints http://127.0.0.1:2379 --user root:jlib
+OK
+$ etcdctl put hello world2 --endpoints http://127.0.0.1:2379 --user root:jlib
+OK
+```
+
+然后执行 watch 命令，空集群启动后的版本号为 1
+
+``` bash
+$ etcdctl watch hello --endpoints http://127.0.0.1:2379 --user root:jlib --rev=1 -w json
+```
+
+输出：两个事件记录分别对应上面的两次的修改，事件中含有 key、value、各类版本号等信息。
+
+``` json
+{
+	"Header": {
+		"cluster_id": 12297797944536498889,
+		"member_id": 17894252403103677144,
+		"revision": 243002,
+		"raft_term": 10
+	},
+	"Events": [{
+		"kv": {
+			"key": "aGVsbG8=",
+			"create_revision": 243001,
+			"mod_revision": 243001,
+			"version": 1,
+			"value": "d29ybGQx"
+		}
+	}, {
+		"kv": {
+			"key": "aGVsbG8=",
+			"create_revision": 243001,
+			"mod_revision": 243002,
+			"version": 2,
+			"value": "d29ybGQy"
+		}
+	}],
+	"CompactRevision": 0,
+	"Canceled": false,
+	"Created": false
+}
+```
+
+
 
 
 ## 查看 cluster leader 信息

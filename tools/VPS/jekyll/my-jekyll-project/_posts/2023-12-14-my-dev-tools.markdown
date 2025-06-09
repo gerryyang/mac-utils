@@ -8,6 +8,20 @@ categories: Tools
 * Do not remove this line (it will not be displayed)
 {:toc}
 
+
+# 变量命名
+
+制定命名规则，保持一致性，可参考一些编码标准如 https://google.github.io/styleguide/cppguide.html#Naming。多学些英文词汇，勤查字典，多看点开源代码。
+
+![twohardtings](/assets/images/202506/twohardtings.png)
+
+* https://google.github.io/styleguide/cppguide.html#Naming
+* https://unbug.github.io/codelf/
+* http://source-code-wordle.de/
+* http://mk.oa.com/q/257553?strict=true
+
+
+
 # 编译工具
 
 ## CMake 3.20.0

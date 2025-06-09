@@ -13,6 +13,37 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* spontaneous /spɒnˈteɪnɪəs/
+  + ADJ **Spontaneous** acts are not planned or arranged, but are done because someone suddenly wants to do them. 自然的; 自发的 (行为)
+    - Diana's house was crowded with happy people whose **spontaneous** outbursts of song were accompanied by lively music. 戴安娜的房子挤满了幸福的人们，他们在欢快音乐的伴奏下不由自主地唱起歌来。
+  + ADJ A **spontaneous** event happens because of processes within something rather than being caused by things outside it. 自然的 (事件)
+    - I had another **spontaneous** miscarriage at around the 16th to 18th week. 在大约第16至18周时我又一次自然流产了。
+
+
+* intuitive /ɪnˈtjuːɪtɪv/
+  + ADJ If you have an **intuitive** idea or feeling about something, you feel that it is true although you have no evidence or proof of it. 直觉的
+    - A positive pregnancy test soon confirmed her **intuitive** feelings. 阳性的孕检结果很快证实了她的直觉。
+
+
+* agile /ˈædʒaɪl/
+  + ADJ Someone who is **agile** can move quickly and easily. 敏捷的
+    - At 20 years old he was not as strong, as fast, as **agile** as he is now. 在他20岁时，他没有现在这样强壮、迅速、敏捷。
+  + ADJ If you have an **agile** mind, you think quickly and intelligently. 机敏的
+    - She was quick-witted and had an extraordinarily **agile** mind. 她很机智并且有一个特别敏锐的头脑。
+
+
+* comprehensive /ˌkɒmprɪˈhensɪv/
+  + ADJ Something that is **comprehensive** includes everything that is needed or relevant. 全面的
+    - The Rough Guide to Nepal is a **comprehensive** guide to the region. 《尼泊尔概览》是介绍该地区的一本全面指南。
+
+
+* intercept /ˌɪntəˈsept/
+  + V-T If you **intercept** someone or something that is travelling from one place to another, you stop them before they get to their destination. 拦截
+    - Gunmen **intercepted** him on his way to the airport. 持枪人在他去机场的路上截住了他。
+
+
+
 * phony /ˈfəʊni/
   + ADJ If you describe something as **phony**, you disapprove of it because it is false rather than genuine. 假的
   + ADJ If you say that someone is **phony**, you disapprove of them because they are pretending to be someone that they are not in order to deceive people. 虚伪的; 做作的

@@ -684,7 +684,7 @@ gdb -q -ex "show envir" -ex "quit" your_bin your_corefile | grep your_env
 
 ## 从 corefile 获取环境变量
 
-```
+``` bash
 gdb -q -ex "p *__environ" -ex "quit" your_bin your_corefile
 
 # 环境变量基本都是在core文件的末尾，所以只需要搜索后面的内容即可
