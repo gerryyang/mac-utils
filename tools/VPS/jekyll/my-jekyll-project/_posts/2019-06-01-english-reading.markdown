@@ -13,6 +13,8 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* consecutive /kənˈsekjətɪv/
+  + ADJ **Consecutive** periods of time or events happen one after the other without interruption. 连续的
 
 * spontaneous /spɒnˈteɪnɪəs/
   + ADJ **Spontaneous** acts are not planned or arranged, but are done because someone suddenly wants to do them. 自然的; 自发的 (行为)

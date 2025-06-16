@@ -684,14 +684,20 @@ gdb -q -ex "show envir" -ex "quit" your_bin your_corefile | grep your_env
 
 ## 从 corefile 获取环境变量
 
+[How to get environment variable from a core dump](https://stackoverflow.com/questions/44686478/how-to-get-environment-variable-from-a-core-dump)
+
 ``` bash
 gdb -q -ex "p *__environ" -ex "quit" your_bin your_corefile
+```
 
+![gdb_env1](/assets/images/202506/gdb_env1.png)
+
+``` bash
 # 环境变量基本都是在core文件的末尾，所以只需要搜索后面的内容即可
 tail -c 1048576  your_corefile | grep -a -o -P 'gerry=\K[^[:cntrl:]]*'
 ```
 
-[How to get environment variable from a core dump](https://stackoverflow.com/questions/44686478/how-to-get-environment-variable-from-a-core-dump)
+![gdb_env2](/assets/images/202506/gdb_env2.png)
 
 
 
