@@ -1310,9 +1310,8 @@ git clone --recurse-submodule --remote-submodules git@github.com:gerryyang/mac-u
 # 如果忘记了 --recurse-submodules
 git submodule update --init --recursive # 等价于 git submodule init 和 git submodule update
 
-# 添加子模块 (在根目录执行)
+# 添加子模块 (在需要添加此模块的目录下执行)
 git submodule add https://github.com/chaconinc/DbConnector
-git clone --recursive https://github.com/chaconinc/MainProject
 
 # https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt-sync--recursive--ltpathgt82308203
 git submodule sync
