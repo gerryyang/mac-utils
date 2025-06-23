@@ -4143,6 +4143,24 @@ The sections below list etcd client libraries by language.
 
 **etcd** is a consistent and durable key value store. The key value store is exposed through gRPC Services. etcd ensures the strongest consistency and durability guarantees for a distributed system. This specification enumerates(列举) the API guarantees made by etcd.
 
+## APIs to consider
+
+* **KV APIs**
+  + [Range](https://etcd.io/docs/v3.5/learning/api/#range)
+  + [Put](https://etcd.io/docs/v3.5/learning/api/#put)
+  + [Delete](https://etcd.io/docs/v3.5/learning/api/#delete-range)
+  + [Transaction](https://etcd.io/docs/v3.5/learning/api/#transaction)
+
+* **Watch APIs**
+  + [Watch](https://etcd.io/docs/v3.5/learning/api/#watch-api)
+
+* **Lease APIs**
+  + [Grant](https://etcd.io/docs/v3.5/learning/api/#obtaining-leases)
+  + [Revoke]
+  + [Keep alive](https://etcd.io/docs/v3.5/learning/api/#keep-alives)
+
+
+
 **KV API** allows for direct reading and manipulation of key value store. **Watch API** allows subscribing to key value store changes. **Lease API** allows assigning a time to live to a key.
 
 **Both KV and Watch APIs** allow access to not only the latest versions of keys, but also previous versions are accessible within a continuous history window, limited by a compaction operation. (**KV API** 和 **Watch API** 允许获取最新的数据和历史版本的数据，在不受压缩操作的影响前提下)
