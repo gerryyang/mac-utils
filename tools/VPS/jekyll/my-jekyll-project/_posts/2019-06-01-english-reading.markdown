@@ -13,6 +13,14 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* pedantic /pɪˈdæntɪk/
+  + ADJ If you say someone is **pedantic**, you mean that they are too concerned with unimportant details or traditional rules, especially in connection with academic subjects. 学究气的
+    - His lecture was so **pedantic** and uninteresting. 他的讲座学究气十足且没趣。
+
+* prominent /ˈprɒmɪnənt/
+  + ADJ Someone who is **prominent** is important and well-known. 重要的; 著名的
+  + ADJ Something that is **prominent** is very noticeable or is an important part of something else. 突出的
+
 * consecutive /kənˈsekjətɪv/
   + ADJ **Consecutive** periods of time or events happen one after the other without interruption. 连续的
 

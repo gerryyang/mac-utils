@@ -541,5 +541,6 @@ This isn't a good idea, though - `TIME_WAIT` exists for a reason (to ensure that
 * https://github.com/chenshuo/tcpip-study
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
 * [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll/#.ZAmnruxBw0Q)
+* [Tips for using the sockets API - Erik Rigtorp](https://rigtorp.se/sockets/)
 
 

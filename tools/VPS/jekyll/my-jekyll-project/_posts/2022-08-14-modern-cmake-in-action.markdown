@@ -155,7 +155,7 @@ First, finding external dependency Boost
 
 ![modern-cmake-demo10](/assets/images/202208/modern-cmake-demo10.png)
 
-![modern-cmake-demo11](/assets/images/202208/modern-cmake-deme11.png)
+![modern-cmake-demo11](/assets/images/202208/modern-cmake-demo11.png)
 
 ![modern-cmake-demo12](/assets/images/202208/modern-cmake-demo12.png)
 

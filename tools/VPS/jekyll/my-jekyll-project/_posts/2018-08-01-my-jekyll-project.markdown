@@ -269,6 +269,16 @@ refer:
 
 ## MacOS 环境
 
+### Mac 键盘快捷键
+
+* 截屏或录屏：`Shift+Command+5`
+* 聚焦搜索：`Command+空格键`
+* 从访达窗口进行聚焦搜索：`Command+Option+空格键`
+
+
+More: https://support.apple.com/zh-cn/102650
+
+
 ### 常用设置
 
 * Mac触控板三指拖移功能
@@ -278,10 +288,6 @@ refer:
 * 触发角
 
 桌面与屏幕保护程序 -> 触发角，可设置屏幕四个角触发事件。例如，左上角启动屏幕保护程序
-
-* 系统截屏或录像
-
-Shift+Command+5
 
 * 切换中英文输入法的快捷键
 

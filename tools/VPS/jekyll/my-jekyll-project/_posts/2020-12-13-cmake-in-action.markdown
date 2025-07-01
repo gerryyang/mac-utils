@@ -1832,6 +1832,24 @@ popd
 
 ```
 
+# CMake UNITY_BUILD (合并文件编译)
+
+https://cmake.org/cmake/help/latest/prop_tgt/UNITY_BUILD.html#unity-build
+
+一种编译优化技术，把多个源文件合并成一个大文件再进行编译和链接。
+
+When this property is set to true, the target source files will be combined into batches for faster compilation. This is done by creating a (set of) unity sources which `#include` the original sources, then compiling these unity sources instead of the originals. This is known as a **Unity or Jumbo build**.
+
+> ODR (One definition rule) errors
+
+When multiple source files are included into one source file, as is done for unity builds, it can potentially lead to ODR errors. CMake provides a number of measures to help address such problems.
+
+
+
+
+
+
+
 
 # Tips
 
