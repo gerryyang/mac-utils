@@ -2838,45 +2838,104 @@ used-heap-size: 193MB
 
 ## 生成 compile_commands.json 文件
 
-生成方案：https://github.com/grailbio/bazel-compilation-database
+### 生成方案
 
-`compile_commands.json` 是一个 JSON 格式的文件，通常由构建系统（如 CMake、Bazel 等）生成。它包含了在构建项目时用于编译每个源文件的完整命令行。这个文件对于代码编辑器和其他工具（如静态分析器、代码格式化工具等）非常有用，因为它们可以通过解析 `compile_commands.json` 文件来获取源文件的编译选项、包含路径、宏定义等信息，从而提供更准确的代码提示、错误检查和自动补全功能。
+* clangd 官方建议的方案：https://github.com/hedronvision/bazel-compile-commands-extractor
+* 其他方案（已停止维护，经测试使用发现功能存在问题，会生成多条相同的头文件且其中一条头文件使用的 include 路径不对，导致 vscode-clangd 扩展符号代码跳转功能异常，不建议使用）：https://github.com/grailbio/bazel-compilation-database
 
-`compile_commands.json` 文件的格式如下：
+
+### 标准说明 [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (编译数据库)
+
+Tools based on the **C++ Abstract Syntax Tree** need full information how to parse **a translation unit**. Usually this information is **implicitly** available in the **build system**, but running tools as part of the build system is not necessarily the best solution:
+
+* Build systems are inherently change driven, so running multiple tools over the same code base without changing the code does not fit into the architecture of many build systems.
+
+* Figuring out whether things have changed is often an IO bound process; this makes it hard to build low latency end user tools based on the build system.
+
+* Build systems are inherently sequential in the build graph, for example due to generated source code. While tools that run independently of the build still need the generated source code to exist, running tools multiple times over unchanging source does not require serialization of the runs according to the build dependency graph.
+
+
+JSON 编译数据库格式规范（JSON Compilation Database Format）是一种用于记录 C/C++ 项目编译信息的标准化格式，其核心目的是让代码分析工具（如静态分析器、代码索引工具等）能够在不依赖原始构建系统的前提下，独立获取并复现单个编译单元的完整编译信息。
+
+具体优势如下：
+
+* 独立于构建系统运行
+  + 工具直接读取 JSON 文件中的编译命令，无需与构建系统交互，避免了变更驱动机制的限制。
+  + 示例：clang-tidy 静态分析工具可通过该文件直接获取编译参数，无需触发 CMake 的构建流程。
+
+* 减少 IO 开销
+  + 编译信息被持久化存储，工具无需反复检查文件系统状态，显著降低延迟。
+  + 示例：IDE 可以快速加载 JSON 文件中的编译命令，立即提供代码导航功能。
+
+* 支持并行化处理
+  + 工具可并行处理多个编译单元，无需遵循构建系统的串行依赖。
+  + 示例：代码索引工具可同时分析多个 .cpp 文件，而无需等待生成代码的任务完成。
+
+
+### Supported Systems
+
+* Currently `CMake` (since 2.8.5) supports generation of compilation databases for Unix Makefile builds (Ninja builds in the works) with the option `CMAKE_EXPORT_COMPILE_COMMANDS`.
+
+* `Bazel` can export a compilation database via [this extractor extension](https://github.com/hedronvision/bazel-compile-commands-extractor).
+
+* Clang’s tooling interface supports reading compilation databases; see the [LibTooling documentation](https://clang.llvm.org/docs/LibTooling.html). libclang and its python bindings also support this (since clang 3.2); see [CXCompilationDatabase.h](https://clang.llvm.org/doxygen/group__COMPILATIONDB.html).
+
+
+### Format
+
+A compilation database is a `JSON` file, which consist of an array of “command objects”, where each command object specifies one way a translation unit is compiled in the project.
+
+Each command object contains the translation unit’s main file, the working directory of the compile run and the actual compile command.
+
+Example:
 
 ``` json
 [
-  {
-    "directory": "path/to/build/directory",
-    "command": "full/compilation/command",
-    "file": "path/to/source/file"
-  },
+  { "directory": "/home/user/llvm/build",
+    "arguments": ["/usr/bin/clang++", "-Irelative", "-DSOMEDEF=With spaces, quotes and \\-es.", "-c", "-o", "file.o", "file.cc"],
+    "file": "file.cc" },
+
+  { "directory": "/home/user/llvm/build",
+    "command": "/usr/bin/clang++ -Irelative -DSOMEDEF=\"With spaces, quotes and \\-es.\" -c -o file.o file.cc",
+    "file": "file2.cc" },
+
   ...
 ]
 ```
 
-* `directory`：构建目录的绝对路径。这是执行编译命令的工作目录。
-* `command`：用于编译源文件的完整命令行。这通常包括编译器（如 gcc 或 clang）、编译选项（如 -O2、-g 等）、包含路径（如 -I/path/to/include）、宏定义（如 -DDEBUG）以及源文件和目标文件的路径。
-* `file`：源文件的绝对路径。
+The contracts for each field in the command object are:
 
-`compile_commands.json` 文件包含一个 JSON 数组，数组中的每个元素都是一个 JSON 对象，表示一个源文件的编译信息。以下是一个简单的示例：
+* **directory**: The working directory of the compilation. All paths specified in the command or file fields must be either absolute or relative to this directory.
 
-``` json
-[
-  {
-    "directory": "/home/user/my_project/build",
-    "command": "/usr/bin/gcc -I/home/user/my_project/include -O2 -g -c /home/user/my_project/src/main.c -o /home/user/my_project/build/main.o",
-    "file": "/home/user/my_project/src/main.c"
-  },
-  {
-    "directory": "/home/user/my_project/build",
-    "command": "/usr/bin/gcc -I/home/user/my_project/include -O2 -g -c /home/user/my_project/src/utils.c -o /home/user/my_project/build/utils.o",
-    "file": "/home/user/my_project/src/utils.c"
-  }
-]
+* **file**: The main translation unit source processed by this compilation step. This is used by tools as the key into the compilation database. There can be multiple command objects for the same file, for example if the same source file is compiled with different configurations.
+
+* **arguments**: The compile command argv as list of strings. This should run the compilation step for the translation unit file. `arguments[0]` should be the executable name, such as clang++. Arguments should not be escaped, but ready to pass to `execvp()`.
+
+* **command**: The compile command as a single shell-escaped string. Arguments may be shell quoted and escaped following platform conventions, with ‘"’ and ‘\’ being the only special characters. Shell expansion is not supported.
+
+> Either **arguments** or **command** is required. **arguments** is preferred, as shell (un)escaping is a possible source of errors.
+
+* **output**: The name of the output created by this compilation step. **This field is optional**. It can be used to distinguish different processing modes of the same input file.
+
+
+### Build System Integration
+
+The convention is to name the file **compile_commands.json** and **put it at the top of the build directory**. Clang tools are pointed to the top of the build directory to detect the file and use the compilation database to parse C++ code in the source tree.
+
+
+### Alternatives
+
+For simple projects, Clang tools also recognize a **compile_flags.txt** file. This should contain one argument per line. The same flags will be used to compile any file.
+
+Example:
+
+```
+-xc++
+-I
+libwidget/include/
 ```
 
-这个示例中的 `compile_commands.json` 文件包含了两个源文件（`main.c` 和 `utils.c`）的编译信息。通过解析这个文件，代码编辑器和其他工具可以获取这些源文件的编译选项和包含路径，从而提供更准确的代码提示和错误检查功能。
+Here `-I libwidget/include` is two arguments, and so becomes two lines. Paths are relative to the directory containing **compile_flags.txt**.
 
 
 

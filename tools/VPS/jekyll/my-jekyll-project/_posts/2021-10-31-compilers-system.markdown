@@ -123,30 +123,70 @@ JSON 编译数据库格式规范（JSON Compilation Database Format）是一种�
   + 工具可并行处理多个编译单元，无需遵循构建系统的串行依赖。
   + 示例：代码索引工具可同时分析多个 .cpp 文件，而无需等待生成代码的任务完成。
 
+### Supported Systems
 
-JSON 文件格式示例：
+* Currently `CMake` (since 2.8.5) supports generation of compilation databases for Unix Makefile builds (Ninja builds in the works) with the option `CMAKE_EXPORT_COMPILE_COMMANDS`.
 
-一个典型的编译数据库文件（如 `compile_commands.json`）包含多个编译命令条目，每个条目对应一个源文件的编译过程。格式如下：
+* `Bazel` can export a compilation database via [this extractor extension](https://github.com/hedronvision/bazel-compile-commands-extractor).
+
+* Clang’s tooling interface supports reading compilation databases; see the [LibTooling documentation](https://clang.llvm.org/docs/LibTooling.html). libclang and its python bindings also support this (since clang 3.2); see [CXCompilationDatabase.h](https://clang.llvm.org/doxygen/group__COMPILATIONDB.html).
+
+
+### Format
+
+A compilation database is a `JSON` file, which consist of an array of “command objects”, where each command object specifies one way a translation unit is compiled in the project.
+
+Each command object contains the translation unit’s main file, the working directory of the compile run and the actual compile command.
+
+Example:
 
 ``` json
 [
-  {
-    "directory": "/path/to/build/dir",
-    "file": "src/main.cpp",
-    "command": "/usr/bin/clang++ -Iinclude -std=c++17 -c src/main.cpp"
-  },
-  {
-    "directory": "/path/to/build/dir",
-    "file": "src/util.cpp",
-    "arguments": ["/usr/bin/clang++", "-Iinclude", "-std=c++17", "-c", "src/util.cpp"]
-  }
+  { "directory": "/home/user/llvm/build",
+    "arguments": ["/usr/bin/clang++", "-Irelative", "-DSOMEDEF=With spaces, quotes and \\-es.", "-c", "-o", "file.o", "file.cc"],
+    "file": "file.cc" },
+
+  { "directory": "/home/user/llvm/build",
+    "command": "/usr/bin/clang++ -Irelative -DSOMEDEF=\"With spaces, quotes and \\-es.\" -c -o file.o file.cc",
+    "file": "file2.cc" },
+
+  ...
 ]
 ```
 
-* `directory`：编译命令执行的工作目录（用于解析相对路径）。
-* `file`：源文件的绝对路径或相对于 `directory` 的路径。
-* `command` 或 `arguments`：完整的编译命令（字符串形式或拆分后的参数列表）。
+The contracts for each field in the command object are:
 
+* **directory**: The working directory of the compilation. All paths specified in the command or file fields must be either absolute or relative to this directory.
+
+* **file**: The main translation unit source processed by this compilation step. This is used by tools as the key into the compilation database. There can be multiple command objects for the same file, for example if the same source file is compiled with different configurations.
+
+* **arguments**: The compile command argv as list of strings. This should run the compilation step for the translation unit file. `arguments[0]` should be the executable name, such as clang++. Arguments should not be escaped, but ready to pass to `execvp()`.
+
+* **command**: The compile command as a single shell-escaped string. Arguments may be shell quoted and escaped following platform conventions, with ‘"’ and ‘\’ being the only special characters. Shell expansion is not supported.
+
+> Either **arguments** or **command** is required. **arguments** is preferred, as shell (un)escaping is a possible source of errors.
+
+* **output**: The name of the output created by this compilation step. **This field is optional**. It can be used to distinguish different processing modes of the same input file.
+
+
+### Build System Integration
+
+The convention is to name the file **compile_commands.json** and **put it at the top of the build directory**. Clang tools are pointed to the top of the build directory to detect the file and use the compilation database to parse C++ code in the source tree.
+
+
+### Alternatives
+
+For simple projects, Clang tools also recognize a **compile_flags.txt** file. This should contain one argument per line. The same flags will be used to compile any file.
+
+Example:
+
+```
+-xc++
+-I
+libwidget/include/
+```
+
+Here `-I libwidget/include` is two arguments, and so becomes two lines. Paths are relative to the directory containing **compile_flags.txt**.
 
 
 

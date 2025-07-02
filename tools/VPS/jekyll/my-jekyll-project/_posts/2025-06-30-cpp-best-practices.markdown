@@ -169,6 +169,9 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
   + [MPMCQueue](https://github.com/rigtorp/MPMCQueue)
   + [Optimizing a ring buffer for throughput](https://rigtorp.se/ringbuffer/)
 
+* HashMap
+  + [HashMap - rigtorp](https://github.com/rigtorp/HashMap)
+
 
 
 
