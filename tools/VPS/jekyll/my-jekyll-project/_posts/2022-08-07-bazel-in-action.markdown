@@ -2838,10 +2838,46 @@ used-heap-size: 193MB
 
 ## 生成 compile_commands.json 文件
 
+> The [JSON compilation database](http://clang.llvm.org/docs/JSONCompilationDatabase.html) is used in the clang project to provide information on how a single compilation unit is processed. With this, it is easy to re-run the compilation with alternate programs.
+
 ### 生成方案
 
-* clangd 官方建议的方案：https://github.com/hedronvision/bazel-compile-commands-extractor
-* 其他方案（已停止维护，经测试使用发现功能存在问题，会生成多条相同的头文件且其中一条头文件使用的 include 路径不对，导致 vscode-clangd 扩展符号代码跳转功能异常，不建议使用）：https://github.com/grailbio/bazel-compilation-database
+#### bazel-compile-commands-extractor
+
+clangd 官方建议的方案：https://github.com/hedronvision/bazel-compile-commands-extractor
+
+#### bazel-compilation-database
+
+已停止维护，经测试使用发现功能存在问题，会生成多条相同的头文件且其中一条头文件使用的 include 路径不对，导致 vscode-clangd 扩展符号代码跳转功能异常，不建议使用。https://github.com/grailbio/bazel-compilation-database
+
+#### Bear
+
+Bear is a tool that generates a compilation database for clang tooling.
+
+Some build system natively supports the generation of JSON compilation database. For projects which does not use such build tool, Bear generates the JSON file during the build process.
+
+> Troubleshooting
+
+* https://github.com/rizsotto/Bear/wiki/Troubleshooting
+* https://github.com/rizsotto/Bear/issues
+
+> How it works?
+
+To build the compilation database, Bear split this work into two major steps:
+
+1. It execute the build and intercepts the executed commands (most likely the compiler calls).
+2. It read the command execution log, and build the final output (deduce the semantic of the commands).
+
+> The output is empty
+
+The most common cause for empty outputs is that the build command did not execute any commands. The reason for that could be, because incremental builds not running the compilers if everything is up-to-date. Remember, Bear does not understand the build file (eg.: makefile), but intercepts the executed commands.
+
+> TODO:
+
+参考[gRPC call failed: Socket closed #636](https://github.com/rizsotto/Bear/issues/636)代码示例，使用 bear 进行测试出现：“recognition failed: No tools recognize this execution.” 错误。
+
+
+
 
 
 ### 标准说明 [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (编译数据库)

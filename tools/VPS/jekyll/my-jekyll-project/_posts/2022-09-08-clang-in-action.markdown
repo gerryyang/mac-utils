@@ -748,6 +748,13 @@ The clangd server also supports a number of feature customizations using its [co
 > 注意：
 > 1. 在 vscode 扩展中，clangd 比 C/C++ 扩展执行效率更高且功能更丰富，但是 clangd 需要使用 GLIBC_2.18 版本。
 > 2. clangd 可以单独下载然后在 vscode 配置中指定安装路径，也可以通过 vscode 的 clangd 扩展自动提示下载。
+> 3. 禁用或卸载 C/C++ 扩展，防止相互影响
+
+``` bash
+code --install-extension llvm-vs-code-extensions.vscode-clangd
+# We also need make sure that Microsoft's C++ extension is not involved and interfering.
+code --uninstall-extension ms-vscode.cpptools
+```
 
 ## clangd 作为 vscode 扩展的配置方法
 

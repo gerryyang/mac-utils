@@ -13,6 +13,10 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* dialect /ˈdaɪəlekt/
+  + N-COUNTA **dialect** is a form of a language that is spoken in a particular area. 方言
+    - It is often appropriate to use the local **dialect** to communicate your message. 用方言来交流信息往往很合适。
+
 * pedantic /pɪˈdæntɪk/
   + ADJ If you say someone is **pedantic**, you mean that they are too concerned with unimportant details or traditional rules, especially in connection with academic subjects. 学究气的
     - His lecture was so **pedantic** and uninteresting. 他的讲座学究气十足且没趣。

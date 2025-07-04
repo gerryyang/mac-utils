@@ -19,6 +19,8 @@ $ rpm -qf /lib64/libstdc++.so.6
 libstdc++-8.3.1-5.el8.0.2.x86_64
 ```
 
+* [C++ compiler support](https://en.cppreference.com/w/cpp/compiler_support.html)
+
 
 # Conventions
 

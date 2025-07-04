@@ -98,6 +98,8 @@ For languages that compile on a file-by-file basis, effective IPO across [transl
 
 ## [JSON Compilation Database Format Specification](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (编译数据库)
 
+> The [JSON compilation database](http://clang.llvm.org/docs/JSONCompilationDatabase.html) is used in the clang project to provide information on how a single compilation unit is processed. With this, it is easy to re-run the compilation with alternate programs.
+
 Tools based on the **C++ Abstract Syntax Tree** need full information how to parse **a translation unit**. Usually this information is **implicitly** available in the **build system**, but running tools as part of the build system is not necessarily the best solution:
 
 * Build systems are inherently change driven, so running multiple tools over the same code base without changing the code does not fit into the architecture of many build systems.
