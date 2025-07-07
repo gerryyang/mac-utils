@@ -135,6 +135,7 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 
 * 模版实例化工具：https://cppinsights.io/
 * 编译运行工具：https://wandbox.org/
+* 代码统计工具 (Count Lines of Code)：https://github.com/AlDanial/cloc
 
 
 

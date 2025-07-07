@@ -13,6 +13,28 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* hover /ˈhɒvə(r)/
+  + V-I To **hover** means to stay in the same position in the air without moving forward or backward. Many birds and insects can **hover** by moving their wings very quickly. (鸟、昆虫等通过快速扇动翅膀在原地) 盘旋
+    - Beautiful butterflies **hovered** above the wild flowers. 美丽的蝴蝶在野花上方盘旋。
+  + V-I If you **hover**, you stay in one place and move slightly in a nervous way, for example because you cannot decide what to do. (人) 徘徊
+    - Judith was **hovering** in the doorway. 朱迪丝在门口徘徊。
+  + V-I If you **hover**, you are in an uncertain situation or state of mind. 处于不稳定状态
+    - She **hovered** on the brink of death for three months as doctors battled to save her. 3个月来在医生们奋力挽救她的生命的过程中，她一直处在死亡的边缘。
+  + V-I If something such as a price, value, or score **hovers** around a particular level, it stays at more or less that level and does not change much. (价格、价值或分数等) 徘徊 (在某个水平上下)
+    - In September 1989 the exchange rate **hovered** around 140 yen to the dollar. 在1989年9月，汇率一直在140日元比1美元左右徘徊。
+
+* ascending /əˈsɛndɪŋ/
+  + ADJ If a group of things is arranged in **ascending** order, each thing is bigger, greater, or more important than the thing before it. 升 (序) 的
+
+* descending /dɪˈsendɪŋ/
+  + ADJ When a group of things is listed or arranged in **descending** order, each thing is smaller or less important than the thing before it. 递降的
+
+
+* decouple /diːˈkʌpl/
+  + V-T If two countries, organizations, or ideas that were connected in some way are **decoupled**, the connection between them is ended. 分离
+    - The issue threatened to **decouple** Europe from the United States. 这个问题威胁到欧洲从美国分离出来。
+
+
 * dialect /ˈdaɪəlekt/
   + N-COUNTA **dialect** is a form of a language that is spoken in a particular area. 方言
     - It is often appropriate to use the local **dialect** to communicate your message. 用方言来交流信息往往很合适。
