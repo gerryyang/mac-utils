@@ -2145,6 +2145,144 @@ ls -l *.o | sort -k5,5 -n -r | head
 `sort -k 5,5 -n -r`：使用 sort 命令按照第 5 列（即文件大小）进行逆序排序。`-k 5,5` 表示按照第 5 列排序，`-n` 表示按照数值排序，`-r` 表示逆序排序。这里的两个数字 `5,5` 分别表示键的开始位置和结束位置，也就是说，只关注第 5 列。如果写的是 `5,6`，那就表示关注第 5 列和第 6 列，这两列的内容会被拼接在一起作为排序的关键字。
 
 
+## uniq
+
+需求：统计文件中不重复的行数。
+
+* 方法 1：先排序再用 uniq。
+
+``` bash
+sort your_file.txt | uniq | wc -l
+```
+
+* 方法 2：直接使用 sort -u（更高效）
+
+``` bash
+# sort -u：直接去重并排序，比 sort | uniq 更高效
+sort -u your_file.txt | wc -l
+```
+
+* 方法 3：使用 awk（不依赖排序）
+
+``` bash
+# !seen[$0]++：仅当行第一次出现时，seen[$0] 为 0（即 !0 为真），然后 count++
+# END {print count}：最后打印不重复的行数
+awk '!seen[$0]++ {count++} END {print count}' your_file.txt
+```
+
+> 总结：如果你的文件很大，推荐 `awk` 方法，因为它不需要排序，速度更快。如果文件较小，`sort -u` 是最简洁的方式。
+
+完整的脚本：
+
+``` bash
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <filename>"
+    exit 1
+fi
+
+filename="$1"
+
+if [ ! -f "$filename" ]; then
+    echo "Error: File '$filename' not found."
+    exit 1
+fi
+
+# 方法 1: sort + uniq
+unique_lines=$(sort "$filename" | uniq | wc -l)
+echo "Number of unique lines (sort | uniq): $unique_lines"
+
+# 方法 2: sort -u (更高效)
+unique_lines=$(sort -u "$filename" | wc -l)
+echo "Number of unique lines (sort -u): $unique_lines"
+
+# 方法 3: awk (不依赖排序)
+unique_lines=$(awk '!seen[$0]++ {count++} END {print count}' "$filename")
+echo "Number of unique lines (awk): $unique_lines"
+```
+
+
+uniq 是 Linux/Unix 系统中用于**过滤或统计连续重复行**的命令，通常需要**先排序（sort）**才能正确去重。
+
+> 注意：**`uniq file.txt` 直接对未排序的文件去重结果是可能不准确的。因为 uniq 只处理连续重复行，未排序的文件可能漏掉非连续的重复行。**。
+
+
+``` bash
+# 先排序（sort），再用 uniq 去重（仅保留不重复的行）
+sort file.txt | uniq
+
+# 统计不重复的行数
+sort file.txt | uniq | wc -l
+
+# 仅显示重复的行（至少出现 2 次）
+sort file.txt | uniq -d
+
+# 仅显示不重复的行（只出现 1 次）
+sort file.txt | uniq -u
+
+# 统计每行出现的次数
+# -c（--count）显示每行的重复次数
+sort file.txt | uniq -c
+
+# 忽略大小写（-i）
+sort file.txt | uniq -i
+
+# 只检查前 N 个字符（-w）
+# -w 5 只比较每行的前 5 个字符，后面的内容不影响去重
+sort file.txt | uniq -w 5
+
+# 跳过前 N 个字符（-s）
+# -s 3 跳过每行的前 3 个字符，再进行比较
+sort file.txt | uniq -s 3
+
+# 跳过前 N 个字段（-f）
+# -f 2 跳过前 2 个字段（以空格或制表符分隔），再进行比较
+sort file.txt | uniq -f 2
+
+# 结合 -c 和 -d 显示重复行的次数
+# -cd 只显示 重复行及其出现次数
+sort file.txt | uniq -cd
+
+# 去重并保存到新文件
+sort file.txt | uniq > unique_lines.txt
+```
+
+
+> 注意：uniq 命令的 -u（--unique）选项 和 不带 -u 时的区别。
+
+`uniq`（不带 -u）默认行为是保留所有行的唯一副本，即：如果一行是**连续重复的**，只输出一次。如果一行**没有重复**，仍然会输出。
+
+例如：apple 和 orange 是重复的，只输出一次。banana 和 grape 是唯一的，仍然输出。
+
+```
+$ cat file.txt
+apple
+apple
+banana
+orange
+orange
+grape
+
+$ sort file.txt | uniq
+apple
+banana
+grape
+orange
+```
+
+`uniq -u` 仅输出完全没有重复的行（即 唯一行，仅出现 1 次的行）。所有重复的行（即使只出现 2 次）都会被过滤掉。
+
+例如：apple 和 orange 是重复的，不输出。banana 和 grape 是唯一的，输出。
+
+```
+$ sort file.txt | uniq -u
+banana
+grape
+```
+
+
+
 
 # Example
 

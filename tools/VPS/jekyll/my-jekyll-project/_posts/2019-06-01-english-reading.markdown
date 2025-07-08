@@ -13,6 +13,15 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* expedite /ˈekspədaɪt/
+  + V-T If you **expedite** something, you cause it to be done more quickly. 加快
+    - We tried to help you expedite your plans. 我们试图帮你加快你的计划。
+
+* dilemma /dɪˈlemə/
+  + N-COUNT A **dilemma** is a difficult situation in which you have to choose between two or more alternatives. 进退两难的局面
+    - He was faced with the dilemma of whether or not to return to his country. 他面临着是否回国的艰难选择。
+
 * hover /ˈhɒvə(r)/
   + V-I To **hover** means to stay in the same position in the air without moving forward or backward. Many birds and insects can **hover** by moving their wings very quickly. (鸟、昆虫等通过快速扇动翅膀在原地) 盘旋
     - Beautiful butterflies **hovered** above the wild flowers. 美丽的蝴蝶在野花上方盘旋。

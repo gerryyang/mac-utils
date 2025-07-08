@@ -134,6 +134,43 @@ JSON 编译数据库格式规范（JSON Compilation Database Format）是一种�
 * Clang’s tooling interface supports reading compilation databases; see the [LibTooling documentation](https://clang.llvm.org/docs/LibTooling.html). libclang and its python bindings also support this (since clang 3.2); see [CXCompilationDatabase.h](https://clang.llvm.org/doxygen/group__COMPILATIONDB.html).
 
 
+> 注意：CMake 生成的 compile_commands.json 文件中只有 `.cpp` 的编译命令，而 Bazel 使用 [this extractor extension](https://github.com/hedronvision/bazel-compile-commands-extractor) 方案生成的 compile_commands.json 文件还会包含 `.h` 的编译命令，导致生成的 compile_commands.json 文件较大。此问题可参考这个 issue [Provide more specifics about headers in compile_commands.json #213](https://github.com/hedronvision/bazel-compile-commands-extractor/issues/213)
+
+具体原因是：
+
+参考 [this extractor extension](https://github.com/hedronvision/bazel-compile-commands-extractor) 工具的[解释](https://github.com/hedronvision/bazel-compile-commands-extractor/blob/1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93/refresh_compile_commands.bzl#L34-L37)：
+
+``` bash
+    # Using ccls or another tool that doesn't want or need headers in compile_commands.json?
+        # exclude_headers = "all", # By default, we include entries for headers to support clangd, working around https://github.com/clangd/clangd/issues/123
+        # ^ excluding headers will speed up compile_commands.json generation *considerably* because we won't need to preprocess your code to figure out which headers you use.
+        # However, if you use clangd and are looking for speed, we strongly recommend you follow the instructions below instead, since clangd is going to regularly infer the wrong commands for headers and give you lots of annoyingly unnecessary red squigglies.
+
+    # Need things to run faster? [Either for compile_commands.json generation or clangd indexing.]
+    # First: You might be able to refresh compile_commands.json slightly less often, making the current runtime okay.
+        # If you're adding files, clangd should make pretty decent guesses at completions, using commands from nearby files. And if you're deleting files, there's not a problem. So you may not need to rerun refresh.py on every change to BUILD files. Instead, maybe refresh becomes something you run every so often when you can spare the time, making the current runtime okay.
+        # If that's not enough, read on.
+    # If you don't care about the implementations of external dependencies:
+        # Then skip adding entries for compilation in external workspaces with
+        # exclude_external_sources = True,
+        # ^ Defaults to False, so the broadest set of features are supported out of the box, without prematurely optimizing.
+    # If you don't care about browsing headers from external workspaces or system headers, except for a CTRL/CMD+click every now and then:
+        # Then no need to add entries for their headers, because clangd will correctly infer from the CTRL/CMD+click (but not a quick open or reopen).
+        # exclude_headers = "external",
+    # Still not fast enough?
+        # Make sure you're specifying just the targets you care about by setting `targets`, above.
+```
+
+再参考 [this extractor extension](https://github.com/hedronvision/bazel-compile-commands-extractor) 工具的[另一个解释](https://github.com/hedronvision/bazel-compile-commands-extractor/blob/1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93/refresh.template.py#L665-L667)：由于 clangd 的 [Use parsed files to improve header compile commands #123](https://github.com/clangd/clangd/issues/123) 问题，**bazel-compile-commands-extractor 工具因此需要 apply commands to headers and sources**。
+
+```
+    # Note: We need to apply commands to headers and sources.
+    # Why? clangd currently tries to infer commands for headers using files with similar paths. This often works really poorly for header-only libraries. The commands should instead have been inferred from the source files using those libraries... See https://github.com/clangd/clangd/issues/123 for more.
+    # When that issue is resolved, we can stop looking for headers and just return the single source file.
+```
+
+
+
 ### Format
 
 A compilation database is a `JSON` file, which consist of an array of “command objects”, where each command object specifies one way a translation unit is compiled in the project.

@@ -108,9 +108,47 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 * Build and run your tests with [sanitizers](https://github.com/google/sanitizers) enabled.
 * [AddressSanitizer (ASan) - A Fast Memory Error Detector](http://gerryyang.com/linux%20performance/2021/10/15/address-sanitizer.html)
 
-* [CPP Cpplint in Action](http://gerryyang.com/c/c++/2022/03/31/cpp-cpplint-in-action.html)
+* [CPP Cpplint in Action](http://gerryyang.com/c/c++/2022/03/31/cpp-cpplint-in-action.html) Cpplint 是一个 Python 编写的基于 Google 代码规范的检测工具。它只是一个代码风格检测工具，其并不对代码逻辑、语法错误等进行检查。More: https://en.wikipedia.org/wiki/Cpplint
 
 * Use [static analysis](https://en.wikipedia.org/wiki/Static_program_analysis) ([clang-tidy](https://clang.llvm.org/extra/clang-tidy/), [cppcheck](http://cppcheck.sourceforge.net/), [coverity](https://scan.coverity.com/), [PVS-Studio](https://www.viva64.com/en/pvs-studio/)).
+
+Clang 项目也提供了其他一些工具，包括代码的静态检查工具 [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) 。这是一个比较全面的工具，它除了会提示你危险的用法，也会告诉你如何去现代化你的代码。默认情况下，Clang-Tidy 只做基本的分析。你也可以告诉它你想现代化你的代码和提高代码的可读性：
+
+```
+clang-tidy --checks='clang-analyzer-*,modernize-*,readability-*' test.cpp
+```
+
+* Clang-Tidy 还是一个比较“重”的工具。它需要有一定的配置，需要能看到文件用到的头文件，运行的时间也会较长。而 [Cppcheck](https://github.com/danmar/cppcheck) 就是一个非常轻量的工具了。它运行速度飞快，看不到头文件、不需要配置就能使用。它跟 Clang-Tidy 的重点也不太一样：它强调的是发现代码可能出问题的地方，而不太着重代码风格问题，两者功能并不完全重叠。有条件的情况下，这两个工具可以一起使用。
+
+* [Valgrind](https://valgrind.org/) 算是一个老牌工具了。它是一个非侵入式的排错工具。根据 Valgrind 的文档，它会导致可执行文件的速度减慢 20 至 30 倍。但它可以在不改变可执行文件的情况下，只要求你在编译时增加产生调试信息的命令行参数（`-g`），即可查出内存相关的错误。
+
+``` cpp
+int main()
+{
+  char* ptr = new char[20];
+}
+```
+
+在 Linux 上使用 `g++ -g test.cpp` 编译之后，然后使用 `valgrind --leak-check=full ./a.out` 检查运行结果，得到的输出会如下所示：
+
+![valgrind](/assets/images/201911/valgrind.png)
+
+即其中包含了内存泄漏的信息，包括内存是从什么地方泄漏的。Valgrind 的功能并不只是内存查错，也包含了多线程问题分析等其他功能。要进一步了解相关信息，请查阅其文档。
+
+* 在 [nvwa](https://github.com/adah1972/nvwa/) 项目里，我也包含了一个很小的内存泄漏检查工具。它的最大优点是小巧，并且对程序运行性能影响极小；缺点主要是不及 Valgrind 易用和强大，只能检查 new 导致的内存泄漏，并需要侵入式地对项目做修改。
+
+``` bash
+c++ test.cpp \../nvwa/nvwa/debug_new.cpp
+```
+
+* [clangd-tidy](https://github.com/lljbash/clangd-tidy), A Faster Alternative to clang-tidy
+
+[Why is clang-tidy in clangd so much faster than (run-)clang-tidy itself?](https://stackoverflow.com/questions/76531831/why-is-clang-tidy-in-clangd-so-much-faster-than-run-clang-tidy-itself)
+
+* [facebook/infer](https://github.com/facebook/infer) A static analyzer for Java, C, C++, and Objective-C
+
+[Getting started with Infer](https://fbinfer.com/docs/getting-started/)
+
 
 
 # Debug
