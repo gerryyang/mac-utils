@@ -169,6 +169,21 @@ JSON 编译数据库格式规范（JSON Compilation Database Format）是一种�
     # When that issue is resolved, we can stop looking for headers and just return the single source file.
 ```
 
+其他相关的issue:
+
+* [compile_commands.json contains entries for headers! And it takes a little while to generate! ~20s on the Hedron main repo at the time of writing. Could we speed it up? #5](https://github.com/hedronvision/bazel-compile-commands-extractor/issues/5) (此 issue 包含了更多讨论的信息)
+* [compile_commands.json is large! Could we make it smaller? #6](https://github.com/hedronvision/bazel-compile-commands-extractor/issues/6)
+* [Improve compile_commands refresh time. #24](https://github.com/hedronvision/bazel-compile-commands-extractor/issues/24)
+* [Same compile command repeated many times. #106](https://github.com/hedronvision/bazel-compile-commands-extractor/issues/106)
+
+
+如果不想对头文件生成编译命令，可以通过设置 `exclude_headers = "all"` 来实现：
+
+```
+Using ccls or another tool that, unlike clangd, doesn't want or need headers in compile_commands.json?
+Similar to the above, we'll use refresh_compile_commands for configuration, but instead of setting targets, set exclude_headers = "all".
+```
+
 
 
 ### Format

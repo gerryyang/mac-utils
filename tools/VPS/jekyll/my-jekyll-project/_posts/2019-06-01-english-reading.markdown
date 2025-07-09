@@ -13,6 +13,18 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* dominant /ˈdɒmɪnənt/
+  + ADJ Someone or something that is **dominant** is more powerful, successful, influential, or noticeable than other people or things. 处于支配地位的
+
+* workaround
+  + N a method of circumventing or overcoming a problem in a computer program or system 避免(或克服)计算机程序(或系统)问题法
+
+* circumvent /ˌsɜːkəmˈvent/
+  + V-T If someone **circumvents** a rule or restriction, they avoid having to obey the rule or restriction, in a clever and perhaps dishonest way. (利用小聪明)回避
+
+* predict /prɪˈdɪkt/
+  + V-T If you **predict** an event, you say that it will happen. 预言
+    - The latest opinion polls are **predicting** a very close contest. 最新的民意测验预言将是一场势均力敌的竞赛。
 
 * expedite /ˈekspədaɪt/
   + V-T If you **expedite** something, you cause it to be done more quickly. 加快

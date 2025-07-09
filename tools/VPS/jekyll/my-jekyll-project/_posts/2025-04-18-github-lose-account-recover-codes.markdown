@@ -103,4 +103,5 @@ Authenticating with a verified device, SSH token, or personal access token çš„å…
 # Refer
 
 * https://docs.github.com/en/authentication/troubleshooting-ssh/error-permission-denied-publickey
+* [Recovering your account if you lose your 2FA credentials](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/recovering-your-account-if-you-lose-your-2fa-credentials)
 
