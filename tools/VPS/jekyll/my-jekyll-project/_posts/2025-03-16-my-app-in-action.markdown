@@ -2,7 +2,7 @@
 layout: post
 title: "My App in Action"
 date:   2025-03-16 01:38:00 +0800
-categories: 杂记
+categories: ML
 ---
 
 * Do not remove this line (it will not be displayed)
@@ -738,4 +738,9 @@ categories: 杂记
 
 
 
+
+# TODO
+
+* https://github.com/harry0703/MoneyPrinterTurbo
+* https://github.com/FujiwaraChoki/MoneyPrinterV2
 

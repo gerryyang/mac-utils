@@ -2,7 +2,7 @@
 layout: post
 title:  "网游创业失败全攻略 (许怡然)"
 date:   2024-09-25 08:00:00 +0800
-categories: [游戏开发]
+categories: [Game]
 ---
 
 * Do not remove this line (it will not be displayed)
