@@ -913,14 +913,6 @@ void f() {
 
 
 
-
-
-# Refer
-
-* [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
-* [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)
-
-
 # Other
 
 ## [Initialization](https://en.cppreference.com/w/cpp/language/initialization)
@@ -934,6 +926,12 @@ Initialization of a variable provides its initial value at the time of construct
 * [reference initialization](https://en.cppreference.com/w/cpp/language/reference_initialization)
 * [value initialization](https://en.cppreference.com/w/cpp/language/value_initialization)
 * [zero initialization](https://en.cppreference.com/w/cpp/language/zero_initialization)
+
+
+# Refer
+
+* [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
+* [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)
 
 
 
