@@ -1,12 +1,309 @@
 ---
 layout: post
-title:  "CPP Style Guide"
-date:   2022-10-17 08:00:00 +0800
+title:  "CPP Conventions in Action"
+date:   2025-07-14 12:00:00 +0800
 categories: [C/C++]
 ---
 
 * Do not remove this line (it will not be displayed)
 {:toc}
+
+
+# [SEI CERT C++ Coding Standard](https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682)
+
+
+## [Rule 08. Exceptions and Error Handling (ERR)](https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046339)
+
+
+### [ERR61-CPP. Catch exceptions by lvalue reference](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR61-CPP.+Catch+exceptions+by+lvalue+reference)
+
+When an exception is thrown, the value of the object in the throw expression is used to initialize an anonymous temporary object called the **exception object**. The type of this **exception object** is used to transfer control to the nearest catch handler, which contains an exception declaration with a matching type. The C++ Standard, `[except.handle]`, paragraph 16 `[ISO/IEC 14882-2014]`, in part, states the following:
+
+> The variable declared by the exception-declaration, of type `cv T` or `cv T&`, is initialized from the **exception object**, of type `E`, as follows:
+>
+> — if `T` is a base class of `E`, the variable is copy-initialized from the corresponding base class **subobject** of the exception object;
+> — otherwise, the variable is copy-initialized from the exception object.
+
+Because the variable declared by the exception-declaration is copy-initialized, it is possible to [slice](https://en.wikipedia.org/wiki/Object_slicing) the exception object as part of the copy operation, losing valuable exception information and leading to incorrect error recovery. For more information about object slicing, see [OOP51-CPP. Do not slice derived objects](https://wiki.sei.cmu.edu/confluence/display/cplusplus/OOP51-CPP.+Do+not+slice+derived+objects). Further, if the copy constructor of the exception object throws an exception, the copy initialization of the exception-declaration object results in undefined behavior. (See [ERR60-CPP. Exception objects must be nothrow copy constructible](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR60-CPP.+Exception+objects+must+be+nothrow+copy+constructible) for more information.)
+
+Always catch exceptions by [lvalue](https://wiki.sei.cmu.edu/confluence/display/cplusplus/BB.+Definitions#BB.Definitions-lvalue) reference unless the type is a **trivial type**. For reference, the C++ Standard, `[basic.types]`, paragraph 9 `[ISO/IEC 14882-2014]`, defines trivial types as the following:
+
+> Arithmetic types, enumeration types, pointer types, pointer to member types, std::nullptr_t, and cv-qualified versions of these types are collectively called scalar types.... Scalar types, trivial class types, arrays of such types and cv-qualified versions of these types are collectively called **trivial types**.
+
+The C++ Standard, `[class]`, paragraph 6, defines **trivial class** types as the following:
+
+> A trivially copyable class is a class that:
+>
+> — has no non-trivial copy constructors,
+> — has no non-trivial move constructors,
+> — has no non-trivial copy assignment operators,
+> — has no non-trivial move assignment operators, and
+> — has a trivial destructor.
+>
+> A trivial class is a class that has a default constructor, has no non-trivial default constructors, and is trivially copyable. [Note: In particular, a trivially copyable or trivial class does not have virtual functions or virtual base classes. — end note]
+
+#### Noncompliant Code Example
+
+In this noncompliant code example, an object of type `S` is used to initialize the **exception object** that is later caught by an exception-declaration of type `std::exception`. The exception-declaration matches the exception object type, so the variable `e` is copy-initialized from the exception object, resulting in the exception object being **sliced**. Consequently, the output of this noncompliant code example is the implementation-defined value returned from calling `std::exception::what()` instead of "My custom exception".
+
+如果 throw 一个子类异常对象，catch 的类型是父类，则会发生 **sliced 对象切片问题**，可以捕获到子类的异常但是输出的 `e.what()` 信息是不对的，输出的是父类的错误信息而不是子类的错误信息。
+
+``` cpp
+#include <exception>
+#include <iostream>
+
+struct S : std::exception {
+  const char *what() const noexcept override {
+    return "My custom exception";
+  }
+};
+
+void f() {
+  try {
+    throw S();
+  } catch (std::exception e) {
+    std::cout << "catch: " << e.what() << std::endl; // 输出：catch: std::exception
+  }
+}
+
+int main()
+{
+  f();
+  return 0;
+}
+```
+
+如果 throw 一个父类异常对象，catch 的类型是子类，则捕获不到，继续在后面的 catch 中进行判断。
+
+
+``` cpp
+#include <exception>
+#include <iostream>
+
+struct S : std::exception {
+  const char *what() const noexcept override {
+    return "My custom exception S";
+  }
+};
+
+struct S2 : S {
+  const char *what() const noexcept override {
+    return "My custom exception S2";
+  }
+};
+
+void f() {
+  try {
+    throw S();
+  } catch (S2 s2) {
+    std::cout << "catch: " << s2.what() << std::endl;
+  }
+}
+
+int main()
+{
+  try {
+    f();
+  } catch (S s) {
+    std::cout << "catch: " << s.what() << std::endl; // 输出：catch: My custom exception S
+  }
+  return 0;
+}
+```
+
+#### Compliant Solution
+
+In this compliant solution, the variable declared by the exception-declaration is an **lvalue reference**. The call to `what()` results in executing `S::what()` instead of `std::exception::what()`.
+
+``` cpp
+#include <exception>
+#include <iostream>
+
+struct S : std::exception {
+  const char *what() const noexcept override {
+    return "My custom exception";
+  }
+};
+
+void f() {
+  try {
+    throw S();
+  } catch (std::exception &e) {
+    std::cout << "catch: " << e.what() << std::endl; // 输出：catch: My custom exception
+  }
+}
+
+int main()
+{
+  f();
+  return 0;
+}
+```
+
+#### Q&A: [C++ catch blocks - catch exception by value or reference?](https://stackoverflow.com/questions/2522299/c-catch-blocks-catch-exception-by-value-or-reference)
+
+The standard practice for exceptions in C++ is ...
+
+> **Throw by value, catch by reference**
+
+Catching by value is problematic in the face of inheritance hierarchies. Suppose for your example that there is another type `MyException` which inherits from `CustomException` and overrides items like an error code. If a `MyException` type was thrown your catch block would cause it to be converted to a `CustomException` instance which would cause the error code to change.
+
+> 什么是切片？
+
+当派生类对象被当作其基类对象使用时（通常是赋值、传值或返回），派生类特有的部分会被“切掉”，只留下基类的部分。在异常处理中，如果你抛出一个派生类对象，例如 `class MyError : public std::runtime_error`，但在 `catch` 块中按值捕获其基类类型 `catch (std::runtime_error e)`，那么当异常对象被复制到 `catch` 块的 `e` 变量时，就会发生切片。
+
+> 为什么切片在异常捕获中是问题？
+
+1. **丢失信息**：`catch` 块中的 `e` 只是一个基类对象的副本。派生类中添加的任何额外成员变量或重写的虚函数（除了基类中声明的）都无法通过 `e` 访问。你丢失了异常的具体类型信息和它携带的额外数据。
+2. **破坏多态性**：即使你试图通过基类指针/引用调用虚函数，因为 `e` 是一个基类对象（不是指向派生类对象的引用），调用的将是基类的虚函数实现，而不是派生类重写的版本。
+
+> 为什么按 **const 引用**捕获 (`catch (const std::runtime_error& e)`) 能解决切片问题？
+
+1. 引用 (`&`) 只是原始对象的一个**别名**。
+2. 当使用 `catch (const BaseType& e)` 时：
+   * `e` 直接绑定到实际抛出的异常对象上（无论它是 `BaseType` 还是 `DerivedType`）。
+   * 不会创建任何副本，因此**不会发生切片**。
+   * 可以安全地访问基类接口 (`e.what()`)。
+   * 如果基类有虚函数，通过 `e` 调用时会正确地进行动态绑定，执行实际对象类型（派生类）的虚函数实现。
+   * 使用 `const` 保证不会意外修改异常对象，这是良好实践。
+
+
+> 关于 `throw;` 无参数的用法说明
+
+1. `throw;` (不带任何参数) 是一个特殊的语句，只能在 `catch` 块内部使用。
+2. 它的作用是：**重新抛出当前正在处理的异常对象**。
+3. 无论是通过值捕获 (`catch (T e)`) 还是通过引用捕获 (`catch (const T& e)`) 了异常。**`throw;` 总是重新抛出原始的、未被修改的异常对象**。
+
+> 何时使用无参 `throw;`：在需要重新抛出异常时，总是使用无参 `throw;` 而不是 `throw e`;，以保持原始异常类型和信息的完整性。
+
+
+1. 在异常处理中途释放资源后重新抛出
+
+``` cpp
+catch (...) {
+    cleanupResources();  // 释放资源
+    throw;              // 保留原始异常继续传播
+}
+```
+
+2. 在记录日志后保留原始异常信息
+
+``` cpp
+catch (const std::exception& e) {
+    logError(e.what());  // 记录错误
+    throw;               // 继续传播原始异常
+}
+```
+
+3. 实现异常处理中间层时保持异常类型透明性
+
+
+代码示例：
+
+``` cpp
+#include <iostream>
+#include <stdexcept>
+
+// 自定义异常层次结构
+class BaseException : public std::exception {
+public:
+    virtual const char* what() const noexcept override {
+        return "BaseException occurred";
+    }
+};
+
+class DerivedException : public BaseException {
+public:
+    const char* what() const noexcept override {
+        return "DerivedException occurred";
+    }
+};
+
+void rethrowExample() {
+    try {
+        try {
+            // 1. 抛出派生类异常
+            throw DerivedException();
+
+        }
+        // 2. 按值捕获（会发生切片）
+        catch (BaseException e) {
+            std::cout << "Inner catch (by value): " << e.what() << std::endl;
+
+            // 3. 无参throw重新抛出
+            throw; // 重新抛出原始异常（仍是DerivedException）
+        }
+    }
+    // 4. 外层按引用捕获
+    catch (const BaseException& e) {
+        std::cout << "Outer catch (by reference): " << e.what() << std::endl;
+    }
+}
+
+void referenceExample() {
+    try {
+        try {
+            throw DerivedException();
+        }
+        // 5. 按引用捕获（无切片）
+        catch (const BaseException& e) {
+            std::cout << "Inner catch (by reference): " << e.what() << std::endl;
+            throw; // 仍重新抛出原始DerivedException
+        }
+    }
+    catch (const BaseException& e) {
+        std::cout << "Outer catch (by reference): " << e.what() << std::endl;
+    }
+}
+
+int main() {
+    std::cout << "=== Slice then rethrow ===" << std::endl;
+    rethrowExample();
+
+    std::cout << "\n=== Reference rethrow ===" << std::endl;
+    referenceExample();
+
+    return 0;
+}
+/*
+输出：
+
+=== Slice then rethrow ===
+Inner catch (by value): BaseException occurred
+Outer catch (by reference): DerivedException occurred
+
+=== Reference rethrow ===
+Inner catch (by reference): DerivedException occurred
+Outer catch (by reference): DerivedException occurred
+*/
+```
+
+
+`throw;` 的核心行为：
+
+``` cpp
+// 在 catch 块内部使用
+catch (...) {
+    throw;  // 重新抛出当前处理的原始异常
+}
+```
+
+* 总是重新抛出最初进入 `catch` 块的异常对象
+* 不受当前 `catch` 块捕获方式（值/引用）的影响
+* 保留原始异常的所有信息（包括 `RTTI`）
+
+对比错误用法：
+
+``` cpp
+catch (BaseException e) {
+    throw e;  // 错误！抛出的是切片后的副本
+}
+```
+
+这种带参数的 `throw` 会抛出当前局部对象 `e`（切片后的基类副本），而不是原始异常。
+
+
+
 
 # Google C++ Style Guide
 
@@ -571,6 +868,50 @@ vec.empty();               // 警告：未处理 [[nodiscard]] 值
 ``` cpp
 static_cast<void>(vec.someNodiscardMethod());
 ```
+
+
+## [misc-throw-by-value-catch-by-reference](https://clang.llvm.org/extra/clang-tidy/checks/misc/throw-by-value-catch-by-reference.html)
+
+Finds violations of the rule “Throw by value, catch by reference” presented for example in “C++ Coding Standards” by H. Sutter and A. Alexandrescu, as well as the CERT C++ Coding Standard rule [ERR61-CPP. Catch exceptions by lvalue reference](https://wiki.sei.cmu.edu/confluence/display/cplusplus/ERR61-CPP.+Catch+exceptions+by+lvalue+reference).
+
+
+## [modernize-pass-by-value](https://clang.llvm.org/extra/clang-tidy/checks/modernize/pass-by-value.html)
+
+With **move semantics** added to the language and the standard library updated with **move constructors** added for many types it is now interesting to **take an argument directly by value, instead of by const-reference**, and then copy. This check allows the compiler to take care of choosing the best way to construct the copy.
+
+The transformation is usually beneficial when the calling code passes an **rvalue** and assumes the **move construction** is a cheap operation. This short example illustrates how the construction of the value happens:
+
+``` cpp
+void foo(std::string s);
+std::string get_str();
+
+void f(const std::string &str) {
+  foo(str);       // lvalue  -> copy construction
+  foo(get_str()); // prvalue -> move construction
+}
+```
+
+> Note: Currently, **only constructors are transformed to make use of pass-by-value**. Contributions that handle other situations are welcome!
+
+## [readability-isolate-declaration](https://clang.llvm.org/extra/clang-tidy/checks/readability/isolate-declaration.html)
+
+Detects local variable declarations declaring more than one variable and tries to refactor the code to one statement per declaration.
+
+The automatic code-transformation will use the same indentation as the original for every created statement and add a line break after each statement. It keeps the order of the variable declarations consistent, too.
+
+``` cpp
+void f() {
+  int * pointer = nullptr, value = 42, * const const_ptr = &value;
+  // This declaration will be diagnosed and transformed into:
+  // int * pointer = nullptr;
+  // int value = 42;
+  // int * const const_ptr = &value;
+}
+```
+
+
+
+
 
 
 

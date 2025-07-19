@@ -71,7 +71,13 @@ Clang 安装脚本：
 https://github.com/owent-utils/bash-shell/tree/main/LLVM&Clang%20Installer
 
 
-## CentOS
+## 通过 scl 源的方式使用高版本 GCC
+
+`scl` 源的全称为 `software collections`，为了解决 CentOS 发行版常用应用版本较低的问题。scl 在避免把系统搞乱的同时，为用户方便、安全地提供较新版本应用程序的安装。scl 不会和已安装的包产生冲突。此方法可以安装使用 GCC 7 8 9等更高版本。
+
+
+
+## CentOS (scl 方式)
 
 Often people want the most recent version of gcc, and [devtoolset](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-6/) is being kept up-to-date, so maybe you want devtoolset-N where `N={4,5,6,7...}`, check yum for the latest available on your system. Updated the cmds below for N=7.
 
@@ -183,6 +189,7 @@ Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortra
 Thread model: posix
 gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC)
 ```
+
 
 ## Ubuntu
 
@@ -1325,6 +1332,7 @@ Generate `N` NOPs right at the beginning of each function, with the function ent
 # Refer
 
 * [100个gcc小技巧](https://wizardforcel.gitbooks.io/100-gcc-tips/content/index.html)
+* https://github.com/owent/bash-shell/tree/main/GCC%20Installer
 
 
 

@@ -13,6 +13,27 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+
+* problematic /ˌprɒbləˈmætɪk/
+  + ADJ Something that is **problematic** involves problems and difficulties. 有问题的
+
+* compliant /kəmˈplaɪənt/
+  + ADJ If you say that someone is **compliant**, you mean they willingly do what they are asked to do. 顺从的
+
+* trivial /ˈtrɪviəl/
+  + ADJ If you describe something as **trivial**, you think that it is unimportant and not serious. 无关紧要的
+
+* anonymous /əˈnɒnɪməs/
+  + ADJ If you remain **anonymous** when you do something, you do not let people know that you were the person who did it. 匿名的
+    - You can remain anonymous if you wish. 如果你愿意你可以保持匿名。
+
+* convention /kənˈvenʃ(ə)n/
+  + N-VAR A **convention** is a way of behaving that is considered to be correct or polite by most people in a society. 习俗
+    -  It's just a social **convention** that men don't wear skirts. 男人不穿裙子仅仅是一个社会习俗。
+  + N-COUNT In art, literature, or the theatre, a **convention** is a traditional method or style. 惯例
+  + N-COUNT A **convention** is an official agreement between countries or groups of people. 公约
+  + N-COUNT A **convention** is a large meeting of an organization or political group. 大型会议
+
 * dominant /ˈdɒmɪnənt/
   + ADJ Someone or something that is **dominant** is more powerful, successful, influential, or noticeable than other people or things. 处于支配地位的
 
