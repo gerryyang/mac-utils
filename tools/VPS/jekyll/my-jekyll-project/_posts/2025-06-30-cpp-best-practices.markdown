@@ -214,7 +214,14 @@ c++ test.cpp \../nvwa/nvwa/debug_new.cpp
   + [HashMap - rigtorp](https://github.com/rigtorp/HashMap)
 
 
+# glibc
 
+https://elixir.bootlin.com/glibc
+
+
+# LLVM
+
+https://github.com/llvm/llvm-project
 
 
 # Refer

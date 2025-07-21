@@ -1698,6 +1698,47 @@ int madvise(void *addr, size_t length, int advice);
 The [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) system call is used to give advice or directions to the kernel about the address range beginning at address addr and with size length bytes In most cases, the goal of such advice is **to improve system or application performance**.
 
 
+## [std::thread::hardware_concurrency](https://en.cppreference.com/w/cpp/thread/thread/hardware_concurrency.html)
+
+``` cpp
+// Returns the number of concurrent threads supported by the implementation. The value should be considered only a hint.
+static unsigned int hardware_concurrency() noexcept; // (since C++11)
+```
+
+
+
+`std::thread::hardware_concurrency()` is a **static member function** of the `std::thread` class in C++11 and later. It returns an `unsigned int` value representing the number of hardware thread contexts available on the current system.
+
+**Purpose:**
+
+It provides a hint to the programmer about the optimal(最佳的) number of concurrent threads that the hardware can effectively execute in parallel. This can be useful for determining the number of threads to create in a thread pool or parallel algorithm.
+
+**Interpretation:**
+
+The returned value typically corresponds to the number of logical CPU cores, including those provided by technologies like `hyperthreading` or `SMT` (Simultaneous Multithreading).
+
+
+**Hint, Not a Guarantee:**
+
+It is important to note that the value returned by `hardware_concurrency()` **is a hint and not a strict guarantee**. The actual number of threads that can run truly in parallel can be influenced by various factors, including operating system scheduling, other running processes, and the nature of the workload.
+
+
+``` cpp
+#include <iostream>
+#include <thread>
+
+int main()
+{
+    unsigned int num_threads = std::thread::hardware_concurrency();
+    if (num_threads > 0) {
+        std::cout << "Hardware supports " << num_threads << " concurrent threads.\n";
+    } else {
+        std::cout << "Hardware concurrency information not available.\n";
+    }
+    return 0;
+}
+```
+
 
 
 # 问题定位

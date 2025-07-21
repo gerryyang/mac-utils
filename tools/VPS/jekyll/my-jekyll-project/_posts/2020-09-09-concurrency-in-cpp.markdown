@@ -226,6 +226,406 @@ Array-based queues are generally faster, however they are usually not strictly [
 
 
 
+# 无锁队列实现
+
+## [SPSCQueue](https://github.com/rigtorp/SPSCQueue) (单生产者单消费者)
+
+相关解释：[Optimizing a ring buffer for throughput](https://rigtorp.se/ringbuffer/)
+
+A single producer single consumer wait-free and lock-free fixed size queue written in C++11. This implementation is faster than both [boost::lockfree::spsc](https://www.boost.org/doc/libs/1_76_0/doc/html/boost/lockfree/spsc_queue.html) and [folly::ProducerConsumerQueue](https://github.com/facebook/folly/blob/master/folly/docs/ProducerConsumerQueue.md).
+
+> Only a single writer thread can perform enqueue operations and only a single reader thread can perform dequeue operations. Any other usage is invalid.
+
+### Example
+
+``` cpp
+#include <iostream>
+#include <rigtorp/SPSCQueue.h>
+#include <thread>
+
+int main(int argc, char *argv[]) {
+  (void)argc, (void)argv;
+
+  using namespace rigtorp;
+
+  SPSCQueue<int> q(1);
+  auto t = std::thread([&] {
+    while (!q.front())
+      ;
+    std::cout << *q.front() << std::endl;
+    q.pop();
+  });
+  q.push(1);
+  t.join();
+
+  return 0;
+}
+```
+
+### Benchmarks
+
+Throughput benchmark measures throughput between 2 threads for a queue of `int` items.
+
+Latency benchmark measures round trip time between 2 threads communicating using 2 queues of `int` items.
+
+Benchmark results for a AMD Ryzen 9 3900X 12-Core Processor, the 2 threads are running on different cores on the same chiplet:
+
+| Queue                        | Throughput (ops/ms) | Latency RTT (ns) |
+| ---------------------------- | ------------------: | ---------------: |
+| SPSCQueue                    |              362723 |              133 |
+| boost::lockfree::spsc        |              209877 |              222 |
+| folly::ProducerConsumerQueue |              148818 |              147 |
+
+
+## [MPMCQueue](https://github.com/rigtorp/MPMCQueue) (多生产者多消费者)
+
+A bounded multi-producer multi-consumer concurrent queue written in C++11.
+
+``` cpp
+#include <iostream>
+#include <rigtorp/MPMCQueue.h>
+#include <thread>
+
+int main(int argc, char *argv[]) {
+  (void)argc, (void)argv;
+
+  using namespace rigtorp;
+
+  MPMCQueue<int> q(10);
+  auto t1 = std::thread([&] {
+    int v;
+    q.pop(v);
+    std::cout << "t1 " << v << "\n";
+  });
+  auto t2 = std::thread([&] {
+    int v;
+    q.pop(v);
+    std::cout << "t2 " << v << "\n";
+  });
+  q.push(1);
+  q.push(2);
+  t1.join();
+  t2.join();
+
+  return 0;
+}
+```
+
+## MPSCQueue (多生产者单消费者)
+
+![mpscqueue](/assets/images/202506/mpscqueue.png)
+
+BoundedMPSCQueue 是一个固定容量的多生产者单消费者 MPSC 无锁队列，专门为高并发场景设计，核心目标是：
+
+1. 高性能：无锁设计避免线程阻塞
+2. 线程安全：支持多个生产者并发写入，单个消费者读取
+3. 内存高效：预分配固定内存，避免动态分配
+4. 低延迟：基于原子操作和缓存友好的数据结构
+
+
+### 实现原理
+
+#### 环形缓冲区和序列号机制
+
+``` cpp
+struct Element {
+    T data;                          // 实际数据
+    std::atomic<size_t> sequence;    // 状态序列号
+};
+```
+
+* 环形缓冲区：**使用固定大小数组，通过位运算实现环形访问，避免使用求模运算使用除法指令带来的性能开销**
+* 序列号状态机：每个元素的 sequence 标记其状态
+  + 初始：`sequence[i] = i`
+  + 入队后：`sequence[i] = pos + 1`
+  + 出队后：`sequence[i] = pos + capacity`
+
+#### 双指针管理
+
+``` cpp
+std::atomic<size_t> enqueue_pos_;    // 入队位置计数器
+std::atomic<size_t> dequeue_pos_;    // 出队位置计数器
+```
+
+* 全局位置计数：不直接映射到数组索引，避免 **ABA** 问题
+* 环形映射：`pos & (capacity_ - 1)` 计算实际数组位置
+* 容量检查：`enqueue_pos - dequeue_pos` 判断队列状态
+
+#### 无锁并发控制
+
+``` cpp
+// CAS 操作保证原子性
+if (enqueue_pos_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed))
+{
+    break;  // 成功获取位置
+}
+```
+
+* `Compare-And-Swap`：多线程竞争时只有一个成功
+* 内存序控制：精确控制内存可见性和重排序
+* 自旋重试：失败时继续尝试，无阻塞
+
+
+### 序列号状态机
+
+每个元素的序列号经历三个主要状态：
+
+1. **Available**（可用）: `sequence = index`，等待生产者写入
+2. **Filled**（已填充）: `sequence = pos + 1`，包含有效数据
+3. **Consumed**（已消费）: `sequence = pos + capacity`，为下轮使用准备
+
+
+### 入队操作关键步骤
+
+* 位置竞争: 多个生产者通过 **CAS** 竞争 `enqueue_pos`
+* 状态检查: 通过 `dif = seq - pos` 判断位置状态
+  + `dif == 0`: 位置可用，可以写入
+  + `dif < 0`: 位置被占用，检查队列是否满
+  + `dif > 0`: 位置被其他线程预订，重试
+
+* 数据写入: 获得位置后写入数据并更新序列号
+* 内存同步: 使用 `memory_order_release` 确保数据对消费者可见
+
+> 位置被旧数据占用
+
+假设 capacity = 4, 当前 enqueue_pos = 5
+计算索引: index = 5 & 3 = 1
+检查 `elements[1].sequence`:
+如果 `elements[1].sequence = 2`（之前入队时设置的 pos + 1）
+那么 dif = 2 - 5 = -3 < 0
+
+含义：索引 1 的位置还被之前入队的数据占用，尚未被消费者取走。
+
+> 队列接近满或已满
+
+当检测到 `dif < 0` 后，立即检查队列是否已满：
+
+* 队列满：`enqueue_pos - dequeue_pos == capacity`，返回失败
+* 队列未满：继续重试循环
+
+### 出队操作关键步骤
+
+* 状态检查: 检查 `dif = seq - (pos + 1)` 是否为 0
+* 数据移动: 使用 `std::move` 避免拷贝开销
+* 序列号更新: 设置 `sequence = pos + capacity` 为下轮使用准备
+* 位置推进: 更新 `dequeue_pos`
+
+
+### 序列号状态转换示例
+
+初始状态（capacity = 4）
+
+```
+Index:    0  1  2  3
+Sequence: 0  1  2  3
+Data:     -  -  -  -
+enqueue_pos = 0, dequeue_pos = 0
+```
+
+连续入队 4 个元素后
+
+```
+Index:    0  1  2  3
+Sequence: 1  2  3  4  (入队后 sequence = pos + 1)
+Data:     A  B  C  D
+enqueue_pos = 4, dequeue_pos = 0
+```
+
+此时再尝试入队元素 E
+
+```
+pos = 4, index = 4 & 3 = 0
+检查 elements[0].sequence = 1
+dif = 1 - 4 = -3 < 0
+
+说明：索引 0 位置还被元素 A 占用，未被消费
+检查：pos - dequeue_pos = 4 - 0 = 4 == capacity
+结果：队列满，返回 false
+```
+
+消费一个元素后
+
+```
+Index:    0  1  2  3
+Sequence: 4  2  3  4  (出队后 sequence = pos + capacity = 0 + 4)
+Data:     -  B  C  D
+enqueue_pos = 4, dequeue_pos = 1
+```
+
+再次尝试入队元素 E
+
+```
+pos = 4, index = 4 & 3 = 0
+检查 elements[0].sequence = 4
+dif = 4 - 4 = 0
+
+说明：索引 0 位置现在可用，可以写入
+```
+
+
+### 代码实现
+
+
+``` cpp
+// MPSCQueue.h
+#pragma once
+
+#include <atomic>
+#include <cstdint>
+#include <memory>
+
+namespace JLib
+{
+// @brief 固定队列大小的多生产者单消费者无锁队列，要求存入队列的元素必须是 moveable 的
+template<typename T>
+class BoundedMPSCQueue
+{
+public:
+    BoundedMPSCQueue() : enqueue_pos_(0), dequeue_pos_(0) {}
+
+    BoundedMPSCQueue(const BoundedMPSCQueue& rhs) = delete;
+    BoundedMPSCQueue(BoundedMPSCQueue&& rhs) = delete;
+
+    BoundedMPSCQueue& operator=(const BoundedMPSCQueue& rhs) = delete;
+    BoundedMPSCQueue& operator=(BoundedMPSCQueue&& rhs) = delete;
+
+    bool Init(size_t size)
+    {
+        if (capacity_ > 0)
+        {
+            return true;
+        }
+
+        if (size == 0)
+        {
+            return false;
+        }
+
+        bool size_is_power_of_2 = (size >= 2) && ((size & (size - 1)) == 0);
+        if (!size_is_power_of_2)
+        {
+            size_t tmp = 1;
+            while (tmp <= size)
+            {
+                tmp <<= 1;
+            }
+
+            size = tmp;
+        }
+
+        capacity_ = size;
+
+        auto* pElementArray = new Element[capacity_];
+        elements_ = std::unique_ptr<Element[]>(pElementArray);
+        for (size_t i = 0; i < size; ++i)
+        {
+            elements_[i].sequence = i;
+        }
+
+        enqueue_pos_.store(0, std::memory_order_relaxed);
+        dequeue_pos_.store(0, std::memory_order_relaxed);
+
+        return true;
+    }
+
+    bool Enqueue(T&& element)
+    {
+        size_t pos = 0;
+        Element* elem;
+
+        while (true)
+        {
+            pos = enqueue_pos_.load(std::memory_order_relaxed);
+            elem = &elements_[pos & (capacity_ - 1)];
+            size_t seq = elem->sequence.load(std::memory_order_acquire);
+            intptr_t dif = (intptr_t)seq - (intptr_t)pos;
+
+            if (dif == 0)
+            {
+                if (enqueue_pos_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed))
+                {
+                    break;
+                }
+            }
+            else if (dif < 0)
+            {
+                if (pos - dequeue_pos_.load(std::memory_order_relaxed) == capacity_)
+                {
+                    return false;
+                }
+            }
+        }
+
+        elem->data = std::forward<T>(element);
+        elem->sequence.store(pos + 1, std::memory_order_release);
+
+        return true;
+    }
+
+    bool Dequeue(T* element)
+    {
+        size_t pos = dequeue_pos_.load(std::memory_order_relaxed);
+        Element* elem = &elements_[pos & (capacity_ - 1)];
+        size_t seq = elem->sequence.load(std::memory_order_acquire);
+        intptr_t dif = (intptr_t)seq - (intptr_t)(pos + 1);
+
+        if (dif == 0)
+        {
+            dequeue_pos_.store(pos + 1, std::memory_order_relaxed);
+            *element = std::move(elem->data);
+            elem->sequence.store(pos + capacity_, std::memory_order_release);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    size_t Size() const
+    {
+        size_t enqueue_pos = enqueue_pos_.load(std::memory_order_relaxed);
+        size_t dequeue_pos = dequeue_pos_.load(std::memory_order_relaxed);
+        return (enqueue_pos <= dequeue_pos ? 0 : (enqueue_pos - dequeue_pos));
+    }
+
+    size_t Capacity() const
+    {
+        return capacity_;
+    }
+
+private:
+
+    struct Element
+    {
+        T data;
+        std::atomic<size_t> sequence;
+
+        Element() = default;
+
+        Element(const Element&) = delete;  // 禁止复制构造，仅允许移动构造
+        Element(Element&& rhs) noexcept : sequence(rhs.sequence.load()), data(std::move(rhs.data)) {}
+
+        Element& operator=(const Element&) = delete;  // 禁止复制赋值，仅允许移动赋值
+        Element& operator=(Element&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                sequence = rhs.sequence.load();
+                data = std::move(rhs.data);
+            }
+            return *this;
+        }
+    };
+
+private:
+    std::unique_ptr<Element[]> elements_;
+    std::size_t capacity_ = 0;
+    std::atomic<size_t> enqueue_pos_;
+    std::atomic<size_t> dequeue_pos_;
+};
+}
+```
+
 
 
 # C++ Memory Model
@@ -543,6 +943,108 @@ http://bar => fake content
 http://foo => fake content
 ```
 
+# [std::shared_mutex](https://en.cppreference.com/w/cpp/thread/shared_mutex.html)
+
+``` cpp
+class shared_mutex; // (since C++17)
+```
+
+The `shared_mutex` class is a synchronization primitive that can be used to protect shared data from being simultaneously accessed by multiple threads. In contrast to other mutex types which facilitate exclusive access, a `shared_mutex` has two levels of access:
+
+* shared - several threads can share ownership of the same mutex.
+* exclusive - only one thread can own the mutex.
+
+If one thread has acquired the **exclusive lock** (through `lock`, `try_lock`), no other threads can acquire the lock (including the shared).
+
+If one thread has acquired the **shared lock** (through `lock_shared`, `try_lock_shared`), no other thread can acquire the **exclusive lock**, but can acquire the **shared lock**.
+
+Only when the **exclusive lock** has not been acquired by any thread, the **shared lock** can be acquired by multiple threads.
+
+Within one thread, only one lock (shared or exclusive) can be acquired at the same time. (一个线程，当前只能获取一种类型的锁 shared or exclusive)
+
+**Shared mutexes are especially useful when shared data can be safely read by any number of threads simultaneously**, but a thread may only write the same data when no other thread is reading or writing at the same time.
+
+The shared_mutex class satisfies all requirements of [SharedMutex](https://en.cppreference.com/w/cpp/named_req/SharedMutex.html) and [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType.html).
+
+
+
+``` cpp
+#include <iostream>
+#include <mutex>
+#include <shared_mutex>
+#include <syncstream>
+#include <thread>
+
+class ThreadSafeCounter
+{
+public:
+    ThreadSafeCounter() = default;
+
+    // Multiple threads/readers can read the counter's value at the same time.
+    unsigned int get() const
+    {
+        std::shared_lock lock(mutex_);
+        return value_;
+    }
+
+    // Only one thread/writer can increment/write the counter's value.
+    void increment()
+    {
+        std::unique_lock lock(mutex_);
+        ++value_;
+    }
+
+    // Only one thread/writer can reset/write the counter's value.
+    void reset()
+    {
+        std::unique_lock lock(mutex_);
+        value_ = 0;
+    }
+
+private:
+    mutable std::shared_mutex mutex_;
+    unsigned int value_{};
+};
+
+int main()
+{
+    ThreadSafeCounter counter;
+
+    auto increment_and_print = [&counter]()
+    {
+        for (int i{}; i != 3; ++i)
+        {
+            counter.increment();
+            std::osyncstream(std::cout)
+                << std::this_thread::get_id() << ' ' << counter.get() << '\n';
+        }
+    };
+
+    std::thread thread1(increment_and_print);
+    std::thread thread2(increment_and_print);
+
+    thread1.join();
+    thread2.join();
+}
+```
+
+
+
+# [futex](https://man7.org/linux/man-pages/man2/futex.2.html) (fast user-space locking)
+
+The `futex()` system call provides a method for waiting until a certain condition becomes true. It is typically used as a blocking construct in the context of shared-memory synchronization. When using futexes, the majority of the synchronization operations are performed in user space. A user-space program employs the `futex()` system call only when it is likely that the program has to block for a longer time until the condition becomes true. Other `futex()` operations can be used to wake any processes or threads waiting for a particular condition.
+
+``` cpp
+       #include <linux/futex.h>      /* Definition of FUTEX_* constants */
+       #include <sys/syscall.h>      /* Definition of SYS_* constants */
+       #include <unistd.h>
+
+       long syscall(SYS_futex, uint32_t *uaddr, int futex_op, uint32_t val,
+                    const struct timespec *timeout,   /* or: uint32_t val2 */
+                    uint32_t *uaddr2, uint32_t val3);
+```
+
+> Note: glibc provides no wrapper for futex(), necessitating the use of syscall(2).
 
 
 
