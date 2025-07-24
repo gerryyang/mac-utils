@@ -8,38 +8,6 @@ categories: [Linux Performance]
 * Do not remove this line (it will not be displayed)
 {:toc}
 
-# Documentation
-
-All users of TCMalloc should consult the following documentation resources:
-
-* The [TCMalloc Quickstart](https://google.github.io/tcmalloc/quickstart.html) covers downloading, installing, building, and testing TCMalloc, including incorporating within your codebase.
-
-* The [TCMalloc Overview](https://google.github.io/tcmalloc/overview.html) covers the basic architecture of TCMalloc, and how that may affect configuration choices.
-
-* The [TCMalloc Reference](https://google.github.io/tcmalloc/reference.html) covers the C and C++ TCMalloc API endpoints.
-
-More advanced usages of TCMalloc may find the following documentation useful:
-
-* The [TCMalloc Tuning Guide](https://google.github.io/tcmalloc/tuning.html) covers the configuration choices in more depth, and also illustrates other ways to customize TCMalloc.
-
-* The [TCMalloc Design Doc](https://google.github.io/tcmalloc/design.html) covers how TCMalloc works underneath the hood, and why certain design choices were made. Most developers will not need this level of implementation detail.
-
-* The [TCMalloc Compatibility Guide](https://google.github.io/tcmalloc/compatibility.html) which documents our expectations for how our APIs are used.
-
-* The [history and differences](https://google.github.io/tcmalloc/gperftools.html) between this repository and `gperftools`.
-
-
-# Publications
-
-We’ve published several papers relating to TCMalloc optimizations:
-
-* [“Beyond malloc efficiency to fleet efficiency: a hugepage-aware memory allocator” (OSDI 2021)](https://research.google/pubs/pub50370/) relating to the development and rollout of [Temeraire](https://google.github.io/tcmalloc/temeraire.html), TCMalloc’s hugepage-aware page heap implementation.
-
-* [“Adaptive Hugepage Subrelease for Non-moving Memory Allocators in Warehouse-Scale Computers” (ISMM 2021)](https://research.google/pubs/pub50436/) relating to optimizations for releasing partial hugepages to the operating system.
-
-* [“Characterizing a Memory Allocator at Warehouse Scale” (ASPLOS 2024)](https://research.google/pubs/characterizing-a-memory-allocator-at-warehouse-scale/) relating to several optimizations developed since 2018.
-
-
 
 # [TCMalloc Overview](https://google.github.io/tcmalloc/overview.html)
 
@@ -251,7 +219,7 @@ refer:
 * **优化效果**：对于绝大多数（>99.9%）的内存分配/释放请求，操作都在 `rseq` 的 `fast path` 上完成，速度极快，且没有锁或原子操作的开销。这使得高频、小对象的内存操作性能得到质的飞跃。
 
 
-### per-thread caching (备选 & 传统模式)
+### `per-thread caching` (备选 & 传统模式)
 
 * **触发条件**：当内核不支持 `rseq` (Linux < 4.18) 或 `rseq` 不可用时，TCMalloc 回退到此模式。
 
@@ -365,6 +333,38 @@ In other words, `malloc(1)` returns `alignof(std::max_align_t)-aligned` pointer.
 
 For more complete information, consult the [TCMalloc Reference](https://google.github.io/tcmalloc/reference.html).
 
+
+
+# Documentation
+
+All users of TCMalloc should consult the following documentation resources:
+
+* The [TCMalloc Quickstart](https://google.github.io/tcmalloc/quickstart.html) covers downloading, installing, building, and testing TCMalloc, including incorporating within your codebase.
+
+* The [TCMalloc Overview](https://google.github.io/tcmalloc/overview.html) covers the basic architecture of TCMalloc, and how that may affect configuration choices.
+
+* The [TCMalloc Reference](https://google.github.io/tcmalloc/reference.html) covers the C and C++ TCMalloc API endpoints.
+
+More advanced usages of TCMalloc may find the following documentation useful:
+
+* The [TCMalloc Tuning Guide](https://google.github.io/tcmalloc/tuning.html) covers the configuration choices in more depth, and also illustrates other ways to customize TCMalloc.
+
+* The [TCMalloc Design Doc](https://google.github.io/tcmalloc/design.html) covers how TCMalloc works underneath the hood, and why certain design choices were made. Most developers will not need this level of implementation detail.
+
+* The [TCMalloc Compatibility Guide](https://google.github.io/tcmalloc/compatibility.html) which documents our expectations for how our APIs are used.
+
+* The [history and differences](https://google.github.io/tcmalloc/gperftools.html) between this repository and `gperftools`.
+
+
+# Publications
+
+We’ve published several papers relating to TCMalloc optimizations:
+
+* [“Beyond malloc efficiency to fleet efficiency: a hugepage-aware memory allocator” (OSDI 2021)](https://research.google/pubs/pub50370/) relating to the development and rollout of [Temeraire](https://google.github.io/tcmalloc/temeraire.html), TCMalloc’s hugepage-aware page heap implementation.
+
+* [“Adaptive Hugepage Subrelease for Non-moving Memory Allocators in Warehouse-Scale Computers” (ISMM 2021)](https://research.google/pubs/pub50436/) relating to optimizations for releasing partial hugepages to the operating system.
+
+* [“Characterizing a Memory Allocator at Warehouse Scale” (ASPLOS 2024)](https://research.google/pubs/characterizing-a-memory-allocator-at-warehouse-scale/) relating to several optimizations developed since 2018.
 
 
 
@@ -918,6 +918,308 @@ Allocation size: 2044723 bytes, Total allocations: 1000000, Duration: 2199 ms
 ```
 
 
+
+
+# The libunwind project
+
+The primary goal of this project is to define a portable and efficient C programming interface (API) to determine the call-chain of a program. The API additionally provides the means to manipulate the preserved (callee-saved) state of each call-frame and to resume execution at any point in the call-chain (non-local goto). The API supports both local (same-process) and remote (across-process) operation. As such, the API is useful in a number of applications. Some examples include:
+
+下载地址：https://www.nongnu.org/libunwind/download.html
+
+
+# 通过 LD_PRELOAD 使用 tcmalloc
+
+使用 `LD_PRELOAD` 运行程序：在运行程序时，设置 `LD_PRELOAD` 环境变量以加载 `libtcmalloc.so`
+
+``` bash
+LD_PRELOAD=/path/to/libtcmalloc.so your_program
+```
+
+检查进程映射：在程序运行时，可以使用 `/proc `文件系统检查已加载的共享库。首先，找到程序的进程ID（PID），然后查看 `/proc/PID/maps` 文件。例如，如果程序的 PID 为 12345，则运行以下命令：
+
+```
+cat /proc/12345/maps
+```
+
+在输出的结果中，检查 `libtcmalloc.so` 的路径。如果找到了该路径，说明 `libtcmalloc.so` 已成功加载。
+
+或者：
+
+```
+lsof -p 12345 | grep libtcmalloc.so
+
+pmap 12345 | grep libtcmalloc.so
+```
+
+# [Performance Tuning TCMalloc](https://google.github.io/tcmalloc/tuning.html)
+
+## User-Accessible Controls
+
+There are three user accessible controls that we can use to performance tune TCMalloc:
+
+* The logical page size for TCMalloc (`4KiB`, `8KiB`, `32KiB`, `256KiB`)
+* The per-thread or per-cpu cache sizes
+* The rate at which memory is released to the OS
+
+None of these tuning parameters are clear wins, otherwise they would be the default. We’ll discuss the advantages and disadvantages of changing them.
+
+## The Logical Page Size for TCMalloc (逻辑页大小)
+
+This is determined at compile time by linking in the appropriate version of TCMalloc. The page size indicates the unit in which TCMalloc manages memory. The default is in `8KiB` chunks, there are larger options of `32KiB` and `256KiB`. There is also the `4KiB` page size used by the `small-but-slow` allocator.
+
+* 编译时确定：TCMalloc 的逻辑页大小在编译时通过链接不同版本的库决定。
+* 内存管理单元：该页大小是 TCMalloc 管理内存的基本单位。
+* 可选值：
+  + 默认值：8 KiB
+  + 其他选项：32 KiB、256 KiB
+  + 特殊选项：4 KiB（由 `small-but-slow` 分配器使用）
+
+**A smaller page size allows TCMalloc to provide memory to an application with less waste**. Waste comes about through two issues:
+
+* Left-over memory when rounding larger requests to the page size (eg a request for `62 KiB` might get rounded to `64 KiB`).
+* Pages of memory that are stuck because they have a single in use allocation on the page, and therefore cannot be repurposed to hold a different size of allocation.
+
+
+> 小页大小的优势（减少内存浪费）
+
+小页（如 4KiB/8KiB）通过两种方式降低内存浪费：
+
+* **分配舍入浪费**
+  + 若申请内存非整页倍数，**TCMalloc 会向上取整到页大小**。
+  + 示例：申请 `62 KiB` 可能被舍入到 `64 KiB`（使用 `8 KiB` 页时），浪费 `2 KiB`。
+
+* **碎片化导致的页面滞留**
+  + 每个页仅存放同尺寸的小对象（例如专用于 512 字节对象的页）。
+  + 只有当页内所有对象均被释放时，该页才能被重新用于其他尺寸的对象。
+  + 小页 vs 大页的影响：**大页更容易因少量存活对象导致整页无法复用，增加内存占用**。
+
+| 页大小 | 单个页容纳 512B 对象数 | 全部释放概率 | 页面滞留风险
+| -- | -- | -- | --
+| 4 KiB | 8 个 | 较高 | 低
+| 256 KiB | 512 个 | 极低 | 高
+
+> 大页大小的优势（性能优化）
+
+* **内存局部性与大页映射**
+  + 优势：
+    - 大页减少 TLB 压力：若系统支持大页（HugePages），大页配置可减少 TLB（地址转换缓存）条目占用，加速内存访问。
+    - 提升缓存局部性：同尺寸对象在物理内存中更紧凑，提高 CPU 缓存效率。
+
+* **PageMap 查询效率**
+  + PageMap：TCMalloc 用于记录内存分配状态的核心数据结构。
+  + 大页优势：
+    - 相同内存量下，大页需更少的 PageMap 条目。
+    - PageMap 体积更小，更容易驻留 CPU 缓存，加速查询。
+  + 注意：现代 TCMalloc 的 `sized delete` 特性减少了 PageMap 查询次数，削弱了大页在此方面的优势。
+
+
+> 实践建议
+
+
+| 页大小 | 适用场景 | 注意事项
+| -- | -- | --
+| 8 KiB | 默认值，适合大多数应用 | 平衡内存效率与性能
+| 32/256 KiB | 堆内存达 GiB 级别的大型应用 | 需实测性能/内存占用的收益
+| 4 KiB (small-but-slow) | 极端内存敏感场景 | 性能代价极高，尽量避免使用
+
+关于 small-but-slow：
+
+1. 机制：关闭 TCMalloc 的多级缓存，减少内存开销。
+2. 代价：分配/释放操作变慢，性能显著下降。
+3. 建议：仅当内存资源极度受限且性能无关紧要时使用。
+
+## Per-thread/per-cpu Cache Sizes
+
+**The default is for TCMalloc to run in per-cpu mode as this is faster**; however, there are few applications which have not yet transitioned. The plan is to move these across at some point soon.
+
+* Per-Thread
+  + 每个线程独立缓存，存在跨线程内存迁移开销
+
+* Per-CPU
+  + 绑定 CPU 核，利用处理器亲和性减少锁竞争，**性能更高（默认启用）**
+  + **现代 CPU 多核架构下，Per-CPU 缓存通过 NUMA 亲和性 避免跨核锁争用，分配释放路径更短**。
+
+
+Increasing the size of the cache is an obvious way to improve performance. The larger the cache the less frequently memory needs to be fetched from the central caches. Returning memory from the cache is substantially faster than fetching from the central cache.
+
+The size of the **per-cpu caches** is controlled by `tcmalloc::MallocExtension::SetMaxPerCpuCacheSize`. This controls the limit for each CPU, so the total amount of memory for application could be much larger than this. Memory on CPUs where the application is no longer able to run can be freed by calling `tcmalloc::MallocExtension::ReleaseCpuMemory`.
+
+缓存大小控制 API:
+
+``` cpp
+// 设置单个 CPU 核的缓存上限（单位：字节）
+tcmalloc::MallocExtension::SetMaxPerCpuCacheSize(size_t size);
+
+// 释放闲置 CPU 核占用的缓存（如容器调度后残留内存）
+tcmalloc::MallocExtension::ReleaseCpuMemory(int cpu);
+```
+
+The heterogeneous per-cpu cache optimization in TCMalloc dynamically sizes per-cpu caches so as to balance the miss rate across all the active and populated caches. It shuffles and reassigns the capacity from lightly used caches to the heavily used caches, using miss rate as the proxy for their usage. The heavily used per-cpu caches may steal capacity from lightly used caches and grow beyond the limit set by `tcmalloc_max_per_cpu_cache_size` flag.
+
+Releasing memory held by unuable CPU caches is handled by `tcmalloc::MallocExtension::ProcessBackgroundActions`.
+
+后台自动回收：
+
+``` cpp
+// 触发后台回收（定期自动调用，无需手动执行）
+tcmalloc::MallocExtension::ProcessBackgroundActions();
+```
+
+In contrast `tcmalloc::MallocExtension::SetMaxTotalThreadCacheBytes` controls the total size of all thread caches in the application.
+
+``` cpp
+// 设置所有线程缓存的总大小上限（单位：字节）
+tcmalloc::MallocExtension::SetMaxTotalThreadCacheBytes(size_t size);
+```
+
+* 与 Per-CPU 区别：此 API 仅影响旧版 Per-Thread 模式，对 Per-CPU 无效。
+* 设计逻辑：线程间无法共享缓存，需限制全局总量防内存膨胀。
+
+
+**Suggestion**: The default cache size is typically sufficient, but cache size can be increased (or decreased) depending on the amount of time spent in TCMalloc code, and depending on the overall size of the application (a larger application can afford to cache more memory without noticeably increasing its overall size).
+
+
+**增大缓存的收益与代价：**
+
+| 方向 | 优点 | 风险
+| -- | -- | --
+| 增大缓存 | ✅ 减少访问中央缓存的频率，加速分配/释放 | ❌ 总内存占用上升
+| 减小缓存 | ✅ 降低应用内存基线 | ❌ 频繁访问中央缓存导致锁竞争
+
+
+调优建议：
+
+1. 默认值适用大多数场景。TCMalloc 的默认缓存大小经过广泛验证，无需主动调整。
+2. 需要调优的指标
+  + 监控 `tcmalloc.cpu_cache.total_used_bytes`，观察实际缓存用量
+  + 分析性能剖析数据，若 TCMalloc_Internal 类函数消耗 >5% CPU 时间，说明缓存不足
+
+3. 扩容缓存的条件
+
+``` python
+if (应用内存 > 1GiB and TCMalloc CPU耗时占比高) or (突发高频分配场景):
+    适当增加 MaxPerCpuCacheSize  # 建议每次增加 25%
+```
+
+4. 缩容缓存的条件
+
+``` python
+if (内存敏感型应用) and (监控显示缓存利用率 < 60%):
+    逐步减小 MaxPerCpuCacheSize  # 优先尝试降低 15-20%
+```
+
+**动态调节的底层逻辑：缓存命中 vs 内存开销的博弈**，TCMalloc 在以下两者间动态平衡：
+
+1. 时间局部性：缓存越大，重复分配模式越高效。
+2. 空间成本：缓存膨胀削减应用可用内存。
+
+建议：
+
+1. **优先信任默认值**，除非有明确性能瓶颈证据
+2. Per-CPU 模式是未来方向，新项目无需考虑线程缓存
+3. 调参后必须进行 A/B 压测（推荐 pprof 分析内存/CPU 变化）
+
+
+## Memory Releasing
+
+`tcmalloc::MallocExtension::ReleaseMemoryToSystem` makes a request to release n bytes of memory to TCMalloc. This can keep the memory footprint of the application down to a minimal amount, however it should be considered that this just reduces the application down from its peak memory footprint over time, and does not make that peak memory footprint smaller.
+
+主动释放内存 API：
+
+``` cpp
+// 请求 TCMalloc 向操作系统释放指定字节数的内存
+tcmalloc::MallocExtension::ReleaseMemoryToSystem(size_t n);
+```
+
+* 核心作用：强制降低应用的当前内存占用
+* 关键限制：
+  + **只能释放空闲内存**（已分配内存不受影响）
+  + **无法降低历史峰值内存**（如突发负载产生的内存尖刺）
+  + 释放后若立即需要内存，会触发高成本的**缺页中断**
+
+> 代价：缺页中断耗时 ≈ 微秒级（比正常分配慢 100-1000 倍）
+
+
+Using a background thread running `tcmalloc::MallocExtension::ProcessBackgroundActions()`, memory will be released from the page heap at the specified rate.
+
+后台自动释放机制：
+
+``` cpp
+// 后台线程定期执行内存回收（默认启用）
+tcmalloc::MallocExtension::ProcessBackgroundActions();
+```
+
+| 内存池 | 是否可释放 | 说明
+| -- | -- | --
+| PageHeap（大内存池）| ✅ | 主要释放来源
+| Stranded per-CPU 缓存 | ✅ | 闲置 CPU 核的缓存
+| CentralFreeList | ❌ | 中央缓存不可释放
+| 活跃 per-CPU 缓存 | ❌ | 正在使用的 CPU 核缓存
+
+
+**There are two disadvantages of releasing memory aggressively**:
+
+* Memory that is unmapped may be immediately needed, and there is a cost to faulting unmapped memory back into the application.
+* Memory that is unmapped at small granularity will break up hugepages, and this will cause some performance loss due to increased TLB misses.
+
+
+**Note**: Release rate is not a panacea for memory usage. Jobs should be provisioned for peak memory usage to avoid OOM errors. Setting a release rate may enable an application to exceed the memory limit for short periods of time without triggering an OOM. A release rate is also a good citizen behavior as it will enable the system to use spare capacity memory for applications which are are under provisioned. However, it is not a substitute for setting appropriate memory requirements for the job.
+
+**Note**: Memory is released from the `PageHeap` and stranded per-cpu caches. It is not possible to release memory from other internal structures, like the `CentralFreeList`.
+
+**Suggestion**: The default release rate is probably appropriate for most applications. In situations where it is tempting to set a faster rate it is worth considering why there are memory spikes, since those spikes are likely to cause an OOM at some point.
+
+
+**内存释放的三条铁律：**
+
+1. 释放是事后补救：只能降低当前水位，不能削减历史峰值
+2. 释放有性能代价：在缺页中断和大页破碎间权衡
+3. 释放非防 OOM 手段：必须基于真实峰值配置内存资源
+
+
+
+## System-Level Optimizations
+
+* TCMalloc heavily relies on **Transparent Huge Pages** (`THP`). As of February 2020, we build and test with
+
+```
+/sys/kernel/mm/transparent_hugepage/enabled:
+    [always] madvise never
+
+/sys/kernel/mm/transparent_hugepage/defrag:
+    always defer [defer+madvise] madvise never`
+
+/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none:
+    0
+```
+
+* TCMalloc makes assumptions about the availability of virtual address space, so that we can layout allocations in cetain ways. We build and test with
+
+```
+/proc/sys/vm/overcommit_memory:
+    1
+```
+
+## [Build-Time Optimizations](https://google.github.io/tcmalloc/tuning.html#build-time-optimizations)
+
+TCMalloc is built and tested in certain ways. These build-time options can improve performance:
+
+* **Statically-linking TCMalloc reduces function call overhead**, by obviating the need to call procedure linkage stubs in the procedure linkage table (PLT).
+
+* Enabling [sized deallocation from C++14](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3778.html) reduces deallocation costs when the size can be determined. Sized deallocation is enabled with the -fsized-deallocation flag. This behavior is enabled by default in GCC), but as of early 2020, is not enabled by default on Clang even when compiling for C++14/C++17.
+
+Some standard C++ libraries (such as [libc++](https://reviews.llvm.org/rCXX345214)) will take advantage of sized deallocation for their allocators as well, improving deallocation performance in C++ containers.
+
+* Aligning raw storage allocated with `::operator new` to 8 bytes by compiling with `__STDCPP_DEFAULT_NEW_ALIGNMENT__ <= 8`. This smaller alignment minimizes wasted memory for many common allocation sizes (24, 40, etc.) which are otherwise rounded up to a multiple of 16 bytes. On many compilers, this behavior is controlled by the `-fnew-alignment=...` flag.
+
+When `__STDCPP_DEFAULT_NEW_ALIGNMENT__` is not specified (or is larger than 8 bytes), we use standard 16 byte alignments for `::operator new`. However, for allocations under 16 bytes, we may return an object with a lower alignment, as no object with a larger alignment requirement can be allocated in the space.
+
+* **Optimizing failures of `operator new` by directly failing instead of throwing exceptions**. Because TCMalloc does not throw exceptions when `operator new` fails, this can be used as a performance optimization for many move constructors.
+
+Within Abseil code, these direct allocation failures are enabled with the Abseil build-time configuration macro [ABSL_ALLOCATOR_NOTHROW](https://abseil.io/docs/cpp/guides/base#abseil-exception-policy).
+
+
+
 # Q&A
 
 ## tcmalloc::allocate_full_XXX
@@ -1221,308 +1523,6 @@ int main() {
 dynamic sees duplicate from libdep as:  d
 but libdep sees duplicate from main as: m
 ```
-
-
-
-
-# The libunwind project
-
-The primary goal of this project is to define a portable and efficient C programming interface (API) to determine the call-chain of a program. The API additionally provides the means to manipulate the preserved (callee-saved) state of each call-frame and to resume execution at any point in the call-chain (non-local goto). The API supports both local (same-process) and remote (across-process) operation. As such, the API is useful in a number of applications. Some examples include:
-
-下载地址：https://www.nongnu.org/libunwind/download.html
-
-
-# 通过 LD_PRELOAD 使用 tcmalloc
-
-使用 `LD_PRELOAD` 运行程序：在运行程序时，设置 `LD_PRELOAD` 环境变量以加载 `libtcmalloc.so`
-
-``` bash
-LD_PRELOAD=/path/to/libtcmalloc.so your_program
-```
-
-检查进程映射：在程序运行时，可以使用 `/proc `文件系统检查已加载的共享库。首先，找到程序的进程ID（PID），然后查看 `/proc/PID/maps` 文件。例如，如果程序的 PID 为 12345，则运行以下命令：
-
-```
-cat /proc/12345/maps
-```
-
-在输出的结果中，检查 `libtcmalloc.so` 的路径。如果找到了该路径，说明 `libtcmalloc.so` 已成功加载。
-
-或者：
-
-```
-lsof -p 12345 | grep libtcmalloc.so
-
-pmap 12345 | grep libtcmalloc.so
-```
-
-# [Performance Tuning TCMalloc](https://google.github.io/tcmalloc/tuning.html)
-
-## User-Accessible Controls
-
-There are three user accessible controls that we can use to performance tune TCMalloc:
-
-* The logical page size for TCMalloc (`4KiB`, `8KiB`, `32KiB`, `256KiB`)
-* The per-thread or per-cpu cache sizes
-* The rate at which memory is released to the OS
-
-None of these tuning parameters are clear wins, otherwise they would be the default. We’ll discuss the advantages and disadvantages of changing them.
-
-## The Logical Page Size for TCMalloc (逻辑页大小)
-
-This is determined at compile time by linking in the appropriate version of TCMalloc. The page size indicates the unit in which TCMalloc manages memory. The default is in `8KiB` chunks, there are larger options of `32KiB` and `256KiB`. There is also the `4KiB` page size used by the `small-but-slow` allocator.
-
-* 编译时确定：TCMalloc 的逻辑页大小在编译时通过链接不同版本的库决定。
-* 内存管理单元：该页大小是 TCMalloc 管理内存的基本单位。
-* 可选值：
-  + 默认值：8 KiB
-  + 其他选项：32 KiB、256 KiB
-  + 特殊选项：4 KiB（由 `small-but-slow` 分配器使用）
-
-**A smaller page size allows TCMalloc to provide memory to an application with less waste**. Waste comes about through two issues:
-
-* Left-over memory when rounding larger requests to the page size (eg a request for `62 KiB` might get rounded to `64 KiB`).
-* Pages of memory that are stuck because they have a single in use allocation on the page, and therefore cannot be repurposed to hold a different size of allocation.
-
-
-> 小页大小的优势（减少内存浪费）
-
-小页（如 4KiB/8KiB）通过两种方式降低内存浪费：
-
-* **分配舍入浪费**
-  + 若申请内存非整页倍数，**TCMalloc 会向上取整到页大小**。
-  + 示例：申请 `62 KiB` 可能被舍入到 `64 KiB`（使用 `8 KiB` 页时），浪费 `2 KiB`。
-
-* **碎片化导致的页面滞留**
-  + 每个页仅存放同尺寸的小对象（例如专用于 512 字节对象的页）。
-  + 只有当页内所有对象均被释放时，该页才能被重新用于其他尺寸的对象。
-  + 小页 vs 大页的影响：**大页更容易因少量存活对象导致整页无法复用，增加内存占用**。
-
-| 页大小 | 单个页容纳 512B 对象数 | 全部释放概率 | 页面滞留风险
-| -- | -- | -- | --
-| 4 KiB | 8 个 | 较高 | 低
-| 256 KiB | 512 个 | 极低 | 高
-
-> 大页大小的优势（性能优化）
-
-* **内存局部性与大页映射**
-  + 优势：
-    - 大页减少 TLB 压力：若系统支持大页（HugePages），大页配置可减少 TLB（地址转换缓存）条目占用，加速内存访问。
-    - 提升缓存局部性：同尺寸对象在物理内存中更紧凑，提高 CPU 缓存效率。
-
-* **PageMap 查询效率**
-  + PageMap：TCMalloc 用于记录内存分配状态的核心数据结构。
-  + 大页优势：
-    - 相同内存量下，大页需更少的 PageMap 条目。
-    - PageMap 体积更小，更容易驻留 CPU 缓存，加速查询。
-  + 注意：现代 TCMalloc 的 `sized delete` 特性减少了 PageMap 查询次数，削弱了大页在此方面的优势。
-
-
-> 实践建议
-
-
-| 页大小 | 适用场景 | 注意事项
-| -- | -- | --
-| 8 KiB | 默认值，适合大多数应用 | 平衡内存效率与性能
-| 32/256 KiB | 堆内存达 GiB 级别的大型应用 | 需实测性能/内存占用的收益
-| 4 KiB (small-but-slow) | 极端内存敏感场景 | 性能代价极高，尽量避免使用
-
-关于 small-but-slow：
-
-1. 机制：关闭 TCMalloc 的多级缓存，减少内存开销。
-2. 代价：分配/释放操作变慢，性能显著下降。
-3. 建议：仅当内存资源极度受限且性能无关紧要时使用。
-
-## Per-thread/per-cpu Cache Sizes
-
-**The default is for TCMalloc to run in per-cpu mode as this is faster**; however, there are few applications which have not yet transitioned. The plan is to move these across at some point soon.
-
-* Per-Thread
-  + 每个线程独立缓存，存在跨线程内存迁移开销
-
-* Per-CPU
-  + 绑定 CPU 核，利用处理器亲和性减少锁竞争，**性能更高（默认启用）**
-  + **现代 CPU 多核架构下，Per-CPU 缓存通过 NUMA 亲和性 避免跨核锁争用，分配释放路径更短**。
-
-
-Increasing the size of the cache is an obvious way to improve performance. The larger the cache the less frequently memory needs to be fetched from the central caches. Returning memory from the cache is substantially faster than fetching from the central cache.
-
-The size of the **per-cpu caches** is controlled by `tcmalloc::MallocExtension::SetMaxPerCpuCacheSize`. This controls the limit for each CPU, so the total amount of memory for application could be much larger than this. Memory on CPUs where the application is no longer able to run can be freed by calling `tcmalloc::MallocExtension::ReleaseCpuMemory`.
-
-缓存大小控制 API:
-
-``` cpp
-// 设置单个 CPU 核的缓存上限（单位：字节）
-tcmalloc::MallocExtension::SetMaxPerCpuCacheSize(size_t size);
-
-// 释放闲置 CPU 核占用的缓存（如容器调度后残留内存）
-tcmalloc::MallocExtension::ReleaseCpuMemory(int cpu);
-```
-
-The heterogeneous per-cpu cache optimization in TCMalloc dynamically sizes per-cpu caches so as to balance the miss rate across all the active and populated caches. It shuffles and reassigns the capacity from lightly used caches to the heavily used caches, using miss rate as the proxy for their usage. The heavily used per-cpu caches may steal capacity from lightly used caches and grow beyond the limit set by `tcmalloc_max_per_cpu_cache_size` flag.
-
-Releasing memory held by unuable CPU caches is handled by `tcmalloc::MallocExtension::ProcessBackgroundActions`.
-
-后台自动回收：
-
-``` cpp
-// 触发后台回收（定期自动调用，无需手动执行）
-tcmalloc::MallocExtension::ProcessBackgroundActions();
-```
-
-In contrast `tcmalloc::MallocExtension::SetMaxTotalThreadCacheBytes` controls the total size of all thread caches in the application.
-
-``` cpp
-// 设置所有线程缓存的总大小上限（单位：字节）
-tcmalloc::MallocExtension::SetMaxTotalThreadCacheBytes(size_t size);
-```
-
-* 与 Per-CPU 区别：此 API 仅影响旧版 Per-Thread 模式，对 Per-CPU 无效。
-* 设计逻辑：线程间无法共享缓存，需限制全局总量防内存膨胀。
-
-
-**Suggestion**: The default cache size is typically sufficient, but cache size can be increased (or decreased) depending on the amount of time spent in TCMalloc code, and depending on the overall size of the application (a larger application can afford to cache more memory without noticeably increasing its overall size).
-
-
-**增大缓存的收益与代价：**
-
-| 方向 | 优点 | 风险
-| -- | -- | --
-| 增大缓存 | ✅ 减少访问中央缓存的频率，加速分配/释放 | ❌ 总内存占用上升
-| 减小缓存 | ✅ 降低应用内存基线 | ❌ 频繁访问中央缓存导致锁竞争
-
-
-调优建议：
-
-1. 默认值适用大多数场景。TCMalloc 的默认缓存大小经过广泛验证，无需主动调整。
-2. 需要调优的指标
-  + 监控 `tcmalloc.cpu_cache.total_used_bytes`，观察实际缓存用量
-  + 分析性能剖析数据，若 TCMalloc_Internal 类函数消耗 >5% CPU 时间，说明缓存不足
-
-3. 扩容缓存的条件
-
-``` python
-if (应用内存 > 1GiB and TCMalloc CPU耗时占比高) or (突发高频分配场景):
-    适当增加 MaxPerCpuCacheSize  # 建议每次增加 25%
-```
-
-4. 缩容缓存的条件
-
-``` python
-if (内存敏感型应用) and (监控显示缓存利用率 < 60%):
-    逐步减小 MaxPerCpuCacheSize  # 优先尝试降低 15-20%
-```
-
-**动态调节的底层逻辑：缓存命中 vs 内存开销的博弈**，TCMalloc 在以下两者间动态平衡：
-
-1. 时间局部性：缓存越大，重复分配模式越高效。
-2. 空间成本：缓存膨胀削减应用可用内存。
-
-建议：
-
-1. **优先信任默认值**，除非有明确性能瓶颈证据
-2. Per-CPU 模式是未来方向，新项目无需考虑线程缓存
-3. 调参后必须进行 A/B 压测（推荐 pprof 分析内存/CPU 变化）
-
-
-## Memory Releasing
-
-`tcmalloc::MallocExtension::ReleaseMemoryToSystem` makes a request to release n bytes of memory to TCMalloc. This can keep the memory footprint of the application down to a minimal amount, however it should be considered that this just reduces the application down from its peak memory footprint over time, and does not make that peak memory footprint smaller.
-
-主动释放内存 API：
-
-``` cpp
-// 请求 TCMalloc 向操作系统释放指定字节数的内存
-tcmalloc::MallocExtension::ReleaseMemoryToSystem(size_t n);
-```
-
-* 核心作用：强制降低应用的当前内存占用
-* 关键限制：
-  + **只能释放空闲内存**（已分配内存不受影响）
-  + **无法降低历史峰值内存**（如突发负载产生的内存尖刺）
-  + 释放后若立即需要内存，会触发高成本的**缺页中断**
-
-> 代价：缺页中断耗时 ≈ 微秒级（比正常分配慢 100-1000 倍）
-
-
-Using a background thread running `tcmalloc::MallocExtension::ProcessBackgroundActions()`, memory will be released from the page heap at the specified rate.
-
-后台自动释放机制：
-
-``` cpp
-// 后台线程定期执行内存回收（默认启用）
-tcmalloc::MallocExtension::ProcessBackgroundActions();
-```
-
-| 内存池 | 是否可释放 | 说明
-| -- | -- | --
-| PageHeap（大内存池）| ✅ | 主要释放来源
-| Stranded per-CPU 缓存 | ✅ | 闲置 CPU 核的缓存
-| CentralFreeList | ❌ | 中央缓存不可释放
-| 活跃 per-CPU 缓存 | ❌ | 正在使用的 CPU 核缓存
-
-
-**There are two disadvantages of releasing memory aggressively**:
-
-* Memory that is unmapped may be immediately needed, and there is a cost to faulting unmapped memory back into the application.
-* Memory that is unmapped at small granularity will break up hugepages, and this will cause some performance loss due to increased TLB misses.
-
-
-**Note**: Release rate is not a panacea for memory usage. Jobs should be provisioned for peak memory usage to avoid OOM errors. Setting a release rate may enable an application to exceed the memory limit for short periods of time without triggering an OOM. A release rate is also a good citizen behavior as it will enable the system to use spare capacity memory for applications which are are under provisioned. However, it is not a substitute for setting appropriate memory requirements for the job.
-
-**Note**: Memory is released from the `PageHeap` and stranded per-cpu caches. It is not possible to release memory from other internal structures, like the `CentralFreeList`.
-
-**Suggestion**: The default release rate is probably appropriate for most applications. In situations where it is tempting to set a faster rate it is worth considering why there are memory spikes, since those spikes are likely to cause an OOM at some point.
-
-
-**内存释放的三条铁律：**
-
-1. 释放是事后补救：只能降低当前水位，不能削减历史峰值
-2. 释放有性能代价：在缺页中断和大页破碎间权衡
-3. 释放非防 OOM 手段：必须基于真实峰值配置内存资源
-
-
-
-## System-Level Optimizations
-
-* TCMalloc heavily relies on **Transparent Huge Pages** (`THP`). As of February 2020, we build and test with
-
-```
-/sys/kernel/mm/transparent_hugepage/enabled:
-    [always] madvise never
-
-/sys/kernel/mm/transparent_hugepage/defrag:
-    always defer [defer+madvise] madvise never`
-
-/sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none:
-    0
-```
-
-* TCMalloc makes assumptions about the availability of virtual address space, so that we can layout allocations in cetain ways. We build and test with
-
-```
-/proc/sys/vm/overcommit_memory:
-    1
-```
-
-## [Build-Time Optimizations](https://google.github.io/tcmalloc/tuning.html#build-time-optimizations)
-
-TCMalloc is built and tested in certain ways. These build-time options can improve performance:
-
-* **Statically-linking TCMalloc reduces function call overhead**, by obviating the need to call procedure linkage stubs in the procedure linkage table (PLT).
-
-* Enabling [sized deallocation from C++14](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3778.html) reduces deallocation costs when the size can be determined. Sized deallocation is enabled with the -fsized-deallocation flag. This behavior is enabled by default in GCC), but as of early 2020, is not enabled by default on Clang even when compiling for C++14/C++17.
-
-Some standard C++ libraries (such as [libc++](https://reviews.llvm.org/rCXX345214)) will take advantage of sized deallocation for their allocators as well, improving deallocation performance in C++ containers.
-
-* Aligning raw storage allocated with `::operator new` to 8 bytes by compiling with `__STDCPP_DEFAULT_NEW_ALIGNMENT__ <= 8`. This smaller alignment minimizes wasted memory for many common allocation sizes (24, 40, etc.) which are otherwise rounded up to a multiple of 16 bytes. On many compilers, this behavior is controlled by the `-fnew-alignment=...` flag.
-
-When `__STDCPP_DEFAULT_NEW_ALIGNMENT__` is not specified (or is larger than 8 bytes), we use standard 16 byte alignments for `::operator new`. However, for allocations under 16 bytes, we may return an object with a lower alignment, as no object with a larger alignment requirement can be allocated in the space.
-
-* **Optimizing failures of `operator new` by directly failing instead of throwing exceptions**. Because TCMalloc does not throw exceptions when `operator new` fails, this can be used as a performance optimization for many move constructors.
-
-Within Abseil code, these direct allocation failures are enabled with the Abseil build-time configuration macro [ABSL_ALLOCATOR_NOTHROW](https://abseil.io/docs/cpp/guides/base#abseil-exception-policy).
-
 
 
 
