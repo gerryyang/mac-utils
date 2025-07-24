@@ -27,6 +27,7 @@ libstdc++-8.3.1-5.el8.0.2.x86_64
 * [CPP Style Guide](http://gerryyang.com/c/c++/2022/10/17/cpp-style-guide.html)
   + [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
   + [LLVM Coding Standards](https://clang.llvm.org/extra/clang-tidy/checks/list.html)
+  + [Abseil Fundamentals](https://abseil.io/docs/cpp/guides/base#abseil-fundamentals)
 
 * Use the [Pitchfork](https://github.com/vector-of-bool/pitchfork) project layout conventions.
 
@@ -216,12 +217,86 @@ c++ test.cpp \../nvwa/nvwa/debug_new.cpp
 
 # glibc
 
-https://elixir.bootlin.com/glibc
+源码：https://elixir.bootlin.com/glibc
+
+
+# [GCC](https://gcc.gnu.org/) (the GNU Compiler Collection)
+
+The GNU Compiler Collection includes front ends for C, C++, Objective-C, Fortran, Ada, Go, D, Modula-2, and COBOL as well as libraries for these languages (libstdc++,...). GCC was originally written as the compiler for the [GNU operating system](http://www.gnu.org/gnu/thegnuproject.html). The GNU system was developed to be 100% free software, free in the sense that it [respects the user's freedom](http://www.gnu.org/philosophy/free-sw.html).
+
+We strive to provide regular, high quality [releases](https://gcc.gnu.org/releases.html), which we want to work well on a variety of native and cross targets (including GNU/Linux), and encourage everyone to [contribute](https://gcc.gnu.org/contribute.html) changes or help [testing](https://gcc.gnu.org/testing/) GCC. Our sources are readily and freely available via [Git](https://gcc.gnu.org/git.html) and weekly [snapshots](https://gcc.gnu.org/snapshots.html).
+
+Major decisions about GCC are made by the [steering committee](https://gcc.gnu.org/steering.html), guided by the [mission statement](https://gcc.gnu.org/gccmission.html).
+
+
+## [GCC Releases](https://gcc.gnu.org/releases.html)
+
+GCC releases may be downloaded from our [mirror sites](https://gcc.gnu.org/mirrors.html).
+
+> **Important**: these are source releases, so will be of little use if you do not already have a C++ compiler installed. As one option, there are [pre-compiled binaries](https://gcc.gnu.org/install/binaries.html). for various platforms.
+
+You can also retrieve our sources [using Git](https://gcc.gnu.org/git.html).
 
 
 # LLVM
 
 https://github.com/llvm/llvm-project
+
+## [Clang](https://clang.llvm.org/)
+
+> Clang: a C language family frontend for LLVM
+
+The Clang project provides a language front-end and tooling infrastructure for languages in the C language family (C, C++, Objective C/C++, OpenCL, and CUDA) for the [LLVM](https://www.llvm.org/) project. Both a GCC-compatible compiler driver (clang) and an MSVC-compatible compiler driver (clang-cl.exe) are provided. You can [get and build](https://clang.llvm.org/get_started.html) the source today.
+
+### [Clang - Features and Goals](https://clang.llvm.org/features.html)
+
+These features are:
+
+* End-User Features:
+  + [Fast compiles and low memory use](https://clang.llvm.org/features.html#performance)
+  + [Expressive diagnostics](https://clang.llvm.org/features.html#expressivediags)
+  + [GCC compatibility](https://clang.llvm.org/features.html#gcccompat)
+
+* Utility and Applications:
+  + [Library based architecture](https://clang.llvm.org/features.html#libraryarch)
+  + [Support diverse clients](https://clang.llvm.org/features.html#diverseclients)
+  + [Integration with IDEs](https://clang.llvm.org/features.html#ideintegration)
+  + [Use the LLVM 'BSD' License](https://clang.llvm.org/features.html#license)
+
+* Internal Design and Implementation:
+  + [A real-world, production quality compiler](https://clang.llvm.org/features.html#real)
+  + [A simple and hackable code base](https://clang.llvm.org/features.html#simplecode)
+  + [A single unified parser for C, Objective C, C++, and Objective C++](https://clang.llvm.org/features.html#unifiedparser)
+  + [Conformance with C/C++/ObjC and their variants](https://clang.llvm.org/features.html#conformance)
+
+### Why?
+
+Development of the new front-end was started out of a need for a compiler that allows better diagnostics, better integration with IDEs, a license that is compatible with commercial products, and a nimble compiler that is easy to develop and maintain. All of these were motivations for starting work on a new front-end that could meet these needs.
+
+
+### Current Status
+
+`Clang` is considered to be a production quality C, Objective-C, C++ and Objective-C++ compiler when targeting any target supported by LLVM. As example, Clang is used in production to build performance-critical software like `Chrome` or `Firefox`.
+
+If you are looking for source analysis or source-to-source transformation tools, `Clang` is probably a great solution for you. Please see the [C++ status](https://clang.llvm.org/cxx_status.html) page or the [C status](https://clang.llvm.org/c_status.html) page for more information about what standard modes and features are supported.
+
+#### [C++ Support in Clang](https://clang.llvm.org/cxx_status.html)
+
+目前 Clang11 可以支持 C++17 标准，更高版本的 Clang 可支持 C++20/C++23 部分特性，可见：https://clang.llvm.org/cxx_status.html
+
+#### [C Support in Clang](https://clang.llvm.org/c_status.html)
+
+可见：https://clang.llvm.org/c_status.html
+
+### Get it and get involved
+
+Start by [getting the code, building it, and playing with it](https://clang.llvm.org/get_started.html). This will show you the sorts of things we can do today and will let you have the "Clang experience" first hand: hopefully it will "resonate" with you.
+
+Once you've done that, please consider [getting involved in the Clang community](https://clang.llvm.org/get_involved.html). The Clang developers include numerous volunteer contributors with a variety of backgrounds. If you're interested in following the development of Clang, signing up for a mailing list is a good way to learn about how the project works.
+
+
+
+
 
 
 # Refer

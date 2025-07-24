@@ -13,6 +13,47 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* obscure /əbˈskjʊə(r)/
+  + ADJ If something or someone is **obscure**, they are unknown, or are known by only a few people. 鲜为人知的
+  + ADJ Something that is **obscure** is difficult to understand or deal with, usually because it involves so many parts or details. 复杂难懂的; 难处理的
+  + V-T If one thing **obscures** another, it prevents it from being seen or heard properly. 遮掩
+  + V-T To **obscure** something means to make it difficult to understand. 使…难懂
+
+* disclaimer /dɪsˈkleɪmə/
+  + N-COUNT A **disclaimer** is a statement in which a person says that they did not know about something or that they are not responsible for something. 免责声明
+    - The company asserts in a **disclaimer** that it won't be held responsible for the accuracy of information. 该公司在一项免责声明里宣称它不会对信息的准确性负责。
+
+* alternative /ɔːlˈtɜːnətɪv/
+  + N-COUNT If one thing is an **alternative** to another, the first can be found, used, or done instead of the second. 替代品
+  + ADJ An **alternative** plan or offer is different from the one that you already have, and can be done or used instead. 另外的
+  + ADJ **Alternative** is used to describe something that is different from the usual things of its kind, or the usual ways of doing something, in modern Western society. For example, an **alternative** lifestyle does not follow conventional ways of living and working. 另类的
+  + ADJ **Alternative** medicine uses traditional ways of curing people, such as medicines made from plants, massage, and acupuncture. 替代性的 (疗法)
+  + ADJ **Alternative** energy uses natural sources of energy such as the sun, wind, or water for power and fuel, rather than oil, coal, or nuclear power. 可再生的 (能源)
+
+
+* elucidate /ɪˈluːsɪˌdeɪt/
+  + V-T/V-I If you **elucidate** something, you make it clear and easy to understand. 阐明; 解释
+    - There was no need for him to elucidate. 他没有解释的必要了。
+
+
+* resonate /ˈrezəneɪt/
+  + V-I If something **resonates**, it vibrates and produces a deep, strong sound. 共振
+  + V-I You say that something **resonates** when it has a special meaning or when it is particularly important to someone. (对某人) 有重要性
+    - What are the issues **resonating** with voters? 什么是投票者特别关心的问题？
+
+
+* voluminous /vəˈluːmɪnəs/
+  + ADJ Something that is **voluminous** is very large or contains a lot of things. 庞大的; 大量的
+
+* arbitrary /ˈɑːbɪtrəri/
+  + ADJ If you describe an action, rule, or decision as **arbitrary**, you think that it is not based on any principle, plan, or system. It often seems unfair because of this. 随意的
+
+* pun /pʌn/
+  + N-COUNT A **pun** is a clever and amusing use of a word or phrase with two meanings, or of words with the same sound but different meanings. For example, if someone says "The peasants are revolting," this is a **pun** because it can be interpreted as meaning either that the peasants are fighting against authority, or that they are disgusting. 双关语
+
+* interpretation /ɪnˌtɜːprəˈteɪʃ(ə)n/
+  + N-VAR An **interpretation** of something is an opinion about what it means. 解释
+  + N-COUNT A performer's **interpretation** of something such as a piece of music or a role in a play is the particular way in which they choose to perform it. 演奏; 表演
 
 * problematic /ˌprɒbləˈmætɪk/
   + ADJ Something that is **problematic** involves problems and difficulties. 有问题的

@@ -44,7 +44,6 @@ The binutils include the following commands:
 
 > The name DWARF is something of a pun, since it was developed along with the ELF object file format. The name is an acronym for “Debugging With Arbitrary Record Formats”.
 
-
 `DWARF` is a widely used, standardized [debugging data format](https://en.wikipedia.org/wiki/Debugging_data_format). `DWARF` was originally designed along with [Executable and Linkable Format](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) (`ELF`), although it is independent of object file formats. The name is a medieval fantasy complement to "ELF" that had no official meaning, although the backronym "Debugging With Arbitrary Record Formats" has since been proposed.
 
 DWARF 是一种用于表示源代码调试信息的标准格式。调试信息通常包括变量名、类型信息、行号等，用于在调试过程中帮助开发人员了解程序的运行状态。DWARF 的不同版本提供了不同的特性和优化，其中 DWARF version 5 是最新的版本，它引入了许多改进，包括更紧凑的表示形式和更高效的数据访问方式。
@@ -110,6 +109,25 @@ The following figure shows C's classic `hello.c` program with a simplified graph
 * Types of DIEs
 
 DIEs can be split into two general types. Those that describe data including data types and those that describe functions and other executable code.
+
+
+## 查看当前二进制文件使用的 DWARF 调试信息版本
+
+``` bash
+readelf --debug-dump=info <your_binary> | head -20
+```
+![dwarf_version](/assets/images/202507/dwarf_version.png)
+
+如果遇到 addr2line 的 DWARF 错误，尝试使用 DWARF 4 版本重新编译：
+
+``` bash
+gcc -gdwarf-4 -g3 -o myapp source.c
+```
+
+GDB 兼容性：
+
+* GDB < 8.0：仅支持到 DWARF 4
+* GDB >= 8.1：完整支持 DWARF 5
 
 
 

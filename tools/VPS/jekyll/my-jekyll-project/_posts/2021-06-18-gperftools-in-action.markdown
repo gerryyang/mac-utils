@@ -117,9 +117,9 @@ See [heap_checker](https://gperftools.github.io/gperftools/heap_checker.html) fo
 
 Link your executable with `-ltcmalloc` or add in the profiler at run-time using `env LD_PRELOAD="/usr/lib/libtcmalloc.so"`
 
-```
+
 This does not turn on heap checking; it just inserts the code. For that reason, it's practical to just always link -ltcmalloc into a binary while developing; that's what we do at Google. (However, since any user can turn on the profiler by setting an environment variable, it's not necessarily recommended to install heapchecker-linked binaries into a production, running system.)
-```
+
 
 * Running the Code
 
