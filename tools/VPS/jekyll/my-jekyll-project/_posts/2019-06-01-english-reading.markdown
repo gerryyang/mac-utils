@@ -13,6 +13,19 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* intuitive /ɪnˈtjuːɪtɪv/
+  + ADJ If you have an **intuitive** idea or feeling about something, you feel that it is true although you have no evidence or proof of it. 直觉的
+
+* versatile /ˈvɜːsəˌtaɪl/
+  + ADJ If you say that a person is **versatile**, you approve of them because they have many different skills. 多才多艺的
+
+* tweak /twiːk/
+  + V-T If you **tweak** something, especially part of someone's body, you hold it between your finger and thumb and twist it or pull it. 扭; 扯
+  + V-T If you **tweak** something such as a system or a design, you improve it by making a slight change. 稍稍改进(如系统或设计)
+  + N-COUNT **Tweak** is also a noun. 稍稍改进
+    - The camera has undergone only two minor **tweaks** since its introduction. 这款相机自推出以来只经过两次小的改进。
+
+
 * obscure /əbˈskjʊə(r)/
   + ADJ If something or someone is **obscure**, they are unknown, or are known by only a few people. 鲜为人知的
   + ADJ Something that is **obscure** is difficult to understand or deal with, usually because it involves so many parts or details. 复杂难懂的; 难处理的

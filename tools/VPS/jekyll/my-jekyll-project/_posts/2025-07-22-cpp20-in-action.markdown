@@ -9,7 +9,7 @@ categories: [C/C++]
 {:toc}
 
 
-# [C++ attribute: likely, unlikely](https://en.cppreference.com/w/cpp/language/attributes/likely)
+# [C++ attribute: likely, unlikely - C++20](https://en.cppreference.com/w/cpp/language/attributes/likely)
 
 Allow the compiler to optimize for the case where paths of execution including that statement are more or less likely than any alternative path of execution that does not include such a statement.
 
@@ -26,9 +26,11 @@ refer:
 
 
 
+# C++ Sized Deallocation - C++14
 
 
-
+* [Sized deallocation in C++: What is the correct behaviour of the global operator delete(void* ptr, std::size_t size)](https://stackoverflow.com/questions/46775187/sized-deallocation-in-c-what-is-the-correct-behaviour-of-the-global-operator)
+* https://isocpp.org/files/papers/n3778.html
 
 
 

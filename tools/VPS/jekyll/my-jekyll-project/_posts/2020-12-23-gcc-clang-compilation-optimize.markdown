@@ -116,6 +116,7 @@ DIEs can be split into two general types. Those that describe data including dat
 ``` bash
 readelf --debug-dump=info <your_binary> | head -20
 ```
+
 ![dwarf_version](/assets/images/202507/dwarf_version.png)
 
 如果遇到 addr2line 的 DWARF 错误，尝试使用 DWARF 4 版本重新编译：
