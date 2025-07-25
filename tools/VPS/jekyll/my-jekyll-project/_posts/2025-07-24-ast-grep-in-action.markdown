@@ -389,7 +389,412 @@ Let's walk through the main fields in this configuration.
 
 ## Run the Rule
 
+There are several ways to run the rule. We will illustrate several `ast-grep` features here.
 
+### ast-grep scan --rule
+
+The `scan` subcommand of ast-grep CLI can run one rule at a time.
+
+To do so, you need to save the rule above in a file on the disk, say `no-await-in-promise-all.yml`. Then you can run the following command to scan your codebase. In the example below, we are scanning a `test.ts` file.
+
+
+``` bash
+ast-grep scan --rule no-await-in-promise-all.yml test.ts
+```
+
+``` ts
+await Promise.all([
+  await foo(),
+])
+```
+
+### ast-grep scan --inline-rules
+
+You can also run the rule directly from the command line without saving the rule to a file. The `--inline-rules` option is useful for ad-hoc search or calling `ast-grep` from another program.
+
+``` bash
+ast-grep scan --inline-rules '
+id: no-await-in-promise-all
+language: TypeScript
+rule:
+  pattern: Promise.all($A)
+  has:
+    pattern: await $_
+    stopBy: end
+' test.ts
+```
+
+### Online Playground
+
+`ast-grep` provides an [online playground](https://ast-grep.github.io/playground.html#eyJtb2RlIjoiQ29uZmlnIiwibGFuZyI6ImphdmFzY3JpcHQiLCJxdWVyeSI6IlByb21pc2UuYWxsKCRBKSIsInJld3JpdGUiOiIiLCJjb25maWciOiJpZDogbm8tYXdhaXQtaW4tcHJvbWlzZS1hbGxcbmxhbmd1YWdlOiBUeXBlU2NyaXB0XG5ydWxlOlxuICBwYXR0ZXJuOiBQcm9taXNlLmFsbCgkQSlcbiAgaGFzOlxuICAgIHBhdHRlcm46IGF3YWl0ICRfXG4gICAgc3RvcEJ5OiBlbmQiLCJzb3VyY2UiOiJQcm9taXNlLmFsbChbXG4gIGF3YWl0IFByb21pc2UucmVzb2x2ZSgxMjMpXG5dKSJ9) to test your rule.
+
+You can paste the rule configuration into the playground and see the matched code. The playground also has a share button that generates a link to share the rule with others.
+
+
+## Rule Object
+
+> **Rule object** is the core concept of ast-grep's rule system and every other features are built on top of it.
+
+Below is the full list of fields in a rule object. Every rule field is optional and can be omitted but at least one field should be present in a rule. A node will match a rule if and only if it satisfies all fields in the rule object.
+
+The equivalent rule object interface in `TypeScript` is also provided for reference.
+
+``` yaml
+rule:
+  # atomic rule
+  pattern: 'search.pattern'
+  kind: 'tree_sitter_node_kind'
+  regex: 'rust|regex'
+  # relational rule
+  inside: { pattern: 'sub.rule' }
+  has: { kind: 'sub_rule' }
+  follows: { regex: 'can|use|any' }
+  precedes: { kind: 'multi_keys', pattern: 'in.sub' }
+  # composite rule
+  all: [ {pattern: 'match.all'}, {kind: 'match_all'} ]
+  any: [ {pattern: 'match.any'}, {kind: 'match_any'} ]
+  not: { pattern: 'not.this' }
+  matches: 'utility-rule'
+```
+
+``` ts
+interface RuleObject {
+  // atomic rule
+  pattern?: string | Pattern
+  kind?: string
+  regex?: string
+  // relational rule
+  inside?: RuleObject & Relation
+  has?: RuleObject & Relation
+  follows?: RuleObject & Relation
+  precedes?: RuleObject & Relation
+  // composite rule
+  all?: RuleObject[]
+  any?: RuleObject[]
+  not?: RuleObject
+  matches?: string
+}
+
+// See Atomic rule for explanation
+interface Pattern {
+  context: string
+  selector: string
+  strictness?: Strictness
+}
+
+// See https://ast-grep.github.io/advanced/match-algorithm.html
+type Strictness =
+  | 'cst'
+  | 'smart'
+  | 'ast'
+  | 'relaxed'
+  | 'signature'
+
+// See Relation rule for explanation
+interface Relation {
+  stopBy?: 'neighbor' | 'end' | RuleObject
+  field?: string
+}
+```
+
+
+A node must **satisfies all fields** in the rule object to be considered as a match. So the rule object can be seen as an abbreviated and **unordered** `all` rule.
+
+
+> **Rule object is unordered!!**
+>
+> Unordered rule object means that certain rules may be applied before others, even if they appear later in the YAML. Whether a node matches or not may depend on the order of rule being applied, especially when using `has`/`inside` rules.
+>
+> If a rule object does not work, you can try using `all` rule to specify the order of rules. See [FAQ](https://ast-grep.github.io/advanced/faq.html#why-is-rule-matching-order-sensitive) for more details.
+
+
+## Three Rule Categories
+
+To summarize the rule object fields above, we have three categories of rules:
+
+* **Atomic Rule**: the most basic rule that checks if AST nodes matches.
+* **Relational Rule**: rules that check if a node is surrounded by another node.
+* **Composite Rule**: rules that combine sub-rules together using logical operators.
+
+**These three categories of rules can be composed together to create more complex rules.**
+
+The rule object is inspired by the CSS selectors but with more composability and expressiveness. Think about how selectors in CSS works can help you understand the rule object!
+
+> **TIP**
+>
+> Don't be daunted! Learn more about how to write a rule in our [detailed guide](https://ast-grep.github.io/guide/rule-config/atomic-rule.html).
+
+
+## Target Node
+
+Every rule configuration will have **one single root** `rule`. The root rule will have only one AST node in one match. The matched node is called target node. During scanning and rewriting, ast-grep will produce multiple matches to report all AST nodes that satisfies the `rule` condition as matched instances.
+
+Though one rule match only have one AST node as matched, we can have more auxiliary nodes to display context or to perform rewrite. We will cover how rules work in details in the next page.
+
+But for a quick primer, a rule can have a pattern and we can extract meta variables from the matched node.
+
+For example, the rule below will match the `console.log('Hello World')`.
+
+``` yaml
+rule:
+  pattern: console.log($GREET)
+```
+
+
+And we can get `$GREET` set to `'Hello World'`.
+
+## language specifies rule interpretation
+
+The `language` field in the rule configuration will specify how the rule is interpreted. For example, with `language: TypeScript`, the rule pattern `'hello world'` is parsed as TypeScript string literal. However, the rule will have a parsing error in languages like `C`/`Java`/`Rust` because single quote is used for character literal and double quote should be used for string.
+
+
+# [Atomic Rule](https://ast-grep.github.io/guide/rule-config/atomic-rule.html)
+
+`ast-grep` has three categories of rules. Let's start with the most basic one: atomic rule.
+
+Atomic rule defines the most basic matching rule that determines whether one syntax node matches the rule or not. There are five kinds of atomic rule: `pattern`, `kind`, `regex`, `nthChild` and `range`.
+
+
+## pattern
+
+Pattern will match one single syntax node according to the [pattern syntax](https://ast-grep.github.io/guide/pattern-syntax.html).
+
+``` yaml
+rule:
+  pattern: console.log($GREETING)
+```
+
+The above rule will match code like `console.log('Hello World')`.
+
+By default, a string `pattern` is parsed and matched as a whole.
+
+## Pattern Object
+
+It is not always possible to select certain code with **a simple string pattern**. A pattern code can be invalid, incomplete or ambiguous for the parser since it lacks context.
+
+For example, to select class field in JavaScript, writing `$FIELD = $INIT` will not work because it will be parsed as `assignment_expression`. See [playground](https://ast-grep.github.io/playground.html#eyJtb2RlIjoiUGF0Y2giLCJsYW5nIjoiamF2YXNjcmlwdCIsInF1ZXJ5IjoiJEZJRUxEID0gJElOSVQiLCJyZXdyaXRlIjoiRGVidWcuYXNzZXJ0IiwiY29uZmlnIjoicnVsZTpcbiAgcGF0dGVybjogXG4gICAgY29udGV4dDogJ3sgJE06ICgkJCRBKSA9PiAkTUFUQ0ggfSdcbiAgICBzZWxlY3RvcjogcGFpclxuIiwic291cmNlIjoiYSA9IDEyM1xuY2xhc3MgQSB7XG4gIGEgPSAxMjNcbn0ifQ==).
+
+
+![astgrep8](/assets/images/202507/astgrep8.png)
+
+We can also use an **object** to **specify a sub-syntax node** to match within a larger context. It consists of an object with three properties: `context`, `selector` and `strictness`.
+
+1. `context` (required): defines the surrounding code that helps to resolve any ambiguity in the syntax.
+2. `selector` (optional): defines the sub-syntax node kind that is the actual matcher of the pattern.
+3. `strictness` (optional): defines how strictly pattern will match against nodes.
+
+Let's see how **pattern object** can solve the ambiguity(模棱两可) in the class field example above.
+
+The **pattern object** below instructs ast-grep to select the `field_definition` node as the pattern target.
+
+``` yaml
+pattern:
+  selector: field_definition
+  context: class A { $FIELD = $INIT }
+```
+
+`ast-grep` works like this:
+
+
+1. First, the code in `context`, `class A { $FIELD = $INIT }`, is parsed as a class declaration.
+2. Then, it looks for the `field_definition` node, specified by selector, in the parsed tree.
+3. The selected `$FIELD = $INIT` is matched against code as the pattern.
+
+In this way, the pattern is parsed as `field_definition` instead of `assignment_expression`. See [playground](https://ast-grep.github.io/playground.html#eyJtb2RlIjoiQ29uZmlnIiwibGFuZyI6ImphdmFzY3JpcHQiLCJxdWVyeSI6IiRGSUVMRCA9ICRJTklUIiwicmV3cml0ZSI6IkRlYnVnLmFzc2VydCIsImNvbmZpZyI6InJ1bGU6XG4gIHBhdHRlcm46XG4gICAgc2VsZWN0b3I6IGZpZWxkX2RlZmluaXRpb25cbiAgICBjb250ZXh0OiBjbGFzcyBBIHsgJEZJRUxEID0gJElOSVQgfVxuIiwic291cmNlIjoiYSA9IDEyM1xuY2xhc3MgQSB7XG4gIGEgPSAxMjNcbn0ifQ==) in action.
+
+``` yaml
+rule:
+  pattern:
+    selector: field_definition
+    context: class A { $FIELD = $INIT }
+```
+
+![astgrep9](/assets/images/202507/astgrep9.png)
+
+
+Other examples are [function call in Go](https://github.com/ast-grep/ast-grep/issues/646) and [function parameter in Rust](https://github.com/ast-grep/ast-grep/issues/648).
+
+
+
+## strictness
+
+You can also use pattern object to control the matching strategy with `strictness` field.
+
+By default, ast-grep uses a smart strategy to match pattern against the AST node. All nodes in the pattern must be matched, but it will skip unnamed nodes in target code.
+
+For the definition of **named** and **unnamed** nodes, please refer to the [core concepts](https://ast-grep.github.io/advanced/core-concepts.html) doc.
+
+For example, the following pattern `function $A() {}` will match both plain function and async function in JavaScript. See [playground](https://ast-grep.github.io/playground.html#eyJtb2RlIjoiUGF0Y2giLCJsYW5nIjoiamF2YXNjcmlwdCIsInF1ZXJ5IjoiZnVuY3Rpb24gJEEoKSB7fSIsInJld3JpdGUiOiJEZWJ1Zy5hc3NlcnQiLCJjb25maWciOiJydWxlOlxuICBwYXR0ZXJuOiBcbiAgICBjb250ZXh0OiAneyAkTTogKCQkJEEpID0+ICRNQVRDSCB9J1xuICAgIHNlbGVjdG9yOiBwYWlyXG4iLCJzb3VyY2UiOiJmdW5jdGlvbiBhKCkge31cbmFzeW5jIGZ1bmN0aW9uIGEoKSB7fSJ9)
+
+
+``` js
+// function $A() {}
+function foo() {}    // matched
+async function bar() {} // matched
+```
+
+![astgrep10](/assets/images/202507/astgrep10.png)
+
+This is because the keyword `async` is an unnamed node in the AST, so the `async` in the code to search is skipped. As long as `function`, `$A` and `{}` are matched, the pattern is considered matched.
+
+However, this is not always the desired behavior. `ast-grep` provides `strictness` to control the matching strategy. At the moment, it provides these options, ordered from the most strict to the least strict:
+
+* `cst`: All nodes in the pattern and target code must be matched. No node is skipped.
+* `smart`: All nodes in the pattern must be matched, but it will skip unnamed nodes in target code. This is the default behavior.
+* `ast`: Only named AST nodes in both pattern and target code are matched. All unnamed nodes are skipped.
+* `relaxed`: Named AST nodes in both pattern and target code are matched. Comments and unnamed nodes are ignored.
+* `signature`: Only named AST nodes' kinds are matched. Comments, unnamed nodes and text are ignored.
+
+> **Deep Dive and More Examples**
+>
+> `strictness` is an advanced feature that you may not need in most cases.
+>
+> If you are interested in more examples and details, please refer to the [deep dive](https://ast-grep.github.io/advanced/match-algorithm.html) doc on ast-grep's match algorithm.
+
+
+## kind
+
+Sometimes it is not easy to write a pattern because it is hard to construct the valid syntax.
+
+For example, if we want to match class property declaration in JavaScript like `class A { a = 1 }`, writing `a = 1` will not match the property because it is parsed as assigning to a variable.
+
+Instead, we can use `kind` to specify the AST node type defined in [tree-sitter parser](https://tree-sitter.github.io/tree-sitter/using-parsers#named-vs-anonymous-nodes).
+
+`kind` rule accepts the tree-sitter node's name, like `if_statement` and `expression`. You can refer to [ast-grep playground](https://ast-grep.github.io/playground.html) for relevant `kind` names.
+
+Back to our example, we can look up class property's kind from the playground.
+
+``` yaml
+rule:
+  kind: field_definition
+```
+
+It will match the following code successfully ([playground link](https://ast-grep.github.io/playground.html#eyJtb2RlIjoiQ29uZmlnIiwibGFuZyI6ImphdmFzY3JpcHQiLCJxdWVyeSI6ImEgPSAxMjMiLCJyZXdyaXRlIjoibG9nZ2VyLmxvZygkTUFUQ0gpIiwiY29uZmlnIjoiIyBDb25maWd1cmUgUnVsZSBpbiBZQU1MXG5ydWxlOlxuICBraW5kOiBmaWVsZF9kZWZpbml0aW9uIiwic291cmNlIjoiY2xhc3MgVGVzdCB7XG4gIGEgPSAxMjNcbn0ifQ==)).
+
+``` js
+class Test {
+  a = 123 // match this line
+}
+```
+
+![astgrep11](/assets/images/202507/astgrep11.png)
+
+Here are some situations that you can effectively use `kind`:
+
+1. Pattern code is ambiguous to parse, e.g. `{}` in JavaScript can be either object or code block.
+2. It is too hard to enumerate all patterns of an AST kind node, e.g. matching all Java/TypeScript class declaration will need including all modifiers, generics, `extends` and `implements`.
+3. Patterns only appear within specific context, e.g. the class property definition.
+
+
+> `kind` + `pattern` is different from pattern object
+>
+> You may want to use `kind` to change how `pattern` is parsed. However, ast-grep rules are independent of each other.
+>
+> To change the parsing behavior of `pattern`, you should use pattern object with `context` and `selector` field. See [this FAQ](https://ast-grep.github.io/advanced/faq.html#kind-and-pattern-rules-are-not-working-together-why).
+
+
+
+## regex
+
+The `regex` atomic rule will match the AST node by its text against a Rust regular expression.
+
+``` yaml
+rule:
+  regex: "\w+"
+```
+
+> **TIP**
+>
+> The regular expression is written in [Rust syntax](https://docs.rs/regex/latest/regex/), not the popular [PCRE like syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions). So some features are not available like arbitrary look-ahead and back references.
+
+
+You should almost always combine `regex` with other atomic rules to make sure the regular expression is applied to the correct AST node. **Regex matching is quite expensive and cannot be optimized based on AST node kinds**. While `kind` and `pattern` rules can be only applied to nodes with specific `kind_id` for optimized performance.
+
+
+## nthChild
+
+`nthChild` is a rule to find nodes based on their indexes in the parent node's children list. In other words, it selects nodes based on their position among all sibling nodes within a parent node. It is very helpful in finding nodes without children or nodes appearing in specific positions.
+
+`nthChild` is heavily inspired by CSS's [nth-child pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child), and it accepts similar forms of arguments.
+
+``` yaml
+# a number to match the exact nth child
+nthChild: 3
+
+# An+B style string to match position based on formula
+nthChild: 2n+1
+
+# object style nthChild rule
+nthChild:
+  # accepts number or An+B style string
+  position: 2n+1
+  # optional, count index from the end of sibling list
+  reverse: true # default is false
+  # optional, filter the sibling node list based on rule
+  ofRule:
+    kind: function_declaration # accepts ast-grep rule
+```
+
+> **TIP**
+>
+> nthChild's index is 1-based, not 0-based, as in the CSS selector.
+> nthChild's node list only includes named nodes, not unnamed nodes.
+
+The following rule will match the second number in the JavaScript array.
+
+``` yaml
+rule:
+  kind: number
+  nthChild: 2
+```
+
+It will match the following code:
+
+``` js
+const arr = [ 1, 2, 3, ]
+            //   |- match this number
+```
+
+![astgrep12](/assets/images/202507/astgrep12.png)
+
+
+## range
+
+`range` is a rule to match nodes based on their position in the source code. It is useful when you want to integrate external tools like compilers or type checkers with ast-grep. External tools can provide the range information of the interested node, and ast-grep can use it to rewrite the code.
+
+`range` rule accepts a range object with `start` and `end` fields. Each field is an object with `line` and `column` fields.
+
+``` yaml
+rule:
+  range:
+    start:
+      line: 0
+      column: 0
+    end:
+      line: 1
+      column: 5
+```
+
+The above example will match an AST node having the first three characters of the first line like `foo` in `foo.bar()`.
+
+`line` and `column` are 0-based and character-wise, and the `start` is inclusive while the `end` is exclusive.
+
+
+## Tips for Writing Rules
+
+**Since one rule will have only one AST node in one match, it is recommended to first write the atomic rule that matches the desired node**.
+
+Suppose we want to write a rule which finds functions without a return type. For example, this code would trigger an error:
+
+``` ts
+const foo = () => {
+	return 1;
+}
+```
+
+The first step to compose a rule is to find the target. In this case, we can first use kind: `arrow_function` to find function node. Then we can use other rules to filter candidate nodes that does have return type.
+
+Another trick to write cleaner rule is to use sub-rules as fields. Please refer to [composite rule](https://ast-grep.github.io/guide/rule-config/composite-rule.html#combine-different-rules-as-fields) for more details.
 
 
 
@@ -401,9 +806,25 @@ Let's walk through the main fields in this configuration.
 https://ast-grep.github.io/advanced/faq.html
 
 
+# [Tree-sitter](https://tree-sitter.github.io/tree-sitter/index.html)
+
+
+**Tree-sitter** is a parser generator tool and an incremental parsing library. It can build a concrete syntax tree for a source file and efficiently update the syntax tree as the source file is edited. Tree-sitter aims to be:
+
+* **General** enough to parse any programming language
+* **Fast** enough to parse on every keystroke in a text editor
+* **Robust** enough to provide useful results even in the presence of syntax errors
+* **Dependency-free** so that the runtime library (which is written in [pure C11](https://github.com/tree-sitter/tree-sitter/tree/master/lib)) can be embedded in any application
+
+
+
+
+
+
 # Refer
 
 * https://ast-grep.github.io/
+* https://tree-sitter.github.io/tree-sitter/index.html
 
 
 

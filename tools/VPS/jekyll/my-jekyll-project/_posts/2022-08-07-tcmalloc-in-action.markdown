@@ -9,6 +9,21 @@ categories: [Linux Performance]
 {:toc}
 
 
+# TCMalloc 版本实现差异
+
+注意：https://github.com/google/tcmalloc 和 https://github.com/gperftools/gperftools 两个仓库 TCMalloc 的实现并不一样，前者的实现更新一些，而 gperftools 的版本目前还使用 Thread Cache 的工作模式。可参考：[gperftools do not have SetMaxPerCpuCacheSize() #1516](https://github.com/gperftools/gperftools/issues/1516)
+
+![tcmalloc_diff](/assets/images/202507/tcmalloc_diff.png)
+
+https://github.com/google/tcmalloc 版本目前默认使用的是 CPU Cache 的工作模式，通过上面的 issue 可以看到，gperftools 版本的 TCMalloc 没有提供 CPU Cache 的优化，原因是依赖 Linux 4.18 内核提供的 `rseq` 系统调用，Linux 4.18 内核支持 TCMalloc per-CPU 工作模式下 Restartable Sequence 优化（乐观并发+重试），避免了传统同步机制（如互斥锁、原子操作）带来的显著性能损耗。参考：https://kib.kiev.ua/kib/rseq.pdf
+
+另外可参考：[Is there benchmark between this tcmalloc and tcmalloc in gperftools? #26](https://github.com/google/tcmalloc/issues/26)，https://github.com/google/tcmalloc 版本实现是 Google 目前最新的实现，添加了很多新的优化，包括：per-CPU caches, sized delete, fast/slow path improvements, hugepage-aware backend 等。
+
+![tcmalloc_diff2](/assets/images/202507/tcmalloc_diff2.png)
+
+
+
+
 # [TCMalloc Overview](https://google.github.io/tcmalloc/overview.html)
 
 [TCMalloc](https://google.github.io/tcmalloc/) is Google’s customized implementation of C’s malloc() and C++’s operator new used for memory allocation within our C and C++ code. This custom memory allocation framework is an alternative to the one provided by the C standard library (on Linux usually through `glibc`) and C++ standard library. TCMalloc is designed to be more efficient at scale than other implementations.
@@ -1217,6 +1232,14 @@ When `__STDCPP_DEFAULT_NEW_ALIGNMENT__` is not specified (or is larger than 8 by
 * **Optimizing failures of `operator new` by directly failing instead of throwing exceptions**. Because TCMalloc does not throw exceptions when `operator new` fails, this can be used as a performance optimization for many move constructors.
 
 Within Abseil code, these direct allocation failures are enabled with the Abseil build-time configuration macro [ABSL_ALLOCATOR_NOTHROW](https://abseil.io/docs/cpp/guides/base#abseil-exception-policy).
+
+
+
+# Benchmark
+
+* [Improve MySQL and MariaDB performance with memory allocators like Jemalloc and TCMalloc](https://www.managedserver.eu/Improve-mysql-and-mariadb-performance-with-memory-allocators-like-jemalloc-and-tcmalloc/)
+
+* [Benchmarking Ruby's Heap: malloc, tcmalloc, jemalloc](https://engineering.appfolio.com/appfolio-engineering/2018/2/1/benchmarking-rubys-heap-malloc-tcmalloc-jemalloc)
 
 
 

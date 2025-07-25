@@ -13,6 +13,35 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* enumerate /ɪˈnjuːməreɪt/
+  + V-T When you **enumerate** a list of things, you name each one in turn. 列举; 枚举
+    - I **enumerate** the work that will have to be done. 我将必须要做的工作一一列举出来。
+
+* ambiguous /æmˈbɪɡjuəs/
+  + ADJ If you describe something as **ambiguous**, you mean that it is unclear or confusing because it can be understood in more than one way. 模棱两可的
+    - This agreement is very **ambiguous** and open to various interpretations. 这个协议非常模棱两可，可以有多种解释。
+
+* ambiguity /ˌæmbɪˈɡjuːɪtɪ/
+  + N-VAR If you say that there is **ambiguity** in something, you mean that it is unclear or confusing, or it can be understood in more than one way. 模棱两可
+    - There is considerable **ambiguity** about what this part of the agreement actually means. 关于协议这一部分到底是什么意思存在着相当大的含混不清。
+
+
+* superfluous /suːˈpɜːfluəs/
+  + ADJ Something that is **superfluous** is unnecessary or is no longer needed. 多余的
+    - My presence at the afternoon's proceedings was **superfluous**. 我在下午的活动中的出席是多余的。
+
+
+* interpret /ɪnˈtɜːprət/
+  + V-T If you **interpret** something in a particular way, you decide that this is its meaning or significance. 解释
+    - The fact that they had decided to come was **interpreted** as a positive sign. 他们已经决定要来的事实可被解释为一个积极的信号。
+  + V-T/V-I If you **interpret** what someone is saying, you translate it immediately into another language. 口译; 作口译
+    - The chambermaid spoke little English, so her husband came with her to **interpret**. 那个女服务员几乎不会说英语，所以她丈夫来给她作口译。
+
+* daunt /dɔːnt/
+  + V-T If something **daunts** you, it makes you feel slightly afraid or worried about dealing with it. 使胆怯
+    - Don't be **daunted**! 不要胆怯。
+    - It is hard to pick up such a book and not to feel a little **daunted**. 读这样的一本书是很难不略微感到胆怯的。
+
 * intuitive /ɪnˈtjuːɪtɪv/
   + ADJ If you have an **intuitive** idea or feeling about something, you feel that it is true although you have no evidence or proof of it. 直觉的
 
