@@ -1845,9 +1845,77 @@ When this property is set to true, the target source files will be combined into
 When multiple source files are included into one source file, as is done for unity builds, it can potentially lead to ODR errors. CMake provides a number of measures to help address such problems.
 
 
+## 核心原理
+
+将**多个源文件**合并为**单个编译单元**（Unity Source），**通过 `#include` 包含原始文件，减少编译次数和重复工作**。
+
+> `UNITY_BUILD` 是“以空间换时间”的优化策略，适用于资源充足的构建环境，但需严格测试 `ODR` 问题。建议在开发与发布环境中差异化启用。
+
+## 优点
+
+1. **显著提升编译速度**
+   * **减少头文件重复解析**：公共头文件仅被处理一次，避免多次加载（尤其对大型头文件效果显著）。
+   * **降低编译器启动开销**：编译 100 个文件时，若合并为 10 个 Unity 文件，编译器仅启动 10 次（而非 100 次）。
+   * **跨文件优化增强**：编译器可内联跨文件的函数，优化代码生成（传统编译因隔离翻译单元无法实现）。
+
+2. **减少内存占用**
+   * 合并编译单元减少重复符号处理，降低链接器内存消耗（对大型项目尤为重要）。
+
+3. **简化构建流程**
+   * 减少中间对象文件数量，加速链接阶段。
 
 
+## 缺点
 
+1. **ODR（单一定义规则）风险**
+   * 根本原因：不同源文件的全局符号（函数、变量、类）被强制合并到同一编译单元。
+   * 典型冲突场景：
+      + 同名全局变量/函数出现在不同文件中（传统编译因隔离可共存）
+      + 不同文件中的匿名命名空间可能被合并，引发符号冲突
+   * CMake 缓解措施：
+      + 自动为每个文件添加唯一后缀（如 `namespace { }` → `namespace <file_hash> { }`）
+      + 通过 `set_source_files_properties(... SKIP_UNITY_BUILD_INCLUSION ON)` 排除问题文件
+      + 使用 `UNITY_BUILD_BATCH_SIZE` 限制单批次文件数（**默认 8**），降低冲突概率
+
+2. **增量构建效率下降**
+  * 修改任意被合并的源文件，整个 Unity 文件需重新编译（传统编译仅重编单个文件）
+
+3. **调试难度增加**
+  * 调试器指向 Unity 合并后的文件（非原始源文件），影响代码定位
+  * **解决方案：开发阶段禁用 `UNITY_BUILD`**
+
+4. **编译内存峰值升高**
+  * 超大 Unity 文件可能耗尽内存（需通过 `UNITY_BUILD_BATCH_SIZE` 控制规模）
+
+5. **宏/静态变量冲突**
+  * 不同文件中的同名静态变量或宏可能相互覆盖。
+
+## 实践建议
+
+1. 适用场景：大型项目 Release 构建（追求编译速度）
+2. 规避 ODR 措施
+   * 启用 `-Wodr` 等编译器警告
+   * 测试阶段开启 `UNITY_BUILD` 主动暴露问题
+   * 避免全局符号使用通用名称（如 `utils.h` 中的 `get()`）。
+
+3. 参数调优
+
+``` makefile
+set_target_properties(my_target PROPERTIES
+    UNITY_BUILD ON
+    UNITY_BUILD_BATCH_SIZE 5       # 控制合并规模
+    UNITY_BUILD_UNIQUE_ID "MY_ID"  # 增强符号唯一性
+)
+```
+
+4. 开发/发布分离配置
+
+``` makefile
+option(ENABLE_UNITY_BUILD "Enable faster builds" OFF)
+if(ENABLE_UNITY_BUILD)
+    set_target_properties(my_target PROPERTIES UNITY_BUILD ON)
+endif()
+```
 
 
 
