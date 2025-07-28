@@ -13,6 +13,13 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* highlight /ˈhaɪˌlaɪt/
+  + V-T If someone or something **highlights** a point or problem, they emphasize it or make you think about it. 强调; 使注意
+  + V-T To **highlight** a piece of text means to mark it in a different colour, either with a special type of pen or on a computer screen. (用不同颜色) 标出; (在电脑屏幕上) 突出显示
+  + N-COUNT The **highlights** of an event, activity, or period of time are the most interesting or exciting parts of it. 最精彩的部分
+
+
+
 * enumerate /ɪˈnjuːməreɪt/
   + V-T When you **enumerate** a list of things, you name each one in turn. 列举; 枚举
     - I **enumerate** the work that will have to be done. 我将必须要做的工作一一列举出来。

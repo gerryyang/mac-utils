@@ -338,7 +338,7 @@ A meta variable pattern `$META` will capture named nodes by default. To capture 
 Namedness is an advanced topic in [Tree-sitter](https://tree-sitter.github.io/tree-sitter/using-parsers#named-vs-anonymous-nodes). You can read this [in-depth guide](https://ast-grep.github.io/advanced/core-concepts.html) for more background.
 
 
-# More Powerful Rule
+## More Powerful Rule
 
 Pattern is a fast and easy way to match code. But it is not as powerful as [rule](https://ast-grep.github.io/guide/rule-config.html#rule-file) which can match code with more [precise selector](https://ast-grep.github.io/guide/rule-config/atomic-rule.html#kind) or [more context](https://ast-grep.github.io/guide/rule-config/relational-rule.html).
 
@@ -546,6 +546,21 @@ And we can get `$GREET` set to `'Hello World'`.
 ## language specifies rule interpretation
 
 The `language` field in the rule configuration will specify how the rule is interpreted. For example, with `language: TypeScript`, the rule pattern `'hello world'` is parsed as TypeScript string literal. However, the rule will have a parsing error in languages like `C`/`Java`/`Rust` because single quote is used for character literal and double quote should be used for string.
+
+
+# [Rule Object Reference](https://ast-grep.github.io/reference/rule.html)
+
+* **Atomic rules** are the most basic rules to match AST nodes.
+* **Relational rules** filter matched target according to their position relative to other nodes.
+* **Composite rules** use logic operation `all`/`any`/`not` to compose the above rules to larger rules.
+
+> All of these **keys** are optional. However, at least one of them must be present and **positive**.
+
+A rule is called **positive** if it only matches nodes with specific kinds. For example, a `kind` rule is positive because it only matches nodes with the kind specified by itself. A `pattern` rule is positive because the pattern itself has a kind and the matching node must have the same kind. A `regex` rule is not positive though because it matches any node as long as its text satisfies the regex.
+
+
+
+
 
 
 # [Atomic Rule](https://ast-grep.github.io/guide/rule-config/atomic-rule.html)
@@ -798,6 +813,37 @@ Another trick to write cleaner rule is to use sub-rules as fields. Please refer 
 
 
 
+# [Relational Rules](https://ast-grep.github.io/guide/rule-config/relational-rule.html)
+
+[Atomic rule](https://ast-grep.github.io/guide/rule-config/atomic-rule.html) **can only match the target node directly**. But sometimes we want to match a node **based on its surrounding nodes**. For example, we want to find `await` expression inside a `for` loop.
+
+**Relational rules** are powerful operators that can filter the target nodes based on their surrounding nodes.
+
+`ast-grep` now supports **four kinds of relational rules**: `inside`, `has`, `follows`, and `precedes`.
+
+All four relational rules **accept a sub rule object** as their value. The sub rule will match the surrounding node while the relational rule itself will match the target node.
+
+
+
+# [Composite Rule](https://ast-grep.github.io/guide/rule-config/composite-rule.html)
+
+**Composite rule** can accept another rule or a list of rules recursively. It provides a way to **compose atomic rules into a bigger rule** for more complex matching.
+
+Below are the **four composite rule** operators available in `ast-grep`: `all`, `any`, `not`, and `matches`.
+
+
+# [Examples](https://ast-grep.github.io/catalog/)
+
+
+# [Rule Cheat Sheet](https://ast-grep.github.io/cheatsheet/rule.html)
+
+This cheat sheet provides a concise overview of ast-grep's rule object configuration, covering Atomic, Relational, and Composite rules, along with notes on Utility rules. It's designed as a handy reference for common usage.
+
+# [Config Cheat Sheet](https://ast-grep.github.io/cheatsheet/yaml.html)
+
+This cheat sheet provides a concise overview of ast-grep's linter rule YAML configuration. It's designed as a handy reference for common usage.
+
+
 
 
 
@@ -825,6 +871,7 @@ https://ast-grep.github.io/advanced/faq.html
 
 * https://ast-grep.github.io/
 * https://tree-sitter.github.io/tree-sitter/index.html
+* [Rule Object Reference](https://ast-grep.github.io/reference/rule.html)
 
 
 
