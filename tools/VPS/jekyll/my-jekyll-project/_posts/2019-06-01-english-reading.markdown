@@ -13,11 +13,36 @@ categories: 英语学习
 
 # Words (柯林斯)
 
+* conclusive /kənˈkluːsɪv/
+  + ADJ **Conclusive** evidence shows that something is certainly true. 确凿的
+    - Her attorneys claim there is no **conclusive** evidence that any murders took place. 她的律师们声称没有任何发生过谋杀的确凿证据。
+
+* exhaustive /ɪɡˈzɔːstɪv/
+  + ADJ If you describe a study, search, or list as **exhaustive**, you mean that it is very thorough and complete. 详尽无遗的
+
+* donate /dəʊˈneɪt/
+  + V-T If you **donate** something to a charity or other organization, you give it to them. 捐赠
+    - He frequently **donates** large sums to charity. 他经常向慈善机构大笔捐款。
+  + V-T If you **donate** your blood or a part of your body, you allow doctors to use it to help someone who is ill. 捐献
+    - people who are willing to **donate** their organs for use after death. 愿意在死后捐献器官的人
+
+
+* obsolete /ˈɒbsəliːt/
+  + ADJ Something that is **obsolete** is no longer needed because something better has been invented. 被淘汰的
+    - So much equipment becomes **obsolete** almost as soon as it's made. 很多设备几乎刚制造出来就过时了。
+
+* unsound /ʌnˈsaʊnd/
+  + ADJ If a conclusion or method is **unsound**, it is based on ideas that are wrong. (结论、方法)错误的
+  + ADJ If something or someone is **unsound**, they are unreliable. (人、事)不可靠的
+    - No sensible person would put his money in a bank he knew to be **unsound**. 一个理智的人不会把钱存在一个他明知不可靠的银行。
+  + ADJ If you say that something is **unsound** in some way, you mean that it is damaging in that way or to the thing mentioned. 破坏性的
+  + ADJ If a building or other structure is **unsound**, it is in poor condition and is likely to collapse. (建筑物)不安全的; 易倒塌的
+
+
 * highlight /ˈhaɪˌlaɪt/
   + V-T If someone or something **highlights** a point or problem, they emphasize it or make you think about it. 强调; 使注意
   + V-T To **highlight** a piece of text means to mark it in a different colour, either with a special type of pen or on a computer screen. (用不同颜色) 标出; (在电脑屏幕上) 突出显示
   + N-COUNT The **highlights** of an event, activity, or period of time are the most interesting or exciting parts of it. 最精彩的部分
-
 
 
 * enumerate /ɪˈnjuːməreɪt/

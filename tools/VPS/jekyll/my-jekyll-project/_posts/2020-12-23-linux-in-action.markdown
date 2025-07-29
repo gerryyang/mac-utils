@@ -3593,6 +3593,16 @@ second setsockopt() worked
 */
 ```
 
+## nproc
+
+``` bash
+# 显示当前进程可用的CPU数量
+nproc
+
+# 显示所有CPU数量
+nproc --all
+```
+
 
 # 第三方工具
 

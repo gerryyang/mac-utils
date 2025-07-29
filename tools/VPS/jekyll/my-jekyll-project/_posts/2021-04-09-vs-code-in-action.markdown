@@ -444,6 +444,11 @@ Check out the available libraries at libraries.excalidraw.com, and don't hesitat
 The leading open-source AI code assistant
 
 
+## Cppcheck Plug-in
+
+A plug-in for Cppcheck, capable of checking folders or editor tabs, shows output in the output channel, severity options available.
+
+
 # 有趣的扩展
 
 ## LeetCode
