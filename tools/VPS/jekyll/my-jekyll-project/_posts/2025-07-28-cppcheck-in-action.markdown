@@ -16,6 +16,220 @@ categories: Tools
 `Cppcheck` is available both as open-source (this page) and as `Cppcheck` Premium with extended functionality and support. Please visit [www.cppcheck.com](https://www.cppcheck.com/?utm_source=sourceforge&utm_medium=opensource&utm_campaign=websitelink) for more information and purchase options for the **commercial version**.
 
 
+
+
+# Compiling
+
+`Cppcheck` requires a C++ compiler with (partial) C++11 support. Minimum required versions are GCC 5.1 / Clang 3.5 / Visual Studio 2015.
+
+When building the command line tool, [PCRE](http://www.pcre.org/) is optional. It is used if you build with rules.
+
+The minimum required Python version is 3.6.
+
+``` bash
+# 安装 PCRE 开发库
+# RHEL/CentOS
+$ sudo yum install pcre-devel
+
+# 确认 PCRE 开发库是否安装
+# RHEL/CentOS
+$ rpm -qa | grep pcre-devel
+pcre-devel-8.42-6.tl3.x86_64
+
+# 定位 pcre-config
+$ which pcre-config || find /usr -name pcre-config 2>/dev/null
+/usr/bin/pcre-config
+```
+
+> GNU make
+
+Simple, unoptimized build (no dependencies):
+
+``` bash
+make
+```
+
+The recommended `release` build is:
+
+``` bash
+make -j36 MATCHCOMPILER=yes DESTDIR=$HOME/tools/cppcheck/cppcheck-2.18.0 FILESDIR=-install HAVE_RULES=yes CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" install
+```
+
+Flags:
+
+* `MATCHCOMPILER=yes` Python is used to optimise cppcheck. The Token::Match patterns are converted into C++ code at compile time.
+* `DESTDIR=xxx FILESDIR=xxx` Specify folder where cppcheck files are installed (`addons`, `cfg`, `platform`)
+* `HAVE_RULES=yes` Enable rules (`PCRE` is required if this is used)
+* `CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function"` Enables most compiler optimizations, disables cppcheck-internal debugging code and enables basic compiler warnings.
+
+
+```
+$ ldd cppcheck
+        linux-vdso.so.1 (0x00007ffffdfb9000)
+        /$LIB/libonion_block.so => /lib64/libonion_block.so (0x00007fcf022ad000)
+        /$LIB/libonion.so => /lib64/libonion.so (0x00007fcf022a5000)
+        libpcre.so.1 => /lib64/libpcre.so.1 (0x00007fcf02229000)
+        libstdc++.so.6 => /lib64/libstdc++.so.6 (0x00007fcf02091000)
+        libm.so.6 => /lib64/libm.so.6 (0x00007fcf01f0d000)
+        libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007fcf01ef2000)
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007fcf01ecf000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007fcf01d07000)
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007fcf01d00000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fcf024b3000)
+```
+
+# About static analysis
+
+The kinds of bugs that you can find with static analysis are:
+
+* Undefined behavior
+* Using dangerous code patterns
+* Coding style
+
+**There are many bugs that you can not find with static analysis**. Static analysis tools do not have human knowledge about what your program is intended to do. If the output from your program is valid but unexpected then in most cases this is not detected by static analysis tools. For instance, if your small program writes “Helo” on the screen instead of “Hello” it is unlikely that any tool will complain about that.
+
+**Static analysis should be used as a complement in your quality assurance**. It does not replace any of:
+
+*  Careful design
+*  Testing
+*  Dynamic analysis
+*  Fuzzing
+
+
+
+
+
+# Manual
+
+You can read the [manual](https://cppcheck.sourceforge.io/manual.pdf) or download some [articles](http://sourceforge.net/projects/cppcheck/files/Articles/).
+
+
+# Features
+
+1. Unique code analysis that detect various kinds of bugs in your code.
+2. Both command line interface and graphical user interface are available.
+3. Cppcheck has a strong focus on detecting undefined behaviour.
+
+## Unique analysis
+
+Using several static analysis tools can be a good idea. There are unique features in each tool. This has been established in many studies.
+
+So what is unique in `Cppcheck`.
+
+**`Cppcheck` uses unsound flow sensitive analysis**. Several other analyzers use path sensitive analysis based on abstract interpretation, that is also great however that has both advantages and disadvantages. In theory by definition, it is better with path sensitive analysis than flow sensitive analysis. **But in practice, it means Cppcheck will detect bugs that the other tools do not detect**.
+
+In `Cppcheck` the data flow analysis is not only "forward" but "bi-directional". Most analyzers will diagnose this:
+
+``` c
+void foo(int x)
+{
+    int buf[10];
+    if (x == 1000)
+        buf[x] = 0; // <- ERROR
+}
+```
+
+Most tools can determine that the array index will be `1000` and there will be overflow.
+
+`Cppcheck` will also diagnose this:
+
+``` c
+void foo(int x)
+{
+    int buf[10];
+    buf[x] = 0; // <- ERROR
+    if (x == 1000) {}
+}
+```
+
+## Undefined behaviour
+
+* Dead pointers
+* Division by zero
+* Integer overflows
+* Invalid bit shift operands
+* Invalid conversions
+* Invalid usage of STL
+* Memory management
+* Null pointer dereferences
+* Out of bounds checking
+* Uninitialized variables
+* Writing const data
+
+## Security
+
+`CVEs` that was found using `Cppcheck`:
+
+[CVE-2017-1000249](https://nvd.nist.gov/vuln/detail/CVE-2017-1000249): file : stack based buffer overflow. This was found by Thomas Jarosch using `Cppcheck`. The cause is a mistake in a condition.
+
+These `CVEs` are shown when you google "cppcheck CVE". Feel free to compare the search results with other static analysis tools.
+
+Security experts recommend that static analysis is used. And using several tools is the best approach from a security perspective.
+
+
+## Coding standards
+
+| Coding standard | Open Source  | Premium
+| -- | -- | --
+| Misra C 2012 - original rules | Partial | Yes
+| Misra C 2012 - amendment #1 | Partial | Yes
+| Misra C 2012 - amendment #2 | Partial | Yes
+| Misra C 2012 - amendment #3 | | Yes
+| Misra C 2012 - amendment #4 | | Yes
+| Misra C 2012 - Compliance report | | Yes
+| Misra C 2012 - Rule texts | User provided | Yes
+| Misra C 2023  | | | Yes
+| Misra C++ 2008 | | | Yes
+| Misra C++ 2023 | | | Yes
+| Cert C | | | Yes
+| Cert C++ | | | Yes
+| Autosar | | | [Partial](https://files.cppchecksolutions.com/autosar.html)
+
+
+# All checks
+
+For a list of all checks in Cppcheck see: http://sourceforge.net/p/cppcheck/wiki/ListOfChecks.
+
+
+
+# Download
+
+[Cppcheck 2.18 (open source)](https://github.com/danmar/cppcheck/archive/2.18.0.zip)
+
+
+# Clients and plugins
+
+`Cppcheck` is integrated with many popular development tools. For instance:
+
+
+* CLion - [Cppcheck plugin](https://plugins.jetbrains.com/plugin/8143)
+* Code::Blocks - integrated
+* Eclipse - [Cppcheclipse](https://github.com/cppchecksolutions/cppcheclipse/wiki/Installation)
+* Tortoise SVN - [Adding a pre-commit hook script](http://omerez.com/automatic-static-code-analysis/)
+* Vim - [Vim Compiler](https://vimhelp.org/quickfix.txt.html#compiler-cppcheck)
+* Visual Studio - [Visual Studio plugin](https://github.com/VioletGiraffe/cppcheck-vs-addin/releases/latest)
+* VScode - [VScode plugin](https://marketplace.visualstudio.com/items?itemName=NathanJ.cppcheck-plugin)
+
+![cppcheck_vscode_plugin](/assets/images/202507/cppcheck_vscode_plugin.png)
+
+> 注意：Cppcheck must be installed to your system! You'll need to add cppcheck to the "PATH" environment variable in Windows
+
+# Other static analysis tools
+
+Using a battery of tools is better than using one tool. Each tool has unique code analysis and therefore we recommend that you also use other tools.
+
+`Cppcheck` focus on bugs instead of stylistic issues. Therefore a tool that focus on stylistic issues could be a good addition.
+
+`Cppcheck` tries very hard to avoid false positives. Sometimes people want to detect all bugs even if there will be many false warnings, for instance when they are working on a release and want to verify that there are no bugs. A tool that is much more noisy than `Cppcheck` might be a good addition.
+
+Even tools that have the same design goals as `Cppcheck` will probably be good additions. **Static analysis is such a big field, `Cppcheck` only covers a small fraction of it. No tool covers the whole field**. The day when all manual testing will be **obsolete(被淘汰的，过时的)** because of some tool is very far away.
+
+
+# [News](https://sourceforge.net/p/cppcheck/news/)
+
+[Cppcheck-2.18.0](https://sourceforge.net/p/cppcheck/news/2025/07/cppcheck-2180/)
+
+
 # Cppcheck Manual
 
 
@@ -1029,219 +1243,7 @@ The command line option `--performance-valueflow-max-if-count` adjusts the max c
 
 
 
-# Compiling
-
-`Cppcheck` requires a C++ compiler with (partial) C++11 support. Minimum required versions are GCC 5.1 / Clang 3.5 / Visual Studio 2015.
-
-When building the command line tool, [PCRE](http://www.pcre.org/) is optional. It is used if you build with rules.
-
-The minimum required Python version is 3.6.
-
-``` bash
-# 安装 PCRE 开发库
-# RHEL/CentOS
-$ sudo yum install pcre-devel
-
-# 确认 PCRE 开发库是否安装
-# RHEL/CentOS
-$ rpm -qa | grep pcre-devel
-pcre-devel-8.42-6.tl3.x86_64
-
-# 定位 pcre-config
-$ which pcre-config || find /usr -name pcre-config 2>/dev/null
-/usr/bin/pcre-config
-```
-
-> GNU make
-
-Simple, unoptimized build (no dependencies):
-
-``` bash
-make
-```
-
-The recommended `release` build is:
-
-``` bash
-make -j36 MATCHCOMPILER=yes DESTDIR=$HOME/tools/cppcheck/cppcheck-2.18.0 FILESDIR=-install HAVE_RULES=yes CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" install
-```
-
-Flags:
-
-* `MATCHCOMPILER=yes` Python is used to optimise cppcheck. The Token::Match patterns are converted into C++ code at compile time.
-* `DESTDIR=xxx FILESDIR=xxx` Specify folder where cppcheck files are installed (`addons`, `cfg`, `platform`)
-* `HAVE_RULES=yes` Enable rules (`PCRE` is required if this is used)
-* `CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function"` Enables most compiler optimizations, disables cppcheck-internal debugging code and enables basic compiler warnings.
-
-
-```
-$ ldd cppcheck
-        linux-vdso.so.1 (0x00007ffffdfb9000)
-        /$LIB/libonion_block.so => /lib64/libonion_block.so (0x00007fcf022ad000)
-        /$LIB/libonion.so => /lib64/libonion.so (0x00007fcf022a5000)
-        libpcre.so.1 => /lib64/libpcre.so.1 (0x00007fcf02229000)
-        libstdc++.so.6 => /lib64/libstdc++.so.6 (0x00007fcf02091000)
-        libm.so.6 => /lib64/libm.so.6 (0x00007fcf01f0d000)
-        libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007fcf01ef2000)
-        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007fcf01ecf000)
-        libc.so.6 => /lib64/libc.so.6 (0x00007fcf01d07000)
-        libdl.so.2 => /lib64/libdl.so.2 (0x00007fcf01d00000)
-        /lib64/ld-linux-x86-64.so.2 (0x00007fcf024b3000)
-```
-
-# About static analysis
-
-The kinds of bugs that you can find with static analysis are:
-
-* Undefined behavior
-* Using dangerous code patterns
-* Coding style
-
-**There are many bugs that you can not find with static analysis**. Static analysis tools do not have human knowledge about what your program is intended to do. If the output from your program is valid but unexpected then in most cases this is not detected by static analysis tools. For instance, if your small program writes “Helo” on the screen instead of “Hello” it is unlikely that any tool will complain about that.
-
-**Static analysis should be used as a complement in your quality assurance**. It does not replace any of:
-
-*  Careful design
-*  Testing
-*  Dynamic analysis
-*  Fuzzing
-
-
-
-
-
-# Manual
-
-You can read the [manual](https://cppcheck.sourceforge.io/manual.pdf) or download some [articles](http://sourceforge.net/projects/cppcheck/files/Articles/).
-
-
-# Features
-
-1. Unique code analysis that detect various kinds of bugs in your code.
-2. Both command line interface and graphical user interface are available.
-3. Cppcheck has a strong focus on detecting undefined behaviour.
-
-## Unique analysis
-
-Using several static analysis tools can be a good idea. There are unique features in each tool. This has been established in many studies.
-
-So what is unique in `Cppcheck`.
-
-**`Cppcheck` uses unsound flow sensitive analysis**. Several other analyzers use path sensitive analysis based on abstract interpretation, that is also great however that has both advantages and disadvantages. In theory by definition, it is better with path sensitive analysis than flow sensitive analysis. **But in practice, it means Cppcheck will detect bugs that the other tools do not detect**.
-
-In `Cppcheck` the data flow analysis is not only "forward" but "bi-directional". Most analyzers will diagnose this:
-
-``` c
-void foo(int x)
-{
-    int buf[10];
-    if (x == 1000)
-        buf[x] = 0; // <- ERROR
-}
-```
-
-Most tools can determine that the array index will be `1000` and there will be overflow.
-
-`Cppcheck` will also diagnose this:
-
-``` c
-void foo(int x)
-{
-    int buf[10];
-    buf[x] = 0; // <- ERROR
-    if (x == 1000) {}
-}
-```
-
-## Undefined behaviour
-
-* Dead pointers
-* Division by zero
-* Integer overflows
-* Invalid bit shift operands
-* Invalid conversions
-* Invalid usage of STL
-* Memory management
-* Null pointer dereferences
-* Out of bounds checking
-* Uninitialized variables
-* Writing const data
-
-## Security
-
-`CVEs` that was found using `Cppcheck`:
-
-[CVE-2017-1000249](https://nvd.nist.gov/vuln/detail/CVE-2017-1000249): file : stack based buffer overflow. This was found by Thomas Jarosch using `Cppcheck`. The cause is a mistake in a condition.
-
-These `CVEs` are shown when you google "cppcheck CVE". Feel free to compare the search results with other static analysis tools.
-
-Security experts recommend that static analysis is used. And using several tools is the best approach from a security perspective.
-
-
-## Coding standards
-
-| Coding standard | Open Source  | Premium
-| -- | -- | --
-| Misra C 2012 - original rules | Partial | Yes
-| Misra C 2012 - amendment #1 | Partial | Yes
-| Misra C 2012 - amendment #2 | Partial | Yes
-| Misra C 2012 - amendment #3 | | Yes
-| Misra C 2012 - amendment #4 | | Yes
-| Misra C 2012 - Compliance report | | Yes
-| Misra C 2012 - Rule texts | User provided | Yes
-| Misra C 2023  | | | Yes
-| Misra C++ 2008 | | | Yes
-| Misra C++ 2023 | | | Yes
-| Cert C | | | Yes
-| Cert C++ | | | Yes
-| Autosar | | | [Partial](https://files.cppchecksolutions.com/autosar.html)
-
-
-# All checks
-
-For a list of all checks in Cppcheck see: http://sourceforge.net/p/cppcheck/wiki/ListOfChecks.
-
-
-
-# Download
-
-[Cppcheck 2.18 (open source)](https://github.com/danmar/cppcheck/archive/2.18.0.zip)
-
-
-# Clients and plugins
-
-`Cppcheck` is integrated with many popular development tools. For instance:
-
-
-* CLion - [Cppcheck plugin](https://plugins.jetbrains.com/plugin/8143)
-* Code::Blocks - integrated
-* Eclipse - [Cppcheclipse](https://github.com/cppchecksolutions/cppcheclipse/wiki/Installation)
-* Tortoise SVN - [Adding a pre-commit hook script](http://omerez.com/automatic-static-code-analysis/)
-* Vim - [Vim Compiler](https://vimhelp.org/quickfix.txt.html#compiler-cppcheck)
-* Visual Studio - [Visual Studio plugin](https://github.com/VioletGiraffe/cppcheck-vs-addin/releases/latest)
-* VScode - [VScode plugin](https://marketplace.visualstudio.com/items?itemName=NathanJ.cppcheck-plugin)
-
-![cppcheck_vscode_plugin](/assets/images/202507/cppcheck_vscode_plugin.png)
-
-> 注意：Cppcheck must be installed to your system! You'll need to add cppcheck to the "PATH" environment variable in Windows
-
-# Other static analysis tools
-
-Using a battery of tools is better than using one tool. Each tool has unique code analysis and therefore we recommend that you also use other tools.
-
-`Cppcheck` focus on bugs instead of stylistic issues. Therefore a tool that focus on stylistic issues could be a good addition.
-
-`Cppcheck` tries very hard to avoid false positives. Sometimes people want to detect all bugs even if there will be many false warnings, for instance when they are working on a release and want to verify that there are no bugs. A tool that is much more noisy than `Cppcheck` might be a good addition.
-
-Even tools that have the same design goals as `Cppcheck` will probably be good additions. **Static analysis is such a big field, `Cppcheck` only covers a small fraction of it. No tool covers the whole field**. The day when all manual testing will be **obsolete(被淘汰的，过时的)** because of some tool is very far away.
-
-
-# [News](https://sourceforge.net/p/cppcheck/news/)
-
-[Cppcheck-2.18.0](https://sourceforge.net/p/cppcheck/news/2025/07/cppcheck-2180/)
-
-
-# cppcheck doc
+# cppcheck --doc
 
 ```
 $ cppcheck --doc
