@@ -97,7 +97,6 @@ Alternatively, you can run your own production level Temporal Service to orchest
 
 ### [How Temporal works and how it works for you](https://temporal.io/how-it-works)
 
-#### How to build with Temporal
 
 > Write your business logic as code
 
