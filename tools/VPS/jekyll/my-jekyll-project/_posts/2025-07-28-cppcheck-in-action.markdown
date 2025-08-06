@@ -580,18 +580,18 @@ Use `--std` on the command line to specify a C/C++ standard.
 
 The available options are:
 
-• c89: C code is C89 compatible
-• c99: C code is C99 compatible
-• c11: C code is C11 compatible
-• c17: C code is C17 compatible
-• c23: C code is C23 compatible (default)
-• c++03: C++ code is C++03 compatible
-• c++11: C++ code is C++11 compatible
-• c++14: C++ code is C++14 compatible
-• c++17: C++ code is C++17 compatible
-• c++20: C++ code is C++20 compatible
-• c++23: C++ code is C++23 compatible
-• c++26: C++ code is C++26 compatible (default)
+* c89: C code is C89 compatible
+* c99: C code is C99 compatible
+* c11: C code is C11 compatible
+* c17: C code is C17 compatible
+* c23: C code is C23 compatible (default)
+* c++03: C++ code is C++03 compatible
+* c++11: C++ code is C++11 compatible
+* c++14: C++ code is C++14 compatible
+* c++17: C++ code is C++17 compatible
+* c++20: C++ code is C++20 compatible
+* c++23: C++ code is C++23 compatible
+* c++26: C++ code is C++26 compatible (default)
 
 
 ## Suppressions
@@ -1872,6 +1872,121 @@ cppcheck --doc
 # get list of error messages
 cppcheck --errorlist
 ```
+
+# 参考脚本
+
+## run_cppcheck_by_dir.sh
+
+``` bash
+#!/bin/bash
+# Cppcheck 2.18.0
+# https://github.com/danmar/cppcheck/releases/tag/2.18.0
+#
+# Usage: run_cppcheck_by_dir.sh [<directory>]
+# If no directory is specified, it defaults to the current directory.
+# Example: ./run_cppcheck_by_dir.sh /path/to/directory
+
+set -euo pipefail
+
+# Configuration parameters
+DIR="${1:-.}"  # Default to current directory if no argument is provided
+WORKDIR="$HOME/jlib_proj/JLib/tools/cppcheck/workdir"
+OUTPUT_FILE="cppcheck.output"
+REPORT_FILE="cppcheck.report"
+ERROR_FILE="cppcheck.error"
+# Number of threads to use for parallel processing
+# Default to number of CPU cores if not set
+THREADS="${THREADS:-$(nproc)}"
+
+# Check if cppcheck is installed
+if ! command -v cppcheck &> /dev/null; then
+    echo "cppcheck command not found. Please install cppcheck."
+    exit 1
+fi
+
+# Clean workdir cache
+mkdir -p "$WORKDIR"
+rm $WORKDIR/* || true
+
+# Run cppcheck
+# --template="{file}:{line}:{column}: {severity}:{message}" \
+cppcheck "$DIR" \
+    --cppcheck-build-dir="$WORKDIR" \
+    -j "$THREADS" \
+    --enable=all \
+    --platform=unix64 \
+    --std=c++17 \
+    --inconclusive \
+    --force \
+    --output-format=text \
+    --output-file="$OUTPUT_FILE" \
+    --checkers-report="$REPORT_FILE" \
+    --inline-suppr \
+    --verbose \
+    -D__cppcheck__ \
+    --template="{file}:{line}:{column}: {severity}:{message}" \
+    2> >(tee "$ERROR_FILE" >&2)
+
+echo "Check completed. Output saved to: $OUTPUT_FILE"
+echo "Detailed error log: $ERROR_FILE"
+```
+
+## run_cppcheck_by_compile_database.sh
+
+``` bash
+#!/bin/bash
+# Cppcheck 2.18.0
+# https://github.com/danmar/cppcheck/releases/tag/2.18.0
+#
+# Usage: run_jlib_cppcheck_by_compile_database.sh </path/to/compile_commands.json>
+# Example: ./run_jlib_cppcheck_by_compile_database.sh /path/to/compile_commands.json
+
+set -euo pipefail
+
+# Configuration parameters
+COMPILE_COMMANDS_FILE="${1:-$HOME/jlib_proj/JLib/compile_commands.json}"  # Path to compile_commands.json
+WORKDIR="$HOME/jlib_proj/JLib/tools/cppcheck/workdir"
+OUTPUT_FILE="cppcheck.output"
+REPORT_FILE="cppcheck.report"
+ERROR_FILE="cppcheck.error"
+CLANG_PATH="${CLANG_PATH:-/usr/local/bin/clang}"  # Clang path (if needed)
+THREADS="${THREADS:-$(nproc)}"  # Automatically get CPU core count
+
+# Check if cppcheck is installed
+if ! command -v cppcheck &> /dev/null; then
+    echo "cppcheck command not found. Please install cppcheck."
+    exit 1
+fi
+
+# Clean workdir cache
+mkdir -p "$WORKDIR"
+rm $WORKDIR/* || true
+
+# Run cppcheck
+cppcheck -i$HOME/jlib_proj/JLib/third_party \
+    -j "$THREADS" \
+    --enable=all \
+    --cppcheck-build-dir=$WORKDIR \
+    --project=$COMPILE_COMMANDS_FILE \
+    --platform=unix64 \
+    --std=c++17 \
+    --inconclusive \
+    --force \
+    --output-format=text \
+    --output-file="$OUTPUT_FILE" \
+    --checkers-report="$REPORT_FILE" \
+    --suppress=missingInclude \
+    --suppress=missingIncludeSystem \
+    --suppress=cstyleCast \
+    --suppress=unusedFunction \
+    --inline-suppr \
+    2> >(tee "$ERROR_FILE" >&2)
+
+echo "Check completed. Output saved to: $OUTPUT_FILE"
+echo "Detailed error log: $ERROR_FILE"
+```
+
+
 
 
 # Refer

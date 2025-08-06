@@ -11,7 +11,79 @@ categories: 英语学习
 
 
 
-# Words (柯林斯)
+# Words (柯林斯英汉双解大词典)
+
+
+* unidirectional /ˌjuːnɪdɪˈrekʃənəl; ˌjuːnɪdaɪˈrekʃənəl/
+  + ADJ having, moving in, or operating in only one direction 单向的
+
+* sophisticated /səˈfɪstɪˌkeɪtɪd/
+  + ADJ A **sophisticated** machine, device, or method is more advanced or complex than others. 高级的; 复杂的
+    - Honeybees use one of the most **sophisticated** communication systems of any insect. 蜜蜂所使用的交流系统是昆虫中最复杂的之一。
+  + ADJ Someone who is **sophisticated** is comfortable in social situations and knows about culture, fashion, and other matters that are considered socially important. 老练的; 久经世故的
+    - Claude was a charming, sophisticated companion. 克劳德是个有魅力、见多识广的伙伴。
+  + ADJ A **sophisticated** person is intelligent and knows a lot, so that they are able to understand complicated situations. 干练的
+
+
+* execution /ˌeksɪˈkjuːʃn/
+  + [ U,C ] the act of killing sb, especially as a legal punishment 处决
+    - He faced **execution** by hanging for murder.他因谋杀要以绞刑处死。
+  + [ U ] (formal) the act of doing a piece of work, performing a duty, or putting a plan into action 实行；执行；实施
+    - The idea was good, but the **execution** was poor.这个主意倒不错，可实施情况不理想。
+  + [ U ] (formal) skill in performing or making sth, such as a piece of music or work of art 表演；（乐曲的）演奏；（艺术品的）制作
+    - Her **execution** of the piano piece was perfect.她把那段钢琴曲演奏得非常完美。
+
+* elevate /ˈelɪveɪt/
+  + V-T When someone or something achieves a more important rank or status, you can say that they are **elevated** to it. 提拔
+    - He was elevated to the post of president. 他被提拔到总裁的职位。
+  + V-T To **elevate** something means to increase it in amount or intensity. 提高
+    - Emotional stress can **elevate** blood pressure. 情绪紧张会使血压升高。
+  + V-T If you **elevate** something, you raise it higher. 举起; 抬高
+    - I built a platform to **elevate** the bed. 我搭了一个台子把床抬高了。
+
+
+* orchestrate /ˈɔːkɪstreɪt/
+  + V-T If you say that someone **orchestrates** an event or situation, you mean that they carefully organize it in a way that will produce the result that they want. 精心组织
+
+
+* mature /məˈtjʊə, -ˈtʃʊə/
+  + V-I When a child or young animal **matures**, it becomes an adult. (小孩、幼崽) 发育成熟
+    - You will learn what to expect as your child **matures** physically. 当你的孩子身体发育成熟时，你将知道会发生什么。
+  + V-I When something **matures**, it reaches a state of complete development. (某物) 长成
+    - When the trees **matured** they were cut. 当这些树长成时，它们就会被砍掉。
+  + V-I If someone **matures**, they become more fully developed in their personality and emotional behaviour. 成熟
+    - They have **matured** way beyond their age. 他们已经成熟得远远超过了他们的年龄。
+  + ADJ If you describe someone as **mature**, you think that they are fully developed and balanced in their personality and emotional behaviour. 成熟的
+    - They are emotionally **mature** and should behave responsibly. 他们在情感上是成熟的，应该负责任地行事。
+  + ADJ If you say that someone is **mature** or of mature years, you are saying politely that they are middle-aged or old. 成年的 (中年和老年的礼貌说法)
+
+* intermittent /ˌɪntəˈmɪtənt/
+  + ADJ Something that is **intermittent** happens occasionally rather than continuously. 断断续续的
+    - After three hours of **intermittent** rain, the game was abandoned. 雨断断续续地下了3个小时之后，比赛被取消了。
+
+
+* resilient /rɪˈzɪlɪənt/
+  + ADJ Something that is **resilient** is strong and not easily damaged by being hit, stretched, or squeezed. 有弹性的
+
+
+* durable /ˈdjʊərəb(ə)l/
+  + ADJ Something that is **durable** is strong and lasts a long time without breaking or becoming weaker. 耐用的
+
+* temporal /ˈtempərəl/
+  + ADJ **Temporal** powers or matters relate to ordinary institutions and activities rather than to religious or spiritual ones. 凡尘的; 普通的
+    - the spiritual and **temporal** leader of the people. 人们的精神及俗世领袖
+  + ADJ **Temporal** means relating to time. 时间的
+    - One is also able to see how specific acts are related to a **temporal** and spatial context. 人们也能看到具体的行为如何与时间和空间背景相关联。
+
+
+* demystify /diːˈmɪstɪfaɪ/
+  + V-T If you **demystify** something, you make it easier to understand by giving a clear explanation of it. 使(某事)简单化
+    - This book aims to **demystify** medical treatments. 这本书旨在使药物治疗简单化。
+
+
+* crucial /ˈkruːʃəl/
+  + ADJ If you describe something as **crucial**, you mean it is extremely important. 至关重要的
+    - He had administrators under him but made the **crucial** decisions himself. 尽管他手下有许多官员，但重要的决定还是他自己做。
 
 * conclusive /kənˈkluːsɪv/
   + ADJ **Conclusive** evidence shows that something is certainly true. 确凿的
@@ -104,6 +176,9 @@ categories: 英语学习
   + ADJ **Alternative** medicine uses traditional ways of curing people, such as medicines made from plants, massage, and acupuncture. 替代性的 (疗法)
   + ADJ **Alternative** energy uses natural sources of energy such as the sun, wind, or water for power and fuel, rather than oil, coal, or nuclear power. 可再生的 (能源)
 
+* alternatively /ɔːˈltɜːnətɪvlɪ/
+  + ADV You use **alternatively** to introduce a suggestion or to mention something different from what has just been stated. 或者
+    - Hotels are generally of a good standard and not too expensive. **Alternatively** you could stay in an apartment. 旅馆一般标准高并且不太贵。或者你可以住公寓。
 
 * elucidate /ɪˈluːsɪˌdeɪt/
   + V-T/V-I If you **elucidate** something, you make it clear and easy to understand. 阐明; 解释

@@ -841,20 +841,27 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -readability-identifier-length,
   -bugprone-narrowing-conversions,
+  -misc-const-correctness,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nullptr,
+  -misc-no-recursion,
+  -bugprone-reserved-identifier,
+  -bugprone-macro-parentheses,
+  -readability-redundant-access-specifiers,
+  -misc-non-private-member-variables-in-classes,
+  -unknown_typename,
+
 # Turn all the warnings from the checks above into errors.
 WarningsAsErrors: "performance-*, bugprone-*"
 
 CheckOptions:
-  - { key: readability-identifier-naming.NamespaceCase, value: lower_case }
+  - { key: readability-identifier-naming.NamespaceCase, value: aNy_CasE }
   - { key: readability-identifier-naming.ClassCase, value: CamelCase }
   - { key: readability-identifier-naming.StructCase, value: CamelCase }
   - { key: readability-identifier-naming.TemplateParameterCase, value: aNy_CasE }
   - { key: readability-identifier-naming.FunctionCase, value: aNy_CasE }
-  - { key: readability-identifier-naming.VariableCase, value: lower_case }
-  - { key: readability-identifier-naming.ClassMemberCase, value: lower_case }
-  - { key: readability-identifier-naming.ClassMemberSuffix, value: _ }
-  - { key: readability-identifier-naming.PrivateMemberSuffix, value: _ }
-  - { key: readability-identifier-naming.ProtectedMemberSuffix, value: _ }
+  - { key: readability-identifier-naming.VariableCase, value: aNy_CasE }
+  - { key: readability-identifier-naming.ClassMemberCase, value: aNy_CasE }
   - { key: readability-identifier-naming.EnumConstantCase, value: CamelCase }
   - { key: readability-identifier-naming.EnumConstantPrefix, value: k }
   - { key: readability-identifier-naming.ConstexprVariableCase, value: CamelCase }
@@ -867,6 +874,8 @@ CheckOptions:
   - { key: readability-identifier-naming.StaticConstantPrefix, value: k }
   - { key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: 1 }
   - { key: readability-function-cognitive-complexity.Threshold, value: 100 }
+  - { key: readability-implicit-bool-conversion.AllowPointerConditions, value: 1}
+
 ```
 
 * [Setting a sub-option to clang-tidy](https://stackoverflow.com/questions/53185985/setting-a-sub-option-to-clang-tidy)

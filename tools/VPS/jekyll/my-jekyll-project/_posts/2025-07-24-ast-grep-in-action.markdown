@@ -865,6 +865,18 @@ https://ast-grep.github.io/advanced/faq.html
 
 
 
+# Issue
+
+## [[feature] Parse multiple pieces of code (same language) one time #448](https://github.com/ast-grep/ast-grep/issues/448)
+
+Q: But I don't know how I can do it and what's the best practice to leverage ast-grep(or Rust)'s powerful parallel mechanism.
+
+A: this feature has been supported by `parseAsync`! [ac78bc0](https://github.com/ast-grep/ast-grep/commit/ac78bc0f75346d9ef1ed7de2622dfd02c439a4a3)
+
+Here is the blog benchmarking parallel parsing of different parsers! [Benchmark TypeScript Parsers: Demystify Rust Tooling Performance](https://dev.to/herrington_darkholme/benchmark-typescript-parsers-demystify-rust-tooling-performance-2go8)
+
+
+
 
 
 # Refer
